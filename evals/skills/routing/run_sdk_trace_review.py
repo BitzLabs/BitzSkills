@@ -36,7 +36,8 @@ RPC_FINAL_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.36.json'
 PROVIDER_ALIAS_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.37.json'
 CONNECTION_EVIDENCE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.38.json'
 PRIMARY_CAPTURE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.39.json'
-CONNECTION_CONTRACTS = {CONNECTION_REVIEW_CONTRACT, CONNECTION_REMEDIATION_CONTRACT, RPC_CORRELATION_CONTRACT, RPC_FINAL_CONTRACT, PROVIDER_ALIAS_CONTRACT, CONNECTION_EVIDENCE_CONTRACT, PRIMARY_CAPTURE_CONTRACT}
+PRIMARY_STOP_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.40.json'
+CONNECTION_CONTRACTS = {CONNECTION_REVIEW_CONTRACT, CONNECTION_REMEDIATION_CONTRACT, RPC_CORRELATION_CONTRACT, RPC_FINAL_CONTRACT, PROVIDER_ALIAS_CONTRACT, CONNECTION_EVIDENCE_CONTRACT, PRIMARY_CAPTURE_CONTRACT, PRIMARY_STOP_CONTRACT}
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -145,6 +146,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-36',
                              '.venv/sdk-trace-independent-review-37',
                              '.venv/sdk-trace-independent-review-38',
+                             '.venv/sdk-trace-independent-review-39',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -297,8 +299,10 @@ if __name__ == '__main__':
     raw.add_argument('--provider-alias-review', action='store_true')
     raw.add_argument('--connection-evidence-review', action='store_true')
     raw.add_argument('--primary-capture-review', action='store_true')
+    raw.add_argument('--primary-stop-review', action='store_true')
     args = parser.parse_args()
-    contract_name = (PRIMARY_CAPTURE_CONTRACT if args.primary_capture_review else
+    contract_name = (PRIMARY_STOP_CONTRACT if args.primary_stop_review else
+                     PRIMARY_CAPTURE_CONTRACT if args.primary_capture_review else
                      CONNECTION_EVIDENCE_CONTRACT if args.connection_evidence_review else
                      PROVIDER_ALIAS_CONTRACT if args.provider_alias_review else
                      RPC_FINAL_CONTRACT if args.rpc_final_review else

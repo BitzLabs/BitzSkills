@@ -123,6 +123,9 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
         argv.extend(['-c', key + '=' + json.dumps(value)])
     process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stop = threading.Event()
+    capture_failed = threading.Event()
+    capture_errors = []
+    capture_lock = threading.Lock()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     handles = [os.fdopen(os.open(base / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb')
                for name in ('rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-stderr.bin')]
@@ -167,7 +170,11 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
                         return
                 dst.write(raw)
                 dst.flush()
-        except (BrokenPipeError, OSError, ValueError):
+        except Exception as exc:
+            if capture_guard is not None:
+                capture_failed.set()
+                with capture_lock:
+                    capture_errors.append({'errorType': type(exc).__name__, 'stream': 'stderr' if saved == handles[2] else 'rpc'})
             stop.set()
         finally:
             if dst == process.stdin:
@@ -202,13 +209,20 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
                     process.kill()
                     process.wait()
     finally:
-        for thread in threads[1:]:
+        for thread in (threads if capture_guard is not None else threads[1:]):
             thread.join(timeout=1)
+        if capture_guard is not None and any(thread.is_alive() for thread in threads):
+            capture_failed.set()
+            capture_errors.append({'errorType': 'UnfinishedRelay', 'stream': 'relay'})
         for handle in handles:
             handle.flush()
             os.fsync(handle.fileno())
-        cli.exclusive(base / 'runtime-result.json', cli.encoded(
-            {'exitCode': process.returncode, 'forcedShutdown': intentional}))
+        result = {'exitCode': process.returncode, 'forcedShutdown': intentional}
+        if capture_guard is not None:
+            result['captureIntegrity'] = not capture_failed.is_set()
+            if capture_failed.is_set():
+                cli.exclusive(base / 'proxy-capture-errors.json', cli.encoded({'errors': capture_errors}))
+        cli.exclusive(base / 'runtime-result.json', cli.encoded(result))
     return 0
 
 

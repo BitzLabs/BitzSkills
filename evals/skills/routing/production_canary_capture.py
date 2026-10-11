@@ -66,6 +66,9 @@ def prepare(source):
 
 def config_for(base, contract):
     config = connection.http_config_for(base)
+    # 固定CLIが無視すると原通知した非対応設定をカナリアには持ち込まない。
+    config.pop('model_providers.bitz_openai_http.include_internal_metadata')
+    config['suppress_unstable_features_warning'] = True
     config['features.code_mode_host'] = True
     config.update({'mcp_servers.production-routing.command': '/usr/bin/python3',
         'mcp_servers.production-routing.args': ['-B', str(ROOT / 'evals/skills/routing/production_canary_host.py'),
@@ -92,19 +95,25 @@ class CaptureGuard:
                 return False
             if (self.base / 'host-stop.json').exists():
                 reason = 'host-policy-stop'
+            elif not isinstance(value, dict):
+                reason = 'invalid-capture-object'
             elif kind == 'rpc':
                 if 'id' in value and 'method' in value:
                     reason = 'server-request'
+                elif 'method' in value and (not isinstance(value['method'], str) or not isinstance(value.get('params'), dict)):
+                    reason = 'invalid-notification'
                 elif value.get('method') in {'item/started', 'item/completed'}:
                     item = value.get('params', {}).get('item', {})
-                    if item.get('type') not in {'userMessage', 'agentMessage', 'reasoning', 'mcpToolCall'}:
+                    if not isinstance(item, dict) or item.get('type') not in {'userMessage', 'agentMessage', 'reasoning', 'mcpToolCall'}:
                         reason = 'unknown-action'
                     elif item.get('type') == 'mcpToolCall' and (item.get('server') != 'production-routing' or
                             item.get('tool') not in {'list_resources', 'read_resource'}):
                         reason = 'unknown-host-tool'
             elif kind == 'telemetry':
                 fields = value.get('fields', {})
-                name = fields.get('event.name')
+                if not isinstance(fields, dict):
+                    reason = 'invalid-telemetry-fields'
+                name = fields.get('event.name') if isinstance(fields, dict) else None
                 if name == 'codex.api_request':
                     endpoint = fields.get('endpoint')
                     if endpoint not in {'/models', '/responses'} or type(fields.get('attempt')) is not int or fields['attempt'] != 0 or \
@@ -233,13 +242,13 @@ def run(source, dry_run=False):
     cli.exclusive(base / 'namespace.stderr', stderr)
     after = guard.verify(ROOT, source, contract['sourceFiles'])
     files = connection.original_artifact_paths(base)
-    files += [base / n for n in ['model-input.json', 'decision-schema.json', 'host.jsonl', 'host-stop.json', 'capture-stop.json', 'dialogue-stop.json'] if (base / n).exists()]
+    files += [base / n for n in ['model-input.json', 'decision-schema.json', 'host.jsonl', 'host-stop.json', 'capture-stop.json', 'dialogue-stop.json', 'proxy-capture-errors.json'] if (base / n).exists()]
     for path in files:
         ledger.safe_tree(path)
     runtime = trace.strict_json((base / 'runtime-result.json').read_bytes()) if (base / 'runtime-result.json').exists() else None
     result = trace.strict_json((base / 'isolated-result.json').read_bytes()) if (base / 'isolated-result.json').exists() else None
     captured = process.returncode == 0 and not timed_out and before == invoke == after and \
-        runtime == {'exitCode': 0, 'forcedShutdown': False} and result == {'sdkErrorType': None} and \
+        runtime == {'exitCode': 0, 'forcedShutdown': False, 'captureIntegrity': True} and result == {'sdkErrorType': None} and \
         not any((base / n).exists() for n in ['host-stop.json', 'capture-stop.json', 'dialogue-stop.json'])
     value = dict(status='primary_capture_awaits_parent_and_independent_review' if captured else 'primary_capture_stopped',
         sourceCommit=source, attempt=attempt, sourceGuards=dict(before=before, invoke=invoke, after=after),

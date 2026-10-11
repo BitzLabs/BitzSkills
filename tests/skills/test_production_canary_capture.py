@@ -95,6 +95,35 @@ class CanaryCaptureTests(unittest.TestCase):
             if list_first: value.call('list_resources', {})
             self.assertTrue(value.call(tool, arguments)['isError'])
             self.assertTrue((fixture.base / 'host-stop.json').exists())
+            self.assertTrue(value.call('read_resource', {'path': fixture.manifest['skills'][0]['path']})['isError'])
+            if not list_first:
+                self.assertFalse(value.listed)
+
+    def test_malformed_capture_fields_are_rejected_with_sticky_marker(self):
+        for direction, event in [('telemetry', {'fields': None}), ('telemetry', {'fields': []}),
+                                  ('rpc', {'method': 'warning', 'params': None}),
+                                  ('rpc', {'method': 'item/started', 'params': {'item': None}}), ('rpc', None)]:
+            value = capture.CaptureGuard(self.temporary())
+            self.assertFalse(value(direction, event))
+            self.assertTrue((value.base / 'capture-stop.json').exists())
+            self.assertFalse(value('rpc', {'id': 1, 'result': {}}))
+
+    def test_proxy_monitor_exception_sets_integrity_failure_even_when_cli_exits_zero(self):
+        base = self.temporary()
+        fake = base / 'fake-codex'
+        fake.write_text('#!/usr/bin/python3\nimport sys\nsys.stderr.write(\'{"target":"codex_otel.trace_safe","fields":null}\\n\')\nsys.stderr.flush()\n')
+        fake.chmod(0o700)
+        (base / 'config.json').write_text('{}')
+        (base / 'contract.json').write_text(json.dumps({'codexPath': str(fake), 'diagnosticTracing':
+            {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}}))
+        code = ('import sys; from pathlib import Path; sys.path.insert(0,"evals/skills/routing"); import production_sdk_probe as sdk; '
+                'sdk.proxy(Path(sys.argv[1]), capture_guard=lambda kind,value: value["fields"].get("x") if kind=="telemetry" else True)')
+        result = subprocess.run([sys.executable, '-B', '-c', code, str(base)], cwd=ROOT, input=b'', capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        runtime = json.loads((base / 'runtime-result.json').read_bytes())
+        self.assertEqual(runtime['exitCode'], 0)
+        self.assertFalse(runtime['captureIntegrity'])
+        self.assertEqual(json.loads((base / 'proxy-capture-errors.json').read_bytes())['errors'][0]['errorType'], 'AttributeError')
 
     def test_configuration_uses_same_provider_without_auth_or_url_override(self):
         config = capture.config_for(Path('/private/canary'), self.contract())
@@ -107,3 +136,4 @@ class CanaryCaptureTests(unittest.TestCase):
         self.assertFalse(config['model_providers.bitz_openai_http.supports_websockets'])
         self.assertFalse(any(key.endswith(('.base_url', '.env_key', '.experimental_bearer_token')) for key in config))
         self.assertEqual(config['mcp_servers.production-routing.enabled_tools'], ['list_resources', 'read_resource'])
+        self.assertNotIn('model_providers.bitz_openai_http.include_internal_metadata', config)

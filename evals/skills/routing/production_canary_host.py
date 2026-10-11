@@ -13,12 +13,17 @@ HOST_SPEC.loader.exec_module(host)
 class CanaryHost(host.Host):
     def __init__(self, snapshot, manifest_sha256, log):
         self.stop_marker = log.parent / 'host-stop.json'
+        self.listed = False
         super().__init__(snapshot, manifest_sha256, log)
 
     def execute(self, name, arguments):
+        if self.stop_marker.exists():
+            raise ValueError('host permanently stopped')
         if self.sequence == 1 and name == 'list_resources' and arguments == {}:
-            return super().execute(name, arguments)
-        if self.sequence == 2 and name == 'read_resource' and isinstance(arguments, dict) and set(arguments) == {'path'}:
+            result = super().execute(name, arguments)
+            self.listed = True
+            return result
+        if self.sequence == 2 and self.listed and name == 'read_resource' and isinstance(arguments, dict) and set(arguments) == {'path'}:
             if isinstance(arguments['path'], str) and arguments['path'] in {s['path'] for s in self.manifest['skills']}:
                 return super().execute(name, arguments)
         marker = self.stop_marker
