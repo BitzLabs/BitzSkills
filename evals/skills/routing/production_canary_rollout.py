@@ -163,7 +163,8 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     thread = sent[3]['params']['threadId']
     turn = next(f['params']['turn']['id'] for f in received if f.get('method') == 'turn/started')
     manifest = trace.strict_json(manifest_raw)
-    require(isinstance(manifest, dict) and set(manifest) == {'schema_version', 'root_thread_id', 'raw_event_log', 'payloads_dir', 'rollout_id'} and
+    require(isinstance(manifest, dict) and set(manifest) == {'schema_version', 'trace_id', 'root_thread_id', 'started_at_unix_ms', 'raw_event_log', 'payloads_dir', 'rollout_id'} and
+            nonempty(manifest['trace_id']) and type(manifest['started_at_unix_ms']) is int and manifest['started_at_unix_ms']>=0 and
             type(manifest['schema_version']) is int and manifest['schema_version'] == 1 and
             manifest['root_thread_id'] == thread and manifest['rollout_id'] == thread and
             manifest['raw_event_log'] == 'trace.jsonl' and manifest['payloads_dir'] == 'payloads', 'original primary rollout manifest')
@@ -177,7 +178,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                 'unique original payload reference')
         used.add(ref['path']);return trace.strict_json(payloads[ref['path']])
     events = [trace.strict_json(line) for line in events_raw.splitlines()]
-    require(bool(events), 'original rollout missing')
+    require(bool(events) and isinstance(events[0],dict) and events[0].get('wall_time_unix_ms')==manifest['started_at_unix_ms'], 'original rollout start timestamp binding')
     kinds = []
     requests, responses, seen = [], [], set()
     stage = 0
@@ -197,7 +198,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
         if kind in milestones:
             require(stage < len(milestones) and kind == milestones[stage] and active is None, 'closed rollout lifecycle order')
             stage += 1
-            if kind == 'rollout_started': require(set(fields)=={'type','trace_id','root_thread_id'} and nonempty(fields['trace_id']) and fields['root_thread_id']==thread, 'rollout start')
+            if kind == 'rollout_started': require(set(fields)=={'type','trace_id','root_thread_id'} and fields['trace_id']==manifest['trace_id'] and fields['root_thread_id']==thread, 'rollout start')
             elif kind == 'thread_started':
                 require(set(fields)=={'type','thread_id','agent_path','metadata_payload'} and fields['thread_id']==thread and fields['agent_path']=='/root', 'root thread start')
                 session = load(fields['metadata_payload'],'session_metadata')

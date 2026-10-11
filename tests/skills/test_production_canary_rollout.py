@@ -89,12 +89,25 @@ class CanaryRolloutTests(unittest.TestCase):
         event(dict(type='protocol_event_observed',event_type='shutdown_complete',event_payload=reference(dict(type='shutdown_complete'),'protocol_event')))
         received.append(dict(method='turn/completed',params=dict(threadId=thread,turn=dict(id=turn))))
         event(dict(type='thread_ended',thread_id=thread,status='completed'));event(dict(type='rollout_ended',status='completed'))
-        manifest=dict(schema_version=1,root_thread_id=thread,raw_event_log='trace.jsonl',payloads_dir='payloads',rollout_id=thread)
+        manifest=dict(schema_version=1,trace_id='trace',root_thread_id=thread,started_at_unix_ms=events[0]['wall_time_unix_ms'],raw_event_log='trace.jsonl',payloads_dir='payloads',rollout_id=thread)
         return dict(manifest=manifest,events=events,payloads=payloads,sent=sent,received=received,native=native,context_profile=profile_value,host_events=host_events)
 
     def check(self,value):
         return rollout.correlate(ledger.encoded(value['manifest']),b''.join(ledger.encoded(e)+b'\n' for e in value['events']),
             value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'],host_events=value['host_events'])
+
+    def test_fixed_cli_seven_manifest_fields_bind_to_original_start_and_reject_drift(self):
+        self.check(self.fixture())
+        for key,value in [('trace_id','another'),('started_at_unix_ms',2),('started_at_unix_ms',True),
+                          ('started_at_unix_ms',1.0),('schema_version',True),('extra','unknown')]:
+            fixture=self.fixture();fixture['manifest'][key]=value
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):self.check(fixture)
+        for key in ['trace_id','started_at_unix_ms']:
+            fixture=self.fixture();fixture['manifest'].pop(key)
+            with self.subTest(missing=key),self.assertRaises(ValueError):self.check(fixture)
+        for first in [None,[],0]:
+            fixture=self.fixture();fixture['events'][0]=first
+            with self.subTest(first=first),self.assertRaises(ValueError):self.check(fixture)
 
     def alter_payload(self,value,kind,change,index=0):
         events=[e for e in value['events'] if e['payload']['type']==kind]
