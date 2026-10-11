@@ -473,3 +473,21 @@ Core固有の単体試験は647件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は661件がすべて成功した。
+
+## 2026-10-11: `--workspace`でルートを選ぶ場合とdoneのTASKをimplementの起点にする場合のfixtureを追加した後のStep 1〜5の再判定
+
+Coreを変えずに、`MULTI-031-01`、`02`（Step 5）と`SINGLE-159`（Step 3）を追加した。現行のCoreで3件とも`passed`となり、Coreのコピーに要点を壊す変異を入れると
+失敗することを確かめた。
+
+コミット`71243ffc71a09e8e25fa06bdaf44d85ef4bc58f6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 356件（`MULTI-031-01`、`02`、`SINGLE-159`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`27306d9b39bac4b3b222a87be2f51b35abaa8b0c668aa521676ce4719e6a30a0` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は661件がすべて成功した。
