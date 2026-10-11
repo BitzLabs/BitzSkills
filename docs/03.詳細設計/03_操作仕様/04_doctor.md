@@ -10,14 +10,14 @@ Coreと`.spec/`を利用できる前提を読取り専用で診断し、停止�
 ```text
 bitz doctor [--format text|json]
   [--workspace <workspace-id>|--all-workspaces]
-  [--plugin <id> --plugin-version <semver>]
-  [--require-core-api <semver-range>]
-  [--require-capability <capability-name>]...
+  [--plugin <id> --plugin-version <semver> --require-core-api <semver-range>
+   [--require-capability <capability-name>]...]
 ```
 
 引数列の共通の解析、オプションの重複、空の値、実行環境は
 [Core実行環境・CLI基盤契約](../00_共通契約/06_Core実行環境・CLI基盤契約.md)に従う。
 プラグインの情報を指定する場合は、ID、バージョン、要求するAPI、対応機能（Capability）を1つの要求として扱い、一部を暗黙に補わない。
+括弧の組合せに反する指定（一部のオプションの欠落）は、構文の不一致による終了コード4ではなく、診断`SPEC-DOCTOR-PLUGIN-001`とする（§4.1）。
 `--format`の既定値は`text`である。
 
 ## 3. 検査順序
@@ -75,7 +75,7 @@ Core APIのマイナーバージョンの差は、要求する範囲とすべて
 
 - `--plugin`は`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`に一致する64文字以下、`--plugin-version`はSemVer 2.0.0のバージョン、`--require-capability`は
   `^[a-zA-Z][a-zA-Z0-9]*\.v[1-9][0-9]*$`とする。`--require-core-api`は、空白1文字で区切った1件以上の比較子の論理積で、比較子は`>=`、`>`、`<=`、`<`、`=`
-  （省略時は`=`）に`MAJOR.MINOR`を続けたもの、または`^MAJOR.MINOR`（`>=MAJOR.MINOR <(MAJOR+1).0`）とする。字句の不一致は終了コード4とする。
+  （省略時は`=`）に`MAJOR.MINOR`を続けたもの、または`^MAJOR.MINOR`（`>=MAJOR.MINOR <(MAJOR+1).0`）とする。`MAJOR`と`MINOR`は桁数の上限を設けずに数値の大小で比べる。字句の不一致は終了コード4とする。
   `--plugin-version`は字句だけを検査し、何とも照合しない。
 - 4種のオプションのどれかを指定した場合は、`--plugin`、`--plugin-version`、`--require-core-api`の3つを同時に指定する。欠けたものがあれば
   `SPEC-DOCTOR-PLUGIN-001`とし、検査2と検査3は行わない。4種のどれも指定しなければ、検査2と検査3を行わず、その検査項目も置かない。
