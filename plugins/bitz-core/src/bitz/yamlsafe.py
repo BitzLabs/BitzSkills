@@ -75,9 +75,9 @@ def _join_key(path: list[str]) -> str | None:
 
 def _resolve_scalar(ev: ScalarEvent, path: list[str], label: str) -> object:
     if ev.anchor is not None:
-        raise YamlForbiddenError(f"{label}のanchorは禁止です", _join_key(path))
+        raise YamlForbiddenError(f"{label}のアンカーは禁止です", _join_key(path))
     if ev.tag is not None:
-        raise YamlForbiddenError(f"{label}のcustom tagは禁止です", _join_key(path))
+        raise YamlForbiddenError(f"{label}のカスタムタグは禁止です", _join_key(path))
     value = ev.value
     # style: None/'' はプレーンなスカラー、"'"/'"'/'|'/'>' は明示的に引用符で囲んだスカラーとブロックスカラー。
     style = getattr(ev, "style", None)
@@ -103,14 +103,14 @@ def _resolve_scalar(ev: ScalarEvent, path: list[str], label: str) -> object:
 def _build(events: list, idx: int, path: list[str], label: str) -> tuple[object, int]:
     ev = events[idx]
     if isinstance(ev, AliasEvent):
-        raise YamlForbiddenError(f"{label}のaliasは禁止です", _join_key(path))
+        raise YamlForbiddenError(f"{label}のエイリアスは禁止です", _join_key(path))
     if isinstance(ev, ScalarEvent):
         return _resolve_scalar(ev, path, label), idx + 1
     if isinstance(ev, SequenceStartEvent):
         if ev.anchor is not None:
-            raise YamlForbiddenError(f"{label}のanchorは禁止です", _join_key(path))
+            raise YamlForbiddenError(f"{label}のアンカーは禁止です", _join_key(path))
         if ev.tag is not None:
-            raise YamlForbiddenError(f"{label}のcustom tagは禁止です", _join_key(path))
+            raise YamlForbiddenError(f"{label}のカスタムタグは禁止です", _join_key(path))
         idx += 1
         items: list[object] = []
         i = 0
@@ -121,29 +121,29 @@ def _build(events: list, idx: int, path: list[str], label: str) -> tuple[object,
         return items, idx + 1
     if isinstance(ev, MappingStartEvent):
         if ev.anchor is not None:
-            raise YamlForbiddenError(f"{label}のanchorは禁止です", _join_key(path))
+            raise YamlForbiddenError(f"{label}のアンカーは禁止です", _join_key(path))
         if ev.tag is not None:
-            raise YamlForbiddenError(f"{label}のcustom tagは禁止です", _join_key(path))
+            raise YamlForbiddenError(f"{label}のカスタムタグは禁止です", _join_key(path))
         idx += 1
         result: dict[str, object] = {}
         while not isinstance(events[idx], MappingEndEvent):
             key_ev = events[idx]
             if not isinstance(key_ev, ScalarEvent):
-                raise YamlForbiddenError(f"{label}の複雑keyは禁止です", _join_key(path))
+                raise YamlForbiddenError(f"{label}の複雑なキーは禁止です", _join_key(path))
             if key_ev.anchor is not None or key_ev.tag is not None:
-                raise YamlForbiddenError(f"{label}のanchorは禁止です", _join_key(path))
+                raise YamlForbiddenError(f"{label}のアンカーは禁止です", _join_key(path))
             key = _resolve_scalar(key_ev, path, label)
             if not isinstance(key, str):
                 raise YamlForbiddenError(
-                    f"{label}のmapping keyは文字列だけを許可します", _join_key(path)
+                    f"{label}のマッピングのキーは文字列だけを許可します", _join_key(path)
                 )
             if key == "<<":
-                raise YamlForbiddenError(f"{label}のmerge keyは禁止です", _join_key(path + [key]))
+                raise YamlForbiddenError(f"{label}のマージキーは禁止です", _join_key(path + [key]))
             idx += 1
             value, idx = _build(events, idx, path + [key], label)
             if key in result:
                 raise YamlForbiddenError(
-                    f"{label}の重複mapping keyは禁止です", _join_key(path + [key])
+                    f"{label}の重複したマッピングのキーは禁止です", _join_key(path + [key])
                 )
             result[key] = value
         return result, idx + 1
@@ -170,7 +170,7 @@ def _parse_yaml_subset_uncached(text: str, label: str) -> object:
 
     doc_starts = [i for i, e in enumerate(events) if isinstance(e, DocumentStartEvent)]
     if len(doc_starts) > 1:
-        raise YamlForbiddenError(f"{label}の複数documentは禁止です", None)
+        raise YamlForbiddenError(f"{label}の複数のYAML文書は禁止です", None)
 
     idx = 0
     n = len(events)

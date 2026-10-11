@@ -179,7 +179,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
                 "code": "SPEC-DOCTOR-CORE-001",
                 "severity": "error",
                 "resultStatus": "blocked",
-                "summary": "実行環境のCPython versionが下限未満です",
+                "summary": "実行環境のCPythonのバージョンが下限未満です",
                 "source": {"kind": "environment", "component": "core"},
             },
             *plugin_diagnostics,
@@ -188,7 +188,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
 
     pre = multiws.precheck(cwd, git, env, extra_config_revs=["HEAD"])
     if pre.discovery_failed:
-        raise CliArgError("doctor", "複合workspaceのroot設定を発見できません")
+        raise CliArgError("doctor", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     checks.append({"name": "git", "status": pre.git_status})
     if pre.catalog_status is not None:
@@ -217,7 +217,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
                     local["checks"].append({"name": name, "status": "blocked"})
                     local["diagnostics"].append({
                         "code": "SPEC-MULTI-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
-                        "summary": f"{name}検査に必要な設定の出力を取得できません",
+                        "summary": f"検査項目{name}に必要な設定の出力を取得できません",
                         "evidence": {"stage": name, "dependencyWorkspaces": [wid], "dependencySpecRefs": []},
                         "source": {"kind": "file", "workspaceId": wid, "path": config_mod.CONFIG_PATH},
                     })
@@ -272,7 +272,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("doctor", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("doctor", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     checks: list[dict] = []
     diagnostics: list[dict] = []
@@ -290,7 +290,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 "code": "SPEC-DOCTOR-CORE-001",
                 "severity": "error",
                 "resultStatus": "blocked",
-                "summary": "実行環境のCPython versionが下限未満です",
+                "summary": "実行環境のCPythonのバージョンが下限未満です",
                 "source": {"kind": "environment", "component": "core"},
             }
         )
@@ -368,7 +368,7 @@ def _diagnose_workspace(
                     "code": "SPEC-DOCTOR-COMMAND-001",
                     "severity": "error",
                     "resultStatus": "blocked",
-                    "summary": "command cwdを解決できません",
+                    "summary": "コマンドの作業ディレクトリを解決できません",
                     "source": {
                         "kind": "file",
                         "workspaceId": outcome.workspace_id,
@@ -385,7 +385,7 @@ def _diagnose_workspace(
                     "code": "SPEC-DOCTOR-COMMAND-001",
                     "severity": "error",
                     "resultStatus": "blocked",
-                    "summary": "command実行fileを解決できません",
+                    "summary": "コマンドの実行可能ファイルを解決できません",
                     "source": {
                         "kind": "file",
                         "workspaceId": outcome.workspace_id,

@@ -628,7 +628,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     extra_revs = [resolved_base] if resolved_base is not None else []
     pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs)
     if pre.discovery_failed:
-        raise CliArgError("check", "複合workspaceのroot設定を発見できません")
+        raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     if pre.ok:
         return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
@@ -720,10 +720,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     }
     if qualified_prefixes:
         if len(qualified_prefixes) > 1:
-            raise CliArgError("check", "複数の起点が異なるworkspaceに属しています")
+            raise CliArgError("check", "複数の起点が異なるワークスペースに属しています")
         target_ws_id = next(iter(qualified_prefixes))
         if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("check", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
+            raise CliArgError("check", f"起点のワークスペースと--workspaceが一致しません: {target_ws_id}")
     else:
         target_ws_id = requested_workspace
 
@@ -752,7 +752,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("check", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("check", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     diagnostics: list[dict] = []
     workspace_id: str | None

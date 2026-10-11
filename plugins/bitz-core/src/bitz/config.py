@@ -119,7 +119,7 @@ def _add_type_error(diags: list[Diagnostic], key: str, expected_type: str) -> No
             code="SPEC-CONFIG-SCHEMA-001",
             severity="error",
             resultStatus="error",
-            summary=f"{key}は{expected_type}で指定してください",
+            summary=f"設定キー{key}は{expected_type}で指定してください",
             source=_file_source(None, key),
         )
     )
@@ -171,7 +171,7 @@ def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict |
     if isinstance(raw, list):
         raw = {"argv": raw}
     if not isinstance(raw, dict):
-        _add_type_error(diags, prefix, "mapまたはargv配列")
+        _add_type_error(diags, prefix, "マッピングまたは引数列")
         return None
     argv = raw.get("argv")
     cwd = raw.get("cwd", ".")
@@ -197,7 +197,7 @@ def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict |
     if not ok:
         return None
     if not isinstance(cwd, str):
-        _add_type_error(diags, f"{prefix}.cwd", "string")
+        _add_type_error(diags, f"{prefix}.cwd", "文字列")
         return None
     return {"argv": argv, "cwd": cwd}
 
@@ -211,7 +211,7 @@ def _validate_schema_version(config: dict, diags: list[Diagnostic]) -> None:
     if "schemaVersion" not in config:
         _add_required_error(diags, "schemaVersion")
     elif not isinstance(config["schemaVersion"], str):
-        _add_type_error(diags, "schemaVersion", "string")
+        _add_type_error(diags, "schemaVersion", "文字列")
 
 
 def _peek_workspace_id(config: dict) -> str:
@@ -237,7 +237,7 @@ def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
                     code="SPEC-CONFIG-UNKNOWN-001",
                     severity="warning",
                     resultStatus="passed_with_warnings",
-                    summary="profilesはCore 1.0では使用しません",
+                    summary="設定キーprofilesはCore 1.0では使用しません",
                     source=_file_source(None, "profiles"),
                 )
             )
@@ -247,47 +247,47 @@ def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
                     code="SPEC-CONFIG-UNKNOWN-001",
                     severity="warning",
                     resultStatus="passed_with_warnings",
-                    summary="未知の設定keyです",
+                    summary="未知の設定キーです",
                     source=_file_source(None, key),
                 )
             )
 
     if "language" in config and not isinstance(config["language"], str):
-        _add_type_error(diags, "language", "string")
+        _add_type_error(diags, "language", "文字列")
 
     if "earsAi" not in config:
         _add_required_error(diags, "earsAi")
     elif not isinstance(config["earsAi"], str):
-        _add_type_error(diags, "earsAi", "string")
+        _add_type_error(diags, "earsAi", "文字列")
 
     context_cfg = config.get("context")
     if context_cfg is not None:
         if not isinstance(context_cfg, dict):
-            _add_type_error(diags, "context", "map")
+            _add_type_error(diags, "context", "マッピング")
         else:
             if "maxDocuments" in context_cfg:
                 v = context_cfg["maxDocuments"]
                 if not isinstance(v, int) or isinstance(v, bool) or not (1 <= v <= 100):
-                    _add_type_error(diags, "context.maxDocuments", "1〜100のinteger")
+                    _add_type_error(diags, "context.maxDocuments", "1〜100の整数")
             if "maxBytes" in context_cfg:
                 v = context_cfg["maxBytes"]
                 if not isinstance(v, int) or isinstance(v, bool) or not (4096 <= v <= 1048576):
-                    _add_type_error(diags, "context.maxBytes", "4096〜1048576のinteger")
+                    _add_type_error(diags, "context.maxBytes", "4096〜1048576の整数")
 
     verify_cfg = config.get("verify")
     commands: dict[str, dict] = {}
     if verify_cfg is not None:
         if not isinstance(verify_cfg, dict):
-            _add_type_error(diags, "verify", "map")
+            _add_type_error(diags, "verify", "マッピング")
         else:
             if "timeoutSeconds" in verify_cfg:
                 v = verify_cfg["timeoutSeconds"]
                 if not isinstance(v, int) or isinstance(v, bool) or not (1 <= v <= 3600):
-                    _add_type_error(diags, "verify.timeoutSeconds", "1〜3600のinteger")
+                    _add_type_error(diags, "verify.timeoutSeconds", "1〜3600の整数")
             cmds = verify_cfg.get("commands")
             if cmds is not None:
                 if not isinstance(cmds, dict):
-                    _add_type_error(diags, "verify.commands", "map")
+                    _add_type_error(diags, "verify.commands", "マッピング")
                 else:
                     for name, raw in cmds.items():
                         if not _COMMAND_NAME_RE.match(name):
@@ -300,15 +300,15 @@ def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
     safety_cfg = config.get("safety")
     if safety_cfg is not None:
         if not isinstance(safety_cfg, dict):
-            _add_type_error(diags, "safety", "map")
+            _add_type_error(diags, "safety", "マッピング")
         elif "protectApprovedRequirements" in safety_cfg:
             if not isinstance(safety_cfg["protectApprovedRequirements"], bool):
-                _add_type_error(diags, "safety.protectApprovedRequirements", "boolean")
+                _add_type_error(diags, "safety.protectApprovedRequirements", "真偽値")
 
     workspace_cfg = config.get("workspace")
     if workspace_cfg is not None:
         if not isinstance(workspace_cfg, dict):
-            _add_type_error(diags, "workspace", "map")
+            _add_type_error(diags, "workspace", "マッピング")
         elif "id" in workspace_cfg:
             wid = workspace_cfg["id"]
             if not isinstance(wid, str) or not lex.WORKSPACE_ID_RE.match(wid):
@@ -336,7 +336,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                 code="SPEC-INPUT-LIMIT-001",
                 severity="error",
                 resultStatus="failed",
-                summary="設定fileが64 KiB上限を超過しました",
+                summary="設定ファイルが64 KiB上限を超過しました",
                 source={"kind": "file", "workspaceId": DEFAULT_WORKSPACE_ID, "path": CONFIG_PATH},
             )
         )
@@ -356,7 +356,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
             code="SPEC-INPUT-BOM-001",
             severity="warning",
             resultStatus="passed_with_warnings",
-            summary="設定file先頭のBOMを除いて解析を続行します",
+            summary="設定ファイル先頭のBOMを除いて解析を続行します",
             source={"kind": "file", "workspaceId": None, "path": CONFIG_PATH},
         )
 
@@ -397,7 +397,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                     code="SPEC-INPUT-READ-001",
                     severity="error",
                     resultStatus="failed",
-                    summary="設定fileをUTF-8として復号できません",
+                    summary="設定ファイルをUTF-8として復号できません",
                     source={"kind": "file", "workspaceId": None, "path": CONFIG_PATH},
                 )
             ],
@@ -445,7 +445,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                     code="SPEC-CONFIG-SCHEMA-001",
                     severity="error",
                     resultStatus="error",
-                    summary="設定YAMLはmapで記述してください",
+                    summary="設定YAMLはマッピングで記述してください",
                     source={"kind": "file", "workspaceId": None, "path": CONFIG_PATH},
                 )
             ],
@@ -470,7 +470,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                     code="SPEC-CONFIG-SCHEMA-001",
                     severity="error",
                     resultStatus="blocked",
-                    summary="未対応のSchema majorです",
+                    summary="未対応のスキーマのメジャーバージョンです",
                     source=_file_source(tentative_workspace_id, "schemaVersion"),
                 )
             ],
@@ -502,7 +502,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                     code=ears_version_code,
                     severity="error",
                     resultStatus="blocked",
-                    summary="未対応のEARS-AI majorです",
+                    summary="未対応のEARS-AIのメジャーバージョンです",
                     source=_file_source(workspace_id, "earsAi"),
                 )
             ],
@@ -529,7 +529,7 @@ def read_config(path, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> Co
                 code="SPEC-INPUT-READ-001",
                 severity="error",
                 resultStatus="error",
-                summary="設定fileを読み取れません",
+                summary="設定ファイルを読み取れません",
                 source={"kind": "file", "workspaceId": DEFAULT_WORKSPACE_ID, "path": CONFIG_PATH},
             )
         )
