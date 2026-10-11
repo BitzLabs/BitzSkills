@@ -367,7 +367,6 @@ REQ-001が自分のテスト対応で隠さないようにするためである�
   Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の`DraftRefinementPurposeTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
 
-
 ## 2026-10-12: Coreの出力文言の書換えに伴う期待値の訂正
 
 Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本語にしたため、次のfixtureの期待値（診断の`summary`、manifestの説明、テキスト出力、
