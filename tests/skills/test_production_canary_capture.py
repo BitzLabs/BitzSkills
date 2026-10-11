@@ -189,9 +189,19 @@ class CanaryCaptureTests(unittest.TestCase):
         self.assertFalse(runtime['captureIntegrity'])
         self.assertEqual(json.loads((base / 'proxy-capture-errors.json').read_bytes())['errors'][0]['errorType'], 'AttributeError')
 
+    def test_context_profile_is_pinned_and_rejects_model_claims_or_unfixed_context(self):
+        contract=self.contract();raw=(ROOT/capture.CONTEXT).read_bytes()
+        self.assertEqual(capture.context_profile(raw,contract)['supplementBlockCount'],2)
+        with self.assertRaises(ValueError):capture.context_profile(raw+b' ',contract)
+        for key,value in [('systemSkillsDisabled',False),('supplementBlockCount',True),('paidModelCalls',True),
+                          ('primaryModelTrajectories',1),('certifiesSkillGate',True),('date','2026-13-01')]:
+            profile=json.loads(raw);profile[key]=value;changed=capture.ledger.encoded(profile)
+            contract['contextProfileSha256']=capture.ledger.sha(changed)
+            with self.subTest(key=key),self.assertRaises(ValueError):capture.context_profile(changed,contract)
+
     def test_builtin_skills_disabled_and_cli_inline_table_array_is_toml(self):
         import tomllib
-        config = capture.config_for(Path('/fixed/base'), self.contract)
+        config = capture.config_for(Path('/fixed/base'), json.loads((ROOT / capture.CONTRACT).read_bytes()))
         expected = [dict(name=n, enabled=False) for n in ['imagegen','openai-docs','skill-creator','skill-installer']]
         self.assertEqual(config['skills.config'], expected)
         for value in [expected, ['plain','quoted"value','line\nvalue'], True, 3, 'literal']:

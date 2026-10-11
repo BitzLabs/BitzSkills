@@ -1,0 +1,21 @@
+{
+  "version": "primary-client-context-0.1.0",
+  "calibrationSource": "9216bff479d543abda4ee71a00e92003982c6cdc",
+  "calibrationRequestSha256": "8e128b2cb11ca1afa2c1d66bec0ed8d73fa70a00db6a102615bd427099c18d0c",
+  "calibrationReceiptSha256": "70d00496d515eef7136070886b1a293dde8e129a5f1b4b0dc842c8cca02359ed",
+  "sdkVersion": "0.160.1",
+  "codexVersion": "codex-cli 0.160.1",
+  "date": "2026-10-11",
+  "toolsValueSha256": "d3ba928b8cb4b51fa55b403a74ec96eac5b967d9d9b257485d2eb203ec404316",
+  "supplementValueSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d",
+  "primaryModelTrajectories": 0,
+  "paidModelCalls": 0,
+  "certifiesProviderWireBodies": false,
+  "certifiesSkillGate": false,
+  "limitations": [
+    "Four bundled system skills are explicitly disabled. The fixed CLI exec helper declaration is hashed in full; calls outside the read-only host and exec/wait are forbidden and stop the canary.",
+    "Loopback scripted response calibrates client context only; it is not primary evidence, actual-provider behavior or usage certification."
+  ],
+  "supplementBlockCount": 2,
+  "systemSkillsDisabled": true
+}

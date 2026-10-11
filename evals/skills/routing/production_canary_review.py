@@ -71,3 +71,22 @@ def verify_native(capture):
         rawPayloadCorrelationVerified=False, eligibleForMeasurement=False,
         certifiesProviderWireBodies=False, certifiesBehavior=False, certifiesSkillGate=False,
         independentReviewPerformed=False, ledgerFinalized=False)
+
+
+def verify_complete(capture):
+    """原取得・native・固定client context・rollout/raw/usageを接続する。"""
+    import production_canary_rollout as rollout
+    result = verify_native(capture)
+    require(evidence.ledger.sha(capture.fixed.context_profile_raw) == capture.fixed.bound.contract['contextProfileSha256'],
+            'consumed fixed context profile drift')
+    originals = capture.originals
+    groups = {name.split('/')[1] for name in originals if name.startswith('rollout-traces/')}
+    require(len(groups) == 1, 'one verified original rollout group')
+    prefix = 'rollout-traces/' + next(iter(groups)) + '/'
+    payloads = {name.removeprefix(prefix):raw for name,raw in originals.items() if name.startswith(prefix+'payloads/')}
+    correlated = rollout.correlate(originals[prefix+'manifest.json'], originals[prefix+'trace.jsonl'], payloads,
+        json_lines(originals['rpc-in.jsonl']), json_lines(originals['rpc-out.jsonl']), result['native'],
+        trace.strict_json(capture.fixed.context_profile_raw))
+    return dict(result, status='primary_original_capture_correlated', rollout=correlated,
+        rawPayloadCorrelationVerified=True, eligibleForMeasurement=False,
+        independentReviewPerformed=False, ledgerFinalized=False)

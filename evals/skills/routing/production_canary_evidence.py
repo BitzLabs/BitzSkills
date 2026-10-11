@@ -28,6 +28,7 @@ CASES = 'evals/skills/routing/production-canary-cases-v0.1.json'
 CATALOG = 'evals/skills/event-catalog.json'
 INSTRUCTIONS = 'evals/skills/routing/production-canary-instructions-v0.1.txt'
 SCHEMA = 'evals/skills/schemas/decision.schema.json'
+CONTEXT = capture.CONTEXT
 AUDIT_SOURCES = ['evals/skills/routing/production_canary_evidence.py',
                  'tests/skills/test_production_canary_evidence.py']
 
@@ -107,6 +108,7 @@ def artifact_inventory(base, declared):
 class FixedInputs:
     bound: ledger.BoundInputs
     decision_schema_raw: bytes
+    context_profile_raw: bytes
     source_evidence: dict
     audit_source_evidence: dict
 
@@ -130,15 +132,18 @@ def load_fixed_inputs(repository, source):
         require(ledger.sha(raw) == digest and
                 ledger.sha(guard.git(repository, 'show', source + ':' + public_path)) == digest,
                 'fixed public resource drift')
+    context_raw = guard.git(repository, 'show', source + ':' + CONTEXT)
+    context = capture.context_profile(context_raw, contract)
     raws = [guard.git(repository, 'show', source + ':' + name) for name in [CASES, CATALOG]]
     raws += [manifest_raw, guard.git(repository, 'show', source + ':' + INSTRUCTIONS),
-             ledger.encoded(dict(platform='Linux', codexVersion=contract['codexVersion'], sdkVersion=contract['sdkVersion']))]
+             ledger.encoded(dict(platform='Linux', codexVersion=contract['codexVersion'], sdkVersion=contract['sdkVersion'],
+            contextDate=context['date'], contextProfileSha256=contract['contextProfileSha256']))]
     runtime = dict(contract, schemaVersion='1.0', sourceCommit=source, candidateSource=manifest['sourceCommit'],
                    inputSha256={k: ledger.sha(v) for k, v in zip(['cases', 'catalog', 'manifest', 'instructions', 'environment'], raws)})
     bound = ledger.bind_initial_canary_inputs(ledger.encoded(runtime), *raws)
     schema = trace.strict_json(guard.git(repository, 'show', source + ':' + SCHEMA))
     schema['properties']['selectedEntry']['enum'] = [None, *sorted(trace.SKILLS)]
-    return FixedInputs(bound, capture.cli.encoded(schema), evidence, audit_evidence)
+    return FixedInputs(bound, capture.cli.encoded(schema), context_raw, evidence, audit_evidence)
 
 
 def load_verified_capture(repository, source, ordinal):

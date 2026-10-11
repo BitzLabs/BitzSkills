@@ -15,6 +15,8 @@ import test_production_canary_trace as trace_fixture
 class CanaryReviewTests(unittest.TestCase):
     def setUp(self):
         self.capture = evidence_fixture.CanaryEvidenceTests(methodName='runTest')
+        if hasattr(self, 'context_profile_raw'):
+            self.capture.context_profile_raw = self.context_profile_raw
         self.capture.setUp()
         self.addCleanup(self.capture.doCleanups)
         self.trace = trace_fixture.PrimaryCanaryTraceTests(methodName='runTest')
@@ -124,6 +126,72 @@ class CanaryReviewTests(unittest.TestCase):
         host[-1]['result']['content'] += 'untrusted extra'
         with self.assertRaises(ValueError): review.verify_native(self.save(host=host))
         with self.assertRaises(ValueError): review.verify_native({})
+
+
+class CanaryCompleteReviewTests(unittest.TestCase):
+    def setUp(self):
+        import test_production_canary_rollout as rollout_fixture
+        original = rollout_fixture.CanaryRolloutTests(methodName='runTest').fixture()
+        self.fixture = CanaryReviewTests(methodName='runTest')
+        self.fixture.context_profile_raw = review.evidence.ledger.encoded(original['context_profile'])
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.capture = self.fixture.capture
+        native = review.verify_native(self.fixture.save())['native']
+        mapping = {'thread':'t','turn':'u','thread:0':'t:0','parent0':native['parentCallIds'][0],
+            'child0':native['nativeChildIds'][0],'child1':native['nativeChildIds'][1],
+            'fixed base':review.evidence.capture.BASE,'fixed developer':review.evidence.capture.DEVELOPER,
+            'fixed public input':self.capture.originals['model-input.json'].decode()}
+        work = str(self.capture.base/'work')
+        def convert(value):
+            if isinstance(value,dict):return {k:(v if k=='request_kind' else convert(v)) for k,v in value.items()}
+            if isinstance(value,list):return [convert(v) for v in value]
+            if isinstance(value,str):
+                if value in mapping:return mapping[value]
+                try:
+                    parsed=json.loads(value)
+                    if isinstance(parsed,dict):return json.dumps(native['decision'] if parsed==original['native']['decision'] else convert(parsed))
+                except ValueError:pass
+                return value.replace('/fixed/work',work)
+            return value
+        events=convert(original['events']);payloads={name:convert(json.loads(raw)) for name,raw in original['payloads'].items()}
+        for value in payloads.values():
+            if 'input' in value and isinstance(value['input'],list):value['text']['format']['schema']=self.fixture.trace.schema
+        received=convert(original['received'])
+        packets=[f for f in received if f.get('method') in (*review.sdk.RAW_METHODS,'thread/tokenUsage/updated')]
+        actual=copy.deepcopy(self.fixture.trace.fixture.received)
+        # 原入力raw→native user→control raw→native children→result raw→native final→final raw→terminal。
+        frames=actual[:5]+packets[:3]+actual[5:7]+packets[3:6]+actual[7:11]+packets[6:7]+actual[11:13]+packets[7:]+actual[13:]
+        self.fixture.save(received=frames)
+        for name in ['rollout-traces/synthetic/payloads/1.json']:
+            # 合成入口の初期placeholderを原イベントpayloadで置換する。
+            self.capture.originals.pop(name,None);self.capture.receipt['artifactSha256'].pop(name,None)
+            (self.capture.base/name).unlink()
+        self.capture.rewrite('rollout-traces/synthetic/manifest.json',review.evidence.ledger.encoded(convert(original['manifest'])))
+        self.capture.rewrite('rollout-traces/synthetic/trace.jsonl',b''.join(review.evidence.ledger.encoded(e)+b'\n' for e in events))
+        for name,value in payloads.items():self.capture.rewrite('rollout-traces/synthetic/'+name,review.evidence.ledger.encoded(value))
+        self.capture.persist()
+
+    def loaded(self):
+        return review.evidence.load_verified_capture(self.capture.repository,self.capture.source,1)
+
+    def test_complete_original_capture_correlates_without_scoring_or_ledger_mutation(self):
+        result=review.verify_complete(self.loaded())
+        self.assertEqual(result['status'],'primary_original_capture_correlated')
+        self.assertTrue(result['rawPayloadCorrelationVerified'])
+        self.assertTrue(result['rollout']['usageCorrelationVerified'])
+        self.assertFalse(result['eligibleForMeasurement']);self.assertFalse(result['ledgerFinalized'])
+        self.assertFalse((self.capture.storage/'review-0001.json').exists())
+
+    def test_rehashed_raw_usage_omission_and_profile_drift_stop(self):
+        from dataclasses import replace
+        context=self.loaded();profile=json.loads(context.fixed.context_profile_raw);profile['date']='2026-10-12'
+        altered=replace(context,fixed=replace(context.fixed,context_profile_raw=review.evidence.ledger.encoded(profile)))
+        with self.assertRaises(ValueError):review.verify_complete(altered)
+        frames=review.json_lines(context.originals['rpc-out.jsonl'])
+        frames=[f for f in frames if f.get('method')!='thread/tokenUsage/updated']
+        self.capture.rewrite('rpc-out.jsonl',b''.join(review.evidence.ledger.encoded(f)+b'\n' for f in frames))
+        with self.assertRaises(ValueError):review.verify_complete(self.loaded())
 
 
 if __name__ == '__main__':

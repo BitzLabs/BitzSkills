@@ -18,6 +18,7 @@ import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-canary-v0.1.json'
+CONTEXT = 'evals/skills/routing/production-canary-context-v0.1.json'
 BASE = '公開製品の発火選択だけを評価する。実操作の成功を主張せず、指定JSONで応答する。'
 DEVELOPER = '固定された読取りホスト以外の操作・質問・委譲は禁止。最大一覧1回・本文1回・制御2回。'
 CODE = ['production_canary_capture.py', 'production_canary_host.py', 'production_connection_probe.py',
@@ -37,6 +38,22 @@ def policy(value):
                   all(value[k] is False for k in ['certifiesApiRequestHardCap', 'certifiesBehavior', 'certifiesSkillGate']), 'limited certification')
 
 
+
+def context_profile(raw, contract):
+    from datetime import date
+    trace.require(ledger.sha(raw) == ledger.pin(contract['contextProfileSha256']), 'fixed context profile hash')
+    value = trace.strict_json(raw)
+    trace.require(value.get('version') == 'primary-client-context-0.1.0' and value.get('sdkVersion') == contract['sdkVersion'] and
+        value.get('codexVersion') == contract['codexVersion'] and value.get('systemSkillsDisabled') is True and
+        type(value.get('supplementBlockCount')) is int and value['supplementBlockCount'] == 2 and
+        all(type(value.get(k)) is int and value[k] == 0 for k in ['primaryModelTrajectories','paidModelCalls']) and
+        value.get('certifiesProviderWireBodies') is False and value.get('certifiesSkillGate') is False,
+        'fixed finite context profile policy')
+    trace.require(isinstance(value.get('date'), str) and date.fromisoformat(value['date']).isoformat() == value['date'], 'fixed context ISO date')
+    ledger.pin(value['toolsValueSha256']);ledger.pin(value['supplementValueSha256'])
+    return value
+
+
 def prepare(source):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
@@ -44,6 +61,11 @@ def prepare(source):
     value = trace.strict_json(raw)
     policy(value)
     source_guard = guard.verify(ROOT, source, value['sourceFiles'])
+    context = context_profile(guard.git(ROOT, 'show', source + ':' + CONTEXT), value)
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    trace.require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
+                  'calibrated context date differs before launch')
     snapshot = ROOT / value['snapshotRelativePath']
     ledger.safe_tree(snapshot)
     manifest_raw = (snapshot / 'manifest.json').read_bytes()
@@ -60,7 +82,7 @@ def prepare(source):
     raws = [guard.git(ROOT, 'show', source + ':' + path) for path in
             ['evals/skills/routing/production-canary-cases-v0.1.json', 'evals/skills/event-catalog.json']]
     raws += [manifest_raw, guard.git(ROOT, 'show', source + ':evals/skills/routing/production-canary-instructions-v0.1.txt'),
-             ledger.encoded({'platform': 'Linux', 'codexVersion': value['codexVersion'], 'sdkVersion': value['sdkVersion']})]
+             ledger.encoded({'platform': 'Linux', 'codexVersion': value['codexVersion'], 'sdkVersion': value['sdkVersion'], 'contextDate': context['date'], 'contextProfileSha256': value['contextProfileSha256']})]
     runtime = dict(value, schemaVersion='1.0', sourceCommit=source, candidateSource=manifest['sourceCommit'],
                    inputSha256={k: ledger.sha(v) for k, v in zip(['cases', 'catalog', 'manifest', 'instructions', 'environment'], raws)})
     return ledger.bind_initial_canary_inputs(ledger.encoded(runtime), *raws), source_guard

@@ -25,6 +25,8 @@ class CanaryEvidenceTests(unittest.TestCase):
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         self.contract = json.loads((ROOT / capture.CONTRACT).read_bytes())
+        context_raw = getattr(self, 'context_profile_raw', (ROOT / evidence.CONTEXT).read_bytes())
+        self.contract['contextProfileSha256'] = ledger.sha(context_raw)
         self.snapshot = self.repository / evidence.SNAPSHOT
         self.snapshot.mkdir(parents=True)
         manifest_raw = (fixture.snapshot / 'manifest.json').read_bytes()
@@ -35,6 +37,7 @@ class CanaryEvidenceTests(unittest.TestCase):
             evidence.CATALOG: (ROOT / evidence.CATALOG).read_bytes(),
             evidence.INSTRUCTIONS: (ROOT / evidence.INSTRUCTIONS).read_bytes(),
             evidence.SCHEMA: (ROOT / evidence.SCHEMA).read_bytes(),
+            evidence.CONTEXT: context_raw,
         }
         for name in fixture.manifest['resources']:
             raw = (fixture.snapshot / name).read_bytes()
