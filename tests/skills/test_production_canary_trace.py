@@ -8,7 +8,75 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_canary_trace as canary
+import production_sdk_trace as sdk
 import test_production_sdk_trace as fixture
+
+
+class PrimaryCanaryTraceTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = CanaryTraceTests(methodName='runTest')
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.schema = json.loads((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes())
+        self.schema['properties']['selectedEntry']['enum'] = [None, *sorted(canary.trace.SKILLS)]
+        self.fixture.sent[2]['params'].update(modelProvider='bitz_openai_http', experimentalRawEvents=True)
+        self.fixture.received[1]['result']['modelProvider'] = 'bitz_openai_http'
+        self.fixture.sent[3]['params'].update(outputSchema=copy.deepcopy(self.schema), effort='low')
+
+    def check(self, **changes):
+        return self.fixture.check(sdk_profile='public-canary', output_schema=self.schema, **changes)
+
+    def test_primary_profiles_preserve_original_params_and_do_not_certify(self):
+        before = copy.deepcopy((self.fixture.sent, self.fixture.received))
+        for profile in ['single-exec', 'two-exec', 'exec-wait']:
+            result = self.check(profile=profile)
+            self.assertEqual(result['hostCalls'], 2)
+            self.assertFalse(result['eligibleForMeasurement'])
+            self.assertFalse(result['certifiesSkillGate'])
+        self.assertEqual((self.fixture.sent, self.fixture.received), before)
+
+    def test_primary_thread_policy_overrides_and_missing_raw_events_rejected(self):
+        for key, value in [('experimentalRawEvents', False), ('experimentalRawEvents', 1),
+                           ('model', 'other-model'), ('modelProvider', 'openai'),
+                           ('sandbox', 'workspace-write'), ('approvalPolicy', 'on-request'),
+                           ('allowProviderModelFallback', True), ('ephemeral', False), ('unknown', True)]:
+            sent = copy.deepcopy(self.fixture.sent)
+            sent[2]['params'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): self.check(sent=sent)
+        for key in self.fixture.sent[2]['params']:
+            sent = copy.deepcopy(self.fixture.sent)
+            del sent[2]['params'][key]
+            with self.subTest(missing=key), self.assertRaises(ValueError): self.check(sent=sent)
+
+    def test_primary_schema_effort_and_turn_overrides_rejected(self):
+        for key, value in [('outputSchema', {}), ('effort', 'high'), ('effort', None),
+                           ('model', 'gpt-6.1-sol'), ('sandbox', 'read-only')]:
+            sent = copy.deepcopy(self.fixture.sent)
+            sent[3]['params'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): self.check(sent=sent)
+        for key in ['outputSchema', 'effort']:
+            sent = copy.deepcopy(self.fixture.sent)
+            del sent[3]['params'][key]
+            with self.subTest(missing=key), self.assertRaises(ValueError): self.check(sent=sent)
+
+    def test_diagnostic_and_primary_profiles_are_not_interchangeable(self):
+        with self.assertRaises(ValueError): sdk.requests(self.fixture.sent)
+        legacy = copy.deepcopy(self.fixture.sent)
+        del legacy[2]['params']['experimentalRawEvents']
+        for key in ['outputSchema', 'effort']: del legacy[3]['params'][key]
+        with self.assertRaises(ValueError): sdk.requests(legacy, profile='public-canary', output_schema=self.schema)
+        for profile in ['unknown', None, True]:
+            with self.subTest(profile=profile), self.assertRaises(ValueError):
+                sdk.requests(self.fixture.sent, profile=profile, output_schema=self.schema)
+
+    def test_primary_schema_pin_and_effective_provider_mismatch_rejected(self):
+        wrong = copy.deepcopy(self.schema)
+        wrong['properties']['selectedEntry']['enum'] = [None]
+        with self.assertRaises(ValueError):
+            sdk.requests(self.fixture.sent, profile='public-canary', output_schema=wrong)
+        received = copy.deepcopy(self.fixture.received)
+        received[1]['result']['modelProvider'] = 'openai'
+        with self.assertRaises(ValueError): self.check(received=received)
 
 
 class CanaryTraceTests(unittest.TestCase):

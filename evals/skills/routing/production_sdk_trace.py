@@ -29,7 +29,8 @@ def uuid_id(value) -> bool:
         return False
 
 
-def requests(sent: list) -> tuple[dict, dict]:
+def requests(sent: list, *, profile='diagnostic', output_schema=None) -> tuple[dict, dict]:
+    require(profile in ('diagnostic', 'public-canary'), 'known SDK request profile required')
     require(isinstance(sent, list) and len(sent) == 4, 'exact SDK request sequence required')
     require(sent[1] == {'method': 'initialized'}, 'SDK initialized notification required')
     selected = [sent[i] for i in (0, 2, 3)]
@@ -45,10 +46,20 @@ def requests(sent: list) -> tuple[dict, dict]:
             isinstance(initialize['clientInfo'], dict) and
             set(initialize['clientInfo']) == {'name', 'title', 'version'} and
             initialize['clientInfo']['title'] == 'Codex Python SDK', 'fixed SDK initialize params')
-    require(set(thread) <= {'model', 'modelProvider', 'allowProviderModelFallback', 'cwd', 'sandbox',
-                           'approvalPolicy', 'ephemeral', 'baseInstructions', 'developerInstructions'},
-            'unknown SDK thread params')
-    require(set(turn) == {'threadId', 'input'}, 'SDK turn policy override or unknown params')
+    thread_keys = {'model', 'modelProvider', 'allowProviderModelFallback', 'cwd', 'sandbox',
+                   'approvalPolicy', 'ephemeral', 'baseInstructions', 'developerInstructions'}
+    if profile == 'diagnostic':
+        require(output_schema is None, 'diagnostic profile has no output schema')
+        require(set(thread) <= thread_keys, 'unknown SDK thread params')
+        require(set(turn) == {'threadId', 'input'}, 'SDK turn policy override or unknown params')
+    else:
+        require(set(thread) == thread_keys | {'experimentalRawEvents'} and
+                thread['experimentalRawEvents'] is True and thread['model'] == 'gpt-6.1-sol' and
+                thread['modelProvider'] == 'bitz_openai_http', 'fixed public canary thread policy')
+        require(isinstance(output_schema, dict) and bool(output_schema) and
+                set(turn) == {'threadId', 'input', 'outputSchema', 'effort'} and
+                trace.json_equal(turn['outputSchema'], output_schema) and turn['effort'] == 'low',
+                'fixed public canary turn policy')
     require(initialize.get('clientInfo', {}).get('name') == 'codex_python_sdk' and
             initialize['clientInfo'].get('version') == '0.160.1', 'SDK version required')
     require(thread.get('sandbox') == 'read-only' and thread.get('approvalPolicy') == 'never' and
@@ -63,9 +74,10 @@ def requests(sent: list) -> tuple[dict, dict]:
     return bindings, {'thread': thread, 'turn': turn}
 
 
-def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] = ()) -> dict:
+def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] = (),
+               profile='diagnostic', output_schema=None) -> dict:
     """原フレームを変更せず、検査済みの入力・環境通知を側記録へ分離する。"""
-    bindings, expected = requests(sent)
+    bindings, expected = requests(sent, profile=profile, output_schema=output_schema)
     require(isinstance(received, list), 'SDK received frames required')
     require(isinstance(allowed_warnings, tuple) and len(allowed_warnings) <= 1 and
             all(isinstance(v, str) and bool(v) for v in allowed_warnings),

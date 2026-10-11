@@ -13,19 +13,22 @@ NEUTRAL = {'codex.conversation_starts', 'codex.startup_phase', 'codex.user_promp
 
 
 def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, selected_log, profile, expected_input,
-          base_instructions, developer_instructions, cwd, actual_exit_code):
+          base_instructions, developer_instructions, cwd, actual_exit_code,
+          sdk_profile='diagnostic', output_schema=None):
     """原RPC・host本文・全対象telemetryの相関。固定IDへの別名置換は行わない。"""
     require(isinstance(profile, str) and profile in PROFILES, 'bounded canary profile')
     events = sdk.complete_trace_projection(raw_stderr, selected_log)
     require(isinstance(expected_input, bytes) and isinstance(base_instructions, str) and
             isinstance(developer_instructions, str) and isinstance(cwd, str) and bool(cwd), 'fixed canary inputs')
-    _, params = sdk.requests(sent)
-    expected_thread = dict(model='gpt-6.1-sol', modelProvider='openai', allowProviderModelFallback=False,
+    _, params = sdk.requests(sent, profile=sdk_profile, output_schema=output_schema)
+    expected_thread = dict(model='gpt-6.1-sol', modelProvider='bitz_openai_http' if sdk_profile == 'public-canary' else 'openai', allowProviderModelFallback=False,
                            cwd=cwd, sandbox='read-only', approvalPolicy='never', ephemeral=True,
                            baseInstructions=base_instructions, developerInstructions=developer_instructions)
+    if sdk_profile == 'public-canary':
+        expected_thread['experimentalRawEvents'] = True
     require(trace.json_equal(params['thread'], expected_thread) and
             params['turn']['input'][0]['text'].encode() == expected_input, 'original SDK input drift')
-    native = sdk.normalized(sent, received)
+    native = sdk.normalized(sent, received, profile=sdk_profile, output_schema=output_schema)
     items = trace.completed_items(native['frames'])
     finals = [item for item in items if item['type'] == 'agentMessage' and item['phase'] == 'final_answer']
     require(len(finals) == 1, 'one canary final required')
