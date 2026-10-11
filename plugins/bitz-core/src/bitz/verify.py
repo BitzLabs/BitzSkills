@@ -815,10 +815,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     }
     if qualified_prefixes:
         if len(qualified_prefixes) > 1:
-            raise CliArgError("verify", "複数の対象が異なるworkspaceに属しています")
+            raise CliArgError("verify", "複数の対象が異なるワークスペースに属しています")
         target_ws_id = next(iter(qualified_prefixes))
         if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("verify", f"対象のworkspaceと--workspaceが一致しません: {target_ws_id}")
+            raise CliArgError("verify", f"対象のワークスペースと--workspaceが一致しません: {target_ws_id}")
         multi_pre = multiws.precheck(cwd, git, env)
         if multi_pre.ok:
             if target_ws_id == multi_pre.root_id:
@@ -841,7 +841,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("verify", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("verify", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     def _empty(workspace_id, status: str, diagnostics: list[dict]) -> tuple[dict, int]:
         result = {
@@ -1054,7 +1054,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     # `_run_all_workspaces_members`自身のテスト割当ての計画の集計に委ねる（複合ワークスペース仕様 §10）。
     pre = multiws.precheck(cwd, git, env, skip_limit_dimensions=frozenset({"commandDefinitionCount"}))
     if pre.discovery_failed:
-        raise CliArgError("verify", "複合workspaceのroot設定を発見できません")
+        raise CliArgError("verify", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     if not pre.ok:
         diagnostics = sort_diagnostics([d.to_dict() for d in pre.diagnostics])

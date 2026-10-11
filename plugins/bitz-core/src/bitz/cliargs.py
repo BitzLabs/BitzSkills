@@ -53,7 +53,7 @@ def _tokenize(op: str, rest: list[str], flags: set[str], single: set[str], repea
         if tok.startswith("--"):
             name = tok
             if "=" in name:
-                raise CliArgError(op, f"未知のoption形式です: {name}")
+                raise CliArgError(op, f"未知のオプション形式です: {name}")
             if name in flags:
                 if name in seen_flags:
                     raise CliArgError(op, f"{name}が重複しています")
@@ -82,7 +82,7 @@ def _tokenize(op: str, rest: list[str], flags: set[str], single: set[str], repea
                     bucket.append(value)
                 i += 2
                 continue
-            raise CliArgError(op, f"未知のoptionです: {name}")
+            raise CliArgError(op, f"未知のオプションです: {name}")
         if tok == "":
             raise CliArgError(op, "空文字列の位置引数は許可されません")
         positionals.append(tok)
@@ -213,7 +213,7 @@ def parse_check(rest: list[str]) -> ParsedArgs:
     explicit_targets = bool(parsed.positionals)
     for t in parsed.positionals:
         if not lex.is_valid_target(t, DOCUMENT_ID_ALL, allow_path=True):
-            raise CliArgError(op, f"targetの構文が不正です: {t}")
+            raise CliArgError(op, f"明示対象の構文が不正です: {t}")
     if explicit_targets and "--full" in parsed.flags:
         raise CliArgError(op, "明示対象と--fullは排他です")
     if "--all-workspaces" in parsed.flags and (
@@ -239,7 +239,7 @@ def parse_verify(rest: list[str]) -> ParsedArgs:
     verify_kinds = frozenset({"REQ", "TECH", "TASK"})
     for t in parsed.positionals:
         if not lex.is_valid_target(t, verify_kinds, allow_path=True):
-            raise CliArgError(op, f"targetの構文が不正です: {t}")
+            raise CliArgError(op, f"明示対象の構文が不正です: {t}")
     if "--all-workspaces" in parsed.flags and (
         explicit_targets or "--workspace" in parsed.single
     ):
@@ -274,7 +274,7 @@ def parse_context(rest: list[str]) -> ParsedArgs:
     if purpose != "interpret":
         for t in parsed.positionals:
             if lex.is_document_id(t, frozenset({"ADR"})) or lex.is_statement_id(t, frozenset({"ADR"})):
-                raise CliArgError(op, f"ADR起点にpurpose={purpose}は指定できません: {t}")
+                raise CliArgError(op, f"ADR起点に目的{purpose}は指定できません: {t}")
     detail = parsed.single.get("--detail", "standard")
     if detail not in ("compact", "standard", "full"):
         raise CliArgError(op, f"--detailの値が不正です: {detail}")
@@ -293,10 +293,10 @@ def parse_context(rest: list[str]) -> ParsedArgs:
 
 def parse_argv(argv: list[str]) -> ParsedArgs:
     if not argv:
-        raise CliArgError("(no-operation)", "operationを指定してください")
+        raise CliArgError("(no-operation)", "操作を指定してください")
     op = argv[0]
     if op not in OPERATIONS:
-        raise CliArgError("(no-operation)", f"未知のoperationです: {op}")
+        raise CliArgError("(no-operation)", f"未知の操作です: {op}")
     rest = argv[1:]
     if op == "doctor":
         return parse_doctor(rest)

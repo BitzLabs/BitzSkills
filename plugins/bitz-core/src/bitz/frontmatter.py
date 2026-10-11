@@ -169,7 +169,7 @@ def _check_path_array(value: object, key: str, limits: list[FieldIssue], hard: l
     """``key``がパスの配列として妥当か検査する。型が不正なら``True``を返し、呼び出し側で打ち切る。"""
 
     if not isinstance(value, list) or any(_is_bad_path(p) for p in value):
-        hard.append(_schema_error(key, messages.fm_type_error(key, "stringの配列")))
+        hard.append(_schema_error(key, messages.fm_type_error(key, "文字列の配列")))
         return True
     if len(value) > ARRAY_ITEM_LIMIT:
         limits.append(_limit_error(key, messages.array_count_limit(key)))
@@ -185,7 +185,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
 
     outcome = FrontmatterOutcome()
     if not isinstance(value, dict):
-        outcome.hard.append(_schema_error(None, "Frontmatterはmapで記述してください"))
+        outcome.hard.append(_schema_error(None, "フロントマターはマッピングで記述してください"))
         return outcome
 
     limits: list[FieldIssue] = []
@@ -202,7 +202,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("id", messages.fm_null_forbidden("id")))
         elif not isinstance(v, str):
-            hard.append(_schema_error("id", messages.fm_type_error("id", "string")))
+            hard.append(_schema_error("id", messages.fm_type_error("id", "文字列")))
         elif v == "":
             hard.append(_schema_error("id", messages.fm_empty_forbidden("id")))
         elif not ID_PATTERN[kind].match(v):
@@ -214,7 +214,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("title", messages.fm_null_forbidden("title")))
         elif not isinstance(v, str):
-            hard.append(_schema_error("title", messages.fm_type_error("title", "string")))
+            hard.append(_schema_error("title", messages.fm_type_error("title", "文字列")))
         elif "\n" in v or "\r" in v or not (1 <= len(v) <= 120) or v.strip() == "":
             hard.append(_schema_error("title", messages.TITLE_LENGTH_RULE))
 
@@ -224,7 +224,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("status", messages.fm_null_forbidden("status")))
         elif not isinstance(v, str):
-            hard.append(_schema_error("status", messages.fm_type_error("status", "string")))
+            hard.append(_schema_error("status", messages.fm_type_error("status", "文字列")))
         elif v == "":
             hard.append(_schema_error("status", messages.fm_empty_forbidden("status")))
         elif v not in STATUS_ENUM[kind]:
@@ -236,7 +236,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("relations", messages.fm_null_forbidden("relations")))
         elif not isinstance(v, dict):
-            hard.append(_schema_error("relations", messages.fm_type_error("relations", "map")))
+            hard.append(_schema_error("relations", messages.fm_type_error("relations", "マッピング")))
         else:
             for rk, rv in v.items():
                 if rk not in RELATION_KEYS:
@@ -267,7 +267,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("tests", messages.fm_null_forbidden("tests")))
         elif not isinstance(v, list):
-            hard.append(_schema_error("tests", messages.fm_type_error("tests", "objectの配列")))
+            hard.append(_schema_error("tests", messages.fm_type_error("tests", "オブジェクトの配列")))
         elif len(v) > ARRAY_ITEM_LIMIT:
             limits.append(_limit_error("tests", messages.array_count_limit("tests")))
         else:
@@ -276,7 +276,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
             for idx, item in enumerate(v):
                 prefix = f"tests[{idx}]"
                 if not isinstance(item, dict):
-                    hard.append(_schema_error(prefix, messages.fm_type_error(prefix, "object")))
+                    hard.append(_schema_error(prefix, messages.fm_type_error(prefix, "オブジェクト")))
                     tests_hard = True
                     continue
                 unknown = [k for k in item if k not in _TEST_KEYS]
@@ -285,12 +285,12 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
                     tests_hard = True
                     continue
                 if "path" not in item or "covers" not in item:
-                    hard.append(_schema_error(prefix, messages.fm_type_error(prefix, "path・coversを持つobject")))
+                    hard.append(_schema_error(prefix, messages.fm_type_error(prefix, "フィールドpathとcoversを持つオブジェクト")))
                     tests_hard = True
                     continue
                 path_v = item.get("path")
                 if _is_bad_path(path_v):
-                    hard.append(_schema_error(f"{prefix}.path", messages.fm_type_error(f"{prefix}.path", "string")))
+                    hard.append(_schema_error(f"{prefix}.path", messages.fm_type_error(f"{prefix}.path", "文字列")))
                     tests_hard = True
                     continue
                 covers_v = item.get("covers")
@@ -315,7 +315,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
                 if command_v is not None:
                     if not isinstance(command_v, str) or command_v == "" or not _COMMAND_NAME_RE.match(command_v):
                         hard.append(
-                            _schema_error(f"{prefix}.command", messages.fm_type_error(f"{prefix}.command", "command名"))
+                            _schema_error(f"{prefix}.command", messages.fm_type_error(f"{prefix}.command", "コマンド名"))
                         )
                         tests_hard = True
                         continue
@@ -329,11 +329,11 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("verify", messages.fm_null_forbidden("verify")))
         elif not isinstance(v, str):
-            hard.append(_schema_error("verify", messages.fm_type_error("verify", "string")))
+            hard.append(_schema_error("verify", messages.fm_type_error("verify", "文字列")))
         elif v == "":
             hard.append(_schema_error("verify", messages.fm_empty_forbidden("verify")))
         elif not _COMMAND_NAME_RE.match(v):
-            hard.append(_schema_error("verify", messages.fm_type_error("verify", "command名")))
+            hard.append(_schema_error("verify", messages.fm_type_error("verify", "コマンド名")))
 
     # --- changes --------------------------------------------------------
     if "changes" in value:
@@ -349,7 +349,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("refs", messages.fm_null_forbidden("refs")))
         elif not isinstance(v, list) or any(not _is_scalar(x) for x in v):
-            hard.append(_schema_error("refs", messages.fm_type_error("refs", "scalarの配列")))
+            hard.append(_schema_error("refs", messages.fm_type_error("refs", "スカラーの配列")))
         elif len(v) > ARRAY_ITEM_LIMIT:
             limits.append(_limit_error("refs", messages.array_count_limit("refs")))
         elif _has_duplicates(v):

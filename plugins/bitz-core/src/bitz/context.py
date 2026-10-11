@@ -425,10 +425,10 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     }
     if qualified_prefixes:
         if len(qualified_prefixes) > 1:
-            raise CliArgError("context", "複数の起点が異なるworkspaceに属しています")
+            raise CliArgError("context", "複数の起点が異なるワークスペースに属しています")
         target_ws_id = next(iter(qualified_prefixes))
         if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("context", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
+            raise CliArgError("context", f"起点のワークスペースと--workspaceが一致しません: {target_ws_id}")
     else:
         target_ws_id = requested_workspace
 
@@ -457,7 +457,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("context", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("context", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     # 設定がない、または不適合で同一性が確定しない場合は null（結果・診断・終了コード §2。`check`、`verify`と同じ）。
     workspace_id = outcome.workspace_id if outcome is not None else None

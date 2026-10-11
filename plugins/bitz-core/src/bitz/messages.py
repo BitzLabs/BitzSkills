@@ -12,33 +12,33 @@ import re
 
 # --- 入出力・上限（`INPUT-*`） -------------------------------------------------
 
-SPEC_UTF8_INVALID = "SPEC fileをUTF-8として復号できません"
-SPEC_IO_UNREADABLE = "SPEC fileを読み取れません"
-SPEC_SIZE_LIMIT = "SPEC Markdownが1 MiB上限を超過しました"
-FRONTMATTER_SIZE_LIMIT = "Frontmatterが32 KiB上限を超過しました"
+SPEC_UTF8_INVALID = "仕様文書のファイルをUTF-8として復号できません"
+SPEC_IO_UNREADABLE = "仕様文書のファイルを読み取れません"
+SPEC_SIZE_LIMIT = "仕様文書のMarkdownが1 MiB上限を超過しました"
+FRONTMATTER_SIZE_LIMIT = "フロントマターが32 KiB上限を超過しました"
 STATEMENT_COUNT_LIMIT = "1文書の規範文数が1,000上限を超過しました"
 
 
 def spec_file_count_limit(limit: int = 10_000) -> str:
-    return f"SPEC fileが{limit:,}件上限を超過しました"
+    return f"仕様文書のファイルが{limit:,}件上限を超過しました"
 
 
 def array_count_limit(key: str) -> str:
-    return "1文書の関係・path配列の項目数が1,000上限を超過しました"
+    return "1文書の関係・パスの配列の項目数が1,000上限を超過しました"
 
 
-SPEC_BOM = "SPEC file先頭のBOMを除いて解析を続行します"
+SPEC_BOM = "仕様文書のファイル先頭のBOMを除いて解析を続行します"
 
 
 # --- ワークスペースの探索 --------------------------------------------------------
 
-WORKSPACE_UNKNOWN_ENTRY = ".spec/内の未知fileをSPECとして読みません"
+WORKSPACE_UNKNOWN_ENTRY = ".spec/内の未知のファイルを仕様文書として読みません"
 
 
 # --- フロントマターのYAML構文の層 -------------------------------------------------
 
-FRONTMATTER_LABEL = "Frontmatter"
-FRONTMATTER_YAML_LABEL = "Frontmatter YAML"
+FRONTMATTER_LABEL = "フロントマター"
+FRONTMATTER_YAML_LABEL = "フロントマターのYAML"
 
 
 def frontmatter_yaml_syntax_invalid() -> str:
@@ -48,67 +48,67 @@ def frontmatter_yaml_syntax_invalid() -> str:
 # --- フロントマターのフィールド --------------------------------------------------
 
 def fm_type_error(key: str, expected: str) -> str:
-    return f"Frontmatter {key}は{expected}が必要です"
+    return f"フロントマターのフィールド{key}は{expected}が必要です"
 
 
 def fm_required_missing(key: str) -> str:
-    return f"Frontmatterの必須field {key}がありません"
+    return f"フロントマターの必須フィールド{key}がありません"
 
 
 def fm_null_forbidden(key: str) -> str:
-    return f"Frontmatter {key}にnullは指定できません"
+    return f"フロントマターのフィールド{key}にnullは指定できません"
 
 
 def fm_empty_forbidden(key: str) -> str:
-    return f"Frontmatter {key}は空文字列にできません"
+    return f"フロントマターのフィールド{key}は空文字列にできません"
 
 
-TITLE_LENGTH_RULE = "Frontmatter titleは改行を含まない1〜120文字で指定してください"
+TITLE_LENGTH_RULE = "フロントマターのフィールドtitleは改行を含まない1〜120文字で指定してください"
 
 
 def fm_id_format_invalid(kind: str) -> str:
-    return f"Frontmatter idの形式が不正です"
+    return f"フロントマターのフィールドidの形式が不正です"
 
 
 def fm_status_invalid(kind: str) -> str:
-    return "Frontmatter statusの値が不正です"
+    return "フロントマターのフィールドstatusの値が不正です"
 
 
 def fm_unavailable(kind_label: str, key: str) -> str:
-    return f"{kind_label}では{key}を使用できません"
+    return f"{kind_label}ではフィールド{key}を使用できません"
 
 
 def fm_unknown_field(key: str) -> str:
-    return "未知のFrontmatter fieldを無視します"
+    return "未知のフロントマターのフィールドを無視します"
 
 
 def fm_extension_invalid(key: str) -> str:
-    return f"Frontmatter {key}はscalar・scalar配列・文字列keyのmapだけを使用できます"
+    return f"フロントマターのフィールド{key}はスカラー・スカラーの配列・文字列のキーを持つマッピングだけを使用できます"
 
 
 def fm_relations_unknown_key(key: str) -> str:
-    return f"relationsに未知のkey {key}があります"
+    return f"フィールドrelationsに未知のキー{key}があります"
 
 
 def fm_relations_duplicate(key: str) -> str:
-    return f"relations.{key}に重複した値があります"
+    return f"フィールドrelations.{key}に重複した値があります"
 
 
 def fm_array_duplicate(key: str) -> str:
-    return f"{key}に重複した値があります"
+    return f"フィールド{key}に重複した値があります"
 
 
-TESTS_DUPLICATE = "testsに重複した要素があります"
-TESTS_COVERS_EMPTY = "tests[].coversは1件以上指定してください"
+TESTS_DUPLICATE = "フィールドtestsに重複した要素があります"
+TESTS_COVERS_EMPTY = "フィールドtests[].coversは1件以上指定してください"
 
 
 def fm_tests_unknown_key(index: int, key: str) -> str:
-    return f"testsの要素に未知のkey {key}があります"
+    return f"フィールドtestsの要素に未知のキー{key}があります"
 
 
 # --- IDの一意性・ファイル名 ------------------------------------------------------
 
-FILE_NAME_MISMATCH = "file名IDとFrontmatter IDが一致しません"
+FILE_NAME_MISMATCH = "ファイル名のIDとフロントマターのIDが一致しません"
 
 
 def doc_id_duplicate(doc_id: str) -> str:
@@ -117,42 +117,42 @@ def doc_id_duplicate(doc_id: str) -> str:
 
 # --- REQ本文検査 ------------------------------------------------------------
 
-REQ_STATEMENT_EMPTY = "approved REQに妥当な規範文がありません"
+REQ_STATEMENT_EMPTY = "状態approvedのREQに妥当な規範文がありません"
 
 H1_MISSING = "H1がありません"
 H1_MULTIPLE = "H1が複数あります"
-H1_MISMATCH = "H1がFrontmatterと一致しません"
+H1_MISMATCH = "H1がフロントマターと一致しません"
 
 
 def section_missing(name: str) -> str:
-    return f"REQ必須section {name}がありません"
+    return f"REQの必須の節{name}がありません"
 
 
 def section_empty(name: str) -> str:
-    return f"REQ必須section {name}が空です"
+    return f"REQの必須の節{name}が空です"
 
 
 def placement_invalid(kind_label: str) -> str:
-    return f"{kind_label}に規範行を配置できません"
+    return f"{kind_label}に規範文を配置できません"
 
 
 # --- EARS-AI構文条件 ---------------------------------------------------
 
-EAI_CODE_UNCLOSED = "code spanが閉じられていません"
-EAI_TAG_UNCLOSED = "tagが閉じられていません"
-EAI_UNKNOWN_ESCAPE = "未知のescapeです"
-EAI_QUOTE_UNCLOSED = "extension値のquoteが閉じられていません"
-EAI_TAG_INVALID = "tagが不正です"
+EAI_CODE_UNCLOSED = "コードスパンが閉じられていません"
+EAI_TAG_UNCLOSED = "タグが閉じられていません"
+EAI_UNKNOWN_ESCAPE = "未知のエスケープです"
+EAI_QUOTE_UNCLOSED = "拡張タグの値の引用符が閉じられていません"
+EAI_TAG_INVALID = "タグが不正です"
 EAI_ID_FORMAT = "規範文IDの形式が不正です"
 EAI_ID_DOCUMENT_MISMATCH = "規範文IDの文書部分が文書IDと一致しません"
 EAI_ID_DUPLICATE = "規範文IDが重複しています"
-EAI_TAG_ORDER = "tagの順序が不正です"
-EAI_TAG_REQUIRED = "必須tagが不足しています"
+EAI_TAG_ORDER = "タグの順序が不正です"
+EAI_TAG_REQUIRED = "必須のタグが不足しています"
 EAI_TRIGGER_MULTIPLE = "発動条件が複数あります"
 EAI_PERIOD_MISSING = "規範文末の句点がありません"
-EAI_OPERAND_MISSING = "operandが不足しています"
+EAI_OPERAND_MISSING = "オペランドが不足しています"
 EAI_SHOULD_REASON_MISSING = "SHOULDに[REASON]がありません"
-EAI_EXTENSION_UNKNOWN = "未知namespaceのextensionを保持します"
+EAI_EXTENSION_UNKNOWN = "未知の名前空間の拡張タグを保持します"
 
 
 # --- 関係・トレース（`RELATION-*`、`TRACE-*`） -------------------------------------
@@ -162,42 +162,42 @@ EAI_EXTENSION_UNKNOWN = "未知namespaceのextensionを保持します"
 #: `summary`へ足す。通常のパスは埋め込まない固定の文言を使う）。
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f\x80-\x9f]")
 
-RELATION_MISSING_STRONG = "strong relationの参照先が存在しません"
+RELATION_MISSING_STRONG = "強い関係の参照先が存在しません"
 
 
 def relation_missing_strong(source_path: str) -> str:
     if _CONTROL_CHAR_RE.search(source_path):
-        return f"参照元{source_path}のstrong relation参照先が存在しません"
+        return f"参照元{source_path}の強い関係の参照先が存在しません"
     return RELATION_MISSING_STRONG
 
 
 def relation_type_mismatch(source_kind: str, target_kind: str, relation: str) -> str:
-    return f"{source_kind}から{target_kind}への{relation}は許可されません"
+    return f"{source_kind}から{target_kind}への関係型{relation}は許可されません"
 
 
 def relation_cycle(relation: str) -> str:
-    return f"{relation}に禁止循環があります"
+    return f"関係型{relation}に禁止された循環があります"
 
 
-RELATION_LEGACY_REFS = "旧refs fieldは使用できません"
-RELATION_ADVISORY_MISSING = "relatedの参照先が存在しません"
+RELATION_LEGACY_REFS = "旧フィールドrefsは使用できません"
+RELATION_ADVISORY_MISSING = "関係型relatedの参照先が存在しません"
 
-IMPLEMENTS_PATH_MISSING = "実装pathが存在しません"
-IMPLEMENTS_PATH_DRAFT = "draftの実装pathは未作成です"
-TEST_PATH_MISSING = "testのpathが存在しません"
-TEST_PATH_DRAFT = "draftのtest pathは未作成です"
+IMPLEMENTS_PATH_MISSING = "実装パスが存在しません"
+IMPLEMENTS_PATH_DRAFT = "状態draftの実装パスは未作成です"
+TEST_PATH_MISSING = "テストのパスが存在しません"
+TEST_PATH_DRAFT = "状態draftのテストのパスは未作成です"
 
-TEST_COVERAGE_INVALID = "coversが存在しない規範文を参照しています"
+TEST_COVERAGE_INVALID = "フィールドcoversが存在しない規範文を参照しています"
 
 
 # --- TASK境界（`CHECK-TASK-*`） -----------------------------------------------
 
 def task_boundary_violation(path: str, task_id: str) -> str:
-    return f"{path}は{task_id}の許可変更path外です"
+    return f"パス{path}は{task_id}の変更許可パスの外です"
 
 
 def task_boundary_no_git(task_id: str) -> str:
-    return f"Git不在のため{task_id}の変更境界を検査できません"
+    return f"Git不在のため{task_id}のTASK境界を検査できません"
 
 
 # --- 明示対象の解決（`CTX-ROOT-MISSING-*`） -------------------------------------
@@ -208,16 +208,16 @@ def root_missing_explicit(target: str) -> str:
 
 # --- 状態遷移・管理済みの仕様文書の削除（`CHECK-STATE-*`） ------------------------------
 
-DOCUMENT_DELETED = "管理済みSPECが削除されています"
+DOCUMENT_DELETED = "管理済みの仕様文書が削除されています"
 
 
 def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> str:
-    return f"{from_status} {kind}を{to_status}へ戻すことはできません"
+    return f"状態{from_status}の{kind}を状態{to_status}へ戻すことはできません"
 
 
 # --- 承認済み要求の保護（`CHECK-APPROVED-MEANING`） --------------------------------
 
-APPROVED_MEANING_CHANGED = "approved REQの意味変更時にstatusが戻されていません"
+APPROVED_MEANING_CHANGED = "状態approvedのREQの意味変更時に文書の状態が戻されていません"
 
 
 # --- 影響候補（`CHECK-IMPACT-OUTDATED`） ---------------------------------------
@@ -229,14 +229,14 @@ def impact_outdated(source_id: str, changed_id: str) -> str:
 # --- Git縮退（`CHECK-GIT-DEGRADED`） -------------------------------------------
 
 GIT_DEGRADED_FULL_FALLBACK = (
-    "Git不在のため全体checkへ縮退します。"
-    "承認済みREQ保護、状態遷移、管理済みSPEC削除の差分検査は実施できません"
+    "Git不在のため全体検査へ縮退します。"
+    "承認済み要求の保護、状態遷移、管理済みの仕様文書の削除の差分検査は実施できません"
 )
 
 
 # --- レポートの保存（`REPORT-WRITE`） ----------------------------------------------
 
-REPORT_WRITE_FAILED = "report保存先へ排他的に作成できません"
+REPORT_WRITE_FAILED = "レポートの保存先へ排他的に作成できません"
 
 
 # --- `context`操作（`CTX-*`） -----------------------------------------------------
@@ -262,12 +262,12 @@ def state_superseded_multiple(doc_id: str) -> str:
     return f"{doc_id}の有効な後継が複数存在します"
 
 
-CTX_LIMIT_DOCUMENTS = "完全Context閉包が文書数上限を超過しました"
-CTX_LIMIT_BYTES = "完全Context閉包がbyte上限を超過しました"
+CTX_LIMIT_DOCUMENTS = "コンテキストの完全な閉包が文書数上限を超過しました"
+CTX_LIMIT_BYTES = "コンテキストの完全な閉包がバイト数上限を超過しました"
 
 
 def coverage_task_unaddressed(modality: str, stmt_id: str) -> str:
-    return f"implement対象の{modality} {stmt_id}を実装するTASKがありません"
+    return f"目的implementの対象規範文{modality} {stmt_id}を実装するTASKがありません"
 
 
 def coverage_test_untested(modality: str, stmt_id: str) -> str:
@@ -275,42 +275,42 @@ def coverage_test_untested(modality: str, stmt_id: str) -> str:
 
 
 def projection_outside(expand_id: str) -> str:
-    return f"expand対象{expand_id}は完全解決集合にありません"
+    return f"展開指定の対象{expand_id}は完全解決した集合にありません"
 
 
 def projection_limit_exceeded(detail: str) -> str:
-    return f"detail {detail}の提示量が1 MiBのhard limitを超過します"
+    return f"詳細度{detail}の提示量が1 MiBの絶対上限を超過します"
 
 
-CTX_STALE_MISMATCH = "期待Digestが現在のContext Digestと一致しません"
+CTX_STALE_MISMATCH = "期待したハッシュ値が現在のコンテキストのハッシュ値と一致しません"
 
 
 # --- `verify`のテストコマンドの引数列（設定`SPEC-CONFIG-SCHEMA-001`） --------------------------
 
-CONFIG_ARGV_LENGTH_INVALID = "argv templateは256要素以下で指定してください"
-CONFIG_ARGV_ELEMENT_NOT_STRING = "argvの要素はstringで指定してください"
-CONFIG_ARGV_FIRST_EMPTY = "argv[0]は空stringにできません"
+CONFIG_ARGV_LENGTH_INVALID = "引数列テンプレートは256要素以下で指定してください"
+CONFIG_ARGV_ELEMENT_NOT_STRING = "argvの要素は文字列で指定してください"
+CONFIG_ARGV_FIRST_EMPTY = "argv[0]は空文字列にできません"
 CONFIG_ARGV_ELEMENT_NUL = "argvの要素にNULは使用できません"
 CONFIG_ARGV_ELEMENT_TOO_LONG = "argvの各要素はUTF-8で32 KiB以下で指定してください"
 
 
 # --- `verify`操作（`SPEC-VERIFY-*`、`CTX-STATE-*`） ------------------------------------
 
-VERIFY_TARGETS_EMPTY = "verify対象が0件です"
-VERIFY_SPAWN_ERROR = "commandの実行形式をOSが拒否しprocessを生成できません"
-VERIFY_SIGNAL = "commandがsignalで終了しました"
-VERIFY_EXECUTABLE_UNAVAILABLE = "command実行fileをPATHから解決できません"
-VERIFY_ARGV_EXPANDED_LIMIT = "{tests}展開後のargvがbyte上限1 MiBを超えます"
-VERIFY_CONFIG_UNTRACKED = "設定fileがGit管理下で未追跡です"
-VERIFY_TEST_OUTSIDE_CWD = "test pathが実効cwd配下にありません"
+VERIFY_TARGETS_EMPTY = "検証対象がありません"
+VERIFY_SPAWN_ERROR = "コマンドの実行形式をOSが拒否しプロセスを生成できません"
+VERIFY_SIGNAL = "コマンドがシグナルで終了しました"
+VERIFY_EXECUTABLE_UNAVAILABLE = "コマンドの実行可能ファイルを環境変数PATHから解決できません"
+VERIFY_ARGV_EXPANDED_LIMIT = "{tests}展開後のargvがバイト数上限1 MiBを超えます"
+VERIFY_CONFIG_UNTRACKED = "設定ファイルがGit管理下で未追跡です"
+VERIFY_TEST_OUTSIDE_CWD = "テストのパスが実効の作業ディレクトリの配下にありません"
 
 
 def verify_timeout(seconds: int) -> str:
-    return f"commandが実効timeout {seconds}秒で終了しませんでした"
+    return f"コマンドが実効タイムアウト{seconds}秒で終了しませんでした"
 
 
 def verify_command_undefined(name: str) -> str:
-    return f"command名{name}が設定に定義されていません"
+    return f"コマンド名{name}が設定に定義されていません"
 
 
 def verify_coverage_untested(modality: str, stmt_id: str) -> str:
@@ -318,7 +318,7 @@ def verify_coverage_untested(modality: str, stmt_id: str) -> str:
 
 
 def verify_executable_unavailable_path() -> str:
-    return "command実行fileを解決できません"
+    return "コマンドの実行可能ファイルを解決できません"
 
 
 def verify_argv_expanded_count_limit() -> str:
@@ -326,7 +326,7 @@ def verify_argv_expanded_count_limit() -> str:
 
 
 def verify_cwd_unavailable() -> str:
-    return "command cwdが利用できません"
+    return "コマンドの作業ディレクトリが利用できません"
 
 
 def state_task_cancelled(doc_id: str) -> str:
@@ -335,50 +335,50 @@ def state_task_cancelled(doc_id: str) -> str:
 
 # --- 複合ワークスペース（`SPEC-MULTI-*`） ---------------------------------------------
 
-MULTI_CONFIG_NOT_MAP = "multiWorkspaceはmapで指定してください"
-MULTI_CONFIG_MEMBERS_REQUIRED = "multiWorkspace.membersは1件以上指定してください"
-MULTI_CONFIG_MEMBERS_TYPE = "multiWorkspace.membersは配列で指定してください"
-MULTI_CONFIG_MEMBER_ENTRY_TYPE = "multiWorkspace.membersの要素はmapで指定してください"
-MULTI_CONFIG_MAX_MEMBERS_RANGE = "multiWorkspace.maxMembersは1〜100のintegerで指定してください"
+MULTI_CONFIG_NOT_MAP = "設定キーmultiWorkspaceはマッピングで指定してください"
+MULTI_CONFIG_MEMBERS_REQUIRED = "設定キーmultiWorkspace.membersは1件以上指定してください"
+MULTI_CONFIG_MEMBERS_TYPE = "設定キーmultiWorkspace.membersは配列で指定してください"
+MULTI_CONFIG_MEMBER_ENTRY_TYPE = "設定キーmultiWorkspace.membersの要素はマッピングで指定してください"
+MULTI_CONFIG_MAX_MEMBERS_RANGE = "設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください"
 
-MEMBER_CONFIG_MISSING = "memberの.spec/bitz.yamlがありません"
-MEMBER_ID_MISMATCH = "memberの設定workspace.idがcatalogのidと一致しません"
-MEMBER_NESTED_MULTIWORKSPACE = "memberはmultiWorkspaceを宣言できません"
+MEMBER_CONFIG_MISSING = "メンバーの.spec/bitz.yamlがありません"
+MEMBER_ID_MISMATCH = "メンバーの設定キーworkspace.idがカタログのIDと一致しません"
+MEMBER_NESTED_MULTIWORKSPACE = "メンバーは設定キーmultiWorkspaceを宣言できません"
 
-MULTI_ID_INVALID = "workspace idの形式が不正です"
-MULTI_ID_DUPLICATE = "workspace idが複合workspace内で重複しています"
+MULTI_ID_INVALID = "ワークスペースIDの形式が不正です"
+MULTI_ID_DUPLICATE = "ワークスペースIDが複合ワークスペース内で重複しています"
 
-MULTI_PATH_INVALID = "member pathの形式が不正です"
-MULTI_PATH_DUPLICATE = "member pathが重複しています"
-MULTI_PATH_NESTED = "member pathが別のmemberの配下にあります"
-MULTI_PATH_SYMLINK = "member pathの経路にsymlinkが含まれています"
-MULTI_PATH_SUBMODULE = "member pathがGit submoduleです"
-MULTI_PATH_WORKTREE = "member pathが別のworktreeです"
-MULTI_PATH_SEPARATE_REPO = "member pathが別のGit repositoryです"
+MULTI_PATH_INVALID = "メンバーのパスの形式が不正です"
+MULTI_PATH_DUPLICATE = "メンバーのパスが重複しています"
+MULTI_PATH_NESTED = "メンバーのパスが別のメンバーの配下にあります"
+MULTI_PATH_SYMLINK = "メンバーのパスの経路にシンボリックリンクが含まれています"
+MULTI_PATH_SUBMODULE = "メンバーのパスがGitのサブモジュールです"
+MULTI_PATH_WORKTREE = "メンバーのパスが別のワークツリーです"
+MULTI_PATH_SEPARATE_REPO = "メンバーのパスが別のGitのリポジトリです"
 
-MULTI_GIT_BOUNDARY_UNKNOWN = "Git repositoryの境界を確定できません"
+MULTI_GIT_BOUNDARY_UNKNOWN = "Gitのリポジトリの境界を確定できません"
 
-MULTI_VERSION_SCHEMA_MAJOR = "memberのschemaVersionが未対応majorです"
-MULTI_VERSION_EARS_MAJOR = "memberのearsAiが未対応majorです"
+MULTI_VERSION_SCHEMA_MAJOR = "メンバーの設定キーschemaVersionのメジャーバージョンが未対応です"
+MULTI_VERSION_EARS_MAJOR = "メンバーの設定キーearsAiのメジャーバージョンが未対応です"
 
-MULTI_UNREGISTERED = "Gitが認識する設定fileがcatalogに登録されていません"
+MULTI_UNREGISTERED = "Gitが認識する設定ファイルがカタログに登録されていません"
 
 
 MULTI_VERIFY_TARGETS_EMPTY = "検証対象がありません"
 
-MULTI_DEPENDENCY_CONTEXT = "依存するworkspaceの非成功によりContextを構成できません"
+MULTI_DEPENDENCY_CONTEXT = "依存するワークスペースの非成功によりコンテキストを構成できません"
 
 
 def multi_limit_exceeded(dimension: str, limit: int) -> str:
     _LABELS = {
-        "memberCount": "member数",
-        "specFileCount": "SPEC file数",
-        "inputBytes": "入力byte数",
+        "memberCount": "メンバー数",
+        "specFileCount": "仕様文書のファイル数",
+        "inputBytes": "入力バイト数",
         "statementCount": "規範文数",
-        "relationEdgeCount": "relation edge数",
-        "traceEntryCount": "trace項目数",
-        "commandDefinitionCount": "command定義数",
-        "verifyBindingCount": "verify binding数",
+        "relationEdgeCount": "関係のエッジ数",
+        "traceEntryCount": "トレースのエントリ数",
+        "commandDefinitionCount": "コマンド定義数",
+        "verifyBindingCount": "テスト割当て数",
     }
     label = _LABELS.get(dimension, dimension)
     return f"{label}が上限{limit:,}を超過しました"
@@ -387,20 +387,20 @@ def multi_limit_exceeded(dimension: str, limit: int) -> str:
 # --- 複合ワークスペースの修飾ID解決・所有境界（Step 5B、`SPEC-MULTI-REF-001`／`SPEC-MULTI-OWNERSHIP-001`） ---
 
 MULTI_REF_QUALIFIER_INVALID = "修飾IDの形式が不正です"
-MULTI_REF_UNQUALIFIED = "非修飾の参照先が別workspaceにだけ存在します"
-MULTI_REF_WORKSPACE_UNKNOWN = "修飾workspaceがcatalogに存在しません"
+MULTI_REF_UNQUALIFIED = "非修飾の参照先が別のワークスペースにだけ存在します"
+MULTI_REF_WORKSPACE_UNKNOWN = "修飾したワークスペースがカタログに存在しません"
 
 
 def multi_ownership_resolved(path: str, workspace_id: str) -> str:
-    return f"{path}の解決先が{workspace_id}の所有範囲外です"
+    return f"パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"
 
 
 def multi_ownership_symlink_base(path: str, workspace_id: str) -> str:
-    return f"{path}の基準版のsymlinkが{workspace_id}の所有範囲外を指します"
+    return f"パス{path}の基準版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します"
 
 
 def multi_ownership_symlink_current(path: str, workspace_id: str) -> str:
-    return f"{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します"
+    return f"パス{path}の現在版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します"
 
 
 # --- doctorのプラグインの要求（`SPEC-DOCTOR-PLUGIN-001`／`SPEC-DOCTOR-API-001`／`SPEC-DOCTOR-CAPABILITY-001`、ADR-061） ---

@@ -351,7 +351,7 @@ class SpecFileCountLimitTests(unittest.TestCase):
             self.assertEqual(len(catalog.diagnostics), 1)
             diag = catalog.diagnostics[0]
             self.assertEqual(diag.code, "SPEC-INPUT-LIMIT-001")
-            self.assertEqual(diag.summary, "SPEC fileが2件上限を超過しました")
+            self.assertEqual(diag.summary, "仕様文書のファイルが2件上限を超過しました")
             self.assertEqual(diag.source["path"], ".spec")
             self.assertEqual(catalog.checked_document_count, 0)
             self.assertEqual(catalog.entries, [])

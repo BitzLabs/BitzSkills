@@ -220,7 +220,7 @@ def _member_config_check(
         # 一般的な設定の不適合（YAML構文・型・必須のフィールド・I/O）はメンバー自身の診断をそのまま返す。
         all_diags = m_outcome.diagnostics + m_outcome.warnings
         return (all_diags[0] if all_diags else _diag(
-            "SPEC-CONFIG-SCHEMA-001", "error", "member設定が不正です", _root_source(root_id, "multiWorkspace.members")
+            "SPEC-CONFIG-SCHEMA-001", "error", "メンバーの設定が不正です", _root_source(root_id, "multiWorkspace.members")
         )), None
 
     assert m_outcome.config is not None
