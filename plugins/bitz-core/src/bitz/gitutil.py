@@ -157,7 +157,7 @@ def _diff_name_status_z(
 ) -> list[ChangedPath]:
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "diff", "-z", "--no-color", "-M", "--name-status", *extra_args],
+            [executable, "--no-optional-locks", "diff", "-z", "--no-color", "--no-relative", "-M", "--name-status", *extra_args],
             cwd,
             env,
         )
@@ -169,6 +169,8 @@ def _diff_name_status_z(
 
 
 def _ls_files_others_z(executable: str, cwd: str, env: dict[str, str]) -> list[ChangedPath]:
+    # `git ls-files`は現在のディレクトリの配下しか列挙しないため、リポジトリのルートで実行する。
+    cwd = _toplevel_or_cwd(executable, cwd, env)
     try:
         proc = _run(
             [
@@ -189,6 +191,16 @@ def _ls_files_others_z(executable: str, cwd: str, env: dict[str, str]) -> list[C
         return []
     tokens = proc.stdout.split("\0")
     return [ChangedPath(status="A", path=p) for p in tokens if p]
+
+
+def _toplevel_or_cwd(executable: str, cwd: str, env: dict[str, str]) -> str:
+    """リポジトリのルートを返す。解決できなければ``cwd``を返す。
+
+    `git ls-files`は現在のディレクトリの配下だけを列挙するため、リポジトリ全体を対象にする呼び出しはこのディレクトリで実行する。
+    """
+
+    toplevel = show_toplevel(executable, cwd, env)
+    return toplevel if toplevel else cwd
 
 
 def _repo_root_relative_offset(executable: str, cwd: str, env: dict[str, str], workspace_root: str) -> str | None:
@@ -287,8 +299,9 @@ def list_base_spec_paths(
 ) -> list[str]:
     """``base_rev``の時点の``.spec/``配下のファイルの一覧を、ワークスペースのルートからの相対パスで返す（`check.md §5・§9`）。
 
-    `git ls-tree -r`はツリーオブジェクトの構造をたどるだけで`cwd`に依存しない。返るパスは常にリポジトリのルートからの相対で
-    あるため、:func:`collect_changed_paths`と同じくワークスペースのルートとの相対オフセットを引いて変換する。
+    `git ls-tree`は既定でパスの指定と出力を現在のディレクトリからの相対で扱い、現在のディレクトリの配下だけを列挙する。
+    `--full-tree`でどちらもリポジトリのルートからの相対にそろえ、:func:`collect_changed_paths`と同じくワークスペースのルートとの
+    相対オフセットを引いて変換する。
     シンボリックリンク（モード ``120000``）は仕様文書として扱わない（ワークスペース・設定仕様 §1-5と同じ規則）。
     """
 
@@ -299,7 +312,7 @@ def list_base_spec_paths(
         subdir = f"{offset.rstrip('/')}/.spec"
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "ls-tree", "-r", "-z", base_rev, "--", subdir],
+            [executable, "--no-optional-locks", "ls-tree", "--full-tree", "-r", "-z", base_rev, "--", subdir],
             cwd,
             env,
         )
@@ -375,7 +388,7 @@ def base_tree_entry_mode(
     else:
         repo_path = f"{offset.rstrip('/')}/{workspace_rel_path}"
     try:
-        proc = _run([executable, "--no-optional-locks", "ls-tree", rev, "--", repo_path], cwd, env)
+        proc = _run([executable, "--no-optional-locks", "ls-tree", "--full-tree", rev, "--", repo_path], cwd, env)
     except (OSError, subprocess.SubprocessError):
         return None
     if proc.returncode != 0:
@@ -396,7 +409,7 @@ def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: 
 
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "ls-tree", "-r", "-z", rev], cwd, env
+            [executable, "--no-optional-locks", "ls-tree", "--full-tree", "-r", "-z", rev], cwd, env
         )
     except (OSError, subprocess.SubprocessError):
         return []
@@ -431,13 +444,12 @@ def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) ->
     ファイル移動後の旧パスがインデックス上に残っていても、作業ツリー上は既に存在しないため対象にしない）。
     """
 
-    toplevel = show_toplevel(executable, cwd, env)
-    root = os.path.abspath(toplevel) if toplevel else os.path.abspath(cwd)
+    root = os.path.abspath(_toplevel_or_cwd(executable, cwd, env))
 
     paths: set[str] = set()
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name"], cwd, env
+            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name"], root, env
         )
     except (OSError, subprocess.SubprocessError):
         proc = None
@@ -462,7 +474,9 @@ def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[
 
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name", "--stage"], cwd, env
+            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name", "--stage"],
+            _toplevel_or_cwd(executable, cwd, env),
+            env,
         )
     except (OSError, subprocess.SubprocessError):
         return set()
