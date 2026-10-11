@@ -265,6 +265,11 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.persist()
         with self.assertRaises(ValueError): self.verify()
 
+    def test_exponent_overflow_elapsed_is_rejected(self):
+        raw = ledger.encoded(self.receipt).replace(b'"elapsedSeconds":2.5', b'"elapsedSeconds":1e999')
+        (self.base / 'receipt.json').write_bytes(raw)
+        with self.assertRaises(ValueError): self.verify()
+
     def test_elapsed_receipt_includes_post_capture_hashing_and_is_not_cli_deadline(self):
         self.receipt['elapsedSeconds'] = 301.5
         self.persist()

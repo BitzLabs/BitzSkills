@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import os
 from pathlib import Path
 import re
@@ -162,7 +163,9 @@ def verify_capture(repository, source, ordinal):
         independentReviewPerformed=False, automaticRetries=0, certifiesApiRequestHardCap=False,
         eligibleForMeasurement=False, phaseComplete=False)
     require(all(trace.json_equal(receipt.get(k), v) for k, v in expected_flags.items()), 'capture status or scope drift')
-    require(type(receipt.get('elapsedSeconds')) in {int, float} and 0 <= receipt['elapsedSeconds'],
+    require(type(receipt.get('elapsedSeconds')) in {int, float} and
+            (type(receipt['elapsedSeconds']) is int or math.isfinite(receipt['elapsedSeconds'])) and
+            0 <= receipt['elapsedSeconds'],
             'capture finite elapsed time')
     capture_evidence = dict(fixed.source_evidence, observedHead=source)
     require(trace.json_equal(receipt.get('sourceGuards'), dict.fromkeys(['before', 'invoke', 'after'], capture_evidence)),
