@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-031-01",
+  "description": "メンバーの中の`check --workspace platform --full`がルートを作業ワークスペースにし、ルートの文書だけを完全検査する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "check",
+      "--workspace",
+      "platform",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

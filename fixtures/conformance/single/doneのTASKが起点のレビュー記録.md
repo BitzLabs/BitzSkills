@@ -575,3 +575,62 @@ B（`digest_crosscheck.build`）は入力の木構造から導出した材料で
 - `commands[].covers`の並びは、規範文IDと文書IDの混在を含めてコードポイントの辞書順とした。規範文が明記する並びは、`statements`と`bindingRefs`の「重複なし辞書順」だけである（`verify` §8）。
   `SINGLE-157`はこの並び（`REQ-001:AC-01` < `TECH-001`）に依存する。
 - Coreは実行していない（期待値を決めた後に、一致を確かめるためだけに実行した）。Coreとの一致の判定はGate Bで行う。
+
+## 2026-10-11追記: 状態`done`のTASKを目的`implement`の起点にする（`SINGLE-159`）
+
+### 追加の理由（実装の確認事項C13）
+
+文書・フロントマター・状態仕様 §7は「`done`のTASKは、`verify`の再実行と`interpret`を許し、目的が`implement`で起点にした場合は`blocked`とする」と定める。
+この規範文は、`done`のTASKを`implement`の起点にしたときの`CTX-STATE-001`を固定するが、適合fixtureはなく、単体試験（`tests/bitz-core/test_targetexpand.py`の`test_done_root_is_still_blocked`）だけだった。
+既存のfixtureは、先行TASKが`done`の`open`のTASKを`implement`の起点にする場合（`SINGLE-134`、`145`）と、先行TASKが未`done`または`cancelled`の場合（`SINGLE-051`、`144`）、
+`cancelled`のTASKを`verify`の起点にする場合（`SINGLE-067`）、`done`のTASKを`verify`の起点にする場合（`SINGLE-068`）を固定しており、**`done`のTASK自身を`implement`の起点にする**場合は、
+どのfixtureも押さえていなかった。
+
+### 根拠の規範文
+
+- 文書・フロントマター・状態仕様 §7: `done`のTASKは、`verify`の再実行と`interpret`を許し、目的が`implement`で起点にした場合は`blocked`とする。
+- 関係・トレースモデル §10・§11: 適用可能でない文書が要求されると`blocked`とする。診断`CTX-STATE-001`は`blocked`で、条件は「起点または強い関係の参照先が目的に適用不能」である。
+  関係・トレースモデル §6.2: 先行TASK（起点のTASKの`requires`の参照先）が未完了のときだけ`CTX-TASK-DEPENDENCY-001`であり、先行TASKがなければ返さない。
+- 診断レジストリ`CTX-STATE-INAPPLICABLE`: `context`と`verify`の`CTX-STATE-001`（`error`、`blocked`、発生元の種類は`file`）。
+- `context` §3・§11: 完全解決が成立しない場合は、一部が欠けたコンテキスト一式を成功の結果として返さず、`resolution.complete: true`の場合にだけ書込みを始める。失敗時の結果の形
+  （`resolution.complete: false`、`contextDigest: null`、`documents`・制約台帳・カバレッジが空）は、規範文が各フィールドの値を列挙していないので、既存の`SINGLE-052-01`、`SINGLE-144`と同じ形を使う。
+
+### 入力と起動
+
+`context TASK-001 --purpose implement --format json`。最小設定の単一ワークスペースで、`git init`だけを行った、コミットのないリポジトリを使う（`SINGLE-144`と同じ）。
+
+| 文書 | 内容 |
+|---|---|
+| TASK-001 | 状態`done`。`addresses: [REQ-001:AC-01]`。`requires`も`changes`も宣言しない（先行TASKなし） |
+| REQ-001 | `approved`。規範文1件（`AC-01`は`MUST`）。テスト対応は宣言しない |
+
+原因はTASK-001の状態`done`だけである。先行TASKを置かず、`addresses`する先のREQ-001は有効なので、`CTX-TASK-DEPENDENCY-001`、`SPEC-RELATION-MISSING-001`、`CTX-STATE-001`の別の対象を混ぜない。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+1. 起点のTASK-001は、状態`done`で目的が`implement`なので適用できない（§7）。結果は`blocked`／終了コード2。
+2. 診断は`CTX-STATE-001`の1件だけである。`CTX-TASK-DEPENDENCY-001`は返さない（先行TASKがない。§6.2）。`resolution.complete`は`false`、`documentCount`は0、
+   `unresolvedStrongRelations`は0（強い関係は解決できている）。`contextDigest`は`null`、`documents`・制約台帳・カバレッジは空、`revision`は`null`（コミットがない）。
+3. 発生元は起点のTASK-001の文書: `{kind: file, workspaceId: root, path: .spec/tasks/TASK-001.md}`。`key`は付けない。診断の原因は`relations`などのフィールドではなく、起点そのものの状態だからである
+   （`SINGLE-067`の`cancelled`のTASK、`SINGLE-148`のREQ-002の`CTX-STATE-001`と同じ形）。
+4. 診断の`summary`は`TASK-001は現在のpurposeに適用できません`である。`SINGLE-148`のREQ-002の`CTX-STATE-001`が使う文字列と同じ形（`<文書ID>は現在のpurposeに適用できません`）に合わせた。
+   規範文は`summary`の文字列を定めない（人に向けた短い説明。結果・診断・終了コード §4）。
+
+監査は、`context_failure_fixtures.check_done_root`が、結果の診断が`CTX-STATE-001`の1件だけであること、`blocked`であること、発生元が起点のTASKのファイルであること、起点・目的・ハッシュ値・解決の状態を確かめる。
+`check_done_root_inputs`が、入力が TASK-001とREQ-001の2文書だけで、TASK-001が状態`done`・`requires`なし・`addresses`のみ、REQ-001が`approved`であることを確かめる。
+
+### 監査の検査と回帰試験
+
+`test_conformance_audit.py`の回帰試験は、診断の`CTX-TASK-DEPENDENCY-001`への置換と混入（追加、先頭への挿入）、`CTX-STATE-SUPERSEDED-001`への置換、診断の重複と消去、状態（`passed`、`failed`、`passed_with_warnings`）・
+`resultStatus`・終了コードの改変、発生元の取り違え（`key`の付加、REQ-001のファイル、`invocation`）、起点・目的・ハッシュ値の改変、解決の状態（`complete`、未解決の件数、文書数）の改変、
+マニフェストの改変（目的を`verify`と`interpret`に変える、起点をREQ-001に変える）、入力の改変（TASK-001を`open`や`cancelled`にする、`requires`を足す、`addresses`を消す、REQ-001を`draft`にする）、
+ステージとコミットの混入を拒否する。
+
+### 固定しない範囲
+
+- 同じ入力で目的を`verify`または`interpret`にした場合は、fixtureにしない。作業ツリーの外の確認（Core）では、`interpret`は`passed`、`verify`は`CTX-STATE-001`を返さない（`verify`はテスト対応がない`MUST`の
+  `CTX-COVERAGE-TEST-001`で別の理由で`blocked`になる）。`done`のTASKの`verify`は`SINGLE-068`が固定し、この入力ではテスト対応を宣言していない。
+- 先行TASKがある`done`のTASK、`done`のTASKの`addresses`の先が適用できない場合、複数の起点は扱わない。`done`のTASKを`requires`の先行TASKとして参照する場合は`SINGLE-134`が固定する。
+- 診断の`summary`の文字列は固定した文字列の一致を要求するが、規範文が定めるのは`code`・`severity`・`resultStatus`・`source`である（上の導出の4）。
+- 陰性対照（修正前のCoreがないため、作業ツリーの外の`plugins/bitz-core`のコピーの`targetexpand.py`で、`done`のTASKを`implement`の起点にしても適用できるとする変異を入れて確認した）。
+  変異したCoreは`passed_with_warnings`／終了コード0を返して`SINGLE-159`は失敗する（`SINGLE-144`は通る）。変異していないCoreは通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。

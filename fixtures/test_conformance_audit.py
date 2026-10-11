@@ -72,7 +72,7 @@ from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doc
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
-from conformance import multi_crosscheck, repo_root_fixtures
+from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -1819,6 +1819,244 @@ class AuditTests(unittest.TestCase):
         # 入力のバイト列だけを変える写し、入力の欠落と余分なファイルを拒否する。
         for identifier in module.CASES:
             for name in ("repo/.spec/bitz.yaml", "extra"):
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_workspace_option_fixtures(self):
+        module = multi_workspace_option_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["MULTI-031-01", "MULTI-031-02"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_workspace_option_reference_follows_the_inputs(self):
+        """参照計算は、`--workspace`が最寄りの設定より優先されること、同じローカルIDが指す文書が作業ワークスペースで決まることを、入力の木構造から導く。"""
+        module = multi_workspace_option_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-031-01")
+            fixture = root / "multi/MULTI-031-01"
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+            full = multi_check_fixtures.reference_check(repository, "full", "platform", "apps/web", "platform")
+            self.assertEqual(full["workspace"], {"id": "platform", "path": "."})
+            self.assertEqual((full["inspected"], full["documentCount"], full["statementCount"], full["diagnostics"]),
+                             (["platform::REQ-001"], 1, 2, []))
+            # `--workspace`がなければ最寄りの設定の`web`が作業ワークスペースで、期待の`platform`とは一致しない。
+            with self.assertRaises(ValueError):
+                multi_check_fixtures.reference_check(repository, "full", "platform", "apps/web", None)
+            fallback = multi_check_fixtures.reference_check(repository, "full", "web", "apps/web", None)
+            self.assertEqual((fallback["workspace"], fallback["inspected"], fallback["statementCount"]),
+                             ({"id": "web", "path": "apps/web"}, ["web::REQ-001", "web::TECH-010"], 1))
+            # 結果の改変を、参照計算との比較が拒否する。
+            result = json.loads((fixture / "expected/check.json").read_text())
+            multi_check_fixtures.check_result_against_reference(result, full)
+            for index, change in enumerate([
+                lambda v: v["workspace"].update(id="web", path="apps/web"),
+                lambda v: v["workspace"].update(path="apps/web"),
+                lambda v: v["workspace"].update(id="web"),
+                lambda v: v.update(checkedDocumentCount=2),
+                lambda v: v.update(checkedDocumentCount=4),
+                lambda v: v.update(checkedDocumentCount=0),
+                lambda v: v.update(checkedStatementCount=1),
+                lambda v: v.update(checkedStatementCount=3),
+                lambda v: v.update(status="failed"),
+                lambda v: v["diagnostics"].append({"code": "SPEC-RELATION-MISSING-001"}),
+            ]):
+                with self.subTest(change=index):
+                    changed = copy.deepcopy(result)
+                    change(changed)
+                    with self.assertRaises(ValueError):
+                        multi_check_fixtures.check_result_against_reference(changed, full)
+            # `context`: 非修飾の起点は、`--workspace`、なければ最寄りの設定のワークスペースで解決する。
+            platform = module.reference_context(repository, "apps/web", "platform", "REQ-001")
+            self.assertEqual((platform["workspace"], platform["roots"]), ({"id": "platform", "path": "."}, ["platform::REQ-001"]))
+            self.assertEqual([item["id"] for item in platform["documents"]], ["platform::REQ-001"])
+            self.assertEqual(platform["documents"][0]["path"], ".spec/requirements/REQ-001.md")
+            self.assertEqual(platform["documents"][0]["statementRefs"], ["platform::REQ-001:AC-01", "platform::REQ-001:AC-02"])
+            nearest = module.reference_context(repository, "apps/web", None, "REQ-001")
+            self.assertEqual((nearest["workspace"], nearest["roots"]), ({"id": "web", "path": "apps/web"}, ["web::REQ-001"]))
+            # 文書の`path`は所有ワークスペースのルートからの相対で、`workspaceId`との組で一意にする。
+            self.assertEqual((nearest["documents"][0]["workspaceId"], nearest["documents"][0]["path"]),
+                             ("web", ".spec/requirements/REQ-001.md"))
+            self.assertEqual(nearest["documents"][0]["statementRefs"], ["web::REQ-001:AC-01"])
+            self.assertEqual(module.reference_context(repository, ".", None, "REQ-001")["roots"], ["platform::REQ-001"])
+            self.assertEqual(module.reference_context(repository, "apps/web", "platform", "web::REQ-001")["roots"], ["web::REQ-001"])
+            expected = json.loads((audit.FIXTURES / "multi/MULTI-031-02/expected/context.json").read_text())
+            module.check_context_against_reference(expected, platform)
+            with self.assertRaises(ValueError):
+                module.check_context_against_reference(expected, nearest)
+            for index, change in enumerate([
+                lambda v: v["workspace"].update(id="web", path="apps/web"),
+                lambda v: v.update(roots=["web::REQ-001"]),
+                lambda v: v.update(roots=["REQ-001"]),
+                lambda v: v["documents"][0].update(id="web::REQ-001"),
+                lambda v: v["documents"][0].update(workspaceId="web"),
+                lambda v: v["documents"][0].update(path="apps/web/.spec/requirements/REQ-001.md"),
+                lambda v: v["documents"][0]["frontmatter"].update(title="Webの画面の基準"),
+                lambda v: v["documents"][0].update(bodyText=v["documents"][0]["bodyText"].replace("ルート", "メンバー")),
+                lambda v: v["documents"][0].update(statementRefs=["platform::REQ-001:AC-01"]),
+                lambda v: v["documents"][0].update(statementRefs=["REQ-001:AC-01", "REQ-001:AC-02"]),
+                lambda v: v["resolution"].update(documentCount=2),
+                lambda v: v["resolution"]["workspaces"].append({"id": "web", "path": "apps/web"}),
+                lambda v: v["resolution"].update(workspaces=[{"id": "web", "path": "apps/web"}]),
+            ]):
+                with self.subTest(context_change=index):
+                    changed = copy.deepcopy(expected)
+                    change(changed)
+                    with self.assertRaises(ValueError):
+                        module.check_context_against_reference(changed, platform)
+
+    def test_multi_workspace_option_audit_rejects_changed_expectations(self):
+        """`workspace`の改変（メンバー、パス）、件数の改変、起点・文書・到達ワークスペースの取り違え、`--workspace`の削除などを拒否する。"""
+        module = multi_workspace_option_fixtures
+        check_changes = [
+            lambda v: v["workspace"].update(id="web", path="apps/web"),
+            lambda v: v["workspace"].update(path="apps/web"),
+            lambda v: v["workspace"].update(id="web"),
+            lambda v: v["workspace"].update(id="api", path="services/api"),
+            lambda v: v.update(checkedDocumentCount=2),
+            lambda v: v.update(checkedDocumentCount=4),
+            lambda v: v.update(checkedDocumentCount=0),
+            lambda v: v.update(checkedStatementCount=0),
+            lambda v: v.update(checkedStatementCount=1),
+            lambda v: v.update(checkedStatementCount=3),
+            lambda v: v.update(scope="selected"),
+            lambda v: v.update(status="failed"),
+            lambda v: v.update(status="passed_with_warnings"),
+            lambda v: v["revision"].update(dirty=True),
+            lambda v: v.update(diagnostics=[{
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
+                           "key": "relations.requires"}}], status="failed"),
+            lambda v: v.update(selection={"changedPathCount": 0, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0}),
+        ]
+        context_changes = [
+            lambda v: v["workspace"].update(id="web", path="apps/web"),
+            lambda v: v["workspace"].update(path="apps/web"),
+            lambda v: v.update(roots=["web::REQ-001"]),
+            lambda v: v.update(roots=["REQ-001"]),
+            lambda v: v.update(purpose="verify"),
+            lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+            lambda v: v.update(contextDigest=None),
+            lambda v: v.update(status="failed"),
+            lambda v: v["revision"].update(dirty=True),
+            lambda v: v["documents"][0].update(id="web::REQ-001"),
+            lambda v: v["documents"][0].update(workspaceId="web"),
+            lambda v: v["documents"][0].update(path="apps/web/.spec/requirements/REQ-001.md"),
+            lambda v: v["documents"][0].update(role="refinement"),
+            lambda v: v["documents"][0]["frontmatter"].update(title="Webの画面の基準"),
+            lambda v: v["documents"][0].update(bodyText=v["documents"][0]["bodyText"].replace("ルート", "メンバー")),
+            lambda v: v["documents"][0].update(statementRefs=["platform::REQ-001:AC-01"]),
+            lambda v: v["documents"][0].update(reachedBy=["refines:web::TECH-010"]),
+            lambda v: v["documents"].append(copy.deepcopy(v["documents"][0])),
+            lambda v: v["resolution"].update(documentCount=2),
+            lambda v: v["resolution"].update(complete=False),
+            lambda v: v["resolution"]["workspaces"].append({"id": "web", "path": "apps/web"}),
+            lambda v: v["resolution"].update(workspaces=[{"id": "web", "path": "apps/web"}]),
+            lambda v: v["resolution"].update(crossWorkspaceEdges=[
+                {"relation": "refines", "source": "web::TECH-010", "target": "platform::REQ-001"}]),
+            lambda v: v["constraintLedger"]["statements"].append({"id": "platform::REQ-001:AC-01"}),
+            lambda v: v["coverage"]["must"].update(total=["platform::REQ-001:AC-01"]),
+            lambda v: v["coverage"].update(adjacent=["platform::REQ-001:AC-02"]),
+            lambda v: v.update(diagnostics=[{"code": "CTX-ROOT-MISSING-001"}]),
+        ]
+        mutations = [("MULTI-031-01", "expected/check.json", change) for change in check_changes]
+        mutations += [("MULTI-031-02", "expected/context.json", change) for change in context_changes]
+        mutations += [
+            # `--workspace`の削除と、別のIDへの変更は、最寄りの設定の`web`が作業ワークスペースになる入力にする。
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(1, 3))),
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "web")),
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "api")),
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"]["argv"].remove("--full")),
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-031-01", "manifest.json", lambda v: v["invocation"].update(cwd="services/api")),
+            ("MULTI-031-01", "manifest.json", lambda v: v["setup"].update(operations=[
+                {"op": "update", "path": ".spec/requirements/REQ-001.md", "source": "changes/x.md"}])),
+            ("MULTI-031-01", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("MULTI-031-01", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(1, 3))),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "web")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "platform::REQ-001")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "web::REQ-001")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(5, "implement")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(5, "verify")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-031-02", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("MULTI-031-01", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("MULTI-031-02", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 正規JSONの改変と、`check`のfixtureへの正規JSONの混入を拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-031-02")
+            path = root / "multi/MULTI-031-02/expected/context.canonical.json"
+            path.write_bytes(path.read_bytes().replace("ルート".encode(), "メンバー".encode()))
+            self.assertEqual(module.validate(root, {"MULTI-031-02"})["status"], "Failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-031-01")
+            (root / "multi/MULTI-031-01/expected/context.canonical.json").write_bytes(b"{}")
+            self.assertEqual(module.validate(root, {"MULTI-031-01"})["status"], "Failed")
+
+    def test_multi_workspace_option_audit_rejects_changed_corpus(self):
+        """原因の構成は、ルートとメンバーが同じローカルIDのREQを持ち、最寄りの設定の`web`と`--workspace platform`が区別できることである。入力を変えた写しは拒否する。"""
+        module = multi_workspace_option_fixtures
+        root_req = "repo/.spec/requirements/REQ-001.md"
+        web_req = "repo/apps/web/.spec/requirements/REQ-001.md"
+        web_tech = "repo/apps/web/.spec/technical/TECH-010.md"
+        api_tech = "repo/services/api/.spec/technical/TECH-020.md"
+        # 原因の構成の検査が、入力の木構造から拒否する写し。
+        breaking = [
+            (root_req, "status: approved", "status: draft"),
+            (web_req, "status: approved", "status: draft"),
+            (web_tech, "status: approved\n", "status: approved\nrelations:\n  refines: [platform::REQ-001:AC-01]\n"),
+            (api_tech, "status: approved\n", "status: approved\nrelations:\n  related: [platform::REQ-001]\n"),
+            (root_req, "title: ルートの共通基準", "title: Webの画面の基準"),
+            (web_req, "title: Webの画面の基準", "title: ルートの共通基準"),
+            # ルートとwebの規範文の数が同じになると、最寄りの設定の`web`との区別が件数からできない。
+            (web_req, "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 画面に利用者のIDを表示しない。\n",
+             "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 画面に利用者のIDを表示しない。\n"
+             "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 画面に端末の情報を表示しない。\n"),
+        ]
+        for index, (relative, old, new) in enumerate(breaking):
+            for identifier in module.CASES:
+                with self.subTest(index=index, identifier=identifier, file=relative), \
+                        tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, repository)
+        # 文書の欠落と余分な文書、設定の変更も、入力のバイト列の検査が拒否する。
+        for identifier in module.CASES:
+            for name in ("repo/.spec/bitz.yaml", web_req, api_tech, "extra"):
                 with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     fixture = root / "multi" / identifier
@@ -4211,7 +4449,7 @@ class AuditTests(unittest.TestCase):
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-159", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_proposed_adr_requires_is_a_type_constraint_not_a_state_check(self):
@@ -4303,6 +4541,38 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-144", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
             ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
             ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            # 状態`done`のTASKを目的`implement`の起点にすると、`CTX-STATE-001`（`blocked`）の1件だけを返す（実装の確認事項C13）。
+            # 先行TASKの診断への置換と混入、置換済みの診断への置換、状態・終了コードの改変、診断の消去、発生元の取り違え、
+            # 起点・目的・ハッシュ値・解決の状態の改変を拒否する。
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].append(dict(
+                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-001.md", "key": "relations.requires"}))),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].insert(0, dict(
+                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-001.md", "key": "relations.requires"}))),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0].update(resultStatus="failed")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="relations.requires")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(kind="invocation", argument="TASK-001")),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(roots=["REQ-001"])),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(purpose="verify")),
+            ("SINGLE-159", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-159", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-159", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=1)),
+            ("SINGLE-159", "expected/context.json", lambda v: v["resolution"].update(documentCount=1)),
+            ("SINGLE-159", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("SINGLE-159", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("SINGLE-159", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            ("SINGLE-159", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "verify")),
+            ("SINGLE-159", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
+            ("SINGLE-159", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-001")),
             # 状態が`accepted`でないADRへの`requires`は、型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す。状態の診断
             # （`CTX-STATE-001`、`blocked`）への置換、診断の消去、独立した原因の診断の消去、状態の改変を拒否する。
             ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
@@ -4354,6 +4624,53 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
 
+    def test_done_root_contract_is_a_state_check_not_a_dependency_check(self):
+        """文書・フロントマター・状態仕様 §7、関係・トレースモデル §11: 状態`done`のTASKを目的`implement`の起点にすると`CTX-STATE-001`（`blocked`）。
+        先行TASKがないので`CTX-TASK-DEPENDENCY-001`は返さない。`check_done_root`だけが、診断の置換と混入、発生元の取り違え、解決の状態の改変を拒否する。"""
+        result = json.loads((audit.FIXTURES / "single/SINGLE-159/expected/context.json").read_text())
+        context_failure_fixtures.check_done_root(result)
+        self.assertEqual([d["code"] for d in result["diagnostics"]], ["CTX-STATE-001"])
+        self.assertEqual((result["status"], result["purpose"], result["contextDigest"]), ("blocked", "implement", None))
+        documents = context_failure_fixtures.reviewed_documents("SINGLE-159")
+        context_failure_fixtures.check_done_root_inputs(documents)
+        self.assertEqual(documents[".spec/tasks/TASK-001.md"][1]["status"], "done")
+        self.assertNotIn("requires", documents[".spec/tasks/TASK-001.md"][1]["relations"])
+        dependency = dict(result["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません")
+        changes = [
+            lambda v: v["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001"),
+            lambda v: v["diagnostics"].append(copy.deepcopy(dependency)),
+            lambda v: v["diagnostics"].insert(0, copy.deepcopy(dependency)),
+            lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            lambda v: v.update(diagnostics=[]),
+            lambda v: v.update(status="failed"),
+            lambda v: v["diagnostics"][0].update(resultStatus="failed"),
+            lambda v: v["diagnostics"][0]["source"].update(key="relations.requires"),
+            lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md"),
+            lambda v: v.update(roots=["REQ-001"]),
+            lambda v: v.update(purpose="verify"),
+            lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+            lambda v: v["resolution"].update(complete=True),
+            lambda v: v["resolution"].update(unresolvedStrongRelations=1),
+            lambda v: v.update(documents=[{"id": "TASK-001"}]),
+        ]
+        for index, mutate in enumerate(changes):
+            with self.subTest(index=index):
+                value = copy.deepcopy(result)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    context_failure_fixtures.check_done_root(value)
+        for index, mutate in enumerate([
+            lambda d: d[".spec/tasks/TASK-001.md"][1].update(status="open"),
+            lambda d: d[".spec/tasks/TASK-001.md"][1]["relations"].update(requires=["TASK-002"]),
+            lambda d: d[".spec/requirements/REQ-001.md"][1].update(status="draft"),
+            lambda d: d.update({".spec/tasks/TASK-002.md": d[".spec/tasks/TASK-001.md"]}),
+        ]):
+            with self.subTest(input_index=index):
+                value = copy.deepcopy(context_failure_fixtures.reviewed_documents("SINGLE-159"))
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    context_failure_fixtures.check_done_root_inputs(value)
+
     def test_context_failure_inputs_reject_repaired_or_changed_causes(self):
         mutations = [
             ("SINGLE-050", ".spec/technical/TECH-001.md", "TECH-001", "TECH-999"),
@@ -4373,6 +4690,12 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-148", ".spec/requirements/REQ-002.md", "status: draft", "status: approved"),
             ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [ADR-001]"),
             ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [REQ-002]"),
+            # TASK-001を`open`や`cancelled`へ直す、先行TASKへの`requires`を足す、`addresses`を消す、`addresses`の先を`draft`にする入力は、期待値と組にならない。
+            ("SINGLE-159", ".spec/tasks/TASK-001.md", "status: done", "status: open"),
+            ("SINGLE-159", ".spec/tasks/TASK-001.md", "status: done", "status: cancelled"),
+            ("SINGLE-159", ".spec/tasks/TASK-001.md", "  addresses: [REQ-001:AC-01]\n", "  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"),
+            ("SINGLE-159", ".spec/tasks/TASK-001.md", "  addresses: [REQ-001:AC-01]\n", ""),
+            ("SINGLE-159", ".spec/requirements/REQ-001.md", "status: approved", "status: draft"),
             ("SINGLE-052-01", ".spec/technical/TECH-002.md", "supersedes:", "related:"),
             ("SINGLE-052-02", ".spec/technical/TECH-003.md", "requires:", "related:"),
             ("SINGLE-053", ".spec/technical/TECH-003.md", "status: approved", "status: draft"),
@@ -4389,7 +4712,7 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
 
     def test_context_failure_git_state_rejects_staging_or_commit(self):
-        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
+        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-159", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 repo = fixture_setup(audit.FIXTURES / "single" / identifier, context_failure_manifest(identifier), Path(temporary) / "repo")
                 check_context_unborn(repo, identifier)

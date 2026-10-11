@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-159",
+  "description": "状態doneのTASKを目的implementの起点にするとCTX-STATE-001でblockedにし、先行TASKの診断を返さない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

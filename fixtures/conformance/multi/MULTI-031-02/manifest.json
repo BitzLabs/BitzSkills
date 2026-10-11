@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-031-02",
+  "description": "メンバーの中の`context --workspace platform REQ-001`が非修飾の起点をルートのREQ-001に解決する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "context",
+      "--workspace",
+      "platform",
+      "REQ-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}
