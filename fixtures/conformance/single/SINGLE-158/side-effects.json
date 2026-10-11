@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67a00c2242f04cd5cb75e75e2840061e7a4aee9b1a823b4e0b70c6d301b8d095"
+      },
+      "docs": {
+        "kind": "directory"
+      },
+      "docs/README.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b1f6d62ff775a8735c68f332445588acf6311110ac52b171c26811a5a73e5dc"
+      }
+    },
+    "git": {
+      "status": " M .spec/requirements/REQ-001.md\n D .spec/requirements/REQ-002.md\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 50442aa16b52672171a9967245923d366e022114 0\t.spec/requirements/REQ-001.md\n100644 07648f649dda288249eefd2dcadc078a2a3f1ae8 0\t.spec/requirements/REQ-002.md\n100644 1c85f7a102f3174d2504600eacfe2d01b4788b00 0\tdocs/README.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67a00c2242f04cd5cb75e75e2840061e7a4aee9b1a823b4e0b70c6d301b8d095"
+      },
+      "docs": {
+        "kind": "directory"
+      },
+      "docs/README.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b1f6d62ff775a8735c68f332445588acf6311110ac52b171c26811a5a73e5dc"
+      }
+    },
+    "git": {
+      "status": " M .spec/requirements/REQ-001.md\n D .spec/requirements/REQ-002.md\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 50442aa16b52672171a9967245923d366e022114 0\t.spec/requirements/REQ-001.md\n100644 07648f649dda288249eefd2dcadc078a2a3f1ae8 0\t.spec/requirements/REQ-002.md\n100644 1c85f7a102f3174d2504600eacfe2d01b4788b00 0\tdocs/README.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

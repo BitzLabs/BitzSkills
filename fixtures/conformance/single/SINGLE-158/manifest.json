@@ -1,0 +1,44 @@
+{
+  "fixtureId": "SINGLE-158",
+  "description": "ワークスペースの下位のディレクトリでも、承認済み要求の保護と削除の検出をルートと同じ結果にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/REQ-changed.md"
+      },
+      {
+        "op": "delete",
+        "path": ".spec/requirements/REQ-002.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "docs",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

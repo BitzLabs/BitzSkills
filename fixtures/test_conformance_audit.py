@@ -72,7 +72,7 @@ from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doc
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
-from conformance import multi_crosscheck
+from conformance import multi_crosscheck, repo_root_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -1822,6 +1822,271 @@ class AuditTests(unittest.TestCase):
                 with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def copy_repo_root_fixture(self, temporary, identifier):
+        root = Path(temporary)
+        kind = repo_root_fixtures.CASES[identifier][0]
+        shutil.copytree(audit.FIXTURES / kind / identifier, root / kind / identifier, symlinks=True)
+        for name in ("manifest", "result", "side-effects", "frontmatter"):
+            shutil.copy2(schema_path(audit.FIXTURES, name), root)
+        return root
+
+    def test_repo_root_fixtures(self):
+        result = repo_root_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-158", "MULTI-030-01", "MULTI-030-02"])
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in repo_root_fixtures.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_repo_root_fixture(temporary, identifier)
+                self.assertEqual(repo_root_fixtures.validate(root, {identifier})["errors"], [])
+
+    def test_repo_root_reference_follows_the_inputs(self):
+        """参照計算は、基準版と作業ツリーの木構造から導き、実行するディレクトリによらない。リテラルの期待値の改変を拒否する。"""
+        module = repo_root_fixtures
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_repo_root_fixture(temporary, identifier)
+                fixture = root / module.CASES[identifier][0] / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                result = json.loads((fixture / "expected/check.json").read_text())
+                reference = module.reference_for(identifier, repository)
+                module.check_result_against_reference(result, reference)
+                module.check_invariance(identifier, repository)
+                if identifier == "MULTI-030-02":
+                    self.assertEqual(reference, {"unregistered": ["tools/x/.spec/bitz.yaml"]})
+                    changes = [lambda v: v.update(status="passed"),
+                               lambda v: v["diagnostics"].clear(),
+                               lambda v: v["diagnostics"][0]["source"].update(path="apps/web/.spec/bitz.yaml"),
+                               lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+                               lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+                               lambda v: v.update(workspaces=[{"id": "web", "path": "apps/web"}])]
+                else:
+                    expected_workspace = {"id": "root", "path": "."} if identifier == "SINGLE-158" else {"id": "web", "path": "apps/web"}
+                    self.assertEqual(reference["workspace"], expected_workspace)
+                    self.assertEqual([item["code"] for item in reference["diagnostics"]],
+                                     ["SPEC-SAFETY-APPROVED-001", "SPEC-STATE-TRANSITION-001"])
+                    # 現在版に残るREQ 1件（削除したREQは数えない）と、その規範文1件。
+                    self.assertEqual((reference["documentCount"], reference["statementCount"]), (1, 1))
+                    changes = [lambda v: v["workspace"].update(path="apps/web" if v["workspace"]["path"] == "." else "."),
+                               lambda v: v["workspace"].update(id="platform", path="."),
+                               lambda v: v.update(status="passed"),
+                               lambda v: v["diagnostics"].clear(),
+                               lambda v: v["diagnostics"].pop(0),
+                               lambda v: v["diagnostics"].pop(1),
+                               lambda v: v["diagnostics"].reverse(),
+                               lambda v: v["diagnostics"][0].update(code="SPEC-STATE-TRANSITION-001"),
+                               lambda v: v["diagnostics"][1].update(code="SPEC-SAFETY-APPROVED-001"),
+                               lambda v: v["diagnostics"][0]["source"].update(key="status"),
+                               lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+                               lambda v: v["diagnostics"][1]["source"].update(path="repo/" + v["diagnostics"][1]["source"]["path"]),
+                               lambda v: v.update(checkedDocumentCount=0),
+                               lambda v: v.update(checkedDocumentCount=2),
+                               lambda v: v.update(checkedStatementCount=0),
+                               lambda v: v.update(checkedStatementCount=2),
+                               lambda v: v.update(scope="changed", selection={"changedPathCount": 2, "targetDocumentCount": 1,
+                                                                              "excludedCodeTestPathCount": 0}),
+                               lambda v: v.update(selection={"changedPathCount": 2, "targetDocumentCount": 1,
+                                                             "excludedCodeTestPathCount": 0})]
+                for index, change in enumerate(changes):
+                    with self.subTest(identifier=identifier, change=index):
+                        changed = copy.deepcopy(result)
+                        change(changed)
+                        self.assertNotEqual(changed, result)
+                        with self.assertRaises(ValueError):
+                            module.check_result_against_reference(changed, reference)
+                if identifier == "MULTI-030-01":
+                    # ルートのまま（作業ワークスペースが`platform`）では、`web`の変更は出発点にならず、期待と一致しない。
+                    with self.assertRaises(ValueError):
+                        module.check_result_against_reference(result, module.reference_check(repository, "multi", "full", ".", None))
+
+    def test_repo_root_reference_uses_the_repository_root_for_git(self):
+        """参照計算の基準版の一覧と変更集合は、現在のディレクトリではなくリポジトリのルートで求める。"""
+        module = repo_root_fixtures
+        for identifier in ("SINGLE-158", "MULTI-030-01"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_repo_root_fixture(temporary, identifier)
+                fixture = root / module.CASES[identifier][0] / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                cwd = module.CASES[identifier][2]
+                listing = module.base_listing(repository)
+                # どのディレクトリから`--full-tree`で求めても、リポジトリ全体の一覧と同じである。
+                self.assertEqual(
+                    sorted(fixture_git(repository / cwd, "ls-tree", "-r", "--name-only", "-z", "--full-tree", "HEAD")
+                           .decode().split("\0")[:-1]), sorted(listing))
+                # 一覧は実行するディレクトリの外のパスも含み、変更集合はリポジトリのルート相対のパスで返る。
+                self.assertTrue(any(not path.startswith(cwd + "/") for path in listing))
+                self.assertEqual(len(module.changed_paths(repository)), 2)
+                self.assertTrue(all(path.startswith(".spec/") or path.startswith("apps/web/.spec/")
+                                    for path in module.changed_paths(repository)))
+
+    def test_repo_root_audit_rejects_changed_expectations(self):
+        """診断の欠落、状態の改変、実行するディレクトリの改変（ルートへ変えるなど）、準備手順の改変を拒否する。"""
+        result_changes = {
+            "SINGLE-158": [
+                lambda v: v["diagnostics"].pop(0),
+                lambda v: v["diagnostics"].pop(1),
+                lambda v: v["diagnostics"].clear(),
+                lambda v: v.update(status="passed", diagnostics=[]),
+                lambda v: v.update(status="blocked"),
+                lambda v: v["workspace"].update(path="docs"),
+                lambda v: v.update(checkedDocumentCount=2),
+                lambda v: v.update(checkedDocumentCount=0),
+                lambda v: v.update(checkedStatementCount=0),
+                lambda v: v["revision"].update(dirty=False),
+                lambda v: v.update(scope="selected"),
+                lambda v: v.update(scope="changed", selection={"changedPathCount": 2, "targetDocumentCount": 1,
+                                                               "excludedCodeTestPathCount": 0}),
+            ],
+            "MULTI-030-01": [
+                lambda v: v["diagnostics"].pop(0),
+                lambda v: v["diagnostics"].pop(1),
+                lambda v: v.update(status="passed", diagnostics=[]),
+                lambda v: v["workspace"].update(id="platform", path="."),
+                lambda v: v["workspace"].update(path="."),
+                lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+                lambda v: v["diagnostics"][1]["source"].update(path="apps/web/.spec/requirements/REQ-011.md"),
+                lambda v: v.update(checkedDocumentCount=2),
+                lambda v: v.update(checkedStatementCount=2),
+                lambda v: v["revision"].update(dirty=False),
+                lambda v: v.update(scope="changed", selection={"changedPathCount": 2, "targetDocumentCount": 1,
+                                                               "excludedCodeTestPathCount": 0}),
+            ],
+            "MULTI-030-02": [
+                lambda v: v.update(status="passed", diagnostics=[]),
+                lambda v: v["diagnostics"].clear(),
+                lambda v: v.update(status="failed"),
+                lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+                lambda v: v["diagnostics"][0]["source"].update(path="libs/native/.spec/bitz.yaml"),
+                lambda v: v["revision"].update(dirty=False),
+                lambda v: v.update(scope="changed"),
+                lambda v: v["workspaces"].append({"id": "web", "path": "apps/web", "status": "passed",
+                                                  "checkedDocumentCount": 1, "checkedStatementCount": 1,
+                                                  "durationMs": 0, "diagnostics": []}),
+            ],
+        }
+        manifest_changes = {
+            "SINGLE-158": [
+                lambda v: v["invocation"].update(cwd="."),
+                lambda v: v["invocation"].update(cwd=".spec"),
+                lambda v: v["invocation"]["argv"].remove("--full"),
+                lambda v: v["setup"].update(operations=v["setup"]["operations"][:1]),
+                lambda v: v["setup"].update(operations=v["setup"]["operations"][1:]),
+                lambda v: v["setup"]["operations"].append({"op": "stage", "paths": ["."]}),
+                lambda v: v["expect"].update(status="passed", exitCode=0),
+            ],
+            "MULTI-030-01": [
+                lambda v: v["invocation"].update(cwd="."),
+                lambda v: v["invocation"].update(cwd="services/api"),
+                lambda v: v["invocation"]["argv"].remove("--full"),
+                lambda v: v["setup"].update(operations=v["setup"]["operations"][:1]),
+                lambda v: v["setup"].update(operations=v["setup"]["operations"][1:]),
+                lambda v: v["expect"].update(status="passed", exitCode=0),
+            ],
+            "MULTI-030-02": [
+                lambda v: v["invocation"].update(cwd="."),
+                lambda v: v["invocation"].update(cwd="tools"),
+                lambda v: v["invocation"]["argv"].remove("--all-workspaces"),
+                lambda v: v["invocation"]["argv"].insert(1, "--full"),
+                lambda v: v["setup"].update(operations=[]),
+                lambda v: v["setup"]["operations"][0].update(path="apps/web/tools/.spec/bitz.yaml"),
+                lambda v: v["expect"].update(status="passed", exitCode=0),
+            ],
+        }
+        mutations = [(identifier, "expected/check.json", change)
+                     for identifier, changes in result_changes.items() for change in changes]
+        mutations += [(identifier, "manifest.json", change)
+                      for identifier, changes in manifest_changes.items() for change in changes]
+        mutations += [(identifier, "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""}))
+                      for identifier in repo_root_fixtures.CASES]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_repo_root_fixture(temporary, identifier)
+                path = root / repo_root_fixtures.CASES[identifier][0] / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(repo_root_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_repo_root_audit_rejects_changed_corpus(self):
+        """原因の構成は、基準版の`approved`のREQ 2件のうち、1件の`title`だけの変更と1件の削除、メンバーの外の未登録の設定1件である。入力を変えた写しは拒否する。"""
+        module = repo_root_fixtures
+        single_1, single_2 = "repo/.spec/requirements/REQ-001.md", "repo/.spec/requirements/REQ-002.md"
+        web_10, web_11 = "repo/apps/web/.spec/requirements/REQ-010.md", "repo/apps/web/.spec/requirements/REQ-011.md"
+        edits = [
+            # 基準版の状態が`approved`でなければ、承認済み要求の保護の対象にならない。
+            ("SINGLE-158", single_1, "status: approved", "status: draft"),
+            ("SINGLE-158", single_2, "status: approved", "status: outdated"),
+            # 変更後の状態を戻す（`draft`）と、保護の対象外になる。
+            ("SINGLE-158", "changes/REQ-changed.md", "status: approved", "status: draft"),
+            # `title`が変わらなければ、意味の変更がない。規範文を変えると2つ目の原因になる。
+            ("SINGLE-158", "changes/REQ-changed.md", "変更後の文書検査", "文書の検査"),
+            ("SINGLE-158", "changes/REQ-changed.md", "秘密情報を出力しない。", "ログを出力しない。"),
+            # 強い関係を足すと、閉包や逆参照が加わる。
+            ("SINGLE-158", single_2, "status: approved\n---", "status: approved\nrelations:\n  requires: [REQ-001]\n---"),
+            ("SINGLE-158", single_2, "status: approved\n---", "status: approved\nrelations:\n  related: [REQ-001]\n---"),
+            ("MULTI-030-01", web_10, "status: approved", "status: draft"),
+            ("MULTI-030-01", web_11, "status: approved", "status: outdated"),
+            ("MULTI-030-01", "changes/REQ-changed.md", "変更後の認証基準", "認証の基準"),
+            ("MULTI-030-01", "changes/REQ-changed.md", "status: approved", "status: draft"),
+            ("MULTI-030-01", "changes/REQ-changed.md", "秘密情報を出力しない。", "ログを出力しない。"),
+            ("MULTI-030-01", web_11, "status: approved\n---", "status: approved\nrelations:\n  requires: [REQ-010]\n---"),
+            # カタログに加えると未登録ではなくなる。メンバーの配下に置いても、メンバーの外の設定ではなくなる。
+            ("MULTI-030-02", "repo/.spec/bitz.yaml", "      path: services/api\n", "      path: services/api\n    - id: x\n      path: tools/x\n"),
+            ("MULTI-030-02", "repo/.spec/bitz.yaml", "path: services/api", "path: tools"),
+            ("MULTI-030-02", "repo/.spec/bitz.yaml", "path: apps/web", "path: apps"),
+        ]
+        for index, (identifier, relative, old, new) in enumerate(edits):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_repo_root_fixture(temporary, identifier)
+                fixture = root / module.CASES[identifier][0] / identifier
+                path = fixture / relative
+                self.assertIn(old, path.read_text())
+                path.write_text(path.read_text().replace(old, new))
+                # 入力のバイト列の一致の検査が拒否する。
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                # 入力の一致の検査と別に、原因の構成の検査が、入力の木構造とGitの状態から拒否する。
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                with self.assertRaises(ValueError):
+                    module.check_conditions(identifier, repository)
+        # 準備手順の結果（Gitの状態）の改変: 変更のステージ、実行するディレクトリの不在、余分な変更を拒否する。
+        for identifier in ("SINGLE-158", "MULTI-030-01", "MULTI-030-02"):
+            for variant in ("stage", "extra", "no-cwd"):
+                with self.subTest(identifier=identifier, variant=variant), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_repo_root_fixture(temporary, identifier)
+                    fixture = root / module.CASES[identifier][0] / identifier
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                    module.check_conditions(identifier, repository)
+                    if variant == "stage":
+                        fixture_git(repository, "add", "-A")
+                    elif variant == "extra":
+                        (repository / "extra.txt").write_text("x")
+                    else:
+                        cwd = module.CASES[identifier][2]
+                        fixture_git(repository, "rm", "-r", "-q", "--cached", "--", cwd)
+                        fixture_git(repository, "commit", "-q", "-m", "drop")
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, repository)
+        # 入力の欠落と余分なファイルを拒否する。
+        for identifier in module.CASES:
+            for name in ("repo/.spec/bitz.yaml", "extra"):
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_repo_root_fixture(temporary, identifier)
+                    fixture = root / module.CASES[identifier][0] / identifier
                     if name == "extra":
                         (fixture / "repo/extra.txt").write_text("x")
                     else:

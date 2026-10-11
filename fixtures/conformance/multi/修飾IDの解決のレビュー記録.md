@@ -330,3 +330,77 @@ B（`multi_crosscheck.build`）は入力の木構造から導出した材料で�
   変更した`web::TECH-030`を参照する`api::TECH-040`を状態`draft`にして、影響候補の対象（`approved`だけ）から外した。
 - `changedPathCount`が、作業ワークスペースが所有する変更だけを数えること（他のメンバーの変更を数えない）は固定しない。`MULTI-029-03`は、変更を`web`の1件だけにした。
 - コードとテストのパスの変更、リネーム、削除、`--report`、`--all-workspaces`は扱わない。
+
+## 2026-10-11追記: `MULTI-030-01`〜`02`（メンバーの中から実行する`check --full`と`check --all-workspaces`）
+
+### 追加の理由（実装の確認事項C26）
+
+Gitの呼び出しが現在のディレクトリを基準にしていたため、複合ワークスペースのメンバーの中で`check`を実行すると、次の2つが黙って省かれていた（修正はコミット`43bec7ee`、仕様の明記はコミット`57ee44af`）。
+
+- 基準版の仕様文書の一覧が空になり、基準版との比較（削除の検出`SPEC-STATE-TRANSITION-001`、状態遷移、承認済み要求の保護`SPEC-SAFETY-APPROVED-001`）が行われなかった。
+- `check --all-workspaces`の全体事前検査の候補が、現在のディレクトリの配下だけになった。メンバーの外の未追跡の`.spec/bitz.yaml`を見落とし、ルートでは`blocked`、`apps/web`では`passed`になった。
+
+既存のfixtureは、メンバーの中の`check`では`MULTI-029-01`〜`03`だけで、基準版との比較を行う変更（削除、`title`の変更）を持たず、`--full`もメンバーの中では`MULTI-029-01`の変更なしの入力だけである。`--all-workspaces`の未登録の判定（`MULTI-006`）はルートで実行する。そこで、メンバーの中から実行する2件を加える。
+単一ワークスペースの下位のディレクトリから実行する`SINGLE-158`は、[基準版・状態遷移のレビュー記録](../single/基準版・状態遷移のレビュー記録.md)に記録した。
+
+### 根拠の規範文
+
+- `check` §3・§5: `--full`は作業ワークスペースのすべての仕様文書を完全検査し、基準版との比較（削除の検出、承認済み要求の保護）も行う（既存の`SINGLE-029`が`--full`で削除を固定している）。変更集合と基準版の仕様文書の一覧は、現在のディレクトリによらず、作業ワークスペースのルートを基準に求める。現在のディレクトリがワークスペースのルートの下位でも、ルートで実行した場合と同じ結果にする。
+  基準版のIDが現在版にない場合は、管理済みの仕様文書の削除として`failed`とする。
+- `check` §6: 複合ワークスペースの単独操作では、作業ワークスペースが所有する変更されたパスだけを出発点にし、基準版との比較（状態遷移、削除の検出、承認済み要求の保護）は作業ワークスペースの文書だけに行う。
+  到達した文書の診断は、所有ワークスペースのIDとそのワークスペースのルートからの相対パスで返す。
+- 文書・フロントマター・状態仕様 §8・§9: 基準版の`approved`のREQの`title`、規範文、強い関係を、状態を`draft`または`outdated`へ戻さずに変えると`SPEC-SAFETY-APPROVED-001`（`failed`）、基準版のIDが現在版にないと`SPEC-STATE-TRANSITION-001`（`failed`）である。
+- 複合ワークスペース仕様 §8: 全体操作は、現在のスナップショットの作業ツリーにある追跡対象またはステージ済みのパスと、Gitが無視しない未追跡のパスから、`.spec/bitz.yaml`の候補を、現在のディレクトリによらずリポジトリ全体から列挙する。
+  カタログにない候補があれば`SPEC-MULTI-UNREGISTERED-001`（`blocked`）とし、`workspaces: []`で結果を返す。現在のディレクトリがリポジトリのルートと一致する必要はない（`check` §2）。
+- 診断レジストリ: `CHECK-APPROVED-MEANING`、`CHECK-DOCUMENT-DELETED`、`MULTI`の未登録の行（発生元の種類は`file`）。
+
+### 入力と起動
+
+2件とも、ルートワークスペース`platform`と、メンバー`web`（`apps/web`）、`api`（`services/api`）を置く（カタログの列挙順はweb、api）。実行は`apps/web`である。引数は`--full --base HEAD --format json`（`MULTI-030-01`）と`--all-workspaces --base HEAD --format json`（`MULTI-030-02`）にする（監査が、コミット済みのfixtureには明示の`--base`を求める）。
+
+| fixture | 入力 | 準備手順 | 引数 |
+|---|---|---|---|
+| `MULTI-030-01` | `web`の`approved`のREQ-010（`title: 認証の基準`）とREQ-011（`title: 設定の保護`）。関係はなし | REQ-010の`title`と見出しを`変更後の認証基準`に`update`（状態は`approved`のまま）、REQ-011を`delete`（どちらも作業ツリーの変更） | `check --full` |
+| `MULTI-030-02` | `web`のREQ-010だけ（変更なし） | メンバーの外に`tools/x/.spec/bitz.yaml`（`workspace.id: x`）を`create`（未追跡で無視されない） | `check --all-workspaces` |
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+`MULTI-030-01`（`scope: full`）。
+
+1. 作業ワークスペースは、`apps/web`の最寄りの設定の`web`（複合ワークスペース仕様 §3の2・3）。結果の`workspace`は`{id: web, path: apps/web}`。
+2. 完全検査の対象は、`--full`の規則（`check` §3・§6）で、作業ワークスペースの現在版のすべての仕様文書（`web::REQ-010`の1件。基準版にあったREQ-011は削除されたので現在版にない）と、
+   強い関係の閉包・直接の逆参照で到達した他のメンバーの文書である。このfixtureは関係を宣言しないので、閉包にも逆参照にも加わる文書はない。`checkedDocumentCount`は1、
+   `checkedStatementCount`は`REQ-010:AC-01`の1件である（`SINGLE-029`が、削除した文書を数えず現在版の文書だけを数えるのと同じ扱い）。`scope: full`は`selection`を持たない。`revision.dirty`は`true`。
+3. 診断は、基準版（`HEAD`）の`web`の文書と現在版を文書IDで対応付けて導く。REQ-010は`approved`のまま`title`だけが変わったので`SPEC-SAFETY-APPROVED-001`（`source.key`は`title`）、
+   REQ-011は現在版にないので`SPEC-STATE-TRANSITION-001`。`workspaceId`は`web`、`path`は`web`のルートからの相対（`.spec/requirements/REQ-010.md`、`.spec/requirements/REQ-011.md`）。
+   順序は`workspaceId`、`path`の辞書順なのでREQ-010が先になる。`failed`／終了コード1。
+4. ルートで実行した場合（`--workspace web`）と同じ結果になる。
+
+`MULTI-030-02`（`scope: all-workspaces`）。
+
+1. Gitが認識する`.spec/bitz.yaml`の候補は、追跡対象の3件（ルート、`web`、`api`）と、未追跡で無視されない`tools/x/.spec/bitz.yaml`の4件である。カタログに登録されているのは前の3件で、`tools/x`は未登録である。
+   基準版のスナップショットには`tools/x`がなく、未登録は現在のスナップショットの1件だけである。
+2. 全体事前検査が非成功なので、メンバーの処理を始めず、`workspaces: []`で`blocked`／終了コード2を返す。診断は`SPEC-MULTI-UNREGISTERED-001`の1件で、未登録の設定はワークスペースではないので
+   `workspaceId`は`null`、`path`は`tools/x/.spec/bitz.yaml`である。`revision.dirty`は、未追跡のファイルがあるので`true`（単一ワークスペースの`SINGLE-028`の新規の未追跡ファイルを`dirty: true`とする既存の期待値と同じ扱い）。
+3. 候補は現在のディレクトリによらず列挙するので、ルートで実行した場合（`MULTI-006`と同じ形）と同じ結果になる。
+
+監査は、この導出を`repo_root_fixtures.reference_check`として、入力の木構造とGitの状態（常にリポジトリのルートで呼ぶ）から独立に計算し、リテラルの期待値と照合する。さらに、実行するディレクトリを変えた参照計算
+（`MULTI-030-01`はルートで`--workspace web`、`MULTI-030-02`はルート、`services/api`、`tools/x`）が同じ結果になること（ルートで実行した場合と同じ結果）を確かめる。
+原因の構成（基準版の`approved`のREQ 2件のうち、1件は`title`だけの変更、1件は削除、関係なし、変更はインデックスへ入れない、未登録の設定は未追跡でメンバーの外にあり基準版にない）は、
+`check_conditions`が入力の木構造とGitの状態から確かめる。
+
+### 監査の検査と回帰試験
+
+`test_conformance_audit.py`の回帰試験は、診断の欠落（`SPEC-SAFETY-APPROVED-001`、`SPEC-STATE-TRANSITION-001`、`SPEC-MULTI-UNREGISTERED-001`のそれぞれ）、状態の改変（`passed`、`failed`、`blocked`の取り違え）、
+`workspace`・`workspaceId`・`path`・`scope`の改変、完全検査の件数と`revision.dirty`の改変、`selection`の混入、実行するディレクトリの改変（ルート、別のメンバー、`tools`）、`--full`の削除（`MULTI-030-01`）、`--full`の追加と`--all-workspaces`の削除（`MULTI-030-02`）、準備手順の削除と変更、
+入力の改変（基準版の状態、`title`の据置き、規範文の変更、関係の追加、未登録の設定のカタログへの追加とメンバーの配下への移動）、準備手順の結果（変更のステージ、余分な変更、実行するディレクトリの不在）を拒否する。
+
+### 固定しない範囲
+
+- 引数なしの`check`で削除した文書を`selection.targetDocumentCount`に数えるかは規範文が定めておらず（実装の確認事項C28）、このfixtureでは引数なしを使わない。
+- `SPEC-SAFETY-APPROVED-001`の`source.key`は、`title`を変えたときの`title`だけを固定する（`SINGLE-031`と同じ）。規範文や強い関係を変えたときの`key`は、規範文が定めないので固定しない（このfixtureは`title`だけを変える）。
+- 診断の`summary`は、`SINGLE-029`、`SINGLE-031`、`MULTI-006`と同じ文字列である。`evidence`、`specRefs`、`suggestedAction`は付けない。
+- 影響候補、閉包、直接の逆参照、リネーム、ステージ済みの変更、コードとテストのパスは扱わない。`MULTI-030-01`は、他のメンバーの変更を置かず、閉包と逆参照も置かない（`--full`でこれらを完全検査の対象に加える規則は`MULTI-029-01`が固定する）。他のメンバーの変更を置かない（基準版との比較を作業ワークスペースの文書だけに行うことの陰性対照は固定しない）。
+- `MULTI-030-02`は、基準版のスナップショットの未登録（初回の複合ワークスペース化、メンバーの削除と移動）を扱わない。未登録の設定がGitに無視されるときや、サブモジュールの内部は扱わない。
+- 修正前のCore（コミット`2baa0b79`の`gitutil.py`を、作業ツリーの外のコピーで差し替えて確認した）は、3件とも失敗する（陰性対照）。`MULTI-030-01`は`passed`／終了コード0で診断が返らず、
+  `MULTI-030-02`は`passed`／終了コード0でメンバー3件の結果を返す。修正後のCoreは3件とも通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
