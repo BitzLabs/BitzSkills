@@ -69,6 +69,20 @@ Gitの境界、非対応のメジャーバージョン、リソースの上限�
 Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`multiWorkspace.v1`を公開する。未知の対応機能は不足として扱う。
 Core APIのマイナーバージョンの差は、要求する範囲とすべての対応機能を満たす場合だけ許可する。
 
+### 4.1 プラグインの要求
+
+プラグインの要求の字句、組合せ、判定は[ADR-061](../../02.設計書/10_決定記録/ADR-061_doctorのプラグイン要求の字句と判定を確定する.md)に従う。要点は次のとおりである。
+
+- `--plugin`は`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`に一致する64文字以下、`--plugin-version`はSemVer 2.0.0のバージョン、`--require-capability`は
+  `^[a-zA-Z][a-zA-Z0-9]*\.v[1-9][0-9]*$`とする。`--require-core-api`は、空白1文字で区切った1件以上の比較子の論理積で、比較子は`>=`、`>`、`<=`、`<`、`=`
+  （省略時は`=`）に`MAJOR.MINOR`を続けたもの、または`^MAJOR.MINOR`（`>=MAJOR.MINOR <(MAJOR+1).0`）とする。字句の不一致は終了コード4とする。
+  `--plugin-version`は字句だけを検査し、何とも照合しない。
+- 4種のオプションのどれかを指定した場合は、`--plugin`、`--plugin-version`、`--require-core-api`の3つを同時に指定する。欠けたものがあれば
+  `SPEC-DOCTOR-PLUGIN-001`とし、検査2と検査3は行わない。4種のどれも指定しなければ、検査2と検査3を行わず、その検査項目も置かない。
+- 検査2はCore APIのバージョンが範囲のすべての比較子を満たすかを、検査3は要求した対応機能をすべて公開しているかを、互いに独立に判定する。
+- 検査項目の名前は`plugin`（検査2）と`capability`（検査3）とし、`core`の直後に置く。`capability`は要求の組合せが完全な場合だけ置く。
+- 3つの診断の発生元は`{kind: environment, component: "plugin"}`で、`--plugin`を指定した場合は`identifier`にそのIDを置く。
+
 `doctor`はクライアント固有のプラグインのインストール先を探索せず、`bitz.yaml`をプラグインの台帳にしない。プラグインの情報が渡されない通常の実行は
 Coreとワークスペースだけを診断する。
 
@@ -137,9 +151,9 @@ earsAi: "1.0"
 |---|---|---|
 | `SPEC-DOCTOR-CORE-001` | `blocked` | 実行環境のバージョンが下限未満 |
 | `SPEC-DOCTOR-CORE-002` | `error` | Core実行体を起動できない |
-| `SPEC-DOCTOR-PLUGIN-001` | `failed` | プラグインの要求の形式が不正 |
-| `SPEC-DOCTOR-API-001` | `blocked` | APIが非互換 |
-| `SPEC-DOCTOR-CAPABILITY-001` | `blocked` | 対応機能が不足 |
+| `SPEC-DOCTOR-PLUGIN-001` | `failed` | プラグインの要求の形式が不正（`--plugin`、`--plugin-version`、`--require-core-api`のいずれかが欠けている。§4.1） |
+| `SPEC-DOCTOR-API-001` | `blocked` | APIが非互換（Core APIのバージョンが要求する範囲を満たさない。§4.1） |
+| `SPEC-DOCTOR-CAPABILITY-001` | `blocked` | 対応機能が不足（要求した対応機能をCoreが公開しない。§4.1） |
 | `SPEC-DOCTOR-WORKSPACE-001` | `blocked` | `.spec/bitz.yaml`が不在 |
 | `SPEC-DOCTOR-EARS-001` | `blocked` | EARS-AIのメジャーバージョンが非互換 |
 | `SPEC-DOCTOR-GIT-001` | `passed_with_warnings` | Git不在 |
