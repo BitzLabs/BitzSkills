@@ -124,11 +124,11 @@ def run():
             if key not in {'sourceCommit', 'contractPath', 'outputRelativeRoot', 'receiptSha256'}:
                 trace.require(trace.json_equal(captured[key], value), 'public connection value differs from originals')
         captures.append(captured)
-    trace.require(len(public['staticReviewStages']) == public['staticSolInvocations'] == 5 and
+    trace.require(len(public['staticReviewStages']) == public['staticSolInvocations'] == 6 and
                   public['observedModelApiRequests'] == public['primaryModelTrajectories'] == public['automaticRetries'] == 0 and
                   public['consumedConnectionReservations'] == public['connectionStartupInvocations'] == 1 and
                   all(public[k] is False for k in ['certifiesNativeProvider', 'eligibleForMeasurement', 'phaseComplete']), 'limited scope')
-    print(json.dumps(dict(status='recorded_connection_history_matches_original_bytes', staticSolInvocations=5,
+    print(json.dumps(dict(status='recorded_connection_history_matches_original_bytes', staticSolInvocations=6,
                          unpaidStartupDiagnostics=len(public.get('startupDiagnostics', [])),
                          consumedConnectionReservations=1 + len(captures),
                          stoppedDiagnosticModelApiRequests=0,

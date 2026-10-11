@@ -9,8 +9,23 @@
   "observedModelApiRequests": 0,
   "primaryModelTrajectories": 0,
   "automaticRetries": 0,
-  "staticSolInvocations": 5,
+  "staticSolInvocations": 6,
   "staticReviewStages": [
+    {
+      "sourceCommit": "a37bd2118c373021bc8f4b6a29e8bfc410f35f98",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.38.json",
+      "verification": {"outputRelativeRoot": ".venv/production-provider-connection-check-06", "summarySha256": "efcaee0a3eed909e2d05a7ce6aaa56ce3e415012ca950c4fcee2391a95c86c1b", "testCount": 554, "testSeconds": 62.698, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "a37bd2118c373021bc8f4b6a29e8bfc410f35f98",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.38.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-38",
+        "receiptSha256": "dc1169a91fda55b417108530bf93d0512efccdbbf0f80b84937e6716e0ea27e5",
+        "responseSha256": "6ee37f0a985bff32e483929b846ae3ebbc23cfc38e0a4da0630450666ea8eb9d",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 26398, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 832, "reasoning_output_tokens": 421},
+        "findings": {"P1": 0, "P2": 1, "P3": 0}
+      }
+    },
     {
       "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
       "contractPath": "evals/skills/routing/sdk-trace-review-v0.37.json",

@@ -37,4 +37,11 @@ API合計は3件で、モデル一覧取得2件・モデル推論1件。旧契�
 HTTP/SSE wire全文・server内部入力・認証復旧ゼロ・API事前hard capは認定しない。
 初回失敗の予約を保持し、実接続v0.2の有限予約を別に消費した。同じ診断を再起動しない。
 
+source `a37bd2118c373021bc8f4b6a29e8bfc410f35f98`の全スキル554試験は62.698秒、OK、exit0。
+SOL v38はv37のturn上書き是正に指摘せず、原requestの固定文字列の部分一致についてP2=1を指摘した。
+原requestではBASEはdeveloper位置1/content全体、DEVELOPERはdeveloper位置2/content先頭、PROMPTはuser位置4/content全体に完全一致する。
+この構造を照合器へ束縛し、追記と位置交換を拒否する合成回帰を追加した。
+v38の原応答・使用量・固定Git source・共通予約を親が再照合する。是正の独立再確認は残件である。
+同じ接続診断を再実行せず、保存した原記録を修正後の照合器で検査する。
+
 routing一次評価、5種類実地比較、Skill Gate 4、Phase 4完了は未認定。

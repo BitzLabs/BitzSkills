@@ -74,9 +74,13 @@ thread→既知startup警告→turn開始→reasoningまたは最終message→tu
 ## 4. 実行上限と停止
 
 案の各試行は壁時計300秒、code-mode親呼出し最大2、子操作最大2、子は一覧1回・本文読取り最大1回。
-native API要求は最大3を候補とするが、これはまだ実効性を確認した上限ではない。
+nativeモデル推論API要求は最大3、モデル一覧APIは最大2を観測閾値とする。
 一次4軌跡はprovider内部retryやHTTP要求4件を意味しない。
-SDK/CLIのretry設定・要求数・timeout後の子process終了を原証拠で確認し、要求上限の強制手段を実装するまで起動しない。
+SDK/CLIの通常/stream retry0、WebSocket/無制限接続retry/proxy fallback無効と、timeout後のprocess group終了を適用する。
+2026-10-11の実接続原記録はモデル一覧2件と推論1件を示した。API合計1件を期待した旧接続契約は未達として保持する。
+本人の制限緩和方針とPhase 4期間送信・SOL継続許可に基づき、初回は送信前hard capを必須にせず、
+応答ログでの閾値超過・未知API・非200・attempt非0・認証復旧観測時に停止し、次の一次起動を禁止する。
+この監視は送信前の絶対上限ではなく、超過した要求が既に送信済みの場合がある。事前API hard capと認証復旧ゼロは認定しない。
 認証情報を読むHTTP proxyでこの未証明事項を補わない。
 価格・請求額を未確認の数値で予算へ換算しない。token usage、実要求数、実時間と停止理由を原記録へ保存する。
 

@@ -114,7 +114,7 @@ def action_frame(frame: dict) -> bool:
         frame.get('params', {}).get('item', {}).get('type') not in {'userMessage', 'agentMessage', 'reasoning'}
 
 
-def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False):
+def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False, capture_guard=None):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
     contract = json.loads((base / 'contract.json').read_bytes())
@@ -149,6 +149,12 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
                     if isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}:
                         trace_handle.write(raw)
                         trace_handle.flush()
+                        if capture_guard is not None and not capture_guard('telemetry', event):
+                            stop.set()
+                            return
+                if dst == sys.stdout.buffer and capture_guard is not None and not capture_guard('rpc', json.loads(raw)):
+                    stop.set()
+                    return
                 if dst == sys.stdout.buffer and (reject_questions or reject_actions):
                     frame = json.loads(raw)
                     if (reject_questions and question_frame(frame)) or (reject_actions and action_frame(frame)):

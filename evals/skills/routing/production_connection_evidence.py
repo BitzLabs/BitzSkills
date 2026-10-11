@@ -67,8 +67,10 @@ def rollout_values(manifest_raw, events_raw, payloads, *, thread, turn, native_u
         trace.require(isinstance(item.get('content'), list) and all(isinstance(c, dict) and c.get('type') == 'input_text' and
                       isinstance(c.get('text'), str) for c in item['content']), 'original text input profile')
         texts.extend(c['text'] for c in item['content'])
-    trace.require(all(any(value in text for text in texts) for value in [connection.BASE, connection.DEVELOPER, connection.PROMPT]),
-                  'public caller strings present in original client request')
+    trace.require(items[1]['content'] == [{'type': 'input_text', 'text': connection.BASE}] and
+                  items[2]['content'][0] == {'type': 'input_text', 'text': connection.DEVELOPER} and
+                  items[4]['content'] == [{'type': 'input_text', 'text': connection.PROMPT}],
+                  'exact caller strings in original role and position')
     outputs = response['output_items']
     trace.require(len(outputs) == 1 and outputs[0]['type'] == 'message' and outputs[0]['role'] == 'assistant' and
                   outputs[0]['phase'] == 'final_answer' and
