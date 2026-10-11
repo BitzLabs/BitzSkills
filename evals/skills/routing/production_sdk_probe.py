@@ -20,6 +20,7 @@ import source_guard
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-sdk-probe-v0.1.json'
 MODES = ('sdk-native', 'sdk-minimal')
+DIAGNOSTIC_TRACING = {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}
 
 
 def tree_hash(root: Path) -> str:
@@ -118,6 +119,9 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
     contract = json.loads((base / 'contract.json').read_bytes())
+    trace_config = contract.get('diagnosticTracing')
+    if (capture_guard is not None or trace_config is not None) and trace_config != DIAGNOSTIC_TRACING:
+        raise ValueError('known diagnostic tracing policy required before CLI start')
     argv = [contract['codexPath'], 'app-server', '--stdio']
     for key, value in config.items():
         argv.extend(['-c', key + '=' + json.dumps(value)])
@@ -129,11 +133,8 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     handles = [os.fdopen(os.open(base / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb')
                for name in ('rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-stderr.bin')]
-    trace_config = contract.get('diagnosticTracing')
     trace_handle = None
     if trace_config is not None:
-        if trace_config != {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}:
-            raise ValueError('unknown diagnostic tracing policy')
         trace_handle = os.fdopen(os.open(base / 'trace-safe.jsonl',
             os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb')
         handles.append(trace_handle)

@@ -25,6 +25,8 @@ CODE = ['production_canary_capture.py', 'production_canary_host.py', 'production
 
 
 def policy(value):
+    trace.require(trace.json_equal(value.get('diagnosticTracing'), sdk.DIAGNOSTIC_TRACING),
+                  'fixed diagnostic tracing required')
     trace.require(value['version'] == 'production-canary-0.1.0' and value['phase'] == 4 and
                   value['scope'] == 'public-production-routing-canary-only' and value['model'] == 'gpt-6.1-sol', 'canary identity')
     limits = dict(repetitions=2, timeoutSeconds=300, observedModelApiLimit=3,
@@ -124,10 +126,17 @@ class CaptureGuard:
                         self.counts[endpoint] += 1
                         if self.counts[endpoint] > (2 if endpoint == '/models' else 3):
                             reason = 'observed-api-limit'
-                elif name == 'codex.tool_call_received' and fields.get('tool_source') == 'direct':
-                    self.counts['control'] += 1
-                    if fields.get('tool_name') not in {'exec', 'wait'} or self.counts['control'] > 2:
-                        reason = 'control-policy-limit'
+                elif name == 'codex.tool_call_received':
+                    source = fields.get('tool_source')
+                    if source == 'direct':
+                        self.counts['control'] += 1
+                        if fields.get('tool_name') not in ('exec', 'wait') or self.counts['control'] > 2:
+                            reason = 'control-policy-limit'
+                    elif source == 'code_mode':
+                        if fields.get('tool_namespace') != 'mcp__production_routing' or fields.get('tool_name') not in ('list_resources', 'read_resource'):
+                            reason = 'unknown-child-tool'
+                    else:
+                        reason = 'unknown-tool-source'
             else:
                 reason = 'unknown-capture-direction'
             if reason is not None:

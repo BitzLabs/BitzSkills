@@ -6,6 +6,7 @@ import sys
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
@@ -15,6 +16,68 @@ import test_routing_host as host_fixture
 
 
 class CanaryCaptureTests(unittest.TestCase):
+    def test_guarded_proxy_rejects_missing_or_unknown_tracing_before_cli_start(self):
+        for tracing in [None, {}, {'format': 'text', 'rustLog': 'unknown'}]:
+            base = self.temporary()
+            (base / 'config.json').write_text('{}')
+            contract = {'codexPath': '/unused/cli'}
+            if tracing is not None:
+                contract['diagnosticTracing'] = tracing
+            (base / 'contract.json').write_text(json.dumps(contract))
+            with self.subTest(tracing=tracing), patch.object(capture.sdk.subprocess, 'Popen',
+                    side_effect=AssertionError('CLI started before tracing validation')) as start:
+                with self.assertRaisesRegex(ValueError, 'tracing'):
+                    capture.sdk.proxy(base, capture_guard=lambda *_: True)
+                start.assert_not_called()
+            self.assertFalse((base / 'runtime-result.json').exists())
+
+    def test_control_notification_with_missing_or_unknown_source_stops(self):
+        for source in [None, '', 'unknown', [], {}]:
+            value = capture.CaptureGuard(self.temporary())
+            direct = {'fields': {'event.name': 'codex.tool_call_received', 'tool_source': 'direct', 'tool_name': 'exec'}}
+            self.assertTrue(value('telemetry', direct))
+            self.assertTrue(value('telemetry', direct))
+            fields = {'event.name': 'codex.tool_call_received', 'tool_name': 'wait'}
+            if source is not None:
+                fields['tool_source'] = source
+            with self.subTest(source=source):
+                self.assertFalse(value('telemetry', {'fields': fields}))
+                self.assertTrue((value.base / 'capture-stop.json').exists())
+                self.assertFalse(value('telemetry', direct))
+
+    def test_known_child_source_preserves_control_limit_and_rejects_masquerading(self):
+        value = capture.CaptureGuard(self.temporary())
+        direct = {'fields': {'event.name': 'codex.tool_call_received', 'tool_source': 'direct', 'tool_name': 'exec'}}
+        self.assertTrue(value('telemetry', direct))
+        self.assertTrue(value('telemetry', direct))
+        for tool in ['list_resources', 'read_resource']:
+            self.assertTrue(value('telemetry', {'fields': {'event.name': 'codex.tool_call_received',
+                'tool_source': 'code_mode', 'tool_namespace': 'mcp__production_routing', 'tool_name': tool}}))
+        self.assertEqual(value.counts['control'], 2)
+        self.assertFalse(value('telemetry', direct))
+        for namespace, tool in [('functions', 'exec'), ('mcp__production_routing', 'wait'),
+                                ('other', 'read_resource'), (None, 'list_resources')]:
+            other = capture.CaptureGuard(self.temporary())
+            self.assertFalse(other('telemetry', {'fields': {'event.name': 'codex.tool_call_received',
+                'tool_source': 'code_mode', 'tool_namespace': namespace, 'tool_name': tool}}))
+            self.assertTrue((other.base / 'capture-stop.json').exists())
+
+    def test_callback_free_legacy_proxy_keeps_optional_tracing_and_result_shape(self):
+        base = self.temporary()
+        fake = base / 'fake-codex'
+        fake.write_text('#!/usr/bin/python3\n')
+        fake.chmod(0o700)
+        (base / 'config.json').write_text('{}')
+        (base / 'contract.json').write_text(json.dumps({'codexPath': str(fake)}))
+        code = ('import sys; from pathlib import Path; sys.path.insert(0,"evals/skills/routing"); '
+                'import production_sdk_probe as sdk; sdk.proxy(Path(sys.argv[1]))')
+        result = subprocess.run([sys.executable, '-B', '-c', code, str(base)], cwd=ROOT,
+                                input=b'', capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        self.assertEqual(json.loads((base / 'runtime-result.json').read_bytes()),
+                         {'exitCode': 0, 'forcedShutdown': False})
+        self.assertFalse((base / 'trace-safe.jsonl').exists())
+
     def test_host_import_does_not_register_generic_host_module(self):
         result = subprocess.run([sys.executable, '-B', '-c',
             'import sys; sys.path.insert(0, "evals/skills/routing"); import production_canary_host; assert "host" not in sys.modules'],
@@ -39,6 +102,7 @@ class CanaryCaptureTests(unittest.TestCase):
         capture.policy(self.contract())
         for key, value in [('timeoutSeconds', True), ('timeoutSeconds', 301), ('maximumHostCalls', 3),
                            ('observedModelApiLimit', 4), ('model', 'gpt-6-astra'), ('certifiesApiRequestHardCap', True),
+                           ('diagnosticTracing', None), ('diagnosticTracing', {}),
                            ('budget', {'primaryModelTrajectories': 4, 'independentReviewerSol': 4, 'automaticRetries': 1, 'delegations': 0})]:
             bad = self.contract()
             bad[key] = value
