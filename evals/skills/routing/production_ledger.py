@@ -374,16 +374,46 @@ class Ledger:
             exclusive(self.storage / f'review-{ordinal:04d}.json', review_raw)
 
 
-def common_ledger_path(repository: Path):
+INITIAL_CAMPAIGN='public-initial-canary'
+SCHEMA_CAMPAIGN='public-schema-projection-01'
+INITIAL_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-public-initial/attempt-0001/receipt.json'
+
+
+def common_ledger_path(repository: Path, campaign_id=None):
     common = Path(source_guard.git(repository, 'rev-parse', '--git-common-dir').decode().strip())
     if not common.is_absolute():
         common = repository / common
     safe_tree(common)
     common = common.resolve(strict=True)
     require(common.name == '.git', 'shared non-bare repository required')
-    return common.parent / '.venv' / 'production-routing-primary-ledger'
+    name='production-routing-primary-ledger-schema-projection-01' if campaign_id==SCHEMA_CAMPAIGN else 'production-routing-primary-ledger'
+    return common.parent / '.venv' / name
+
+
+def verify_predecessor(repository,contract):
+    """Schema是正の別有限測定だけを、原停止の不変hashへ束縛する。旧台帳は読取りのみ。"""
+    if contract.get('campaignId')!=SCHEMA_CAMPAIGN:return None
+    prior=contract.get('stoppedPredecessor')
+    require(isinstance(prior,dict) and set(prior)=={'campaignId','sourceCommit','campaignSha256','attemptSha256','stopSha256','primaryReceiptSha256'},'stopped predecessor fields')
+    require(prior['campaignId']==INITIAL_CAMPAIGN and re.fullmatch(r'[0-9a-f]{40}',prior['sourceCommit'] or ''),'stopped predecessor identity')
+    legacy=common_ledger_path(repository)
+    raws={n:read_regular(legacy/n) for n in ['campaign.json','attempt-0001.json','stop-0001.json']}
+    for name,key in [('campaign.json','campaignSha256'),('attempt-0001.json','attemptSha256'),('stop-0001.json','stopSha256')]:
+        require(sha(raws[name])==pin(prior[key]),'original stopped ledger drift');read_owned(legacy/name)
+    campaign,attempt,stop=(strict_json(raws[n]) for n in ['campaign.json','attempt-0001.json','stop-0001.json'])
+    require(set(p.name for p in legacy.iterdir())=={'lock',*raws},'original stopped campaign inventory')
+    require(campaign.get('campaignId')==INITIAL_CAMPAIGN and attempt.get('attempt')==1 and attempt.get('sourceCommit')==prior['sourceCommit'] and
+        attempt.get('contractSha256')==campaign.get('contractSha256') and all(stop.get(k)==v for k,v in attempt.items()) and
+        stop.get('status')=='stopped_before_independent_review' and stop.get('reason')=='primary-capture-failed' and stop.get('independentInvocations')==0 and
+        stop.get('automaticRetry') is False and stop.get('primaryReceiptSha256')==pin(prior['primaryReceiptSha256']),'original stopped predecessor binding')
+    raw=read_regular(legacy.parent/INITIAL_RECEIPT);receipt=strict_json(raw)
+    require(sha(raw)==prior['primaryReceiptSha256'] and receipt.get('status')=='primary_capture_stopped' and
+        receipt.get('sourceCommit')==prior['sourceCommit'] and receipt.get('attempt')==attempt,'original failed receipt drift')
+    return dict(status='original_stopped_campaign_preserved',campaignId=INITIAL_CAMPAIGN,primaryReservationsConsumed=1,
+        independentReservationsConsumed=0,primaryReceiptSha256=sha(raw),usage=None,automaticRetry=False)
 
 
 def open_ledger(repository: Path, bound: BoundInputs):
     # 全worktreeで共通の場所。出力先・campaign変更を台帳の切替に使わない。
-    return Ledger(common_ledger_path(repository), bound, require_independent_reviews=True)
+    verify_predecessor(repository,bound.contract)
+    return Ledger(common_ledger_path(repository,bound.contract.get('campaignId')), bound, require_independent_reviews=True)

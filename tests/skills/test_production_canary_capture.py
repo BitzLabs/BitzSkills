@@ -16,6 +16,17 @@ import test_routing_host as host_fixture
 
 
 class CanaryCaptureTests(unittest.TestCase):
+    def test_execution_schema_does_not_weaken_canonical_duplicate_event_validation(self):
+        schema=json.loads((ROOT/'evals/skills/schemas/decision.schema.json').read_bytes());original=copy.deepcopy(schema)
+        wire=capture.execution_schema(schema)
+        self.assertEqual(schema,original)
+        self.assertNotIn('uniqueItems',wire['properties']['events'])
+        decision=dict(selectedEntry=None,selectedPath=None,outcome='not-applicable',events=['invoke-bitz','invoke-bitz'],
+            rejectedEvents=[],readyClaimed=False,evidencePresent=False,reason='public duplicate regression')
+        capture.trace.jsonschema.Draft202012Validator(wire).validate(decision)
+        with self.assertRaises(capture.trace.jsonschema.exceptions.ValidationError):
+            capture.trace.jsonschema.Draft202012Validator(schema).validate(decision)
+
     def test_guarded_proxy_rejects_missing_or_unknown_tracing_before_cli_start(self):
         for tracing in [None, {}, {'format': 'text', 'rustLog': 'unknown'}]:
             base = self.temporary()

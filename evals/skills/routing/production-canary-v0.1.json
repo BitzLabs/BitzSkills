@@ -1,9 +1,9 @@
 {
-  "version": "production-canary-0.1.0",
+  "version": "production-canary-0.1.1",
   "phase": 4,
   "scope": "public-production-routing-canary-only",
   "model": "gpt-6.1-sol",
-  "campaignId": "public-initial-canary",
+  "campaignId": "public-schema-projection-01",
   "repetitions": 2,
   "budget": {
     "primaryModelTrajectories": 4,
@@ -19,7 +19,7 @@
   "certifiesApiRequestHardCap": false,
   "certifiesBehavior": false,
   "certifiesSkillGate": false,
-  "outputRelativeRoot": ".venv/production-routing-primary-public-initial",
+  "outputRelativeRoot": ".venv/production-routing-primary-schema-projection-01",
   "codexVersion": "codex-cli 0.160.1",
   "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
   "sdkVersion": "0.160.1",
@@ -65,7 +65,8 @@
     "tests/skills/test_production_canary_score.py",
     "evals/skills/sol-authorization.json",
     "evals/skills/routing/production_canary_campaign.py",
-    "tests/skills/test_production_canary_campaign.py"
+    "tests/skills/test_production_canary_campaign.py",
+    "tests/skills/test_production_source_integration.py"
   ],
   "limitations": [
     "Phase 4期間の送信/SOL継続許可内の公開正例1・負例1各2反復。共通台帳を各一次/独立検分の起動前に予約し、独立原照合待ちの間は次を起動しない。",
@@ -76,5 +77,13 @@
   ],
   "contextProfileSha256": "78485e34aca006daefacef764799c91d5359885f1e75942ef2360f22dd1d427a",
   "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
-  "calibrationManifestSha256": "e48c25cd5864c351f6a5129cbcf9674552cefd56155157c0e5722d010dd8b495"
+  "calibrationManifestSha256": "e48c25cd5864c351f6a5129cbcf9674552cefd56155157c0e5722d010dd8b495",
+  "stoppedPredecessor": {
+    "campaignId": "public-initial-canary",
+    "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+    "campaignSha256": "ac776b7116d87c3905e49e7082920aecb06d9f41ed22452a0f6bc90435d501b3",
+    "attemptSha256": "446aa1a72c4e5680bb8794fa951beeae2faf96cdd1e066551f856b6692a3fc0a",
+    "stopSha256": "648fd689c53c1b6ecb0f545f3fb8a1b06f5f122d125493276c385f5ee50cc413",
+    "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc"
+  }
 }

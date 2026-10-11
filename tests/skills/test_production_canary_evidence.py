@@ -61,6 +61,7 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.patch(capture.calibration,'verify',return_value=dict(status='original_local_calibration_matches'))
         self.storage = self.repository / 'ledger'
         self.patch(ledger, 'common_ledger_path', return_value=self.storage)
+        self.patch(ledger,'verify_predecessor',return_value=dict(status='public synthetic predecessor'))
         self.fixed = evidence.load_fixed_inputs(self.repository, self.source)
         self.bound = self.fixed.bound
         self.instance = ledger.Ledger(self.storage, self.bound, require_independent_reviews=True)

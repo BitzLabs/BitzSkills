@@ -10,10 +10,11 @@ import production_ledger as ledger
 import production_trace as trace
 
 ROOT=Path(__file__).resolve().parents[3]
+OUTPUT='.venv/production-routing-campaign-schema-projection-01'
 
 
 def save_progress(source,bound,attempt,result):
-    base=ROOT/'.venv/production-routing-campaign-public-initial'
+    base=ROOT/OUTPUT
     ledger.safe_tree(base);base.mkdir(mode=0o700,parents=True,exist_ok=True)
     record=dict(sourceCommit=source,attempt=bound.attempt(attempt),result=result,recordedAtUnix=time.time(),
                 automaticRetry=False,certifiesBehavior=False,certifiesSkillGate=False)

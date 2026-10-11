@@ -113,6 +113,10 @@ class FixedInputs:
     audit_source_evidence: dict
 
 
+def audit_sources(contract):
+    return list(dict.fromkeys([*contract['sourceFiles'],*AUDIT_SOURCES]))
+
+
 def load_fixed_inputs(repository, source):
     """レシートの任意パスを使わず、固定Git refと公開snapshotから再構成する。"""
     require(isinstance(source, str) and re.fullmatch(r'[0-9a-f]{40}', source), 'full source commit required')
@@ -120,10 +124,11 @@ def load_fixed_inputs(repository, source):
             'exact fixed commit required')
     contract = trace.strict_json(guard.git(repository, 'show', source + ':' + capture.CONTRACT))
     capture.policy(contract)
+    ledger.verify_predecessor(repository,contract)
     capture.fixed_runtime.verify(guard.git(repository,'show',source+':'+capture.fixed_runtime.MANIFEST),contract)
     require(contract['snapshotRelativePath'] == SNAPSHOT, 'fixed public snapshot path')
     evidence = guard.verify(repository, source, contract['sourceFiles'])
-    audit_evidence = guard.verify(repository, source, [*contract['sourceFiles'], *AUDIT_SOURCES])
+    audit_evidence = guard.verify(repository, source, audit_sources(contract))
     manifest_raw = read_original(repository / SNAPSHOT / 'manifest.json')
     require(ledger.sha(manifest_raw) == contract['manifestSha256'], 'fixed manifest drift')
     manifest, _, _ = trace.manifest_view(manifest_raw)
@@ -200,7 +205,7 @@ def load_verified_capture(repository, source, ordinal):
             all(isinstance(v, str) for v in invocation['argv']) and
             trace.json_equal(invocation['argv'], capture.namespace_command(base, bound.contract, repository=repository)),
             'original invocation binding')
-    storage = ledger.common_ledger_path(repository)
+    storage = ledger.common_ledger_path(repository,bound.contract.get('campaignId'))
     ledger.safe_tree(storage)
     info = storage.stat()
     require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o700,

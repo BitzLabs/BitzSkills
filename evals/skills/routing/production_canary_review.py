@@ -52,7 +52,8 @@ def verify_native(capture):
     require({name: evidence.ledger.sha(raw) for name, raw in originals.items()} ==
             capture.result['artifactSha256'], 'consumed original artifact binding drift')
     schema = trace.strict_json(fixed.decision_schema_raw)
-    sdk.requests(sent, profile='public-canary', output_schema=schema)
+    wire_schema=evidence.capture.execution_schema(schema)
+    sdk.requests(sent, profile='public-canary', output_schema=wire_schema)
     projected, raw = raw_projection(sent, received)
     events = sdk.complete_trace_projection(originals['runtime-stderr.bin'], originals['trace-safe.jsonl'])
     direct = tuple(e['fields'].get('tool_name') for e in events
@@ -64,7 +65,7 @@ def verify_native(capture):
         raw_stderr=originals['runtime-stderr.bin'], selected_log=originals['trace-safe.jsonl'],
         profile=profiles[0], expected_input=originals['model-input.json'],
         base_instructions=evidence.capture.BASE, developer_instructions=evidence.capture.DEVELOPER,
-        cwd=str(capture.base / 'work'), actual_exit_code=0, sdk_profile='public-canary', output_schema=schema)
+        cwd=str(capture.base / 'work'), actual_exit_code=0, sdk_profile='public-canary', output_schema=wire_schema)
     trace.jsonschema.Draft202012Validator(schema).validate(result['decision'])
     return dict(status='primary_native_and_host_correlated', artifactBinding=capture.result, native=result,
         rawNotificationsValueSha256=sdk.digest(raw), rawNotificationCount=len(raw),

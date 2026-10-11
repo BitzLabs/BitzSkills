@@ -21,8 +21,9 @@ CONTRACT='evals/skills/routing/production-canary-score-v0.1.json'
 SCHEMA='evals/skills/routing/production-canary-score.schema.json'
 SOURCES=[CONTRACT,SCHEMA,'evals/skills/routing/production_canary_score.py','tests/skills/test_production_canary_score.py','evals/skills/sol-authorization.json']
 SCOPE='public-primary-routing-semantic-review-only'
-OUTPUT='.venv/production-routing-independent-public-initial'
-ARTIFACTS={'contract.json','review-input.json','prompt.txt','schema.json','reservation.json','config.json','invocation.json',
+OUTPUT='.venv/production-routing-independent-schema-projection-01'
+PARENT_OUTPUT='.venv/production-routing-parent-schema-projection-01'
+ARTIFACTS={'contract.json','review-input.json','prompt.txt','schema.json','execution-schema.json','reservation.json','config.json','invocation.json',
            'trace.jsonl','stderr.bin'}
 OPTIONAL={'response.json'}
 OPAQUE={'work','tmp','codex-home','state','logs'}
@@ -30,6 +31,10 @@ BINDINGS={'sourceCommit','caseId','repetition','attempt','reviewInputSha256','mo
 WARNING=('Code Mode is unavailable because code-mode host is disabled. '
          'Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.')
 require=trace.require
+
+
+def source_names(primary_contract):
+    return list(dict.fromkeys([*primary_contract['sourceFiles'],*SOURCES]))
 
 
 def policy(value):
@@ -152,7 +157,7 @@ def config_for(base):
 def command_for(base,primary_contract):
     config=config_for(base)
     argv=[primary_contract['codexPath'],'exec','--json','--ephemeral','--ignore-user-config','--ignore-rules','--skip-git-repo-check',
-        '--sandbox','read-only','--cd',str(base/'work'),'--model','gpt-6.1-sol','--output-schema',str(base/'schema.json'),
+        '--sandbox','read-only','--cd',str(base/'work'),'--model','gpt-6.1-sol','--output-schema',str(base/'execution-schema.json'),
         '--output-last-message',str(base/'response.json')]
     for key,value in config.items():argv+=['-c',key+'='+capture.sdk.toml_value(value)]
     argv+=['-']
@@ -167,7 +172,7 @@ def run(source,ordinal,dry_run=False):
     require(guard.git(ROOT,'status','--porcelain')==b'' and guard.git(ROOT,'rev-parse','HEAD').decode().strip()==source,'clean fixed score source')
     context=evidence.load_verified_capture(ROOT,source,ordinal);prepared=prepare(ROOT,context)
     primary_contract=context.fixed.bound.contract
-    before=guard.verify(ROOT,source,[*primary_contract['sourceFiles'],*SOURCES])
+    before=guard.verify(ROOT,source,source_names(primary_contract))
     runtime_raw=guard.git(ROOT,'show',source+':'+capture.fixed_runtime.MANIFEST)
     runtime_before=capture.fixed_runtime.verify(runtime_raw,primary_contract)
     if dry_run:return dict(status='semantic_score_preflight_checked',reviewInputSha256=prepared.bindings['reviewInputSha256'],independentInvocations=0)
@@ -186,7 +191,8 @@ def execute_reserved(source,ordinal,context,prepared,reservation,before,runtime_
     for name in OPAQUE:(base/name).mkdir(mode=0o700)
     argv=command_for(base,primary_contract);prompt_raw=prompt(prepared)
     originals={'contract.json':prepared.contract_raw,'review-input.json':prepared.input_raw,'prompt.txt':prompt_raw,
-        'schema.json':prepared.schema_raw,'reservation.json':ledger.encoded(reservation),'config.json':ledger.encoded(config_for(base)),
+        'schema.json':prepared.schema_raw,'execution-schema.json':ledger.encoded(capture.execution_schema(trace.strict_json(prepared.schema_raw))),
+        'reservation.json':ledger.encoded(reservation),'config.json':ledger.encoded(config_for(base)),
         'invocation.json':ledger.encoded(dict(argv=argv,sourceCommit=source,model='gpt-6.1-sol',maximumInvocations=1,
             promptSha256=ledger.sha(prompt_raw),reviewInputSha256=prepared.bindings['reviewInputSha256']))}
     for name,raw in originals.items():ledger.exclusive(base/name,raw)
@@ -194,7 +200,7 @@ def execute_reserved(source,ordinal,context,prepared,reservation,before,runtime_
     start=time.monotonic()
     try:
         auth=Path('/home/hide/.codex/auth.json');require(auth.is_file() and not auth.is_symlink(),'standard score authentication unavailable')
-        invoke=guard.verify(ROOT,source,[*primary_contract['sourceFiles'],*SOURCES])
+        invoke=guard.verify(ROOT,source,source_names(primary_contract))
         runtime_invoke=capture.fixed_runtime.verify(runtime_raw,primary_contract)
         require(invoke==before and runtime_before==runtime_invoke,'score pre-invocation source/runtime drift')
         # 親は認証内容にアクセスしない。標準CLIがRO mountを用いて解決する。
@@ -209,7 +215,7 @@ def execute_reserved(source,ordinal,context,prepared,reservation,before,runtime_
     except (ValueError,OSError) as exc:error=type(exc).__name__
     ledger.exclusive(base/'trace.jsonl',stdout);ledger.exclusive(base/'stderr.bin',stderr)
     try:
-        after=guard.verify(ROOT,source,[*primary_contract['sourceFiles'],*SOURCES])
+        after=guard.verify(ROOT,source,source_names(primary_contract))
         runtime_after=capture.fixed_runtime.verify(runtime_raw,primary_contract)
     except (ValueError,OSError) as exc:after=runtime_after=None;error=type(exc).__name__
     ok=calls==1 and exit_code==0 and not timed_out and error is None and before==invoke==after and runtime_before==runtime_invoke==runtime_after
@@ -251,13 +257,14 @@ def load_review(repository,context,prepared):
     require(actual==set(inventory),'independent original inventory drift')
     originals={name:ledger.read_regular(base/name) for name in sorted(inventory)}
     require({name:ledger.sha(raw) for name,raw in originals.items()}==inventory,'independent original bytes drift')
-    storage=ledger.common_ledger_path(repository);reservation=ledger.read_owned(storage/f'independent-{ordinal:04d}.json')
+    storage=ledger.common_ledger_path(repository,context.fixed.bound.contract.get('campaignId'));reservation=ledger.read_owned(storage/f'independent-{ordinal:04d}.json')
     context_ledger=ledger.Ledger.__new__(ledger.Ledger);context_ledger.bound=context.fixed.bound
     context_ledger.validate_independent_reservation(ordinal,reservation)
     require(reservation['reviewInputSha256']==prepared.bindings['reviewInputSha256'] and
         originals['reservation.json']==ledger.encoded(reservation),'independent shared input reservation')
     expected={'contract.json':prepared.contract_raw,'review-input.json':prepared.input_raw,'prompt.txt':prompt(prepared),
-        'schema.json':prepared.schema_raw,'config.json':ledger.encoded(config_for(base)),
+        'schema.json':prepared.schema_raw,'execution-schema.json':ledger.encoded(capture.execution_schema(trace.strict_json(prepared.schema_raw))),
+        'config.json':ledger.encoded(config_for(base)),
         'invocation.json':ledger.encoded(dict(argv=command_for(base,context.fixed.bound.contract),sourceCommit=source,model='gpt-6.1-sol',maximumInvocations=1,
             promptSha256=ledger.sha(prompt(prepared)),reviewInputSha256=prepared.bindings['reviewInputSha256']))}
     require(all(originals[name]==raw for name,raw in expected.items()),'fixed independent original input/argv/config drift')
@@ -268,7 +275,7 @@ def load_review(repository,context,prepared):
     require(type(receipt['independentInvocations']) is int and receipt['independentInvocations'] in {0,1} and type(receipt['timedOut']) is bool and
         (receipt['exitCode'] is None or type(receipt['exitCode']) is int) and
         (receipt['errorType'] is None or isinstance(receipt['errorType'],str)),'independent execution field types')
-    source_proof=guard.verify(repository,source,[*context.fixed.bound.contract['sourceFiles'],*SOURCES])
+    source_proof=guard.verify(repository,source,source_names(context.fixed.bound.contract))
     runtime_proof=capture.fixed_runtime.verify(guard.git(repository,'show',source+':'+capture.fixed_runtime.MANIFEST),context.fixed.bound.contract)
     accepted=receipt['status']=='independent_score_captured'
     require(receipt['status'] in {'independent_score_captured','independent_score_stopped'},'independent receipt status')
@@ -302,7 +309,7 @@ def finalize_verified(repository,source,ordinal):
         eligibleForMeasurement=accepted,certifiesBehavior=False,certifiesSkillGate=False))
     base=repository/OUTPUT/f'attempt-{ordinal:04d}'
     # 外部scoreの書換えには使わない。親の原照合結果を別ディレクトリに保存する。
-    parent_base=repository/'.venv/production-routing-parent-public-initial'/f'attempt-{ordinal:04d}'
+    parent_base=repository/PARENT_OUTPUT/f'attempt-{ordinal:04d}'
     ledger.safe_tree(parent_base);parent_base.mkdir(mode=0o700,parents=True)
     ledger.exclusive(parent_base/'verification.json',verification)
     value=dict(**context.result['attempt'],status='accepted' if accepted else 'stopped',
@@ -324,7 +331,7 @@ def save_independent_failure(repository,bound,ordinal,reason,error_type,actual_i
     primary=repository/bound.attempt(ordinal)['outputRelativePath']/'receipt.json'
     base=repository/OUTPUT/f'attempt-{ordinal:04d}'
     primary_raw=original_failure_file(primary);independent_raw=original_failure_file(base/'receipt.json')
-    parent_base=repository/'.venv/production-routing-parent-public-initial'/f'attempt-{ordinal:04d}'
+    parent_base=repository/PARENT_OUTPUT/f'attempt-{ordinal:04d}'
     value=dict(status='independent_original_verification_failed',attempt=bound.attempt(ordinal),reason=reason,errorType=error_type,
         actualIndependentInvocations=actual_invocations,usage=None,eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
     stopped=ledger.open_ledger(repository,bound).record_independent_stop(ordinal,reason,
@@ -341,7 +348,7 @@ def finalize(repository,source,ordinal):
     fixed=evidence.load_fixed_inputs(repository,source)
     try:return finalize_verified(repository,source,ordinal)
     except (ValueError,OSError,trace.jsonschema.exceptions.ValidationError) as exc:
-        storage=ledger.common_ledger_path(repository)
+        storage=ledger.common_ledger_path(repository,fixed.bound.contract.get('campaignId'))
         # 未予約入力や既存の停止に対して停止レコードを捏造・上書きしない。
         if (storage/f'stop-{ordinal:04d}.json').exists() or (storage/f'review-{ordinal:04d}.json').exists() or not (storage/f'independent-{ordinal:04d}.json').exists():raise
         save_independent_failure(repository,fixed.bound,ordinal,'independent-originals-rejected',type(exc).__name__)

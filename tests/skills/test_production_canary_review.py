@@ -24,6 +24,7 @@ class CanaryReviewTests(unittest.TestCase):
         self.trace.setUp()
         self.addCleanup(self.trace.doCleanups)
         primary = self.trace.fixture
+        primary.sent[3]['params']['outputSchema']=review.evidence.capture.execution_schema(json.loads(self.capture.fixed.decision_schema_raw))
         primary.sent[2]['params'].update(cwd=str(self.capture.base / 'work'),
             baseInstructions=review.evidence.capture.BASE, developerInstructions=review.evidence.capture.DEVELOPER)
         primary.sent[3]['params']['input'][0]['text'] = self.capture.originals['model-input.json'].decode()
@@ -158,7 +159,7 @@ class CanaryCompleteReviewTests(unittest.TestCase):
             return value
         events=convert(original['events']);payloads={name:convert(json.loads(raw)) for name,raw in original['payloads'].items()}
         for value in payloads.values():
-            if 'input' in value and isinstance(value['input'],list):value['text']['format']['schema']=self.fixture.trace.schema
+            if 'input' in value and isinstance(value['input'],list):value['text']['format']['schema']=self.fixture.trace.fixture.sent[3]['params']['outputSchema']
         received=convert(original['received'])
         bodies=json.dumps([e['result'] for e in self.fixture.trace.fixture.host])
         for value in payloads.values():

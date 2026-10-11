@@ -59,6 +59,38 @@ class ProductionLedgerTests(unittest.TestCase):
                 'severityCounts': {'P1': 0, 'P2': 0}, 'automaticRetry': False,
                 'certifiesBehavior': False, 'certifiesSkillGate': False}
 
+    def predecessor(self):
+        root=self.storage.parent/'public-predecessor-repository';(root/'.git').mkdir(parents=True);(root/'.venv').mkdir()
+        p=patch.object(ledger.source_guard,'git',return_value=str(root/'.git').encode());p.start();self.addCleanup(p.stop)
+        previous=self.bind(dict(self.contract,campaignId=ledger.INITIAL_CAMPAIGN))
+        legacy=ledger.open_ledger(root,previous);attempt=legacy.reserve()
+        receipt=ledger.encoded(dict(status='primary_capture_stopped',sourceCommit=previous.contract['sourceCommit'],attempt=attempt))
+        path=legacy.storage.parent/ledger.INITIAL_RECEIPT;path.parent.mkdir(parents=True);ledger.exclusive(path,receipt)
+        stop=legacy.record_primary_stop(1,'primary-capture-failed',ledger.sha(receipt))
+        prior=dict(campaignId=ledger.INITIAL_CAMPAIGN,sourceCommit=previous.contract['sourceCommit'],
+            campaignSha256=ledger.sha(ledger.read_regular(legacy.storage/'campaign.json')),
+            attemptSha256=ledger.sha(ledger.read_regular(legacy.storage/'attempt-0001.json')),
+            stopSha256=ledger.sha(ledger.encoded(stop)),primaryReceiptSha256=ledger.sha(receipt))
+        next_bound=self.bind(dict(self.contract,campaignId=ledger.SCHEMA_CAMPAIGN,sourceCommit='b'*40,stoppedPredecessor=prior))
+        return root,legacy,next_bound
+
+    def test_explicit_schema_measurement_preserves_original_stop_and_shares_one_new_ledger(self):
+        root,legacy,bound=self.predecessor()
+        before={p.name:ledger.sha(ledger.read_regular(p)) for p in legacy.storage.iterdir()}
+        new=ledger.open_ledger(root,bound);same=ledger.open_ledger(root,bound)
+        self.assertNotEqual(new.storage,legacy.storage);self.assertEqual(new.storage,same.storage)
+        self.assertEqual(new.reserve()['attempt'],1)
+        with self.assertRaises(ValueError):same.reserve()
+        with self.assertRaises(ValueError):legacy.reserve()
+        self.assertEqual(before,{p.name:ledger.sha(ledger.read_regular(p)) for p in legacy.storage.iterdir()})
+
+    def test_schema_measurement_missing_predecessor_or_changed_original_stops_before_new_reservation(self):
+        root,legacy,bound=self.predecessor();bad=dict(bound.contract);bad.pop('stoppedPredecessor')
+        with self.assertRaises(ValueError):ledger.open_ledger(root,self.bind(bad))
+        (legacy.storage/'stop-0001.json').write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError,'drift'):ledger.open_ledger(root,bound)
+        self.assertFalse(ledger.common_ledger_path(root,ledger.SCHEMA_CAMPAIGN).exists())
+
     def test_primary_capture_stop_does_not_forge_independent_review_and_is_permanent(self):
         instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
         instance.reserve();stopped=instance.record_primary_stop(1,'primary-structure-rejected','1'*64)

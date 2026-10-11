@@ -15,7 +15,7 @@ class CanaryCampaignTests(unittest.TestCase):
         fixture=ledger_fixture.ProductionLedgerTests(methodName='runTest');fixture.setUp()
         self.addCleanup(fixture.doCleanups);self.fixture=fixture
         self.repository=fixture.storage.parent;self.bound=fixture.bound;self.source=self.bound.contract['sourceCommit']
-        for target,name,value in [(campaign,'ROOT',self.repository),(campaign.ledger,'common_ledger_path',lambda repo:fixture.storage)]:
+        for target,name,value in [(campaign,'ROOT',self.repository),(campaign.ledger,'common_ledger_path',lambda repo,campaign_id=None:fixture.storage)]:
             handle=patch.object(target,name,value);handle.start();self.addCleanup(handle.stop)
         handle=patch.object(campaign.capture,'prepare',return_value=(self.bound,{}));handle.start();self.addCleanup(handle.stop)
         self.instance=campaign.ledger.open_ledger(self.repository,self.bound)
@@ -41,7 +41,7 @@ class CanaryCampaignTests(unittest.TestCase):
             self.assertEqual(result['result']['reason'],'primary-capture-failed')
             with self.assertRaises(ValueError):campaign.one(self.source)
         independent.assert_not_called();self.assertFalse((self.fixture.storage/'independent-0001.json').exists())
-        self.assertTrue((self.repository/'.venv/production-routing-campaign-public-initial/attempt-0001.json').is_file())
+        self.assertTrue((self.repository/campaign.OUTPUT/'attempt-0001.json').is_file())
 
     def test_post_reservation_exception_with_missing_receipt_permanently_stops(self):
         def fail(source,**kw):self.primary(receipt=False,**kw);raise OSError('synthetic acquisition failure')
@@ -107,7 +107,7 @@ class CanaryCampaignTests(unittest.TestCase):
             with self.assertRaises(ValueError):campaign.one(self.source)
         independent.assert_not_called();self.assertFalse((self.fixture.storage/'stop-0001.json').exists())
         self.assertEqual(self.instance.reservations(allow_pending_last=True),1)
-        self.assertFalse((self.repository/'.venv/production-routing-campaign-public-initial/attempt-0001.json').exists())
+        self.assertFalse((self.repository/campaign.OUTPUT/'attempt-0001.json').exists())
 
     def test_other_worker_completion_does_not_consume_unannounced_next_case(self):
         def competing(source,**kw):

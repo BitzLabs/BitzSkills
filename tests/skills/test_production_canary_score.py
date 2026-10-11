@@ -44,7 +44,8 @@ class CanaryScoreTests(unittest.TestCase):
         for name in score.OPAQUE:(self.base/name).mkdir()
         enc=score.ledger.encoded;prompt=score.prompt(self.prepared)
         self.originals={'contract.json':self.prepared.contract_raw,'review-input.json':self.prepared.input_raw,'prompt.txt':prompt,
-            'schema.json':self.prepared.schema_raw,'reservation.json':enc(reservation),'config.json':enc(score.config_for(self.base)),
+            'schema.json':self.prepared.schema_raw,'execution-schema.json':enc(score.capture.execution_schema(json.loads(self.prepared.schema_raw))),
+            'reservation.json':enc(reservation),'config.json':enc(score.config_for(self.base)),
             'invocation.json':enc(dict(argv=score.command_for(self.base,self.capture.bound.contract),sourceCommit=self.capture.source,model='gpt-6.1-sol',
                 maximumInvocations=1,promptSha256=score.ledger.sha(prompt),reviewInputSha256=self.prepared.bindings['reviewInputSha256'])),
             'trace.jsonl':b''.join(enc(e)+b'\n' for e in self.trace(result)),'stderr.bin':b'','response.json':enc(result)}
@@ -68,6 +69,19 @@ class CanaryScoreTests(unittest.TestCase):
         self.assertEqual(self.prepared.bindings['reviewInputSha256'],score.ledger.sha(self.prepared.input_raw))
         self.assertFalse((self.capture.storage/'independent-0001.json').exists())
         self.assertEqual(self.check(self.trace())[0],self.result)
+
+    def test_nested_wire_projection_keeps_strict_parent_duplicate_evidence_rejection(self):
+        schema=json.loads(self.prepared.schema_raw);wire=score.capture.execution_schema(schema)
+        refs=schema['properties']['findings']['items']['properties']['evidenceRefs']
+        self.assertTrue(refs['uniqueItems']);self.assertNotIn('uniqueItems',wire['properties']['findings']['items']['properties']['evidenceRefs'])
+        result=dict(self.result,semantic='fail',verdict='findings',findings=[dict(priority='P2',evidenceRefs=['input','input'],message='public duplicate evidence')])
+        score.trace.jsonschema.Draft202012Validator(wire).validate(result)
+        with self.assertRaises(score.trace.jsonschema.exceptions.ValidationError):self.check(self.trace(result),result)
+
+    def test_rehashed_execution_schema_drift_rejects_before_parent_finalization(self):
+        self.create_review();wire=json.loads(self.originals['execution-schema.json']);wire['properties']['semantic']['enum']=['pass']
+        self.originals['execution-schema.json']=score.ledger.encoded(wire);self.persist()
+        with self.assertRaisesRegex(ValueError,'fixed independent original'):score.load_review(self.repository,self.context,self.prepared)
 
     def test_unknown_action_retry_missing_terminal_usage_type_and_binding_reject(self):
         for fault in ['tool','retry','missing','bool','usage','binding','float','late','mismatch']:
@@ -154,7 +168,7 @@ class CanaryScoreTests(unittest.TestCase):
         self.assertEqual(result['status'],'stopped_independent_verification')
         stop=score.ledger.read_owned(self.capture.storage/'stop-0001.json')
         self.assertEqual(stop['independentReceiptSha256'],score.ledger.sha(failed));self.assertIsNone(stop['actualIndependentInvocations'])
-        failure=self.repository/'.venv/production-routing-parent-public-initial/attempt-0001/failed-independent-receipt.json'
+        failure=self.repository/score.PARENT_OUTPUT/'attempt-0001/failed-independent-receipt.json'
         self.assertEqual(failure.read_bytes(),failed)
         (self.base/'receipt.json').write_bytes(original)
         with self.assertRaises(ValueError):score.finalize(self.repository,self.capture.source,1)
