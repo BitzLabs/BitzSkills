@@ -40,19 +40,22 @@ class ConnectionProbeTests(unittest.TestCase):
     def test_finite_contract_rejects_extra_turns_retries_models_and_bool_counts(self):
         probe.policy(self.contract())
         for key, value in [('maximumInvocations', True), ('maximumLogicalTurns', 2), ('automaticRetries', 1),
-                           ('timeoutSeconds', 300), ('model', 'other'), ('primaryModelTrajectories', 1)]:
+                           ('timeoutSeconds', 300), ('model', 'other'), ('primaryModelTrajectories', 1), ('version', 'unknown')]:
             bad = self.contract()
             bad[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError): probe.policy(bad)
 
     def test_same_contract_reservation_cannot_be_repeated_with_another_source_or_output(self):
-        with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
-            storage = Path(temporary) / 'ledger'
-            raw = json.dumps(self.contract()).encode()
-            reservation = probe.reserve(ROOT, 'a' * 40, raw, storage)
-            self.assertEqual(reservation['role'], 'paidConnectionDiagnostic')
-            for source, changed in [('b' * 40, raw), ('a' * 40, json.dumps(dict(self.contract(), outputRelativeRoot='other')).encode())]:
-                with self.assertRaises(FileExistsError): probe.reserve(ROOT, source, changed, storage)
+        for contract_path in [probe.CONTRACT, probe.HTTP_CONTRACT]:
+            with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
+                storage = Path(temporary) / 'ledger'
+                contract = json.loads((ROOT / contract_path).read_bytes())
+                raw = json.dumps(contract).encode()
+                reservation = probe.reserve(ROOT, 'a' * 40, raw, storage)
+                self.assertEqual(reservation['role'], 'paidConnectionDiagnostic')
+                self.assertEqual(reservation['contractPath'], contract_path)
+                for source, changed in [('b' * 40, raw), ('a' * 40, json.dumps(dict(contract, outputRelativeRoot='other')).encode())]:
+                    with self.assertRaises(FileExistsError): probe.reserve(ROOT, source, changed, storage)
 
     def test_reservation_rejects_symlink_storage(self):
         with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
@@ -91,6 +94,18 @@ class ConnectionProbeTests(unittest.TestCase):
             elif mutation == 'other-caller-thread': sent[3]['params']['threadId'] = 'other'
             with self.subTest(mutation=mutation), self.assertRaises((ValueError, KeyError)):
                 probe.evaluate(sent, frames, api, runtime)
+
+    def test_alias_profile_is_explicit_and_rejects_provider_and_runtime_contradictions(self):
+        sent, frames, api, runtime = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_openai_http'
+        self.assertTrue(probe.evaluate(sent, frames, api, runtime, expected_provider='bitz_openai_http')['finalMatched'])
+        with self.assertRaises(ValueError): probe.evaluate(sent, frames, api, runtime)
+        for key, value in [('model', 'other'), ('app.version', 'other'), ('provider_name', 'other'),
+                           ('auth.retry_after_unauthorized', True)]:
+            changed = copy.deepcopy(api)
+            changed[0][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                probe.evaluate(sent, frames, changed, runtime, expected_provider='bitz_openai_http')
 
     def test_fault_profile_uses_same_caller_and_reply_checks(self):
         sent, frames, _, _ = copy.deepcopy(self.fixture())

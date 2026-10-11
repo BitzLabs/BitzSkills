@@ -1,0 +1,57 @@
+{
+  "version": "sdk-trace-review-0.37.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "official-provider-alias-startup-and-bounded-connection-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-37",
+  "payloadFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_startup_probe.py",
+    "tests/skills/test_production_connection_probe.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.2.json",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_startup_probe.py",
+    "evals/skills/routing/production-provider-startup-v0.2.json",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.37.json"
+  ],
+  "constraints": [
+    "Phase 4期間の本人送信・SOL許可内。公開4本文のみ、SOL1回/300秒/一次0/retry0。v33〜36の原指摘/消費を保持する。",
+    "v36 P2=1はinitialize応答前のthread開始の見落とし。今回reply_positions[0] < thread_starts[0] < starts[0]へ束縛し、接続/故障両profileの回帰に追加。",
+    "旧connection0.1はCLIの組込みopenai設定上書き禁止でinitialize前に停止。原停止/消費1を保持。無認証・network隔離のinitialize-only検査はSDKエラーなし/process0/APIログ空で原照合済み。この検分者へ私的原証拠を送らず、原証拠を自ら検分済みとしない。",
+    "是正版connection0.2は公式別名bitz_openai_http/name OpenAI/Responses/標準OpenAI認証/標準URL解決を使う。宛先・key・bearer tokenを独自指定せず、通常/stream retry0・WebSocket/無制限retry/proxy fallback無効。旧停止と無課金初期化のhashを起動前に固定する。",
+    "旧契約・是正契約は各起動1/SDK turn1/60秒/retry0/primary0の共通別role有限枠。旧枠は返金/再起動せず、新契約は設定原因の是正を根拠とする。モデル・公開prompt/base/developer/schemaは同じ。API1は観測期待で事前hard cap/認証復旧0を保証しない。",
+    "collector capturedは原取得で診断passではない。parent evaluate・原rollout/RPC/API/終端照合が別に必要。全wire/上流入力/一次/実地/Gate/Phaseは未認定。",
+    "CLIだけが既承認RO bindの認証を内部利用し、コードは認証内容を読取/コピー/出力しない。原artifact集計は明示原記録とrolloutだけでhome/cacheを除外する。",
+    "非提示依存は未読。限定是正、入力相関、有限枠、停止、偽認定の具体的矛盾のみを検分する。未知profileの安全な拒否や未実装の後続だけを欠陥にしない。保持原SDK/stdio/bundle/HTTP/SSE/期待値/認証内容は送らない。tool/追加モデル/委譲/ファイル読取り/試験実行は禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "86db7ca7f965366c9d7e2ebab1ccf83faf577286",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-36",
+    "receiptSha256": "2a4c65a19b35ed142d80e8bdc2c9de14e66666f6d632f17c50a83bf30c8ec9c4",
+    "responseSha256": "3295ad183a53b5ad2cb52a01fba846a90fbbfb2e4b9455e126864adab0cca93c",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

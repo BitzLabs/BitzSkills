@@ -16,4 +16,10 @@ v36はinitialize応答より前のthread開始の見落としを指摘した。�
 任意の送信先や認証headerを設定するproxyは作らない。成果物は明示した原記録だけをhash集計する。
 元receiptにある`codex-home/auth.json`はbwrapの空のmount先（host側size0）であり、再照合器は内容を読まない。
 
+無課金startup0.1はSDK起動前のNETLINK_ROUTE権限停止、startup0.2はnetwork隔離を維持した必要権限で
+initialize/initializedのみを実行し、SDKエラーなし・process終了0・APIログ空を原照合した。
+別名providerの設定読込みは確認できた。認証・実接続の成功を意味しない。
+source `ede0b4876f413f758e810e289c5f75c13db89ce6`の全スキル549試験は62.767秒、OK、exit0。
+是正版接続v0.2は元失敗と無課金初期化のhashを先に固定し、同じ旧枠を再起動せず、別の有限1枠へ設定是正を結ぶ。
+
 実OpenAIモデル接続、初期入力捕捉、routing一次評価、5種類実地比較、Skill Gate 4、Phase 4完了は未認定。

@@ -19,6 +19,7 @@ import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-connection-probe-v0.1.json'
+HTTP_CONTRACT = 'evals/skills/routing/production-connection-probe-v0.2.json'
 CODE_FILES = ['production_connection_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'source_guard.py']
 PROMPT = 'PUBLIC_CONNECTION_DIAGNOSTIC: Return exactly {"ok":true,"scope":"public_connection_diagnostic"}.'
 BASE = 'This is a public connection diagnostic. Return the requested JSON without using any tools.'
@@ -30,7 +31,7 @@ SCHEMA = {'type': 'object', 'additionalProperties': False, 'required': ['ok', 's
 
 
 def policy(contract):
-    if (contract.get('version') != 'production-connection-probe-0.1.0' or
+    if (contract.get('version') not in {'production-connection-probe-0.1.0', 'production-connection-probe-0.2.0'} or
             contract.get('model') != 'gpt-6.1-sol' or contract.get('phase') != 4 or
             contract.get('scope') != 'public-provider-connection-diagnostic-only' or
             any(type(contract.get(key)) is not int or contract[key] != expected for key, expected in
@@ -74,8 +75,9 @@ def reserve(repository, source, contract_raw, storage=None):
     require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and
             stat.S_IMODE(info.st_mode) == 0o700, 'diagnostic ledger owner or mode')
     ledger.sync_directory(storage.parent)
-    path = storage / (Path(CONTRACT).stem + '.json')
-    value = dict(contractPath=CONTRACT, sourceCommit=source, contractSha256=hashlib.sha256(contract_raw).hexdigest(),
+    contract_name = HTTP_CONTRACT if contract['version'] == 'production-connection-probe-0.2.0' else CONTRACT
+    path = storage / (Path(contract_name).stem + '.json')
+    value = dict(contractPath=contract_name, sourceCommit=source, contractSha256=hashlib.sha256(contract_raw).hexdigest(),
                  maximumInvocations=1, consumedReservations=1, model=contract['model'],
                  role='paidConnectionDiagnostic', primaryModelTrajectories=0, automaticRetry=False)
     ledger.exclusive(path, ledger.encoded(value))
@@ -119,11 +121,12 @@ def original_artifact_paths(base):
     return paths
 
 
-def evaluate(sent, frames, api, runtime):
+def evaluate(sent, frames, api, runtime, *, expected_provider='openai'):
     """原SDK文脈とAPI観測を照合する。HTTP回数の事前強制を意味しない。"""
     from production_trace import require, strict_json, json_equal
     from production_rpc_capture import correlate
     correlated = correlate(sent, frames)
+    require(expected_provider in {'openai', 'bitz_openai_http'}, 'fixed provider profile')
     require([f.get('method') for f in sent] == ['initialize', 'initialized', 'thread/start', 'turn/start'],
             'closed caller method sequence')
     require('id' not in sent[1] and all(type(f.get('id')) in {str, int} for f in [sent[0], sent[2], sent[3]]) and
@@ -132,7 +135,7 @@ def evaluate(sent, frames, api, runtime):
     turns = [f for f in sent if f.get('method') == 'turn/start']
     require(len(threads) == len(turns) == 1, 'one caller thread and turn')
     params = threads[0]['params']
-    require(params['model'] == 'gpt-6.1-sol' and params['modelProvider'] == 'openai' and
+    require(params['model'] == 'gpt-6.1-sol' and params['modelProvider'] == expected_provider and
             params['allowProviderModelFallback'] is False and params['sandbox'] == 'read-only' and
             params['approvalPolicy'] == 'never' and params['ephemeral'] is True and
             params['baseInstructions'] == BASE and params['developerInstructions'] == DEVELOPER,
@@ -176,6 +179,10 @@ def evaluate(sent, frames, api, runtime):
     require(len(api) == 1 and type(api[0].get('attempt')) is int and api[0]['attempt'] == 0 and
             type(api[0].get('http.response.status_code')) is int and api[0]['http.response.status_code'] == 200 and
             api[0].get('auth.header_attached') is True, 'one observed authenticated API request')
+    require('auth.retry_after_unauthorized' not in api[0] or api[0]['auth.retry_after_unauthorized'] is False,
+            'unexpected observed authorization recovery')
+    for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
+        require(key not in api[0] or api[0][key] == expected, 'observed runtime contradiction')
     require(type(runtime.get('exitCode')) is int and runtime['exitCode'] == 0 and
             runtime.get('forcedShutdown') is False, 'normal process exit')
     return dict(threadId=thread, turnId=turn, observedApiRequests=1, logicalTurns=1, finalMatched=True)
@@ -211,7 +218,8 @@ def isolated(base):
     cli.exclusive(base / 'version.stderr', version.stderr)
     if version.returncode or version.stdout.decode().strip() != contract['codexVersion']:
         raise ValueError('CLI drift')
-    cli.exclusive(base / 'config.json', cli.encoded(config_for(base)))
+    http_alias = contract['version'] == 'production-connection-probe-0.2.0'
+    cli.exclusive(base / 'config.json', cli.encoded(http_config_for(base) if http_alias else config_for(base)))
 
     def deny(*_):
         raise ValueError('unexpected SDK server request')
@@ -222,7 +230,7 @@ def isolated(base):
     try:
         client.start()
         client.initialize()
-        thread = client.thread_start({'model': contract['model'], 'modelProvider': 'openai',
+        thread = client.thread_start({'model': contract['model'], 'modelProvider': 'bitz_openai_http' if http_alias else 'openai',
             'allowProviderModelFallback': False, 'cwd': str(base / 'work'), 'sandbox': 'read-only',
             'approvalPolicy': 'never', 'ephemeral': True, 'baseInstructions': BASE, 'developerInstructions': DEVELOPER})
         turn = client.turn_start(thread.thread.id, PROMPT, {'outputSchema': SCHEMA, 'effort': 'low'})
@@ -239,13 +247,28 @@ def isolated(base):
     cli.exclusive(base / 'isolated-result.json', cli.encoded({'sdkErrorType': error}))
 
 
-def run(source, dry_run=False):
-    contract_raw = guard.git(ROOT, 'show', source + ':' + CONTRACT)
+def run(source, dry_run=False, contract_name=CONTRACT):
+    if contract_name not in {CONTRACT, HTTP_CONTRACT}:
+        raise ValueError('unknown paid diagnostic contract')
+    contract_raw = guard.git(ROOT, 'show', source + ':' + contract_name)
     contract = json.loads(contract_raw)
     policy(contract)
+    if contract['version'] != ('production-connection-probe-0.2.0' if contract_name == HTTP_CONTRACT else
+                               'production-connection-probe-0.1.0'):
+        raise ValueError('contract identity/version mismatch')
     if guard.git(ROOT, 'status', '--porcelain') != b'' or guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() != source:
         raise ValueError('clean fixed HEAD required')
     before = guard.verify(ROOT, source, contract['sourceFiles'])
+    if contract_name == HTTP_CONTRACT:
+        for pin in [contract['previousFailure'], contract['startupPreparation']]:
+            path = ROOT / pin['outputRelativeRoot'] / 'receipt.json'
+            if any(p.is_symlink() for p in [path, *path.parents]) or hashlib.sha256(path.read_bytes()).hexdigest() != pin['receiptSha256']:
+                raise ValueError('original diagnostic preparation drift')
+            if json.loads(path.read_bytes())['sourceCommit'] != pin['sourceCommit']:
+                raise ValueError('original diagnostic preparation source drift')
+        prepared = json.loads((ROOT / contract['startupPreparation']['outputRelativeRoot'] / 'receipt.json').read_bytes())
+        if prepared['status'] != 'unpaid_sdk_initialization_captured' or prepared['paidModelCalls'] != 0:
+            raise ValueError('unpaid provider initialization required')
     if sdk.tree_hash(ROOT / contract['sdkRelativePath']) != contract['sdkTreeSha256']:
         raise ValueError('SDK dependency drift')
     base = ROOT / contract['outputRelativeRoot']
@@ -311,6 +334,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source')
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--http-alias', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -321,4 +345,4 @@ if __name__ == '__main__':
     else:
         if not args.source:
             parser.error('--source required')
-        raise SystemExit(run(args.source, args.dry_run))
+        raise SystemExit(run(args.source, args.dry_run, HTTP_CONTRACT if args.http_alias else CONTRACT))

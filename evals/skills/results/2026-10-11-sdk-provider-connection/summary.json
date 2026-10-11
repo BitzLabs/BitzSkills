@@ -140,6 +140,10 @@
       }
     }
   ],
+  "startupDiagnostics": [
+    {"sourceCommit": "ede0b4876f413f758e810e289c5f75c13db89ce6", "contractPath": "evals/skills/routing/production-provider-startup-v0.1.json", "outputRelativeRoot": ".venv/production-provider-startup-01", "receiptSha256": "460241d03788d773c7150483cc5dc4f0ae8fe9ec479e73a1b2f132415acfed10", "status": "startup_diagnostic_stopped", "namespaceExitCode": 1},
+    {"sourceCommit": "c5e7d41a51c12feb2235eedb955b2d3861f957f6", "contractPath": "evals/skills/routing/production-provider-startup-v0.2.json", "outputRelativeRoot": ".venv/production-provider-startup-02", "receiptSha256": "094dabcad32a275a3618c689ab2adb7b43e0a3f2e65489fe23a09e34bd664fee", "status": "unpaid_sdk_initialization_captured", "namespaceExitCode": 0}
+  ],
   "certifiesNativeProvider": false,
   "eligibleForMeasurement": false,
   "phaseComplete": false

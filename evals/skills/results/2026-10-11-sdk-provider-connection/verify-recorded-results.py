@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_ledger as ledger
+import production_connection_probe as connection
 import production_trace as trace
 import source_guard as guard
 
@@ -76,11 +77,50 @@ def run():
     preparation = module('connection_preparation', 'evals/skills/results/2026-10-10-production-canary-design/verify-recorded-results.py')
     for stage in public['staticReviewStages']:
         preparation.check_stage(stage, review)
+    for row in public.get('startupDiagnostics', []):
+        startup = ROOT / row['outputRelativeRoot']
+        ledger.safe_tree(startup)
+        trace.require(sha((startup / 'receipt.json').read_bytes()) == row['receiptSha256'], 'startup receipt drift')
+        original = trace.strict_json((startup / 'receipt.json').read_bytes())
+        startup_contract_raw = guard.git(ROOT, 'show', row['sourceCommit'] + ':' + row['contractPath'])
+        startup_contract = trace.strict_json(startup_contract_raw)
+        trace.require((startup / 'contract.json').read_bytes() == startup_contract_raw and
+                      original['sourceCommit'] == row['sourceCommit'] and original['status'] == row['status'] and
+                      original['namespaceExitCode'] == row['namespaceExitCode'] and original['paidModelCalls'] == 0,
+                      'startup original scope and outcome')
+        expected_sources = {p: sha(guard.git(ROOT, 'show', row['sourceCommit'] + ':' + p)) for p in startup_contract['sourceFiles']}
+        before, after = original['sourceGuards']['before'], original['sourceGuards']['after']
+        trace.require(trace.json_equal(before, after) and before['sourceCommit'] == before['observedHead'] == row['sourceCommit'] and
+                      before['sourceSha256'] == expected_sources, 'startup original source guards')
+        paths = connection.original_artifact_paths(startup)
+        trace.require({str(p.relative_to(startup)) for p in paths} == set(original['artifactSha256']), 'startup complete original inventory')
+        for path in paths:
+            ledger.safe_tree(path)
+            trace.require(sha(path.read_bytes()) == original['artifactSha256'][str(path.relative_to(startup))], 'startup original hash')
+        if row['status'] == 'unpaid_sdk_initialization_captured':
+            trace.require({'rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-result.json', 'trace-safe.jsonl', 'config.json'} <=
+                          set(original['artifactSha256']), 'required initialization originals')
+            caller = [trace.strict_json(line) for line in (startup / 'rpc-in.jsonl').read_bytes().splitlines()]
+            incoming = [trace.strict_json(line) for line in (startup / 'rpc-out.jsonl').read_bytes().splitlines()]
+            replies = [f for f in incoming if 'id' in f]
+            trace.require([f.get('method') for f in caller] == ['initialize', 'initialized'] and len(replies) == 1 and
+                          set(replies[0]) == {'id', 'result'} and replies[0]['id'] == caller[0]['id'] and
+                          isinstance(replies[0]['result'], dict) and original['sdkErrorType'] is None and
+                          trace.json_equal(trace.strict_json((startup / 'runtime-result.json').read_bytes()),
+                                           {'exitCode': 0, 'forcedShutdown': False}) and
+                          (startup / 'trace-safe.jsonl').read_bytes() == b'' and
+                          trace.json_equal(trace.strict_json((startup / 'config.json').read_bytes()), connection.http_config_for(startup)) and
+                          not (startup / 'codex-home/auth.json').exists(), 'unpaid isolated initialization')
+        else:
+            trace.require((startup / 'namespace.stderr').read_bytes() ==
+                          b'bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted\n' and
+                          not (startup / 'rpc-in.jsonl').exists(), 'original pre-SDK namespace failure')
     trace.require(len(public['staticReviewStages']) == public['staticSolInvocations'] == 4 and
                   public['observedModelApiRequests'] == public['primaryModelTrajectories'] == public['automaticRetries'] == 0 and
                   public['consumedConnectionReservations'] == public['connectionStartupInvocations'] == 1 and
                   all(public[k] is False for k in ['certifiesNativeProvider', 'eligibleForMeasurement', 'phaseComplete']), 'limited scope')
     print(json.dumps(dict(status='recorded_connection_startup_failure_matches_original_bytes', staticSolInvocations=4,
+                         unpaidStartupDiagnostics=len(public.get('startupDiagnostics', [])),
                          consumedConnectionReservations=1, observedModelApiRequests=0, eligibleForMeasurement=False)))
 
 
