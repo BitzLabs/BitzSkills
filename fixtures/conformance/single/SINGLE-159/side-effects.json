@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "12c91a76133207d31f489a6ac2f271be48923f5786f35731477a63954bd0cbd2"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ccd4bd3c2bc34953536a0fcbff3702c9431ce6cedda3d7bae0ab1681874deefc"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "12c91a76133207d31f489a6ac2f271be48923f5786f35731477a63954bd0cbd2"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ccd4bd3c2bc34953536a0fcbff3702c9431ce6cedda3d7bae0ab1681874deefc"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

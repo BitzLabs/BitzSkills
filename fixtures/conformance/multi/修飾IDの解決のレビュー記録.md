@@ -405,3 +405,86 @@ Gitの呼び出しが現在のディレクトリを基準にしていたため�
 - `MULTI-030-02`は、基準版のスナップショットの未登録（初回の複合ワークスペース化、メンバーの削除と移動）を扱わない。未登録の設定がGitに無視されるときや、サブモジュールの内部は扱わない。
 - 修正前のCore（コミット`2baa0b79`の`gitutil.py`を、作業ツリーの外のコピーで差し替えて確認した）は、3件とも失敗する（陰性対照）。`MULTI-030-01`は`passed`／終了コード0で診断が返らず、
   `MULTI-030-02`は`passed`／終了コード0でメンバー3件の結果を返す。修正後のCoreは3件とも通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
+
+## 2026-10-11追記: `MULTI-031-01`〜`02`（メンバーの中から`--workspace`でルートのIDを指定する）
+
+### 追加の理由（実装の確認事項C7）
+
+複合ワークスペース仕様 §3の5.は、「`--workspace <id>`は、カタログ内の**ルートまたはメンバー**のIDと完全に一致するIDで、作業ワークスペースを置き換える」と定める。
+既存のfixtureは、未知のIDを終了コード4にする`MULTI-005`と、ルートからメンバーのIDを指定する`MULTI-029-02`だけで、**メンバーの中からルートのIDを指定する**肯定的なfixtureがなかった。
+メンバーの中の最寄りの設定はそのメンバーなので、`--workspace`が最寄りの設定より優先されること、`context`では非修飾の起点がその`--workspace`のワークスペースで解決されることは、
+どのfixtureも押さえていなかった。そこで、同じ入力を使う2件（`check --full`と`context`）を加える。
+
+### 根拠の規範文
+
+- 複合ワークスペース仕様 §3: 最寄りの`.spec/bitz.yaml`のワークスペースが作業ワークスペースになる（2・3）。`--workspace <id>`は、ルートまたはメンバーのIDで作業ワークスペースを置き換える（5）。
+  `--workspace`を使わないパスの入力は作業ワークスペース内に限る。
+- 複合ワークスペース仕様 §4: 同じローカルIDを別のワークスペースが持つことは許可する。複合ワークスペース内で実行した操作の`roots`、文書`id`、規範文IDは修飾形式で返し、`path`は各ワークスペースのルート相対で、
+  `workspaceId`との組で一意にする。単独操作の結果の`workspace`は実際のワークスペースIDとリポジトリのルート相対のパスで、ルートワークスペースのパスは`.`である。
+- `check` §3・§6: `--full`の完全検査の対象は作業ワークスペースのすべての仕様文書で、他のメンバーの文書は強い関係の閉包と直接の逆参照で到達したものだけである。
+  `check` §9: `scope: full`は`checkedDocumentCount`と`checkedStatementCount`を持つ。
+- `context` §2: `--workspace`は非修飾IDを解決する基準のワークスペースを明示する。`context` §4: 複合ワークスペースでは、最上位の`workspace`を起点ワークスペースとし、`roots`、文書の`id`、規範文IDを修飾IDで返す。
+  `documents[]`は`workspaceId`を持ち、`resolution.workspaces`は到達ワークスペース、`resolution.crossWorkspaceEdges`はワークスペースの境界を越えるエッジ（ない場合は空配列）である。
+- 関係・トレースモデル §6.1・§6.4: 目的`interpret`の閉包は、起点を所有する文書、その`requires`、`refines`の参照先、起点を具体化する適用可能な文書で、`targetStatements`は空（制約台帳とカバレッジが空になる）。
+- コンテキストのハッシュ値の正規化仕様 §3: 材料は、起点ワークスペース、閉包の文書、到達ワークスペースの設定だけの射影である。到達しないワークスペースの設定と本文は材料へ入れない。
+
+### 入力と起動
+
+2件は同じ入力を共有する。カタログの形は`MULTI-029-01`と同じ（ルート`platform`、メンバー`web`（`apps/web`）、`api`（`services/api`））で、実行は`apps/web`、変更集合はない。
+
+| 文書 | 内容 |
+|---|---|
+| `platform`のREQ-001 | `approved`。タイトル`ルートの共通基準`。規範文2件（`AC-01`は`MUST`、`AC-02`は`SHOULD`）。関係なし |
+| `web`のREQ-001 | `approved`。タイトル`Webの画面の基準`。規範文1件（`AC-01`は`MUST`）。関係なし。ルートと同じローカルIDで、本文と件数が異なる |
+| `web`のTECH-010、`api`のTECH-020 | `approved`。関係なし（閉包にも逆参照にも入らない、メンバーの無関係な文書） |
+
+| fixture | 引数 |
+|---|---|
+| `MULTI-031-01` | `check --workspace platform --full --base HEAD --format json` |
+| `MULTI-031-02` | `context --workspace platform REQ-001 --purpose interpret --format json` |
+
+どの文書も関係を宣言しないので、閉包と直接の逆参照は結果を変えない。`web`のREQ-001が、`--workspace`を使わない場合の最寄りの設定（`web`）での結果を区別する陰性対照になる。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+`MULTI-031-01`（`scope: full`）。
+
+1. 作業ワークスペースは、`--workspace platform`が最寄りの設定の`web`を置き換えて`platform`になる（§3の5.）。結果の`workspace`は`{id: platform, path: .}`。
+2. 完全検査の対象は、作業ワークスペース`platform`のすべての仕様文書（`platform::REQ-001`の1件）。強い関係を宣言する文書がないので、閉包で加わる他のメンバーの文書はなく、
+   他のメンバーから`platform`の文書を参照する文書もない。`web`のREQ-001・TECH-010、`api`のTECH-020は対象にしない。`checkedDocumentCount`は1、`checkedStatementCount`は`AC-01`と`AC-02`の2件。
+   最寄りの設定の`web`が作業ワークスペースになっていたなら、`web::REQ-001`と`web::TECH-010`の2文書、規範文1件になり、`workspace`と件数が異なる。
+3. 診断は0件で、`passed`／終了コード0、`revision.dirty`は`false`、`scope: full`は`selection`を持たない。
+
+`MULTI-031-02`（`context`、目的`interpret`）。
+
+1. 起点ワークスペースは`platform`（`--workspace platform`）。非修飾の`REQ-001`は`platform::REQ-001`に解決され、`roots`は`["platform::REQ-001"]`。`web::REQ-001`ではない（`context` §2、複合ワークスペース仕様 §3の5.・§4）。
+2. 閉包は起点の`platform::REQ-001`だけ（`requires`、`refines`、`refines`する文書がない）。`documents`は`platform::REQ-001`の1件で、役割`root`、`reachedBy`は`["root"]`、
+   提示形式`full`（標準の詳細度。起点は`full`）、`workspaceId`は`platform`、`path`は`.spec/requirements/REQ-001.md`、`frontmatter.id`は修飾ID、`bodyText`はルートのREQ-001の現行本文、
+   `statementRefs`は`["platform::REQ-001:AC-01", "platform::REQ-001:AC-02"]`（所有するすべての規範文）。
+3. `resolution`は、`complete: true`、`documentCount: 1`、`unresolvedStrongRelations: 0`、`workspaces`は`[{id: platform, path: .}]`（到達ワークスペースは起点ワークスペースの1件）、`crossWorkspaceEdges`は空配列。
+4. 目的`interpret`は対象規範文を持たないので、制約台帳とカバレッジの各区分と`adjacent`は空である。`revision`は`{commit, dirty: false}`（基準版のコミットがある。`MULTI-002-01`と同じ形）。診断は0件。
+5. `contextDigest`は、コミットした正規JSON（`expected/context.canonical.json`）のSHA-256である。正規JSONは、独立に書いた2系統の参照計算で同じバイト列になることを要求する。A（`multi_workspace_option_fixtures.reviewed_digest_input`）は
+   材料をリテラルで書き、B（`multi_crosscheck.build`）は入力の木構造から導く。材料の到達ワークスペースは`platform`だけで、`web`と`api`の設定と本文は入らない（正規化仕様 §3）。
+
+監査は、`MULTI-031-01`を`multi_check_fixtures.reference_check`（入力の木構造から作業ワークスペース、完全検査の対象、件数、診断を導く）で、`MULTI-031-02`の起点・文書・件数・到達ワークスペースを
+`multi_workspace_option_fixtures.reference_context`（入力の木構造から導く）で、それぞれリテラルの期待値と照合する。原因の構成（ルートと`web`が同じローカルIDで本文・件数が異なる、
+どの文書も関係を宣言しない、すべて`approved`、変更集合がない、実行ディレクトリの最寄りの設定は`web`で`--workspace platform`が置き換える、最寄りの設定の`web`を作業ワークスペースにすると件数が変わる）は、
+`check_conditions`が入力の木構造から確かめる。
+
+### 監査の検査と回帰試験
+
+`test_conformance_audit.py`の回帰試験は、`workspace`の改変（メンバー、パス、ID）、件数の改変、`scope`・状態・`revision.dirty`・診断の混入、起点と文書の取り違え（`web::REQ-001`、非修飾の`REQ-001`）、
+文書の`workspaceId`・`path`・本文・タイトル・`statementRefs`の改変、`resolution`の件数・到達ワークスペース・横断エッジの改変、`contextDigest`と正規JSONの改変、制約台帳とカバレッジの混入、
+マニフェストの改変（`--workspace`の削除、`web`・`api`への変更、実行ディレクトリ、`--full`の削除、起点の修飾形式、目的、準備手順）、入力の改変（状態の変更、関係の追加、タイトルの一致、規範文の数の一致、文書の欠落、余分なファイル）を拒否する。
+
+### 固定しない範囲
+
+- ルートの中からルートのIDを指定する場合（`--workspace platform`は最寄りの設定と同じ）と、メンバーからメンバーのIDを指定する場合は、このfixtureでは扱わない（前者は結果が変わらず、後者は`MULTI-029-02`がルートからの指定として固定する）。
+- 複数の起点、修飾IDの起点と`--workspace`の組合せ（一致する場合と食い違う場合）、パスの入力と`--workspace`の組合せは扱わない。未知の`--workspace`の終了コード4は`MULTI-005`が固定する。
+- `--workspace platform`の`check`で、引数なしと明示対象の場合は扱わない（`--full`だけ）。`verify`と`doctor`の`--workspace`は扱わない。
+- `context`で、ルートのREQ-001を具体化する文書や`requires`の参照先がある場合（他のメンバーの文書が閉包に入る場合）は扱わない（`MULTI-002-01`が横断の閉包を固定する）。このfixtureの閉包は起点の1文書だけで、
+  `resolution.workspaces`が起点ワークスペースの1件になること、`crossWorkspaceEdges`が空配列になることを固定する。
+- `contextDigest`は、到達ワークスペースだけの設定を材料にすること（`web`と`api`の設定を材料へ入れない）に依存する。値の根拠は正規化仕様 §3と、参照計算A・Bの一致である。
+- 陰性対照（修正前のCoreがないため、作業ツリーの外の`plugins/bitz-core`のコピーに要点を壊す変異を入れて確認した）。`check.py`と`context.py`が`--workspace`を無視する変異では、`MULTI-031-01`は
+  `workspace.id`が`web`で`checkedDocumentCount`が2、`MULTI-031-02`は`roots`が`web::REQ-001`で`contextDigest`と本文が異なり、2件とも失敗する（`MULTI-029-02`も失敗する）。ルートのIDを
+  作業ワークスペースとして受け付けない変異では、2件とも結果を返さず（標準出力がJSONではない）失敗する。変異していないCoreは2件とも通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
