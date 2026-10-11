@@ -86,7 +86,8 @@ def verify_complete(capture):
     payloads = {name.removeprefix(prefix):raw for name,raw in originals.items() if name.startswith(prefix+'payloads/')}
     correlated = rollout.correlate(originals[prefix+'manifest.json'], originals[prefix+'trace.jsonl'], payloads,
         json_lines(originals['rpc-in.jsonl']), json_lines(originals['rpc-out.jsonl']), result['native'],
-        trace.strict_json(capture.fixed.context_profile_raw))
+        trace.strict_json(capture.fixed.context_profile_raw),
+        host_events=json_lines(originals.get('host.jsonl',b''),empty=True))
     return dict(result, status='primary_original_capture_correlated', rollout=correlated,
         rawPayloadCorrelationVerified=True, eligibleForMeasurement=False,
         independentReviewPerformed=False, ledgerFinalized=False)

@@ -158,6 +158,13 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         for value in payloads.values():
             if 'input' in value and isinstance(value['input'],list):value['text']['format']['schema']=self.fixture.trace.schema
         received=convert(original['received'])
+        bodies=json.dumps([e['result'] for e in self.fixture.trace.fixture.host])
+        for value in payloads.values():
+            if isinstance(value.get('input'),list) and value['input'][-1].get('type')=='custom_tool_call_output':
+                value['input'][-1]['output'][0]['text']=bodies
+        for frame in received:
+            item=frame.get('params',{}).get('item',{})
+            if item.get('type')=='custom_tool_call_output':item['output'][0]['text']=bodies
         packets=[f for f in received if f.get('method') in (*review.sdk.RAW_METHODS,'thread/tokenUsage/updated')]
         actual=copy.deepcopy(self.fixture.trace.fixture.received)
         # 原入力raw→native user→control raw→native children→result raw→native final→final raw→terminal。
@@ -192,6 +199,22 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         frames=[f for f in frames if f.get('method')!='thread/tokenUsage/updated']
         self.capture.rewrite('rpc-out.jsonl',b''.join(review.evidence.ledger.encoded(f)+b'\n' for f in frames))
         with self.assertRaises(ValueError):review.verify_complete(self.loaded())
+
+    def test_rehashed_raw_and_next_request_forged_parent_body_rejected(self):
+        context=self.loaded()
+        for name,raw in context.originals.items():
+            if name=='rpc-out.jsonl':
+                frames=review.json_lines(raw)
+                for frame in frames:
+                    item=frame.get('params',{}).get('item',{})
+                    if item.get('type')=='custom_tool_call_output':item['output'][0]['text']='forged result'
+                self.capture.rewrite(name,b''.join(review.evidence.ledger.encoded(f)+b'\n' for f in frames))
+            elif '/payloads/' in name:
+                value=json.loads(raw)
+                if isinstance(value.get('input'),list) and value['input'][-1].get('type')=='custom_tool_call_output':
+                    value['input'][-1]['output'][0]['text']='forged result'
+                    self.capture.rewrite(name,review.evidence.ledger.encoded(value))
+        with self.assertRaisesRegex(ValueError,'complete host bodies'):review.verify_complete(self.loaded())
 
 
 if __name__ == '__main__':

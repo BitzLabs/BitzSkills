@@ -113,8 +113,42 @@ def request_policy(request, sent, *, thread, turn):
             type(extra['turn_started_at_unix_ms']) is int and extra['turn_started_at_unix_ms'] >= 0, 'fixed client turn metadata')
 
 
-def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile):
+def parent_bodies(output, expected):
+    """モデルへ返ったJSON本文からhost全文を順に抽出する。要約・部分一致は証拠にしない。"""
+    found = []
+    visited = 0
+    def inspect(value, depth=0):
+        nonlocal visited
+        visited += 1
+        require(depth <= 16 and visited <= 4096, 'bounded parent output JSON')
+        if isinstance(value, dict):
+            if ({'skills', 'resources', 'manifestSha256'} <= set(value) or
+                    {'path', 'content', 'sha256', 'sourceCommit'} <= set(value)):
+                found.append(value)
+                return
+            for nested in value.values():inspect(nested, depth+1)
+        elif isinstance(value, list):
+            for nested in value:inspect(nested, depth+1)
+        elif isinstance(value, str):
+            # execの固定ヘッダはJSONでない。全文JSONまたは各JSON行だけを読む。
+            try:parsed = trace.strict_json(value)
+            except ValueError:
+                for line in value.splitlines():
+                    try:parsed = trace.strict_json(line)
+                    except ValueError:continue
+                    if isinstance(parsed, (dict,list)):inspect(parsed, depth+1)
+            else:
+                if isinstance(parsed, (dict,list)):inspect(parsed, depth+1)
+    for block in output:inspect(block['text'])
+    require(trace.json_equal(found, expected), 'original parent output and complete host bodies')
+    return [sdk.digest(value) for value in found]
+
+
+def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events):
     """原artifact検査後の値比較。wire bytesやserver内部入力は認定しない。"""
+    require(isinstance(host_events,list) and len(host_events) == len(native['nativeChildIds']), 'original host child body count')
+    host_results = [event['result'] for event in host_events]
+    parent_hashes = []
     thread = sent[3]['params']['threadId']
     turn = next(f['params']['turn']['id'] for f in received if f.get('method') == 'turn/started')
     manifest = trace.strict_json(manifest_raw)
@@ -140,12 +174,13 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     last_wall = -1
     protocols = []
     protocol_start = None
+    context_window = None
     milestones = ['rollout_started','thread_started','codex_turn_started','codex_turn_ended','thread_ended','rollout_ended']
     for seq, event in enumerate(events,1):
         require(isinstance(event,dict) and set(event) == {'schema_version','seq','wall_time_unix_ms','rollout_id','thread_id','codex_turn_id','payload'} and
                 type(event['schema_version']) is int and event['schema_version'] == 1 and type(event['seq']) is int and
                 event['seq'] == seq and event['rollout_id'] == thread and
-                type(event['wall_time_unix_ms']) is int and event['wall_time_unix_ms'] >= last_wall and
+                type(event['wall_time_unix_ms']) is int and event['wall_time_unix_ms'] >= 0 and event['wall_time_unix_ms'] >= last_wall and
                 isinstance(event['payload'],dict), 'original rollout sequence')
         last_wall = event['wall_time_unix_ms'];fields = event['payload'];kind = fields.get('type');kinds.append(kind)
         if kind in milestones:
@@ -186,7 +221,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                     body['type']=='task_started' and body['turn_id']==body['root_turn_id']==turn and body['collaboration_mode_kind']=='default' and
                     type(body['started_at']) is int and body['started_at']>=0 and type(body['model_context_window']) is int and body['model_context_window']>0,
                     'protocol original turn start')
-                protocol_start=body['started_at']
+                protocol_start=body['started_at'];context_window=body['model_context_window']
             elif protocol == 'turn_complete':
                 require(stage==4 and set(body)=={'type','turn_id','last_agent_message','started_at','completed_at','duration_ms','time_to_first_token_ms'} and
                     body['type']=='task_complete' and body['turn_id']==turn and body['started_at']==protocol_start and
@@ -279,7 +314,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                 native_params['turnId']==turn, 'native usage original context')
         usage=native_params['tokenUsage']
         require(set(usage)=={'last','total','modelContextWindow'} and
-                (usage['modelContextWindow'] is None or type(usage['modelContextWindow']) is int and usage['modelContextWindow']>0), 'native usage envelope')
+                type(usage['modelContextWindow']) is int and usage['modelContextWindow']==context_window, 'native usage envelope')
         for key,n in last.items():total[key]+=n
         require(counters(usage['last'])==last and counters(usage['total'])==total,'native last and cumulative rollout usage')
         history=[*history,*echoed]
@@ -297,6 +332,8 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                     isinstance(result_fields['output'],list) and bool(result_fields['output']) and
                     all(isinstance(c,dict) and set(c)=={'type','text'} and c['type']=='input_text' and isinstance(c['text'],str)
                         for c in result_fields['output']), 'original control result binding')
+            expected_bodies = host_results if native['profile']=='single-exec' else host_results[index:index+1]
+            parent_hashes.append(parent_bodies(result_fields['output'], expected_bodies))
             consume(result);history=next_history
     require(cursor==len(raw) and parent_index==len(native['parentCallIds']),'complete original raw and parent inventory')
     child_ids = native['nativeChildIds']
@@ -322,7 +359,8 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     require(len(native_finals)==1 and native_finals[0]['id']==final_raw['id'] and
             native_finals[0]['text']==''.join(c['text'] for c in final_raw['content']), 'raw and native final identity')
     return dict(status='primary_client_rollout_raw_usage_correlated',inferences=len(requests),rolloutEvents=len(events),
-        totalTokenUsage=total,initialContextVerified=True,rawPayloadCorrelationVerified=True,usageCorrelationVerified=True,
+        totalTokenUsage=total,modelContextWindow=context_window,parentHostBodiesVerified=True,
+        parentHostBodyValueSha256=parent_hashes,initialContextVerified=True,rawPayloadCorrelationVerified=True,usageCorrelationVerified=True,
         originalRequestValueSha256=[sdk.digest(x) for x in requests],originalResponseValueSha256=[sdk.digest(x) for x in responses],
         contextProfileValueSha256=sdk.digest(context_profile),certifiesProviderWireBodies=False,eligibleForMeasurement=False,
         certifiesBehavior=False,certifiesSkillGate=False)

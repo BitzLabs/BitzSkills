@@ -43,6 +43,8 @@ class CanaryRolloutTests(unittest.TestCase):
             outcome='proceed' if profile!='no-exec' else 'not-applicable',events=[],rejectedEvents=[],readyClaimed=False,evidencePresent=False,reason='synthetic')
         names={'no-exec':(),'single-exec':('exec',),'two-exec':('exec','exec'),'exec-wait':('exec','wait')}[profile]
         native=dict(nativeChildIds=[] if profile=='no-exec' else ['child0','child1'],apiRequests=len(names)+1,parentCallIds=['parent'+str(i) for i in range(len(names))],profile=profile,decision=decision)
+        host_events=[] if profile=='no-exec' else [dict(result=dict(skills=[],resources=[],manifestSha256='1'*64)),
+            dict(result=dict(path='public/SKILL.md',content='public body',sha256='2'*64,sourceCommit='b'*40))]
         received=[dict(method='turn/started',params=dict(threadId=thread,turn=dict(id=turn)))]
         def rawitem(x):
             x=copy.deepcopy(x);x.setdefault('internal_chat_message_metadata_passthrough',dict(turn_id=turn));received.append(dict(method='rawResponseItem/completed',params=dict(threadId=thread,turnId=turn,item=x)))
@@ -79,7 +81,7 @@ class CanaryRolloutTests(unittest.TestCase):
                 for child in (['child0','child1'] if len(names)==1 else ['child'+str(i)]):
                     for method in ['item/started','item/completed']:
                         received.append(dict(method=method,params=dict(threadId=thread,turnId=turn,item=dict(type='mcpToolCall',id=child))))
-                result=dict(type=output['type']+'_output',id='result'+str(i),call_id='parent'+str(i),output=[dict(type='input_text',text='synthetic original result')])
+                result=dict(type=output['type']+'_output',id='result'+str(i),call_id='parent'+str(i),output=[dict(type='input_text',text=json.dumps([e['result'] for e in (host_events if len(names)==1 else host_events[i:i+1])]))])
                 request['input'].append(result);rawitem(result)
         received.append(dict(method='item/completed',params=dict(item=dict(type='agentMessage',id='final',phase='final_answer',text=json.dumps(decision)))))
         event(dict(type='codex_turn_ended',codex_turn_id=turn,status='completed'),True)
@@ -88,11 +90,11 @@ class CanaryRolloutTests(unittest.TestCase):
         received.append(dict(method='turn/completed',params=dict(threadId=thread,turn=dict(id=turn))))
         event(dict(type='thread_ended',thread_id=thread,status='completed'));event(dict(type='rollout_ended',status='completed'))
         manifest=dict(schema_version=1,root_thread_id=thread,raw_event_log='trace.jsonl',payloads_dir='payloads',rollout_id=thread)
-        return dict(manifest=manifest,events=events,payloads=payloads,sent=sent,received=received,native=native,context_profile=profile_value)
+        return dict(manifest=manifest,events=events,payloads=payloads,sent=sent,received=received,native=native,context_profile=profile_value,host_events=host_events)
 
     def check(self,value):
         return rollout.correlate(ledger.encoded(value['manifest']),b''.join(ledger.encoded(e)+b'\n' for e in value['events']),
-            value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'])
+            value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'],host_events=value['host_events'])
 
     def alter_payload(self,value,kind,change,index=0):
         events=[e for e in value['events'] if e['payload']['type']==kind]
@@ -115,7 +117,7 @@ class CanaryRolloutTests(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ValueError):self.check(value)
 
     def test_missing_unknown_out_of_order_or_unreferenced_rollout_stops(self):
-        for fault in ['missing','unknown','order','unreferenced','reference','bool','wrongturn']:
+        for fault in ['missing','unknown','order','unreferenced','reference','bool','wrongturn','negativewall']:
             value=self.fixture()
             if fault=='missing':value['events'].pop()
             elif fault=='unknown':value['events'][3]['payload']['type']='inference_failed'
@@ -123,14 +125,16 @@ class CanaryRolloutTests(unittest.TestCase):
             elif fault=='unreferenced':value['payloads']['payloads/999.json']=b'{}'
             elif fault=='reference':next(e for e in value['events'] if e['payload']['type']=='inference_started')['payload']['request_payload']['path']='../secret'
             elif fault=='bool':value['events'][0]['schema_version']=True
+            elif fault=='negativewall':value['events'][0]['wall_time_unix_ms']=-1
             else:next(e for e in value['events'] if e['payload']['type']=='inference_started')['codex_turn_id']='another'
             with self.subTest(fault=fault),self.assertRaises(ValueError):self.check(value)
 
     def test_raw_usage_cumulative_usage_and_counter_types_stop(self):
-        for fault in ['raw','total','bool','negative','missing','overflow']:
+        for fault in ['raw','total','bool','negative','missing','overflow','window','nullwindow']:
             value=self.fixture('two-exec')
             if fault=='raw':next(f for f in value['received'] if f.get('method')=='rawResponse/completed')['params']['responseId']='another'
             elif fault=='total':[f for f in value['received'] if f.get('method')=='thread/tokenUsage/updated'][-1]['params']['tokenUsage']['total']['totalTokens']-=1
+            elif fault in {'window','nullwindow'}:next(f for f in value['received'] if f.get('method')=='thread/tokenUsage/updated')['params']['tokenUsage']['modelContextWindow']=1 if fault=='window' else None
             elif fault=='missing':value['received']=[f for f in value['received'] if f.get('method')!='thread/tokenUsage/updated']
             elif fault=='overflow':value['received'][1]['params']['item']['internal_chat_message_metadata_passthrough']['create_time']=float('inf')
             else:self.alter_payload(value,'inference_completed',lambda r:r['token_usage'].update(total_tokens=True if fault=='bool' else -1))
@@ -165,6 +169,26 @@ class CanaryRolloutTests(unittest.TestCase):
             with self.subTest(kind=kind,index=index),self.assertRaises(ValueError):self.check(value)
         value=self.fixture();next(f for f in value['received'] if f.get('method')=='item/completed')['params']['item']['id']='another'
         with self.assertRaises(ValueError):self.check(value)
+
+    def test_rehashed_parent_output_without_host_change_stops(self):
+        for body in ['forged text', json.dumps({'path':'public/SKILL.md','content':'public body'}),
+                     json.dumps([self.fixture()['host_events'][0]['result']])]:
+            value=self.fixture()
+            self.alter_payload(value,'inference_started',lambda r:r['input'][-1]['output'][0].update(text=body),1)
+            for frame in value['received']:
+                item=frame.get('params',{}).get('item',{})
+                if item.get('type')=='custom_tool_call_output':item['output'][0]['text']=body
+            with self.subTest(body=body),self.assertRaisesRegex(ValueError,'complete host bodies'):self.check(value)
+
+    def test_wrapped_full_host_json_accepts_and_forged_extra_or_duplicate_rejects(self):
+        expected=[e['result'] for e in self.fixture()['host_events']]
+        wrapped=dict(listed=dict(content=[dict(type='text',text=json.dumps(expected[0]))],isError=False),
+                     read=dict(content=[dict(type='text',text=json.dumps(expected[1]))],isError=False))
+        blocks=[dict(type='input_text',text='Script completed\nOutput:\n'),dict(type='input_text',text=json.dumps(wrapped))]
+        self.assertEqual(len(rollout.parent_bodies(blocks,expected)),2)
+        for extra in [expected[1],dict(expected[1],content='forged')]:
+            bad=copy.deepcopy(blocks);bad.append(dict(type='input_text',text=json.dumps(extra)))
+            with self.assertRaises(ValueError):rollout.parent_bodies(bad,expected)
 
 
 if __name__=='__main__':unittest.main()
