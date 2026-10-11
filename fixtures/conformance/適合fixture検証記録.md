@@ -1455,3 +1455,21 @@ commit `681862928a3e2f66470349ef236e5219e038728a`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureとCoreを変えていないため、Gate Bは判定し直さない。
+
+## 2026-10-12: Coreの出力文言を書き換え、140件の期待値を訂正した後のGate Aの再認定
+
+Coreの出力文言（診断の`summary`と引数不正の標準エラー出力の理由）の英語の一般語を、表記規則 §3.5に沿って日本語にした（163の文言）。
+[ADR-062](../../docs/02.設計書/10_決定記録/ADR-062_Coreの出力文言の規範と適合fixtureの期待値の扱いを確定する.md)に従い、管理者が2026-10-12に承認した対応表の文言で、
+140件のfixtureの期待値（`summary`、manifestの説明、テキスト出力、`MULTI-021`の7件の`resultDigest`）を訂正した（期待値の訂正）。入力、状態、終了コード、
+診断コード、発生元は変えていない。承認の記録は[Coreの出力文言のレビュー記録](Coreの出力文言のレビュー記録.md)と、各fixture群のレビュー記録の2026-10-12の節にある。
+
+commit `5db2711417c177167be360434292699058ad0af9`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`d717fd6fce62f915e22984f0a1afa030ee86745200ceb9ae925a78cd58064c5d`（前回と同じ。監査のレポートは件数と検査の結果を記録し、期待値の文言を含まない） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 1〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
