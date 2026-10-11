@@ -17,12 +17,13 @@ class ConnectionProbeTests(unittest.TestCase):
         return json.loads((ROOT / probe.CONTRACT).read_bytes())
 
     def fixture(self):
-        sent = [{'id': 2, 'method': 'thread/start', 'params': {'model': 'gpt-6.1-sol', 'modelProvider': 'openai',
+        sent = [{'id': 1, 'method': 'initialize', 'params': {}}, {'method': 'initialized'},
+                {'id': 2, 'method': 'thread/start', 'params': {'model': 'gpt-6.1-sol', 'modelProvider': 'openai',
                  'allowProviderModelFallback': False, 'sandbox': 'read-only', 'approvalPolicy': 'never',
                  'ephemeral': True, 'baseInstructions': probe.BASE, 'developerInstructions': probe.DEVELOPER}},
                 {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread', 'outputSchema': probe.SCHEMA,
                  'input': [{'type': 'text', 'text': probe.PROMPT}]}}]
-        frames = [{'id': 2, 'result': {'thread': {'id': 'thread'}}},
+        frames = [{'id': 1, 'result': {}}, {'id': 2, 'result': {'thread': {'id': 'thread'}}},
                   {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}},
                   {'id': 3, 'result': {'turn': {'id': 'turn'}}},
                   {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn',
@@ -59,19 +60,24 @@ class ConnectionProbeTests(unittest.TestCase):
     def test_original_success_needs_one_api_and_matching_native_and_caller_context(self):
         self.assertTrue(probe.evaluate(*self.fixture())['finalMatched'])
         for mutation in ['extra-api', 'attempt-bool', 'wrong-auth', 'other-turn', 'other-reply', 'post-terminal',
-                         'tool', 'caller-prompt', 'schema', 'forced-shutdown', 'failed-turn']:
+                         'tool', 'caller-prompt', 'schema', 'forced-shutdown', 'failed-turn', 'steer', 'duplicate-reply',
+                         'unknown-reply', 'duplicate-request']:
             sent, frames, api, runtime = copy.deepcopy(self.fixture())
             if mutation == 'extra-api': api += copy.deepcopy(api)
             elif mutation == 'attempt-bool': api[0]['attempt'] = False
             elif mutation == 'wrong-auth': api[0]['auth.header_attached'] = False
             elif mutation == 'other-turn': frames[-1]['params']['turn']['id'] = 'other'
-            elif mutation == 'other-reply': frames[0]['result']['thread']['id'] = 'other'
-            elif mutation == 'post-terminal': frames.append(frames.pop(3))
-            elif mutation == 'tool': frames[3]['params']['item']['type'] = 'commandExecution'
-            elif mutation == 'caller-prompt': sent[1]['params']['input'][0]['text'] = 'different'
-            elif mutation == 'schema': sent[1]['params']['outputSchema']['properties']['ok']['const'] = False
+            elif mutation == 'other-reply': frames[1]['result']['thread']['id'] = 'other'
+            elif mutation == 'post-terminal': frames.append(frames.pop(4))
+            elif mutation == 'tool': frames[4]['params']['item']['type'] = 'commandExecution'
+            elif mutation == 'caller-prompt': sent[3]['params']['input'][0]['text'] = 'different'
+            elif mutation == 'schema': sent[3]['params']['outputSchema']['properties']['ok']['const'] = False
             elif mutation == 'forced-shutdown': runtime['forcedShutdown'] = True
             elif mutation == 'failed-turn': frames[-1]['params']['turn']['status'] = 'failed'
+            elif mutation == 'steer': sent.append({'id': 4, 'method': 'turn/steer', 'params': {}})
+            elif mutation == 'duplicate-reply': frames.insert(0, {'id': 2, 'result': {'thread': {'id': 'other'}}})
+            elif mutation == 'unknown-reply': frames.append({'id': 4, 'result': {}})
+            elif mutation == 'duplicate-request': sent[3]['id'] = sent[2]['id']
             with self.subTest(mutation=mutation), self.assertRaises((ValueError, KeyError)):
                 probe.evaluate(sent, frames, api, runtime)
 

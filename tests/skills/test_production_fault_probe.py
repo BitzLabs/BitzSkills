@@ -1,6 +1,7 @@
 """故障診断の有限政策と失敗終端の束縛を検査する。有料起動0。"""
 import copy
 import json
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
@@ -11,6 +12,23 @@ import production_fault_probe as probe
 
 
 class FaultProbeTests(unittest.TestCase):
+    def test_original_api_attempts_must_match_fixed_fault_not_self_reported_counts(self):
+        spec = importlib.util.spec_from_file_location('fault_record',
+            ROOT / 'evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py')
+        record = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(record)
+        api = [{'attempt': 0, 'auth.header_attached': False, 'http.response.status_code': None}]
+        row = {'apiRequests': 1, 'httpStatuses': [None]}
+        record.check_api(api, row, row, 'connection', 0)
+        extra = api + [{'attempt': 1, 'auth.header_attached': False, 'http.response.status_code': None}]
+        lie = {'apiRequests': 2, 'httpStatuses': [None, None]}
+        with self.assertRaises(ValueError): record.check_api(extra, lie, lie, 'connection', 0)
+        for fault, count, status in [('http-503', 1, 503), ('http-503', 2, 503), ('stream-cut', 1, 200)]:
+            events = [{'attempt': i, 'auth.header_attached': False, 'http.response.status_code': status} for i in range(count)]
+            row = {'apiRequests': count, 'httpStatuses': [status] * count}
+            record.check_api(events, row, row, fault, count)
+            with self.assertRaises(ValueError): record.check_api(events, row, row, fault, count + 1)
+
     def test_finite_policy_cannot_enable_paid_or_unbounded_scenarios(self):
         contract = json.loads((ROOT / probe.CONTRACT).read_bytes())
         for case in probe.CASES:

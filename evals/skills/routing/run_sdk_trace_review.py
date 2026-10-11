@@ -30,6 +30,7 @@ CANARY_TRACE_RUNTIME_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.30.jso
 ROLLOUT_CAPTURE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.31.json'
 ROLLOUT_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.32.json'
 CONNECTION_REVIEW_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.33.json'
+CONNECTION_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.34.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -101,7 +102,7 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT, CONNECTION_REMEDIATION_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract_raw = source_guard.git(ROOT, 'show', source + ':' + contract_name)
     contract = trace.strict_json(contract_raw)
@@ -132,6 +133,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-30',
                              '.venv/sdk-trace-independent-review-31',
                              '.venv/sdk-trace-independent-review-32',
+                             '.venv/sdk-trace-independent-review-33',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -167,7 +169,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in {CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT}:
+    if contract_name in {CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT, CONNECTION_REMEDIATION_CONTRACT}:
         prompt = ('あなたは作業者と別の独立した設計検分者です。日本語で回答してください。'
                   '次の確定した公開本文だけから実provider公開canaryと一次台帳の統合設計・限定コンポーネントを静的検分してください。'
                   'tool、追加モデル、委譲、ファイル読取り、試験実行は禁止です。'
@@ -177,7 +179,7 @@ def run(source: str, contract_name: str = CONTRACT):
                   'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
                   '指定schemaのJSONだけを回答してください。\n'
                   f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT}:
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, CANARY_TRACE_PROJECTION_CONTRACT, CANARY_TRACE_RUNTIME_CONTRACT, ROLLOUT_CAPTURE_CONTRACT, ROLLOUT_REMEDIATION_CONTRACT, CONNECTION_REVIEW_CONTRACT, CONNECTION_REMEDIATION_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -278,8 +280,10 @@ if __name__ == '__main__':
     raw.add_argument('--rollout-capture-review', action='store_true')
     raw.add_argument('--rollout-remediation-review', action='store_true')
     raw.add_argument('--connection-probe-review', action='store_true')
+    raw.add_argument('--connection-probe-remediation', action='store_true')
     args = parser.parse_args()
-    contract_name = (CONNECTION_REVIEW_CONTRACT if args.connection_probe_review else
+    contract_name = (CONNECTION_REMEDIATION_CONTRACT if args.connection_probe_remediation else
+                     CONNECTION_REVIEW_CONTRACT if args.connection_probe_review else
                      ROLLOUT_REMEDIATION_CONTRACT if args.rollout_remediation_review else
                      ROLLOUT_CAPTURE_CONTRACT if args.rollout_capture_review else
                      CANARY_TRACE_RUNTIME_CONTRACT if args.canary_trace_runtime else

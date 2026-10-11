@@ -16,6 +16,18 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def check_api(api, row, receipt, fault, expected):
+    count = 1 if fault == 'connection' else expected
+    statuses = [None] if fault == 'connection' else [503 if fault == 'http-503' else 200] * expected
+    trace.require(type(row['apiRequests']) is int and type(receipt['apiRequests']) is int and
+                  len(api) == row['apiRequests'] == receipt['apiRequests'] == count and
+                  trace.json_equal([e.get('http.response.status_code') for e in api], statuses) and
+                  trace.json_equal(row['httpStatuses'], statuses) and
+                  trace.json_equal(receipt['httpStatuses'], statuses) and
+                  all(type(e.get('attempt')) is int and e['attempt'] == i and
+                      e.get('auth.header_attached') is False for i, e in enumerate(api)), 'fixed fault API attempts')
+
+
 def run():
     public = trace.strict_json((Path(__file__).parent / 'summary.json').read_bytes())
     source = public['sourceCommit']
@@ -83,9 +95,7 @@ def run():
         api = [e['fields'] for line in selected if
                (e := trace.strict_json(line)).get('fields', {}).get('event.name') == 'codex.api_request']
         statuses = [e.get('http.response.status_code') for e in api]
-        trace.require(len(api) == row['apiRequests'] and statuses == row['httpStatuses'] and
-                      all(type(e.get('attempt')) is int and e['attempt'] == i and
-                          e.get('auth.header_attached') is False for i, e in enumerate(api)), 'original API attempts')
+        check_api(api, row, receipt, fault, expected)
         for i in range(1, expected + 1):
             request = trace.strict_json((base / f'request-{i}.json').read_bytes())
             trace.require(request['model'] == contract['model'] and

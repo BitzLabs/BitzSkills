@@ -85,6 +85,10 @@ def reserve(repository, source, contract_raw, storage=None):
 def evaluate(sent, frames, api, runtime):
     """原SDK文脈とAPI観測を照合する。HTTP回数の事前強制を意味しない。"""
     from production_trace import require, strict_json, json_equal
+    require([f.get('method') for f in sent] == ['initialize', 'initialized', 'thread/start', 'turn/start'],
+            'closed caller method sequence')
+    require('id' not in sent[1] and all(type(f.get('id')) in {str, int} for f in [sent[0], sent[2], sent[3]]) and
+            len({f['id'] for f in [sent[0], sent[2], sent[3]]}) == 3, 'unique caller request ids')
     threads = [f for f in sent if f.get('method') == 'thread/start']
     turns = [f for f in sent if f.get('method') == 'turn/start']
     require(len(threads) == len(turns) == 1, 'one caller thread and turn')
@@ -108,7 +112,11 @@ def evaluate(sent, frames, api, runtime):
             next(i for i, f in enumerate(frames) if f.get('method') == 'turn/completed'), 'native lifecycle order')
     start_index = next(i for i, f in enumerate(frames) if f.get('method') == 'turn/started')
     end_index = next(i for i, f in enumerate(frames) if f.get('method') == 'turn/completed')
-    replies = {f['id']: f['result'] for f in frames if 'id' in f and 'result' in f}
+    reply_frames = [f for f in frames if 'id' in f and 'result' in f]
+    require(len(reply_frames) == 3 and all(type(f['id']) in {str, int} for f in reply_frames) and
+            len({f['id'] for f in reply_frames}) == 3 and
+            {f['id'] for f in reply_frames} == {sent[i]['id'] for i in [0, 2, 3]}, 'exactly one reply per request')
+    replies = {f['id']: f['result'] for f in reply_frames}
     require(replies[threads[0]['id']]['thread']['id'] == thread and
             replies[turns[0]['id']]['turn']['id'] == turn, 'caller reply correlation')
     messages = []
