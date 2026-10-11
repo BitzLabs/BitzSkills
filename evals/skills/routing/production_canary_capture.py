@@ -14,6 +14,8 @@ import production_connection_probe as connection
 import production_ledger as ledger
 import production_sdk_probe as sdk
 import production_trace as trace
+import production_canary_runtime as fixed_runtime
+import production_canary_calibration as calibration
 import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -22,7 +24,7 @@ CONTEXT = 'evals/skills/routing/production-canary-context-v0.1.json'
 BASE = '公開製品の発火選択だけを評価する。実操作の成功を主張せず、指定JSONで応答する。'
 DEVELOPER = '固定された読取りホスト以外の操作・質問・委譲は禁止。最大一覧1回・本文1回・制御2回。'
 CODE = ['production_canary_capture.py', 'production_canary_host.py', 'production_connection_probe.py',
-        'production_sdk_probe.py', 'production_cli_probe.py', 'production_ledger.py', 'production_trace.py', 'host.py', 'source_guard.py']
+        'production_sdk_probe.py', 'production_cli_probe.py', 'production_ledger.py', 'production_trace.py', 'host.py', 'source_guard.py', 'production_canary_runtime.py', 'production_canary_calibration.py']
 
 
 def policy(value):
@@ -61,7 +63,9 @@ def prepare(source):
     value = trace.strict_json(raw)
     policy(value)
     source_guard = guard.verify(ROOT, source, value['sourceFiles'])
+    fixed_runtime.verify(guard.git(ROOT,'show',source+':'+fixed_runtime.MANIFEST),value)
     context = context_profile(guard.git(ROOT, 'show', source + ':' + CONTEXT), value)
+    calibration.verify(ROOT,guard.git(ROOT,'show',source+':'+calibration.MANIFEST),context,value)
     from datetime import datetime
     from zoneinfo import ZoneInfo
     trace.require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
@@ -82,7 +86,7 @@ def prepare(source):
     raws = [guard.git(ROOT, 'show', source + ':' + path) for path in
             ['evals/skills/routing/production-canary-cases-v0.1.json', 'evals/skills/event-catalog.json']]
     raws += [manifest_raw, guard.git(ROOT, 'show', source + ':evals/skills/routing/production-canary-instructions-v0.1.txt'),
-             ledger.encoded({'platform': 'Linux', 'codexVersion': value['codexVersion'], 'sdkVersion': value['sdkVersion'], 'contextDate': context['date'], 'contextProfileSha256': value['contextProfileSha256']})]
+             ledger.encoded({'platform': 'Linux', 'codexVersion': value['codexVersion'], 'sdkVersion': value['sdkVersion'], 'contextDate': context['date'], 'contextProfileSha256': value['contextProfileSha256'], 'runtimeManifestSha256':value['runtimeManifestSha256'], 'calibrationManifestSha256':value['calibrationManifestSha256']})]
     runtime = dict(value, schemaVersion='1.0', sourceCommit=source, candidateSource=manifest['sourceCommit'],
                    inputSha256={k: ledger.sha(v) for k, v in zip(['cases', 'catalog', 'manifest', 'instructions', 'environment'], raws)})
     return ledger.bind_initial_canary_inputs(ledger.encoded(runtime), *raws), source_guard
@@ -179,7 +183,7 @@ def namespace_command(base, contract, *, repository=None):
     args = ['bwrap', '--unshare-pid', '--unshare-ipc', '--new-session', '--die-with-parent',
             '--ro-bind', '/', '/', '--tmpfs', '/home', '--tmpfs', '/root', '--tmpfs', '/tmp', '--tmpfs', '/run',
             '--proc', '/proc', '--dev', '/dev']
-    paths = [repository / contract['sdkRelativePath'], repository / contract['snapshotRelativePath'], Path(contract['codexPath']).parents[1],
+    paths = [repository / fixed_runtime.MANIFEST, repository / contract['sdkRelativePath'], repository / contract['snapshotRelativePath'], Path(contract['codexPath']).parents[1],
              *(repository / 'evals/skills/routing' / name for name in CODE)]
     for path in paths:
         args += ['--ro-bind', str(path), str(path)]
@@ -202,6 +206,7 @@ def isolated(base):
     from openai_codex import CodexConfig, __version__
     from openai_codex.client import CodexClient
     trace.require(__version__ == contract['sdkVersion'] and sdk.tree_hash(ROOT / contract['sdkRelativePath']) == contract['sdkTreeSha256'], 'SDK drift')
+    fixed_runtime.verify((ROOT/fixed_runtime.MANIFEST).read_bytes(),contract)
     version = subprocess.run([contract['codexPath'], '--version'], capture_output=True, timeout=10)
     cli.exclusive(base / 'version.stdout', version.stdout)
     cli.exclusive(base / 'version.stderr', version.stderr)
@@ -238,6 +243,8 @@ def isolated(base):
 def run(source, dry_run=False):
     bound, before = prepare(source)
     contract = bound.contract
+    runtime_raw=guard.git(ROOT,'show',source+':'+fixed_runtime.MANIFEST)
+    runtime_before=fixed_runtime.verify(runtime_raw,contract)
     root = ROOT / contract['outputRelativeRoot']
     ledger.safe_tree(root)
     if dry_run:
@@ -262,6 +269,8 @@ def run(source, dry_run=False):
                   'modelInputSha256': attempt['modelInputSha256']}))
     invoke = guard.verify(ROOT, source, contract['sourceFiles'])
     trace.require(invoke == before, 'source drift before invocation; reservation consumed')
+    runtime_invoke=fixed_runtime.verify(runtime_raw,contract)
+    trace.require(runtime_invoke==runtime_before,'runtime drift before invocation; reservation consumed')
     env = {'PATH': str(Path(contract['codexPath']).parents[1] / 'bin') + ':/usr/bin:/bin', 'LANG': 'C.UTF-8',
            'PYTHONDONTWRITEBYTECODE': '1', 'TMPDIR': str(base / 'tmp'), 'LOG_FORMAT': 'json',
            'CODEX_ROLLOUT_TRACE_ROOT': str(base / 'rollout-traces'),
@@ -282,17 +291,20 @@ def run(source, dry_run=False):
     cli.exclusive(base / 'namespace.stdout', stdout)
     cli.exclusive(base / 'namespace.stderr', stderr)
     after = guard.verify(ROOT, source, contract['sourceFiles'])
+    try:runtime_after=fixed_runtime.verify(runtime_raw,contract)
+    except (ValueError,OSError):runtime_after=None
     files = connection.original_artifact_paths(base)
     files += [base / n for n in ['model-input.json', 'decision-schema.json', 'host.jsonl', 'host-stop.json', 'capture-stop.json', 'dialogue-stop.json', 'proxy-capture-errors.json'] if (base / n).exists()]
     for path in files:
         ledger.safe_tree(path)
     runtime = trace.strict_json((base / 'runtime-result.json').read_bytes()) if (base / 'runtime-result.json').exists() else None
     result = trace.strict_json((base / 'isolated-result.json').read_bytes()) if (base / 'isolated-result.json').exists() else None
-    captured = process.returncode == 0 and not timed_out and before == invoke == after and \
+    captured = runtime_before==runtime_invoke==runtime_after and process.returncode == 0 and not timed_out and before == invoke == after and \
         runtime == {'exitCode': 0, 'forcedShutdown': False, 'captureIntegrity': True} and result == {'sdkErrorType': None} and \
         not any((base / n).exists() for n in ['host-stop.json', 'capture-stop.json', 'dialogue-stop.json'])
     value = dict(status='primary_capture_awaits_parent_and_independent_review' if captured else 'primary_capture_stopped',
         sourceCommit=source, attempt=attempt, sourceGuards=dict(before=before, invoke=invoke, after=after),
+        runtimeGuards=dict(before=runtime_before,invoke=runtime_invoke,after=runtime_after),
         namespaceExitCode=process.returncode, timedOut=timed_out, elapsedSeconds=time.monotonic() - start,
         artifactSha256={str(p.relative_to(base)): ledger.sha(p.read_bytes()) for p in files},
         primaryModelTrajectories=1, independentReviewPerformed=False, automaticRetries=0,

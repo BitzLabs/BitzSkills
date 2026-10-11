@@ -21,7 +21,7 @@
   "certifiesSkillGate": false,
   "outputRelativeRoot": ".venv/production-routing-primary-public-initial",
   "codexVersion": "codex-cli 0.160.1",
-  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
   "sdkVersion": "0.160.1",
   "sdkRelativePath": ".venv/codex-python-sdk-deps",
   "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
@@ -51,7 +51,14 @@
     "evals/skills/routing/production_canary_review.py",
     "evals/skills/routing/production_canary_rollout.py",
     "evals/skills/routing/production_sdk_trace.py",
-    "evals/skills/routing/production_canary_trace.py"
+    "evals/skills/routing/production_canary_trace.py",
+    "evals/skills/routing/production_canary_runtime.py",
+    "evals/skills/routing/production-canary-runtime-v0.1.json",
+    "evals/skills/routing/production_canary_evidence.py",
+    "tests/skills/test_production_canary_runtime.py",
+    "evals/skills/routing/production_canary_calibration.py",
+    "evals/skills/routing/production-canary-calibration-v0.1.json",
+    "tests/skills/test_production_canary_calibration.py"
   ],
   "limitations": [
     "Phase 4期間の送信/SOL継続許可内の公開正例1・負例1各2反復。共通台帳を各一次/独立検分の起動前に予約し、独立原照合待ちの間は次を起動しない。",
@@ -60,5 +67,7 @@
     "モデル推論の観測閾値3とモデル一覧の閾値2を区別し、旧接続契約のAPI合計1未達を変更しない。HTTP/SSE wire全文・server内部入力の取得を成功条件へ追加しない。",
     "captureは原取得のみ。親の原入力/RPC/host/rollout/telemetry照合と独立採点は別に必要。canary4件だけでは区分ごとの試作最低分母/5実地/Skill Gate/Phase完了を認定しない。"
   ],
-  "contextProfileSha256": "26520e33cd7b7210a492fe367c9d0eab5c3c69b3e4909aa55fae821a2a4399a9"
+  "contextProfileSha256": "26520e33cd7b7210a492fe367c9d0eab5c3c69b3e4909aa55fae821a2a4399a9",
+  "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+  "calibrationManifestSha256": "a360a371a47f475a360ad4d6fdb3c61ab22d565ab0fb14049864135dd893daf5"
 }

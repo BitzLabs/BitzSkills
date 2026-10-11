@@ -1,0 +1,18 @@
+{
+  "version": "primary-client-calibration-originals-0.1.0",
+  "sourceCommit": "9216bff479d543abda4ee71a00e92003982c6cdc",
+  "artifactSha256": {
+    "config.json": "d7dbf5c95dd9c5e4924def4d12b6556b8e2acb97de66852a2b9e0f053c8815bc",
+    "contract.json": "85a72f05189d66918f184ade89edbb8a52c86df3c48189a85920ca061be58d73",
+    "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+    "invocation.json": "b7d00b2e3c80ebbce3ab888999b5e8aad3224e7da916c9e05ee1d11303b97f1d",
+    "isolated-result.json": "ee1f95b3d363cb73ae1a2ebc73b0c98d97a55d69084c8367b6bf2095ee473d8a",
+    "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+    "receipt.json": "70d00496d515eef7136070886b1a293dde8e129a5f1b4b0dc842c8cca02359ed",
+    "request-1.json": "8e128b2cb11ca1afa2c1d66bec0ed8d73fa70a00db6a102615bd427099c18d0c",
+    "rpc-in.jsonl": "9e4d8c6d161524cf1e6773890f6c2ad03fddee42f6bb5383d821b8edcbd58c02",
+    "rpc-out.jsonl": "344c0f1be9955e4bbcc17428ca0ae0ada7af16b95956ef31ff295fe0543d6e3c",
+    "runtime-result.json": "28b5c6f075b67543cac8b1d207294f74cf54d959b1c83ae23cec2f4b4480dacd",
+    "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
+  }
+}

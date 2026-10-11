@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_canary_evidence as evidence
 import test_routing_host as host_fixture
+import test_production_canary_runtime as runtime_fixture
 
 ledger, capture, trace = evidence.ledger, evidence.capture, evidence.trace
 
@@ -27,6 +28,10 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.contract = json.loads((ROOT / capture.CONTRACT).read_bytes())
         context_raw = getattr(self, 'context_profile_raw', (ROOT / evidence.CONTEXT).read_bytes())
         self.contract['contextProfileSha256'] = ledger.sha(context_raw)
+        runtime_root=self.repository/'fixed-runtime'
+        runtime_raw=runtime_fixture.fixture(runtime_root,self.contract)
+        self.patch(capture.fixed_runtime,'ROOT',new=runtime_root)
+        runtime_proof=capture.fixed_runtime.verify(runtime_raw,self.contract)
         self.snapshot = self.repository / evidence.SNAPSHOT
         self.snapshot.mkdir(parents=True)
         manifest_raw = (fixture.snapshot / 'manifest.json').read_bytes()
@@ -38,6 +43,7 @@ class CanaryEvidenceTests(unittest.TestCase):
             evidence.INSTRUCTIONS: (ROOT / evidence.INSTRUCTIONS).read_bytes(),
             evidence.SCHEMA: (ROOT / evidence.SCHEMA).read_bytes(),
             evidence.CONTEXT: context_raw,
+            capture.fixed_runtime.MANIFEST: runtime_raw,
         }
         for name in fixture.manifest['resources']:
             raw = (fixture.snapshot / name).read_bytes()
@@ -51,6 +57,8 @@ class CanaryEvidenceTests(unittest.TestCase):
             'sourceSha256': {p: '1' * 64 for p in self.contract['sourceFiles']}}
         self.patch(evidence.guard, 'git', side_effect=self.git)
         self.patch(evidence.guard, 'verify', return_value=self.source_evidence)
+        self.git_raws[capture.calibration.MANIFEST]=b'public synthetic calibration manifest'
+        self.patch(capture.calibration,'verify',return_value=dict(status='original_local_calibration_matches'))
         self.storage = self.repository / 'ledger'
         self.patch(ledger, 'common_ledger_path', return_value=self.storage)
         self.fixed = evidence.load_fixed_inputs(self.repository, self.source)
@@ -80,6 +88,7 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.receipt = dict(status='primary_capture_awaits_parent_and_independent_review',
             sourceCommit=self.source, attempt=self.attempt,
             sourceGuards=dict.fromkeys(['before', 'invoke', 'after'], self.source_evidence),
+            runtimeGuards=dict.fromkeys(['before','invoke','after'],runtime_proof),
             namespaceExitCode=0, timedOut=False, elapsedSeconds=2.5,
             artifactSha256={name: ledger.sha(raw) for name, raw in self.originals.items()},
             primaryModelTrajectories=1, independentReviewPerformed=False, automaticRetries=0,

@@ -125,21 +125,32 @@ def parent_bodies(output, expected):
             if ({'skills', 'resources', 'manifestSha256'} <= set(value) or
                     {'path', 'content', 'sha256', 'sourceCommit'} <= set(value)):
                 found.append(value)
-                return
-            for nested in value.values():inspect(nested, depth+1)
-        elif isinstance(value, list):
-            for nested in value:inspect(nested, depth+1)
-        elif isinstance(value, str):
-            # execの固定ヘッダはJSONでない。全文JSONまたは各JSON行だけを読む。
-            try:parsed = trace.strict_json(value)
-            except ValueError:
-                for line in value.splitlines():
-                    try:parsed = trace.strict_json(line)
-                    except ValueError:continue
-                    if isinstance(parsed, (dict,list)):inspect(parsed, depth+1)
-            else:
-                if isinstance(parsed, (dict,list)):inspect(parsed, depth+1)
-    for block in output:inspect(block['text'])
+            elif set(value)=={'content','isError'}:
+                require(value['isError'] is False and isinstance(value['content'],list) and len(value['content'])==1,
+                        'successful complete parent MCP wrapper')
+                part=value['content'][0]
+                require(isinstance(part,dict) and set(part)=={'type','text'} and part['type']=='text' and
+                        isinstance(part['text'],str), 'parent MCP text shape')
+                inspect(trace.strict_json(part['text']),depth+1)
+            elif set(value) in ({'listed','read'},{'listed'},{'read'},{'kind','listed','read'}):
+                require('kind' not in value or value['kind']=='read','fixed parent wrapper label')
+                for name in ['listed','read']:
+                    if name in value:inspect(value[name],depth+1)
+            else:require(False,'unknown parent JSON wrapper or additional context')
+        elif isinstance(value,list):
+            require(bool(value),'nonempty parent JSON list')
+            for nested in value:inspect(nested,depth+1)
+        else:require(False,'unknown parent JSON value')
+    for block in output:
+        value=block['text']
+        # 実行ヘッダは独立したblockだけ許す。本文への任意文字列追加は受理しない。
+        if re.fullmatch(r'Script completed\nWall time [0-9]+(?:\.[0-9]+)? seconds\nOutput:\n',value):continue
+        try:parsed=trace.strict_json(value)
+        except ValueError:
+            lines=value.splitlines()
+            require(bool(lines) and all(line.strip() for line in lines),'complete parent JSON lines')
+            for line in lines:inspect(trace.strict_json(line))
+        else:inspect(parsed)
     require(trace.json_equal(found, expected), 'original parent output and complete host bodies')
     return [sdk.digest(value) for value in found]
 

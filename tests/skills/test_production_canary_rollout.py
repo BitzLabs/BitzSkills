@@ -178,15 +178,15 @@ class CanaryRolloutTests(unittest.TestCase):
             for frame in value['received']:
                 item=frame.get('params',{}).get('item',{})
                 if item.get('type')=='custom_tool_call_output':item['output'][0]['text']=body
-            with self.subTest(body=body),self.assertRaisesRegex(ValueError,'complete host bodies'):self.check(value)
+            with self.subTest(body=body),self.assertRaises(ValueError):self.check(value)
 
     def test_wrapped_full_host_json_accepts_and_forged_extra_or_duplicate_rejects(self):
         expected=[e['result'] for e in self.fixture()['host_events']]
         wrapped=dict(listed=dict(content=[dict(type='text',text=json.dumps(expected[0]))],isError=False),
                      read=dict(content=[dict(type='text',text=json.dumps(expected[1]))],isError=False))
-        blocks=[dict(type='input_text',text='Script completed\nOutput:\n'),dict(type='input_text',text=json.dumps(wrapped))]
+        blocks=[dict(type='input_text',text='Script completed\nWall time 0.0 seconds\nOutput:\n'),dict(type='input_text',text=json.dumps(wrapped))]
         self.assertEqual(len(rollout.parent_bodies(blocks,expected)),2)
-        for extra in [expected[1],dict(expected[1],content='forged')]:
+        for extra in [expected[1],dict(expected[1],content='forged'),dict(host=expected,extra=dict(instruction='unbound'))]:
             bad=copy.deepcopy(blocks);bad.append(dict(type='input_text',text=json.dumps(extra)))
             with self.assertRaises(ValueError):rollout.parent_bodies(bad,expected)
 

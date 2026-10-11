@@ -120,6 +120,7 @@ def load_fixed_inputs(repository, source):
             'exact fixed commit required')
     contract = trace.strict_json(guard.git(repository, 'show', source + ':' + capture.CONTRACT))
     capture.policy(contract)
+    capture.fixed_runtime.verify(guard.git(repository,'show',source+':'+capture.fixed_runtime.MANIFEST),contract)
     require(contract['snapshotRelativePath'] == SNAPSHOT, 'fixed public snapshot path')
     evidence = guard.verify(repository, source, contract['sourceFiles'])
     audit_evidence = guard.verify(repository, source, [*contract['sourceFiles'], *AUDIT_SOURCES])
@@ -134,10 +135,11 @@ def load_fixed_inputs(repository, source):
                 'fixed public resource drift')
     context_raw = guard.git(repository, 'show', source + ':' + CONTEXT)
     context = capture.context_profile(context_raw, contract)
+    capture.calibration.verify(repository,guard.git(repository,'show',source+':'+capture.calibration.MANIFEST),context,contract)
     raws = [guard.git(repository, 'show', source + ':' + name) for name in [CASES, CATALOG]]
     raws += [manifest_raw, guard.git(repository, 'show', source + ':' + INSTRUCTIONS),
              ledger.encoded(dict(platform='Linux', codexVersion=contract['codexVersion'], sdkVersion=contract['sdkVersion'],
-            contextDate=context['date'], contextProfileSha256=contract['contextProfileSha256']))]
+            contextDate=context['date'], contextProfileSha256=contract['contextProfileSha256'], runtimeManifestSha256=contract['runtimeManifestSha256'], calibrationManifestSha256=contract['calibrationManifestSha256']))]
     runtime = dict(contract, schemaVersion='1.0', sourceCommit=source, candidateSource=manifest['sourceCommit'],
                    inputSha256={k: ledger.sha(v) for k, v in zip(['cases', 'catalog', 'manifest', 'instructions', 'environment'], raws)})
     bound = ledger.bind_initial_canary_inputs(ledger.encoded(runtime), *raws)
@@ -155,9 +157,11 @@ def load_verified_capture(repository, source, ordinal):
     receipt_raw = read_original(base / 'receipt.json')
     receipt = trace.strict_json(receipt_raw)
     require(isinstance(receipt, dict) and set(receipt) == {'status', 'sourceCommit', 'attempt', 'sourceGuards',
-            'namespaceExitCode', 'timedOut', 'elapsedSeconds', 'artifactSha256', 'primaryModelTrajectories',
+            'runtimeGuards', 'namespaceExitCode', 'timedOut', 'elapsedSeconds', 'artifactSha256', 'primaryModelTrajectories',
             'independentReviewPerformed', 'automaticRetries', 'certifiesApiRequestHardCap',
             'eligibleForMeasurement', 'phaseComplete'}, 'capture receipt fields')
+    runtime_proof=capture.fixed_runtime.verify(guard.git(repository,'show',source+':'+capture.fixed_runtime.MANIFEST),bound.contract)
+    require(trace.json_equal(receipt.get('runtimeGuards'),dict.fromkeys(['before','invoke','after'],runtime_proof)), 'captured runtime guards drift')
     names = artifact_inventory(base, receipt.get('artifactSha256'))
     originals = {name: read_original(base / name) for name in names}
     require({name: ledger.sha(raw) for name, raw in originals.items()} == receipt['artifactSha256'],

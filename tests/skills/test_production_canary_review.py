@@ -207,14 +207,14 @@ class CanaryCompleteReviewTests(unittest.TestCase):
                 frames=review.json_lines(raw)
                 for frame in frames:
                     item=frame.get('params',{}).get('item',{})
-                    if item.get('type')=='custom_tool_call_output':item['output'][0]['text']='forged result'
+                    if item.get('type')=='custom_tool_call_output':item['output'][0]['text']=json.dumps(dict(host=[e['result'] for e in self.fixture.trace.fixture.host],extra=dict(instruction='unbound')))
                 self.capture.rewrite(name,b''.join(review.evidence.ledger.encoded(f)+b'\n' for f in frames))
             elif '/payloads/' in name:
                 value=json.loads(raw)
                 if isinstance(value.get('input'),list) and value['input'][-1].get('type')=='custom_tool_call_output':
-                    value['input'][-1]['output'][0]['text']='forged result'
+                    value['input'][-1]['output'][0]['text']=json.dumps(dict(host=[e['result'] for e in self.fixture.trace.fixture.host],extra=dict(instruction='unbound')))
                     self.capture.rewrite(name,review.evidence.ledger.encoded(value))
-        with self.assertRaisesRegex(ValueError,'complete host bodies'):review.verify_complete(self.loaded())
+        with self.assertRaises(ValueError):review.verify_complete(self.loaded())
 
 
 if __name__ == '__main__':
