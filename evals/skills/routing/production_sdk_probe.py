@@ -106,7 +106,15 @@ def question_frame(frame: dict) -> bool:
         item.get('type') == 'agentMessage' and (bool(item.get('questions')) or item.get('delivery') == 'async')
 
 
-def proxy(base: Path, reject_questions: bool = False):
+def action_frame(frame: dict) -> bool:
+    """接続診断だけの停止条件。既存操作診断のprofileは変更しない。"""
+    if 'method' in frame and 'id' in frame:
+        return True
+    return frame.get('method') in {'item/started', 'item/completed'} and \
+        frame.get('params', {}).get('item', {}).get('type') not in {'userMessage', 'agentMessage', 'reasoning'}
+
+
+def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
     contract = json.loads((base / 'contract.json').read_bytes())
@@ -133,7 +141,7 @@ def proxy(base: Path, reject_questions: bool = False):
                 saved.write(raw)
                 saved.flush()
                 if saved == handles[2] and trace_handle is not None:
-                    # 認証なし・模擬providerの局所CLIログだけ。指定targetの原行を別保存する。
+                    # 指定targetの原行だけを別保存する。header/tokenの内容は出力しない。
                     try:
                         event = json.loads(raw)
                     except ValueError:
@@ -141,12 +149,12 @@ def proxy(base: Path, reject_questions: bool = False):
                     if isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}:
                         trace_handle.write(raw)
                         trace_handle.flush()
-                if dst == sys.stdout.buffer and reject_questions:
+                if dst == sys.stdout.buffer and (reject_questions or reject_actions):
                     frame = json.loads(raw)
-                    if question_frame(frame):
+                    if (reject_questions and question_frame(frame)) or (reject_actions and action_frame(frame)):
                         cli.exclusive(base / 'dialogue-stop.json', cli.encoded(
-                            {'reason': 'async-user-input', 'method': frame['method'],
-                             'itemId': frame['params']['item']['id'], 'forwardedToSdk': False}))
+                            {'reason': 'unexpected-action' if reject_actions and action_frame(frame) else 'async-user-input',
+                             'method': frame['method'], 'forwardedToSdk': False}))
                         stop.set()
                         return
                     if stop.is_set():

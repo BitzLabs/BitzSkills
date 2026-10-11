@@ -20,7 +20,9 @@
 - `core/src/client.rs`のHTTP経路は401等の認証復旧後に別のloopで再要求する。通常retry0だけでこの経路の0回を証明しない。
 - `login/src/auth/manager.rs`には認証復旧の状態遷移がある。認証値を読まずに公開実装だけを調査した。
 
-次の無課金故障注入では、認証なしの隔離模擬providerを用い、HTTP失敗・stream切断・接続失敗を別条件にする。
+無課金故障注入を実施した。原記録は`../results/2026-10-11-sdk-provider-faults/`。
+503/retry 0はHTTP1件、503/retry 1対照は2件、stream切断は1件、接続失敗はHTTP受信0件・API試行1回。
+全4条件でSDK turn failedとprocess終了0を観測した。認証なしの隔離模擬providerを用い、条件を分けた。
 通常retry0、stream retry0、supports_websockets=false、unbounded_connection_retries=falseの候補設定で
 原要求件数・失敗終端・timeout・子process終了を観測する。正常ケースだけで上限を認定しない。
 固定版のsystem_proxy_fallbackも既定trueであることをfeatures/src/lib.rsで確認した。
