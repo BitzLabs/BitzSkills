@@ -19,7 +19,7 @@
       "code": "SPEC-MULTI-UNREGISTERED-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "Gitが認識する設定fileがcatalogに登録されていません",
+      "summary": "Gitが認識する設定ファイルがカタログに登録されていません",
       "source": {
         "kind": "file",
         "workspaceId": null,

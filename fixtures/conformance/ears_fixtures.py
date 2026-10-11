@@ -164,11 +164,11 @@ CASES.extend(json.loads(r'''
 SUMMARIES = {
     "EAI-CORE-ID-001": "規範文IDの形式が不正です",
     "EAI-CORE-ID-002": "規範文IDが重複しています",
-    "EAI-CORE-SYNTAX-001": "tagの順序が不正です",
-    "EAI-CORE-SYNTAX-004": "tagが閉じられていません",
-    "EAI-CORE-SYNTAX-005": "code spanが閉じられていません",
+    "EAI-CORE-SYNTAX-001": "タグの順序が不正です",
+    "EAI-CORE-SYNTAX-004": "タグが閉じられていません",
+    "EAI-CORE-SYNTAX-005": "コードスパンが閉じられていません",
     "EAI-CORE-SYNTAX-006": "規範文末の句点がありません",
-    "EAI-EXT-UNKNOWN-001": "未知namespaceのextensionを保持します",
+    "EAI-EXT-UNKNOWN-001": "未知の名前空間の拡張タグを保持します",
 }
 # 診断コードだけでは決まらない、識別子固有の要約の上書き（EAI-CORE-ID-001は2条件を共有するため）。
 SUMMARY_OVERRIDES = {

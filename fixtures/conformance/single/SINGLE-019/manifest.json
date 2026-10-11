@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-019",
-  "description": "SPEC fileをUTF-8として復号できません",
+  "description": "仕様文書のファイルをUTF-8として復号できません",
   "setup": {
     "git": true,
     "baseCommit": {

@@ -20,7 +20,7 @@
       "code": "SPEC-TASK-BOUNDARY-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "src2/outside.pyはweb::TASK-010の許可変更path外です",
+      "summary": "パスsrc2/outside.pyはweb::TASK-010の変更許可パスの外です",
       "source": {
         "kind": "file",
         "workspaceId": "web",

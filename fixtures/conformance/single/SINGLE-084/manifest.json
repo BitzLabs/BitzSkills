@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-084",
-  "description": "REQではchangesを使用できません",
+  "description": "REQではフィールドchangesを使用できません",
   "setup": {
     "git": true,
     "baseCommit": {

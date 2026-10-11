@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-029",
-  "description": "管理済みSPECが削除されています",
+  "description": "管理済みの仕様文書が削除されています",
   "setup": {
     "git": true,
     "baseCommit": {

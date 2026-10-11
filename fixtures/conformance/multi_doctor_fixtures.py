@@ -81,7 +81,7 @@ def command_diagnostic():
         "code": "SPEC-DOCTOR-COMMAND-001",
         "severity": "error",
         "resultStatus": "blocked",
-        "summary": "command実行fileを解決できません",
+        "summary": "コマンドの実行可能ファイルを解決できません",
         "source": {"kind": "file", "workspaceId": "api", "path": ".spec/bitz.yaml",
                    "key": "verify.commands.backend.argv"},
     }
@@ -128,7 +128,7 @@ def reviewed_text(identifier):
     return (
         "doctor blocked targets=21 diagnostics=1 (0ms)\n"
         "api:.spec/bitz.yaml::: error: SPEC-DOCTOR-COMMAND-001: "
-        "command実行fileを解決できません\n"
+        "コマンドの実行可能ファイルを解決できません\n"
     )
 
 

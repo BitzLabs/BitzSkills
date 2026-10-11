@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-017-03",
-  "description": "ADRに規範行を配置できません",
+  "description": "ADRに規範文を配置できません",
   "setup": {
     "git": true,
     "baseCommit": {

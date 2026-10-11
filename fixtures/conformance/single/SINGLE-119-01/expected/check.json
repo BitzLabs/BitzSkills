@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "relationsに未知のkey futureがあります",
+      "summary": "フィールドrelationsに未知のキーfutureがあります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

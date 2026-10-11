@@ -817,7 +817,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-151", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
             # 設定の不在は、`environment`を発生元とする`SPEC-WORKSPACE-MISSING-001`（`blocked`）で返す。設定の診断や`file`の発生元へ置換しない。
             ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
-                code="SPEC-CONFIG-SCHEMA-001", resultStatus="error", summary="languageはstringで指定してください")),
+                code="SPEC-CONFIG-SCHEMA-001", resultStatus="error", summary="設定キーlanguageは文字列で指定してください")),
             ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
                 source={"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})),
             ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(identifier=".spec")),
@@ -1682,7 +1682,7 @@ class AuditTests(unittest.TestCase):
         """修正前の誤検出、`workspace.path`の改変、件数の改変、他のメンバーの診断の所有ワークスペースの改変などを拒否する。"""
         pre_fix = {
             "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-            "summary": "strong relationの参照先が存在しません", "evidence": "api::TECH-020",
+            "summary": "強い関係の参照先が存在しません", "evidence": "api::TECH-020",
             "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
                        "key": "relations.requires"}}
 
@@ -1704,7 +1704,7 @@ class AuditTests(unittest.TestCase):
             lambda v: v.update(status="passed_with_warnings"),
             lambda v: v.update(diagnostics=[{
                 "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "summary": "強い関係の参照先が存在しません", "evidence": "TECH-998",
                 "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
                            "key": "relations.requires"}}], status="failed"),
         ]
@@ -1719,12 +1719,12 @@ class AuditTests(unittest.TestCase):
             lambda v: v["diagnostics"].reverse(),
             lambda v: v["diagnostics"].append({
                 "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-996",
+                "summary": "強い関係の参照先が存在しません", "evidence": "TECH-996",
                 "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-060.md",
                            "key": "relations.requires"}}),
             lambda v: v["diagnostics"].append({
                 "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "summary": "強い関係の参照先が存在しません", "evidence": "TECH-998",
                 "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
                            "key": "relations.requires"}}),
             lambda v: v.update(diagnostics=[], status="passed"),
@@ -1939,7 +1939,7 @@ class AuditTests(unittest.TestCase):
             lambda v: v["revision"].update(dirty=True),
             lambda v: v.update(diagnostics=[{
                 "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "summary": "強い関係の参照先が存在しません", "evidence": "TECH-998",
                 "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
                            "key": "relations.requires"}}], status="failed"),
             lambda v: v.update(selection={"changedPathCount": 0, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0}),

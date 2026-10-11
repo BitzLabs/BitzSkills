@@ -55,7 +55,7 @@
       "code": "CTX-PROJECTION-LIMIT-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "detail fullの提示量が1 MiBのhard limitを超過します",
+      "summary": "詳細度fullの提示量が1 MiBの絶対上限を超過します",
       "source": {
         "kind": "invocation",
         "argument": "--detail"

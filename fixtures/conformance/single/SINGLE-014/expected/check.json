@@ -20,7 +20,7 @@
       "code": "SPEC-FILE-NAME-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "file名IDとFrontmatter IDが一致しません",
+      "summary": "ファイル名のIDとフロントマターのIDが一致しません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

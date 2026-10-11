@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-020",
-  "description": "strong relationの参照先が存在しません",
+  "description": "強い関係の参照先が存在しません",
   "setup": {
     "git": true,
     "baseCommit": {

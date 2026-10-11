@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "testsの要素に未知のkey futureがあります",
+      "summary": "フィールドtestsの要素に未知のキーfutureがあります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-087-02",
-  "description": "Frontmatterのanchorは禁止です",
+  "description": "フロントマターのアンカーは禁止です",
   "setup": {
     "git": true,
     "baseCommit": {

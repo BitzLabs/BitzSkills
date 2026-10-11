@@ -19,7 +19,7 @@
           "code": "CTX-RELATION-TYPE-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "REQからADRへのrequiresは許可されません",
+          "summary": "REQからADRへの関係型requiresは許可されません",
           "source": {
             "kind": "file",
             "workspaceId": "root",

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-081",
-  "description": "設定file先頭のBOMを除いて解析を続行します",
+  "description": "設定ファイル先頭のBOMを除いて解析を続行します",
   "setup": {
     "git": true,
     "baseCommit": {

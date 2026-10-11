@@ -128,7 +128,7 @@ def reviewed_result(context_digest):
         "diagnostics": [{
             "code": "CTX-COVERAGE-TASK-001", "severity": "warning",
             "resultStatus": "passed_with_warnings",
-            "summary": "implement対象のMUST REQ-001:AC-01を実装するTASKがありません",
+            "summary": "目的implementの対象規範文MUST REQ-001:AC-01を実装するTASKがありません",
             "source": {"kind": "file", "workspaceId": "root",
                        "path": ".spec/requirements/REQ-001.md"},
         }],

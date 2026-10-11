@@ -16,7 +16,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "argv[0]は空stringにできません",
+      "summary": "argv[0]は空文字列にできません",
       "source": {
         "kind": "file",
         "workspaceId": null,

@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "testsに重複した要素があります",
+      "summary": "フィールドtestsに重複した要素があります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

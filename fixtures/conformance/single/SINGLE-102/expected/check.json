@@ -20,7 +20,7 @@
       "code": "EAI-CORE-SYNTAX-004",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "tagが閉じられていません",
+      "summary": "タグが閉じられていません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

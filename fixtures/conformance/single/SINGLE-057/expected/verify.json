@@ -59,7 +59,7 @@
       "code": "SPEC-VERIFY-COMMAND-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "commandの実行形式をOSが拒否しprocessを生成できません",
+      "summary": "コマンドの実行形式をOSが拒否しプロセスを生成できません",
       "source": {
         "kind": "environment",
         "component": "command",

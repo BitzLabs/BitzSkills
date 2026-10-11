@@ -32,7 +32,7 @@
     "status": "blocked",
     "exitCode": 2,
     "stdout": "json",
-    "resultDigest": "sha256:d181a349c8ca9082fe6b1df2581acd9ed1f2832ea2dde23f4ba5201f037d5274",
+    "resultDigest": "sha256:cc92ba72b3d193a1acdef73fe6f5d3392317315b803204ad11fd4299ce0e642f",
     "reportFileCount": 0
   }
 }

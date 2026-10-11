@@ -55,9 +55,9 @@ COMMANDS = {
     "SINGLE-059": ("bin/hang.sh", HANG_SCRIPT, "timeout", "SPEC-VERIFY-TIMEOUT-001", 1),
 }
 SUMMARIES = {
-    "SINGLE-057": "commandの実行形式をOSが拒否しprocessを生成できません",
-    "SINGLE-058": "commandがsignalで終了しました",
-    "SINGLE-059": "commandが実効timeout 1秒で終了しませんでした",
+    "SINGLE-057": "コマンドの実行形式をOSが拒否しプロセスを生成できません",
+    "SINGLE-058": "コマンドがシグナルで終了しました",
+    "SINGLE-059": "コマンドが実効タイムアウト1秒で終了しませんでした",
 }
 DESCRIPTIONS = {
     "SINGLE-057": "事前検査通過後のprocess生成失敗をspawn_errorで記録する",

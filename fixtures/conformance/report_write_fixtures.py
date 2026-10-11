@@ -80,7 +80,7 @@ def reviewed_result(identifier):
     result["status"] = "error"
     result["diagnostics"] = result["diagnostics"] + [{
         "code": "SPEC-REPORT-WRITE-001", "severity": "error", "resultStatus": "error",
-        "summary": "report保存先へ排他的に作成できません",
+        "summary": "レポートの保存先へ排他的に作成できません",
         "source": {"kind": "file", "workspaceId": "root", "path": REPORT_DIRECTORY}}]
     return result
 

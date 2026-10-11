@@ -59,7 +59,7 @@
       "code": "SPEC-VERIFY-TIMEOUT-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "commandが実効timeout 1秒で終了しませんでした",
+      "summary": "コマンドが実効タイムアウト1秒で終了しませんでした",
       "source": {
         "kind": "environment",
         "component": "command",

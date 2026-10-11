@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-017-01",
-  "description": "H1がFrontmatterと一致しません",
+  "description": "H1がフロントマターと一致しません",
   "setup": {
     "git": true,
     "baseCommit": {

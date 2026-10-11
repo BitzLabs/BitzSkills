@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "relations.relatedに重複した値があります",
+      "summary": "フィールドrelations.relatedに重複した値があります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

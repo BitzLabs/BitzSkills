@@ -50,9 +50,9 @@ CONFIG_SOURCE = "changes/x-bitz.yaml"
 # 引数なしの`check`が削除した仕様文書を`selection.targetDocumentCount`に数えるかは、規範文が定めない（実装の確認事項C28）。
 # そのため、この群は引数なしの`check`を使わず、`selection`を持たない`--full`で実行する。
 
-SAFETY_SUMMARY = "approved REQの意味変更時にstatusが戻されていません"
-DELETED_SUMMARY = "管理済みSPECが削除されています"
-UNREGISTERED_SUMMARY = "Gitが認識する設定fileがcatalogに登録されていません"
+SAFETY_SUMMARY = "状態approvedのREQの意味変更時に文書の状態が戻されていません"
+DELETED_SUMMARY = "管理済みの仕様文書が削除されています"
+UNREGISTERED_SUMMARY = "Gitが認識する設定ファイルがカタログに登録されていません"
 
 # id: (種類, corpus, 実行ディレクトリ, 引数列の残り, 状態, 終了コード, 説明)
 CASES = {

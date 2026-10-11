@@ -143,7 +143,7 @@ def requires_edges(documents, identifier):
             diagnostic = {
                 "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
                 "summary": f"{KIND_LABEL[document['kind']]}から{KIND_LABEL[documents[target]['kind']]}への"
-                           "requiresは許可されません",
+                           "関係型requiresは許可されません",
                 "source": {"kind": "file", "workspaceId": document["workspaceId"],
                            "path": f".spec/{KIND_DIRECTORY[document['kind']]}/{document['frontmatter']['id']}.md",
                            "key": "relations.requires"},
@@ -156,7 +156,7 @@ def requires_edges(documents, identifier):
 def reviewed_diagnostics():
     return [{
         "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
-        "summary": "TECHからADRへのrequiresは許可されません",
+        "summary": "TECHからADRへの関係型requiresは許可されません",
         "source": dict(ORIGIN), "evidence": "ADR-001",
     }]
 

@@ -104,7 +104,7 @@ def reviewed_result(identifier, context_digest):
     if identifier == "SINGLE-098-01":
         result["status"] = "passed_with_warnings"
         result["diagnostics"] = [{"code": "EAI-EXT-UNKNOWN-001", "severity": "warning",
-            "resultStatus": "passed_with_warnings", "summary": "未知namespaceのextensionを保持します",
+            "resultStatus": "passed_with_warnings", "summary": "未知の名前空間の拡張タグを保持します",
             "source": {"kind": "file", "workspaceId": "root", "path": REQ_RESULT_PATH,
                        "line": 15, "column": 19}}]
     if identifier == "SINGLE-106-02":

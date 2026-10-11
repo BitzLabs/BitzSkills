@@ -55,7 +55,7 @@
       "code": "CTX-RELATION-TYPE-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "TASKからADRへのrequiresは許可されません",
+      "summary": "TASKからADRへの関係型requiresは許可されません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

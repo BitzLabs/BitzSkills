@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-087-05",
-  "description": "Frontmatterの重複mapping keyは禁止です",
+  "description": "フロントマターの重複したマッピングのキーは禁止です",
   "setup": {
     "git": true,
     "baseCommit": {

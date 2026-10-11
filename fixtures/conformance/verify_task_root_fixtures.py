@@ -233,7 +233,7 @@ def type_diagnostic():
     許可されません`）にそろえた。"""
     return {
         "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
-        "summary": "REQからADRへのrequiresは許可されません",
+        "summary": "REQからADRへの関係型requiresは許可されません",
         "source": {"kind": "file", "workspaceId": "root", "path": INAPPLICABLE_PATH, "key": "relations.requires"},
         "evidence": "ADR-001",
     }

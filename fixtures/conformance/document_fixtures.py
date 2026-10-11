@@ -22,18 +22,18 @@ DOCUMENT = HEADER + INTENT + AC + VERIFICATION
 # ID: (パス, 完全な入力, 診断コード, 要約, 発生元の詳細, 文書・規範文の件数)
 CASES = {
     "SINGLE-014": (".spec/requirements/REQ-002.md", DOCUMENT.encode(),
-        "SPEC-FILE-NAME-001", "file名IDとFrontmatter IDが一致しません", {"key": "id"}, (0, 0)),
+        "SPEC-FILE-NAME-001", "ファイル名のIDとフロントマターのIDが一致しません", {"key": "id"}, (0, 0)),
     "SINGLE-016": (REQ_PATH, (HEADER + INTENT + "## Acceptance Criteria\n\n規範文は未記載。\n\n" + VERIFICATION).encode(),
-        "SPEC-REQ-STATEMENT-001", "approved REQに妥当な規範文がありません", {}, (0, 0)),
+        "SPEC-REQ-STATEMENT-001", "状態approvedのREQに妥当な規範文がありません", {}, (0, 0)),
     "SINGLE-017-01": (REQ_PATH, DOCUMENT.replace("# REQ-001 文書の検査", "# REQ-001 異なる見出し").encode(),
-        "SPEC-STYLE-H1-001", "H1がFrontmatterと一致しません", {"line": 7, "column": 1}, (1, 1)),
+        "SPEC-STYLE-H1-001", "H1がフロントマターと一致しません", {"line": 7, "column": 1}, (1, 1)),
     "SINGLE-017-02": (REQ_PATH, ((HEADER + INTENT + AC).rstrip() + "\n").encode(),
-        "SPEC-STYLE-SECTION-001", "REQ必須section Verificationがありません", {}, (1, 1)),
+        "SPEC-STYLE-SECTION-001", "REQの必須の節Verificationがありません", {}, (1, 1)),
     "SINGLE-017-03": (ADR_PATH, (
         "---\nid: ADR-001\ntitle: 文書の検査\nstatus: accepted\n---\n\n# ADR-001 文書の検査\n\n"
         "## Context\n\n判断の背景。\n\n## Decision\n\n" + GOOD.replace("REQ-001", "ADR-001") +
         "\n\n## Consequences\n\n規範契約はREQへ置く。\n").encode(),
-        "SPEC-STYLE-PLACEMENT-001", "ADRに規範行を配置できません", {"line": 15, "column": 3}, (1, 0)),
+        "SPEC-STYLE-PLACEMENT-001", "ADRに規範文を配置できません", {"line": 15, "column": 3}, (1, 0)),
     "SINGLE-018-01": (REQ_PATH, ((HEADER + VERIFICATION + "\n" + AC + INTENT).rstrip() + "\n").encode(),
         None, None, {}, (1, 1)),
     "SINGLE-018-02": (REQ_PATH, (DOCUMENT + "\n## Notes\n").encode(),
@@ -41,7 +41,7 @@ CASES = {
     "SINGLE-018-03": (REQ_PATH, (DOCUMENT + "\n**補足**\n\n太字の疑似節は検査対象外。\n").encode(),
         None, None, {}, (1, 1)),
     "SINGLE-019": (REQ_PATH, DOCUMENT.encode() + b"\n\xff\n",
-        "SPEC-INPUT-READ-001", "SPEC fileをUTF-8として復号できません", {}, (0, 0)),
+        "SPEC-INPUT-READ-001", "仕様文書のファイルをUTF-8として復号できません", {}, (0, 0)),
 }
 
 

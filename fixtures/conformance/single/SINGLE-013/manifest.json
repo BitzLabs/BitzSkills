@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-013",
-  "description": "未知namespaceのextensionを保持します",
+  "description": "未知の名前空間の拡張タグを保持します",
   "setup": {
     "git": true,
     "baseCommit": {

@@ -20,7 +20,7 @@
       "code": "SPEC-SAFETY-APPROVED-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "approved REQの意味変更時にstatusが戻されていません",
+      "summary": "状態approvedのREQの意味変更時に文書の状態が戻されていません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
@@ -32,7 +32,7 @@
       "code": "SPEC-STATE-TRANSITION-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "管理済みSPECが削除されています",
+      "summary": "管理済みの仕様文書が削除されています",
       "source": {
         "kind": "file",
         "workspaceId": "root",

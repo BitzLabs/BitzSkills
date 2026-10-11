@@ -68,8 +68,8 @@ def reviewed_result(identifier):
         "checkedDocumentCount": 1, "checkedStatementCount": 0, "durationMs": 0,
         "diagnostics": [{"code": "SPEC-TASK-BOUNDARY-002" if task else "SPEC-GIT-DEGRADED-001",
             "severity": "error" if task else "warning", "resultStatus": status,
-            "summary": "Git不在のためTASK-001の変更境界を検査できません" if task else
-                "Git不在のため全体checkへ縮退します。承認済みREQ保護、状態遷移、管理済みSPEC削除の差分検査は実施できません",
+            "summary": "Git不在のためTASK-001のTASK境界を検査できません" if task else
+                "Git不在のため全体検査へ縮退します。承認済み要求の保護、状態遷移、管理済みの仕様文書の削除の差分検査は実施できません",
             "source": {"kind": "environment", "component": "git", "identifier": "git"}}]}
 
 

@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatter titleにnullは指定できません",
+      "summary": "フロントマターのフィールドtitleにnullは指定できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
