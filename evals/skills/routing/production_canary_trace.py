@@ -43,7 +43,7 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
     require(isinstance(events, list) and bool(events), 'original telemetry required')
     context = next(frame['params'] for frame in received if frame.get('method') == 'turn/started')
     thread, turn = context['threadId'], context['turn']['id']
-    direct, api_indices = [], []
+    direct, api_indices, catalog_indices = [], [], []
     for index, event in enumerate(events):
         require(isinstance(event, dict) and event.get('level') == 'INFO' and
                 event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'} and
@@ -52,6 +52,21 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
         for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
             require(key not in fields or fields[key] == expected, 'canary runtime context contradiction')
         name = fields.get('event.name')
+        if sdk_profile == 'public-canary' and name == 'codex.api_request':
+            require(fields.get('endpoint') in {'/models', '/responses'} and
+                    fields.get('auth.header_attached') is True and type(fields.get('attempt')) is int and
+                    fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
+                    fields['http.response.status_code'] == 200 and
+                    fields.get('auth.retry_after_unauthorized', False) is False,
+                    'known primary API without retry')
+            if fields['endpoint'] == '/models':
+                require(event['target'] == 'codex_otel.trace_safe' and fields.get('success') is True and
+                        ('conversation.id' not in fields or fields['conversation.id'] == thread) and
+                        ('turn_id' not in fields or fields['turn_id'] == turn), 'primary catalog context')
+                catalog_indices.append(index)
+                continue
+            require(fields.get('model') == 'gpt-6.1-sol' and fields.get('app.version') == '0.160.1',
+                    'primary model API context')
         if name in NEUTRAL:
             require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread and
                     ('turn_id' not in fields or fields['turn_id'] == turn), 'canary telemetry context')
@@ -67,7 +82,7 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
             direct.append((index, fields['call_id'], fields.get('tool_name')))
     require(tuple(value[2] for value in direct) == PROFILES[profile] and
             len({value[1] for value in direct}) == len(direct), 'canary parent profile drift')
-    require(len(api_indices) == len(direct) + 1, 'canary API count')
+    require(len(api_indices) == len(direct) + 1 and len(api_indices) <= 3 and len(catalog_indices) <= 2, 'canary API count')
     if profile == 'no-exec':
         require(not host_events and all(event['target'] == 'codex_otel.trace_safe' and
                 event['fields']['event.name'] in NEUTRAL for event in events), 'unexpected negative operation')
@@ -75,7 +90,8 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
     else:
         require(bool(host_events), 'exec without observed child is outside bounded profile')
         sdk._require_native_parent_context(received)
-        parent_links = sdk._audit_parent_links(events, received, direct[0][1],
+        parent_events = [event for index, event in enumerate(events) if index not in catalog_indices]
+        parent_links = sdk._audit_parent_links(parent_events, received, direct[0][1],
             wait_call_id=direct[1][1] if profile == 'exec-wait' else None,
             second_exec_call_id=direct[1][1] if profile == 'two-exec' else None,
             api_auth_attached=True, child_tools=tuple(tools))
@@ -87,7 +103,8 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
     return dict(status='bounded_sdk_routing_trace_diagnostic_passed', profile=profile,
                 parentCallIds=[value[1] for value in direct],
                 nativeChildIds=[item['id'] for item in items if item['type'] == 'mcpToolCall'],
-                hostCalls=len(host_events), apiRequests=len(api_indices), decision=decision,
+                hostCalls=len(host_events), apiRequests=len(api_indices), modelCatalogApiRequests=len(catalog_indices),
+                totalServiceApiRequests=len(api_indices) + len(catalog_indices), decision=decision,
                 nativeEvidence={key: value for key, value in native.items() if key != 'frames'},
                 parentLinks=parent_links, childIntegrity=integrity,
                 traceValueSha256=sdk.digest(events), modelInputSha256=hashlib.sha256(expected_input).hexdigest(),

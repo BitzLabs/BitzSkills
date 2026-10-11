@@ -22,6 +22,14 @@ class PrimaryCanaryTraceTests(unittest.TestCase):
         self.fixture.sent[2]['params'].update(modelProvider='bitz_openai_http', experimentalRawEvents=True)
         self.fixture.received[1]['result']['modelProvider'] = 'bitz_openai_http'
         self.fixture.sent[3]['params'].update(outputSchema=copy.deepcopy(self.schema), effort='low')
+        original_events = self.fixture.events
+        def primary_events(profile):
+            events = original_events(profile)
+            for event in events:
+                if event['fields'].get('event.name') == 'codex.api_request':
+                    event['fields'].update(endpoint='/responses', model='gpt-6.1-sol', **{'app.version': '0.160.1'})
+            return events
+        self.fixture.events = primary_events
 
     def check(self, **changes):
         return self.fixture.check(sdk_profile='public-canary', output_schema=self.schema, **changes)

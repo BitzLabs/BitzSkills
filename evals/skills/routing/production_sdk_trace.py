@@ -138,6 +138,12 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
             require(not turn_started and params.get('threadId') == thread and
                     params.get('turn', {}).get('id') == turn, 'SDK turn start mismatch')
             turn_started = True
+        if profile == 'public-canary' and method == 'account/updated':
+            require(set(params) == {'authMode', 'planType'} and
+                    params['authMode'] in {'apiKey', 'chatgpt', 'chatgptAuthTokens'} and
+                    (params['planType'] is None or isinstance(params['planType'], str)), 'SDK account metadata')
+            retained.append({'rawIndex': index, 'kind': method, 'sha256': digest(original)})
+            continue
         if method in {'remoteControl/status/changed', 'account/rateLimits/updated', 'warning',
                       'mcpServer/startupStatus/updated'}:
             if method == 'remoteControl/status/changed':

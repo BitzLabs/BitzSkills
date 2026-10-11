@@ -140,7 +140,7 @@ def load_fixed_inputs(repository, source):
     return FixedInputs(bound, capture.cli.encoded(schema), evidence, audit_evidence)
 
 
-def verify_capture(repository, source, ordinal):
+def load_verified_capture(repository, source, ordinal):
     """読取りのみの構造検査。成功しても独立採点・次枠予約・acceptedには進めない。"""
     fixed = load_fixed_inputs(repository, source)
     bound = fixed.bound
@@ -207,7 +207,7 @@ def verify_capture(repository, source, ordinal):
     context = ledger.Ledger.__new__(ledger.Ledger)
     context.storage, context.bound, context.require_independent_reviews = storage, bound, True
     require(context.reservations(allow_pending_last=True) == ordinal, 'latest pending primary reservation required')
-    return dict(status='primary_artifacts_and_fixed_inputs_verified', sourceCommit=source, attempt=attempt,
+    result = dict(status='primary_artifacts_and_fixed_inputs_verified', sourceCommit=source, attempt=attempt,
         receiptSha256=ledger.sha(receipt_raw), artifactSha256=receipt['artifactSha256'],
         sharedReservationSha256=ledger.sha(shared_raw), fixedInputSha256=bound.contract['inputSha256'],
         runtimeConfigVerified=True, invocationArgvVerified=True,
@@ -215,3 +215,17 @@ def verify_capture(repository, source, ordinal):
         certifiesProviderWireBodies=False, eligibleForMeasurement=False,
         certifiesBehavior=False, certifiesSkillGate=False, independentReviewPerformed=False,
         ledgerFinalized=False)
+
+    return VerifiedCapture(fixed, base, originals, result)
+
+
+@dataclass(frozen=True)
+class VerifiedCapture:
+    fixed: FixedInputs
+    base: Path
+    originals: dict[str, bytes]
+    result: dict
+
+
+def verify_capture(repository, source, ordinal):
+    return load_verified_capture(repository, source, ordinal).result
