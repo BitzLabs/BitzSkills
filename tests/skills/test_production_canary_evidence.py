@@ -192,7 +192,7 @@ class CanaryEvidenceTests(unittest.TestCase):
 
     def test_receipt_source_attempt_policy_runtime_and_elapsed_drift_reject(self):
         for key, value in [('sourceCommit', 'a' * 40), ('namespaceExitCode', False), ('timedOut', True),
-                           ('primaryModelTrajectories', True), ('elapsedSeconds', True), ('elapsedSeconds', 301),
+                           ('primaryModelTrajectories', True), ('elapsedSeconds', True), ('elapsedSeconds', -1),
                            ('independentReviewPerformed', True), ('phaseComplete', True),
                            ('attempt', {**self.attempt, 'attempt': True})]:
             bad = copy.deepcopy(self.receipt)
@@ -265,10 +265,37 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.persist()
         with self.assertRaises(ValueError): self.verify()
 
+    def test_elapsed_receipt_includes_post_capture_hashing_and_is_not_cli_deadline(self):
+        self.receipt['elapsedSeconds'] = 301.5
+        self.persist()
+        self.assertEqual(self.verify()['status'], 'primary_artifacts_and_fixed_inputs_verified')
+
     def test_current_head_move_does_not_replace_fixed_capture_source(self):
         self.source_evidence['observedHead'] = 'c' * 40
         # receipt保存bytesの観測HEADは取得時sourceのまま。
         self.assertEqual(self.verify()['sourceCommit'], self.source)
+
+    def test_forbidden_actual_rollout_group_is_rejected_before_listing(self):
+        group = self.base / 'rollout-traces/synthetic'
+        forbidden = group.with_name('auth')
+        group.rename(forbidden)
+        original_iterdir = Path.iterdir
+        def limited_iterdir(path):
+            self.assertNotEqual(path, forbidden, 'forbidden rollout directory enumerated')
+            return original_iterdir(path)
+        with patch.object(Path, 'iterdir', limited_iterdir), self.assertRaises(ValueError):
+            self.verify()
+
+    def test_shared_campaign_hardlink_is_rejected_before_read(self):
+        campaign = self.storage / 'campaign.json'
+        alias = self.repository / 'public-campaign-alias.json'
+        alias.hardlink_to(campaign)
+        original_read = Path.read_bytes
+        def limited_read(path):
+            self.assertNotEqual(path, campaign, 'shared hardlink was read')
+            return original_read(path)
+        with patch.object(Path, 'read_bytes', limited_read), self.assertRaises(ValueError):
+            self.verify()
 
     def test_invocation_argv_override_rejects_even_if_rehashed(self):
         invocation = trace.strict_json(self.originals['invocation.json'])

@@ -31,27 +31,7 @@ AUDIT_SOURCES = ['evals/skills/routing/production_canary_evidence.py',
 
 
 def read_original(path: Path):
-    """親ディレクトリもopenat/NOFOLLOWで辿り、regularな原ファイルだけを読む。"""
-    require(path.is_absolute(), 'absolute trusted artifact root required')
-    parts = path.parts[1:]
-    require(bool(parts) and all(p not in {'.', '..', ''} for p in parts), 'original path segments')
-    fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
-    try:
-        for name in parts[:-1]:
-            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
-            os.close(fd)
-            fd = child
-        child = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
-        try:
-            info = os.fstat(child)
-            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'regular single-link artifact required')
-        except BaseException:
-            os.close(child)
-            raise
-        with os.fdopen(child, 'rb') as stream:
-            return stream.read()
-    finally:
-        os.close(fd)
+    return ledger.read_regular(path)
 
 
 def artifact_name(name):
@@ -95,6 +75,7 @@ def artifact_inventory(base, declared):
             require(len(groups) == 1, 'one original rollout required')
             group = groups[0]
             require(not group.is_symlink() and group.is_dir(), 'rollout directory symlink or shape')
+            artifact_name(str(group.relative_to(base)) + '/manifest.json')
             for entry in group.iterdir():
                 require(not entry.is_symlink(), 'original rollout symlink')
                 if entry.name == 'payloads':
@@ -181,7 +162,7 @@ def verify_capture(repository, source, ordinal):
         independentReviewPerformed=False, automaticRetries=0, certifiesApiRequestHardCap=False,
         eligibleForMeasurement=False, phaseComplete=False)
     require(all(trace.json_equal(receipt.get(k), v) for k, v in expected_flags.items()), 'capture status or scope drift')
-    require(type(receipt.get('elapsedSeconds')) in {int, float} and 0 <= receipt['elapsedSeconds'] <= 300,
+    require(type(receipt.get('elapsedSeconds')) in {int, float} and 0 <= receipt['elapsedSeconds'],
             'capture finite elapsed time')
     capture_evidence = dict(fixed.source_evidence, observedHead=source)
     require(trace.json_equal(receipt.get('sourceGuards'), dict.fromkeys(['before', 'invoke', 'after'], capture_evidence)),

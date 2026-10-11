@@ -135,12 +135,36 @@ def sync_directory(path: Path):
         os.close(directory)
 
 
+def read_regular(path: Path, *, owned=False):
+    """親ディレクトリもopenat/NOFOLLOWで辿り、regularな原ファイルだけを読む。"""
+    require(path.is_absolute(), 'absolute trusted artifact root required')
+    parts = path.parts[1:]
+    require(bool(parts) and all(p not in {'.', '..', ''} for p in parts), 'original path segments')
+    fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for name in parts[:-1]:
+            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        child = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+        try:
+            info = os.fstat(child)
+            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'regular single-link artifact required')
+            if owned:
+                require(info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o600,
+                        'ledger ownership or mode')
+        except BaseException:
+            os.close(child)
+            raise
+        with os.fdopen(child, 'rb') as stream:
+            return stream.read()
+    finally:
+        os.close(fd)
+
+
 def read_owned(path: Path):
     safe_tree(path)
-    info = path.stat()
-    require(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o600,
-            'ledger ownership or mode')
-    return strict_json(path.read_bytes())
+    return strict_json(read_regular(path.absolute(), owned=True))
 
 
 class Ledger:
