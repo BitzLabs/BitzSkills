@@ -73,6 +73,8 @@ def config_for(base, contract, *, repository=None):
     config.pop('model_providers.bitz_openai_http.include_internal_metadata')
     config['suppress_unstable_features_warning'] = True
     config['features.code_mode_host'] = True
+    config['skills.config'] = [dict(name=name, enabled=False) for name in
+        ['imagegen', 'openai-docs', 'skill-creator', 'skill-installer']]
     config.update({'mcp_servers.production-routing.command': '/usr/bin/python3',
         'mcp_servers.production-routing.args': ['-B', str(repository / 'evals/skills/routing/production_canary_host.py'),
             '--snapshot', str(repository / contract['snapshotRelativePath']), '--manifest-sha256', contract['manifestSha256'],
