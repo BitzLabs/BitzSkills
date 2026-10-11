@@ -30,7 +30,7 @@ CODE = ['production_canary_capture.py', 'production_canary_host.py', 'production
 def policy(value):
     trace.require(trace.json_equal(value.get('diagnosticTracing'), sdk.DIAGNOSTIC_TRACING),
                   'fixed diagnostic tracing required')
-    trace.require(value['version'] in {'production-canary-0.1.0','production-canary-0.1.1','production-canary-0.1.2'} and value['phase'] == 4 and
+    trace.require(value['version'] in {'production-canary-0.1.0','production-canary-0.1.1','production-canary-0.1.2','production-canary-0.1.3'} and value['phase'] == 4 and
                   value['scope'] == 'public-production-routing-canary-only' and value['model'] == 'gpt-6.1-sol', 'canary identity')
     if value['version']=='production-canary-0.1.1':
         trace.require(value.get('campaignId')==ledger.SCHEMA_CAMPAIGN and
@@ -38,6 +38,9 @@ def policy(value):
     if value['version']=='production-canary-0.1.2':
         trace.require(value.get('campaignId')==ledger.STRUCTURE_CAMPAIGN and
             value.get('outputRelativeRoot')=='.venv/production-routing-primary-code-mode-structure-01','fixed new structure measurement identity')
+    if value['version']=='production-canary-0.1.3':
+        trace.require(value.get('campaignId')==ledger.REASONING_CAMPAIGN and
+            value.get('outputRelativeRoot')=='.venv/production-routing-primary-empty-reasoning-01','fixed new reasoning measurement identity')
     limits = dict(repetitions=2, timeoutSeconds=300, observedModelApiLimit=3,
                   observedCatalogApiLimit=2, maximumHostCalls=2, maximumControlCalls=2)
     trace.require(all(type(value[k]) is int and value[k] == n for k, n in limits.items()), 'fixed finite limits')

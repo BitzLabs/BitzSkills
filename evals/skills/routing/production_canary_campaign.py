@@ -10,7 +10,7 @@ import production_ledger as ledger
 import production_trace as trace
 
 ROOT=Path(__file__).resolve().parents[3]
-OUTPUT='.venv/production-routing-campaign-code-mode-structure-01'
+OUTPUT='.venv/production-routing-campaign-empty-reasoning-01'
 
 
 def save_progress(source,bound,attempt,result):

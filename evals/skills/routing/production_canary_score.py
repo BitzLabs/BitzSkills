@@ -21,8 +21,8 @@ CONTRACT='evals/skills/routing/production-canary-score-v0.1.json'
 SCHEMA='evals/skills/routing/production-canary-score.schema.json'
 SOURCES=[CONTRACT,SCHEMA,'evals/skills/routing/production_canary_score.py','tests/skills/test_production_canary_score.py','evals/skills/sol-authorization.json']
 SCOPE='public-primary-routing-semantic-review-only'
-OUTPUT='.venv/production-routing-independent-code-mode-structure-01'
-PARENT_OUTPUT='.venv/production-routing-parent-code-mode-structure-01'
+OUTPUT='.venv/production-routing-independent-empty-reasoning-01'
+PARENT_OUTPUT='.venv/production-routing-parent-empty-reasoning-01'
 ARTIFACTS={'contract.json','review-input.json','prompt.txt','schema.json','execution-schema.json','reservation.json','config.json','invocation.json',
            'trace.jsonl','stderr.bin'}
 OPTIONAL={'response.json'}

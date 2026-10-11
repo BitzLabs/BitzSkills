@@ -146,6 +146,57 @@ class ProductionLedgerTests(unittest.TestCase):
                 extra=schema.storage/'attempt-0002.json'
                 if extra.exists():extra.unlink()
 
+    def reasoning_predecessor(self):
+        root,legacy,schema,bound=self.structure_predecessor();third=ledger.open_ledger(root,bound)
+        for ordinal in [1,2]:
+            attempt=third.reserve();independent=third.reserve_independent_review(ordinal,'d'*64)
+            value=self.accepted(attempt);value.update(reviewInputSha256='d'*64,
+                independentReservationSha256=ledger.sha(ledger.encoded(independent)))
+            third.record_verified_review(ordinal,ledger.encoded(value))
+        attempt=third.reserve();receipt=ledger.encoded(dict(status='primary_capture_awaits_parent_and_independent_review',
+            sourceCommit=bound.contract['sourceCommit'],attempt=attempt))
+        path=third.storage.parent/ledger.STRUCTURE_RECEIPT;path.parent.mkdir(parents=True);ledger.exclusive(path,receipt)
+        third.record_primary_stop(3,'primary-structure-rejected',ledger.sha(receipt))
+        prior=dict(campaignId=ledger.STRUCTURE_CAMPAIGN,sourceCommit=bound.contract['sourceCommit'],
+            ledgerSha256={p.name:ledger.sha(ledger.read_regular(p)) for p in third.storage.iterdir() if p.name!='lock'},
+            primaryReceiptSha256=ledger.sha(receipt),primaryReservationsConsumed=3,independentReservationsConsumed=2)
+        fourth=self.bind(dict(bound.contract,campaignId=ledger.REASONING_CAMPAIGN,sourceCommit='d'*40,stoppedReasoningPredecessor=prior))
+        return root,[legacy,schema,third],fourth
+
+    def test_reasoning_measurement_preserves_all_stops_consumption_and_accepted_original_records(self):
+        root,previous,bound=self.reasoning_predecessor()
+        before={str(p):ledger.sha(ledger.read_regular(p)) for item in previous for p in item.storage.iterdir()}
+        proof=ledger.verify_predecessor(root,bound.contract)
+        self.assertEqual(proof['primaryReservationsConsumed'],5);self.assertEqual(proof['independentReservationsConsumed'],2)
+        fourth=ledger.open_ledger(root,bound);same=ledger.open_ledger(root,bound)
+        self.assertEqual(fourth.storage,same.storage);self.assertNotIn(fourth.storage,[x.storage for x in previous])
+        self.assertEqual(fourth.reserve()['attempt'],1)
+        for item in [*previous,same]:
+            with self.assertRaises(ValueError):item.reserve()
+        self.assertEqual(before,{str(p):ledger.sha(ledger.read_regular(p)) for item in previous for p in item.storage.iterdir()})
+
+    def test_reasoning_measurement_rejects_missing_changed_and_rehashed_prior_records_before_creation(self):
+        root,previous,bound=self.reasoning_predecessor();third=previous[-1];storage=ledger.common_ledger_path(root,ledger.REASONING_CAMPAIGN)
+        import copy
+        raws={p.name:ledger.read_regular(p) for p in third.storage.iterdir() if p.name!='lock'}
+        for fault in ['missing-proof','wrong-consumption','hash-missing','changed-stop','rehashed-review','rehashed-stop','extra-attempt']:
+            contract=copy.deepcopy(bound.contract);prior=contract['stoppedReasoningPredecessor']
+            if fault=='missing-proof':contract.pop('stoppedReasoningPredecessor')
+            elif fault=='wrong-consumption':prior['primaryReservationsConsumed']=2
+            elif fault=='hash-missing':prior['ledgerSha256'].pop('review-0002.json')
+            elif fault=='changed-stop':(third.storage/'stop-0003.json').write_bytes(b'{}')
+            elif fault in ['rehashed-review','rehashed-stop']:
+                name='review-0001.json' if fault=='rehashed-review' else 'stop-0003.json';value=ledger.strict_json(raws[name]);value['status']='stopped' if fault=='rehashed-review' else 'accepted';raw=ledger.encoded(value)
+                (third.storage/name).write_bytes(raw);prior['ledgerSha256'][name]=ledger.sha(raw)
+            else:ledger.exclusive(third.storage/'attempt-0004.json',b'{}')
+            try:
+                with self.subTest(fault=fault),self.assertRaises(ValueError):ledger.open_ledger(root,self.bind(contract))
+                self.assertFalse(storage.exists())
+            finally:
+                for name,raw in raws.items():(third.storage/name).write_bytes(raw)
+                extra=third.storage/'attempt-0004.json'
+                if extra.exists():extra.unlink()
+
     def test_primary_capture_stop_does_not_forge_independent_review_and_is_permanent(self):
         instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
         instance.reserve();stopped=instance.record_primary_stop(1,'primary-structure-rejected','1'*64)
