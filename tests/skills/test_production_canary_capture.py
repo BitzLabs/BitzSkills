@@ -27,10 +27,19 @@ class CanaryCaptureTests(unittest.TestCase):
                 capture.policy(dict(contract,**{key:value}))
 
     def test_reasoning_policy_requires_its_exact_identity_and_output(self):
-        contract=self.contract();self.assertEqual(contract['version'],'production-canary-0.1.3');capture.policy(contract)
+        contract=dict(self.contract(),version='production-canary-0.1.3',campaignId=capture.ledger.REASONING_CAMPAIGN,
+                      outputRelativeRoot='.venv/production-routing-primary-empty-reasoning-01')
+        self.assertEqual(contract['version'],'production-canary-0.1.3');capture.policy(contract)
         for key,value in [('campaignId',capture.ledger.STRUCTURE_CAMPAIGN),
                           ('outputRelativeRoot','.venv/production-routing-primary-code-mode-structure-01')]:
             with self.subTest(key=key),self.assertRaisesRegex(ValueError,'reasoning measurement identity'):
+                capture.policy(dict(contract,**{key:value}))
+
+    def test_clock_policy_requires_its_exact_identity_and_output(self):
+        contract=self.contract();self.assertEqual(contract['version'],'production-canary-0.1.4');capture.policy(contract)
+        for key,value in [('campaignId',capture.ledger.REASONING_CAMPAIGN),
+                          ('outputRelativeRoot','.venv/production-routing-primary-empty-reasoning-01')]:
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'clock measurement identity'):
                 capture.policy(dict(contract,**{key:value}))
 
     def test_execution_schema_does_not_weaken_canonical_duplicate_event_validation(self):

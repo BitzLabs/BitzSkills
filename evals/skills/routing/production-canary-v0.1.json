@@ -1,9 +1,9 @@
 {
-  "version": "production-canary-0.1.3",
+  "version": "production-canary-0.1.4",
   "phase": 4,
   "scope": "public-production-routing-canary-only",
   "model": "gpt-6.1-sol",
-  "campaignId": "public-empty-reasoning-01",
+  "campaignId": "public-rollout-clock-01",
   "repetitions": 2,
   "budget": {
     "primaryModelTrajectories": 4,
@@ -19,7 +19,7 @@
   "certifiesApiRequestHardCap": false,
   "certifiesBehavior": false,
   "certifiesSkillGate": false,
-  "outputRelativeRoot": ".venv/production-routing-primary-empty-reasoning-01",
+  "outputRelativeRoot": ".venv/production-routing-primary-rollout-clock-01",
   "codexVersion": "codex-cli 0.160.1",
   "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
   "sdkVersion": "0.160.1",
@@ -75,7 +75,8 @@
     "モデル推論の観測閾値3とモデル一覧の閾値2を区別し、旧接続契約のAPI合計1未達を変更しない。HTTP/SSE wire全文・server内部入力の取得を成功条件へ追加しない。",
     "captureは原取得のみ。親の原入力/RPC/host/rollout/telemetry照合と独立採点は別に必要。canary4件だけでは区分ごとの試作最低分母/5実地/Skill Gate/Phase完了を認定しない。",
     "HTTP400停止一次1とSchema条件構造停止一次1の原hashを保持し別条件へ固定。新上限一次4・独立4、過去一次2と新上限4を別々に記録し累計最大6、retry0。実completed single/two execだけのcell原形式対応で、実yield/waitは未対応として停止する。",
-    "第四空reasoning是正条件の一次4/独立4を別計測する。先行3停止条件の一次消費5/意味独立2は保持し、第四を使い切った通算一次上限9。静的準備検分は別記録。旧受理2を新refへ合算しない。"
+    "第四空reasoning是正条件の一次4/独立4を別計測する。先行3停止条件の一次消費5/意味独立2は保持し、第四を使い切った通算一次上限9。静的準備検分は別記録。旧受理2を新refへ合算しない。",
+    "第五時刻是正条件は新一次4/意味独立4/300秒/retry0。先行4条件の一次7/意味独立3/受理3を保持し、新4を使い切った通算一次上限11。旧受理を合算しない。wall clock rollback/jumpは有限測定profileの停止対象で、producerの単調時刻保証は認定しない。"
   ],
   "contextProfileSha256": "d0b72f85991f5273615d9286adea2a2ca27b603cfcfcde213755feda0d2227f4",
   "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
@@ -113,5 +114,20 @@
     "primaryReceiptSha256": "abf3aaf8fee653d4d7a1b5b1db1b0f1f272c24e7c3a9dbe1cade7a56a41dd1de",
     "primaryReservationsConsumed": 3,
     "independentReservationsConsumed": 2
+  },
+  "stoppedClockPredecessor": {
+    "campaignId": "public-empty-reasoning-01",
+    "sourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110",
+    "ledgerSha256": {
+      "attempt-0001.json": "f6477fda149bc4249bdf7701f2c994528acd572c0fc6c4c6165a464989340598",
+      "campaign.json": "0fe4bcde4ba03ff4d89e35e06dbfbc99e890faa2c65946372d8548708505b903",
+      "independent-0001.json": "2b4d42bebc610d21b12d6a45d5f49cacb4a5e9a52daf56a5f20bef33318bda35",
+      "review-0001.json": "6332ed4e120d40160f692fd553538457c5c63ea846260a1431b743ff4348cb6a",
+      "attempt-0002.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+      "stop-0002.json": "6717780d44623dede2bb83fb06e315cde8d584fb14dfe4f8f9e834321c222be3"
+    },
+    "primaryReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763",
+    "primaryReservationsConsumed": 2,
+    "independentReservationsConsumed": 1
   }
 }

@@ -379,6 +379,8 @@ INITIAL_CAMPAIGN='public-initial-canary'
 SCHEMA_CAMPAIGN='public-schema-projection-01'
 STRUCTURE_CAMPAIGN='public-code-mode-structure-01'
 REASONING_CAMPAIGN='public-empty-reasoning-01'
+CLOCK_CAMPAIGN='public-rollout-clock-01'
+REASONING_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-empty-reasoning-01/attempt-0002/receipt.json'
 STRUCTURE_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-code-mode-structure-01/attempt-0003/receipt.json'
 SCHEMA_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-schema-projection-01/attempt-0001/receipt.json'
 INITIAL_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-public-initial/attempt-0001/receipt.json'
@@ -393,12 +395,48 @@ def common_ledger_path(repository: Path, campaign_id=None):
     require(common.name == '.git', 'shared non-bare repository required')
     name={SCHEMA_CAMPAIGN:'production-routing-primary-ledger-schema-projection-01',
           STRUCTURE_CAMPAIGN:'production-routing-primary-ledger-code-mode-structure-01',
-          REASONING_CAMPAIGN:'production-routing-primary-ledger-empty-reasoning-01'}.get(campaign_id,'production-routing-primary-ledger')
+          REASONING_CAMPAIGN:'production-routing-primary-ledger-empty-reasoning-01',
+          CLOCK_CAMPAIGN:'production-routing-primary-ledger-rollout-clock-01'}.get(campaign_id,'production-routing-primary-ledger')
     return common.parent / '.venv' / name
 
 
 def verify_predecessor(repository,contract):
     """明示した是正後の有限測定を、全先行停止の不変hashへ束縛する。旧台帳は読取りのみ。"""
+    if contract.get('campaignId')==CLOCK_CAMPAIGN:
+        first=verify_predecessor(repository,dict(contract,campaignId=REASONING_CAMPAIGN))
+        prior=contract.get('stoppedClockPredecessor')
+        require(isinstance(prior,dict) and set(prior)=={'campaignId','sourceCommit','ledgerSha256','primaryReceiptSha256','primaryReservationsConsumed','independentReservationsConsumed'} and
+                prior['campaignId']==REASONING_CAMPAIGN and isinstance(prior['sourceCommit'],str) and re.fullmatch(r'[0-9a-f]{40}',prior['sourceCommit']) and
+                type(prior['primaryReservationsConsumed']) is int and prior['primaryReservationsConsumed']==2 and
+                type(prior['independentReservationsConsumed']) is int and prior['independentReservationsConsumed']==1,'stopped clock predecessor fields')
+        names={'campaign.json','attempt-0001.json','attempt-0002.json','independent-0001.json','review-0001.json','stop-0002.json'}
+        pins=prior['ledgerSha256'];require(isinstance(pins,dict) and set(pins)==names,'stopped clock hash inventory')
+        storage=common_ledger_path(repository,REASONING_CAMPAIGN)
+        require(set(p.name for p in storage.iterdir())=={'lock',*names},'stopped clock ledger inventory')
+        values={}
+        for name in sorted(names):
+            raw=read_regular(storage/name);require(sha(raw)==pin(pins[name]),'original clock stopped ledger drift');values[name]=read_owned(storage/name)
+        campaign=values['campaign.json'];attempts=campaign.get('attempts')
+        require(campaign.get('campaignId')==REASONING_CAMPAIGN and campaign.get('reviewReservationRequired') is True and
+                isinstance(attempts,list) and len(attempts)==4,'original clock campaign binding')
+        pin(campaign['contractSha256'])
+        for ordinal,attempt in enumerate(attempts,1):
+            require(isinstance(attempt,dict) and type(attempt.get('attempt')) is int and attempt['attempt']==ordinal and
+                    attempt.get('sourceCommit')==prior['sourceCommit'] and attempt.get('contractSha256')==campaign['contractSha256'],
+                    'original clock ordered attempt binding')
+            if ordinal<=2:require(values[f'attempt-{ordinal:04d}.json']==attempt,'original clock reserved attempt drift')
+        previous=Ledger.__new__(Ledger);previous.storage=storage;previous.bound=SimpleNamespace(attempt=lambda n:attempts[n-1]);previous.require_independent_reviews=True
+        accepted=values['review-0001.json'];previous.validate_review(1,accepted);previous.validate_review_reservation(1,accepted)
+        require(accepted['status']=='accepted','original clock preceding review not accepted')
+        stop=values['stop-0002.json'];previous.validate_primary_stop(2,stop)
+        require(stop['reason']=='primary-structure-rejected' and stop['primaryReceiptSha256']==pin(prior['primaryReceiptSha256']),
+                'original clock second stop binding')
+        raw=read_regular(storage.parent/REASONING_RECEIPT);receipt=strict_json(raw)
+        require(sha(raw)==prior['primaryReceiptSha256'] and receipt.get('status')=='primary_capture_awaits_parent_and_independent_review' and
+                receipt.get('sourceCommit')==prior['sourceCommit'] and receipt.get('attempt')==attempts[1],'original stopped clock receipt drift')
+        return dict(status='four_original_stopped_campaigns_preserved',predecessors=[first,dict(campaignId=REASONING_CAMPAIGN,
+            primaryReservationsConsumed=2,independentReservationsConsumed=1,acceptedPrimary=1,stoppedPrimary=1,primaryReceiptSha256=sha(raw))],
+            primaryReservationsConsumed=7,independentReservationsConsumed=3,automaticRetry=False)
     if contract.get('campaignId')==REASONING_CAMPAIGN:
         first=verify_predecessor(repository,dict(contract,campaignId=STRUCTURE_CAMPAIGN))
         prior=contract.get('stoppedReasoningPredecessor')
