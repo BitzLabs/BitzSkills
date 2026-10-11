@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-161",
+  "description": "Core APIのバージョンが要求する範囲を満たさない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--plugin",
+      "bitz-sdd",
+      "--plugin-version",
+      "1.2.0",
+      "--require-core-api",
+      ">=1.1",
+      "--require-capability",
+      "context.v1",
+      "--require-capability",
+      "check.v1",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

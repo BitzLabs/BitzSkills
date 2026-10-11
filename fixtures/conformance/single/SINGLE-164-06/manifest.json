@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-164-06",
+  "description": "範囲の比較子を区切る空白が2文字なら拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--plugin",
+      "bitz-sdd",
+      "--plugin-version",
+      "1.2.0",
+      "--require-core-api",
+      ">=1.0  <2.0",
+      "--require-capability",
+      "context.v1",
+      "--require-capability",
+      "check.v1",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

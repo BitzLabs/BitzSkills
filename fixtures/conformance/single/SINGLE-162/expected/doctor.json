@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "blocked",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-CAPABILITY-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "プラグインの要求する対応機能をCoreが公開していません",
+      "source": {
+        "kind": "environment",
+        "component": "plugin",
+        "identifier": "bitz-sdd"
+      },
+      "evidence": {
+        "missing": [
+          "context.v2"
+        ]
+      }
+    }
+  ],
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "plugin",
+      "status": "passed"
+    },
+    {
+      "name": "capability",
+      "status": "blocked"
+    },
+    {
+      "name": "workspace",
+      "status": "passed"
+    },
+    {
+      "name": "config",
+      "status": "passed"
+    },
+    {
+      "name": "schema",
+      "status": "passed"
+    },
+    {
+      "name": "ears",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "command",
+      "status": "passed"
+    },
+    {
+      "name": "impact",
+      "status": "info"
+    }
+  ]
+}

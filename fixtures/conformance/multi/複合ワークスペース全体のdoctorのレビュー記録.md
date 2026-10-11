@@ -27,3 +27,33 @@
 - [`bitz doctor`仕様 §7](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md#7-結果)
 - [複合ワークスペース仕様 §8](../../../docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#8-全体操作の共通規則)
 - [結果・診断・終了コード §2.3](../../../docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md#23-doctorの全体結果)
+
+## 5. 2026-10-11追記: プラグインの要求の判定（`MULTI-032`）
+
+実装の確認事項C6（[ADR-061](../../../docs/02.設計書/10_決定記録/ADR-061_doctorのプラグイン要求の字句と判定を確定する.md)）に伴い、
+`doctor --all-workspaces`にプラグインの要求を渡す場合を固定する。単一ワークスペースの12件は
+[`doctor`のプラグインの要求のレビュー記録](../single/doctorのプラグインの要求のレビュー記録.md)に記録した。
+
+| fixture | 独立した原因 | 必須確認 |
+|---|---|---|
+| `MULTI-032` | `--require-core-api ^2.0`（Core APIは`1.0`で、メジャーバージョンが異なる） | 最上位の`checks[]`は`core`、`plugin`（`blocked`）、`capability`（`passed`）、`git`、`catalog`の順で、`plugin`と`capability`は1回だけ。診断は最上位の`SPEC-DOCTOR-API-001`の1件で、メンバーの`checks[]`と`diagnostics[]`へ複製しない。状態は`blocked`、終了コード2 |
+
+入力は`MULTI-026-01`と同じ（ルートワークスペース`platform`、メンバー`api`、`web`の設定3件だけ）で、`apps/web`で実行する。呼出しは
+`doctor --all-workspaces --plugin bitz-sdd --plugin-version 1.2.0 --require-core-api ^2.0 --require-capability context.v1 --require-capability check.v1 --format json`である。
+
+期待値の導き方（Coreの出力を根拠にしない）は次のとおりである。
+
+1. `doctor`仕様 §3は、全体操作ではCore、プラグイン、対応機能、Git、カタログを最上位で1回検査し、同じ環境の診断をメンバーごとに複製しないと定める。
+   ADR-061 Decision 4は、`plugin`と`capability`を最上位の`checks[]`に1回だけ置き、メンバーへ複製しないと定める。
+2. 検査項目の並びは、`doctor`仕様 §4.1の「`core`の直後」に`plugin`、`capability`を置き、既存の`MULTI-026-01`の`git`、`catalog`の順を保つ。
+3. `^2.0`は`>=2.0 <3.0`で、Core API `1.0`を満たさないので`SPEC-DOCTOR-API-001`（`blocked`）。`coreApi`は`1.0`、`required`は指定した`^2.0`。対応機能は満たすので`capability`は`passed`。
+   発生元は`{kind: environment, component: "plugin", identifier: "bitz-sdd"}`。
+4. 最上位の状態は`blocked`、終了コード2。**メンバーの結果は変わらない**: `doctor`仕様 §3は、Core、プラグイン、対応機能、Gitを「先行する検査項目の出力を必要としない」検査項目として
+   可能な範囲で継続すると定め、全体事前検査を止める条件（カタログ、ID、パス、Gitの境界、非対応のメジャーバージョン、リソースの上限）にプラグインの要求を含めない。
+   したがって`platform`、`api`、`web`の3つのワークスペースは`MULTI-026-01`と同じく`passed`で、診断を持たない。この読みは、継続の規則（§3）からの導出であり、メンバーの扱いを個別に明示した規範文はない。
+5. `summary`の文字列は規範文が定めず、Coreの`messages.py`の文言を使った。規範文から導いた値ではない（単一ワークスペースの記録の5と同じ）。
+
+固定しない範囲は、単一ワークスペースの記録の7と同じに加えて、全体事前検査が非成功（カタログの不正など）のときのプラグインの検査項目の有無、
+要求の組合せが不完全な場合の全体結果、`--workspace`との併用である。
+
+陰性対照として、修正前のCore（コミット`5927890b`）のコピーでは、`plugin`と`capability`の欠落、診断の欠落、状態`passed`で失敗した。

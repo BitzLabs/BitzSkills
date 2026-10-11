@@ -340,6 +340,18 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-005-02` | 予約キー`profiles` | check | passed_with_warnings／0 | `SPEC-CONFIG-UNKNOWN-001`だけ。値を変更しない |
 | `SINGLE-006-01` | 解決できないコマンドの実行ファイル | doctor | blocked／2 | `SPEC-DOCTOR-COMMAND-001` |
 | `SINGLE-006-02` | 解決できないコマンドの`cwd` | doctor | blocked／2 | `SPEC-DOCTOR-COMMAND-001` |
+| `SINGLE-160` | 最小の`bitz.yaml`のワークスペース。`doctor --plugin bitz-sdd --plugin-version 1.2.0 --require-core-api ^1.0 --require-capability context.v1 --require-capability check.v1` | doctor | passed／0 | 検査項目`core`の直後に`plugin`、`capability`（ともに`passed`）。診断なし。ほかの検査項目と状態は`SINGLE-001`と同じ（ADR-061） |
+| `SINGLE-161` | `SINGLE-160`と同じ入力で`--require-core-api >=1.1` | doctor | blocked／2 | `SPEC-DOCTOR-API-001`の1件（発生元は`{kind: environment, component: plugin, identifier: bitz-sdd}`、`evidence`は`{"coreApi": "1.0", "required": ">=1.1"}`）。`plugin`は`blocked`、要求した対応機能は公開しているので`capability`は`passed` |
+| `SINGLE-162` | `SINGLE-160`と同じ入力で`--require-capability context.v2 --require-capability check.v1` | doctor | blocked／2 | `SPEC-DOCTOR-CAPABILITY-001`の1件（`evidence`は`{"missing": ["context.v2"]}`）。`capability`は`blocked`、Core APIは範囲を満たすので`plugin`は`passed` |
+| `SINGLE-163` | `--plugin bitz-sdd --require-capability context.v1`だけ（`--plugin-version`と`--require-core-api`がない） | doctor | failed／1 | `SPEC-DOCTOR-PLUGIN-001`の1件（`evidence`は`{"missing": ["--plugin-version", "--require-core-api"]}`）。`plugin`は`failed`、`capability`は置かない（検査2と検査3は行わない） |
+| `SINGLE-164-01` | `--require-core-api ~1.0`（ほかの要求は正しい） | doctor | 結果なし／4 | npm形式の範囲は字句の不一致。標準出力に結果なし、レポートなし |
+| `SINGLE-164-02` | `--plugin Bitz-SDD` | doctor | 結果なし／4 | プラグインIDの大文字は字句の不一致 |
+| `SINGLE-164-03` | `--require-capability context.v0` | doctor | 結果なし／4 | 対応機能名のバージョンは1以上 |
+| `SINGLE-164-04` | `--plugin-version 1.0` | doctor | 結果なし／4 | SemVerは`MAJOR.MINOR.PATCH` |
+| `SINGLE-164-05` | `--require-core-api ^1.0.0` | doctor | 結果なし／4 | 範囲にパッチバージョンは使えない |
+| `SINGLE-164-06` | `--require-core-api ">=1.0  <2.0"`（比較子の間が空白2文字） | doctor | 結果なし／4 | 区切りは空白1文字 |
+| `SINGLE-164-07` | `--plugin-version v1.2.0` | doctor | 結果なし／4 | 接頭辞`v`は字句の不一致 |
+| `SINGLE-164-08` | `--plugin`に65文字のID | doctor | 結果なし／4 | プラグインIDは64文字以下 |
 
 ### 6.2 EARS-AIと文書
 
@@ -752,6 +764,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-025-02` | 存在するワークスペースの、不在の修飾起点 | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
 | `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、ワークスペースに依存しない検査項目とメンバーの検査項目を分離 |
 | `MULTI-026-02` | 1つのメンバーのコマンドが不在 | doctor all | blocked／2 | 後続メンバーを継続、メンバーの診断と全体の状態を集約、テキストの件数 |
+| `MULTI-032` | `MULTI-026-01`と同じ入力（`apps/web`で実行）。`doctor --all-workspaces --plugin bitz-sdd --plugin-version 1.2.0 --require-core-api ^2.0 --require-capability context.v1 --require-capability check.v1` | doctor all | blocked／2 | 最上位の`checks[]`は`core`、`plugin`（`blocked`）、`capability`（`passed`）、`git`、`catalog`の順で、`plugin`と`capability`は1回だけ。診断は最上位の`SPEC-DOCTOR-API-001`の1件（メジャーバージョンが異なる範囲。`evidence`は`{"coreApi": "1.0", "required": "^2.0"}`）で、メンバーの`checks[]`と`diagnostics[]`には複製しない。プラグインとCoreの検査はメンバーの診断を止めないので、3つのワークスペースは`MULTI-026-01`と同じく`passed` |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
