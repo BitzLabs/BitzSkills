@@ -66,15 +66,16 @@ def prepare(source):
     return ledger.bind_initial_canary_inputs(ledger.encoded(runtime), *raws), source_guard
 
 
-def config_for(base, contract):
+def config_for(base, contract, *, repository=None):
+    repository = ROOT if repository is None else repository
     config = connection.http_config_for(base)
     # 固定CLIが無視すると原通知した非対応設定をカナリアには持ち込まない。
     config.pop('model_providers.bitz_openai_http.include_internal_metadata')
     config['suppress_unstable_features_warning'] = True
     config['features.code_mode_host'] = True
     config.update({'mcp_servers.production-routing.command': '/usr/bin/python3',
-        'mcp_servers.production-routing.args': ['-B', str(ROOT / 'evals/skills/routing/production_canary_host.py'),
-            '--snapshot', str(ROOT / contract['snapshotRelativePath']), '--manifest-sha256', contract['manifestSha256'],
+        'mcp_servers.production-routing.args': ['-B', str(repository / 'evals/skills/routing/production_canary_host.py'),
+            '--snapshot', str(repository / contract['snapshotRelativePath']), '--manifest-sha256', contract['manifestSha256'],
             '--log', str(base / 'host.jsonl')],
         'mcp_servers.production-routing.enabled_tools': ['list_resources', 'read_resource'],
         'mcp_servers.production-routing.default_tools_approval_mode': 'prompt'})
@@ -147,19 +148,26 @@ class CaptureGuard:
             return True
 
 
-def namespace(base, contract):
+def namespace_command(base, contract, *, repository=None):
+    """固定mount/argvの構築。認証ファイルの内容・所在を検査しない。"""
+    repository = ROOT if repository is None else repository
     auth = Path('/home/hide/.codex/auth.json')
-    trace.require(auth.is_file() and not auth.is_symlink(), 'standard CLI authentication unavailable')
     args = ['bwrap', '--unshare-pid', '--unshare-ipc', '--new-session', '--die-with-parent',
             '--ro-bind', '/', '/', '--tmpfs', '/home', '--tmpfs', '/root', '--tmpfs', '/tmp', '--tmpfs', '/run',
             '--proc', '/proc', '--dev', '/dev']
-    paths = [ROOT / contract['sdkRelativePath'], ROOT / contract['snapshotRelativePath'], Path(contract['codexPath']).parents[1],
-             *(ROOT / 'evals/skills/routing' / name for name in CODE)]
+    paths = [repository / contract['sdkRelativePath'], repository / contract['snapshotRelativePath'], Path(contract['codexPath']).parents[1],
+             *(repository / 'evals/skills/routing' / name for name in CODE)]
     for path in paths:
         args += ['--ro-bind', str(path), str(path)]
     return args + ['--bind', str(base), str(base), '--bind', str(base / 'codex-home'), '/home/hide/.codex',
         '--ro-bind', str(auth), '/home/hide/.codex/auth.json', '--chdir', str(base / 'work'), '--', '/usr/bin/python3',
-        '-B', str(Path(__file__)), '--isolated', str(base)]
+        '-B', str(repository / 'evals/skills/routing/production_canary_capture.py'), '--isolated', str(base)]
+
+
+def namespace(base, contract):
+    auth = Path('/home/hide/.codex/auth.json')
+    trace.require(auth.is_file() and not auth.is_symlink(), 'standard CLI authentication unavailable')
+    return namespace_command(base, contract)
 
 
 def isolated(base):
