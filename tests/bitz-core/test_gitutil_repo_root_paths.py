@@ -18,8 +18,10 @@ import unittest
 from pathlib import Path
 
 from bitz import check as check_mod
+from bitz import doctor as doctor_mod
 from bitz import gitutil
-from bitz.cliargs import ParsedArgs
+from bitz import verify as verify_mod
+from bitz.cliargs import ParsedArgs, parse_argv
 
 ROOT_YAML = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: platform\n'
 MEMBER_YAML = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: {wid}\n'
@@ -213,22 +215,59 @@ class CheckBaseComparisonFromSubdirectoryTests(unittest.TestCase):
 
 
 class AllWorkspacesUnregisteredFromMemberTests(unittest.TestCase):
+    """全体事前検査の未登録の判定が、メンバーの中から実行しても同じになること（複合ワークスペース仕様 §8）。"""
+
+    def _repo(self, tmp: str) -> Path:
+        root = Path(tmp)
+        _init_repo(root)
+        _write(root, ".spec/bitz.yaml", ROOT_YAML + CATALOG)
+        _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web"))
+        _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
+        return root
+
+    def _assert_blocked_everywhere(self, root: Path, run) -> None:
+        for cwd in (root, root / "apps" / "web", root / "services" / "api"):
+            result, _ = run(cwd)
+            with self.subTest(cwd=str(cwd)):
+                self.assertEqual(result["status"], "blocked")
+                self.assertIn("SPEC-MULTI-UNREGISTERED-001", _codes(result))
+
     def test_untracked_unregistered_config_is_blocked_from_any_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            _init_repo(root)
-            _write(root, ".spec/bitz.yaml", ROOT_YAML + CATALOG)
-            _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web"))
-            _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
+            root = self._repo(tmp)
             _git(root, "add", "-A")
             _git(root, "commit", "-q", "-m", "base")
             _write(root, "tools/x/.spec/bitz.yaml", MEMBER_YAML.format(wid="x"))
+            self._assert_blocked_everywhere(root, lambda cwd: _run_check(cwd, flags={"--all-workspaces"}))
 
-            for cwd in (root, root / "apps" / "web"):
-                result, code = _run_check(cwd, flags={"--all-workspaces"})
-                with self.subTest(cwd=str(cwd)):
-                    self.assertEqual(result["status"], "blocked")
-                    self.assertIn("SPEC-MULTI-UNREGISTERED-001", _codes(result))
+    def test_unregistered_config_only_in_base_snapshot_is_blocked_from_any_directory(self):
+        # 基準版のスナップショットにだけある未登録の設定（現在版では削除済み）。
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._repo(tmp)
+            _write(root, "tools/x/.spec/bitz.yaml", MEMBER_YAML.format(wid="x"))
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            (root / "tools" / "x" / ".spec" / "bitz.yaml").unlink()
+            self._assert_blocked_everywhere(root, lambda cwd: _run_check(cwd, flags={"--all-workspaces"}))
+
+    def test_doctor_all_workspaces_is_blocked_from_any_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._repo(tmp)
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            _write(root, "tools/x/.spec/bitz.yaml", MEMBER_YAML.format(wid="x"))
+            self._assert_blocked_everywhere(
+                root, lambda cwd: doctor_mod.run(parse_argv(["doctor", "--all-workspaces"]), str(cwd), _git_env())
+            )
+
+    def test_verify_all_workspaces_is_blocked_from_any_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._repo(tmp)
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            _write(root, "tools/x/.spec/bitz.yaml", MEMBER_YAML.format(wid="x"))
+            parsed = ParsedArgs(operation="verify", positionals=[], flags={"--all-workspaces"}, single={}, repeat={})
+            self._assert_blocked_everywhere(root, lambda cwd: verify_mod.run(parsed, str(cwd), _git_env()))
 
 
 if __name__ == "__main__":
