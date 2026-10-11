@@ -18,7 +18,7 @@ import production_trace as trace
 import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = '.venv/primary-context-calibration-04'
+OUTPUT = '.venv/primary-context-calibration-05'
 SOURCES = ['evals/skills/routing/production_canary_context_probe.py']
 CODE = [*capture.CODE, 'production_canary_context_probe.py']
 
@@ -86,7 +86,7 @@ def isolated(base):
             cwd=str(base/'work'),sandbox='read-only',approvalPolicy='never',ephemeral=True,baseInstructions=capture.BASE,
             developerInstructions=capture.DEVELOPER,experimentalRawEvents=True))
         turn = client.turn_start(thread.thread.id,(base/'model-input.json').read_text(),
-                                {'outputSchema':trace.strict_json((base/'decision-schema.json').read_bytes()),'effort':'low'})
+                                {'outputSchema':capture.execution_schema(trace.strict_json((base/'decision-schema.json').read_bytes())),'effort':'low'})
         while client.next_turn_notification(turn.turn.id).method != 'turn/completed': pass
     except Exception as exc: error = type(exc).__name__
     finally:
@@ -96,8 +96,8 @@ def isolated(base):
 
 
 def run(source):
-    bound, before = capture.prepare(source)
-    verify = guard.verify(ROOT,source,[*bound.contract['sourceFiles'],*SOURCES])
+    bound, before = capture.prepare_calibration(source)
+    verify = guard.verify(ROOT,source,list(dict.fromkeys([*bound.contract['sourceFiles'],*SOURCES])))
     runtime_raw=guard.git(ROOT,'show',source+':'+capture.fixed_runtime.MANIFEST)
     runtime_before=capture.fixed_runtime.verify(runtime_raw,bound.contract)
     base = ROOT / OUTPUT
@@ -124,7 +124,7 @@ def run(source):
         try:stdout,stderr=process.communicate(timeout=3)
         except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);stdout,stderr=process.communicate()
     cli.exclusive(base/'namespace.stdout',stdout);cli.exclusive(base/'namespace.stderr',stderr)
-    after=guard.verify(ROOT,source,[*bound.contract['sourceFiles'],*SOURCES])
+    after=guard.verify(ROOT,source,list(dict.fromkeys([*bound.contract['sourceFiles'],*SOURCES])))
     runtime_after=capture.fixed_runtime.verify(runtime_raw,bound.contract)
     result=trace.strict_json((base/'isolated-result.json').read_bytes()) if (base/'isolated-result.json').exists() else None
     ok=process.returncode==0 and not timed_out and result==dict(errorType=None,localRequests=1,errors=[],paidModelCalls=0,

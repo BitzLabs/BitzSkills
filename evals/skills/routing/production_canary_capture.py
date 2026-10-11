@@ -73,6 +73,15 @@ def execution_schema(schema):
 
 
 def prepare(source):
+    return _prepare(source, calibration_only=False)
+
+
+def prepare_calibration(source):
+    """局所校正のbootstrap専用。呼出し側はnetwork/認証隔離を必須にする。"""
+    return _prepare(source, calibration_only=True)
+
+
+def _prepare(source, *, calibration_only):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
     raw = guard.git(ROOT, 'show', source + ':' + CONTRACT)
@@ -82,11 +91,12 @@ def prepare(source):
     source_guard = guard.verify(ROOT, source, value['sourceFiles'])
     fixed_runtime.verify(guard.git(ROOT,'show',source+':'+fixed_runtime.MANIFEST),value)
     context = context_profile(guard.git(ROOT, 'show', source + ':' + CONTEXT), value)
-    calibration.verify(ROOT,guard.git(ROOT,'show',source+':'+calibration.MANIFEST),context,value)
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-    trace.require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
-                  'calibrated context date differs before launch')
+    if not calibration_only:
+        calibration.verify(ROOT,guard.git(ROOT,'show',source+':'+calibration.MANIFEST),context,value)
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        trace.require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
+                      'calibrated context date differs before launch')
     snapshot = ROOT / value['snapshotRelativePath']
     ledger.safe_tree(snapshot)
     manifest_raw = (snapshot / 'manifest.json').read_bytes()

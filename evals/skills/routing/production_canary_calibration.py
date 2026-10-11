@@ -9,7 +9,7 @@ import production_ledger as ledger
 import production_trace as trace
 import source_guard as guard
 
-ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-04'
+ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-05'
 MANIFEST='evals/skills/routing/production-canary-calibration-v0.1.json'
 FILES={'request-1.json','receipt.json','config.json','contract.json','invocation.json','rpc-in.jsonl','rpc-out.jsonl',
        'model-input.json','decision-schema.json','runtime-result.json','isolated-result.json','version.stdout'}
@@ -32,7 +32,7 @@ def verify(repository, manifest_raw, profile, contract):
     require(ledger.sha(manifest_raw)==ledger.pin(contract['calibrationManifestSha256']),'fixed calibration manifest hash')
     manifest=trace.strict_json(manifest_raw)
     require(isinstance(manifest,dict) and set(manifest)=={'version','sourceCommit','artifactSha256'} and
-        manifest['version']=='primary-client-calibration-originals-0.1.1' and
+        manifest['version'] in {'primary-client-calibration-originals-0.1.1','primary-client-calibration-originals-0.1.2'} and
         manifest['sourceCommit']==profile['calibrationSource'] and re.fullmatch(r'[0-9a-f]{40}',manifest['sourceCommit']) and
         isinstance(manifest['artifactSha256'],dict) and set(manifest['artifactSha256'])==FILES,'fixed calibration inventory')
     for digest in manifest['artifactSha256'].values():ledger.pin(digest)
@@ -46,7 +46,7 @@ def verify(repository, manifest_raw, profile, contract):
     saved_contract=trace.strict_json(originals['contract.json'])
     require(all(trace.json_equal(saved_contract.get(k),v) for k,v in source_contract.items()) and
         saved_contract.get('sourceCommit')==source,'original calibration source contract')
-    source_files=[*source_contract['sourceFiles'],'evals/skills/routing/production_canary_context_probe.py']
+    source_files=list(dict.fromkeys([*source_contract['sourceFiles'],'evals/skills/routing/production_canary_context_probe.py']))
     source_hash={name:ledger.sha(guard.git(repository,'show',source+':'+name)) for name in source_files}
     receipt=trace.strict_json(originals['receipt.json'])
     source_evidence=dict(status='fixed_source_matches',sourceCommit=source,observedHead=source,
@@ -85,14 +85,15 @@ def verify(repository, manifest_raw, profile, contract):
     schema=trace.strict_json(guard.git(repository,'show',source+':evals/skills/schemas/decision.schema.json'))
     schema['properties']['selectedEntry']['enum']=[None,*sorted(trace.SKILLS)]
     require(trace.json_equal(trace.strict_json(originals['decision-schema.json']),schema),'original calibration schema')
-    sdk.requests(sent,profile='public-canary',output_schema=schema)
+    wire_schema=capture.execution_schema(schema) if manifest['version']=='primary-client-calibration-originals-0.1.2' else schema
+    sdk.requests(sent,profile='public-canary',output_schema=wire_schema)
     require(sent[2]['params']['baseInstructions']==base==capture.BASE and
         sent[2]['params']['developerInstructions']==developer==capture.DEVELOPER and
         sent[2]['params']['cwd']==str(ROOT/'work') and
         sent[3]['params']['input'][0]['text'].encode()==originals['model-input.json'],'original calibration caller input')
     import production_canary_review as review
     projected,raw=review.raw_projection(sent,received)
-    native=sdk.normalized(sent,projected,profile='public-canary',output_schema=schema)
+    native=sdk.normalized(sent,projected,profile='public-canary',output_schema=wire_schema)
     items=trace.completed_items(native['frames'])
     require(all(i['type'] in {'userMessage','agentMessage','reasoning'} for i in items),'calibration unknown native action')
     finals=[i for i in items if i['type']=='agentMessage' and i['phase']=='final_answer']

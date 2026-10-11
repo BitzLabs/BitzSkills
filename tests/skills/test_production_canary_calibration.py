@@ -97,7 +97,7 @@ class CanaryCalibrationTests(unittest.TestCase):
     def persist(self):
         for name,raw in self.originals.items():(self.base/name).write_bytes(raw)
         hashes={name:calibration.ledger.sha(raw) for name,raw in self.originals.items()}
-        self.manifest=calibration.ledger.encoded(dict(version='primary-client-calibration-originals-0.1.1',sourceCommit=self.source,artifactSha256=hashes))
+        self.manifest=calibration.ledger.encoded(dict(version=getattr(self,'calibration_version','primary-client-calibration-originals-0.1.1'),sourceCommit=self.source,artifactSha256=hashes))
         self.contract['calibrationManifestSha256']=calibration.ledger.sha(self.manifest)
         self.profile.update(calibrationRequestSha256=hashes['request-1.json'],calibrationReceiptSha256=hashes['receipt.json'])
 
@@ -106,6 +106,21 @@ class CanaryCalibrationTests(unittest.TestCase):
     def test_complete_local_originals_bind_without_actual_provider_certification(self):
         result=self.verify();self.assertEqual(result['status'],'original_local_calibration_matches')
         self.assertEqual(result['paidModelCalls'],0);self.assertFalse(result['certifiesProviderWireBodies'])
+
+    def test_new_local_wire_projection_preserves_canonical_schema_and_rejects_other_changes(self):
+        self.calibration_version='primary-client-calibration-originals-0.1.2'
+        canonical=json.loads(self.originals['decision-schema.json'])
+        sent=calibration.lines(self.originals['rpc-in.jsonl'])
+        wire=capture.execution_schema(canonical)
+        sent[3]['params']['outputSchema']=wire
+        request=json.loads(self.originals['request-1.json']);request['text']['format']['schema']=wire
+        self.originals['rpc-in.jsonl']=b''.join(calibration.ledger.encoded(f)+b'\n' for f in sent)
+        self.originals['request-1.json']=calibration.ledger.encoded(request);self.persist()
+        self.assertEqual(self.verify()['paidModelCalls'],0)
+        self.assertTrue(json.loads(self.originals['decision-schema.json'])['properties']['events']['uniqueItems'])
+        sent[3]['params']['outputSchema']['properties']['events']['maxItems']=999
+        self.originals['rpc-in.jsonl']=b''.join(calibration.ledger.encoded(f)+b'\n' for f in sent);self.persist()
+        with self.assertRaises(ValueError):self.verify()
 
     def test_missing_changed_hash_or_unsafe_manifest_stops_before_unknown_read(self):
         (self.base/'config.json').write_bytes(b'{}')
