@@ -366,3 +366,12 @@ REQ-001が自分のテスト対応で隠さないようにするためである�
 - TASKを起点にした`implement`で、`draft`の文書が閉包の文書を`refines`する場合（修正前は`CTX-STATE-001`で止めていた経路）は固定せず、
   Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の`DraftRefinementPurposeTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+
+
+## 2026-10-12: Coreの出力文言の書換えに伴う期待値の訂正
+
+Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本語にしたため、次のfixtureの期待値（診断の`summary`、manifestの説明、テキスト出力、
+`resultDigest`のいずれか）を訂正した（ADR-062の期待値の訂正。管理者が対応表を承認）。入力、状態、終了コード、診断コード、発生元は変えていない。
+承認済みの対応表と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)にまとめた。
+
+- 対象: `SINGLE-135`、`SINGLE-140`、`SINGLE-142`

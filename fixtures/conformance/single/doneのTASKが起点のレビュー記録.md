@@ -638,3 +638,12 @@ B（`digest_crosscheck.build`）は入力の木構造から導出した材料で
 - 診断の`summary`の文字列は固定した文字列の一致を要求するが、規範文が定めるのは`code`・`severity`・`resultStatus`・`source`である（上の導出の4）。
 - 陰性対照（修正前のCoreがないため、作業ツリーの外の`plugins/bitz-core`のコピーの`targetexpand.py`で、`done`のTASKを`implement`の起点にしても適用できるとする変異を入れて確認した）。
   変異したCoreは`passed_with_warnings`／終了コード0を返して`SINGLE-159`は失敗する（`SINGLE-144`は通る）。変異していないCoreは通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
+
+
+## 2026-10-12: Coreの出力文言の書換えに伴う期待値の訂正
+
+Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本語にしたため、次のfixtureの期待値（診断の`summary`、manifestの説明、テキスト出力、
+`resultDigest`のいずれか）を訂正した（ADR-062の期待値の訂正。管理者が対応表を承認）。入力、状態、終了コード、診断コード、発生元は変えていない。
+承認済みの対応表と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)にまとめた。
+
+- 対象: `SINGLE-021`、`SINGLE-147`、`SINGLE-148`
