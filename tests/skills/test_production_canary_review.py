@@ -238,6 +238,25 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         self.assertFalse(result['eligibleForMeasurement']);self.assertFalse(result['ledgerFinalized'])
         self.assertFalse((self.capture.storage/'review-0001.json').exists())
 
+    def test_elapsed_context_value_and_original_receipt_are_bound_before_complete(self):
+        from dataclasses import replace
+        context=self.loaded();value=context.result
+        self.assertEqual(value['captureElapsedSeconds'],self.capture.receipt['elapsedSeconds'])
+        for elapsed in [None,True,-1,0.0,999.0]:
+            changed=dict(value,captureElapsedSeconds=elapsed)
+            with self.subTest(elapsed=elapsed),self.assertRaisesRegex(ValueError,'elapsed receipt value drift'):
+                review.verify_complete(replace(context,result_raw=review.evidence.ledger.encoded(changed)))
+        self.capture.receipt['elapsedSeconds']=3.5;self.capture.persist()
+        with self.assertRaisesRegex(ValueError,'elapsed receipt hash drift'):review.verify_complete(context)
+        self.assertEqual(review.verify_complete(self.loaded())['rollout']['captureElapsedMilliseconds'],3500)
+
+    def test_finite_elapsed_float_uses_integer_ceil_without_overflow(self):
+        for seconds in [0.5,2.0001,1e308]:
+            self.capture.receipt['elapsedSeconds']=seconds;self.capture.persist()
+            numerator,denominator=seconds.as_integer_ratio();expected=(numerator*1000+denominator-1)//denominator
+            result=review.verify_complete(self.loaded())
+            self.assertEqual(result['rollout']['captureElapsedMilliseconds'],expected)
+
     def test_rehashed_code_mode_events_and_payload_drift_reject(self):
         prefix='rollout-traces/synthetic/'
         originals=dict(self.loaded().originals)

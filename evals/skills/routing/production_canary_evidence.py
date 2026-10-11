@@ -223,7 +223,8 @@ def load_verified_capture(repository, source, ordinal):
     context.storage, context.bound, context.require_independent_reviews = storage, bound, True
     require(context.reservations(allow_pending_last=True) == ordinal, 'latest pending primary reservation required')
     result = dict(status='primary_artifacts_and_fixed_inputs_verified', sourceCommit=source, attempt=attempt,
-        receiptSha256=ledger.sha(receipt_raw), artifactSha256=receipt['artifactSha256'],
+        receiptSha256=ledger.sha(receipt_raw), captureElapsedSeconds=receipt['elapsedSeconds'],
+        artifactSha256=receipt['artifactSha256'],
         sharedReservationSha256=ledger.sha(shared_raw), fixedInputSha256=bound.contract['inputSha256'],
         runtimeConfigVerified=True, invocationArgvVerified=True,
         auditSourceEvidence=fixed.audit_source_evidence,

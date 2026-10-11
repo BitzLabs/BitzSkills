@@ -110,9 +110,9 @@ class CanaryRolloutTests(unittest.TestCase):
         manifest=dict(schema_version=1,trace_id='trace',root_thread_id=thread,started_at_unix_ms=events[0]['wall_time_unix_ms'],raw_event_log='trace.jsonl',payloads_dir='payloads',rollout_id=thread)
         return dict(manifest=manifest,events=events,payloads=payloads,sent=sent,received=received,native=native,context_profile=profile_value,host_events=host_events)
 
-    def check(self,value):
+    def check(self,value,elapsed_ms=5000):
         return rollout.correlate(ledger.encoded(value['manifest']),b''.join(ledger.encoded(e)+b'\n' for e in value['events']),
-            value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'],host_events=value['host_events'])
+            value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'],host_events=value['host_events'],capture_elapsed_ms=elapsed_ms)
 
     def test_no_exec_raw_reasoning_omission_correlates_without_discarding_nonempty_values(self):
         value=self.fixture('no-exec')
@@ -131,6 +131,22 @@ class CanaryRolloutTests(unittest.TestCase):
             elif fault=='missing-summary':changed['received'][index]['params']['item'].pop('summary')
             else:changed['received'][index]['params']['item']['unknown']='extra'
             with self.subTest(fault=fault),self.assertRaisesRegex(ValueError,'raw item payload binding'):self.check(changed)
+
+    def test_writer_start_and_first_event_may_differ_within_original_elapsed_window(self):
+        value=self.fixture('no-exec');value['manifest']['started_at_unix_ms']=0
+        before=copy.deepcopy(value);result=self.check(value)
+        self.assertEqual(result['manifestToFirstEventMilliseconds'],1);self.assertEqual(value,before)
+        span=value['events'][-1]['wall_time_unix_ms']
+        self.assertEqual(self.check(value,span)['observedRolloutSpanMilliseconds'],span)
+        for fault in ['start-after-first','start-before-window','end-after-window','invalid-bound','negative-bound','trace-id']:
+            changed=copy.deepcopy(value);bound=5000
+            if fault=='start-after-first':changed['manifest']['started_at_unix_ms']=2
+            elif fault=='start-before-window':bound=0
+            elif fault=='end-after-window':bound=span-1
+            elif fault=='invalid-bound':bound=True
+            elif fault=='negative-bound':bound=-1
+            else:changed['events'][0]['payload']['trace_id']='changed'
+            with self.subTest(fault=fault),self.assertRaises(ValueError):self.check(changed,bound)
 
     def test_fixed_cli_seven_manifest_fields_bind_to_original_start_and_reject_drift(self):
         self.check(self.fixture())

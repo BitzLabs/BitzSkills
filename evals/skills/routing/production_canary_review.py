@@ -1,6 +1,8 @@
 """一次カナリアの原通知・host・最終応答の相関。独立採点・台帳確定は別工程。"""
 from __future__ import annotations
 
+import math
+
 import production_canary_evidence as evidence
 import production_canary_trace as canary
 import production_sdk_trace as sdk
@@ -85,10 +87,20 @@ def verify_complete(capture):
     require(len(groups) == 1, 'one verified original rollout group')
     prefix = 'rollout-traces/' + next(iter(groups)) + '/'
     payloads = {name.removeprefix(prefix):raw for name,raw in originals.items() if name.startswith(prefix+'payloads/')}
+    receipt_raw=evidence.read_original(capture.base/'receipt.json')
+    require(evidence.ledger.sha(receipt_raw)==capture.result.get('receiptSha256'),'consumed elapsed receipt hash drift')
+    seconds=capture.result.get('captureElapsedSeconds')
+    require(trace.json_equal(seconds,trace.strict_json(receipt_raw).get('elapsedSeconds')),'consumed elapsed receipt value drift')
+    require(type(seconds) in {int,float} and seconds>=0 and (type(seconds) is int or math.isfinite(seconds)),
+            'captured elapsed time type')
+    if type(seconds) is int:elapsed_ms=seconds*1000
+    else:
+        numerator,denominator=seconds.as_integer_ratio()
+        elapsed_ms=(numerator*1000+denominator-1)//denominator
     correlated = rollout.correlate(originals[prefix+'manifest.json'], originals[prefix+'trace.jsonl'], payloads,
         json_lines(originals['rpc-in.jsonl']), json_lines(originals['rpc-out.jsonl']), result['native'],
         trace.strict_json(capture.fixed.context_profile_raw),
-        host_events=json_lines(originals.get('host.jsonl',b''),empty=True))
+        host_events=json_lines(originals.get('host.jsonl',b''),empty=True),capture_elapsed_ms=elapsed_ms)
     return dict(result, status='primary_original_capture_correlated', rollout=correlated,
         rawPayloadCorrelationVerified=True, eligibleForMeasurement=False,
         independentReviewPerformed=False, ledgerFinalized=False)

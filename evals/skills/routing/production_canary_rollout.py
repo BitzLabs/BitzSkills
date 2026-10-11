@@ -268,7 +268,7 @@ def original_item_equal(actual,expected):
     if 'content' in actual or 'content' not in expected or expected['content']!=[]:return False
     return trace.json_equal(actual,{k:v for k,v in expected.items() if k!='content'})
 
-def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events):
+def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events, capture_elapsed_ms):
     """原artifact検査後の値比較。wire bytesやserver内部入力は認定しない。"""
     require(isinstance(host_events,list) and len(host_events) == len(native['nativeChildIds']), 'original host child body count')
     host_results = [event['result'] for event in host_events]
@@ -291,7 +291,10 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                 'unique original payload reference')
         used.add(ref['path']);return trace.strict_json(payloads[ref['path']])
     events = [trace.strict_json(line) for line in events_raw.splitlines()]
-    require(bool(events) and isinstance(events[0],dict) and events[0].get('wall_time_unix_ms')==manifest['started_at_unix_ms'], 'original rollout start timestamp binding')
+    require(type(capture_elapsed_ms) is int and capture_elapsed_ms>=0,'captured rollout elapsed bound')
+    require(bool(events) and isinstance(events[0],dict) and type(events[0].get('wall_time_unix_ms')) is int and
+            manifest['started_at_unix_ms']<=events[0]['wall_time_unix_ms']<=manifest['started_at_unix_ms']+capture_elapsed_ms,
+            'original rollout start timestamp binding')
     kinds = []
     requests, responses, seen = [], [], set()
     stage = 0
@@ -383,6 +386,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
             if kind=='tool_call_runtime_started':require(isinstance(body,dict) and body.get('turn_id')==turn,'original runtime turn binding')
             code_records.append((fields,body,len(requests)-1))
         else: require(False,'unknown original rollout event')
+    require(last_wall-manifest['started_at_unix_ms']<=capture_elapsed_ms,'original rollout exceeds captured elapsed bound')
     require(stage==6 and active is None and len(requests)==len(responses)==native['apiRequests'] and used==set(payloads),
             'complete rollout and inference inventory')
     require(protocols == ['session_configured','turn_started','turn_complete','shutdown_complete'], 'complete original protocol lifecycle')
@@ -506,7 +510,9 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                    f['params']['item'].get('phase')=='final_answer']
     require(len(native_finals)==1 and native_finals[0]['id']==final_raw['id'] and
             native_finals[0]['text']==''.join(c['text'] for c in final_raw['content']), 'raw and native final identity')
-    return dict(status='primary_client_rollout_raw_usage_correlated',inferences=len(requests),rolloutEvents=len(events),
+    return dict(status='primary_client_rollout_raw_usage_correlated',captureElapsedMilliseconds=capture_elapsed_ms,
+                observedRolloutSpanMilliseconds=last_wall-manifest['started_at_unix_ms'],
+                manifestToFirstEventMilliseconds=events[0]['wall_time_unix_ms']-manifest['started_at_unix_ms'],inferences=len(requests),rolloutEvents=len(events),
         totalTokenUsage=total,modelContextWindow=context_window,codeModeOriginals=code_proof,parentHostBodiesVerified=True,
         parentHostBodyValueSha256=parent_hashes,initialContextVerified=True,rawPayloadCorrelationVerified=True,usageCorrelationVerified=True,
         originalRequestValueSha256=[sdk.digest(x) for x in requests],originalResponseValueSha256=[sdk.digest(x) for x in responses],
