@@ -25,7 +25,7 @@
       ".spec/tasks/TASK-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "ccd4bd3c2bc34953536a0fcbff3702c9431ce6cedda3d7bae0ab1681874deefc"
+        "sha256": "20ee760e3657a02a7dbf47124893fdbff02100482b449abf8c28353167db89d3"
       }
     },
     "git": {
@@ -60,7 +60,7 @@
       ".spec/tasks/TASK-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "ccd4bd3c2bc34953536a0fcbff3702c9431ce6cedda3d7bae0ab1681874deefc"
+        "sha256": "20ee760e3657a02a7dbf47124893fdbff02100482b449abf8c28353167db89d3"
       }
     },
     "git": {
