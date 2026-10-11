@@ -98,7 +98,7 @@ class RecordedCaptureTests(unittest.TestCase):
     def test_role_only_input_does_not_require_type_and_unknown_role_stops(self):
         self.assertEqual(self.record.input_roles({'input': [{'role': 'developer'}, {'role': 'user'}, {'type': 'custom_tool_call'}]}),
                          ['developer', 'user', 'custom_tool_call'])
-        for item in [{}, {'role': None}, {'role': True}]:
+        for item in [{}, {'role': None}, {'role': True}, {'role': 'unknown_role'}, {'type': 'unknown_item'}]:
             with self.assertRaises(ValueError): self.record.input_roles({'input': [item]})
 
 

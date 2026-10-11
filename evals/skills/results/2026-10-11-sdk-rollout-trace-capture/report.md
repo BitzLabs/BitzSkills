@@ -31,3 +31,7 @@ source19df29eのclean全534件/64.168s/OK/exit0、有限SOL31は公開4本文/1�
 
 是正後の対象6件/0.007s/OK/exit0、原捕捉とSOL31の原stdio/hash/Git/共通予約再照合もexit0。
 新有限v0.32で是正対象の公開3本文だけを独立検分する。追加mock/HTTP0、一次/委譲/自動retry0。
+
+source24a7a98のclean全536件/66.664s/OK/exit0、独立SOL32は1回/CLIexit0/P2=0/P3=1。
+入力role/typeの未知文字列を拒否しないP3を保持し、初期roleと既知call/output typeの許可集合を明示した。
+この小修正の独立再検分は次の区切りにまとめる。原捕捉、SOL31/32の原応答と消費2を保持する。

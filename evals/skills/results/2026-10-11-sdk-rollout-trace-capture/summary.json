@@ -19,7 +19,7 @@
   "rawResponseItemNotifications": 8,
   "namespaceExitCode": 0,
   "runtimeExitCode": 0,
-  "staticSolInvocations": 1,
+  "staticSolInvocations": 2,
   "staticReviewStages": [
     {
       "sourceCommit": "19df29e59b0034289271ffc6d1ed14ed7c9fc834",
@@ -34,6 +34,21 @@
         "status": "review_findings", "actualInvocations": 1,
         "usage": {"input_tokens": 21936, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 1309, "reasoning_output_tokens": 434},
         "findings": {"P1": 0, "P2": 2, "P3": 1}
+      }
+    }
+    ,{
+      "sourceCommit": "24a7a9874fa1bd3e2e666f41080395920440a579",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.32.json",
+      "verification": {"outputRelativeRoot": ".venv/production-rollout-trace-check-02", "summarySha256": "f97fff8af2853b61609de16f5f1a51a3e511541b0abcfdb2ecafd40c0fc2087c", "testCount": 536, "testSeconds": 66.664, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "24a7a9874fa1bd3e2e666f41080395920440a579",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.32.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-32",
+        "receiptSha256": "0c13426a0024fd993796b0ee1b9b2c92782a7e94185bdf3bafd6cbe8cc392f7d",
+        "responseSha256": "db7d72fe5453df001306ec86689fd06b8ba4ba9723fc0b3aa211bc7229e2edf6",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 13290, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 741, "reasoning_output_tokens": 453},
+        "findings": {"P1": 0, "P2": 0, "P3": 1}
       }
     }
   ],

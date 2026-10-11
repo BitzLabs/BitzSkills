@@ -32,6 +32,8 @@ def input_roles(request):
         trace.require(isinstance(item, dict), 'original input item')
         role = item['role'] if 'role' in item else item.get('type')
         trace.require(isinstance(role, str) and bool(role), 'original input role or type missing')
+        allowed = {'developer', 'user'} if 'role' in item else {'custom_tool_call', 'custom_tool_call_output'}
+        trace.require(role in allowed, 'unknown original input role or type')
         roles.append(role)
     return roles
 
