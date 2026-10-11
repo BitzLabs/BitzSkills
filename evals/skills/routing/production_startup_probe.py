@@ -14,6 +14,7 @@ import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-provider-startup-v0.1.json'
+REMEDIATION_CONTRACT = 'evals/skills/routing/production-provider-startup-v0.2.json'
 
 
 def namespace(base, contract):
@@ -63,15 +64,24 @@ def isolated(base):
     cli.exclusive(base / 'isolated-result.json', cli.encoded({'sdkErrorType': error}))
 
 
-def run(source):
-    raw = guard.git(ROOT, 'show', source + ':' + CONTRACT)
+def run(source, contract_name=CONTRACT):
+    if contract_name not in {CONTRACT, REMEDIATION_CONTRACT}:
+        raise ValueError('unknown startup contract')
+    raw = guard.git(ROOT, 'show', source + ':' + contract_name)
     contract = json.loads(raw)
-    if (contract['version'] != 'production-provider-startup-0.1.0' or contract['maximumInvocations'] != 1 or
-            contract['maximumLogicalTurns'] != 0 or contract['timeoutSeconds'] != 30 or contract['paidModelCalls'] != 0):
+    if (contract['version'] != ('production-provider-startup-0.2.0' if contract_name == REMEDIATION_CONTRACT else
+                                'production-provider-startup-0.1.0') or
+            any(type(contract[key]) is not int or contract[key] != value for key, value in
+                [('maximumInvocations', 1), ('maximumLogicalTurns', 0), ('timeoutSeconds', 30), ('paidModelCalls', 0)])):
         raise ValueError('unknown unpaid startup policy')
     if guard.git(ROOT, 'status', '--porcelain') != b'' or guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() != source:
         raise ValueError('clean fixed HEAD required')
     before = guard.verify(ROOT, source, contract['sourceFiles'])
+    if contract_name == REMEDIATION_CONTRACT:
+        previous = contract['previousFailure']
+        path = ROOT / previous['outputRelativeRoot'] / 'receipt.json'
+        if any(p.is_symlink() for p in [path, *path.parents]) or hashlib.sha256(path.read_bytes()).hexdigest() != previous['receiptSha256']:
+            raise ValueError('original unpaid namespace failure drift')
     base = ROOT / contract['outputRelativeRoot']
     if any(p.is_symlink() for p in [base, *base.parents]):
         raise ValueError('output symlink')
@@ -115,6 +125,7 @@ def run(source):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source')
+    parser.add_argument('--namespace-remediation', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -125,4 +136,4 @@ if __name__ == '__main__':
     else:
         if not args.source:
             parser.error('--source required')
-        raise SystemExit(run(args.source))
+        raise SystemExit(run(args.source, REMEDIATION_CONTRACT if args.namespace_remediation else CONTRACT))
