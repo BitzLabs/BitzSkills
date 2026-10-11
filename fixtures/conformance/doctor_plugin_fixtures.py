@@ -23,7 +23,7 @@ import tempfile
 from jsonschema import Draft202012Validator, ValidationError
 
 from .schemas import schema_path
-from . import multi_doctor_fixtures, multi_reference
+from . import multi_doctor_fixtures
 from .git_environment_fixtures import check_cli_error_output
 from .harness import git, setup
 from .initial_fixtures import CONFIGS, observe, compare_state
@@ -99,15 +99,23 @@ def parse_range(text):
         match = _COMPARATOR.fullmatch(token)
         if match is None:
             return None
-        comparators.append((match.group(1) or "=", int(match.group(2)), int(match.group(3))))
+        comparators.append((match.group(1) or "=", match.group(2), match.group(3)))
     return comparators
 
 
+def _number_key(value):
+    """先頭に`0`を含まない十進の非負整数の大小を、`int`への変換なしに比べるキー（4300桁を超える値も扱う）。"""
+    digits = str(value)
+    return (len(digits), digits)
+
+
 def satisfies(api, comparators):
+    api = (_number_key(api[0]), _number_key(api[1]))
     for operator, major, minor in comparators:
-        bound = (major, minor)
+        bound = (_number_key(major), _number_key(minor))
         if operator == "^":
-            ok = bound <= api < (major + 1, 0)
+            # `api < (major + 1).0`は、MAJORが整数なので`api`のMAJOR <= `major`と同じ。
+            ok = bound <= api and api[0] <= _number_key(major)
         else:
             ok = {">=": api >= bound, ">": api > bound, "<=": api <= bound, "<": api < bound, "=": api == bound}[operator]
         if not ok:

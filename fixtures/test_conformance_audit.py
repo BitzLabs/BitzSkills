@@ -2468,6 +2468,12 @@ class AuditTests(unittest.TestCase):
         # 範囲のすべての比較子を満たすときだけ満たす。マイナーバージョンの差も範囲で判定する。
         self.assertTrue(satisfies((1, 3), parse("^1.0")))
         self.assertFalse(satisfies((1, 3), parse("^1.0 <1.3")))
+        # 4300桁を超える値も、`int`へ変換せずに数値の大小で比べる。
+        huge = "1" * 4301
+        self.assertTrue(satisfies((1, 0), parse(f"<{huge}.0")))
+        self.assertFalse(satisfies((1, 0), parse(f">={huge}.0")))
+        self.assertFalse(satisfies((1, 0), parse(f"^1.{huge}")))
+        self.assertTrue(satisfies((1, 10), parse(">1.9")))
 
     def test_doctor_plugin_reference_outcome_follows_adr_061(self):
         outcome = doctor_plugin_fixtures.reference_plugin_outcome
