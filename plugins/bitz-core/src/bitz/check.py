@@ -297,9 +297,10 @@ def _direct_reverse_references(
     （作業ワークスペースと、ワークスペースをまたいで参照する他のメンバーの文書が候補になる。無関係なメンバーの文書は、
     ``context_ids``のいずれも参照しないため含まれない。複合ワークスペース仕様 §7）。
 
-    複合ワークスペース内の単独操作では、呼び出し側が``context_ids``を作業ワークスペースの文書（修飾のないID）だけに
-    絞って渡す。作業ワークスペースの文書を参照する他のメンバーの文書は対象に加わるが、強い関係の閉包で到達した
-    他のメンバーの文書の逆参照へは広げない（check §6「別のワークスペースの無関係な変更を対象へ混ぜない」）。
+    ``normalize``を渡す複合ワークスペース内の単独操作では、採用する逆参照の文書を所有者で分ける。作業ワークスペースの
+    文書（修飾のないID）は、``context_ids``のどの文書を参照していても採用する。他のメンバーの文書（``ws::ID``）は、
+    ``context_ids``のうち作業ワークスペースの文書（修飾のないID）を参照するものだけを採用し、強い関係の閉包で到達した
+    他のメンバーの文書を参照するだけの文書へは広げない（check §6「別のワークスペースの無関係な変更を対象へ混ぜない」）。
 
     ``normalize``は、文書IDを``context_ids``と同じ表現へそろえる（作業ワークスペース自身を指す修飾IDを
     修飾のないIDへ戻す）。返す集合の要素も正規化後の表現である。
@@ -308,17 +309,21 @@ def _direct_reverse_references(
     def _norm(doc_id: str) -> str:
         return normalize(doc_id) if normalize is not None else doc_id
 
+    # 他のメンバーの文書を採用する根拠にできる参照先（作業ワークスペースの文書）。
+    working_ids = {i for i in context_ids if "::" not in i} if normalize is not None else context_ids
+
     result: set[str] = set()
     for doc_id, entry in (source_index if source_index is not None else id_index).items():
         source_id = _norm(doc_id)
         if source_id in context_ids:
             continue
+        targets = working_ids if normalize is not None and "::" in source_id else context_ids
         relations = (entry.frontmatter or {}).get("relations") or {}
         for relation_name in ("requires", "refines", "addresses", "supersedes", "related"):
             hit = False
             for ref in relations.get(relation_name) or []:
                 _target_entry, target_doc_id = relations_mod.resolve_ref(ref, id_index, statement_index)
-                if target_doc_id is not None and _norm(target_doc_id) in context_ids:
+                if target_doc_id is not None and _norm(target_doc_id) in targets:
                     result.add(source_id)
                     hit = True
                     break
@@ -866,11 +871,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 if multi_active:
                     # 複合ワークスペースでは、作業ワークスペースの文書から強い関係の閉包で到達した他のメンバーの文書と、
                     # 作業ワークスペースの文書を直接参照する他のメンバーの文書も完全検査の対象に含める。閉包で到達した
-                    # 他のメンバーの文書の逆参照へは広げない（無関係なメンバーの文書は含めない。仕様 §7）。
+                    # 他のメンバーの文書を参照するだけの他のメンバーの文書へは広げない（仕様 §7）。
                     start_ids = set(active_index)
                     reached = basecompare.strong_dependency_closure(start_ids, id_index, normalize=normalize)
                     reached |= _direct_reverse_references(
-                        start_ids | {i for i in reached if "::" not in i}, id_index, statement_index,
+                        start_ids | reached, id_index, statement_index,
                         source_index=reverse_source_index, normalize=normalize,
                     )
                     other_check_ids = reached - start_ids
@@ -890,7 +895,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 if normalize is not None:
                     context_ids = {normalize(i) for i in context_ids}
                 full_check_ids = context_ids | _direct_reverse_references(
-                    {i for i in context_ids if "::" not in i}, id_index, statement_index,
+                    context_ids, id_index, statement_index,
                     source_index=reverse_source_index, normalize=normalize,
                 )
                 other_check_ids = {i for i in full_check_ids if "::" in i}
@@ -924,7 +929,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 )
                 full_check_ids = owning_ids | strong_closure
                 full_check_ids |= _direct_reverse_references(
-                    {i for i in full_check_ids if "::" not in i}, id_index, statement_index,
+                    full_check_ids, id_index, statement_index,
                     source_index=reverse_source_index, normalize=normalize,
                 )
                 other_check_ids = {i for i in full_check_ids if "::" in i}

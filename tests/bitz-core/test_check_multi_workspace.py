@@ -276,6 +276,103 @@ class RootWorkspaceOwnershipTests(unittest.TestCase):
                 "changedPathCount": 1, "targetDocumentCount": 1, "excludedCodeTestPathCount": 0})
 
 
+class ReverseReferenceOwnerRuleTests(unittest.TestCase):
+    """直接の逆参照の採用規則（check §6）。作業ワークスペースの文書は、完全検査の対象のどの文書を参照していても採用する。
+    他のメンバーの文書は、作業ワークスペースの文書を参照するものだけを採用する。
+    """
+
+    def _repo(self, root: Path) -> None:
+        _make_repo(root)
+        # webのTECH-012は、閉包で到達するapi::TECH-020だけを`related`で参照し、実装パスが存在しない。
+        _write(root, "apps/web/.spec/technical/TECH-012.md", _tech(
+            "TECH-012", relations={"related": ["api::TECH-020"]}, implements=["src/missing_012.py"]))
+        _git(root, "add", "-A")
+        _git(root, "commit", "-q", "-m", "TECH-012")
+        _write(root, "apps/web/.spec/technical/TECH-030.md", _tech(
+            "TECH-030", relations={"requires": ["api::TECH-020"], "refines": ["platform::REQ-001:AC-01"]},
+            body="変更した本文。"))
+
+    def test_changed_checks_working_workspace_document_that_references_only_closure_document(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+
+            result, _exit_code = _run(root / "apps/web")
+            web_012 = _doc_diags(result, "web", ".spec/technical/TECH-012.md")
+            self.assertEqual([d["code"] for d in web_012], ["SPEC-PATH-INVALID-001"])
+            # 他のメンバーの文書は、閉包の文書だけを参照するもの(TECH-060)を引き続き対象にしない。
+            self.assertEqual(_doc_diags(result, "api", ".spec/technical/TECH-060.md"), [])
+
+    def test_selected_checks_working_workspace_document_that_references_only_context_document(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+
+            result, _exit_code = _run(root / "apps/web", ["TECH-030"])
+            web_012 = _doc_diags(result, "web", ".spec/technical/TECH-012.md")
+            self.assertEqual([d["code"] for d in web_012], ["SPEC-PATH-INVALID-001"])
+            self.assertEqual(_doc_diags(result, "api", ".spec/technical/TECH-060.md"), [])
+
+    def test_full_still_excludes_other_member_document_that_references_only_closure_document(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+
+            result, _exit_code = _run(root / "apps/web", flags={"--full"})
+            self.assertEqual(len(_doc_diags(result, "web", ".spec/technical/TECH-012.md")), 1)
+            self.assertEqual(_doc_diags(result, "api", ".spec/technical/TECH-060.md"), [])
+
+
+class ImpactCandidateScopeTests(unittest.TestCase):
+    """影響候補（`SPEC-IMPACT-OUTDATED-001`）は作業ワークスペースの文書だけに、1文書につき1件出す（check §8）。"""
+
+    def test_impact_candidates_are_limited_to_working_workspace_documents_without_duplicates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _make_repo(root)
+            _write(root, "apps/web/.spec/technical/TECH-032.md", _tech("TECH-032", relations={"requires": ["TECH-030"]}))
+            _write(root, "apps/web/.spec/technical/TECH-033.md", _tech("TECH-033", relations={"requires": ["web::TECH-030"]}))
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "impact")
+            _write(root, "apps/web/.spec/technical/TECH-030.md", _tech(
+                "TECH-030", relations={"requires": ["api::TECH-020"], "refines": ["platform::REQ-001:AC-01"]},
+                body="変更した本文。"))
+
+            result, _exit_code = _run(root / "apps/web")
+            impact = sorted(
+                (d["source"]["workspaceId"], d["source"]["path"])
+                for d in result["diagnostics"] if d["code"] == "SPEC-IMPACT-OUTDATED-001"
+            )
+            # webの2文書に1件ずつ。作業ワークスペースの別名による重複も、他のメンバーの文書(api::TECH-040が
+            # web::TECH-030をrefinesしている)への警告もない。
+            self.assertEqual(impact, [
+                ("web", ".spec/technical/TECH-032.md"), ("web", ".spec/technical/TECH-033.md"),
+            ])
+
+
+class ReachedDocumentCatalogDiagnosticsTests(unittest.TestCase):
+    """到達した他のメンバーの文書のファイル単位の診断(フロントマター、EARS-AI、スタイル)を、所有ワークスペースの名前で返す。"""
+
+    def test_style_diagnostic_of_reached_document_is_reported_with_owner(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _make_repo(root)
+            broken = _tech("TECH-020", relations={"requires": ["web::TECH-031"]}).replace("# TECH-020 TECH", "# 違う見出し")
+            _write(root, "services/api/.spec/technical/TECH-020.md", broken)
+            _write(root, "services/api/.spec/technical/TECH-050.md", _tech("TECH-050").replace("# TECH-050 TECH", "# 無関係な見出し"))
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "style")
+            _write(root, "apps/web/.spec/technical/TECH-030.md", _tech(
+                "TECH-030", relations={"requires": ["api::TECH-020"], "refines": ["platform::REQ-001:AC-01"]},
+                body="変更した本文。"))
+
+            result, _exit_code = _run(root / "apps/web")
+            reached = _doc_diags(result, "api", ".spec/technical/TECH-020.md")
+            self.assertEqual([d["code"] for d in reached], ["SPEC-STYLE-H1-001"])
+            # 到達していない文書の診断は返さない。
+            self.assertEqual(_doc_diags(result, "api", ".spec/technical/TECH-050.md"), [])
+
+
 class CycleDiagnosticsScopeTests(unittest.TestCase):
     """循環の診断（`CTX-CYCLE-001`）は、完全検査の対象の文書へ帰属するものだけを返す（`check.md §3`）。"""
 
