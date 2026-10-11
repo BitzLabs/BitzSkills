@@ -139,5 +139,105 @@ class ParseArgvAcceptanceTests(unittest.TestCase):
         self.assertEqual(parsed.single["--timeout"], "3600")
 
 
+
+class DoctorPluginRequestLexicalTests(unittest.TestCase):
+    """`doctor`のプラグインの要求の字句（ADR-061 Decision 1）。不一致は終了コード4（`CliArgError`）。"""
+
+    def assert_rejected(self, option, value):
+        with self.assertRaises(CliArgError, msg=f"{option} {value!r}") as cm:
+            parse_argv(["doctor", option, value])
+        self.assertEqual(cm.exception.context, "doctor")
+
+    def assert_accepted(self, option, value):
+        parsed = parse_argv(["doctor", option, value])
+        if option == "--require-capability":
+            self.assertEqual(parsed.repeat[option], [value])
+        else:
+            self.assertEqual(parsed.single[option], value)
+
+    def test_plugin_id_accepted(self):
+        for value in ("bitz-sdd", "a", "a1", "a1-b2-c3", "bitz", "a" * 64):
+            with self.subTest(value=value):
+                self.assert_accepted("--plugin", value)
+
+    def test_plugin_id_rejected(self):
+        for value in (
+            "Bitz", "bitz-SDD", "1bitz", "-bitz", "bitz-", "bitz--sdd", "bitz_sdd", "bitz.sdd",
+            "a" * 65, "bitz\n", "bitz-sdd\n", " bitz", "bitz ", "ｂitz", "bitzé",
+        ):
+            with self.subTest(value=value):
+                self.assert_rejected("--plugin", value)
+
+    def test_plugin_version_accepted(self):
+        for value in (
+            "0.0.0", "1.2.3", "10.20.30", "1.0.0-alpha", "1.0.0-alpha.1", "1.0.0-0.3.7", "1.0.0-x.7.z.92",
+            "1.0.0-x-y-z.--", "1.0.0+20130313144700", "1.0.0-beta+exp.sha.5114f85", "1.0.0+21AF26D3----117B344092BD",
+            "1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay", "1.0.0-0A.is.legal",
+        ):
+            with self.subTest(value=value):
+                self.assert_accepted("--plugin-version", value)
+
+    def test_plugin_version_rejected(self):
+        for value in (
+            "1", "1.0", "1.0.0.0", "01.0.0", "1.01.0", "1.0.01", "v1.0.0", "1.0.0-", "1.0.0-01",
+            "1.0.0-alpha..1", "1.0.0-alpha.", "1.0.0+", "1.0.0+build..1", "1.0.0-alpha_beta", "1.0.0\n",
+            " 1.0.0", "1.0.0 ", "1.0.0-alpha.01", "-1.0.0", "1.0.0+b+c", "１.0.0", "1.0.0-é",
+        ):
+            with self.subTest(value=value):
+                self.assert_rejected("--plugin-version", value)
+
+    def test_core_api_range_accepted(self):
+        for value in (
+            "1.0", "=1.0", ">=1.0", ">1.0", "<=1.0", "<1.0", "^1.0", "^0.9", "0.0", "10.20", ">=1.0 <2.0",
+            ">=0.9 <1.0", ">=1.0 >1.0 <=3.0 <4.0", "1.0 1.0", "^1.0 <1.5",
+        ):
+            with self.subTest(value=value):
+                self.assert_accepted("--require-core-api", value)
+
+    def test_core_api_range_rejected(self):
+        for value in (
+            "01.0", "1.00", "1.01", "00.0", "1.0.0", ">=1.0.0", "^1.0.0", "1", ">=1", "~1.0", "~>1.0", "1.x",
+            "1.*", "*", "x", ">=1.0 || >=2.0", "||", "1.0 - 2.0", "1.0-2.0", " >=1.0", ">=1.0 ", ">=1.0  <2.0",
+            ">=1.0\t<2.0", ">=1.0\n", "1.0\n", "^1.0\n", "^^1.0", ">^1.0", "^>=1.0", "=>1.0", "== 1.0", ">= 1.0",
+            "=<1.0", "!=1.0", ">=1.0,<2.0", "v1.0", ">=-1.0", "+1.0", "1.0-alpha", "1.0+build", "１.0",
+            "^1.x", ">=1.0 <", "<>1.0",
+        ):
+            with self.subTest(value=value):
+                self.assert_rejected("--require-core-api", value)
+
+    def test_capability_accepted(self):
+        for value in ("context.v1", "multiWorkspace.v1", "a.v10", "A1.v99", "doctor.v1", "context.v2", "x.v123456"):
+            with self.subTest(value=value):
+                self.assert_accepted("--require-capability", value)
+
+    def test_capability_rejected(self):
+        for value in (
+            "context.v0", "context.V1", "context.v01", "context", "context.v", "context.1", "1context.v1",
+            "context-x.v1", "context_x.v1", "context.v1.v1", "context.v1\n", " context.v1", "context.v1 ",
+            ".v1", "context.v1a", "con.text.v1",
+        ):
+            with self.subTest(value=value):
+                self.assert_rejected("--require-capability", value)
+
+    def test_each_invalid_repeated_capability_is_rejected(self):
+        with self.assertRaises(CliArgError):
+            parse_argv(["doctor", "--require-capability", "context.v1", "--require-capability", "context.v0"])
+
+    def test_capability_duplicates_are_collapsed(self):
+        parsed = parse_argv(
+            ["doctor", "--require-capability", "context.v1", "--require-capability", "check.v1",
+             "--require-capability", "context.v1"]
+        )
+        self.assertEqual(parsed.repeat["--require-capability"], ["context.v1", "check.v1"])
+
+    def test_lexical_error_precedes_missing_combination(self):
+        # 字句の不一致は、組合せの不足より先に終了コード4とする。
+        with self.assertRaises(CliArgError):
+            parse_argv(["doctor", "--plugin", "Bad"])
+        # 字句が正しければ、一部だけの指定でも解析は成功する（組合せは`doctor`が判定する）。
+        parsed = parse_argv(["doctor", "--plugin", "bitz-sdd"])
+        self.assertEqual(parsed.single["--plugin"], "bitz-sdd")
+
+
 if __name__ == "__main__":
     unittest.main()

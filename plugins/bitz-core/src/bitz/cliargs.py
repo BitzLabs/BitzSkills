@@ -18,6 +18,19 @@ OPERATIONS = ("context", "check", "verify", "doctor")
 _TIMEOUT_RE = re.compile(r"^[1-9][0-9]{0,3}$")
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
+# `doctor`のプラグインの要求の字句（ADR-061 Decision 1）。`$`は末尾の改行に一致するため、
+# 検査には`fullmatch`だけを使う。数字は`\d`（Unicodeの数字を含む）ではなく`[0-9]`で書く。
+_PLUGIN_ID_RE = re.compile(r"[a-z][a-z0-9]*(-[a-z0-9]+)*")
+_PLUGIN_ID_MAX_LENGTH = 64
+_NUMERIC_ID = r"(?:0|[1-9][0-9]*)"
+_SEMVER_RE = re.compile(
+    rf"{_NUMERIC_ID}\.{_NUMERIC_ID}\.{_NUMERIC_ID}"
+    rf"(?:-(?:{_NUMERIC_ID}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:{_NUMERIC_ID}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?"
+    r"(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?"
+)
+_API_COMPARATOR_RE = re.compile(rf"(>=|>|<=|<|=|\^)?({_NUMERIC_ID})\.({_NUMERIC_ID})")
+_CAPABILITY_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9]*\.v[1-9][0-9]*")
+
 
 @dataclass
 class ParsedArgs:
@@ -95,6 +108,38 @@ def _check_workspace_value(op: str, value: str) -> None:
         raise CliArgError(op, f"--workspaceの値が不正です: {value}")
 
 
+def is_valid_plugin_id(value: str) -> bool:
+    return len(value) <= _PLUGIN_ID_MAX_LENGTH and _PLUGIN_ID_RE.fullmatch(value) is not None
+
+
+def is_valid_semver(value: str) -> bool:
+    return _SEMVER_RE.fullmatch(value) is not None
+
+
+def parse_core_api_range(value: str) -> list[tuple[str, tuple[int, int]]] | None:
+    """`--require-core-api`の範囲を(演算子, (MAJOR, MINOR))の列へ分解する。字句の不一致は`None`。
+
+    `^M.N`は`>=M.N`と`<(M+1).0`の2件へ展開する。比較子は空白1文字で区切る。
+    """
+    comparators: list[tuple[str, tuple[int, int]]] = []
+    for token in value.split(" "):
+        m = _API_COMPARATOR_RE.fullmatch(token)
+        if m is None:
+            return None
+        op = m.group(1) or "="
+        version = (int(m.group(2)), int(m.group(3)))
+        if op == "^":
+            comparators.append((">=", version))
+            comparators.append(("<", (version[0] + 1, 0)))
+        else:
+            comparators.append((op, version))
+    return comparators
+
+
+def is_valid_capability_name(value: str) -> bool:
+    return _CAPABILITY_RE.fullmatch(value) is not None
+
+
 def parse_doctor(rest: list[str]) -> ParsedArgs:
     op = "doctor"
     parsed = _tokenize(
@@ -111,6 +156,18 @@ def parse_doctor(rest: list[str]) -> ParsedArgs:
     if "--workspace" in parsed.single:
         _check_workspace_value(op, parsed.single["--workspace"])
     _check_format(op, parsed, ("text", "json"), "text")
+    plugin = parsed.single.get("--plugin")
+    if plugin is not None and not is_valid_plugin_id(plugin):
+        raise CliArgError(op, f"--pluginの値が不正です: {plugin}")
+    plugin_version = parsed.single.get("--plugin-version")
+    if plugin_version is not None and not is_valid_semver(plugin_version):
+        raise CliArgError(op, f"--plugin-versionの値が不正です: {plugin_version}")
+    core_api = parsed.single.get("--require-core-api")
+    if core_api is not None and parse_core_api_range(core_api) is None:
+        raise CliArgError(op, f"--require-core-apiの値が不正です: {core_api}")
+    for capability in parsed.repeat.get("--require-capability", []):
+        if not is_valid_capability_name(capability):
+            raise CliArgError(op, f"--require-capabilityの値が不正です: {capability}")
     return parsed
 
 
