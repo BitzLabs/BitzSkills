@@ -71,7 +71,7 @@ from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doctor_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
-from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures
+from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck
 
 
@@ -1609,6 +1609,224 @@ class AuditTests(unittest.TestCase):
                 result = json.loads((fixture / "expected/context.json").read_text())
                 with self.assertRaises(ValueError):
                     multi_relation_type_fixtures.check_single_cause("MULTI-027-01", repository, result)
+
+    def test_multi_check_fixtures(self):
+        result = multi_check_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["MULTI-029-01", "MULTI-029-02", "MULTI-029-03"])
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in multi_check_fixtures.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(multi_check_fixtures.validate(root, {identifier})["errors"], [])
+
+    def test_multi_check_reference_follows_the_inputs(self):
+        """参照計算は入力の木構造とGitの変更集合から、作業ワークスペース、完全検査の対象、件数、診断を導く。"""
+        module = multi_check_fixtures
+        expected = {
+            "MULTI-029-01": ("full", "apps/web", None, ["api::TECH-020", "platform::REQ-001", "web::TECH-010", "web::TECH-011"]),
+            "MULTI-029-02": ("full", ".", "web", ["api::TECH-020", "platform::REQ-001", "web::TECH-010", "web::TECH-011"]),
+            "MULTI-029-03": ("changed", "apps/web", None, ["api::TECH-020", "api::TECH-040", "web::TECH-030"]),
+        }
+        for identifier, (kind, cwd, option, inspected) in expected.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                reference = module.reference_check(repository, kind, "web", cwd, option)
+                self.assertEqual(reference["workspace"], {"id": "web", "path": "apps/web"})
+                self.assertEqual(reference["inspected"], inspected)
+                self.assertEqual(reference["documentCount"], len(inspected))
+                result = json.loads((fixture / "expected/check.json").read_text())
+                module.check_result_against_reference(result, reference)
+                # オプションと実行ディレクトリが作業ワークスペースを決める。ルートの既定は`platform`、メンバーの中は`web`。
+                _, workspaces, _ = multi_crosscheck.load_workspaces(repository)
+                self.assertEqual(module.select_workspace(workspaces, ".", None), "platform")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web", None), "web")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web/src", None), "web")
+                self.assertEqual(module.select_workspace(workspaces, ".", "api"), "api")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web", "platform"), "platform")
+                with self.assertRaises(ValueError):
+                    module.select_workspace(workspaces, ".", "missing")
+                # 作業ワークスペースの取り違え（ルート）では、期待と一致しない。
+                with self.assertRaises(ValueError):
+                    module.reference_check(repository, kind, "web", ".", None)
+                # 期待値の改変（修正前の値、他の範囲、所有ワークスペースの取り違え）を、参照計算との比較が拒否する。
+                changes = [lambda v: v["workspace"].update(path="."),
+                           lambda v: v["workspace"].update(id="platform", path="."),
+                           lambda v: v.update(status="passed" if v["status"] == "failed" else "failed")]
+                if kind == "full":
+                    changes += [lambda v: v.update(checkedDocumentCount=2), lambda v: v.update(checkedDocumentCount=5),
+                                lambda v: v.update(checkedStatementCount=0), lambda v: v.update(checkedStatementCount=2)]
+                else:
+                    changes += [lambda v: v.update(diagnostics=[]),
+                                lambda v: v["selection"].update(targetDocumentCount=3),
+                                lambda v: v["selection"].update(changedPathCount=2),
+                                lambda v: v["selection"].update(excludedCodeTestPathCount=1),
+                                lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+                                lambda v: v["diagnostics"][1]["source"].update(workspaceId="platform"),
+                                lambda v: v["diagnostics"].reverse(),
+                                lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))]
+                for index, change in enumerate(changes):
+                    with self.subTest(identifier=identifier, change=index):
+                        changed = copy.deepcopy(result)
+                        change(changed)
+                        self.assertNotEqual(changed, result)
+                        with self.assertRaises(ValueError):
+                            module.check_result_against_reference(changed, reference)
+
+    def test_multi_check_audit_rejects_changed_expectations(self):
+        """修正前の誤検出、`workspace.path`の改変、件数の改変、他のメンバーの診断の所有ワークスペースの改変などを拒否する。"""
+        pre_fix = {
+            "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+            "summary": "strong relationの参照先が存在しません", "evidence": "api::TECH-020",
+            "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
+                       "key": "relations.requires"}}
+
+        def false_positive(value):
+            value.update(status="failed", diagnostics=[copy.deepcopy(pre_fix)])
+
+        full = [
+            false_positive,
+            lambda v: v["workspace"].update(path="."),
+            lambda v: v["workspace"].update(id="platform", path="."),
+            lambda v: v["workspace"].update(id="api", path="services/api"),
+            lambda v: v.update(checkedDocumentCount=2),
+            lambda v: v.update(checkedDocumentCount=3),
+            lambda v: v.update(checkedDocumentCount=5),
+            lambda v: v.update(checkedStatementCount=0),
+            lambda v: v.update(checkedStatementCount=2),
+            lambda v: v.update(scope="selected"),
+            lambda v: v["revision"].update(dirty=True),
+            lambda v: v.update(status="passed_with_warnings"),
+            lambda v: v.update(diagnostics=[{
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
+                           "key": "relations.requires"}}], status="failed"),
+        ]
+        changed = [
+            lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+            lambda v: v["diagnostics"][1]["source"].update(workspaceId="web"),
+            lambda v: v["diagnostics"][0].update(evidence="api::TECH-999"),
+            lambda v: v["diagnostics"][0]["source"].update(path=".spec/technical/TECH-030.md"),
+            lambda v: v["diagnostics"].pop(0),
+            lambda v: v["diagnostics"].pop(1),
+            lambda v: v["diagnostics"].reverse(),
+            lambda v: v["diagnostics"].append({
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-996",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-060.md",
+                           "key": "relations.requires"}}),
+            lambda v: v["diagnostics"].append({
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
+                           "key": "relations.requires"}}),
+            lambda v: v.update(diagnostics=[], status="passed"),
+            lambda v: v["workspace"].update(path="."),
+            lambda v: v["workspace"].update(id="platform", path="."),
+            lambda v: v["selection"].update(targetDocumentCount=3),
+            lambda v: v["selection"].update(targetDocumentCount=0),
+            lambda v: v["selection"].update(changedPathCount=2),
+            lambda v: v["selection"].update(excludedCodeTestPathCount=1),
+            lambda v: v.pop("selection"),
+            lambda v: v["revision"].update(dirty=False),
+            lambda v: v.update(scope="full", checkedDocumentCount=3, checkedStatementCount=0),
+        ]
+        mutations = [(identifier, "expected/check.json", change)
+                     for identifier in ("MULTI-029-01", "MULTI-029-02") for change in full]
+        mutations += [("MULTI-029-03", "expected/check.json", change) for change in changed]
+        mutations += [
+            ("MULTI-029-01", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-029-01", "manifest.json", lambda v: v["invocation"]["argv"].remove("--full")),
+            ("MULTI-029-02", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(1, 3))),
+            ("MULTI-029-02", "manifest.json", lambda v: v["invocation"].update(cwd="apps/web")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("MULTI-029-03", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "--full")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("MULTI-029-01", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("MULTI-029-03", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_check_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_check_audit_rejects_changed_corpus(self):
+        """原因の構成は、無関係な誤りの文書を完全検査の対象に入れず、閉包と直接の逆参照だけを入れることである。入力を変えた写しは拒否する。"""
+        module = multi_check_fixtures
+        full_ids = ("MULTI-029-01", "MULTI-029-02")
+        web_tech = "repo/apps/web/.spec/technical/TECH-010.md"
+        api_20 = "repo/services/api/.spec/technical/TECH-020.md"
+        api_50 = "repo/services/api/.spec/technical/TECH-050.md"
+        api_40 = "repo/services/api/.spec/technical/TECH-040.md"
+        api_60 = "repo/services/api/.spec/technical/TECH-060.md"
+        web_30 = "changes/TECH-030.md"
+        edits = [
+            # `--full`: 無関係な文書の誤りを消すと、完全検査の対象に入らないことの陰性対照が成り立たない。
+            (full_ids, api_50, "requires: [TECH-998]", "requires: [TECH-020]"),
+            # 他のメンバーの文書から作業ワークスペースの文書への参照は、直接の逆参照の解釈に依存するので置かない。
+            (full_ids, api_20, "status: approved\n", "status: approved\nrelations:\n  related: [web::TECH-011]\n"),
+            (full_ids, api_50, "requires: [TECH-998]", "requires: [TECH-998]\n  refines: [web::TECH-010]"),
+            # 2つ目の原因（存在しない参照）と、閉包の変更。
+            (full_ids, web_tech, "requires: [api::TECH-020]", "requires: [api::TECH-999]"),
+            (full_ids, web_tech, "platform::REQ-001:AC-01", "platform::REQ-001:AC-09"),
+            (full_ids, web_tech, "  requires: [api::TECH-020]\n", ""),
+            (full_ids, web_tech, "status: approved", "status: draft"),
+            (full_ids, "repo/apps/web/.spec/technical/TECH-011.md", "status: approved\n",
+             "status: approved\nrelations:\n  requires: [TECH-010]\n"),
+            # `changed`: 影響候補を避けるための`draft`、閉包の逆参照と無関係な文書の位置づけ、文書ごとに1件の誤り。
+            (("MULTI-029-03",), api_40, "status: draft", "status: approved"),
+            (("MULTI-029-03",), api_60, "refines: [TECH-020]", "refines: [web::TECH-030]"),
+            (("MULTI-029-03",), api_60, "refines: [TECH-020]", "refines: [TECH-050]"),
+            (("MULTI-029-03",), api_50, "requires: [TECH-998]", "requires: [TECH-998]\n  related: [web::TECH-030]"),
+            (("MULTI-029-03",), api_40, "requires: [TECH-997]", "requires: [TECH-997, TECH-995]"),
+            (("MULTI-029-03",), api_40, "refines: [web::TECH-030]", "refines: [web::TECH-031]"),
+            (("MULTI-029-03",), api_20, "requires: [TECH-999]", "requires: [TECH-050]"),
+            (("MULTI-029-03",), api_50, "requires: [TECH-998]", "requires: [TECH-020]"),
+            (("MULTI-029-03",), web_30, "  requires: [api::TECH-020]\n", ""),
+            (("MULTI-029-03",), web_30, "変更後の本文。", "変更前の本文。"),
+            (("MULTI-029-03",), "repo/apps/web/.spec/technical/TECH-030.md", "変更前の本文。", "変更後の本文。"),
+        ]
+        for index, (identifiers, relative, old, new) in enumerate(edits):
+            for identifier in identifiers:
+                with self.subTest(index=index, identifier=identifier, file=relative), \
+                        tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    # 入力のバイト列の一致の検査が拒否する。
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                    # 入力の一致の検査と別に、原因の構成の検査が、入力の木構造から拒否する。
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, repository)
+        # 入力のバイト列だけを変える写し、入力の欠落と余分なファイルを拒否する。
+        for identifier in module.CASES:
+            for name in ("repo/.spec/bitz.yaml", "extra"):
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
     def test_multi_identity_audit_rejects_second_cause_in_the_corpus(self):
         """各種類は原因を1つだけ持つ。入力へ2つ目の原因を足した写しは受理しない。"""
