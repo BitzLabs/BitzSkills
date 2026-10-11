@@ -161,6 +161,45 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         for value in payloads.values():
             if 'input' in value and isinstance(value['input'],list):value['text']['format']['schema']=self.fixture.trace.fixture.sent[3]['params']['outputSchema']
         received=convert(original['received'])
+        requests=[payloads[e['payload']['request_payload']['path']] for e in events if e['payload']['type']=='inference_started']
+        responses=[payloads[e['payload']['response_payload']['path']] for e in events if e['payload']['type']=='inference_completed']
+        def ref(body,kind):
+            number=len(payloads)+1;path=f'payloads/{number}.json';payloads[path]=body
+            return dict(raw_payload_id=f'raw_payload:{number}',kind=dict(type=kind),path=path)
+        expanded=[]
+        for event in events:
+            expanded.append(event)
+            if event['payload']['type']!='inference_completed':continue
+            response=payloads[event['payload']['response_payload']['path']]
+            call=next((x for x in response['output_items'] if x.get('type')=='custom_tool_call'),None)
+            if call is None:continue
+            parent=call['call_id'];bindings=native['parentLinks']['childBindings'];cell=bindings[0]['cellId']
+            def code(fields,outside=False):
+                expanded.append(dict(schema_version=1,seq=0,wall_time_unix_ms=event['wall_time_unix_ms'],rollout_id='t',
+                    thread_id=None if outside else 't',codex_turn_id=None if outside else 'u',payload=fields))
+            code(dict(type='code_cell_started',runtime_cell_id=cell,model_visible_call_id=parent,source_js=call['input']))
+            for number,binding in enumerate(bindings):
+                host=self.fixture.trace.fixture.host[number];tool=host['tool'];args=host['arguments'];ident=binding['childId']
+                code(dict(type='tool_call_started',tool_call_id=ident,model_visible_call_id=None,
+                    code_mode_runtime_tool_id=binding['runtimeToolId'],requester=dict(type='code_cell',runtime_cell_id=cell),
+                    kind=dict(type='other',name=tool),summary=dict(type='generic',label='mcp__production_routing.'+tool,
+                    input_preview=json.dumps(args),output_preview=None),invocation_payload=ref(dict(tool_name=tool,
+                    tool_namespace='mcp__production_routing',payload=dict(type='function',arguments=json.dumps(args))),'tool_invocation')))
+                runtime=dict(call_id=ident,turn_id='u',invocation=dict(server='production-routing',tool=tool,arguments=args),read_only_hint=True)
+                code(dict(type='tool_call_runtime_started',tool_call_id=ident,runtime_payload=ref(runtime,'tool_runtime_event')))
+                code(dict(type='mcp_tool_call_correlation_assigned',tool_call_id=ident,mcp_call_id=f'00000000-0000-0000-0000-{number+1:012d}'),True)
+                wrapper=dict(content=[dict(type='text',text=json.dumps(host['result']))],isError=False)
+                code(dict(type='tool_call_runtime_ended',tool_call_id=ident,status='completed',runtime_payload=ref(
+                    dict(runtime,duration=dict(secs=0,nanos=1),result=dict(Ok=wrapper)),'tool_runtime_event')))
+                code(dict(type='tool_call_ended',tool_call_id=ident,status='completed',result_payload=ref(dict(type='code_mode_response',value=wrapper),'tool_result')))
+            ns=native['parentLinks']['parentDurationsNs'][parent]
+            body=dict(response=dict(Result=dict(cell_id=cell,content_items=requests[1]['input'][-1]['output'],error_text=None,
+                code_mode_host_duration=dict(secs=ns//1_000_000_000,nanos=ns%1_000_000_000))))
+            for kind in ['code_cell_initial_response','code_cell_ended']:
+                code(dict(type=kind,runtime_cell_id=cell,status='completed',response_payload=ref(body,'tool_result')))
+        events=expanded
+        for number,event in enumerate(events,1):event['seq']=number
+
         bodies=json.dumps([e['result'] for e in self.fixture.trace.fixture.host])
         for value in payloads.values():
             if isinstance(value.get('input'),list) and value['input'][-1].get('type')=='custom_tool_call_output':
@@ -172,7 +211,13 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         actual=copy.deepcopy(self.fixture.trace.fixture.received)
         # 原入力raw→native user→control raw→native children→result raw→native final→final raw→terminal。
         frames=actual[:5]+packets[:3]+actual[5:7]+packets[3:6]+actual[7:11]+packets[6:7]+actual[11:13]+packets[7:]+actual[13:]
-        self.fixture.save(received=frames)
+        telemetry=self.fixture.trace.fixture.events('single-exec')
+        usage=[f['params']['tokenUsage']['last'] for f in frames if f.get('method')=='thread/tokenUsage/updated']
+        api=[i for i,e in enumerate(telemetry) if e['fields'].get('event.name')=='codex.api_request']
+        for number in reversed(range(len(usage))):
+            end=api[number+1] if number+1<len(api) else len(telemetry)
+            telemetry.insert(end,trace_fixture.completion_event(usage[number]))
+        self.fixture.save(received=frames,events=telemetry)
         for name in ['rollout-traces/synthetic/payloads/1.json']:
             # 合成入口の初期placeholderを原イベントpayloadで置換する。
             self.capture.originals.pop(name,None);self.capture.receipt['artifactSha256'].pop(name,None)
@@ -192,6 +237,49 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         self.assertTrue(result['rollout']['usageCorrelationVerified'])
         self.assertFalse(result['eligibleForMeasurement']);self.assertFalse(result['ledgerFinalized'])
         self.assertFalse((self.capture.storage/'review-0001.json').exists())
+
+    def test_rehashed_code_mode_events_and_payload_drift_reject(self):
+        prefix='rollout-traces/synthetic/'
+        originals=dict(self.loaded().originals)
+        original_events=review.json_lines(originals[prefix+'trace.jsonl'])
+        faults=['missing','duplicate','unknown','parent','cell','source','runtime-id','requester','tool','summary',
+                'invoke','runtime-turn','runtime-duration','runtime-body','correlation-type','correlation-duplicate',
+                'tool-body','cell-status','cell-duration','cell-content','cell-final','stream-order']
+        for fault in faults:
+            for name,raw in originals.items():self.capture.rewrite(name,raw)
+            events=copy.deepcopy(original_events)
+            def event(kind):return next(e for e in events if e['payload']['type']==kind)
+            def body(kind,key,change):
+                path=prefix+event(kind)['payload'][key]['path'];value=review.evidence.trace.strict_json(originals[path]);change(value)
+                self.capture.rewrite(path,review.evidence.ledger.encoded(value))
+            start=event('code_cell_started')['payload'];tool=event('tool_call_started')['payload']
+            if fault=='missing':events.remove(event('code_cell_initial_response'))
+            elif fault=='duplicate':events.insert(events.index(event('code_cell_started')),copy.deepcopy(event('code_cell_started')))
+            elif fault=='unknown':tool['unknown']=True
+            elif fault=='parent':start['model_visible_call_id']='other'
+            elif fault=='cell':start['runtime_cell_id']='other'
+            elif fault=='source':start['source_js']+='changed'
+            elif fault=='runtime-id':tool['code_mode_runtime_tool_id']='other'
+            elif fault=='requester':tool['requester']['runtime_cell_id']='other'
+            elif fault=='tool':tool['kind']['name']='read_resource'
+            elif fault=='summary':tool['summary']['input_preview']='{"unknown":true}'
+            elif fault=='invoke':body('tool_call_started','invocation_payload',lambda v:v['payload'].update(arguments='{"unknown":true}'))
+            elif fault=='runtime-turn':body('tool_call_runtime_started','runtime_payload',lambda v:v.update(turn_id='other'))
+            elif fault=='runtime-duration':body('tool_call_runtime_ended','runtime_payload',lambda v:v['duration'].update(nanos=True))
+            elif fault=='runtime-body':body('tool_call_runtime_ended','runtime_payload',lambda v:v['result']['Ok'].update(isError=True))
+            elif fault=='correlation-type':event('mcp_tool_call_correlation_assigned')['payload']['mcp_call_id']=True
+            elif fault=='correlation-duplicate':
+                all_c=[e for e in events if e['payload']['type']=='mcp_tool_call_correlation_assigned'];all_c[1]['payload']['mcp_call_id']=all_c[0]['payload']['mcp_call_id']
+            elif fault=='tool-body':body('tool_call_ended','result_payload',lambda v:v['value']['content'][0].update(text='{}'))
+            elif fault=='cell-status':event('code_cell_ended')['payload']['status']='failed'
+            elif fault=='cell-duration':body('code_cell_initial_response','response_payload',lambda v:v['response']['Result']['code_mode_host_duration'].update(nanos=0))
+            elif fault=='cell-content':body('code_cell_initial_response','response_payload',lambda v:v['response']['Result']['content_items'][0].update(text='{}'))
+            elif fault=='cell-final':body('code_cell_ended','response_payload',lambda v:v['response']['Result'].update(error_text='error'))
+            else:
+                changed=event('code_cell_started');events.remove(changed);events.insert(events.index(event('inference_started')),changed)
+            for n,e in enumerate(events,1):e['seq']=n
+            self.capture.rewrite(prefix+'trace.jsonl',b''.join(review.evidence.ledger.encoded(e)+b'\n' for e in events));self.capture.persist()
+            with self.subTest(fault=fault),self.assertRaises(ValueError):review.verify_complete(self.loaded())
 
     def test_rehashed_raw_usage_omission_and_profile_drift_stop(self):
         from dataclasses import replace

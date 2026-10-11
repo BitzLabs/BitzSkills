@@ -43,8 +43,8 @@ class CanaryRolloutTests(unittest.TestCase):
             outcome='proceed' if profile!='no-exec' else 'not-applicable',events=[],rejectedEvents=[],readyClaimed=False,evidencePresent=False,reason='synthetic')
         names={'no-exec':(),'single-exec':('exec',),'two-exec':('exec','exec'),'exec-wait':('exec','wait')}[profile]
         native=dict(nativeChildIds=[] if profile=='no-exec' else ['child0','child1'],apiRequests=len(names)+1,parentCallIds=['parent'+str(i) for i in range(len(names))],profile=profile,decision=decision)
-        host_events=[] if profile=='no-exec' else [dict(result=dict(skills=[],resources=[],manifestSha256='1'*64)),
-            dict(result=dict(path='public/SKILL.md',content='public body',sha256='2'*64,sourceCommit='b'*40))]
+        host_events=[] if profile=='no-exec' else [dict(tool='list_resources',arguments={},result=dict(skills=[],resources=[],manifestSha256='1'*64)),
+            dict(tool='read_resource',arguments={'path':'public/SKILL.md'},result=dict(path='public/SKILL.md',content='public body',sha256='2'*64,sourceCommit='b'*40))]
         received=[dict(method='turn/started',params=dict(threadId=thread,turn=dict(id=turn)))]
         def rawitem(x):
             x=copy.deepcopy(x);x.setdefault('internal_chat_message_metadata_passthrough',dict(turn_id=turn));received.append(dict(method='rawResponseItem/completed',params=dict(threadId=thread,turnId=turn,item=x)))
@@ -62,6 +62,9 @@ class CanaryRolloutTests(unittest.TestCase):
         event(dict(type='protocol_event_observed',event_type='turn_started',event_payload=reference(dict(type='task_started',turn_id=turn,root_turn_id=turn,started_at=1,model_context_window=1000,collaboration_mode_kind='default'),'protocol_event')))
         total={k:0 for k in rollout.USAGE.values()}
         for i in range(len(names)+1):
+            prior=0 if i==0 else len(host_events) if len(names)==1 else i
+            sources=[dict(server_name='production-routing',tool_name=h['tool'],first_turn_id=turn) for h in host_events[:prior]]
+            request['client_metadata'].update(guardian_credits_requested='true',mcp_attribution=json.dumps(dict(status='complete',sources=sources) if sources else dict(status='none')))
             call='inference'+str(i);response_id='response'+str(i)
             event(dict(type='inference_started',inference_call_id=call,thread_id=thread,codex_turn_id=turn,model='gpt-6.1-sol',provider_name='OpenAI',
                 request_payload=reference(copy.deepcopy(request),'inference_request')),True)
@@ -119,6 +122,54 @@ class CanaryRolloutTests(unittest.TestCase):
             value=self.fixture(profile);before=copy.deepcopy(value);result=self.check(value)
             self.assertEqual(result['inferences'],value['native']['apiRequests']);self.assertTrue(result['rawPayloadCorrelationVerified'])
             self.assertFalse(result['eligibleForMeasurement']);self.assertFalse(result['certifiesProviderWireBodies']);self.assertEqual(value,before)
+
+    def test_real_guardian_and_mcp_attribution_are_exact_and_ordered(self):
+        value=self.fixture('two-exec')
+        requests=[json.loads(value['payloads'][e['payload']['request_payload']['path']]) for e in value['events'] if e['payload']['type']=='inference_started']
+        for names in [[],['list_resources'],['list_resources','read_resource']]:
+            request=copy.deepcopy(requests[len(names)])
+            expected=dict(status='complete',sources=[dict(server_name='production-routing',tool_name=n,first_turn_id='turn') for n in names]) if names else dict(status='none')
+            request['client_metadata'].update(guardian_credits_requested='true',mcp_attribution=json.dumps(expected))
+            rollout.request_policy(request,value['sent'],thread='thread',turn='turn',mcp_sources=names)
+            for fault in ['guardian-type','guardian-value','missing','unknown','status','source','order']:
+                changed=copy.deepcopy(request);meta=changed['client_metadata'];attrib=copy.deepcopy(expected)
+                if fault=='guardian-type':meta['guardian_credits_requested']=True
+                elif fault=='guardian-value':meta['guardian_credits_requested']='false'
+                elif fault=='missing':del meta['mcp_attribution']
+                elif fault=='unknown':meta['unknown']='x'
+                elif fault=='status':attrib['status']='unknown'
+                elif fault=='source':attrib['sources']=[dict(server_name='other',tool_name='unknown',first_turn_id='turn')]
+                elif len(names)==2:attrib['sources'].reverse()
+                else:continue
+                if fault in ['status','source','order']:meta['mcp_attribution']=json.dumps(attrib)
+                with self.subTest(names=names,fault=fault),self.assertRaises(ValueError):
+                    rollout.request_policy(changed,value['sent'],thread='thread',turn='turn',mcp_sources=names)
+
+    def test_removing_attribution_from_every_request_cannot_select_legacy_contract(self):
+        value=self.fixture('two-exec')
+        for e in value['events']:
+            if e['payload']['type']=='inference_started':
+                path=e['payload']['request_payload']['path'];body=json.loads(value['payloads'][path])
+                for key in ['mcp_attribution','guardian_credits_requested']:del body['client_metadata'][key]
+                value['payloads'][path]=ledger.encoded(body)
+        with self.assertRaisesRegex(ValueError,'client metadata fields'):self.check(value)
+
+    def test_discovery_catalog_is_fixed_and_only_once_before_first_host_body(self):
+        catalog=[dict(name='mcp__production_routing__list_resources',description='固定した製品6スキルの説明と読取り可能な資源の相対パスを一覧する。\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__production_routing__list_resources(args: {}): Promise<CallToolResult>; };\n```'),
+            dict(name='mcp__production_routing__read_resource',description='一覧にある資源1件だけを固定hashに照合して読む。\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__production_routing__read_resource(args: { path: string; }): Promise<CallToolResult>; };\n```')]
+        self.assertEqual(rollout.sdk.digest(catalog),rollout.DISCOVERY_VALUE_SHA256)
+        host=self.fixture()['host_events'][0]['result']
+        blocks=[dict(type='input_text',text=json.dumps(v)) for v in [catalog,host]]
+        before=copy.deepcopy(blocks)
+        self.assertEqual(rollout.parent_bodies(blocks,[host],allow_discovery=True),[rollout.sdk.digest(host)])
+        self.assertEqual(blocks,before)
+        for fault in ['not-first','duplicate','changed','unknown','default']:
+            changed=copy.deepcopy(blocks)
+            if fault=='not-first':changed.reverse()
+            elif fault=='duplicate':changed.insert(0,copy.deepcopy(changed[0]))
+            elif fault=='changed':altered=copy.deepcopy(catalog);altered[0]['description']+='changed';changed[0]['text']=json.dumps(altered)
+            elif fault=='unknown':altered=copy.deepcopy(catalog);altered[0]['unknown']=True;changed[0]['text']=json.dumps(altered)
+            with self.subTest(fault=fault),self.assertRaises(ValueError):rollout.parent_bodies(changed,[host],allow_discovery=fault!='default')
 
     def test_initial_context_or_request_policy_injection_stops(self):
         faults=[lambda r:r['input'].append(copy.deepcopy(r['input'][-1])),lambda r:r['input'][2]['content'][1].update(text='injected'),

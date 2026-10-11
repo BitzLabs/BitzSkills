@@ -89,7 +89,7 @@ def initial_context(request, sent, context_profile, *, turn):
     require(len({v['id'] for v in inputs}) == len(inputs), 'unique initial message IDs')
 
 
-def request_policy(request, sent, *, thread, turn):
+def request_policy(request, sent, *, thread, turn, mcp_sources=()):
     require(isinstance(request, dict) and set(request) == REQUEST_KEYS and request['model'] == 'gpt-6.1-sol' and
             request['tool_choice'] == 'auto' and request['parallel_tool_calls'] is False and
             request['reasoning'] == dict(effort='low', context='all_turns') and request['store'] is False and
@@ -98,8 +98,12 @@ def request_policy(request, sent, *, thread, turn):
             trace.json_equal(request['text'], dict(verbosity='low', format=dict(type='json_schema', strict=True,
                 schema=sent[3]['params']['outputSchema'], name='codex_output_schema'))), 'fixed entire client request policy')
     value = request['client_metadata']
-    require(isinstance(value, dict) and set(value) == {'x-codex-turn-metadata', 'x-codex-installation-id', 'thread_id',
-            'turn_id', 'root_turn_id', 'session_id', 'x-codex-window-id'}, 'client metadata fields')
+    keys={'x-codex-turn-metadata','x-codex-installation-id','thread_id','turn_id','root_turn_id','session_id','x-codex-window-id'}
+    require(isinstance(value,dict) and set(value)==keys | {'mcp_attribution','guardian_credits_requested'}, 'client metadata fields')
+    require(isinstance(mcp_sources,(list,tuple)),'fixed MCP source list')
+    expected=dict(status='complete',sources=[dict(server_name='production-routing',tool_name=name,first_turn_id=turn) for name in mcp_sources]) if mcp_sources else dict(status='none')
+    require(value['guardian_credits_requested']=='true' and isinstance(value['mcp_attribution'],str) and
+            trace.json_equal(trace.strict_json(value['mcp_attribution']),expected),'fixed original guardian and MCP attribution')
     require(all(nonempty(v) for v in value.values()) and value['thread_id'] == value['session_id'] == thread and
             value['turn_id'] == value['root_turn_id'] == turn and value['x-codex-window-id'] == thread + ':0',
             'client metadata context')
@@ -113,12 +117,15 @@ def request_policy(request, sent, *, thread, turn):
             type(extra['turn_started_at_unix_ms']) is int and extra['turn_started_at_unix_ms'] >= 0, 'fixed client turn metadata')
 
 
-def parent_bodies(output, expected):
+DISCOVERY_VALUE_SHA256 = '0a1f3954c9034bf54c678853010ebff33304f3444e0b771ca07b6fd1adfd471f'
+
+def parent_bodies(output, expected, *, allow_discovery=False):
     """モデルへ返ったJSON本文からhost全文を順に抽出する。要約・部分一致は証拠にしない。"""
     found = []
     visited = 0
+    discovery_seen=False
     def inspect(value, depth=0):
-        nonlocal visited
+        nonlocal visited,discovery_seen
         visited += 1
         require(depth <= 16 and visited <= 4096, 'bounded parent output JSON')
         if isinstance(value, dict):
@@ -139,6 +146,9 @@ def parent_bodies(output, expected):
             else:require(False,'unknown parent JSON wrapper or additional context')
         elif isinstance(value,list):
             require(bool(value),'nonempty parent JSON list')
+            if sdk.digest(value)==DISCOVERY_VALUE_SHA256:
+                require(allow_discovery and not discovery_seen and not found,'one first parent discovery catalog only')
+                discovery_seen=True;return
             for nested in value:inspect(nested,depth+1)
         else:require(False,'unknown parent JSON value')
     for block in output:
@@ -154,6 +164,98 @@ def parent_bodies(output, expected):
     require(trace.json_equal(found, expected), 'original parent output and complete host bodies')
     return [sdk.digest(value) for value in found]
 
+
+
+CODE_EVENTS = {'code_cell_started','code_cell_initial_response','code_cell_ended','tool_call_started',
+               'tool_call_runtime_started','tool_call_runtime_ended','tool_call_ended','mcp_tool_call_correlation_assigned'}
+
+def code_mode_events(records, requests, responses, native, host_events):
+    """閉じた完了cellの原source/tool/runtime/本文をnativeとhostへ照合する。"""
+    links=native.get('parentLinks')
+    if not records:
+        require(not links or not links.get('childBindings'), 'original code cell milestones missing')
+        return dict(cells=0,tools=0,originalValuesVerified=True)
+    require(isinstance(links,dict) and native['profile'] in {'single-exec','two-exec'}, 'bounded completed code cell profile')
+    bindings=links['childBindings'];cursor=0;seen_cells=set();seen_mcp=set()
+    def take(kind,keys):
+        nonlocal cursor
+        require(cursor<len(records),'original code cell milestone missing')
+        f,body,inference=records[cursor];cursor+=1
+        require(f.get('type')==kind and set(f)==keys,'original code cell milestone order or fields')
+        return f,body,inference
+    def duration(v):
+        require(isinstance(v,dict) and set(v)=={'secs','nanos'} and type(v['secs']) is int and v['secs']>=0 and
+                type(v['nanos']) is int and 0<=v['nanos']<1_000_000_000,'original runtime duration')
+        return v['secs']*1_000_000_000+v['nanos']
+    def wrapper(v,expected):
+        require(isinstance(v,dict) and set(v)=={'content','isError'} and v['isError'] is False and
+                isinstance(v['content'],list) and len(v['content'])==1,'original successful tool result wrapper')
+        text=v['content'][0]
+        require(isinstance(text,dict) and set(text)=={'type','text'} and text['type']=='text' and
+                isinstance(text['text'],str) and trace.json_equal(trace.strict_json(text['text']),expected),
+                'original runtime tool body and host drift')
+    for parent_number,parent in enumerate(native['parentCallIds']):
+        call=[o for o in responses[parent_number]['output_items'] if o.get('call_id')==parent]
+        require(len(call)==1 and call[0].get('type')=='custom_tool_call','original code cell parent control')
+        children=[(i,b) for i,b in enumerate(bindings) if b['parentCallId']==parent]
+        require(bool(children),'original code cell child binding missing')
+        cell=children[0][1]['cellId'];require(cell not in seen_cells,'original distinct completed cells');seen_cells.add(cell)
+        f,_,inference=take('code_cell_started',{'type','runtime_cell_id','model_visible_call_id','source_js'})
+        require(f['runtime_cell_id']==cell and f['model_visible_call_id']==parent and f['source_js']==call[0]['input'] and
+                inference==parent_number,'original code cell source and parent binding')
+        for i,b in children:
+            host=host_events[i];ident=b['childId'];tool=host['tool'];arguments=host['arguments']
+            require(b['cellId']==cell,'original tool requester cell')
+            f,body,inference=take('tool_call_started',{'type','tool_call_id','model_visible_call_id','code_mode_runtime_tool_id','requester','kind','summary','invocation_payload'})
+            require(inference==parent_number and f['tool_call_id']==ident and f['model_visible_call_id'] is None and
+                    f['code_mode_runtime_tool_id']==b['runtimeToolId'] and f['requester']==dict(type='code_cell',runtime_cell_id=cell) and
+                    f['kind']==dict(type='other',name=tool) and isinstance(f['summary'],dict) and
+                    set(f['summary'])=={'type','label','input_preview','output_preview'} and f['summary']['type']=='generic' and
+                    f['summary']['label']=='mcp__production_routing.'+tool and f['summary']['output_preview'] is None and
+                    isinstance(f['summary']['input_preview'],str) and trace.json_equal(trace.strict_json(f['summary']['input_preview']),arguments),
+                    'original tool start identity or summary drift')
+            require(isinstance(body,dict) and set(body)=={'tool_name','tool_namespace','payload'} and body['tool_name']==tool and
+                    body['tool_namespace']=='mcp__production_routing' and isinstance(body['payload'],dict) and
+                    set(body['payload'])=={'type','arguments'} and body['payload']['type']=='function' and
+                    isinstance(body['payload']['arguments'],str) and trace.json_equal(trace.strict_json(body['payload']['arguments']),arguments),
+                    'original tool invocation and host arguments drift')
+            runtime=dict(call_id=ident,turn_id=host.get('turn_id'),invocation=dict(server='production-routing',tool=tool,arguments=arguments),read_only_hint=True)
+            f,start,inference=take('tool_call_runtime_started',{'type','tool_call_id','runtime_payload'})
+            require(f['tool_call_id']==ident and inference==parent_number and isinstance(start,dict) and
+                    set(start)=={'call_id','turn_id','invocation','read_only_hint'} and start['call_id']==ident and
+                    nonempty(start['turn_id']) and start['invocation']==runtime['invocation'] and start['read_only_hint'] is True,
+                    'original runtime start context')
+            f,_,inference=take('mcp_tool_call_correlation_assigned',{'type','tool_call_id','mcp_call_id'})
+            require(f['tool_call_id']==ident and sdk.uuid_id(f['mcp_call_id']) and f['mcp_call_id'] not in seen_mcp and
+                    inference==parent_number,'original unique MCP correlation');seen_mcp.add(f['mcp_call_id'])
+            f,end,inference=take('tool_call_runtime_ended',{'type','tool_call_id','status','runtime_payload'})
+            require(f['tool_call_id']==ident and f['status']=='completed' and inference==parent_number and isinstance(end,dict) and
+                    set(end)==set(start)|{'duration','result'} and trace.json_equal({k:end[k] for k in start},start) and
+                    isinstance(end['result'],dict) and set(end['result'])=={'Ok'},'original runtime completion')
+            duration(end['duration']);wrapper(end['result']['Ok'],host['result'])
+            f,result,inference=take('tool_call_ended',{'type','tool_call_id','status','result_payload'})
+            require(f['tool_call_id']==ident and f['status']=='completed' and inference==parent_number and
+                    isinstance(result,dict) and set(result)=={'type','value'} and result['type']=='code_mode_response' and
+                    trace.json_equal(result['value'],end['result']['Ok']),'original tool completion body')
+        final=None
+        for kind in ['code_cell_initial_response','code_cell_ended']:
+            f,body,inference=take(kind,{'type','runtime_cell_id','status','response_payload'})
+            require(f['runtime_cell_id']==cell and f['status']=='completed' and inference==parent_number and
+                    isinstance(body,dict) and set(body)=={'response'} and isinstance(body['response'],dict) and
+                    set(body['response'])=={'Result'},'original completed cell response envelope')
+            value=body['response']['Result']
+            require(isinstance(value,dict) and set(value)=={'cell_id','content_items','error_text','code_mode_host_duration'} and
+                    value['cell_id']==cell and value['error_text'] is None and
+                    duration(value['code_mode_host_duration'])==links['parentDurationsNs'][parent], 'original cell duration and identity')
+            expected=requests[parent_number+1]['input'][-1]
+            require(expected.get('call_id')==parent and isinstance(expected.get('output'),list) and
+                    trace.json_equal(value['content_items'],[v for v in expected['output'] if not re.fullmatch(
+                        r'Script completed\nWall time [0-9]+(?:\.[0-9]+)? seconds\nOutput:\n',v.get('text',''))]),
+                    'original cell result and next request body drift')
+            require(final is None or trace.json_equal(body,final),'original initial and final cell response drift');final=body
+    require(cursor==len(records) and len(seen_mcp)==len(bindings),'complete original tool and cell inventory')
+    return dict(cells=len(seen_cells),tools=len(seen_mcp),originalValuesVerified=True,
+                certifiesMcpTransportEnvelope=False)
 
 def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events):
     """原artifact検査後の値比較。wire bytesやserver内部入力は認定しない。"""
@@ -185,6 +287,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     active = None
     last_wall = -1
     protocols = []
+    code_records = []
     protocol_start = None
     context_window = None
     milestones = ['rollout_started','thread_started','codex_turn_started','codex_turn_ended','thread_ended','rollout_ended']
@@ -256,11 +359,24 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                 require(isinstance(value,dict) and set(value)=={'response_id','upstream_request_id','token_usage','output_items'} and
                         value['response_id']==fields['response_id'] and value['upstream_request_id']==fields['upstream_request_id'], 'response payload identity')
                 responses.append(value);active=None
+        elif kind in CODE_EVENTS:
+            require(stage==3 and bool(requests) and
+                    ((kind=='mcp_tool_call_correlation_assigned' and event['thread_id'] is None and event['codex_turn_id'] is None) or
+                     (kind!='mcp_tool_call_correlation_assigned' and event['thread_id']==thread and event['codex_turn_id']==turn)),
+                    'original tool and cell rollout context')
+            refkey= {'tool_call_started':'invocation_payload','tool_call_runtime_started':'runtime_payload',
+                'tool_call_runtime_ended':'runtime_payload','tool_call_ended':'result_payload',
+                'code_cell_initial_response':'response_payload','code_cell_ended':'response_payload'}.get(kind)
+            body=load(fields.get(refkey), 'tool_invocation' if kind=='tool_call_started' else
+                'tool_runtime_event' if kind.startswith('tool_call_runtime') else 'tool_result') if refkey else None
+            if kind=='tool_call_runtime_started':require(isinstance(body,dict) and body.get('turn_id')==turn,'original runtime turn binding')
+            code_records.append((fields,body,len(requests)-1))
         else: require(False,'unknown original rollout event')
     require(stage==6 and active is None and len(requests)==len(responses)==native['apiRequests'] and used==set(payloads),
             'complete rollout and inference inventory')
     require(protocols == ['session_configured','turn_started','turn_complete','shutdown_complete'], 'complete original protocol lifecycle')
     require(len({r['response_id'] for r in responses})==len(responses),'unique response IDs')
+    code_proof=code_mode_events(code_records,requests,responses,native,host_events)
     initial_context(requests[0],sent,context_profile,turn=turn)
     raw = [f for f in received if f.get('method') in sdk.RAW_METHODS]
     cursor = 0
@@ -287,19 +403,25 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     total={k:0 for k in USAGE.values()};parent_index=0;calls=[]
     history=requests[0]['input']
     for index,(request,response) in enumerate(zip(requests,responses)):
-        request_policy(request,sent,thread=thread,turn=turn)
+        prior_children=0 if index==0 else len(host_events) if native['profile']=='single-exec' else index
+        source_names=[h['tool'] for h in host_events[:prior_children]]
+        request_policy(request,sent,thread=thread,turn=turn,mcp_sources=source_names)
+        stable=lambda r:{k:(trace.strict_json(v) if k=='x-codex-turn-metadata' else v) for k,v in r['client_metadata'].items() if k!='mcp_attribution'}
+        require(trace.json_equal(stable(request),stable(requests[0])),'stable original client metadata drift')
         require(trace.json_equal(request['input'],history), 'unaltered request history prefix')
-        outputs=response['output_items'];require(isinstance(outputs,list) and bool(outputs),'response output items')
+        original_outputs=response['output_items'];require(isinstance(original_outputs,list) and bool(original_outputs),'response output items')
+        outputs=[metadata(item,turn,required=False) for item in original_outputs]
         echoed=[]
         for item in outputs:
             require(isinstance(item,dict),'output object')
             kind=item.get('type')
             if kind in {'custom_tool_call','function_call'}:
                 argument = 'input' if kind == 'custom_tool_call' else 'arguments'
-                require({'type','call_id','name','namespace',argument} <= set(item) <=
-                        {'type','call_id','name','namespace',argument,'id'} and
+                require({'type','call_id','name',argument} <= set(item) <=
+                        {'type','call_id','name','namespace',argument,'id','status'} and
+                        ('status' not in item or item['status']=='completed') and
                         ('id' not in item or nonempty(item['id'])) and nonempty(item['call_id']) and
-                        item['namespace']=='functions' and isinstance(item[argument],str), 'closed original control call')
+                        ('namespace' not in item or item['namespace']=='functions') and isinstance(item[argument],str), 'closed original control call')
                 expected = {'single-exec':('exec',),'two-exec':('exec','exec'),'exec-wait':('exec','wait'),'no-exec':()}[native['profile']]
                 require(parent_index<len(expected) and item['name']==expected[parent_index] and
                         kind==('custom_tool_call' if item['name']=='exec' else 'function_call') and
@@ -345,7 +467,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                     all(isinstance(c,dict) and set(c)=={'type','text'} and c['type']=='input_text' and isinstance(c['text'],str)
                         for c in result_fields['output']), 'original control result binding')
             expected_bodies = host_results if native['profile']=='single-exec' else host_results[index:index+1]
-            parent_hashes.append(parent_bodies(result_fields['output'], expected_bodies))
+            parent_hashes.append(parent_bodies(result_fields['output'], expected_bodies,allow_discovery=index==0 and bool(code_records)))
             consume(result);history=next_history
     require(cursor==len(raw) and parent_index==len(native['parentCallIds']),'complete original raw and parent inventory')
     child_ids = native['nativeChildIds']
@@ -359,8 +481,11 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
         original_result = next(i for i,f in enumerate(received) if f.get('method')==sdk.RAW_METHODS[0] and
             f['params']['item'].get('type') in {'custom_tool_call_output','function_call_output'} and
             f['params']['item'].get('call_id')==call['call_id'])
-        require(all(response_positions[parent] < starts[child] < ends[child] < original_result for child in children),
-                'raw parent response native child and original result order')
+        control_positions=[i for i,f in enumerate(received) if f.get('method')==sdk.RAW_METHODS[0] and
+            f['params']['item'].get('type') in {'custom_tool_call','function_call'} and f['params']['item'].get('call_id')==call['call_id']]
+        require(len(control_positions)==1 and control_positions[0] < response_positions[parent] < original_result and
+                all(control_positions[0] < starts[child] < ends[child] < original_result for child in children),
+                'raw parent control native child and original result order')
     finals=[x for r in responses for x in r['output_items'] if x.get('type')=='message' and x.get('phase')=='final_answer']
     require(len(finals)==1 and finals[0] is responses[-1]['output_items'][-1] and
             trace.json_equal(trace.strict_json(''.join(c['text'] for c in finals[0]['content'])), native['decision']), 'original final and native decision')
@@ -371,7 +496,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     require(len(native_finals)==1 and native_finals[0]['id']==final_raw['id'] and
             native_finals[0]['text']==''.join(c['text'] for c in final_raw['content']), 'raw and native final identity')
     return dict(status='primary_client_rollout_raw_usage_correlated',inferences=len(requests),rolloutEvents=len(events),
-        totalTokenUsage=total,modelContextWindow=context_window,parentHostBodiesVerified=True,
+        totalTokenUsage=total,modelContextWindow=context_window,codeModeOriginals=code_proof,parentHostBodiesVerified=True,
         parentHostBodyValueSha256=parent_hashes,initialContextVerified=True,rawPayloadCorrelationVerified=True,usageCorrelationVerified=True,
         originalRequestValueSha256=[sdk.digest(x) for x in requests],originalResponseValueSha256=[sdk.digest(x) for x in responses],
         contextProfileValueSha256=sdk.digest(context_profile),certifiesProviderWireBodies=False,eligibleForMeasurement=False,

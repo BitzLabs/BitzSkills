@@ -62,6 +62,10 @@ class CanaryCampaignTests(unittest.TestCase):
              patch.object(campaign.score,'run') as independent:
             result=campaign.one(self.source)
         self.assertEqual(result['result']['reason'],'primary-structure-rejected');independent.assert_not_called()
+        self.assertEqual(result['result']['errorType'],'ValueError')
+        self.assertEqual(result['result']['errorMessage'],'synthetic usage drift')
+        saved=campaign.trace.strict_json((self.repository/campaign.OUTPUT/'attempt-0001.json').read_bytes())
+        self.assertEqual(saved['result'],result['result'])
         with self.assertRaises(ValueError):campaign.one(self.source)
 
     def test_four_accepted_attempts_are_sequential_and_fifth_invokes_nothing(self):

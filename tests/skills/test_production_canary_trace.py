@@ -12,6 +12,17 @@ import production_sdk_trace as sdk
 import test_production_sdk_trace as fixture
 
 
+def completion_event(last, thread='t'):
+    return dict(timestamp='2026-10-11T17:16:47.198123Z',level='INFO',target='codex_otel.trace_safe',fields={
+        'event.name':'codex.sse_event','event.kind':'response.completed',
+        'input_token_count':str(last['inputTokens']),'output_token_count':str(last['outputTokens']),
+        'cached_token_count':last['cachedInputTokens'],'cache_write_token_count':last['cacheWriteInputTokens'],
+        'reasoning_token_count':last['reasoningOutputTokens'],'tool_token_count':str(last['totalTokens']),
+        'ttft_ms':10,'model_reasoning_effort':'low','event.timestamp':'2026-10-11T17:16:47.198Z',
+        'conversation.id':thread,'app.version':'0.160.1','auth_mode':'Chatgpt',
+        'originator':'codex_python_sdk','terminal.type':'unknown','model':'gpt-6.1-sol','slug':'gpt-6.1-sol'})
+
+
 class PrimaryCanaryTraceTests(unittest.TestCase):
     def setUp(self):
         self.fixture = CanaryTraceTests(methodName='runTest')
@@ -26,6 +37,7 @@ class PrimaryCanaryTraceTests(unittest.TestCase):
         def primary_events(profile):
             events = original_events(profile)
             for event in events:
+                if event['fields'].get('event.name') == 'codex.tool_result':event['fields']['auth_mode']='Chatgpt'
                 if event['fields'].get('event.name') == 'codex.api_request':
                     event['fields'].update(endpoint='/responses', model='gpt-6.1-sol', **{'app.version': '0.160.1'})
             return events
@@ -42,6 +54,57 @@ class PrimaryCanaryTraceTests(unittest.TestCase):
             self.assertFalse(result['eligibleForMeasurement'])
             self.assertFalse(result['certifiesSkillGate'])
         self.assertEqual((self.fixture.sent, self.fixture.received), before)
+
+    def test_primary_auth_metadata_is_bound_without_allowing_unknown_fields(self):
+        events=self.fixture.events('two-exec')
+        before=copy.deepcopy(events)
+        self.check(profile='two-exec',events=events)
+        self.assertEqual(events,before)
+        for fault in ['missing','type','value','unknown']:
+            changed=copy.deepcopy(events)
+            f=next(e['fields'] for e in changed if e['fields']['event.name']=='codex.tool_result')
+            if fault=='missing':del f['auth_mode']
+            elif fault=='type':f['auth_mode']=True
+            elif fault=='value':f['auth_mode']='ApiKey'
+            else:f['unknown_auth']=True
+            with self.subTest(fault=fault),self.assertRaises(ValueError):self.check(profile='two-exec',events=changed)
+
+    def test_completion_telemetry_usage_count_context_and_order_are_bound(self):
+        last=dict(inputTokens=10,cachedInputTokens=2,cacheWriteInputTokens=0,outputTokens=5,reasoningOutputTokens=1,totalTokens=15)
+        frame=dict(method='thread/tokenUsage/updated',params=dict(threadId='t',turnId='u',
+            tokenUsage=dict(last=last,total=last,modelContextWindow=100)))
+        api=dict(level='INFO',target='codex_otel.trace_safe',fields={'event.name':'codex.api_request'})
+        events=[api,completion_event(last)]
+        before=copy.deepcopy((events,frame))
+        self.assertEqual(canary.primary_usage_telemetry(events,[frame],'t','u',[0])['count'],1)
+        self.assertEqual((events,frame),before)
+        for fault in ['missing','duplicate','extra','kind','context','auth','model','version','effort','origin',
+                'timestamp','outer-timestamp','ttft','decimal-type','decimal-negative','decimal-leading-zero','cached-bool',
+                'arithmetic','native-count','native-context','native-total','order']:
+            changed=copy.deepcopy(events);frames=[copy.deepcopy(frame)];indices=[0];f=changed[1]['fields']
+            if fault=='missing':changed.pop()
+            elif fault=='duplicate':changed.append(copy.deepcopy(changed[1]))
+            elif fault=='extra':f['unknown']=True
+            elif fault=='kind':f['event.kind']='response.failed'
+            elif fault=='context':f['conversation.id']='other'
+            elif fault=='auth':f['auth_mode']=True
+            elif fault=='model':f['model']='other'
+            elif fault=='version':f['app.version']='other'
+            elif fault=='effort':f['model_reasoning_effort']='high'
+            elif fault=='origin':f['originator']='other'
+            elif fault=='timestamp':f['event.timestamp']='2026-99-99T17:16:47.198Z'
+            elif fault=='outer-timestamp':changed[1]['timestamp']='2026-10-11T17:16:48.198123Z'
+            elif fault=='ttft':f['ttft_ms']=False
+            elif fault=='decimal-type':f['input_token_count']=10
+            elif fault=='decimal-negative':f['input_token_count']='-1'
+            elif fault=='decimal-leading-zero':f['input_token_count']='010'
+            elif fault=='cached-bool':f['cached_token_count']=True
+            elif fault=='arithmetic':f['tool_token_count']='16'
+            elif fault=='native-count':frames=[]
+            elif fault=='native-context':frames[0]['params']['turnId']='other'
+            elif fault=='native-total':frames[0]['params']['tokenUsage']['total']['inputTokens']=11
+            else:changed.reverse();indices=[1]
+            with self.subTest(fault=fault),self.assertRaises(ValueError):canary.primary_usage_telemetry(changed,frames,'t','u',indices)
 
     def test_primary_thread_policy_overrides_and_missing_raw_events_rejected(self):
         for key, value in [('experimentalRawEvents', False), ('experimentalRawEvents', 1),

@@ -676,9 +676,9 @@ def _require_native_parent_context(received: list):
 
 def _audit_parent_links(events: list, received: list, provider_call_id: str, *, wait_call_id: str | None = None,
                         second_exec_call_id: str | None = None, api_auth_attached: bool = False,
-                        child_tools: tuple[str, ...] = ('list_resources', 'read_resource')) -> dict:
+                        telemetry_auth_mode: str | None = None, child_tools: tuple[str, ...] = ('list_resources', 'read_resource')) -> dict:
     require(isinstance(events, list) and bool(events), 'original parent telemetry required')
-    require(type(api_auth_attached) is bool and child_tools in {('list_resources',), ('list_resources', 'read_resource')},
+    require(telemetry_auth_mode in {None, 'Chatgpt'} and type(api_auth_attached) is bool and child_tools in {('list_resources',), ('list_resources', 'read_resource')},
             'bounded parent audit policy')
     children = [f['params']['item'] for f in received if f.get('method') == 'item/completed' and
                 f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
@@ -715,6 +715,7 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
     result_fields = {'tool_result_seq', 'duration_ms', 'success', 'output_truncated', 'arguments_length',
                      'output_length', 'output_line_count', 'tool_origin', 'mcp_tool', 'event.timestamp',
                      'app.version', 'originator', 'terminal.type', 'model', 'slug'}
+    if telemetry_auth_mode is not None: result_fields.add('auth_mode')
     for index, event in enumerate(events):
         require(isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}
                 and event.get('level') == 'INFO' and isinstance(event.get('fields'), dict), 'parent telemetry format')
@@ -796,6 +797,8 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
             ready[ident] = index
         else:
             require(ident not in results and fields.get('success') == 'true', 'tool result failed or duplicate')
+            require(telemetry_auth_mode is None or fields.get('auth_mode') == telemetry_auth_mode,
+                    'tool result auth mode drift')
             if 'output_truncated' in fields:
                 require(type(fields['output_truncated']) is bool, 'telemetry preview truncation type')
                 if fields['output_truncated']:
@@ -834,7 +837,11 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
     result = {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
             'parentCallId': provider_call_id, 'cellId': cell, 'nativeChildIds': [c['id'] for c in children],
             'traceEventCount': len(events), 'traceValueSha256': digest(events),
-            'telemetryTruncatedPreviewCallIds': truncated_previews, 'certifiesTelemetryOutputBodies': False,
+            'telemetryTruncatedPreviewCallIds': truncated_previews,
+            'childBindings':[dict(childId=c['id'],parentCallId=child_parents[c['id']],
+                cellId=received_calls[c['id']][1]['cell.id'],runtimeToolId=received_calls[c['id']][1]['runtime_tool_call_id']) for c in children],
+            'parentDurationsNs':{p:t[1]['code_mode_host_duration_ns'] for p,t in timings.items()},
+            'certifiesTelemetryOutputBodies': False,
             'certifiesMultipleOrYieldedCells': False, 'eligibleForMeasurement': False}
     if wait_call_id is not None:
         result.update(status='scripted_yielded_parent_cell_child_ids_matched',

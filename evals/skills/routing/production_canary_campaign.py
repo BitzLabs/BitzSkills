@@ -46,7 +46,7 @@ def one(source,dry_run=False):
         if not owned:raise
         raw=score.original_failure_file(ROOT/bound.attempt(ordinal)['outputRelativePath']/'receipt.json')
         stopped=instance.record_primary_stop(ordinal,'primary-structure-rejected' if raw is not None else 'primary-receipt-missing',ledger.sha(raw) if raw is not None else None)
-        return save_progress(source,bound,ordinal,dict(stopped,errorType=type(exc).__name__))
+        return save_progress(source,bound,ordinal,dict(stopped,errorType=type(exc).__name__,errorMessage=str(exc)))
     if code!=0:
         raw=score.original_failure_file(ROOT/bound.attempt(ordinal)['outputRelativePath']/'receipt.json')
         stopped=instance.record_primary_stop(ordinal,'primary-capture-failed' if raw is not None else 'primary-receipt-missing',ledger.sha(raw) if raw is not None else None)
