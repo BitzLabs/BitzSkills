@@ -240,7 +240,7 @@ def isolated(base):
     cli.exclusive(base / 'isolated-result.json', cli.encoded({'sdkErrorType': error}))
 
 
-def run(source, dry_run=False):
+def run(source, dry_run=False, *, expected_ordinal=None, on_reserved=None):
     bound, before = prepare(source)
     contract = bound.contract
     runtime_raw=guard.git(ROOT,'show',source+':'+fixed_runtime.MANIFEST)
@@ -252,7 +252,8 @@ def run(source, dry_run=False):
                               payloadSha256=bound.identity['payloadSha256'], certifiesApiRequestHardCap=False)))
         return 0
     instance = ledger.open_ledger(ROOT, bound)
-    attempt = instance.reserve()
+    attempt = instance.reserve(expected_ordinal=expected_ordinal)
+    if on_reserved is not None:on_reserved(attempt)
     base = ROOT / attempt['outputRelativePath']
     ledger.safe_tree(base)
     base.mkdir(mode=0o700, parents=True, exist_ok=False)

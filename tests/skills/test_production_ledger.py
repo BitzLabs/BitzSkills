@@ -88,6 +88,18 @@ class ProductionLedgerTests(unittest.TestCase):
             lambda:instance.record_verified_review(1,ledger.encoded(self.accepted(self.bound.attempt(1))))]:
             with self.assertRaises(ValueError):operation()
 
+    def test_expected_next_ordinal_is_checked_under_lock_before_consuming_reservation(self):
+        instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
+        for ordinal in [True,1.0,0,2]:
+            with self.subTest(ordinal=ordinal),self.assertRaises(ValueError):instance.reserve(expected_ordinal=ordinal)
+        self.assertFalse((self.storage/'attempt-0001.json').exists())
+        attempt=instance.reserve(expected_ordinal=1);independent=instance.reserve_independent_review(1,'2'*64)
+        value=self.accepted(attempt);value.update(reviewInputSha256='2'*64,independentReservationSha256=ledger.sha(ledger.encoded(independent)))
+        instance.record_verified_review(1,ledger.encoded(value))
+        with self.assertRaises(ValueError):instance.reserve(expected_ordinal=1)
+        self.assertFalse((self.storage/'attempt-0002.json').exists())
+        self.assertEqual(instance.reserve(expected_ordinal=2)['attempt'],2)
+
     def test_model_payload_excludes_id_expected_and_control(self):
         payload = json.loads(self.bound.payloads[0])
         self.assertEqual(set(payload), {'instructions', 'eventCatalog', 'case'})

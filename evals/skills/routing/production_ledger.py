@@ -337,10 +337,13 @@ class Ledger:
             self.validate_review_reservation(ordinal, review)
             exclusive(self.storage / f'review-{ordinal:04d}.json', review_raw)
 
-    def reserve(self):
+    def reserve(self, *, expected_ordinal=None):
         with self.locked():
             self.initialize()
             count = self.reservations()
+            if expected_ordinal is not None:
+                require(type(expected_ordinal) is int and expected_ordinal==count+1,
+                        'next reservation changed before acquisition')
             value = self.bound.attempt(count + 1)
             exclusive(self.storage / f'attempt-{count + 1:04d}.json', encoded(value))
             return value

@@ -28,15 +28,21 @@ def one(source,dry_run=False):
     with instance.locked():instance.initialize();completed=instance.reservations()
     if completed==4:return dict(status='finite_canary_four_attempts_accepted',completed=4,certifiesBehavior=False,certifiesSkillGate=False)
     ordinal=completed+1
+    owned=False
+    def acquired(attempt):
+        nonlocal owned
+        trace.require(trace.json_equal(attempt,bound.attempt(ordinal)),'this campaign reservation binding')
+        owned=True
     # 各呼出しは別途、共有台帳の最新pendingを検査する。未検分中に次を起動しない。
     try:
-        code=capture.run(source)
+        code=capture.run(source,expected_ordinal=ordinal,on_reserved=acquired)
+        trace.require(owned,'capture did not acquire this campaign reservation')
         if code==0:
             context=evidence.load_verified_capture(ROOT,source,ordinal)
             score.prepare(ROOT,context)
     except (ValueError,OSError,trace.jsonschema.exceptions.ValidationError) as exc:
         # 起動前拒否では予約がない。起動後の不適合だけを実際の予約へ記録する。
-        if not (instance.storage/f'attempt-{ordinal:04d}.json').exists():raise
+        if not owned:raise
         raw=score.original_failure_file(ROOT/bound.attempt(ordinal)['outputRelativePath']/'receipt.json')
         stopped=instance.record_primary_stop(ordinal,'primary-structure-rejected' if raw is not None else 'primary-receipt-missing',ledger.sha(raw) if raw is not None else None)
         return save_progress(source,bound,ordinal,dict(stopped,errorType=type(exc).__name__))
