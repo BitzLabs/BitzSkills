@@ -73,6 +73,7 @@ from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_r
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
+from conformance import doctor_plugin_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -2419,6 +2420,255 @@ class AuditTests(unittest.TestCase):
             path = root / "multi/MULTI-026-02/expected/doctor.txt"
             path.write_text(path.read_text().replace("diagnostics=1", "diagnostics=0"))
             self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-026-02"})["status"], "Failed")
+
+    def copy_doctor_plugin_fixture(self, temporary, identifier):
+        multi = identifier in doctor_plugin_fixtures.MULTI
+        return self.copy_multi_fixture(temporary, identifier) if multi else self.copy_fixture(temporary, identifier)
+
+    def test_doctor_plugin_fixtures(self):
+        result = doctor_plugin_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], doctor_plugin_fixtures.all_identifiers())
+        self.assertEqual(result["core_execution"], "Not run")
+        self.assertEqual(result["prepared"], [
+            "SINGLE-160", "SINGLE-161", "SINGLE-162", "SINGLE-163",
+            *[f"SINGLE-164-0{index}" for index in range(1, 9)], "MULTI-032"])
+
+    def test_doctor_plugin_reference_lexicon_follows_adr_061(self):
+        """字句の参照計算は、ADR-061 Decision 1の許可と拒否の両方の例を固定する（Coreの実装は使わない）。"""
+        def errors(**options):
+            argv = []
+            for name, value in options.items():
+                argv += ["--" + name.replace("_", "-"), value]
+            return doctor_plugin_fixtures.reference_lexical_errors(argv)
+        for value in ("bitz-sdd", "a", "a1", "a-b-c1", "a" * 64):
+            self.assertEqual(errors(plugin=value), [], value)
+        for value in ("Bitz", "1a", "-a", "a-", "a--b", "a_b", "a.b", "", "a" * 65, "a\n"):
+            self.assertEqual(errors(plugin=value), ["--plugin"], repr(value))
+        for value in ("0.0.0", "1.2.0", "10.20.30", "1.2.0-rc.1", "1.2.0+build.5", "1.2.0-rc.1+build.5", "1.0.0-0A.is.legal"):
+            self.assertEqual(errors(plugin_version=value), [], value)
+        for value in ("1.0", "v1.2.0", "01.2.0", "1.2.0-", "1.2.0+", "1.2.0-01", "1.2", "1.2.0.0", "", " 1.2.0", "1.2.0\n"):
+            self.assertEqual(errors(plugin_version=value), ["--plugin-version"], repr(value))
+        for value in ("^1.0", "1.0", "=1.0", ">=1.0", ">1.0", "<=1.0", "<2.0", ">=1.0 <2.0", "^0.0", ">=10.20 <=30.40"):
+            self.assertEqual(errors(require_core_api=value), [], value)
+        for value in ("~1.0", "1.x", "*", "^1.0.0", "1.0.0", ">= 1.0", ">=1.0  <2.0", " ^1.0", "^1.0 ", ">=1.0 || ^2.0",
+                      "1.0 - 2.0", "^01.0", "=>1.0", "", "^1", ">=1.0\n"):
+            self.assertEqual(errors(require_core_api=value), ["--require-core-api"], repr(value))
+        for value in ("context.v1", "Context.v12", "a.v1"):
+            self.assertEqual(errors(require_capability=value), [], value)
+        for value in ("context.v0", "context", "context.v01", "1a.v1", "con-text.v1", "context.v1.v2", "", "context.V1", "context.v1\n"):
+            self.assertEqual(errors(require_capability=value), ["--require-capability"], repr(value))
+
+    def test_doctor_plugin_reference_range_semantics(self):
+        satisfies, parse = doctor_plugin_fixtures.satisfies, doctor_plugin_fixtures.parse_range
+        for text, expected in (("^1.0", True), ("^0.9", False), ("^2.0", False), ("=1.0", True), ("1.0", True), (">=1.0", True),
+                               (">=1.1", False), (">1.0", False), ("<=1.0", True), ("<1.0", False), ("<2.0", True),
+                               (">=1.0 <2.0", True), (">=1.0 <1.0", False), ("^1.0 >=1.1", False), ("<1.1", True)):
+            self.assertEqual(satisfies((1, 0), parse(text)), expected, text)
+        # 範囲のすべての比較子を満たすときだけ満たす。マイナーバージョンの差も範囲で判定する。
+        self.assertTrue(satisfies((1, 3), parse("^1.0")))
+        self.assertFalse(satisfies((1, 3), parse("^1.0 <1.3")))
+
+    def test_doctor_plugin_reference_outcome_follows_adr_061(self):
+        outcome = doctor_plugin_fixtures.reference_plugin_outcome
+        self.assertEqual(outcome(["--format", "json"]), ([], []))
+        self.assertEqual(outcome(["--all-workspaces", "--format", "json"]), ([], []))
+        # 通過するときは診断を持たず、要求した対応機能が0件でも`capability`を置く。
+        checks, diagnostics = outcome(doctor_plugin_fixtures.request(capabilities=()))
+        self.assertEqual((checks, diagnostics), ([{"name": "plugin", "status": "passed"}, {"name": "capability", "status": "passed"}], []))
+        # 検査2と検査3は独立で、両方不適合なら診断は`code`の辞書順に並ぶ。
+        checks, diagnostics = outcome(doctor_plugin_fixtures.request(
+            api="^2.0", capabilities=("verify.v2", "context.v9", "verify.v2", "check.v1")))
+        self.assertEqual([c["status"] for c in checks], ["blocked", "blocked"])
+        self.assertEqual([d["code"] for d in doctor_plugin_fixtures.sort_diagnostics(diagnostics[::-1])],
+                         ["SPEC-DOCTOR-API-001", "SPEC-DOCTOR-CAPABILITY-001"])
+        self.assertEqual(diagnostics[1]["evidence"], {"missing": ["context.v9", "verify.v2"]})
+        # 組合せが不完全なら検査2と検査3を行わず、欠けたオプションを辞書順で示す。
+        for kwargs, missing in (({"plugin": None}, ["--plugin"]),
+                                ({"version": None}, ["--plugin-version"]),
+                                ({"api": None}, ["--require-core-api"]),
+                                ({"plugin": None, "version": None, "api": None},
+                                 ["--plugin", "--plugin-version", "--require-core-api"])):
+            checks, diagnostics = outcome(doctor_plugin_fixtures.request(**kwargs))
+            self.assertEqual(checks, [{"name": "plugin", "status": "failed"}], kwargs)
+            self.assertEqual(diagnostics[0]["evidence"], {"missing": missing}, kwargs)
+            self.assertEqual(diagnostics[0]["source"].get("identifier"), None if "plugin" in kwargs else "bitz-sdd")
+        # `--require-capability`だけを指定しても、要求の1つとして不完全になる。
+        checks, _ = outcome(["--require-capability", "context.v1"])
+        self.assertEqual(checks, [{"name": "plugin", "status": "failed"}])
+
+    def test_doctor_plugin_lexical_fixtures_have_one_cause_and_no_result(self):
+        for identifier, (option, argv, _) in doctor_plugin_fixtures.LEXICAL.items():
+            fixture = audit.FIXTURES / "single" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            self.assertEqual(manifest["expect"], {"exitCode": 4, "stdout": "none", "reportFileCount": 0}, identifier)
+            self.assertFalse((fixture / "expected").exists(), identifier)
+            self.assertEqual(doctor_plugin_fixtures.reference_lexical_errors(manifest["invocation"]["argv"][1:]), [option], identifier)
+            output = json.loads((fixture / "cli-output.json").read_text())
+            self.assertEqual(output["stderrPrefix"], "bitz: doctor: ", identifier)
+            self.assertEqual(output["stderrLineCount"], 1, identifier)
+            self.assertFalse(output["stderrTerminalControls"], identifier)
+        # 字句が正しい4件は、結果を返す。
+        for identifier in doctor_plugin_fixtures.SINGLE:
+            manifest = json.loads((audit.FIXTURES / "single" / identifier / "manifest.json").read_text())
+            self.assertEqual(doctor_plugin_fixtures.reference_lexical_errors(manifest["invocation"]["argv"][1:]), [], identifier)
+            self.assertNotEqual(manifest["expect"]["exitCode"], 4, identifier)
+
+    def test_doctor_plugin_audit_rejects_tampered_fixtures(self):
+        diag = lambda v: v["diagnostics"][0]
+        mutations = [
+            # 起動条件：オプションの削除、値の変更、操作の変更
+            ("SINGLE-160", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(1, 3))),
+            ("SINGLE-160", "manifest.json", lambda v: v["invocation"]["argv"].remove("--require-core-api") or None),
+            ("SINGLE-160", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, ">=1.1")),
+            ("SINGLE-160", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(8, "context.v2")),
+            ("SINGLE-160", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "other-plugin")),
+            ("SINGLE-160", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-161", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, "^1.0")),
+            ("SINGLE-161", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, "^2.0")),
+            ("SINGLE-161", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("SINGLE-161", "manifest.json", lambda v: v["expect"].update(exitCode=3)),
+            ("SINGLE-162", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(8, "context.v1")),
+            ("SINGLE-162", "manifest.json", lambda v: v["invocation"].update(cwd="src")),
+            ("SINGLE-163", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(1, "--plugin-version")),
+            ("SINGLE-163", "manifest.json", lambda v: v["invocation"]["argv"].extend(["--require-core-api", "^1.0"])),
+            ("SINGLE-163", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            # 期待結果：検査項目の欠落、順序、状態
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"].pop(1)),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"].pop(2)),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"].insert(1, v["checks"].pop(2))),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"].append(v["checks"].pop(1))),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"][1].update(status="blocked")),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v["checks"].__setitem__(slice(1, 3), [])),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v.update(diagnostics=v["diagnostics"] + [{"code": "SPEC-DOCTOR-API-001"}])),
+            ("SINGLE-160", "expected/doctor.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v.update(status="passed")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v.update(status="failed")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v["checks"][1].update(status="passed")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v["checks"][2].update(status="blocked")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v["checks"].pop(2)),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(code="SPEC-DOCTOR-CAPABILITY-001")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(resultStatus="failed")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(severity="warning")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["evidence"].update(coreApi="1.1")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["evidence"].update(required="^1.0")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(evidence=">=1.1")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["source"].update(identifier="other-plugin")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["source"].pop("identifier")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["source"].update(component="core")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(
+                source={"kind": "invocation", "argument": "--require-core-api"})),
+            ("SINGLE-161", "expected/doctor.json", lambda v: v["diagnostics"].append(dict(diag(v)))),
+            ("SINGLE-162", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-162", "expected/doctor.json", lambda v: v["checks"][1].update(status="blocked")),
+            ("SINGLE-162", "expected/doctor.json", lambda v: v["checks"][2].update(status="passed")),
+            ("SINGLE-162", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=["context.v2", "check.v1"])),
+            ("SINGLE-162", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=[])),
+            ("SINGLE-162", "expected/doctor.json", lambda v: diag(v).update(code="SPEC-DOCTOR-API-001")),
+            ("SINGLE-162", "expected/doctor.json", lambda v: diag(v).update(resultStatus="failed")),
+            ("SINGLE-162", "expected/doctor.json", lambda v: v.update(status="failed")),
+            ("SINGLE-162", "expected/doctor.json", lambda v: v["core"]["capabilities"].append("context.v2")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: v["checks"].insert(2, {"name": "capability", "status": "passed"})),
+            ("SINGLE-163", "expected/doctor.json", lambda v: v["checks"][1].update(status="blocked")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v).update(code="SPEC-DOCTOR-API-001", resultStatus="blocked")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["evidence"].update(
+                missing=["--require-core-api", "--plugin-version"])),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=["--plugin-version"])),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["source"].pop("identifier")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            # 字句の不一致：結果の混入、引数の修復、終了コードの変更、標準エラー出力の契約
+            *[(identifier, "manifest.json", lambda v: v["expect"].update(exitCode=1)) for identifier in doctor_plugin_fixtures.LEXICAL],
+            *[(identifier, "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2, stdout="json",
+                                                                          resultFile="expected/doctor.json"))
+              for identifier in doctor_plugin_fixtures.LEXICAL],
+            *[(identifier, "cli-output.json", lambda v: v.update(stderrLineCount=2)) for identifier in doctor_plugin_fixtures.LEXICAL],
+            *[(identifier, "cli-output.json", lambda v: v.update(stdout="{}")) for identifier in doctor_plugin_fixtures.LEXICAL],
+            ("SINGLE-164-01", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, "^1.0")),
+            ("SINGLE-164-02", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "bitz-sdd")),
+            ("SINGLE-164-03", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(8, "context.v1")),
+            ("SINGLE-164-04", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(4, "1.0.0")),
+            ("SINGLE-164-05", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, "^1.0")),
+            ("SINGLE-164-06", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(6, ">=1.0 <2.0")),
+            ("SINGLE-164-07", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(4, "1.2.0")),
+            ("SINGLE-164-08", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "a" * 64)),
+            # 複合ワークスペース：複製、位置、状態
+            ("MULTI-032", "manifest.json", lambda v: v["invocation"]["argv"].remove("--all-workspaces") or None),
+            ("MULTI-032", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(7, "^1.0")),
+            ("MULTI-032", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-032", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("MULTI-032", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["checks"].pop(1)),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["checks"].pop(2)),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["checks"].insert(1, v["checks"].pop(3))),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["checks"][1].update(status="passed")),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["checks"].append(dict(v["checks"][1]))),
+            ("MULTI-032", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("MULTI-032", "expected/doctor.json", lambda v: v.update(status="passed")),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["diagnostics"].append(dict(v["diagnostics"][0]))),
+            ("MULTI-032", "expected/doctor.json", lambda v: diag(v)["evidence"].update(required="^1.0")),
+            ("MULTI-032", "expected/doctor.json", lambda v: diag(v)["source"].pop("identifier")),
+            # メンバーへの複製：診断
+            ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"][1]["diagnostics"].append(dict(diag(v)))),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"][1].update(status="blocked")),
+            # メンバーへの複製：検査項目
+            ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"][0]["checks"].insert(0, dict(v["checks"][1]))),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"][2]["checks"].insert(0, dict(v["checks"][2]))),
+            ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"].pop()),
+        ]
+        # 陽性対照：コピーを改変しなければ受理する。改変した場合の拒否が、コピーの不備によるものではないことを示す。
+        for identifier in doctor_plugin_fixtures.all_identifiers():
+            with self.subTest(identifier=identifier, control="pristine"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_doctor_plugin_fixture(temporary, identifier)
+                self.assertEqual(doctor_plugin_fixtures.validate(root, {identifier}),
+                                 {"prepared": [identifier], "setups_per_fixture": 2, "core_execution": "Not run",
+                                  "status": "Passed", "errors": []})
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_doctor_plugin_fixture(temporary, identifier)
+                path = root / ("multi" if identifier in doctor_plugin_fixtures.MULTI else "single") / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(doctor_plugin_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_doctor_plugin_reference_check_rejects_consistent_but_wrong_pairs(self):
+        """期待結果をリテラルと同時に書き換えても、引数列からの参照計算とずれれば拒否する（リテラルへの依存を避ける）。"""
+        base = {identifier: json.loads((audit.FIXTURES / ("multi" if identifier in doctor_plugin_fixtures.MULTI else "single")
+                                        / identifier / "manifest.json").read_text())
+                for identifier in doctor_plugin_fixtures.all_identifiers()}
+        results = {identifier: json.loads((audit.FIXTURES / ("multi" if identifier in doctor_plugin_fixtures.MULTI else "single")
+                                           / identifier / "expected/doctor.json").read_text())
+                   for identifier in [*doctor_plugin_fixtures.SINGLE, *doctor_plugin_fixtures.MULTI]}
+        for identifier in results:
+            doctor_plugin_fixtures.check_reference(identifier, copy.deepcopy(base[identifier]), copy.deepcopy(results[identifier]))
+        # 引数列だけを変えると、検査項目と診断がずれる。
+        for identifier, index, value in (("SINGLE-160", 6, ">=1.1"), ("SINGLE-161", 6, "^1.0"), ("SINGLE-162", 8, "context.v1"),
+                                         ("SINGLE-160", 8, "nope.v1"), ("MULTI-032", 7, "^1.0")):
+            manifest = copy.deepcopy(base[identifier])
+            manifest["invocation"]["argv"][index] = value
+            with self.subTest(identifier=identifier, value=value), self.assertRaises(ValueError):
+                doctor_plugin_fixtures.check_reference(identifier, manifest, copy.deepcopy(results[identifier]))
+        # 結果だけを変えると、操作の状態が診断の最悪値とずれる。
+        for identifier, mutate in (
+                ("SINGLE-161", lambda v: v.update(status="failed")),
+                ("SINGLE-163", lambda v: v.update(status="blocked")),
+                ("MULTI-032", lambda v: v["workspaces"][0]["checks"].append({"name": "plugin", "status": "passed"}))):
+            result = copy.deepcopy(results[identifier])
+            mutate(result)
+            with self.subTest(identifier=identifier), self.assertRaises(ValueError):
+                doctor_plugin_fixtures.check_reference(identifier, copy.deepcopy(base[identifier]), result)
+        # 字句の不一致のfixtureで、別のオプションも不一致にする、または不一致を直すと拒否する。
+        manifest = copy.deepcopy(base["SINGLE-164-01"])
+        manifest["invocation"]["argv"][2] = "Bad"
+        with self.assertRaises(ValueError):
+            doctor_plugin_fixtures.check_reference("SINGLE-164-01", manifest, None)
+        manifest = copy.deepcopy(base["SINGLE-164-01"])
+        manifest["invocation"]["argv"][6] = "^1.0"
+        with self.assertRaises(ValueError):
+            doctor_plugin_fixtures.check_reference("SINGLE-164-01", manifest, None)
 
     def test_multi_ownership_fixtures(self):
         result = multi_ownership_fixtures.validate()

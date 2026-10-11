@@ -1,0 +1,42 @@
+{
+  "fixtureId": "MULTI-032",
+  "description": "doctor --all-workspacesでCore APIの非互換を最上位へ1回だけ置き、メンバーへ複製しない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--plugin",
+      "bitz-sdd",
+      "--plugin-version",
+      "1.2.0",
+      "--require-core-api",
+      "^2.0",
+      "--require-capability",
+      "context.v1",
+      "--require-capability",
+      "check.v1",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}
