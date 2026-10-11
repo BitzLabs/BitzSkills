@@ -22,10 +22,11 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False, canary_trace_projection=False, canary_trace_runtime=False, rollout_capture=False, rollout_remediation=False, connection_probe=False, connection_remediation=False, rpc_correlation=False, rpc_final=False, provider_alias=False):
+def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False, canary_trace_projection=False, canary_trace_runtime=False, rollout_capture=False, rollout_remediation=False, connection_probe=False, connection_remediation=False, rpc_correlation=False, rpc_final=False, provider_alias=False, connection_evidence=False):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
-    contract_name = ('evals/skills/routing/sdk-trace-review-v0.37.json' if provider_alias else
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.38.json' if connection_evidence else
+                     'evals/skills/routing/sdk-trace-review-v0.37.json' if provider_alias else
                      'evals/skills/routing/sdk-trace-review-v0.36.json' if rpc_final else
                      'evals/skills/routing/sdk-trace-review-v0.35.json' if rpc_correlation else
                      'evals/skills/routing/sdk-trace-review-v0.34.json' if connection_remediation else
@@ -38,7 +39,8 @@ def run(source, remediation=False, final_remediation=False, canary_trace=False, 
                      'evals/skills/routing/sdk-trace-review-v0.27.json' if canary_trace else
                      'evals/skills/routing/sdk-trace-review-v0.26.json' if final_remediation else
                      'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT)
-    output_name = ('.venv/production-provider-connection-check-05' if provider_alias else
+    output_name = ('.venv/production-provider-connection-check-06' if connection_evidence else
+                   '.venv/production-provider-connection-check-05' if provider_alias else
                    '.venv/production-provider-connection-check-04' if rpc_final else
                    '.venv/production-provider-connection-check-03' if rpc_correlation else
                    '.venv/production-provider-connection-check-02' if connection_remediation else
@@ -55,7 +57,7 @@ def run(source, remediation=False, final_remediation=False, canary_trace=False, 
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     trace.require(contract['maximumInvocations'] == 1 and contract['automaticRetries'] == 0 and
                   contract['primaryModelTrajectories'] == 0, 'finite static review required')
-    trace.require(len(contract['payloadFiles']) == len(set(contract['payloadFiles'])) == (4 if provider_alias else 2 if rpc_final else 4 if rpc_correlation or connection_remediation else 3 if rollout_remediation else 4 if rollout_capture else 2 if canary_trace_runtime else 6) and
+    trace.require(len(contract['payloadFiles']) == len(set(contract['payloadFiles'])) == (5 if connection_evidence else 4 if provider_alias else 2 if rpc_final else 4 if rpc_correlation or connection_remediation else 3 if rollout_remediation else 4 if rollout_capture else 2 if canary_trace_runtime else 6) and
                   set(contract['payloadFiles']) <= set(contract['sourceFiles']), 'public payload inventory')
     inventory = []
     for name in contract['payloadFiles']:
@@ -113,10 +115,11 @@ if __name__ == '__main__':
     mode.add_argument('--rpc-correlation', action='store_true')
     mode.add_argument('--rpc-final', action='store_true')
     mode.add_argument('--provider-alias', action='store_true')
+    mode.add_argument('--connection-evidence', action='store_true')
     args = parser.parse_args()
     run(args.source, remediation=args.remediation, final_remediation=args.final_remediation,
         canary_trace=args.canary_trace, canary_trace_remediation=args.canary_trace_remediation,
         canary_trace_projection=args.canary_trace_projection, canary_trace_runtime=args.canary_trace_runtime,
         rollout_capture=args.rollout_capture, rollout_remediation=args.rollout_remediation, connection_probe=args.connection_probe,
         connection_remediation=args.connection_remediation, rpc_correlation=args.rpc_correlation, rpc_final=args.rpc_final,
-        provider_alias=args.provider_alias)
+        provider_alias=args.provider_alias, connection_evidence=args.connection_evidence)

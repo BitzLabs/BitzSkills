@@ -2,6 +2,7 @@
 from production_trace import require
 
 NOTIFICATIONS = {'remoteControl/status/changed', 'thread/started', 'thread/status/changed', 'warning',
+                 'configWarning', 'account/updated', 'thread/tokenUsage/updated',
                  'account/rateLimits/updated', 'turn/started', 'turn/completed', 'item/started', 'item/completed',
                  'item/agentMessage/delta', 'item/reasoning/summaryTextDelta', 'item/reasoning/summaryPartAdded',
                  'item/reasoning/textDelta', 'rawResponseItem/completed', 'rawResponse/completed', 'error'}
@@ -21,6 +22,25 @@ def correlate(sent, received, *, allow_turn_error=False):
     requests = [sent[i] for i in [0, 2, 3]]
     require(all(set(f) == {'id', 'method', 'params'} and isinstance(f['params'], dict) for f in requests),
             'caller request envelope')
+    thread_params, turn_params = requests[1]['params'], requests[2]['params']
+    require(set(thread_params) == {'model', 'modelProvider', 'allowProviderModelFallback', 'cwd', 'sandbox',
+                                  'approvalPolicy', 'ephemeral', 'baseInstructions', 'developerInstructions'} and
+            thread_params['model'] == 'gpt-6.1-sol' and thread_params['allowProviderModelFallback'] is False and
+            thread_params['sandbox'] == 'read-only' and thread_params['approvalPolicy'] == 'never' and
+            thread_params['ephemeral'] is True and
+            all(isinstance(thread_params[k], str) and bool(thread_params[k]) for k in
+                ['cwd', 'baseInstructions', 'developerInstructions']), 'fixed thread caller fields')
+    if allow_turn_error:
+        require(thread_params['modelProvider'] == 'bitz_local_probe' and set(turn_params) == {'threadId', 'input'},
+                'fixed fault caller fields')
+    else:
+        require(thread_params['modelProvider'] in {'openai', 'bitz_openai_http'} and
+                set(turn_params) == {'threadId', 'input', 'outputSchema', 'effort'} and turn_params['effort'] == 'low',
+                'fixed connection caller fields; no turn overrides')
+    require(isinstance(turn_params['input'], list) and len(turn_params['input']) == 1 and
+            isinstance(turn_params['input'][0], dict) and set(turn_params['input'][0]) == {'type', 'text'} and
+            turn_params['input'][0]['type'] == 'text' and isinstance(turn_params['input'][0]['text'], str),
+            'single public text caller input')
     ids = [ident(f['id']) for f in requests]
     require(len(set(ids)) == 3, 'unique caller request ids')
     require(isinstance(received, list) and all(isinstance(f, dict) for f in received), 'received RPC list')
@@ -59,6 +79,25 @@ def correlate(sent, received, *, allow_turn_error=False):
                 ('turnId' not in params or params['turnId'] == turn), 'explicit notification context')
         if method == 'thread/started':
             require(params['thread']['id'] == thread, 'native thread start context')
+        elif method == 'configWarning':
+            require(set(params) == {'summary', 'details'} and isinstance(params['summary'], str) and
+                    (params['details'] is None or isinstance(params['details'], str)), 'typed configuration metadata')
+        elif method == 'account/updated':
+            require(set(params) == {'authMode', 'planType'} and
+                    params['authMode'] in {'apiKey', 'chatgpt', 'chatgptAuthTokens'} and
+                    (params['planType'] is None or isinstance(params['planType'], str)), 'typed account metadata')
+        elif method == 'thread/tokenUsage/updated':
+            require(set(params) == {'threadId', 'turnId', 'tokenUsage'} and params['threadId'] == thread and
+                    params['turnId'] == turn and starts[0] < i < ends[0], 'token usage context')
+            usage = params['tokenUsage']
+            require(isinstance(usage, dict) and set(usage) == {'total', 'last', 'modelContextWindow'} and
+                    (usage['modelContextWindow'] is None or type(usage['modelContextWindow']) is int and
+                     usage['modelContextWindow'] > 0), 'token usage envelope')
+            for counters in [usage['total'], usage['last']]:
+                require(isinstance(counters, dict) and set(counters) == {'totalTokens', 'inputTokens', 'cachedInputTokens',
+                        'cacheWriteInputTokens', 'outputTokens', 'reasoningOutputTokens'} and
+                        all(type(v) is int and v >= 0 for v in counters.values()) and
+                        counters['totalTokens'] == counters['inputTokens'] + counters['outputTokens'], 'typed token counters')
         elif method in {'turn/started', 'turn/completed'}:
             require(params['threadId'] == thread and params['turn']['id'] == turn, 'native turn context')
         elif method.startswith(('item/', 'rawResponse')) or method == 'error':

@@ -203,6 +203,34 @@ def namespace(base, contract):
                    '--', '/usr/bin/python3', '-B', str(Path(__file__)), '--isolated', str(base)]
 
 
+def evaluate_service_capture(sent, frames, api, runtime, *, expected_cwd):
+    """新しい分析範囲。旧契約の合計API1件条件へ補助APIを隠して代用しない。"""
+    from production_trace import require
+    require(isinstance(api, list) and 1 <= len(api) <= 3 and all(isinstance(e, dict) for e in api),
+            'bounded service API inventory')
+    require(all(e.get('endpoint') in {'/models', '/responses'} and type(e.get('attempt')) is int and
+                e['attempt'] == 0 and type(e.get('http.response.status_code')) is int and
+                e['http.response.status_code'] == 200 and e.get('auth.header_attached') is True for e in api),
+            'known authenticated service endpoints without retry')
+    model_api = [e for e in api if e['endpoint'] == '/responses']
+    metadata_api = [e for e in api if e['endpoint'] == '/models']
+    require(len(model_api) == 1 and len(metadata_api) <= 2 and all(e.get('success') is True for e in metadata_api),
+            'one model request and bounded model catalog reads')
+    turn_params = next(f['params'] for f in sent if f.get('method') == 'thread/start')
+    require(isinstance(expected_cwd, str) and turn_params['cwd'] == expected_cwd, 'fixed original working directory')
+    result = evaluate(sent, frames, model_api, runtime, expected_provider='bitz_openai_http')
+    for event in api:
+        require('conversation.id' not in event or event['conversation.id'] == result['threadId'], 'service API context contradiction')
+        for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
+            require(key not in event or event[key] == expected, 'service runtime contradiction')
+    require(model_api[0].get('conversation.id') == result['threadId'] and model_api[0].get('model') == 'gpt-6.1-sol' and
+            model_api[0].get('app.version') == '0.160.1', 'model API bound to original context')
+    result.update(totalServiceApiRequests=len(api), modelApiRequests=1, modelCatalogApiRequests=len(metadata_api),
+                  originalOneTotalApiCriterionMet=len(api) == 1, eligibleForMeasurement=False,
+                  certifiesApiRequestHardCap=False, certifiesProviderWireBodies=False)
+    return result
+
+
 def isolated(base):
     contract = json.loads((base / 'contract.json').read_bytes())
     policy(contract)

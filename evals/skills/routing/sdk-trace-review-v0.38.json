@@ -1,0 +1,57 @@
+{
+  "version": "sdk-trace-review-0.38.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "fixed-caller-input-and-client-request-evidence",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-38",
+  "payloadFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_connection_evidence.py",
+    "tests/skills/test_production_connection_probe.py",
+    "tests/skills/test_production_connection_evidence.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.2.json",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_connection_evidence.py",
+    "tests/skills/test_production_connection_probe.py",
+    "tests/skills/test_production_connection_evidence.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.38.json"
+  ],
+  "constraints": [
+    "Phase 4期間の本人送信・SOL全許可内。公開5本文のみ、SOL1回/300秒/一次0/retry0。v33〜37の原指摘/消費は保持し、低優先度の一般改善だけを理由に診断を繰返さない。",
+    "v37 P2=1はturn/start.params.modelの上書き見落とし。接続callerはthread9キー/turn4キー、故障callerはturn2キーに固定し、モデル・指示・sandbox上書き拒否を両profileで試験した。この具体的是正を検分する。",
+    "接続0.2の原取得では全API3件（models2/responses1）、原SDK/rolloutの使用量一致と初期client request JSONを親が保存・照合した。旧API合計1条件falseを保持する。原取得capturedとmeasurement eligible/Gate/Phase passを混同しない。",
+    "新分類evaluate_service_captureはHTTP200/auth attached/attempt0のmodels最大2とresponses1のみ許容し、モデルAPIにはthread/model/versionを必須にする。metadata読取通知の追加は制御操作の許可を意味しない。",
+    "production_connection_evidenceはhash inventory/予約/固定Git source/SDK終端とrollout原request・最終JSON・usageの限定照合。対象は単一turn/no toolの既知profileだけ。不明profileの拒否は欠陥としない。HTTP/SSE wire全文・server内部入力・認証復旧ゼロ・API事前hard cap・全軌跡・一次行動・Gate・Phaseは認定しない。",
+    "合成無課金試験を原サービス実行と偽らない。非提示依存は未読として扱う。具体的に不正な値を受理して上記の限定成功を偽認定する矛盾を優先し、範囲外の将来機能/未認定事項を欠陥にしない。",
+    "私的原SDK/stdio/bundle/HTTP/SSE/認証内容は送らない。この静的検分者が実軌跡を自ら検分済みとしない。tool/追加モデル/委譲/ファイル読取り/試験実行は禁止。認証内容の読取/コピー/出力はコードでも行わない。"
+  ],
+  "previousReview": {
+    "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-37",
+    "receiptSha256": "8dd850b2c9b07a8a9d02e6cbf7d1f0de6b64900ea5e5803b148cc40256c836a5",
+    "responseSha256": "664159236b8dd5a62720e41b035b6aa8feef12a1fa86a1102723b73f2e3b1aab",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_ledger as ledger
 import production_connection_probe as connection
+import production_connection_evidence as evidence
 import production_trace as trace
 import source_guard as guard
 
@@ -115,13 +116,25 @@ def run():
             trace.require((startup / 'namespace.stderr').read_bytes() ==
                           b'bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted\n' and
                           not (startup / 'rpc-in.jsonl').exists(), 'original pre-SDK namespace failure')
-    trace.require(len(public['staticReviewStages']) == public['staticSolInvocations'] == 4 and
+    captures = []
+    for row in public.get('connectionCaptures', []):
+        captured = evidence.inspect(ROOT / row['outputRelativeRoot'], source=row['sourceCommit'],
+                                    contract_path=row['contractPath'], receipt_sha=row['receiptSha256'])
+        for key, value in row.items():
+            if key not in {'sourceCommit', 'contractPath', 'outputRelativeRoot', 'receiptSha256'}:
+                trace.require(trace.json_equal(captured[key], value), 'public connection value differs from originals')
+        captures.append(captured)
+    trace.require(len(public['staticReviewStages']) == public['staticSolInvocations'] == 5 and
                   public['observedModelApiRequests'] == public['primaryModelTrajectories'] == public['automaticRetries'] == 0 and
                   public['consumedConnectionReservations'] == public['connectionStartupInvocations'] == 1 and
                   all(public[k] is False for k in ['certifiesNativeProvider', 'eligibleForMeasurement', 'phaseComplete']), 'limited scope')
-    print(json.dumps(dict(status='recorded_connection_startup_failure_matches_original_bytes', staticSolInvocations=4,
+    print(json.dumps(dict(status='recorded_connection_history_matches_original_bytes', staticSolInvocations=5,
                          unpaidStartupDiagnostics=len(public.get('startupDiagnostics', [])),
-                         consumedConnectionReservations=1, observedModelApiRequests=0, eligibleForMeasurement=False)))
+                         consumedConnectionReservations=1 + len(captures),
+                         stoppedDiagnosticModelApiRequests=0,
+                         capturedModelApiRequests=sum(c['modelApiRequests'] for c in captures),
+                         capturedTotalServiceApiRequests=sum(c['totalServiceApiRequests'] for c in captures),
+                         originalOneTotalApiCriterionMet=False, eligibleForMeasurement=False)))
 
 
 if __name__ == '__main__':

@@ -9,8 +9,23 @@
   "observedModelApiRequests": 0,
   "primaryModelTrajectories": 0,
   "automaticRetries": 0,
-  "staticSolInvocations": 4,
+  "staticSolInvocations": 5,
   "staticReviewStages": [
+    {
+      "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.37.json",
+      "verification": {"outputRelativeRoot": ".venv/production-provider-connection-check-05", "summarySha256": "fc09536151b17f74130b649f68ef89b5e987a5e4e25cf5fce4432c5e4b37c70c", "testCount": 550, "testSeconds": 63.266, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.37.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-37",
+        "receiptSha256": "8dd850b2c9b07a8a9d02e6cbf7d1f0de6b64900ea5e5803b148cc40256c836a5",
+        "responseSha256": "664159236b8dd5a62720e41b035b6aa8feef12a1fa86a1102723b73f2e3b1aab",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 22321, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 1004, "reasoning_output_tokens": 682},
+        "findings": {"P1": 0, "P2": 1, "P3": 0}
+      }
+    },
     {
       "sourceCommit": "3449e12c8a0cc484b91f66b432238637983d7c9f",
       "contractPath": "evals/skills/routing/sdk-trace-review-v0.33.json",
@@ -138,6 +153,26 @@
           "P3": 0
         }
       }
+    }
+  ],
+  "connectionCaptures": [
+    {
+      "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+      "contractPath": "evals/skills/routing/production-connection-probe-v0.2.json",
+      "outputRelativeRoot": ".venv/production-provider-connection-02",
+      "receiptSha256": "57c4b4fc0ecd9b8b5e0a4e7b652dc75f7f630af80e2ea75cbe5cb5f8e498d627",
+      "totalServiceApiRequests": 3,
+      "modelApiRequests": 1,
+      "modelCatalogApiRequests": 2,
+      "originalOneTotalApiCriterionMet": false,
+      "artifactCount": 26,
+      "rolloutEvents": 15,
+      "initialInputRoles": ["developer", "developer", "developer", "user", "user"],
+      "requestPayloadSha256": "2ade34c63fc6aae64babb76798bf2b9cdc23bc8bd6f1e901e39329a64adfd4af",
+      "tokenUsage": {"input_tokens": 2635, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 22, "reasoning_output_tokens": 0, "total_tokens": 2657},
+      "eligibleForMeasurement": false,
+      "certifiesWholeTrace": false,
+      "certifiesPhaseCompletion": false
     }
   ],
   "startupDiagnostics": [

@@ -22,4 +22,19 @@ initialize/initializedのみを実行し、SDKエラーなし・process終了0�
 source `ede0b4876f413f758e810e289c5f75c13db89ce6`の全スキル549試験は62.767秒、OK、exit0。
 是正版接続v0.2は元失敗と無課金初期化のhashを先に固定し、同じ旧枠を再起動せず、別の有限1枠へ設定是正を結ぶ。
 
-実OpenAIモデル接続、初期入力捕捉、routing一次評価、5種類実地比較、Skill Gate 4、Phase 4完了は未認定。
+## 実接続v0.2の原記録照合
+
+source `e81c0e8fd7d7aa7b148c9810e36bce5c48082736`の全スキル550試験は63.266秒、OK、exit0。
+SOL v37は公開コードの静的検分でP2=1（turn/startでのモデル上書き）を指摘した。
+送信paramsをthread9キー・turn4キー（無課金故障profileは2キー）に固定し、モデル・指示・sandboxの上書き拒否を両profileの回帰へ追加した。
+この是正の独立再確認は残件である。
+
+別名providerでSDK1 turnの実接続原記録を取得した。namespace/processはexit0、timeoutなし。
+26原artifact、15 rollout events、共通予約、固定source、原RPC・API・最終JSON・schema・usageを親が再照合した。
+初期client request JSONの5入力はdeveloper/developer/developer/user/userで、公開固定入力と制御metadata3宣言を確認した。
+API合計は3件で、モデル一覧取得2件・モデル推論1件。旧契約の「API合計1件」は未達として保持する。
+入力2,635・出力22・合計2,657トークンは原SDK通知とrolloutで一致した。
+HTTP/SSE wire全文・server内部入力・認証復旧ゼロ・API事前hard capは認定しない。
+初回失敗の予約を保持し、実接続v0.2の有限予約を別に消費した。同じ診断を再起動しない。
+
+routing一次評価、5種類実地比較、Skill Gate 4、Phase 4完了は未認定。

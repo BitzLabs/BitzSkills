@@ -21,8 +21,9 @@ class ConnectionProbeTests(unittest.TestCase):
         sent = [{'id': 1, 'method': 'initialize', 'params': {}}, {'method': 'initialized'},
                 {'id': 2, 'method': 'thread/start', 'params': {'model': 'gpt-6.1-sol', 'modelProvider': 'openai',
                  'allowProviderModelFallback': False, 'sandbox': 'read-only', 'approvalPolicy': 'never',
+                 'cwd': '/private-diagnostic/work',
                  'ephemeral': True, 'baseInstructions': probe.BASE, 'developerInstructions': probe.DEVELOPER}},
-                {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread', 'outputSchema': probe.SCHEMA,
+                {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread', 'outputSchema': probe.SCHEMA, 'effort': 'low',
                  'input': [{'type': 'text', 'text': probe.PROMPT}]}}]
         frames = [{'id': 1, 'result': {}}, {'id': 2, 'result': {'thread': {'id': 'thread'}}},
                   {'method': 'thread/started', 'params': {'thread': {'id': 'thread'}}},
@@ -109,6 +110,9 @@ class ConnectionProbeTests(unittest.TestCase):
 
     def test_fault_profile_uses_same_caller_and_reply_checks(self):
         sent, frames, _, _ = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+        sent[3]['params'].pop('outputSchema')
+        sent[3]['params'].pop('effort')
         frames[-1]['params']['turn']['status'] = 'failed'
         frames.insert(-1, {'method': 'error', 'params': {'threadId': 'thread', 'turnId': 'turn', 'willRetry': False}})
         self.assertEqual(rpc.correlate(sent, frames, allow_turn_error=True), {'threadId': 'thread', 'turnId': 'turn'})
@@ -125,6 +129,10 @@ class ConnectionProbeTests(unittest.TestCase):
         for failed in [False, True]:
             for mutation in ['ghost', 'late', 'wrong-type', 'payload', 'text-mismatch', 'late-thread', 'turn-before-thread', 'thread-before-init']:
                 sent, frames, _, _ = copy.deepcopy(self.fixture())
+                if failed:
+                    sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+                    sent[3]['params'].pop('outputSchema')
+                    sent[3]['params'].pop('effort')
                 frames[-1]['params']['turn']['status'] = 'failed' if failed else 'completed'
                 if mutation in {'late-thread', 'turn-before-thread', 'thread-before-init'}:
                     frame = frames.pop(2)
@@ -143,6 +151,39 @@ class ConnectionProbeTests(unittest.TestCase):
         frames.insert(6, {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
                          'itemId': 'message', 'delta': frames[6]['params']['item']['text']}})
         self.assertEqual(rpc.correlate(sent, frames)['turnId'], 'turn')
+
+    def test_turn_model_and_other_input_overrides_are_rejected_in_both_profiles(self):
+        for failed in [False, True]:
+            sent, frames, _, _ = copy.deepcopy(self.fixture())
+            if failed:
+                sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+                sent[3]['params'].pop('outputSchema')
+                sent[3]['params'].pop('effort')
+                frames[-1]['params']['turn']['status'] = 'failed'
+            for key, value in [('model', 'other'), ('developerInstructions', 'other'), ('sandboxPolicy', {})]:
+                bad = copy.deepcopy(sent)
+                bad[3]['params'][key] = value
+                with self.subTest(failed=failed, key=key), self.assertRaises(ValueError):
+                    rpc.correlate(bad, frames, allow_turn_error=failed)
+
+    def test_service_classification_keeps_total_api_mismatch_and_rejects_extra_or_unknown_requests(self):
+        sent, frames, api, runtime = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_openai_http'
+        api[0].update(endpoint='/responses', model='gpt-6.1-sol', **{'conversation.id': 'thread', 'app.version': '0.160.1'})
+        catalog = dict(endpoint='/models', attempt=0, success=True, **{'http.response.status_code': 200, 'auth.header_attached': True})
+        all_api = [copy.deepcopy(catalog), copy.deepcopy(catalog), api[0]]
+        result = probe.evaluate_service_capture(sent, frames, all_api, runtime, expected_cwd='/private-diagnostic/work')
+        self.assertEqual((result['totalServiceApiRequests'], result['modelApiRequests'], result['modelCatalogApiRequests']), (3, 1, 2))
+        self.assertFalse(result['originalOneTotalApiCriterionMet'])
+        for mutation in ['extra-model', 'extra-catalog', 'unknown-endpoint', 'bad-version', 'metadata-failure']:
+            changed = copy.deepcopy(all_api)
+            if mutation == 'extra-model': changed.append(copy.deepcopy(api[0]))
+            elif mutation == 'extra-catalog': changed.insert(0, copy.deepcopy(catalog))
+            elif mutation == 'unknown-endpoint': changed[0]['endpoint'] = '/unknown'
+            elif mutation == 'bad-version': changed[0]['app.version'] = 'other'
+            elif mutation == 'metadata-failure': changed[0]['success'] = False
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                probe.evaluate_service_capture(sent, frames, changed, runtime, expected_cwd='/private-diagnostic/work')
 
     def test_unknown_actions_and_server_requests_are_stopped_before_forwarding(self):
         for item in ['commandExecution', 'dynamicToolCall', 'mcpToolCall', 'unknown', None]:
