@@ -1,7 +1,7 @@
 # 修飾IDの解決のfixtureのレビュー記録
 
 [適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
-`MULTI-001`、`MULTI-003`、`MULTI-004-01/02`、`MULTI-025-01/02`、`MULTI-027-01/02`、`MULTI-028`を扱う。いずれもレビュー済みの期待値であり、
+`MULTI-001`、`MULTI-003`、`MULTI-004-01/02`、`MULTI-025-01/02`、`MULTI-027-01/02`、`MULTI-028`、`MULTI-029-01`〜`03`を扱う。いずれもレビュー済みの期待値であり、
 Coreの挙動を観測したものではない。
 
 ## 4つの結末を1つずつ切り分ける
@@ -217,3 +217,113 @@ B（`multi_crosscheck.build`）は入力の木構造から導出した材料で�
 - 規範文を持つTECHや、REQの規範文と規範文のないTECHが混在する`addresses`は、複合ワークスペースでは固定しない（単一ワークスペースの`SINGLE-157`が固定する）。
 - 他のメンバーのTECHが具体化文書を持つ場合、`tests`を持たない場合、コマンドを解決できない場合は固定しない。
 - Coreは実行していない（期待値を決めた後に、一致を確かめるためだけに実行した）。Coreとの一致の判定はGate Bで行う。
+
+## 2026-10-11追記: `MULTI-029-01`〜`03`（引数なしの`check`、`--full`、`--workspace`の複合ワークスペース対応）
+
+### 追加の理由（実装の確認事項C4）
+
+`check`は、位置引数に修飾IDがあるときだけ複合ワークスペースの索引を使っていた。修飾IDのない引数なしの`check`と`--full`は、作業ワークスペースだけの索引で動き、
+`api::TECH-020`や`platform::REQ-001:AC-01`のような修飾した参照を`SPEC-RELATION-MISSING-001`と誤検出した。結果の`workspace.path`も、メンバーの中で実行しても`.`だった。
+`--workspace`は、最寄りの設定のIDと比べるだけで、ルートからメンバーを作業ワークスペースにできなかった（終了コード4になる）。
+既存の複合ワークスペースの`check`のfixtureは、修飾IDを明示対象にする`MULTI-004-02`、`MULTI-009`、`MULTI-010`、`MULTI-025-01`か、全体操作の`--all-workspaces`であり、
+引数なしと`--full`と`--workspace`の経路を押さえていなかった。そこで、3つの経路を1件ずつ固定する3件を加える。
+
+### 根拠の規範文
+
+- 複合ワークスペース仕様 §3: 複合ワークスペースでは、最寄りの`.spec/bitz.yaml`のワークスペースが作業ワークスペースになる。`--workspace <id>`は、カタログ内のIDで作業ワークスペースを
+  置き換える。
+- 複合ワークスペース仕様 §4: 単独操作の結果の`workspace`は実際のワークスペースIDとリポジトリのルート相対のパスで、診断の`source.workspaceId`は所有ワークスペースのID、
+  `source.path`は所有ワークスペース相対である。`relations`は別のワークスペースを参照するとき修飾IDを必須とし、修飾IDは統合索引で解決する。
+- 複合ワークスペース仕様 §6・§7: 単独操作は、横断する関係の解決に必要な索引と到達先の解析を行うが、無関係なメンバーを完全検査しない。
+- `check` §3: 完全検査の対象は、`--full`ではすべての仕様文書、引数なしではGitの変更から選んだ所有文書、強い関係の閉包、直接の逆参照である。強い関係の閉包は4つの強い関係
+  （`requires`、`refines`、`addresses`、`supersedes`）を前方へ推移的にたどる。直接の逆参照は、自身の`relations`（5種のどれでもよい）で、集合内の文書またはその規範文を1段で
+  参照する文書である。
+- `check` §6: 複合ワークスペースの単独操作では、作業ワークスペースが所有する変更されたパスだけを出発点にする。ワークスペースをまたぐ強い関係の閉包と直接の逆参照は
+  通常どおり辿るが、別のワークスペースの無関係な変更を対象へ混ぜない。
+- `check` §9: `scope: changed`は`selection`（`changedPathCount`、`targetDocumentCount`、`excludedCodeTestPathCount`）を持ち、`scope: full`は`checkedDocumentCount`、
+  `checkedStatementCount`を持つ。
+- 結果・診断・終了コード §4・§7: 関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりの文字列（所有ワークスペースの中で書いた形）で持つ。診断は発生元のワークスペースID、
+  `path`の順に並べる。
+- ADR-035: `targetDocumentCount`は、パスを所有する文書のIDへ正規化し、重複排除した後の文書の数である（下の「固定しない範囲」を参照）。
+
+### 入力と起動
+
+3件とも、ルートワークスペース`platform`と、メンバー`web`（`apps/web`）、`api`（`services/api`）を、`MULTI-001`と同じカタログの形で置く。状態は、`MULTI-029-03`の`api::TECH-040`を除いて
+すべて`approved`である。
+
+`MULTI-029-01`と`MULTI-029-02`は同じ入力（変更集合なし）を共有する。
+
+| 文書 | 内容 |
+|---|---|
+| `platform`のREQ-001 | `MUST`の規範文1件（`REQ-001:AC-01`） |
+| `web`のTECH-010 | `requires: [api::TECH-020]`、`refines: [platform::REQ-001:AC-01]` |
+| `web`のTECH-011 | 関係なし（閉包に含まれない`web`の文書） |
+| `api`のTECH-020 | 関係なし（閉包で到達する他のメンバーの文書） |
+| `api`のTECH-050 | `requires: [TECH-998]`（存在しない参照。`web`と無関係） |
+
+| fixture | 実行ディレクトリ | 引数 |
+|---|---|---|
+| `MULTI-029-01` | `apps/web` | `check --full --base HEAD --format json` |
+| `MULTI-029-02` | リポジトリのルート | `check --workspace web --full --base HEAD --format json` |
+
+`MULTI-029-03`は、`web`のTECH-030の本文を変更し（準備手順の`update`。基準版のコミットは変更前）、`apps/web`で`check --base HEAD --format json`（引数なし）を実行する。
+
+| 文書 | 内容 | 位置づけ |
+|---|---|---|
+| `web`のTECH-030 | `requires: [api::TECH-020]`。本文を変更する | 変更した文書（出発点） |
+| `api`のTECH-020 | `requires: [TECH-999]`（存在しない） | 強い関係の閉包で到達する他のメンバーの文書 |
+| `api`のTECH-040 | 状態`draft`。`refines: [web::TECH-030]`、`requires: [TECH-997]`（存在しない） | 作業ワークスペースの文書を参照する、他のメンバーの文書（直接の逆参照） |
+| `api`のTECH-060 | `refines: [TECH-020]`、`requires: [TECH-996]`（存在しない） | 閉包で到達した他のメンバーの文書の逆参照 |
+| `api`のTECH-050 | `requires: [TECH-998]`（存在しない） | 無関係な文書 |
+
+4件の`api`の文書は、いずれも存在しない参照を1件だけ持つ。診断の有無で、完全検査の対象になったかどうかを見分けられる。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+`MULTI-029-01`／`02`（`scope: full`）。
+
+1. 作業ワークスペース: `029-01`は`apps/web`の最寄りの設定の`web`（§3の2・3）。`029-02`は実行ディレクトリがルートで、最寄りの設定は`platform`だが、`--workspace web`が`web`へ置き換える（§3の5）。
+   結果の`workspace`は`{id: web, path: apps/web}`である。
+2. 完全検査の対象: `web`のすべての仕様文書（TECH-010、TECH-011）。`web::TECH-010`の強い関係の閉包は`api::TECH-020`（`requires`）と`platform::REQ-001`（`refines`の規範文の所有文書）。
+   `api::TECH-020`と`platform::REQ-001`は関係を宣言しない。他のメンバーから`web`の文書を参照する文書はない。`api::TECH-050`は閉包にも逆参照にも入らない。
+   `checkedDocumentCount`は4、`checkedStatementCount`は`platform::REQ-001`の1件である。
+3. 診断: 修飾した参照（`api::TECH-020`、`platform::REQ-001:AC-01`）は統合索引で解決できる。完全検査の対象の文書に、存在しない参照はない。`api::TECH-050`の`TECH-998`は対象外なので返さない。
+   診断は0件で、`passed`／終了コード0、`revision.dirty`は`false`である。
+
+`MULTI-029-03`（`scope: changed`）。
+
+1. 作業ワークスペースは`web`（`workspace`は`{id: web, path: apps/web}`）。変更集合は`apps/web/.spec/technical/TECH-030.md`の1件で、`web`が所有する。`revision.dirty`は`true`。
+2. `selection`: `changedPathCount`は1、`targetDocumentCount`は1（`web::TECH-030`）、`excludedCodeTestPathCount`は0。
+3. 完全検査の対象: 出発点`web::TECH-030`、強い関係の閉包で到達する`api::TECH-020`、`web::TECH-030`を`refines`する`api::TECH-040`（作業ワークスペースの文書の直接の逆参照）の3文書。
+   `api::TECH-060`は閉包で到達した他のメンバーの文書の逆参照、`api::TECH-050`は無関係なので入れない。
+4. 診断: `api::TECH-020`の`relations.requires`の`TECH-999`と、`api::TECH-040`の`relations.requires`の`TECH-997`の`SPEC-RELATION-MISSING-001`が各1件。`workspaceId`は`api`、`path`はメンバー相対
+   （`.spec/technical/TECH-020.md`、`.spec/technical/TECH-040.md`）、`evidence`は宣言どおりの文字列。`web::TECH-030`の`api::TECH-020`は実在するので診断しない。順序は`workspaceId`、`path`の辞書順である。
+   `failed`／終了コード1。
+
+監査は、この導出を`multi_check_fixtures.reference_check`として、入力の木構造とGitの変更集合から独立に計算し、リテラルの期待値と照合する。作業ワークスペース、変更集合の所有判定、強い関係の閉包、
+直接の逆参照、診断を別々に導く。入力が上の構成（誤りを持つ文書、閉包、逆参照、陰性対照の位置づけ）であることも、`check_conditions`が入力の木構造から確かめる。
+
+### 監査の検査と回帰試験
+
+`test_conformance_audit.py`の回帰試験は、修正前の誤検出（`SPEC-RELATION-MISSING-001`の混入）、`workspace`の改変（`path: "."`、`platform`、`api`）、`checkedDocumentCount`／`checkedStatementCount`の改変、
+`scope`、`revision.dirty`、`selection`の各件数の改変、他のメンバーの診断の所有ワークスペースの改変、閉包の逆参照と無関係な文書の診断の混入、診断の消去と順序の入替え、マニフェストの改変
+（実行ディレクトリ、`--full`と`--workspace`の削除、準備手順の変更の削除）、入力の改変（無関係な文書の誤りの除去、作業ワークスペースへの参照の追加、`draft`の除去、閉包の逆参照の付け替え、
+二つ目の誤りの追加）を拒否する。
+
+### 固定しない範囲
+
+- 修正前のCore（コミット`82d60f2d`の`check.py`、`basecompare.py`、`multirelate.py`。作業ツリーの外のコピーで確認した）は、3件とも失敗する（陰性対照）。`MULTI-029-01`は`web::TECH-010`の
+  `api::TECH-020`と`platform::REQ-001:AC-01`を`SPEC-RELATION-MISSING-001`と誤検出して`failed`、`workspace.path`は`.`、`checkedDocumentCount`は2になる。`MULTI-029-02`は終了コード4になる。
+  `MULTI-029-03`は`workspace.path`が`.`で、`web::TECH-030`の`api::TECH-020`を誤検出し、`api`の2件の診断は返らない。修正後のCoreは通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
+- `targetDocumentCount`が、変更したパスを所有する文書だけを数え、閉包や直接の逆参照で完全検査の対象に加わる文書を数えないことは、ADR-035の「パスを所有する文書のIDへ正規化し」と、
+  `check` §9の例（変更3件、除外2件、対象1件）の読みに基づく。閉包と逆参照を含む読みを排除する明記はない。規範文の明記を待つ。
+- `scope: changed`は、完全検査した文書数を出力しない（`checkedDocumentCount`は`selected`と`full`だけ）。`MULTI-029-03`が閉包と逆参照を完全検査したことは、他のメンバーの文書の診断の有無で確かめる。
+- 閉包で到達した他のメンバーの文書の逆参照（`api::TECH-060`）を対象にしないことは、ユーザー決定に基づく。`check` §3は、直接の逆参照の集合を、引数なしでは「所有する文書と強い関係の閉包の和」と定めており、
+  文言どおりに読めば、閉包で到達した`api::TECH-020`を参照する`api::TECH-060`も加わる。単一ワークスペースでは文言どおりである。複合ワークスペースでの「別のワークスペースの無関係な変更を対象へ混ぜない」
+  （`check` §6）と「無関係なメンバーを完全検査しない」（複合ワークスペース仕様 §7）の読み方として、閉包で到達した文書の逆参照を除く扱いを固定した。規範文の明記を待つ。
+- `--full`が、他のメンバーから作業ワークスペースの文書を参照する文書（直接の逆参照）を完全検査するかは固定しない。`MULTI-029-01`／`02`は、そのような文書を置かない。
+  `--full`が閉包で到達した他のメンバーの文書（`api::TECH-020`、`platform::REQ-001`）を完全検査の件数へ数えることは、明示対象の`MULTI-004-02`（閉包の`platform::REQ-001`を数える）と同じ扱いに従った。
+- 影響候補（`SPEC-IMPACT-OUTDATED-001`）の範囲は固定しない。`check` §8は、変更された文書へ強く依存する状態`approved`の文書を示すと定め、他のメンバーの文書を除外していない。そこで`MULTI-029-03`は、
+  変更した`web::TECH-030`を参照する`api::TECH-040`を状態`draft`にして、影響候補の対象（`approved`だけ）から外した。
+- `changedPathCount`が、作業ワークスペースが所有する変更だけを数えること（他のメンバーの変更を数えない）は固定しない。`MULTI-029-03`は、変更を`web`の1件だけにした。
+- コードとテストのパスの変更、リネーム、削除、`--report`、`--all-workspaces`は扱わない。

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "durationMs": 0,
+  "scope": "changed",
+  "status": "failed",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "selection": {
+    "changedPathCount": 1,
+    "targetDocumentCount": 1,
+    "excludedCodeTestPathCount": 0
+  },
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "strong relationの参照先が存在しません",
+      "evidence": "TECH-999",
+      "source": {
+        "kind": "file",
+        "workspaceId": "api",
+        "path": ".spec/technical/TECH-020.md",
+        "key": "relations.requires"
+      }
+    },
+    {
+      "code": "SPEC-RELATION-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "strong relationの参照先が存在しません",
+      "evidence": "TECH-997",
+      "source": {
+        "kind": "file",
+        "workspaceId": "api",
+        "path": ".spec/technical/TECH-040.md",
+        "key": "relations.requires"
+      }
+    }
+  ]
+}

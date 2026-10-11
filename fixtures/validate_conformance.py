@@ -71,6 +71,7 @@ from conformance.multi_report_fixtures import validate as validate_multi_report_
 from conformance.multi_compat_fixtures import validate as validate_multi_compat_fixtures
 from conformance.multi_limit_fixtures import validate as validate_multi_limit_fixtures
 from conformance.multi_relation_type_fixtures import validate as validate_multi_relation_type_fixtures
+from conformance.multi_check_fixtures import validate as validate_multi_check_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -346,6 +347,7 @@ def main():
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
     checks["multi_relation_type_fixtures"] = validate_multi_relation_type_fixtures()
+    checks["multi_check_fixtures"] = validate_multi_check_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
