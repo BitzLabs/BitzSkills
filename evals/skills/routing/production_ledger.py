@@ -376,6 +376,8 @@ class Ledger:
 
 INITIAL_CAMPAIGN='public-initial-canary'
 SCHEMA_CAMPAIGN='public-schema-projection-01'
+STRUCTURE_CAMPAIGN='public-code-mode-structure-01'
+SCHEMA_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-schema-projection-01/attempt-0001/receipt.json'
 INITIAL_RECEIPT='skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-public-initial/attempt-0001/receipt.json'
 
 
@@ -386,12 +388,37 @@ def common_ledger_path(repository: Path, campaign_id=None):
     safe_tree(common)
     common = common.resolve(strict=True)
     require(common.name == '.git', 'shared non-bare repository required')
-    name='production-routing-primary-ledger-schema-projection-01' if campaign_id==SCHEMA_CAMPAIGN else 'production-routing-primary-ledger'
+    name={SCHEMA_CAMPAIGN:'production-routing-primary-ledger-schema-projection-01',
+          STRUCTURE_CAMPAIGN:'production-routing-primary-ledger-code-mode-structure-01'}.get(campaign_id,'production-routing-primary-ledger')
     return common.parent / '.venv' / name
 
 
 def verify_predecessor(repository,contract):
-    """Schema是正の別有限測定だけを、原停止の不変hashへ束縛する。旧台帳は読取りのみ。"""
+    """明示した是正後の有限測定を、全先行停止の不変hashへ束縛する。旧台帳は読取りのみ。"""
+    if contract.get('campaignId')==STRUCTURE_CAMPAIGN:
+        first=verify_predecessor(repository,dict(contract,campaignId=SCHEMA_CAMPAIGN))
+        prior=contract.get('stoppedStructurePredecessor')
+        require(isinstance(prior,dict) and set(prior)=={'campaignId','sourceCommit','campaignSha256','attemptSha256','stopSha256','primaryReceiptSha256'} and
+                prior['campaignId']==SCHEMA_CAMPAIGN and isinstance(prior['sourceCommit'],str) and re.fullmatch(r'[0-9a-f]{40}',prior['sourceCommit']),
+                'stopped structure predecessor fields')
+        storage=common_ledger_path(repository,SCHEMA_CAMPAIGN)
+        raws={n:read_regular(storage/n) for n in ['campaign.json','attempt-0001.json','stop-0001.json']}
+        require(set(p.name for p in storage.iterdir())=={'lock',*raws},'stopped structure inventory')
+        for name,key in [('campaign.json','campaignSha256'),('attempt-0001.json','attemptSha256'),('stop-0001.json','stopSha256')]:
+            require(sha(raws[name])==pin(prior[key]),'original structure stopped ledger drift');read_owned(storage/name)
+        campaign,attempt,stop=(strict_json(raws[n]) for n in ['campaign.json','attempt-0001.json','stop-0001.json'])
+        require(campaign.get('campaignId')==SCHEMA_CAMPAIGN and type(attempt.get('attempt')) is int and attempt['attempt']==1 and
+                attempt.get('sourceCommit')==prior['sourceCommit'] and attempt.get('contractSha256')==campaign.get('contractSha256') and
+                all(type(stop.get(k)) is type(v) and stop[k]==v for k,v in attempt.items()) and
+                stop.get('status')=='stopped_before_independent_review' and stop.get('reason')=='primary-structure-rejected' and
+                type(stop.get('independentInvocations')) is int and stop['independentInvocations']==0 and stop.get('automaticRetry') is False and
+                stop.get('primaryReceiptSha256')==pin(prior['primaryReceiptSha256']),'original structure predecessor binding')
+        raw=read_regular(storage.parent/SCHEMA_RECEIPT);receipt=strict_json(raw)
+        require(sha(raw)==prior['primaryReceiptSha256'] and receipt.get('status')=='primary_capture_awaits_parent_and_independent_review' and
+                receipt.get('sourceCommit')==prior['sourceCommit'] and receipt.get('attempt')==attempt,'original stopped structure receipt drift')
+        return dict(status='two_original_stopped_campaigns_preserved',predecessors=[first,dict(campaignId=SCHEMA_CAMPAIGN,
+            primaryReservationsConsumed=1,independentReservationsConsumed=0,primaryReceiptSha256=sha(raw),accepted=False)],
+            primaryReservationsConsumed=2,independentReservationsConsumed=0,automaticRetry=False)
     if contract.get('campaignId')!=SCHEMA_CAMPAIGN:return None
     prior=contract.get('stoppedPredecessor')
     require(isinstance(prior,dict) and set(prior)=={'campaignId','sourceCommit','campaignSha256','attemptSha256','stopSha256','primaryReceiptSha256'},'stopped predecessor fields')

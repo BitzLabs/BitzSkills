@@ -1,9 +1,9 @@
 {
-  "version": "production-canary-0.1.1",
+  "version": "production-canary-0.1.2",
   "phase": 4,
   "scope": "public-production-routing-canary-only",
   "model": "gpt-6.1-sol",
-  "campaignId": "public-schema-projection-01",
+  "campaignId": "public-code-mode-structure-01",
   "repetitions": 2,
   "budget": {
     "primaryModelTrajectories": 4,
@@ -19,7 +19,7 @@
   "certifiesApiRequestHardCap": false,
   "certifiesBehavior": false,
   "certifiesSkillGate": false,
-  "outputRelativeRoot": ".venv/production-routing-primary-schema-projection-01",
+  "outputRelativeRoot": ".venv/production-routing-primary-code-mode-structure-01",
   "codexVersion": "codex-cli 0.160.1",
   "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
   "sdkVersion": "0.160.1",
@@ -73,7 +73,8 @@
     "標準CLI内部のOpenAI認証/URL解決のみ。認証情報の読み取り/コピー/出力はしない。モデルにはprompt/context・共通instructions/catalog・固定製品資源だけを提示する。期待値/IDは送らない。",
     "SDK turn1、通常/stream retry0、WebSocket/無制限retry/proxy fallback無効、300秒でprocess group停止。観測API閾値は応答ログの監視であり送信前hard capではない。認証復旧ゼロも保証しない。超過/未知操作/非正常終端/欠落時は停止して残りを起動しない。",
     "モデル推論の観測閾値3とモデル一覧の閾値2を区別し、旧接続契約のAPI合計1未達を変更しない。HTTP/SSE wire全文・server内部入力の取得を成功条件へ追加しない。",
-    "captureは原取得のみ。親の原入力/RPC/host/rollout/telemetry照合と独立採点は別に必要。canary4件だけでは区分ごとの試作最低分母/5実地/Skill Gate/Phase完了を認定しない。"
+    "captureは原取得のみ。親の原入力/RPC/host/rollout/telemetry照合と独立採点は別に必要。canary4件だけでは区分ごとの試作最低分母/5実地/Skill Gate/Phase完了を認定しない。",
+    "HTTP400停止一次1とSchema条件構造停止一次1の原hashを保持し別条件へ固定。新上限一次4・独立4、過去一次2と新上限4を別々に記録し累計最大6、retry0。実completed single/two execだけのcell原形式対応で、実yield/waitは未対応として停止する。"
   ],
   "contextProfileSha256": "d0b72f85991f5273615d9286adea2a2ca27b603cfcfcde213755feda0d2227f4",
   "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
@@ -85,5 +86,13 @@
     "attemptSha256": "446aa1a72c4e5680bb8794fa951beeae2faf96cdd1e066551f856b6692a3fc0a",
     "stopSha256": "648fd689c53c1b6ecb0f545f3fb8a1b06f5f122d125493276c385f5ee50cc413",
     "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc"
+  },
+  "stoppedStructurePredecessor": {
+    "campaignId": "public-schema-projection-01",
+    "sourceCommit": "123c89baf6efc094aaa8065cee1f7adaf4286fea",
+    "campaignSha256": "89adc29480db0a296763328368a346c5da30b2d78c3f9190d46798c2c2215ee9",
+    "attemptSha256": "3fb57d3133ecaae18057d47749a862423df4b545448f6dee7ac4a582fa5bdaab",
+    "stopSha256": "c5c17e1470bcfa51e4bc0dd290c22e058d42b9d85dcef572109cd40ff3653e23",
+    "primaryReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671"
   }
 }

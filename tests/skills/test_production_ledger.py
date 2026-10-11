@@ -91,6 +91,61 @@ class ProductionLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'drift'):ledger.open_ledger(root,bound)
         self.assertFalse(ledger.common_ledger_path(root,ledger.SCHEMA_CAMPAIGN).exists())
 
+    def structure_predecessor(self):
+        root,legacy,bound=self.predecessor()
+        schema=ledger.open_ledger(root,bound);attempt=schema.reserve()
+        receipt=ledger.encoded(dict(status='primary_capture_awaits_parent_and_independent_review',
+                                   sourceCommit=bound.contract['sourceCommit'],attempt=attempt))
+        path=schema.storage.parent/ledger.SCHEMA_RECEIPT;path.parent.mkdir(parents=True);ledger.exclusive(path,receipt)
+        stop=schema.record_primary_stop(1,'primary-structure-rejected',ledger.sha(receipt))
+        prior=dict(campaignId=ledger.SCHEMA_CAMPAIGN,sourceCommit=bound.contract['sourceCommit'],
+            campaignSha256=ledger.sha(ledger.read_regular(schema.storage/'campaign.json')),
+            attemptSha256=ledger.sha(ledger.read_regular(schema.storage/'attempt-0001.json')),
+            stopSha256=ledger.sha(ledger.encoded(stop)),primaryReceiptSha256=ledger.sha(receipt))
+        third=self.bind(dict(bound.contract,campaignId=ledger.STRUCTURE_CAMPAIGN,sourceCommit='c'*40,
+                             stoppedStructurePredecessor=prior))
+        return root,legacy,schema,third
+
+    def test_structure_measurement_preserves_both_stops_and_uses_one_distinct_shared_ledger(self):
+        root,legacy,schema,bound=self.structure_predecessor()
+        before={str(p):ledger.sha(ledger.read_regular(p)) for item in [legacy,schema] for p in item.storage.iterdir()}
+        proof=ledger.verify_predecessor(root,bound.contract)
+        self.assertEqual(proof['primaryReservationsConsumed'],2)
+        self.assertEqual(proof['independentReservationsConsumed'],0)
+        third=ledger.open_ledger(root,bound);same=ledger.open_ledger(root,bound)
+        self.assertEqual(third.storage,same.storage)
+        self.assertNotIn(third.storage,[legacy.storage,schema.storage])
+        self.assertEqual(third.reserve()['attempt'],1)
+        for item in [legacy,schema,same]:
+            with self.assertRaises(ValueError):item.reserve()
+        self.assertEqual(before,{str(p):ledger.sha(ledger.read_regular(p)) for item in [legacy,schema] for p in item.storage.iterdir()})
+        self.assertEqual(ledger.common_ledger_path(root,'arbitrary-new-id'),legacy.storage)
+
+    def test_structure_measurement_missing_changed_or_rebound_stops_reject_before_storage_creation(self):
+        root,legacy,schema,bound=self.structure_predecessor()
+        storage=ledger.common_ledger_path(root,ledger.STRUCTURE_CAMPAIGN)
+        original=ledger.read_regular(schema.storage/'stop-0001.json')
+        for fault in ['missing-proof','wrong-campaign','changed-stop','rehashed-accepted','rehashed-independent','changed-receipt','extra-attempt']:
+            contract=dict(bound.contract);prior=dict(contract['stoppedStructurePredecessor']);contract['stoppedStructurePredecessor']=prior
+            receipt=schema.storage.parent/ledger.SCHEMA_RECEIPT;receipt_raw=ledger.read_regular(receipt)
+            if fault=='missing-proof':contract.pop('stoppedStructurePredecessor')
+            elif fault=='wrong-campaign':prior['campaignId']='arbitrary-new-id'
+            elif fault=='changed-stop':(schema.storage/'stop-0001.json').write_bytes(b'{}')
+            elif fault.startswith('rehashed-'):
+                changed=ledger.strict_json(original)
+                if fault=='rehashed-accepted':changed['status']='accepted'
+                else:changed['independentInvocations']=1
+                raw=ledger.encoded(changed);(schema.storage/'stop-0001.json').write_bytes(raw);prior['stopSha256']=ledger.sha(raw)
+            elif fault=='changed-receipt':receipt.write_bytes(b'{}')
+            else:ledger.exclusive(schema.storage/'attempt-0002.json',b'{}')
+            try:
+                with self.subTest(fault=fault),self.assertRaises(ValueError):ledger.open_ledger(root,self.bind(contract))
+                self.assertFalse(storage.exists())
+            finally:
+                (schema.storage/'stop-0001.json').write_bytes(original);receipt.write_bytes(receipt_raw)
+                extra=schema.storage/'attempt-0002.json'
+                if extra.exists():extra.unlink()
+
     def test_primary_capture_stop_does_not_forge_independent_review_and_is_permanent(self):
         instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
         instance.reserve();stopped=instance.record_primary_stop(1,'primary-structure-rejected','1'*64)
