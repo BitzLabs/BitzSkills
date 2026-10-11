@@ -120,7 +120,8 @@ def reviewed_documents(identifier):
     if identifier == "SINGLE-159":
         head, body = DONE_ROOT_REQ
         root = TASK.replace("先行作業の確認", DONE_ROOT_TITLE).replace(
-            "status: open\n---", "status: done\nrelations:\n  addresses: [REQ-001:AC-01]\n---", 1)
+            "status: open\n---", "status: done\nrelations:\n  addresses: [REQ-001:AC-01]\n---", 1).replace(
+            "先行作業の完了を確認する。", "対象要求に対応する作業を完了した。", 1)
         return {
             TASK_PATH: (root, {"id": "TASK-001", "title": DONE_ROOT_TITLE, "status": "done",
                                "relations": {"addresses": ["REQ-001:AC-01"]}}),
