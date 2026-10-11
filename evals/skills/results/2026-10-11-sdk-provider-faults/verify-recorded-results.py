@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_fault_probe as probe
+import production_rpc_capture as rpc
 import production_ledger as ledger
 import production_trace as trace
 import source_guard as guard
@@ -77,6 +78,8 @@ def run():
         starts = [f['params'] for f in received if f.get('method') == 'turn/started']
         trace.require(len(starts) == 1 and sum(f.get('method') == 'turn/start' for f in sent) == 1,
                       'one original logical turn')
+        trace.require(rpc.correlate(sent, received, allow_turn_error=True) ==
+                      {'threadId': starts[0]['threadId'], 'turnId': starts[0]['turn']['id']}, 'original caller correlation')
         runtime = trace.strict_json((base / 'runtime-result.json').read_bytes())
         originals = list(base.glob('request-*.json'))
         result = probe.outcome(received, starts[0]['threadId'], starts[0]['turn']['id'],

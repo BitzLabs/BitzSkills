@@ -85,6 +85,8 @@ def reserve(repository, source, contract_raw, storage=None):
 def evaluate(sent, frames, api, runtime):
     """原SDK文脈とAPI観測を照合する。HTTP回数の事前強制を意味しない。"""
     from production_trace import require, strict_json, json_equal
+    from production_rpc_capture import correlate
+    correlated = correlate(sent, frames)
     require([f.get('method') for f in sent] == ['initialize', 'initialized', 'thread/start', 'turn/start'],
             'closed caller method sequence')
     require('id' not in sent[1] and all(type(f.get('id')) in {str, int} for f in [sent[0], sent[2], sent[3]]) and
@@ -104,6 +106,7 @@ def evaluate(sent, frames, api, runtime):
     terminals = [f['params'] for f in frames if f.get('method') == 'turn/completed']
     require(len(starts) == len(terminals) == 1, 'one native lifecycle')
     thread, turn = starts[0]['threadId'], starts[0]['turn']['id']
+    require(correlated == {'threadId': thread, 'turnId': turn}, 'shared native correlation')
     require(isinstance(thread, str) and bool(thread) and isinstance(turn, str) and bool(turn) and
             turns[0]['params']['threadId'] == thread and terminals[0]['threadId'] == thread and
             terminals[0]['turn']['id'] == turn and terminals[0]['turn']['status'] == 'completed' and

@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_connection_probe as probe
 import production_sdk_probe as sdk
+import production_rpc_capture as rpc
 
 
 class ConnectionProbeTests(unittest.TestCase):
@@ -24,10 +25,13 @@ class ConnectionProbeTests(unittest.TestCase):
                 {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread', 'outputSchema': probe.SCHEMA,
                  'input': [{'type': 'text', 'text': probe.PROMPT}]}}]
         frames = [{'id': 1, 'result': {}}, {'id': 2, 'result': {'thread': {'id': 'thread'}}},
+                  {'method': 'thread/started', 'params': {'thread': {'id': 'thread'}}},
                   {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}},
                   {'id': 3, 'result': {'turn': {'id': 'turn'}}},
+                  {'method': 'item/started', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                   'item': {'id': 'message', 'type': 'agentMessage'}}},
                   {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn',
-                   'item': {'type': 'agentMessage', 'phase': 'final_answer', 'text': json.dumps(probe.FINAL)}}},
+                   'item': {'id': 'message', 'type': 'agentMessage', 'phase': 'final_answer', 'text': json.dumps(probe.FINAL)}}},
                   {'method': 'turn/completed', 'params': {'threadId': 'thread',
                    'turn': {'id': 'turn', 'status': 'completed', 'error': None}}}]
         api = [{'attempt': 0, 'http.response.status_code': 200, 'auth.header_attached': True}]
@@ -61,15 +65,16 @@ class ConnectionProbeTests(unittest.TestCase):
         self.assertTrue(probe.evaluate(*self.fixture())['finalMatched'])
         for mutation in ['extra-api', 'attempt-bool', 'wrong-auth', 'other-turn', 'other-reply', 'post-terminal',
                          'tool', 'caller-prompt', 'schema', 'forced-shutdown', 'failed-turn', 'steer', 'duplicate-reply',
-                         'unknown-reply', 'duplicate-request']:
+                         'unknown-reply', 'duplicate-request', 'id-only-unknown', 'id-only-duplicate', 'empty-notification',
+                         'unknown-notification', 'missing-item-start', 'other-caller-thread']:
             sent, frames, api, runtime = copy.deepcopy(self.fixture())
             if mutation == 'extra-api': api += copy.deepcopy(api)
             elif mutation == 'attempt-bool': api[0]['attempt'] = False
             elif mutation == 'wrong-auth': api[0]['auth.header_attached'] = False
             elif mutation == 'other-turn': frames[-1]['params']['turn']['id'] = 'other'
             elif mutation == 'other-reply': frames[1]['result']['thread']['id'] = 'other'
-            elif mutation == 'post-terminal': frames.append(frames.pop(4))
-            elif mutation == 'tool': frames[4]['params']['item']['type'] = 'commandExecution'
+            elif mutation == 'post-terminal': frames.append(frames.pop(6))
+            elif mutation == 'tool': frames[6]['params']['item']['type'] = 'commandExecution'
             elif mutation == 'caller-prompt': sent[3]['params']['input'][0]['text'] = 'different'
             elif mutation == 'schema': sent[3]['params']['outputSchema']['properties']['ok']['const'] = False
             elif mutation == 'forced-shutdown': runtime['forcedShutdown'] = True
@@ -78,8 +83,28 @@ class ConnectionProbeTests(unittest.TestCase):
             elif mutation == 'duplicate-reply': frames.insert(0, {'id': 2, 'result': {'thread': {'id': 'other'}}})
             elif mutation == 'unknown-reply': frames.append({'id': 4, 'result': {}})
             elif mutation == 'duplicate-request': sent[3]['id'] = sent[2]['id']
+            elif mutation == 'id-only-unknown': frames.append({'id': 4})
+            elif mutation == 'id-only-duplicate': frames.append({'id': 2})
+            elif mutation == 'empty-notification': frames.append({})
+            elif mutation == 'unknown-notification': frames.append({'method': 'unknown', 'params': {}})
+            elif mutation == 'missing-item-start': frames.pop(5)
+            elif mutation == 'other-caller-thread': sent[3]['params']['threadId'] = 'other'
             with self.subTest(mutation=mutation), self.assertRaises((ValueError, KeyError)):
                 probe.evaluate(sent, frames, api, runtime)
+
+    def test_fault_profile_uses_same_caller_and_reply_checks(self):
+        sent, frames, _, _ = copy.deepcopy(self.fixture())
+        frames[-1]['params']['turn']['status'] = 'failed'
+        frames.insert(-1, {'method': 'error', 'params': {'threadId': 'thread', 'turnId': 'turn', 'willRetry': False}})
+        self.assertEqual(rpc.correlate(sent, frames, allow_turn_error=True), {'threadId': 'thread', 'turnId': 'turn'})
+        for mutation in ['steer', 'other-thread', 'unknown-id', 'retry-error']:
+            s, f = copy.deepcopy((sent, frames))
+            if mutation == 'steer': s.append({'id': 4, 'method': 'turn/steer', 'params': {}})
+            elif mutation == 'other-thread': s[3]['params']['threadId'] = 'other'
+            elif mutation == 'unknown-id': f.append({'id': 4})
+            elif mutation == 'retry-error': f[-2]['params']['willRetry'] = True
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                rpc.correlate(s, f, allow_turn_error=True)
 
     def test_unknown_actions_and_server_requests_are_stopped_before_forwarding(self):
         for item in ['commandExecution', 'dynamicToolCall', 'mcpToolCall', 'unknown', None]:

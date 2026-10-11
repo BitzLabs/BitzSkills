@@ -15,6 +15,7 @@
     "evals/skills/routing/production_cli_probe.py",
     "evals/skills/routing/production_ledger.py",
     "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_rpc_capture.py",
     "evals/skills/routing/source_guard.py",
     "tests/skills/test_production_connection_probe.py"
   ],
