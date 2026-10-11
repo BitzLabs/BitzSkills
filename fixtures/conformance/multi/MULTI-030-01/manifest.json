@@ -1,0 +1,44 @@
+{
+  "fixtureId": "MULTI-030-01",
+  "description": "メンバーの中でも、承認済み要求の保護と削除の検出を作業ワークスペースの文書にルートと同じ結果で行う",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "apps/web/.spec/requirements/REQ-010.md",
+        "source": "changes/REQ-changed.md"
+      },
+      {
+        "op": "delete",
+        "path": "apps/web/.spec/requirements/REQ-011.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
