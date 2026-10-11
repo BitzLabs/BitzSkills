@@ -234,6 +234,18 @@ class DoctorPluginRequestTests(unittest.TestCase):
             ["SPEC-DOCTOR-API-001", "SPEC-DOCTOR-CAPABILITY-001", "SPEC-DOCTOR-CORE-001"],
         )
 
+    def test_huge_version_numbers_are_compared_without_overflow(self):
+        # CPythonは4300桁を超える文字列の`int`への変換を拒否する。字句として正しい値なので、結果を返す。
+        huge = "1" * 4301
+        result, code = self.run_doctor(*_request(f"<{huge}.0"))
+        self.assertEqual((self.check(result, "plugin")["status"], code), ("passed", 0))
+        result, code = self.run_doctor(*_request(f">={huge}.0"))
+        self.assertEqual((self.check(result, "plugin")["status"], code), ("blocked", 2))
+        result, code = self.run_doctor(*_request(f"^1.{huge}"))
+        self.assertEqual(self.check(result, "plugin")["status"], "blocked")
+        result, code = self.run_doctor(*_request(f"^0.{huge}"))
+        self.assertEqual(self.check(result, "plugin")["status"], "blocked")
+
     # --- 決定性・テキスト出力 ---------------------------------------------------
 
     def test_result_is_deterministic_across_runs(self):
@@ -304,6 +316,18 @@ class DoctorPluginRequestAllWorkspacesTests(unittest.TestCase):
         self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-DOCTOR-PLUGIN-001"])
         for member in result["workspaces"]:
             self.assertEqual(member["diagnostics"], [])
+
+    def test_cpython_below_floor_still_reports_plugin_diagnostics_at_top_level(self):
+        from unittest.mock import patch
+
+        with patch.object(doctor.sys, "version_info", (3, 11, 0, "final", 0)):
+            result, code = self.run_doctor(*_request(">=2.0", "context.v2"))
+        self.assertEqual(code, 2)
+        self.assertEqual([c["name"] for c in result["checks"]], ["core", "plugin", "capability"])
+        self.assertEqual(
+            [d["code"] for d in result["diagnostics"]],
+            ["SPEC-DOCTOR-API-001", "SPEC-DOCTOR-CAPABILITY-001", "SPEC-DOCTOR-CORE-001"],
+        )
 
     def test_satisfied_request_passes(self):
         result, code = self.run_doctor(*_request("^1.0", "multiWorkspace.v1"))

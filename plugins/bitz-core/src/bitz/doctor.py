@@ -13,7 +13,7 @@ from . import execfile
 from . import gitutil
 from . import messages
 from . import multiws
-from .cliargs import ParsedArgs, parse_core_api_range
+from .cliargs import ParsedArgs, api_version_key, parse_core_api_range
 from .errors import CliArgError
 from .resultmodel import doctor_status, sort_diagnostics, worst_status
 from .workspace import WorkspaceLocation, locate_workspace
@@ -40,11 +40,11 @@ _COMPARATORS = {
 
 
 def _core_api_satisfies(required: str) -> bool:
-    """Core APIのバージョンが範囲のすべての比較子を満たすか。(MAJOR, MINOR)の整数の組で比べる。"""
+    """Core APIのバージョンが範囲のすべての比較子を満たすか。(MAJOR, MINOR)の数値の組で比べる。"""
     comparators = parse_core_api_range(required)
     assert comparators is not None  # 字句は`parse_doctor`で検査済み
-    major, minor = (int(part) for part in CORE_API_VERSION.split("."))
-    return all(_COMPARATORS[op]((major, minor), version) for op, version in comparators)
+    core = api_version_key(*CORE_API_VERSION.split("."))
+    return all(_COMPARATORS[op](core, version) for op, version in comparators)
 
 
 def _plugin_request_checks(parsed: ParsedArgs) -> tuple[list[dict], list[dict]]:
