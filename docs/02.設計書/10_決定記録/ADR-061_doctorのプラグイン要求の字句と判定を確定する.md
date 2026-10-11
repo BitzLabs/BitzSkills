@@ -1,6 +1,6 @@
 ---
 id: ADR-061
-title: doctorのプラグイン要求の字句と判定を確定する
+title: "`doctor`のプラグイン要求の字句と判定を確定する"
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-051
 ---
 
-# ADR-061 doctorのプラグイン要求の字句と判定を確定する
+# ADR-061 `doctor`のプラグイン要求の字句と判定を確定する
 
 ## Context
 
@@ -32,7 +32,7 @@ Core APIや対応機能が要求を満たさなくても`passed`を返す。互�
      探索しないため（`doctor` §4）、字句だけを検査し、何とも照合しない。
    - `--require-core-api <semver-range>`: 空白1文字で区切った1件以上の比較子の論理積。比較子は、`>=`、`>`、`<=`、`<`、`=`のいずれか
      （省略時は`=`）に`MAJOR.MINOR`を続けたもの、または`^MAJOR.MINOR`（`>=MAJOR.MINOR <(MAJOR+1).0`の略記）とする。`MAJOR`と`MINOR`は
-     先頭に`0`を含まない十進の非負整数（`0`だけは可）とする。`~`、`x`、`*`、`||`、ハイフンの範囲、パッチバージョンは受け付けない。
+     先頭に`0`を含まない十進の非負整数（`0`だけは可）とし、桁数の上限を設けずに数値の大小で比べる。`~`、`x`、`*`、`||`、ハイフンの範囲、パッチバージョンは受け付けない。
    - `--require-capability <capability-name>`: `^[a-zA-Z][a-zA-Z0-9]*\.v[1-9][0-9]*$`（例: `context.v1`）。同じ値は1件へ重複排除する（同契約 §5）。
 2. **要求の組合せ**。4種のオプションのどれかを指定した場合を、1つのプラグインの要求として扱う。
    - `--plugin`、`--plugin-version`、`--require-core-api`の3つを同時に指定する。一部を暗黙に補わない（`doctor` §2）。
@@ -54,7 +54,8 @@ Core APIや対応機能が要求を満たさなくても`passed`を返す。互�
      `evidence`は、`SPEC-DOCTOR-PLUGIN-001`では欠けたオプションの名前の辞書順の配列`{"missing": [...]}`、`SPEC-DOCTOR-API-001`では
      `{"coreApi": "1.0", "required": "<指定した範囲>"}`、`SPEC-DOCTOR-CAPABILITY-001`では不足した対応機能の辞書順の配列`{"missing": [...]}`とする。
 5. **実装計画**。この判定は実装計画のどのStepにも含まれていなかったため、`doctor`を扱うStep 1の範囲の補正として記録し、
-   Step 1の完了条件へ適合fixtureを追加する（ADR-051）。fixtureを追加したStepのGate Bは判定し直す。
+   単一ワークスペースの適合fixtureをStep 1、`--all-workspaces`の適合fixtureを複合ワークスペースのStep 5の完了条件へ追加する（ADR-051）。
+   fixtureを追加したStepのGate Bは判定し直す。
 
 ## Consequences
 
@@ -75,3 +76,9 @@ Core APIや対応機能が要求を満たさなくても`passed`を返す。互�
 ## Notes
 
 - 実装の確認事項C6（`doctor`が`--plugin`などを受け付けるが使っておらず、`doctor` §3の検査2と検査3を出していない）を解消するための決定である。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-10-11 | プラグイン要求の字句、組合せ、判定を起案し、ユーザーの決定（範囲は最小形、`--require-core-api`は必須、`--plugin-version`は字句だけ）に基づき採用 | 実装の確認事項C6 |
