@@ -41,8 +41,10 @@ def correlate(sent, received, *, allow_turn_error=False):
     ends = [i for i, f in enumerate(received) if f.get('method') == 'turn/completed']
     require(len(starts) == len(ends) == 1 and reply_positions[1] < starts[0] < ends[0] and
             reply_positions[2] < ends[0], 'one native turn lifecycle')
-    require(sum(f.get('method') == 'thread/started' for f in received) == 1, 'one native thread')
+    thread_starts = [i for i, f in enumerate(received) if f.get('method') == 'thread/started']
+    require(len(thread_starts) == 1 and thread_starts[0] < starts[0], 'one native thread before turn')
     active, completed = {}, set()
+    summaries, deltas = {}, {}
     for i, frame in enumerate(received):
         if 'id' in frame:
             continue
@@ -63,6 +65,26 @@ def correlate(sent, received, *, allow_turn_error=False):
                     'turn notification context and order')
         if method == 'error':
             require(allow_turn_error and params.get('willRetry') is False, 'unexpected or retriable turn error')
+        if method in {'item/agentMessage/delta', 'item/reasoning/summaryTextDelta',
+                      'item/reasoning/summaryPartAdded', 'item/reasoning/textDelta'}:
+            kind = 'agentMessage' if method == 'item/agentMessage/delta' else 'reasoning'
+            require(isinstance(params.get('itemId'), str) and active.get(params['itemId']) == kind,
+                    'delta belongs to active matching item')
+            key = params['itemId']
+            if method != 'item/reasoning/summaryPartAdded':
+                require(isinstance(params.get('delta'), str), 'text delta payload')
+            if method in {'item/reasoning/summaryPartAdded', 'item/reasoning/summaryTextDelta'}:
+                index = params.get('summaryIndex')
+                require(type(index) is int and index >= 0, 'summary delta index')
+                if method == 'item/reasoning/summaryPartAdded':
+                    require(index == len(summaries[key]), 'ordered unique summary part')
+                    summaries[key].add(index)
+                else:
+                    require(index in summaries[key], 'started summary part')
+            if method == 'item/reasoning/textDelta':
+                require(type(params.get('contentIndex')) is int and params['contentIndex'] >= 0, 'reasoning content index')
+            if method == 'item/agentMessage/delta':
+                deltas.setdefault(key, []).append(params['delta'])
         if method in {'item/started', 'item/completed'}:
             item = params['item']
             require(isinstance(item, dict) and item.get('type') in {'userMessage', 'reasoning', 'agentMessage'} and
@@ -71,8 +93,11 @@ def correlate(sent, received, *, allow_turn_error=False):
             if method == 'item/started':
                 require(key not in active and key not in completed, 'unique item start')
                 active[key] = item['type']
+                summaries[key] = set()
             else:
                 require(active.get(key) == item['type'] and key not in completed, 'matching item completion')
+                if key in deltas:
+                    require(''.join(deltas[key]) == item.get('text'), 'streamed and completed agent text')
                 del active[key]
                 completed.add(key)
     require(not active, 'unresolved native item')

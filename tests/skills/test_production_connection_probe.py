@@ -106,6 +106,29 @@ class ConnectionProbeTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 rpc.correlate(s, f, allow_turn_error=True)
 
+    def test_deltas_require_an_active_matching_item_and_thread_starts_before_turn(self):
+        for failed in [False, True]:
+            for mutation in ['ghost', 'late', 'wrong-type', 'payload', 'text-mismatch', 'late-thread', 'turn-before-thread']:
+                sent, frames, _, _ = copy.deepcopy(self.fixture())
+                frames[-1]['params']['turn']['status'] = 'failed' if failed else 'completed'
+                if mutation in {'late-thread', 'turn-before-thread'}:
+                    frame = frames.pop(2)
+                    frames.insert(len(frames) if mutation == 'late-thread' else 3, frame)
+                else:
+                    delta = {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                             'itemId': 'message', 'delta': frames[6]['params']['item']['text']}}
+                    if mutation == 'ghost': delta['params']['itemId'] = 'ghost'
+                    elif mutation == 'wrong-type': delta['method'] = 'item/reasoning/textDelta'
+                    elif mutation == 'payload': delta['params']['delta'] = None
+                    elif mutation == 'text-mismatch': delta['params']['delta'] = 'different'
+                    frames.insert(7 if mutation == 'late' else 6, delta)
+                with self.subTest(failed=failed, mutation=mutation), self.assertRaises(ValueError):
+                    rpc.correlate(sent, frames, allow_turn_error=failed)
+        sent, frames, _, _ = copy.deepcopy(self.fixture())
+        frames.insert(6, {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                         'itemId': 'message', 'delta': frames[6]['params']['item']['text']}})
+        self.assertEqual(rpc.correlate(sent, frames)['turnId'], 'turn')
+
     def test_unknown_actions_and_server_requests_are_stopped_before_forwarding(self):
         for item in ['commandExecution', 'dynamicToolCall', 'mcpToolCall', 'unknown', None]:
             self.assertTrue(sdk.action_frame({'method': 'item/started', 'params': {'item': {'type': item}}}))
