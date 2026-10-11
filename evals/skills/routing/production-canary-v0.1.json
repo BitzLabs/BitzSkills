@@ -20,8 +20,8 @@
   "sdkVersion":"0.160.1",
   "sdkRelativePath":".venv/codex-python-sdk-deps",
   "sdkTreeSha256":"e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
-  "snapshotRelativePath":".venv/production-routing-preparation-01/snapshot",
-  "manifestSha256":"603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "snapshotRelativePath":".venv/production-routing-preparation-02/snapshot",
+  "manifestSha256":"d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
   "diagnosticTracing":{"format":"json","rustLog":"codex_otel.trace_safe=info,codex_code_mode::timing=info"},
   "sourceFiles":[
     "evals/skills/routing/production_canary_capture.py",
