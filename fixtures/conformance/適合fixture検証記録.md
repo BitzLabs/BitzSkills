@@ -1418,3 +1418,23 @@ commit `71243ffc71a09e8e25fa06bdaf44d85ef4bc58f6`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: `SINGLE-160`〜`164`と`MULTI-032`を追加した後のGate Aの再認定
+
+`doctor`が`--plugin`、`--plugin-version`、`--require-core-api`、`--require-capability`を受け付けるが判定に使わず、非互換でも`passed`を返していた欠陥を直した
+（`cliargs.py`、`doctor.py`、`messages.py`。実装の確認事項C6）。プラグインの要求の字句、組合せ、判定は、ユーザーの決定に基づく
+[ADR-061](../../docs/02.設計書/10_決定記録/ADR-061_doctorのプラグイン要求の字句と判定を確定する.md)と`doctor`仕様 §2・§4.1・§8に定め、実装計画のStep 1の範囲を補正した。
+これを固定する`SINGLE-160`（互換）、`SINGLE-161`（Core APIの非互換）、`SINGLE-162`（対応機能の不足）、`SINGLE-163`（要求の不完全）、`SINGLE-164-01`〜`08`（字句の不一致で終了コード4）、
+`MULTI-032`（`--all-workspaces`で最上位に1回だけ置く）を追加した（ADR-051の追加、新しい群`doctor_plugin_fixtures`）。matrix、Step 1とStep 5の割当て、実装計画の完了条件、
+網羅表が固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `9ee8a756d03b5cb57bdbdbcd0fc8a5c0338607cf`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`fd103e67999a331c37992fe1d1060e70e0404f58e709925265e654d229d3f967`。前回から変わったのは次の値だけである: 13件の追加によるmatrixと網羅の件数（356件→369件）、Step 1の件数（34件→46件）、Step 5の件数（72件→73件）、新しい群`doctor_plugin_fixtures`、実行ビットを確かめたファイル数（1944件→1959件）、網羅表が固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 1とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

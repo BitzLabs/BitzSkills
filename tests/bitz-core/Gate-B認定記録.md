@@ -491,3 +491,22 @@ Coreを変えずに、`MULTI-031-01`、`02`（Step 5）と`SINGLE-159`（Step 3�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は661件がすべて成功した。
+
+## 2026-10-12: doctorでプラグインの要求のCore APIの範囲と対応機能を判定するようにした後のStep 1〜5の再判定
+
+`doctor`のプラグインの要求の判定（ADR-061）を実装し（`cliargs.py`、`doctor.py`、`messages.py`）、これを固定する`SINGLE-160`〜`164`（Step 1。`164`は`01`〜`08`）と
+`MULTI-032`（Step 5）を追加した。修正の前後で、既存の356件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`5927890b`の版）では
+13件とも失敗し、修正後のCoreでは13件とも`passed`となることを確かめた。
+
+コミット`9ee8a756d03b5cb57bdbdbcd0fc8a5c0338607cf`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件（`SINGLE-160`〜`164`、`MULTI-032`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は705件がすべて成功した。
