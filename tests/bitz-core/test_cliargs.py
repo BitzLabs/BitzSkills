@@ -194,6 +194,26 @@ class DoctorPluginRequestLexicalTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assert_accepted("--require-core-api", value)
 
+    def test_caret_range_expands_to_next_major(self):
+        from bitz.cliargs import api_version_key, parse_core_api_range
+
+        self.assertEqual(
+            parse_core_api_range("^1.0"), [(">=", api_version_key("1", "0")), ("<", api_version_key("2", "0"))]
+        )
+        self.assertEqual(
+            parse_core_api_range("^9.5"), [(">=", api_version_key("9", "5")), ("<", api_version_key("10", "0"))]
+        )
+        self.assertEqual(
+            parse_core_api_range("^99.0")[1], ("<", api_version_key("100", "0"))
+        )
+
+    def test_version_keys_order_numerically(self):
+        from bitz.cliargs import api_version_key
+
+        self.assertLess(api_version_key("1", "9"), api_version_key("1", "10"))
+        self.assertLess(api_version_key("9", "0"), api_version_key("10", "0"))
+        self.assertLess(api_version_key("1", "0"), api_version_key("1" * 4301, "0"))
+
     def test_core_api_range_rejected(self):
         for value in (
             "01.0", "1.00", "1.01", "00.0", "1.0.0", ">=1.0.0", "^1.0.0", "1", ">=1", "~1.0", "~>1.0", "1.x",

@@ -116,23 +116,53 @@ def is_valid_semver(value: str) -> bool:
     return _SEMVER_RE.fullmatch(value) is not None
 
 
-def parse_core_api_range(value: str) -> list[tuple[str, tuple[int, int]]] | None:
-    """`--require-core-api`の範囲を(演算子, (MAJOR, MINOR))の列へ分解する。字句の不一致は`None`。
+DecimalKey = tuple[int, str]
+ApiVersionKey = tuple[DecimalKey, DecimalKey]
 
-    `^M.N`は`>=M.N`と`<(M+1).0`の2件へ展開する。比較子は空白1文字で区切る。
+
+def decimal_key(digits: str) -> DecimalKey:
+    """先頭に`0`を含まない十進の非負整数（`0`は可）の大小を、`int`へ変換せずに比べるためのキー。
+
+    CPythonは4300桁を超える文字列を`int`へ変換すると`ValueError`を送出するため、桁数と文字列の組で比べる。
     """
-    comparators: list[tuple[str, tuple[int, int]]] = []
+    return (len(digits), digits)
+
+
+def api_version_key(major: str, minor: str) -> ApiVersionKey:
+    return (decimal_key(major), decimal_key(minor))
+
+
+def _increment_decimal(digits: str) -> str:
+    """十進の非負整数の文字列に1を足す（桁数の上限なし）。"""
+    out = list(digits)
+    i = len(out) - 1
+    while i >= 0:
+        if out[i] != "9":
+            out[i] = chr(ord(out[i]) + 1)
+            return "".join(out)
+        out[i] = "0"
+        i -= 1
+    return "1" + "".join(out)
+
+
+def parse_core_api_range(value: str) -> list[tuple[str, ApiVersionKey]] | None:
+    """`--require-core-api`の範囲を(演算子, バージョンのキー)の列へ分解する。字句の不一致は`None`。
+
+    `^M.N`は`>=M.N`と`<(M+1).0`の2件へ展開する。比較子は空白1文字で区切る。バージョンのキーは
+    :func:`api_version_key`で作り、桁数の上限なしに(MAJOR, MINOR)の数値の大小で比べられる。
+    """
+    comparators: list[tuple[str, ApiVersionKey]] = []
     for token in value.split(" "):
         m = _API_COMPARATOR_RE.fullmatch(token)
         if m is None:
             return None
         op = m.group(1) or "="
-        version = (int(m.group(2)), int(m.group(3)))
+        major, minor = m.group(2), m.group(3)
         if op == "^":
-            comparators.append((">=", version))
-            comparators.append(("<", (version[0] + 1, 0)))
+            comparators.append((">=", api_version_key(major, minor)))
+            comparators.append(("<", api_version_key(_increment_decimal(major), "0")))
         else:
-            comparators.append((op, version))
+            comparators.append((op, api_version_key(major, minor)))
     return comparators
 
 
