@@ -173,6 +173,15 @@ def run(source,ordinal,dry_run=False):
     if dry_run:return dict(status='semantic_score_preflight_checked',reviewInputSha256=prepared.bindings['reviewInputSha256'],independentInvocations=0)
     instance=ledger.open_ledger(ROOT,context.fixed.bound)
     reservation=instance.reserve_independent_review(ordinal,prepared.bindings['reviewInputSha256'])
+    state=dict(independentInvocations=0)
+    try:return execute_reserved(source,ordinal,context,prepared,reservation,before,runtime_raw,runtime_before,state)
+    except (ValueError,OSError,trace.jsonschema.exceptions.ValidationError) as exc:
+        stopped=save_independent_failure(ROOT,context.fixed.bound,ordinal,'independent-execution-incomplete',type(exc).__name__,state['independentInvocations'])
+        return dict(status=stopped['status'],independentInvocations=state['independentInvocations'],primaryModelTrajectories=0,usage=None)
+
+
+def execute_reserved(source,ordinal,context,prepared,reservation,before,runtime_raw,runtime_before,state):
+    primary_contract=context.fixed.bound.contract
     base=ROOT/OUTPUT/f'attempt-{ordinal:04d}';ledger.safe_tree(base);base.mkdir(mode=0o700,parents=True)
     for name in OPAQUE:(base/name).mkdir(mode=0o700)
     argv=command_for(base,primary_contract);prompt_raw=prompt(prepared)
@@ -190,7 +199,7 @@ def run(source,ordinal,dry_run=False):
         require(invoke==before and runtime_before==runtime_invoke,'score pre-invocation source/runtime drift')
         # 親は認証内容にアクセスしない。標準CLIがRO mountを用いて解決する。
         env=dict(PATH=str(Path(primary_contract['codexPath']).parents[1]/'bin')+':/usr/bin:/bin',LANG='C.UTF-8',TMPDIR=str(base/'tmp'))
-        process=subprocess.Popen(argv,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env,start_new_session=True);calls=1
+        process=subprocess.Popen(argv,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env,start_new_session=True);calls=1;state['independentInvocations']=1
         try:stdout,stderr=process.communicate(prompt_raw,timeout=300)
         except subprocess.TimeoutExpired:
             timed_out=True;os.killpg(process.pid,signal.SIGTERM)
@@ -207,12 +216,17 @@ def run(source,ordinal,dry_run=False):
     if ok:
         try:_,usage,warnings=response(stdout,ledger.read_regular(base/'response.json'),prepared.schema_raw,prepared.bindings)
         except (ValueError,OSError,trace.jsonschema.exceptions.ValidationError) as exc:ok=False;error=type(exc).__name__
-    names=ARTIFACTS|({'response.json'} if (base/'response.json').exists() else set())
+    names=ARTIFACTS|({'response.json'} if (base/'response.json').exists() or (base/'response.json').is_symlink() else set())
+    hashes={};rejections={}
+    for name in sorted(names):
+        try:hashes[name]=ledger.sha(ledger.read_regular(base/name))
+        except (ValueError,OSError) as exc:
+            ok=False;error=type(exc).__name__;rejections[name]=type(exc).__name__
     receipt=dict(status='independent_score_captured' if ok else 'independent_score_stopped',sourceCommit=source,attempt=context.result['attempt'],
         model='gpt-6.1-sol',scope=SCOPE,independentInvocations=calls,consumedReservations=1,primaryModelTrajectories=0,automaticRetries=0,
         exitCode=exit_code,timedOut=timed_out,elapsedSeconds=time.monotonic()-start,errorType=error,
         sourceGuards=dict(before=before,invoke=invoke,after=after),runtimeGuards=dict(before=runtime_before,invoke=runtime_invoke,after=runtime_after),
-        artifactSha256={name:ledger.sha(ledger.read_regular(base/name)) for name in sorted(names)},usage=usage,acceptedStartupWarningHashes=warnings,
+        artifactSha256=hashes,artifactRejections=rejections,usage=usage,acceptedStartupWarningHashes=warnings,
         eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
     ledger.exclusive(base/'receipt.json',ledger.encoded(receipt))
     return dict(status=receipt['status'],independentInvocations=calls,primaryModelTrajectories=0,exitCode=exit_code,timedOut=timed_out,usage=usage)
@@ -222,9 +236,10 @@ def load_review(repository,context,prepared):
     ordinal=context.result['attempt']['attempt'];source=context.result['sourceCommit'];base=repository/OUTPUT/f'attempt-{ordinal:04d}'
     receipt_raw=ledger.read_regular(base/'receipt.json');receipt=trace.strict_json(receipt_raw)
     keys={'status','sourceCommit','attempt','model','scope','independentInvocations','consumedReservations','primaryModelTrajectories','automaticRetries',
-        'exitCode','timedOut','elapsedSeconds','errorType','sourceGuards','runtimeGuards','artifactSha256','usage','acceptedStartupWarningHashes',
+        'exitCode','timedOut','elapsedSeconds','errorType','sourceGuards','runtimeGuards','artifactSha256','artifactRejections','usage','acceptedStartupWarningHashes',
         'eligibleForMeasurement','certifiesBehavior','certifiesSkillGate'}
     require(isinstance(receipt,dict) and set(receipt)==keys,'independent receipt fields')
+    require(receipt['artifactRejections']=={},'independent artifact read rejected')
     inventory=receipt['artifactSha256'];require(isinstance(inventory,dict) and ARTIFACTS<=set(inventory)<=ARTIFACTS|OPTIONAL,'independent original inventory')
     for digest in inventory.values():ledger.pin(digest)
     ledger.safe_tree(base);actual=set()
@@ -271,7 +286,7 @@ def load_review(repository,context,prepared):
     return receipt_raw,score,ledger.sha(originals['reservation.json'])
 
 
-def finalize(repository,source,ordinal):
+def finalize_verified(repository,source,ordinal):
     context=evidence.load_verified_capture(repository,source,ordinal);prepared=prepare(repository,context)
     receipt_raw,score,reservation_sha=load_review(repository,context,prepared)
     parent=trace.strict_json(prepared.parent_raw);data=trace.strict_json(prepared.input_raw)
@@ -298,6 +313,40 @@ def finalize(repository,source,ordinal):
         severityCounts=counts,automaticRetry=False,certifiesBehavior=False,certifiesSkillGate=False)
     ledger.open_ledger(repository,context.fixed.bound).record_verified_review(ordinal,ledger.encoded(value))
     return trace.strict_json(verification)
+
+
+def original_failure_file(path):
+    try:return ledger.read_regular(path)
+    except (OSError,ValueError):return None
+
+
+def save_independent_failure(repository,bound,ordinal,reason,error_type,actual_invocations=None):
+    primary=repository/bound.attempt(ordinal)['outputRelativePath']/'receipt.json'
+    base=repository/OUTPUT/f'attempt-{ordinal:04d}'
+    primary_raw=original_failure_file(primary);independent_raw=original_failure_file(base/'receipt.json')
+    parent_base=repository/'.venv/production-routing-parent-public-initial'/f'attempt-{ordinal:04d}'
+    value=dict(status='independent_original_verification_failed',attempt=bound.attempt(ordinal),reason=reason,errorType=error_type,
+        actualIndependentInvocations=actual_invocations,usage=None,eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
+    stopped=ledger.open_ledger(repository,bound).record_independent_stop(ordinal,reason,
+        ledger.sha(primary_raw) if primary_raw is not None else None,ledger.sha(independent_raw) if independent_raw is not None else None,actual_invocations)
+    ledger.safe_tree(parent_base);parent_base.mkdir(mode=0o700,parents=True,exist_ok=True)
+    # 拒否した原receiptを不変の別ファイルへ保存し、修正後も原不適合を保持する。
+    if primary_raw is not None:ledger.exclusive(parent_base/'failed-primary-receipt.json',primary_raw)
+    if independent_raw is not None:ledger.exclusive(parent_base/'failed-independent-receipt.json',independent_raw)
+    ledger.exclusive(parent_base/'failure.json',ledger.encoded(value))
+    return stopped
+
+
+def finalize(repository,source,ordinal):
+    fixed=evidence.load_fixed_inputs(repository,source)
+    try:return finalize_verified(repository,source,ordinal)
+    except (ValueError,OSError,trace.jsonschema.exceptions.ValidationError) as exc:
+        storage=ledger.common_ledger_path(repository)
+        # 未予約入力や既存の停止に対して停止レコードを捏造・上書きしない。
+        if (storage/f'stop-{ordinal:04d}.json').exists() or (storage/f'review-{ordinal:04d}.json').exists() or not (storage/f'independent-{ordinal:04d}.json').exists():raise
+        save_independent_failure(repository,fixed.bound,ordinal,'independent-originals-rejected',type(exc).__name__)
+        return dict(status='stopped_independent_verification',attempt=fixed.bound.attempt(ordinal),
+            errorType=type(exc).__name__,eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False,usage=None)
 
 
 if __name__=='__main__':

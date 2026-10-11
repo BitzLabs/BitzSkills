@@ -52,7 +52,7 @@ class CanaryScoreTests(unittest.TestCase):
         self.receipt=dict(status='independent_score_captured',sourceCommit=self.capture.source,attempt=self.capture.attempt,model='gpt-6.1-sol',scope=score.SCOPE,
             independentInvocations=1,consumedReservations=1,primaryModelTrajectories=0,automaticRetries=0,exitCode=0,timedOut=False,elapsedSeconds=1,errorType=None,
             sourceGuards=dict.fromkeys(['before','invoke','after'],self.capture.source_evidence),runtimeGuards=dict.fromkeys(['before','invoke','after'],runtime),
-            artifactSha256={},usage=self.trace()[-1]['usage'],acceptedStartupWarningHashes=[],eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
+            artifactSha256={},artifactRejections={},usage=self.trace()[-1]['usage'],acceptedStartupWarningHashes=[],eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
         self.persist()
 
     def persist(self):
@@ -146,6 +146,58 @@ class CanaryScoreTests(unittest.TestCase):
         self.assertEqual(loaded[1],self.result)
         self.assertEqual((self.base/'stderr.bin').read_bytes(),b'original public stderr')
         with self.assertRaises(FileExistsError):self.capture.instance.reserve_independent_review(1,self.prepared.bindings['reviewInputSha256'])
+
+    def test_parent_rejection_preserves_failed_receipt_and_cannot_be_reaccepted(self):
+        self.create_review();original=(self.base/'receipt.json').read_bytes()
+        self.receipt['usage']['input_tokens']=20;self.persist();failed=(self.base/'receipt.json').read_bytes()
+        result=score.finalize(self.repository,self.capture.source,1)
+        self.assertEqual(result['status'],'stopped_independent_verification')
+        stop=score.ledger.read_owned(self.capture.storage/'stop-0001.json')
+        self.assertEqual(stop['independentReceiptSha256'],score.ledger.sha(failed));self.assertIsNone(stop['actualIndependentInvocations'])
+        failure=self.repository/'.venv/production-routing-parent-public-initial/attempt-0001/failed-independent-receipt.json'
+        self.assertEqual(failure.read_bytes(),failed)
+        (self.base/'receipt.json').write_bytes(original)
+        with self.assertRaises(ValueError):score.finalize(self.repository,self.capture.source,1)
+        self.assertEqual(failure.read_bytes(),failed)
+        with self.assertRaises(ValueError):self.capture.instance.reserve()
+
+    def test_symlink_response_failure_still_saves_receipt_and_permanent_stop(self):
+        from types import SimpleNamespace
+        original_git=score.guard.git
+        def git(repository,*args):
+            if args==('status','--porcelain'):return b''
+            if args==('rev-parse','HEAD'):return self.capture.source.encode()+b'\n'
+            return original_git(repository,*args)
+        outside=self.repository/'SYNTHETIC_NEVER_READ';outside.write_bytes(b'SYNTHETIC_DO_NOT_READ')
+        def invoke(*args,**kwargs):
+            (self.base/'response.json').symlink_to(outside)
+            return SimpleNamespace(returncode=0,pid=123456,communicate=lambda raw,timeout:
+                (b''.join(score.ledger.encoded(e)+b'\n' for e in self.trace()),b'original public stderr'))
+        original_is_file=Path.is_file
+        with patch.object(score,'ROOT',self.repository),patch.object(score.guard,'git',side_effect=git),\
+            patch.object(Path,'is_file',lambda p:True if str(p)=='/home/hide/.codex/auth.json' else original_is_file(p)),\
+            patch.object(score.subprocess,'Popen',side_effect=invoke) as start:
+            result=score.run(self.capture.source,1)
+        self.assertEqual(start.call_count,1);self.assertEqual(result['status'],'independent_score_stopped')
+        receipt=json.loads((self.base/'receipt.json').read_bytes())
+        self.assertEqual(receipt['independentInvocations'],1);self.assertIn('response.json',receipt['artifactRejections'])
+        self.assertNotIn('response.json',receipt['artifactSha256']);self.assertIsNone(receipt['usage'])
+        final=score.finalize(self.repository,self.capture.source,1)
+        self.assertFalse(final['eligibleForMeasurement']);self.assertTrue((self.capture.storage/'stop-0001.json').exists())
+        with self.assertRaises(ValueError):self.capture.instance.reserve()
+
+    def test_failure_copy_io_error_still_blocks_restored_receipt_and_next_attempt(self):
+        self.create_review();original=(self.base/'receipt.json').read_bytes()
+        self.receipt['usage']['input_tokens']=20;self.persist()
+        exclusive=score.ledger.exclusive
+        def fail_copy(path,raw):
+            if path.name=='failed-independent-receipt.json':raise OSError('synthetic failure archive I/O error')
+            return exclusive(path,raw)
+        with patch.object(score.ledger,'exclusive',side_effect=fail_copy):
+            with self.assertRaises(OSError):score.finalize(self.repository,self.capture.source,1)
+        (self.base/'receipt.json').write_bytes(original)
+        with self.assertRaises(ValueError):score.finalize(self.repository,self.capture.source,1)
+        with self.assertRaises(ValueError):self.capture.instance.reserve()
 
     def test_policy_and_command_keep_one_sol_context_tools_disabled_and_no_repo_mount(self):
         value=json.loads(self.prepared.contract_raw);score.policy(value)

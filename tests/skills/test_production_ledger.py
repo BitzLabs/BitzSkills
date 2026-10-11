@@ -79,6 +79,15 @@ class ProductionLedgerTests(unittest.TestCase):
         instance.reserve_independent_review(1,'2'*64)
         with self.assertRaises(ValueError):instance.record_primary_stop(1,'primary-capture-failed','1'*64)
 
+    def test_independent_parent_rejection_is_permanent_and_preserves_missing_usage(self):
+        instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True);instance.reserve()
+        instance.reserve_independent_review(1,'2'*64)
+        stopped=instance.record_independent_stop(1,'independent-originals-rejected','1'*64,'3'*64)
+        self.assertIsNone(stopped['actualIndependentInvocations']);self.assertEqual(stopped['consumedIndependentReservations'],1)
+        for operation in [instance.reserve,lambda:instance.reserve_independent_review(1,'2'*64),
+            lambda:instance.record_verified_review(1,ledger.encoded(self.accepted(self.bound.attempt(1))))]:
+            with self.assertRaises(ValueError):operation()
+
     def test_model_payload_excludes_id_expected_and_control(self):
         payload = json.loads(self.bound.payloads[0])
         self.assertEqual(set(payload), {'instructions', 'eventCatalog', 'case'})

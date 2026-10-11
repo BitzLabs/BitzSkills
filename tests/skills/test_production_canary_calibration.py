@@ -13,6 +13,7 @@ import production_canary_calibration as calibration
 import production_canary_capture as capture
 import test_production_canary_rollout as rollout_fixture
 import test_production_canary_trace as sdk_fixture
+import test_production_canary_runtime as runtime_fixture
 
 
 class CanaryCalibrationTests(unittest.TestCase):
@@ -41,8 +42,12 @@ class CanaryCalibrationTests(unittest.TestCase):
         request['input'][4]['content'][0]['text']='public calibration input'
         source_contract=dict(codexPath='/fixed/bin/codex',sdkRelativePath='.venv/sdk',snapshotRelativePath='.venv/snapshot',
             manifestSha256='1'*64,sourceFiles=['evals/skills/routing/production_canary_capture.py'])
+        runtime_root=self.repository/'.venv/runtime'
+        runtime_raw=runtime_fixture.fixture(runtime_root,source_contract)
+        self.patch(calibration.runtime,'ROOT',new=runtime_root)
+        runtime_proof=calibration.runtime.verify(runtime_raw,source_contract)
         code='BASE='+repr(capture.BASE)+'\nDEVELOPER='+repr(capture.DEVELOPER)+'\nCODE=[]\n'
-        self.git_raws={'evals/skills/routing/production-canary-v0.1.json':calibration.ledger.encoded(source_contract),
+        self.git_raws={calibration.runtime.MANIFEST:runtime_raw,'evals/skills/routing/production-canary-v0.1.json':calibration.ledger.encoded(source_contract),
             'evals/skills/routing/production_canary_capture.py':code.encode(),
             'evals/skills/routing/production_canary_context_probe.py':b'pass\n',
             'evals/skills/schemas/decision.schema.json':(ROOT/'evals/skills/schemas/decision.schema.json').read_bytes()}
@@ -51,10 +56,10 @@ class CanaryCalibrationTests(unittest.TestCase):
             sourceSha256={name:calibration.ledger.sha(self.git_raws[name]) for name in [*source_contract['sourceFiles'],'evals/skills/routing/production_canary_context_probe.py']})
         local=dict(credentialsHidden=True,errorType=None,errors=[],localRequests=1,networkNamespaceIsolated=True,paidModelCalls=0)
         receipt=dict(status='local_primary_context_captured',sourceCommit=self.source,exitCode=0,timedOut=False,
-            sourceGuards=dict(before=evidence,after=evidence),localResult=local,paidModelCalls=0,primaryModelTrajectories=0,eligibleForMeasurement=False)
+            sourceGuards=dict(before=evidence,after=evidence),runtimeGuards=dict.fromkeys(['before','invoke','after'],runtime_proof),localResult=local,paidModelCalls=0,primaryModelTrajectories=0,eligibleForMeasurement=False)
         argv=['bwrap','--unshare-net','--unshare-pid','--unshare-ipc','--new-session','--die-with-parent',
           '--ro-bind','/','/','--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run','--proc','/proc','--dev','/dev']
-        for p in [self.repository/'.venv/sdk',self.repository/'.venv/snapshot',Path('/fixed'),self.repository/'evals/skills/routing/production_canary_context_probe.py']:
+        for p in [self.repository/calibration.runtime.MANIFEST,self.repository/'.venv/sdk',self.repository/'.venv/snapshot',runtime_root,self.repository/'evals/skills/routing/production_canary_context_probe.py']:
             argv+=['--ro-bind',str(p),str(p)]
         argv+=['--bind',str(self.base),str(self.base),'--chdir',str(self.base/'work'),'--','/usr/bin/python3','-B',str(self.repository/'evals/skills/routing/production_canary_context_probe.py'),'--isolated',str(self.base)]
         config=capture.config_for(self.base,source_contract,repository=self.repository)
@@ -92,7 +97,7 @@ class CanaryCalibrationTests(unittest.TestCase):
     def persist(self):
         for name,raw in self.originals.items():(self.base/name).write_bytes(raw)
         hashes={name:calibration.ledger.sha(raw) for name,raw in self.originals.items()}
-        self.manifest=calibration.ledger.encoded(dict(version='primary-client-calibration-originals-0.1.0',sourceCommit=self.source,artifactSha256=hashes))
+        self.manifest=calibration.ledger.encoded(dict(version='primary-client-calibration-originals-0.1.1',sourceCommit=self.source,artifactSha256=hashes))
         self.contract['calibrationManifestSha256']=calibration.ledger.sha(self.manifest)
         self.profile.update(calibrationRequestSha256=hashes['request-1.json'],calibrationReceiptSha256=hashes['receipt.json'])
 
@@ -112,7 +117,7 @@ class CanaryCalibrationTests(unittest.TestCase):
 
     def test_rehashed_source_network_auth_config_and_context_drift_stop(self):
         baseline=copy.deepcopy(self.originals)
-        for fault in ['source','network','auth','config','tools','supplement','caller','terminal','rpc-unknown','rpc-error','rpc-failed']:
+        for fault in ['source','network','auth','config','tools','supplement','caller','terminal','rpc-unknown','rpc-error','rpc-failed','runtime']:
             self.originals=copy.deepcopy(baseline)
             if fault.startswith('rpc-'):
                 frames=calibration.lines(self.originals['rpc-out.jsonl'])
@@ -124,6 +129,7 @@ class CanaryCalibrationTests(unittest.TestCase):
                 continue
             if fault=='source':
                 value=json.loads(self.originals['receipt.json']);value['sourceGuards']['before']['sourceSha256']['evals/skills/routing/production_canary_capture.py']='1'*64;name='receipt.json'
+            elif fault=='runtime':value=json.loads(self.originals['receipt.json']);value['runtimeGuards']['after']=None;name='receipt.json'
             elif fault in {'network','auth'}:
                 value=json.loads(self.originals['invocation.json']);name='invocation.json'
                 if fault=='network':value['argv'].remove('--unshare-net')

@@ -1,8 +1,8 @@
 {
   "version": "primary-client-context-0.1.0",
-  "calibrationSource": "9216bff479d543abda4ee71a00e92003982c6cdc",
-  "calibrationRequestSha256": "8e128b2cb11ca1afa2c1d66bec0ed8d73fa70a00db6a102615bd427099c18d0c",
-  "calibrationReceiptSha256": "70d00496d515eef7136070886b1a293dde8e129a5f1b4b0dc842c8cca02359ed",
+  "calibrationSource": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+  "calibrationRequestSha256": "1a380d040b13dc08e8f3917c38848777f38b22346cfe2e05fbea1fbb0f9d6a06",
+  "calibrationReceiptSha256": "8b28e8f90cdcc9499a40e7d398ee4a79c538269bb6e3a1114c0bf95e34d6870c",
   "sdkVersion": "0.160.1",
   "codexVersion": "codex-cli 0.160.1",
   "date": "2026-10-11",

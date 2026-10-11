@@ -215,7 +215,9 @@ class Ledger:
             require(path.name == f'attempt-{i:04d}.json' and read_owned(path) == self.bound.attempt(i), 'reservation drift or gap')
             stop=self.storage/f'stop-{i:04d}.json'
             if stop.exists():
-                self.validate_primary_stop(i,read_owned(stop))
+                stopped=read_owned(stop)
+                if stopped.get('status')=='stopped_independent_verification':self.validate_independent_stop(i,stopped)
+                else:self.validate_primary_stop(i,stopped)
                 require(False,'primary stopped before independent review')
             review = self.storage / f'review-{i:04d}.json'
             independent = self.storage / f'independent-{i:04d}.json'
@@ -253,6 +255,39 @@ class Ledger:
             value=dict(**self.bound.attempt(ordinal),status='stopped_before_independent_review',reason=reason,
                 primaryReceiptSha256=receipt_sha256,independentInvocations=0,automaticRetry=False)
             self.validate_primary_stop(ordinal,value)
+            exclusive(self.storage/f'stop-{ordinal:04d}.json',encoded(value))
+            return value
+
+    def validate_independent_stop(self,ordinal,value):
+        require(isinstance(value,dict) and set(value)==set(self.bound.attempt(ordinal))|{
+            'status','reason','primaryReceiptSha256','independentReceiptSha256','independentReservationSha256',
+            'reviewInputSha256','consumedIndependentReservations','actualIndependentInvocations','automaticRetry'},'independent stop fields')
+        for key,expected in self.bound.attempt(ordinal).items():
+            require(type(value[key]) is type(expected) and value[key]==expected,'independent stop attempt binding')
+        require(value['status']=='stopped_independent_verification' and value['reason'] in {
+            'independent-originals-rejected','independent-execution-incomplete'} and
+            type(value['consumedIndependentReservations']) is int and value['consumedIndependentReservations']==1 and
+            (value['actualIndependentInvocations'] is None or type(value['actualIndependentInvocations']) is int and value['actualIndependentInvocations'] in {0,1}) and
+            value['automaticRetry'] is False,'independent stop finite scope')
+        for key in ['primaryReceiptSha256','independentReceiptSha256']:
+            if value[key] is not None:pin(value[key])
+        path=self.storage/f'independent-{ordinal:04d}.json'
+        independent=read_owned(path);self.validate_independent_reservation(ordinal,independent)
+        require(value['independentReservationSha256']==sha(read_regular(path)) and value['reviewInputSha256']==independent['reviewInputSha256'], 'independent stop shared reservation')
+
+    def record_independent_stop(self,ordinal,reason,primary_receipt_sha256,independent_receipt_sha256,actual_invocations=None):
+        """採点実行・親原照合の不適合を恒久停止する。欠測使用量を0へ置換しない。"""
+        with self.locked():
+            self.initialize()
+            require(ordinal==self.reservations(allow_pending_last=True),'only latest pending independent may stop')
+            require(not (self.storage/f'review-{ordinal:04d}.json').exists(),'independent already finalized')
+            path=self.storage/f'independent-{ordinal:04d}.json'
+            independent=read_owned(path);self.validate_independent_reservation(ordinal,independent)
+            value=dict(**self.bound.attempt(ordinal),status='stopped_independent_verification',reason=reason,
+                primaryReceiptSha256=primary_receipt_sha256,independentReceiptSha256=independent_receipt_sha256,
+                independentReservationSha256=sha(read_regular(path)),reviewInputSha256=independent['reviewInputSha256'],
+                consumedIndependentReservations=1,actualIndependentInvocations=actual_invocations,automaticRetry=False)
+            self.validate_independent_stop(ordinal,value)
             exclusive(self.storage/f'stop-{ordinal:04d}.json',encoded(value))
             return value
 

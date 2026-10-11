@@ -9,7 +9,7 @@ import production_ledger as ledger
 import production_trace as trace
 import source_guard as guard
 
-ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-03'
+ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-04'
 MANIFEST='evals/skills/routing/production-canary-calibration-v0.1.json'
 FILES={'request-1.json','receipt.json','config.json','contract.json','invocation.json','rpc-in.jsonl','rpc-out.jsonl',
        'model-input.json','decision-schema.json','runtime-result.json','isolated-result.json','version.stdout'}
@@ -32,7 +32,7 @@ def verify(repository, manifest_raw, profile, contract):
     require(ledger.sha(manifest_raw)==ledger.pin(contract['calibrationManifestSha256']),'fixed calibration manifest hash')
     manifest=trace.strict_json(manifest_raw)
     require(isinstance(manifest,dict) and set(manifest)=={'version','sourceCommit','artifactSha256'} and
-        manifest['version']=='primary-client-calibration-originals-0.1.0' and
+        manifest['version']=='primary-client-calibration-originals-0.1.1' and
         manifest['sourceCommit']==profile['calibrationSource'] and re.fullmatch(r'[0-9a-f]{40}',manifest['sourceCommit']) and
         isinstance(manifest['artifactSha256'],dict) and set(manifest['artifactSha256'])==FILES,'fixed calibration inventory')
     for digest in manifest['artifactSha256'].values():ledger.pin(digest)
@@ -51,9 +51,11 @@ def verify(repository, manifest_raw, profile, contract):
     receipt=trace.strict_json(originals['receipt.json'])
     source_evidence=dict(status='fixed_source_matches',sourceCommit=source,observedHead=source,
         headIsCondition=False,sourceSha256=source_hash)
+    runtime_proof=runtime.verify(guard.git(repository,'show',source+':'+runtime.MANIFEST),source_contract)
     require(trace.json_equal(receipt,dict(status='local_primary_context_captured',sourceCommit=source,exitCode=0,timedOut=False,
         sourceGuards=dict(before=source_evidence,after=source_evidence),
         localResult=dict(credentialsHidden=True,errorType=None,errors=[],localRequests=1,networkNamespaceIsolated=True,paidModelCalls=0),
+        runtimeGuards=dict.fromkeys(['before','invoke','after'],runtime_proof),
         paidModelCalls=0,primaryModelTrajectories=0,eligibleForMeasurement=False)),'original successful local calibration receipt')
     require(trace.json_equal(trace.strict_json(originals['isolated-result.json']),receipt['localResult']) and
         trace.json_equal(trace.strict_json(originals['runtime-result.json']),dict(exitCode=0,forcedShutdown=False)) and
@@ -64,7 +66,7 @@ def verify(repository, manifest_raw, profile, contract):
     old_repository=ROOT.parents[1]
     argv=['bwrap','--unshare-net','--unshare-pid','--unshare-ipc','--new-session','--die-with-parent',
           '--ro-bind','/','/','--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run','--proc','/proc','--dev','/dev']
-    for path in [old_repository/source_contract['sdkRelativePath'],old_repository/source_contract['snapshotRelativePath'],
+    for path in [old_repository/runtime.MANIFEST,old_repository/source_contract['sdkRelativePath'],old_repository/source_contract['snapshotRelativePath'],
             Path(source_contract['codexPath']).parents[1],*(old_repository/'evals/skills/routing'/n for n in [*code,'production_canary_context_probe.py'])]:
         argv += ['--ro-bind',str(path),str(path)]
     argv += ['--bind',str(ROOT),str(ROOT),'--chdir',str(ROOT/'work'),'--','/usr/bin/python3','-B',
