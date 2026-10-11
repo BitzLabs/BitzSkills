@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-145",
+  "description": "implementの起点TASKは、推移的に到達した先行TASKがcancelledでも、直接の先行TASKがdoneなら状態を検査せず止まらない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

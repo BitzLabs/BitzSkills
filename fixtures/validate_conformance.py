@@ -29,7 +29,9 @@ from conformance.task_fixtures import validate as validate_task_fixtures
 from conformance.selection_fixtures import validate as validate_selection_fixtures
 from conformance.git_environment_fixtures import validate as validate_git_environment_fixtures
 from conformance.context_failure_fixtures import validate as validate_context_failure_fixtures
+from conformance.context_config_fixtures import validate as validate_context_config_fixtures
 from conformance.digest_fixtures import validate as validate_digest_fixtures
+from conformance.digest_command_fixtures import validate as validate_digest_command_fixtures
 from conformance.context_limit_fixtures import validate as validate_context_limit_fixtures
 from conformance.context_coverage_fixtures import validate as validate_context_coverage_fixtures
 from conformance.projection_limit_fixtures import validate as validate_projection_limit_fixtures
@@ -39,6 +41,7 @@ from conformance.verify_process_fixtures import validate as validate_verify_proc
 from conformance.verify_output_fixtures import validate as validate_verify_output_fixtures
 from conformance.verify_document_fixtures import validate as validate_verify_document_fixtures
 from conformance.verify_task_root_fixtures import validate as validate_verify_task_root_fixtures
+from conformance.verify_task_tech_fixtures import validate as validate_verify_task_tech_fixtures
 from conformance.report_absent_fixtures import validate as validate_report_absent_fixtures
 from conformance.cli_error_fixtures import validate as validate_cli_error_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write_fixtures
@@ -67,6 +70,8 @@ from conformance.multi_verify_fixtures import validate as validate_multi_verify_
 from conformance.multi_report_fixtures import validate as validate_multi_report_fixtures
 from conformance.multi_compat_fixtures import validate as validate_multi_compat_fixtures
 from conformance.multi_limit_fixtures import validate as validate_multi_limit_fixtures
+from conformance.multi_relation_type_fixtures import validate as validate_multi_relation_type_fixtures
+from conformance.multi_check_fixtures import validate as validate_multi_check_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -300,7 +305,9 @@ def main():
     checks["selection_fixtures"] = validate_selection_fixtures()
     checks["git_environment_fixtures"] = validate_git_environment_fixtures()
     checks["context_failure_fixtures"] = validate_context_failure_fixtures()
+    checks["context_config_fixtures"] = validate_context_config_fixtures()
     checks["digest_fixtures"] = validate_digest_fixtures()
+    checks["digest_command_fixtures"] = validate_digest_command_fixtures()
     checks["context_limit_fixtures"] = validate_context_limit_fixtures()
     checks["context_coverage_fixtures"] = validate_context_coverage_fixtures()
     checks["projection_limit_fixtures"] = validate_projection_limit_fixtures()
@@ -310,6 +317,7 @@ def main():
     checks["verify_output_fixtures"] = validate_verify_output_fixtures()
     checks["verify_document_fixtures"] = validate_verify_document_fixtures()
     checks["verify_task_root_fixtures"] = validate_verify_task_root_fixtures()
+    checks["verify_task_tech_fixtures"] = validate_verify_task_tech_fixtures()
     checks["report_absent_fixtures"] = validate_report_absent_fixtures()
     checks["cli_error_fixtures"] = validate_cli_error_fixtures()
     checks["report_write_fixtures"] = validate_report_write_fixtures()
@@ -338,6 +346,8 @@ def main():
     checks["multi_report_fixtures"] = validate_multi_report_fixtures()
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
+    checks["multi_relation_type_fixtures"] = validate_multi_relation_type_fixtures()
+    checks["multi_check_fixtures"] = validate_multi_check_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

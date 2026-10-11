@@ -229,7 +229,10 @@ def _relation_check_diagnostics(
     known_ws_ids: set[str],
     multi_active: bool,
 ):
-    """検証対象の完全解決の対象（起点ワークスペース自身が所有する閉包内の文書）の関係の診断を返す。"""
+    """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
+
+    コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
+    """
 
     if multi_active:
         scoped_entries = [e for e in relations_mod.valid_entries(catalog_entries) if e.doc_id in context_documents]
@@ -279,33 +282,14 @@ def _compute_verify_digest(
     if multi_active:
         assert config_for is not None and ws_path_by_id is not None
         reached = sorted({_owner(d) for d in context_documents} - {workspace_id})
-        referenced_commands_multi: set[tuple[str, str]] = set()
-        for doc_id in context_documents:
-            owner = _owner(doc_id)
-            for t in id_index[doc_id].frontmatter.get("tests") or []:
-                name = t.get("command")
-                if name:
-                    referenced_commands_multi.add((owner, name))
-        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
-        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
-        commands_settings = []
-        binding_ws_ids: set[str] = set()
-        for wid, name in sorted(referenced_commands_multi):
-            cfg = config_for(wid)
-            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
-            if resolved is None:
-                continue
-            binding_ws_ids.add(wid)
-            commands_settings.append(
-                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
-        verify_timeouts = []
-        for wid in sorted(binding_ws_ids):
-            cfg = config_for(wid)
-            vcfg = cfg.get("verify") or {}
-            verify_timeouts.append(
-                {"workspaceId": wid, "timeoutSeconds": vcfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}
-            )
+        # `context --purpose verify`と同じ関数で作る（収録したテスト割当てが参照するコマンドとタイムアウトだけ）。
+        commands_settings, verify_timeouts = context_mod.digest_command_materials(
+            context_documents,
+            id_index,
+            _owner,
+            lambda wid, name: (config_for(wid).get("_resolvedCommands") or {}).get(name),
+            lambda wid: (config_for(wid).get("verify") or {}).get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT),
+        )
         settings_ws_ids = sorted(set(reached) | {workspace_id})
         settings_workspaces = []
         for wid in settings_ws_ids:
@@ -322,27 +306,13 @@ def _compute_verify_digest(
             {"id": w, "path": ws_path_by_id.get(w, ".")} for w in reached
         ]
     else:
-        referenced_commands: set[str] = set()
-        for doc_id in context_documents:
-            for t in id_index[doc_id].frontmatter.get("tests") or []:
-                name = t.get("command")
-                if name:
-                    referenced_commands.add(name)
-        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
-        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
-        commands_settings = []
-        for name in sorted(referenced_commands):
-            resolved = resolved_commands.get(name)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {"workspaceId": workspace_id, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
-        has_binding = bool(commands_settings)
-        verify_timeouts = (
-            [{"workspaceId": workspace_id, "timeoutSeconds": verify_cfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}]
-            if has_binding
-            else []
+        # `context --purpose verify`と同じ関数で作る（収録したテスト割当てが参照するコマンドとタイムアウトだけ）。
+        commands_settings, verify_timeouts = context_mod.digest_command_materials(
+            context_documents,
+            id_index,
+            lambda d: workspace_id,
+            lambda wid, name: resolved_commands.get(name),
+            lambda wid: verify_cfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT),
         )
         settings_workspaces = [
             {
@@ -493,8 +463,21 @@ def _process_single_target(
         entry_out["status"] = "failed"
         return entry_out, needed_pairs
 
+    # 強い関係（型制約）は展開が返した範囲（``relation_scope``）で、状態の診断の有無によらず検査し、独立した元の原因として
+    # 両方を返す（診断レジストリ、関係・トレースモデル §4・§6.3）。
+    relation_scope = expansion.relation_scope or expansion.context_documents
+
+    def _relation_errors() -> list[dict]:
+        return [
+            d.to_dict()
+            for d in _relation_check_diagnostics(
+                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
+            )
+            if d.severity == "error"
+        ]
+
     if expansion.errors:
-        diags = []
+        diags = _relation_errors()
         for err in expansion.errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -504,9 +487,10 @@ def _process_single_target(
                 doc_id = err["doc_id"]
                 owner = context_mod._owner_of(doc_id, workspace_id) if multi_active else workspace_id
                 doc_path = id_index[doc_id].path
-                diags.append(
-                    _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
-                )
+                diag = _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
+                if err.get("evidence") is not None:
+                    diag["evidence"] = err["evidence"]
+                diags.append(diag)
         entry_out["diagnostics"] = sort_diagnostics(diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in diags])
         return entry_out, needed_pairs
@@ -525,13 +509,7 @@ def _process_single_target(
             entry_out["status"] = "blocked"
             return entry_out, needed_pairs
 
-    relation_error_diags = [
-        d.to_dict()
-        for d in _relation_check_diagnostics(
-            context_documents, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
-        )
-        if d.severity == "error"
-    ]
+    relation_error_diags = _relation_errors()
     if relation_error_diags:
         entry_out["diagnostics"] = sort_diagnostics(relation_error_diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in relation_error_diags])
@@ -575,14 +553,22 @@ def _process_single_target(
         return entry_out, needed_pairs
 
     # --- テスト割当て候補の決定（関係・トレースモデル §6.4「規範文のないTECHを起点にした場合は`targetStatements`を空とし、文書単位のテスト割当てを保持する」） ---
-    # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``には
-    # キーがない。規範文を起点にした場合は`target_statements`が空でなくなるため、文書単位の判定（TECHの文書IDの
-    # キーが必要）に入る前に短絡させる（元の単一ワークスペースの実装と同じ`elif`の規則を保つ）。
-    doc_unit = False
-    root_entry: DocEntry | None = None
-    if not target_statements:
-        root_entry = id_index[root_id]
-        doc_unit = root_entry.kind == "TECH" and not root_entry.statements
+    # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``にはキーがないので、``root_id in id_index``で判定する。
+    # 文書単位のテスト割当ての対象: 規範文のないTECHを起点にした場合はそのTECH、TASKを起点にした場合は`addresses`する規範文のないTECH
+    # （ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3）。そのTECHの`tests[]`をすべて対象にし、
+    # 規範文は増やさない（ユーザー決定: TECHを起点にした場合と同じ）。
+    doc_unit_ids: list[str] = []
+    if not target_statements and root_id in id_index:
+        candidate = id_index[root_id]
+        if candidate.kind == "TECH" and not candidate.statements:
+            doc_unit_ids.append(root_id)
+    if root_id in id_index and id_index[root_id].kind == "TASK":
+        for ref in targetexpand._addresses_targets(id_index[root_id], id_index, statement_index):
+            if ref in statement_index or ref not in id_index:
+                continue
+            addressed = id_index[ref]
+            if addressed.kind == "TECH" and not addressed.statements and ref not in doc_unit_ids:
+                doc_unit_ids.append(ref)
 
     # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
     # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
@@ -603,16 +589,18 @@ def _process_single_target(
             )
         )
 
-    if doc_unit:
-        for idx, t in enumerate(root_entry.frontmatter.get("tests") or []):
-            name = t.get("command") or root_entry.frontmatter.get("verify")
-            cmds = resolved_commands_for(workspace_id)
+    for doc_unit_id in doc_unit_ids:
+        doc_entry = id_index[doc_unit_id]
+        owner = context_mod._owner_of(doc_unit_id, workspace_id) if multi_active else workspace_id
+        for idx, t in enumerate(doc_entry.frontmatter.get("tests") or []):
+            name = t.get("command") or doc_entry.frontmatter.get("verify")
+            cmds = resolved_commands_for(owner)
             if not name or name not in cmds:
-                _add_binding_missing(workspace_id, root_entry.path, idx, name)
+                _add_binding_missing(owner, doc_entry.path, idx, name)
                 continue
             for c in (t.get("covers") or []):
-                needed_pairs.append((workspace_id, name, t["path"], _canon_id(c)))
-    else:
+                needed_pairs.append((owner, name, t["path"], _canon_id(c)))
+    if target_statements:
         cover_ids = list(target_statements)
         for cover_id in cover_ids:
             for doc_entry, idx, t, owner in covering_tests(cover_id):
@@ -887,6 +875,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
         status = worst_status([d["resultStatus"] for d in diags]) if diags else "error"
         return _empty(workspace_id, status, diags)
+    # 設定の警告（診断レジストリで全操作の`continue`）は、どの結果にも最上位の診断として加える。
+    config_warning_diags = [w.to_dict() for w in outcome.warnings]
 
     config_raw = outcome.config
     assert loc.root is not None
@@ -982,9 +972,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     if not pending:
         diag = _invocation_diag("SPEC-VERIFY-BLOCKED-002", "error", "blocked", messages.VERIFY_TARGETS_EMPTY)
-        return _empty(workspace_id, "blocked", [diag])
+        return _empty(workspace_id, "blocked", [diag] + config_warning_diags)
 
-    top_diagnostics: list[dict] = []
+    top_diagnostics: list[dict] = list(config_warning_diags)
     target_entries: list[dict] = []
     needs: dict[tuple[str, str], dict] = {}
 

@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-142",
+  "description": "implementでは、refinesする状態draftの文書をadvisoryとしても閉包へ含めず、そのテスト対応を数えない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

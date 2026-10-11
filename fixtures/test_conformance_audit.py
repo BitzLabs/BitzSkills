@@ -30,6 +30,7 @@ from conformance.git_environment_fixtures import (validate as validate_git_envir
 from conformance.context_failure_fixtures import (validate as validate_context_failures,
     check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
 from conformance import digest_crosscheck, digest_reference
+from conformance import context_failure_fixtures
 from conformance.digest_fixtures import validate as validate_digest
 from conformance import context_limit_fixtures
 from conformance.context_limit_fixtures import validate as validate_context_limits
@@ -57,6 +58,9 @@ from conformance import text_fixtures
 from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
+from conformance import context_config_fixtures
+from conformance import digest_command_fixtures
+from conformance import verify_task_tech_fixtures
 from conformance import scanner_fixtures
 from conformance import presentation_fixtures
 from conformance import target_root_fixtures
@@ -67,7 +71,8 @@ from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doctor_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
-from conformance import multi_generator, multi_limit_fixtures
+from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
+from conformance import multi_crosscheck
 
 
 class AuditTests(unittest.TestCase):
@@ -117,6 +122,16 @@ class AuditTests(unittest.TestCase):
     def test_expansion_audit_rejects_changed_sets_and_roles(self):
         def document(index, **changes):
             return lambda v: v["documents"][index].update(changes)
+
+        def as_normative(entry):
+            entry["projection"] = "normative"
+            del entry["frontmatter"], entry["bodyText"]
+
+        def swap_documents(first, second):
+            def mutate(value):
+                documents = value["documents"]
+                documents[first], documents[second] = documents[second], documents[first]
+            return mutate
         mutations = [
             # `requires`先の役割は種別で決まり、REQは役割`requirement`、TECHは役割`constraint`である。
             ("SINGLE-107-01", "expected/context.json", document(1, role="constraint")),
@@ -136,6 +151,91 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-110", "expected/context.json",
              lambda v: v["documents"].append(dict(v["documents"][0], id="TASK-002", role="work",
                                                   reachedBy=["requires:TASK-001"]))),
+            # 目的`implement`の起点TASKは、先行TASKがすべて`done`なら止まらない。先行TASKを閉包から落とさず、
+            # `CTX-STATE-001`や`CTX-TASK-DEPENDENCY-001`で`blocked`にしない。
+            ("SINGLE-134", "expected/context.json", lambda v: v["documents"].pop()),
+            ("SINGLE-134", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(code="CTX-STATE-001", resultStatus="blocked", severity="error")),
+            ("SINGLE-134", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-134", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-134", "expected/context.json",
+             lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
+            # 目的`implement`の起点TASKは、直接の先行TASKが`done`なら、`requires`の閉包で推移的に到達した`cancelled`のTASKの
+            # 状態を検査しない（関係・トレースモデル §6.2）。推移的なTASKを閉包から落とさず、`CTX-STATE-001`で`blocked`にしない。
+            ("SINGLE-145", "expected/context.json", lambda v: v["documents"].pop()),
+            ("SINGLE-145", "expected/context.json", lambda v: v["documents"].pop(2)),
+            ("SINGLE-145", "expected/context.json", document(3, role="advisory")),
+            ("SINGLE-145", "expected/context.json", document(3, status="done")),
+            ("SINGLE-145", "expected/context.json", document(3, reachedBy=["requires:TASK-001"])),
+            ("SINGLE-145", "expected/context.json", swap_documents(2, 3)),
+            ("SINGLE-145", "expected/context.json",
+             lambda v: v["diagnostics"].append(dict(v["diagnostics"][0], code="CTX-STATE-001", severity="error",
+                                                    resultStatus="blocked"))),
+            ("SINGLE-145", "expected/context.json",
+             lambda v: v["diagnostics"].__setitem__(0, dict(v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001",
+                                                            severity="error", resultStatus="blocked"))),
+            ("SINGLE-145", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-145", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-145", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-145", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            # 制約台帳にない規範文を持つ具体化文書は、距離によらず提示形式`full`で提示し、`MUST`の本文を落とさない
+            # （`bitz context`仕様 §5、ADR-014の`Decision`の4番目の項目）。`normative`への変更、役割の取り違え、
+            # 対象規範文でない規範文の制約台帳への昇格を拒否する。
+            ("SINGLE-135", "expected/context.json", lambda v: as_normative(v["documents"][2])),
+            ("SINGLE-135", "expected/context.json", document(2, role="requirement")),
+            ("SINGLE-135", "expected/context.json", document(2, reachedBy=["requires:REQ-002"])),
+            ("SINGLE-135", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "REQ-003:AC-01"})),
+            ("SINGLE-135", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-136", "expected/context.json", lambda v: as_normative(v["documents"][2])),
+            ("SINGLE-136", "expected/context.json", document(2, role="constraint")),
+            ("SINGLE-136", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-003:AC-01"})),
+            # 文書の距離は、閉包を作るときに辿ったエッジによる最短の段数である（関係・トレースモデル §7の6.）。
+            # 並び順の入替え、提示形式`normative`の`full`への改変、役割の取り違え、後継の`reachedBy`の取り違えを拒否する。
+            ("SINGLE-139", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-139", "expected/context.json", document(1, role="requirement")),
+            ("SINGLE-139", "expected/context.json", document(2, role="refinement")),
+            ("SINGLE-139", "expected/context.json", document(1, reachedBy=["refines:REQ-001"])),
+            ("SINGLE-140", "expected/context.json",
+             lambda v: v["documents"].__setitem__(2, expansion_fixtures.bundle_document(
+                 "SINGLE-140", "TECH-002", "refinement", "full", ["refines:TECH-002"]))),
+            ("SINGLE-140", "expected/context.json",
+             lambda v: v["documents"].__setitem__(3, expansion_fixtures.bundle_document(
+                 "SINGLE-140", "TECH-003", "refinement", "full", ["refines:TECH-003"]))),
+            ("SINGLE-140", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-140", "expected/context.json", swap_documents(2, 3)),
+            ("SINGLE-140", "expected/context.json", document(1, role="work")),
+            ("SINGLE-140", "expected/context.json", lambda v: v["constraintLedger"]["statements"].pop()),
+            ("SINGLE-140", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-140", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-141", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-141", "expected/context.json", swap_documents(0, 1)),
+            ("SINGLE-141", "expected/context.json", document(2, role="constraint")),
+            ("SINGLE-141", "expected/context.json", document(0, role="root")),
+            ("SINGLE-141", "expected/context.json", document(2, reachedBy=["supersedes:TECH-005"])),
+            # 目的`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない（関係・トレースモデル §6.1の末尾）。
+            # `draft`の文書の追加、そのテスト対応のテスト済みへの計上、状態の`blocked`への改変、診断の欠落を拒否する。
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["documents"].append(expansion_fixtures.bundle_document(
+                 "SINGLE-142", "TECH-005", "advisory", "reference", ["refines:TECH-005"]))),
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
+            ("SINGLE-142", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-142", "expected/context.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-005:AC-01"})),
+            ("SINGLE-142", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-142", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["commands"][0]["tests"].append("tests/test_candidate.py")),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(status="blocked", contextDigest=None)),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0]["statements"].append("TECH-005:AC-01")),
+            ("SINGLE-143", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
             # `verify`は`context`と同じ対象の集合とハッシュ値を使う。
             ("SINGLE-107-02", "expected/verify.json",
              lambda v: v["targetResults"][0]["statements"].pop()),
@@ -159,6 +259,189 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 result = expansion_fixtures.validate(root, {identifier})
                 self.assertEqual(result["status"], "Failed")
+
+    def test_expansion_contract_rejects_normative_without_ledger(self):
+        """完全比較とは別に、`check_contract`だけが、制約台帳にない規範文を持つ文書の`normative`を拒否する。"""
+        for identifier, index in (("SINGLE-135", 2), ("SINGLE-136", 2)):
+            path = audit.FIXTURES / "single" / identifier / "expected/context.json"
+            with self.subTest(identifier=identifier):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                entry = value["documents"][index]
+                entry["projection"] = "normative"
+                del entry["frontmatter"], entry["bodyText"]
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_expansion_contract_rejects_changed_distance_order_and_roles(self):
+        """完全比較とは別に、`check_contract`だけが、距離に基づく並び、提示形式、役割の改変を拒否する。"""
+        def swap(first, second):
+            def mutate(value):
+                documents = value["documents"]
+                documents[first], documents[second] = documents[second], documents[first]
+            return mutate
+
+        def projection(index, name, role, reached):
+            return lambda v: v["documents"].__setitem__(index, expansion_fixtures.bundle_document(
+                "SINGLE-140", name, role, "full", reached))
+        changes = [
+            ("SINGLE-139", swap(1, 2)),
+            ("SINGLE-139", lambda v: v["documents"][1].update(role="requirement")),
+            ("SINGLE-140", swap(2, 3)),
+            ("SINGLE-140", projection(2, "TECH-002", "refinement", ["refines:TECH-002"])),
+            ("SINGLE-140", projection(3, "TECH-003", "refinement", ["refines:TECH-003"])),
+            ("SINGLE-141", swap(1, 2)),
+            ("SINGLE-141", lambda v: v["documents"][2].update(role="constraint")),
+        ]
+        for identifier, mutate in changes:
+            path = audit.FIXTURES / "single" / identifier / "expected/context.json"
+            with self.subTest(identifier=identifier, mutation=mutate.__qualname__):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_expansion_contract_rejects_state_checks_of_transitive_tasks(self):
+        """完全比較とは別に、`check_contract`だけが、推移的に到達した`cancelled`のTASKの状態の診断と、その`blocked`、
+        閉包からの除外を拒否する（`SINGLE-145`、関係・トレースモデル §6.2）。"""
+        state = {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                 "summary": "TASK-003は現在のpurposeに適用できません",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-003.md"}}
+        dependency = {"code": "CTX-TASK-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
+                      "summary": "先行TASK-003が完了していません",
+                      "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md",
+                                 "key": "relations.requires"}}
+
+        def replaced(diagnostic):
+            return lambda v: v.update(status="blocked", diagnostics=[diagnostic])
+
+        changes = [
+            lambda v: v["diagnostics"].append(state),
+            lambda v: v["diagnostics"].append(dependency),
+            replaced(state),
+            replaced(dependency),
+            lambda v: v.update(diagnostics=[]),
+            lambda v: v["documents"].pop(),
+            lambda v: v["documents"][3].update(role="advisory"),
+        ]
+        path = audit.FIXTURES / "single/SINGLE-145/expected/context.json"
+        for index, mutate in enumerate(changes):
+            with self.subTest(index=index):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract("SINGLE-145", value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract("SINGLE-145", value, audit.FIXTURES)
+
+    def test_expansion_contract_rejects_draft_documents_in_implement_and_verify(self):
+        """完全比較とは別に、`check_contract`だけが、目的`implement`と`verify`の結果に現れる、`refines`する
+        状態`draft`の文書、そのテスト対応の計上、状態を理由とした`blocked`を拒否する。"""
+        blocked = {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                   "summary": "TECH-005が適用できません",
+                   "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-005.md"}}
+
+        def advisory(value):
+            value["documents"].append(expansion_fixtures.bundle_document(
+                "SINGLE-142", "TECH-005", "advisory", "reference", ["refines:TECH-005"]))
+            value["resolution"]["documentCount"] = 2
+
+        def counted(value):
+            value["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])
+
+        def one_diagnostic(value):
+            value["diagnostics"].pop()
+
+        def candidate_test(value):
+            value["commands"][0]["tests"].append("tests/test_candidate.py")
+            value["commands"][0]["argv"].append("tests/test_candidate.py")
+
+        def blocked_target(value):
+            value["status"] = "blocked"
+            value["targetResults"][0].update(status="blocked", contextDigest=None, statements=[], bindingRefs=[],
+                                             diagnostics=[blocked])
+            value["commands"] = []
+
+        def state_only(value):
+            value["targetResults"][0]["diagnostics"] = [blocked]
+        changes = [
+            ("SINGLE-142", "context", advisory),
+            ("SINGLE-142", "context", counted),
+            ("SINGLE-142", "context", one_diagnostic),
+            ("SINGLE-143", "verify", candidate_test),
+            ("SINGLE-143", "verify", blocked_target),
+            ("SINGLE-143", "verify", state_only),
+        ]
+        for identifier, operation, mutate in changes:
+            path = audit.FIXTURES / "single" / identifier / f"expected/{operation}.json"
+            with self.subTest(identifier=identifier, mutation=mutate.__qualname__):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_distance_reference_orders_by_the_shortest_path(self):
+        """参照計算Bの閉包は、辿ったエッジによる最短の段数、種別、IDの順に文書を並べる。
+        陽性対照（3件のfixture）と、経路や関係を変えて並びが変わる陰性対照を置く。"""
+        def load(identifier):
+            documents = digest_crosscheck.load_documents(audit.FIXTURES / "single" / identifier / "repo")
+            return copy.deepcopy(documents)
+
+        def ordered(documents, root, purpose):
+            return digest_crosscheck.closure(documents, root, purpose)[0]
+        # 139: REQ-002は`refines`の1段と`requires`の2段で到達し、距離は最短の1。
+        documents = load("SINGLE-139")
+        self.assertEqual(ordered(documents, "REQ-001", "interpret"), ["REQ-001", "REQ-002", "REQ-003"])
+        # `refines`を外すと、REQ-002は`requires`の2段だけになり、距離が2になって並びが変わる。
+        documents["REQ-001"]["frontmatter"]["relations"].pop("refines")
+        self.assertEqual(ordered(documents, "REQ-001", "interpret"), ["REQ-001", "REQ-003", "REQ-002"])
+        # 140: 具体化の鎖は距離が1段ずつ増える。
+        documents = load("SINGLE-140")
+        self.assertEqual(ordered(documents, "TASK-001", "implement"), ["TASK-001", "REQ-001", "TECH-002", "TECH-003"])
+        # 141: 後継は距離1で、起点の`requires`の参照先とIDの順に並び、役割`replacement`になる。
+        documents = load("SINGLE-141")
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, advisory, replacement),
+                         (["TECH-005", "TECH-007", "TECH-009"], {"TECH-005"}, {"TECH-009"}))
+        # 後継のIDを起点の前提より前にしても、距離1の2件はIDの順に並ぶ。
+        documents["TECH-001"] = copy.deepcopy(documents.pop("TECH-009"))
+        documents["TECH-001"]["frontmatter"]["id"] = "TECH-001"
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, replacement), (["TECH-005", "TECH-001", "TECH-007"], {"TECH-001"}))
+        # `supersedes`されていない起点は、置換済みとして扱わない。
+        documents = load("SINGLE-141")
+        documents["TECH-009"]["frontmatter"]["relations"].pop("supersedes")
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, advisory, replacement), (["TECH-005", "TECH-007"], set(), set()))
+        # 後継が複数ある起点は、参照計算Bの対象外として拒否する（`CTX-STATE-SUPERSEDED-002`の場面）。
+        documents = load("SINGLE-141")
+        documents["TECH-010"] = copy.deepcopy(documents["TECH-009"])
+        documents["TECH-010"]["frontmatter"]["id"] = "TECH-010"
+        with self.assertRaisesRegex(ValueError, "有効な後継が複数"):
+            digest_crosscheck._closure(documents, "TECH-005", "interpret")
+
+    def test_reference_closure_excludes_draft_refinements_unless_interpret(self):
+        """参照計算Bは、`refines`する状態`draft`の文書を、目的`interpret`だけで役割`advisory`として含め、
+        `implement`と`verify`では閉包へ含めない（関係・トレースモデル §6.1の末尾）。陽性対照と陰性対照を置く。"""
+        def load(identifier):
+            return copy.deepcopy(digest_crosscheck.load_documents(audit.FIXTURES / "single" / identifier / "repo"))
+        documents = load("SINGLE-142")
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "interpret"),
+                         (["REQ-001", "TECH-005"], {"TECH-005"}))
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "implement"), (["REQ-001"], set()))
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "verify"), (["REQ-001"], set()))
+        documents = load("SINGLE-143")
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "verify"),
+                         (["TASK-001", "REQ-001"], set()))
+        # 状態を`approved`にすると、具体化する適用可能な文書として、目的を問わず閉包へ含める。
+        documents["TECH-005"]["frontmatter"]["status"] = "approved"
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "verify")[0],
+                         ["TASK-001", "REQ-001", "TECH-005"])
+        # 状態`draft`以外の適用可能でない文書（`rejected`）は、黙って捨てず、閉包の外の強いエッジとして拒否する。
+        documents["TECH-005"]["frontmatter"]["status"] = "rejected"
+        with self.assertRaisesRegex(ValueError, "閉包の外の強いエッジ"):
+            digest_crosscheck.closure(documents, "TASK-001", "verify")
 
     def test_ordering_fixtures(self):
         result = ordering_fixtures.validate()
@@ -490,6 +773,651 @@ class AuditTests(unittest.TestCase):
                     path.write_bytes(content)
                 self.assertTrue(input_limit_fixtures.validate(root, [identifier])["errors"])
 
+    def test_context_config_fixtures(self):
+        result = context_config_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-150", "SINGLE-151", "SINGLE-152", "SINGLE-153"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def copy_config_fixture(self, temporary, identifier):
+        root = self.copy_fixture(temporary, identifier)
+        shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
+        return root
+
+    def test_context_config_audit_rejects_replaced_or_lost_diagnostics(self):
+        """設定の不適合を`SPEC-WORKSPACE-MISSING-001`へ置換する、発生元を改変する、警告を消す、といった期待値を拒否する。"""
+        missing = {"kind": "environment", "component": "workspace", "identifier": "."}
+        mutations = [
+            # 型の不正と値の範囲外は、設定の診断で返す。不在の診断への置換、発生元の`environment`化、`key`の消去・改変を拒否する。
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-WORKSPACE-MISSING-001", resultStatus="blocked", summary=".spec/bitz.yamlがありません", source=missing)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(source=missing)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                source={"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="earsAi")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-150", "expected/context.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-150", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-150", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("SINGLE-150", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(0, "check")),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-WORKSPACE-MISSING-001", resultStatus="blocked", summary=".spec/bitz.yamlがありません", source=missing)),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0].update(source=missing)),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="context.maxDocuments")),
+            ("SINGLE-151", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-151", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-151", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            # 設定の不在は、`environment`を発生元とする`SPEC-WORKSPACE-MISSING-001`（`blocked`）で返す。設定の診断や`file`の発生元へ置換しない。
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-CONFIG-SCHEMA-001", resultStatus="error", summary="languageはstringで指定してください")),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                source={"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(identifier=".spec")),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(component="git")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(status="error")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-152", "expected/context.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-152", "manifest.json", lambda v: v["expect"].update(status="error", exitCode=3)),
+            ("SINGLE-152", "manifest.json", lambda v: v["expect"].update(exitCode=3)),
+            # 警告は成功した結果へ加える。警告の消去、重大度や状態の改変、ハッシュ値の改変、完全解決の取消しを拒否する。
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(status="error")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0].update(severity="error")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0].update(code="SPEC-CONFIG-SCHEMA-001")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="profiles")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(contextDigest=None)),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-153", "expected/context.json", lambda v: v["resolution"].update(complete=False)),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(documents=[])),
+            ("SINGLE-153", "expected/context.json", lambda v: v["constraintLedger"].update(statements=[{"id": "REQ-001:AC-01"}])),
+            ("SINGLE-153", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-153", "manifest.json", lambda v: v["expect"].update(exitCode=3)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, file=relative, mutation=mutations.index((identifier, relative, mutate))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+
+    def test_context_config_audit_rejects_digest_material_changes(self):
+        """正規JSONが参照計算から離れる改変（未知のキーの混入、許可リストの設定値の改変）を拒否する。"""
+        mutations = [
+            lambda text: text.replace('"settings":{', '"settings":{"futureOption":"preserve-me",', 1),
+            lambda text: text.replace('"language":"ja"', '"language":"en"', 1),
+            lambda text: text.replace('"purpose":"interpret"', '"purpose":"verify"', 1),
+            lambda text: text.replace('"verifyTimeouts":[]', '"verifyTimeouts":[{"timeoutSeconds":300,"workspaceId":"root"}]', 1),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, "SINGLE-153")
+                path = root / "single/SINGLE-153/expected/context.canonical.json"
+                changed = mutate(path.read_text())
+                self.assertNotEqual(changed, path.read_text())
+                path.write_text(changed)
+                self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-153"])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_config_fixture(temporary, "SINGLE-153")
+            path = root / "single/SINGLE-153/expected/context.canonical.json"
+            path.write_bytes(path.read_bytes() + b"\n")
+            self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-153"])["errors"])
+        # 他のfixtureは、ハッシュ値を計算しないので正規JSONを持てない。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_config_fixture(temporary, "SINGLE-150")
+            (root / "single/SINGLE-150/expected/context.canonical.json").write_bytes(b"{}")
+            self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-150"])["errors"])
+
+    def test_context_config_audit_rejects_repaired_or_confounded_inputs(self):
+        """唯一の原因を直した入力、別の原因を足した入力、起点を消した入力は、期待値と組にならない。"""
+        module = context_config_fixtures
+        config, req = module.CONFIG_PATH, module.REQ_PATH
+        edits = [
+            # 型の不正を直す、値の範囲を満たす、設定を足す
+            ("SINGLE-150", config, lambda text: text.replace("language: 42", "language: ja")),
+            ("SINGLE-150", config, lambda text: text.replace("language: 42", "language: en")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 4096")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 131072")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 5000000")),
+            ("SINGLE-151", config, lambda text: text + "futureOption: x\n"),
+            ("SINGLE-153", config, lambda text: text.replace("futureOption: preserve-me\n", "")),
+            ("SINGLE-153", config, lambda text: text.replace("futureOption", "profiles")),
+            ("SINGLE-153", config, lambda text: text + "otherOption: 1\n"),
+            ("SINGLE-153", config, lambda text: text.replace("preserve-me", "changed")),
+            # 起点の文書を変える。ハッシュ値の材料と本文が変わる
+            ("SINGLE-153", req, lambda text: text.replace("文書構造を検査する。", "文書構造を検査する。\n")),
+            ("SINGLE-153", req, lambda text: text.replace("[MUST]", "[SHOULD] [REASON] 確認のため")),
+            ("SINGLE-150", req, lambda text: text.replace("status: approved", "status: draft")),
+        ]
+        for identifier, relative, edit in edits:
+            with self.subTest(identifier=identifier, file=relative, edit=edits.index((identifier, relative, edit))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "repo" / relative
+                changed = edit(path.read_text())
+                self.assertNotEqual(changed, path.read_text())
+                path.write_text(changed)
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+        # 起点の文書を消す（起点の不在が原因に混ざる）、設定を消す、設定を足す、不要なファイルを足す
+        for identifier, action in (("SINGLE-150", "remove-req"), ("SINGLE-151", "remove-req"), ("SINGLE-153", "remove-req"),
+                                   ("SINGLE-150", "remove-config"), ("SINGLE-153", "remove-config"),
+                                   ("SINGLE-152", "add-config"), ("SINGLE-152", "add-minimal-config"),
+                                   ("SINGLE-152", "remove-req"), ("SINGLE-150", "add-file")):
+            with self.subTest(identifier=identifier, action=action), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                repo = root / "single" / identifier / "repo"
+                if action == "remove-req":
+                    (repo / req).unlink()
+                elif action == "remove-config":
+                    (repo / config).unlink()
+                elif action == "add-config":
+                    (repo / config).write_text(module.CONFIGS["SINGLE-004-01"])
+                elif action == "add-minimal-config":
+                    (repo / config).write_text(module.CONFIGS["SINGLE-001"])
+                else:
+                    (repo / "extra.txt").write_text("x")
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_context_config_audit_rejects_changed_side_effects_and_git_state(self):
+        mutations = [
+            ("SINGLE-150", lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+            ("SINGLE-152", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-153", lambda v: v["before"]["repository"][".spec/bitz.yaml"].update(executable=True)),
+            ("SINGLE-153", lambda v: v["after"]["repository"].pop(".spec/bitz.yaml")),
+        ]
+        for identifier, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "side-effects.json"
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+        # コミットのないリポジトリの作業ツリーだけで準備する。基準のコミットを足すと拒否する。
+        for identifier in context_config_fixtures.CASES:
+            with self.subTest(identifier=identifier, change="baseCommit"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "manifest.json"
+                value = json.loads(path.read_text())
+                value["setup"]["baseCommit"] = {"message": "base", "paths": ["."]}
+                path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+
+    def copy_command_fixtures(self, temporary):
+        """`SINGLE-155`の検証は`SINGLE-154`の正規JSONを共有するので、2件とも複製する。"""
+        root = self.copy_config_fixture(temporary, "SINGLE-154")
+        other = self.copy_fixture(Path(temporary) / "other", "SINGLE-155")
+        shutil.copytree(other / "single/SINGLE-155", root / "single/SINGLE-155", symlinks=True)
+        return root
+
+    def test_digest_command_fixtures(self):
+        result = digest_command_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-154", "SINGLE-155"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも2件とも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            self.assertEqual(digest_command_fixtures.validate(root)["errors"], [])
+        canonical = (audit.FIXTURES / "single/SINGLE-154/expected/context.canonical.json").read_bytes()
+        settings = json.loads(canonical)["settings"]
+        self.assertEqual([c["name"] for c in settings["commands"]], ["default"])
+        self.assertEqual(settings["verifyTimeouts"], [{"timeoutSeconds": 300, "workspaceId": "root"}])
+        # 2件のハッシュ値は同じ値である。
+        context = json.loads((audit.FIXTURES / "single/SINGLE-154/expected/context.json").read_text())
+        verify = json.loads((audit.FIXTURES / "single/SINGLE-155/expected/verify.json").read_text())
+        self.assertEqual(context["contextDigest"], verify["targetResults"][0]["contextDigest"])
+        self.assertEqual(context["contextDigest"], digest_command_fixtures.literal_digest())
+
+    def test_digest_command_audit_rejects_changed_expectations(self):
+        """ハッシュ値の食い違い、実行したコマンドの改変、起動条件の改変を拒否する。"""
+        zero = "sha256:" + "0" * 64
+        mutations = [
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(contextDigest=zero)),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(contextDigest=None)),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["documents"][0]["frontmatter"].pop("verify")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["documents"][0]["frontmatter"]["tests"][0].update(command="default")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["coverage"]["must"].update(tested=[], untested=["REQ-001:AC-01"])),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(purpose="implement")),
+            ("SINGLE-154", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "implement")),
+            ("SINGLE-154", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(2, 4))),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=zero)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=None)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v.update(commands=[])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(argv=["/bin/true"])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(timeoutSeconds=1)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(cwd="src")),
+            ("SINGLE-155", "expected/verify.json", lambda v: v.update(status="failed")),
+            ("SINGLE-155", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("SINGLE-155", "manifest.json", lambda v: v["invocation"]["argv"].append("--all-workspaces")),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_command_fixtures(temporary)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+
+    def test_digest_command_audit_rejects_digest_material_changes(self):
+        """材料から`commands`または`verifyTimeouts`を消す改変、その内容の改変、正規JSONと結果の食い違いを拒否する。"""
+        command = '"commands":[{"argv":["/bin/true","{tests}"],"cwd":".","name":"default","workspaceId":"root"}]'
+        timeout = '"verifyTimeouts":[{"timeoutSeconds":300,"workspaceId":"root"}]'
+        mutations = [
+            lambda text: text.replace(command, '"commands":[]', 1),
+            lambda text: text.replace(timeout, '"verifyTimeouts":[]', 1),
+            lambda text: text.replace(command, '"commands":[]', 1).replace(timeout, '"verifyTimeouts":[]', 1),
+            lambda text: text.replace('"/bin/true","{tests}"', '"/bin/true","tests/test_auth.py"', 1),
+            lambda text: text.replace('"cwd":"."', '"cwd":"src"', 1),
+            lambda text: text.replace('"timeoutSeconds":300', '"timeoutSeconds":301', 1),
+            lambda text: text.replace('"name":"default"', '"name":"other"', 1),
+            lambda text: text.replace('"verify":"default"', '"verify":null', 1),
+            lambda text: text.replace('"command":null', '"command":"default"', 1),
+        ]
+        for index, mutate in enumerate(mutations):
+            for identifier in ("SINGLE-154", "SINGLE-155"):
+                with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    path = root / "single/SINGLE-154/expected/context.canonical.json"
+                    changed = mutate(path.read_text())
+                    self.assertNotEqual(changed, path.read_text())
+                    path.write_text(changed)
+                    self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            path = root / "single/SINGLE-154/expected/context.canonical.json"
+            path.write_bytes(path.read_bytes() + b"\n")
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-154"])["errors"])
+        # `SINGLE-155`は正規JSONを持たない（`SINGLE-154`のものを共有する）。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            (root / "single/SINGLE-155/expected/context.canonical.json").write_bytes(
+                (root / "single/SINGLE-154/expected/context.canonical.json").read_bytes())
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-155"])["errors"])
+
+    def test_digest_command_audit_rejects_repaired_or_confounded_inputs(self):
+        """コマンド名の与え方（文書の`verify`だけ）を変えた入力、設定やテストを変えた入力は、期待値と組にならない。"""
+        module = digest_command_fixtures
+        config, req, test = module.CONFIG_PATH, module.REQ_PATH, module.TEST_PATH
+        edits = [
+            # 文書の`verify`を消す、テスト対応に`command`を足す（解決の経路が変わる）、別名にする
+            (req, lambda text: text.replace("verify: default\n", "")),
+            (req, lambda text: text.replace("verify: default\n", "").replace(
+                "covers: [REQ-001:AC-01]\n", "covers: [REQ-001:AC-01]\n    command: default\n")),
+            (req, lambda text: text.replace("verify: default", "verify: other")),
+            (req, lambda text: text.replace("covers: [REQ-001:AC-01]\n", "covers: [REQ-001:AC-01]\n    command: default\n")),
+            (req, lambda text: text.replace("文書構造を検査する。", "文書構造を検査する。\n")),
+            (req, lambda text: text.replace("[MUST]", "[SHOULD] [REASON] 確認のため")),
+            (config, lambda text: text.replace("default:", "other:")),
+            (config, lambda text: text.replace("      cwd: .\n", "")),
+            (config, lambda text: text.replace('"/bin/true", "{tests}"', '"/bin/true"')),
+            (config, lambda text: text + "  timeoutSeconds: 60\n"),
+            (test, lambda text: text + "# 変更\n"),
+        ]
+        for index, (relative, edit) in enumerate(edits):
+            for identifier in ("SINGLE-154", "SINGLE-155"):
+                with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    path = root / "single" / identifier / "repo" / relative
+                    changed = edit(path.read_text())
+                    self.assertNotEqual(changed, path.read_text())
+                    path.write_text(changed)
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+        for identifier in ("SINGLE-154", "SINGLE-155"):
+            for action in ("remove-test", "remove-req", "remove-config", "add-file"):
+                with self.subTest(identifier=identifier, action=action), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    repo = root / "single" / identifier / "repo"
+                    if action == "add-file":
+                        (repo / "extra.txt").write_text("x")
+                    else:
+                        (repo / {"remove-test": test, "remove-req": req, "remove-config": config}[action]).unlink()
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_digest_command_audit_rejects_changed_side_effects_and_git_state(self):
+        mutations = [
+            ("SINGLE-154", lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+            ("SINGLE-154", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-155", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-155", lambda v: v["after"]["repository"].pop("tests/test_auth.py")),
+            ("SINGLE-155", lambda v: v["before"]["repository"][".spec/bitz.yaml"].update(executable=True)),
+        ]
+        for index, (identifier, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_command_fixtures(temporary)
+                path = root / "single" / identifier / "side-effects.json"
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+        # `SINGLE-154`はコミットのないリポジトリで準備する。基準のコミットを足すと拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            path = root / "single/SINGLE-154/manifest.json"
+            value = json.loads(path.read_text())
+            value["setup"]["baseCommit"] = {"message": "base", "paths": ["."]}
+            path.write_text(json.dumps(value))
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-154"])["errors"])
+
+    def copy_task_tech_fixture(self, temporary, identifier):
+        """`SINGLE-156`、`SINGLE-157`、`MULTI-028`は独立した入力なので、1件ずつ複製する。"""
+        if identifier.startswith("MULTI-"):
+            return self.copy_multi_fixture(temporary, identifier)
+        return self.copy_config_fixture(temporary, identifier)
+
+    def task_tech_directory(self, root, identifier):
+        return verify_task_tech_fixtures.fixture_directory(root, identifier)
+
+    def test_verify_task_tech_fixtures(self):
+        result = verify_task_tech_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-156", "SINGLE-157", "MULTI-028"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in verify_task_tech_fixtures.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_task_tech_fixture(temporary, identifier)
+                self.assertEqual(verify_task_tech_fixtures.validate(root, [identifier])["errors"], [])
+        # 3件は、規範文のないTECHの文書単位のテスト割当てを、TASKの起点で実行する。
+        expected = {"SINGLE-156": ([], ["root::default"], ["tests/test_tech.py"], ["TECH-001"]),
+                    "SINGLE-157": (["REQ-001:AC-01"], ["root::default"],
+                                   ["tests/test_req.py", "tests/test_tech.py"], ["REQ-001:AC-01", "TECH-001"]),
+                    "MULTI-028": ([], ["api::backend"], ["tests/test_audit.py"], ["api::TECH-020"])}
+        for identifier, (statements, bindings, tests, covers) in expected.items():
+            fixture = self.task_tech_directory(audit.FIXTURES, identifier)
+            value = json.loads((fixture / "expected/verify.json").read_text())
+            target = value["targetResults"][0]
+            self.assertEqual((target["statements"], target["bindingRefs"]), (statements, bindings))
+            self.assertEqual([(c["bindingId"], c["tests"], c["covers"]) for c in value["commands"]],
+                             [(bindings[0], tests, covers)])
+            self.assertEqual(target["contextDigest"], verify_task_tech_fixtures.literal_digest(identifier))
+        # 3件はそれぞれ別の入力のハッシュ値を持つ。
+        self.assertEqual(len({verify_task_tech_fixtures.literal_digest(i) for i in verify_task_tech_fixtures.CASES}), 3)
+
+    def test_verify_task_tech_audit_rejects_changed_expectations(self):
+        """`bindingRefs`や`commands`の消去、規範文の追加、テストの欠落、修飾の改変、ハッシュ値の改変を拒否する。"""
+        zero = "sha256:" + "0" * 64
+        mutations = []
+        for identifier in verify_task_tech_fixtures.CASES:
+            mutations += [
+                (identifier, "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+                (identifier, "expected/verify.json", lambda v: v.update(commands=[])),
+                (identifier, "expected/verify.json", lambda v: v.update(commands=[], targetResults=[
+                    dict(v["targetResults"][0], bindingRefs=[])])),
+                (identifier, "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=zero)),
+                (identifier, "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=None)),
+                (identifier, "expected/verify.json", lambda v: v["targetResults"][0]["statements"].append("TECH-001")),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(tests=[])),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(covers=[])),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(argv=["/bin/true"])),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(timeoutSeconds=1)),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(cwd="src")),
+                (identifier, "expected/verify.json", lambda v: v["commands"][0].update(status="failed", exitCode=1)),
+                (identifier, "expected/verify.json", lambda v: v.update(commands=v["commands"] * 2)),
+                (identifier, "expected/verify.json", lambda v: v.update(status="failed")),
+                (identifier, "expected/verify.json", lambda v: v.update(status="blocked")),
+                (identifier, "expected/verify.json", lambda v: v["targetResults"][0].update(status="blocked")),
+                (identifier, "expected/verify.json", lambda v: v.update(diagnostics=[{
+                    "code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
+                    "summary": "テストがありません"}])),
+                (identifier, "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+                (identifier, "manifest.json", lambda v, identifier=identifier: v["invocation"]["argv"].__setitem__(
+                    1, "api::TECH-020" if identifier == "MULTI-028" else "TECH-001")),
+                (identifier, "manifest.json", lambda v: v["invocation"]["argv"].append("--all-workspaces")),
+            ]
+        mutations += [
+            ("SINGLE-156", "expected/verify.json", lambda v: v["targetResults"][0].update(statements=["TECH-001"])),
+            ("SINGLE-157", "expected/verify.json", lambda v: v["targetResults"][0].update(statements=[])),
+            ("SINGLE-157", "expected/verify.json", lambda v: v["targetResults"][0].update(statements=["REQ-001:AC-01", "TECH-001"])),
+            ("SINGLE-157", "expected/verify.json", lambda v: v["commands"][0].update(
+                tests=["tests/test_req.py"], argv=["/bin/true", "tests/test_req.py"], covers=["REQ-001:AC-01"])),
+            ("SINGLE-157", "expected/verify.json", lambda v: v["commands"][0].update(
+                tests=["tests/test_tech.py"], argv=["/bin/true", "tests/test_tech.py"], covers=["TECH-001"])),
+            ("SINGLE-157", "expected/verify.json", lambda v: v["commands"][0].update(tests=["tests/test_tech.py", "tests/test_req.py"])),
+            ("SINGLE-156", "expected/verify.json", lambda v: v["commands"][0].update(
+                tests=["tests/test_req.py"], argv=["/bin/true", "tests/test_req.py"])),
+            ("SINGLE-156", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("MULTI-028", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=["web::backend"])),
+            ("MULTI-028", "expected/verify.json", lambda v: v["commands"][0].update(bindingId="web::backend", workspaceId="web")),
+            ("MULTI-028", "expected/verify.json", lambda v: v["commands"][0].update(covers=["TECH-020"])),
+            ("MULTI-028", "expected/verify.json", lambda v: v["targetResults"][0].update(target="TASK-001")),
+            ("MULTI-028", "expected/verify.json", lambda v: v.update(workspace={"id": "api", "path": "services/api"})),
+            ("MULTI-028", "expected/verify.json", lambda v: v.update(revision=None)),
+            ("MULTI-028", "manifest.json", lambda v: v["setup"].pop("baseCommit")),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_task_tech_fixture(temporary, identifier)
+                path = self.task_tech_directory(root, identifier) / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertTrue(verify_task_tech_fixtures.validate(root, [identifier])["errors"])
+
+    def test_verify_task_tech_result_check_rejects_lost_or_added_binding_and_statements(self):
+        """入力の木構造から導く計画との比較が、`bindingRefs`・`commands`の消去、規範文の追加、テストの欠落を拒否する。"""
+        module = verify_task_tech_fixtures
+        for identifier in module.CASES:
+            multi = identifier in module.MULTI
+            root_id = "web::TASK-001" if multi else "TASK-001"
+            fixture = self.task_tech_directory(audit.FIXTURES, identifier)
+            result = json.loads((fixture / "expected/verify.json").read_text())
+            plan = module.reference_plan(fixture / "repo", root_id, multi)
+            module.check_result(result, plan)
+
+            def erase_binding(value):
+                value["targetResults"][0]["bindingRefs"] = []
+                value["commands"] = []
+
+            def add_statement(value):
+                value["targetResults"][0]["statements"].append("TECH-001" if not multi else "api::TECH-020")
+
+            def drop_tests(value):
+                value["commands"][0]["tests"] = value["commands"][0]["tests"][:-1]
+
+            def drop_covers(value):
+                value["commands"][0]["covers"] = value["commands"][0]["covers"][:-1]
+
+            def unqualify(value):
+                value["commands"][0]["covers"] = [item.rpartition("::")[2] for item in value["commands"][0]["covers"]]
+
+            changes = [erase_binding, add_statement, drop_tests, drop_covers,
+                       lambda value: value["targetResults"][0].update(bindingRefs=[]),
+                       lambda value: value.update(commands=[])]
+            if multi:
+                changes.append(unqualify)
+            for index, change in enumerate(changes):
+                with self.subTest(identifier=identifier, index=index):
+                    changed = copy.deepcopy(result)
+                    change(changed)
+                    with self.assertRaises(ValueError):
+                        module.check_result(changed, plan)
+
+    def test_verify_task_tech_reference_plan_follows_the_inputs(self):
+        """計画は入力の木構造から導く。TECHの`tests`の消去、`addresses`の変更、規範文の追加で計画が変わり、期待値と食い違う。"""
+        module = verify_task_tech_fixtures
+        edits = [
+            ("SINGLE-156", module.TECH_PATH, "tests:\n  - path: tests/test_tech.py\n    covers: [TECH-001]\n    command: default\n", ""),
+            ("SINGLE-156", module.TASK_PATH, "addresses: [TECH-001]", "related: [TECH-001]"),
+            ("SINGLE-156", module.TECH_PATH, "covers: [TECH-001]", "covers: [TECH-002]"),
+            ("SINGLE-157", module.TECH_PATH, "tests:\n  - path: tests/test_tech.py\n    covers: [TECH-001]\n    command: default\n", ""),
+            ("SINGLE-157", module.REQ_PATH, "tests:\n  - path: tests/test_req.py\n    covers: [REQ-001:AC-01]\n    command: default\n", ""),
+            ("SINGLE-157", module.TASK_PATH, "addresses: [REQ-001:AC-01, TECH-001]", "addresses: [REQ-001:AC-01]"),
+            ("SINGLE-157", module.TASK_PATH, "addresses: [REQ-001:AC-01, TECH-001]", "addresses: [TECH-001]"),
+            ("MULTI-028", "services/api/.spec/technical/TECH-020.md",
+             "tests:\n  - path: tests/test_audit.py\n    covers: [TECH-020]\n    command: backend\n", ""),
+            ("MULTI-028", module.M_TASK_PATH, "addresses: [api::TECH-020]", "related: [api::TECH-020]"),
+        ]
+        for index, (identifier, relative, old, new) in enumerate(edits):
+            multi = identifier in module.MULTI
+            root_id = "web::TASK-001" if multi else "TASK-001"
+            with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                fixture = self.task_tech_directory(audit.FIXTURES, identifier)
+                repository = Path(temporary) / "repo"
+                shutil.copytree(fixture / "repo", repository)
+                path = repository / relative
+                self.assertIn(old, path.read_text())
+                path.write_text(path.read_text().replace(old, new))
+                result = json.loads((fixture / "expected/verify.json").read_text())
+                with self.assertRaises(ValueError):
+                    module.check_result(result, module.reference_plan(repository, root_id, multi))
+        # 規範文を持つTECHを文書IDだけで`addresses`することは、規範文を持たない文書の規則に反する。
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.task_tech_directory(audit.FIXTURES, "SINGLE-156")
+            repository = Path(temporary) / "repo"
+            shutil.copytree(fixture / "repo", repository)
+            path = repository / module.TECH_PATH
+            path.write_text(path.read_text() + "\n## Contract\n\n"
+                            "- [TECH-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n")
+            with self.assertRaises(ValueError):
+                module.reference_plan(repository, "TASK-001", False)
+
+    def test_verify_task_tech_audit_rejects_changed_inputs(self):
+        """原因は、TASKが規範文のないTECHを`addresses`し、そのTECHが文書単位の`tests`を持つことだけである。入力を変えた写しは、期待値が同じでも拒否する。"""
+        module = verify_task_tech_fixtures
+        tech, req, task, config = module.TECH_PATH, module.REQ_PATH, module.TASK_PATH, module.CONFIG_PATH
+        web_task, api_tech = module.M_TASK_PATH, module.M_TECH_PATH
+        api_config, web_config = multi_reference.API_CONFIG_PATH, multi_reference.WEB_CONFIG_PATH
+        schema = json.loads(schema_path(audit.FIXTURES, "frontmatter").read_text())
+        both = ("SINGLE-156", "SINGLE-157")
+        edits = [
+            (both, tech, lambda text: text.replace("    command: default\n", "")),
+            (both, tech, lambda text: text.replace("covers: [TECH-001]", "covers: [TECH-001, TECH-002]")),
+            (both, tech, lambda text: text.replace("tests:\n", "verify: default\ntests:\n")),
+            (both, tech, lambda text: text.replace("command: default", "command: other")),
+            (both, tech, lambda text: text.replace("status: approved", "status: draft")),
+            (both, tech, lambda text: text.replace("status: approved\n", "status: approved\nrelations:\n  requires: [REQ-009]\n")),
+            (both, tech, lambda text: text.replace("規範文を持たず、", "規範文を持たず、\n\n- [TECH-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 何かを行う。\n")),
+            (both, task, lambda text: text.replace("status: open", "status: done")),
+            (both, task, lambda text: text.replace("relations:", "changes: [src/auth.py]\nrelations:")),
+            (both, task, lambda text: text.replace("addresses:", "requires: [TASK-002]\n  addresses:")),
+            (both, task, lambda text: text.replace("addresses: [", "addresses: [REQ-009, ")),
+            (both, config, lambda text: text.replace("default:", "other:")),
+            (both, config, lambda text: text + "  timeoutSeconds: 60\n"),
+            (both, config, lambda text: text.replace("{tests}", "tests/test_tech.py")),
+            (("SINGLE-157",), req, lambda text: text.replace("[MUST]", "[SHOULD] [REASON] 確認のため")),
+            (("SINGLE-157",), req, lambda text: text.replace("path: tests/test_req.py", "path: tests/test_tech.py")),
+            (("SINGLE-157",), req, lambda text: text.replace("command: default", "command: other")),
+            (("SINGLE-157",), req, lambda text: text.replace("status: approved", "status: draft")),
+            (("SINGLE-157",), req, lambda text: text.replace("tests:", "relations:\n  refines: [TECH-001]\ntests:")),
+            (("MULTI-028",), api_tech, lambda text: text.replace("    command: backend\n", "")),
+            (("MULTI-028",), api_tech, lambda text: text.replace("covers: [TECH-020]", "covers: [api::TECH-020]")),
+            (("MULTI-028",), api_tech, lambda text: text.replace("status: approved", "status: draft")),
+            (("MULTI-028",), api_tech, lambda text: text.replace("tests:\n", "verify: backend\ntests:\n")),
+            (("MULTI-028",), web_task, lambda text: text.replace("api::TECH-020", "TECH-020")),
+            (("MULTI-028",), web_task, lambda text: text.replace("status: open", "status: done")),
+            (("MULTI-028",), api_config, lambda text: text.replace("backend:", "frontend:")),
+            (("MULTI-028",), web_config, lambda text: text + "verify:\n  commands:\n    backend:\n      argv: [\"/bin/false\", \"{tests}\"]\n      cwd: .\n"),
+        ]
+        for index, (identifiers, relative, edit) in enumerate(edits):
+            for identifier in identifiers:
+                with self.subTest(index=index, identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_task_tech_fixture(temporary, identifier)
+                    path = self.task_tech_directory(root, identifier) / "repo" / relative
+                    changed = edit(path.read_text())
+                    self.assertNotEqual(changed, path.read_text())
+                    path.write_text(changed)
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+                    # 入力の一致の検査と別に、原因の単一性の検査が、入力の木構造から拒否する。
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, path.parents[len(Path(relative).parents) - 1], schema)
+        # 末尾の空行とテストのファイルの本文は原因に関与しないが、入力のバイト列の一致の検査が拒否する。
+        byte_only = [(both, tech, "\n"), (both, "tests/test_tech.py", "# 変更\n"),
+                     (("MULTI-028",), "services/api/tests/test_audit.py", "# 変更\n")]
+        for identifiers, relative, suffix in byte_only:
+            for identifier in identifiers:
+                with self.subTest(identifier=identifier, file=relative, edit="append"), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_task_tech_fixture(temporary, identifier)
+                    path = self.task_tech_directory(root, identifier) / "repo" / relative
+                    path.write_text(path.read_text() + suffix)
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+        removals = {"SINGLE-156": [tech, task, config, "tests/test_tech.py"],
+                    "SINGLE-157": [tech, task, req, config, "tests/test_tech.py", "tests/test_req.py"],
+                    "MULTI-028": [api_tech, web_task, api_config, web_config, "services/api/tests/test_audit.py"]}
+        for identifier, names in removals.items():
+            for name in [*names, "add-file"]:
+                with self.subTest(identifier=identifier, removed=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_task_tech_fixture(temporary, identifier)
+                    repo = self.task_tech_directory(root, identifier) / "repo"
+                    if name == "add-file":
+                        (repo / "extra.txt").write_text("x")
+                    else:
+                        (repo / name).unlink()
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_verify_task_tech_audit_rejects_changed_digest_and_side_effects(self):
+        """ハッシュ値の材料（参照計算A）と入力の木構造（参照計算B）が食い違う写し、副作用の期待値とGitの状態の改変を拒否する。"""
+        module = verify_task_tech_fixtures
+        for identifier in module.CASES:
+            for change in ("commands", "document", "roots", "timeout"):
+                with self.subTest(identifier=identifier, change=change), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_task_tech_fixture(temporary, identifier)
+                    original = module.reviewed_digest_input
+
+                    def tampered(name, original=original, change=change):
+                        value = copy.deepcopy(original(name))
+                        if change == "commands":
+                            value["settings"]["commands"] = []
+                        elif change == "document":
+                            value["documents"][0]["bodyText"] += "\n"
+                        elif change == "roots":
+                            value["roots"].append("TECH-001")
+                        else:
+                            value["settings"]["verifyTimeouts"] = []
+                        return value
+
+                    with patch.object(module, "reviewed_digest_input", tampered):
+                        self.assertTrue(module.validate(root, [identifier])["errors"])
+                        # 参照計算Aだけを差し替えると、入力の木構造から導く参照計算Bと食い違う。
+                        with self.assertRaises(ValueError):
+                            module.references(identifier, self.task_tech_directory(audit.FIXTURES, identifier) / "repo")
+        mutations = [
+            ("SINGLE-156", lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+            ("SINGLE-156", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-157", lambda v: v["before"]["repository"].pop("tests/test_req.py")),
+            ("SINGLE-157", lambda v: v["before"]["repository"][".spec/bitz.yaml"].update(executable=True)),
+            ("MULTI-028", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("MULTI-028", lambda v: v["after"]["repository"].pop("services/api/tests/test_audit.py")),
+        ]
+        for index, (identifier, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_task_tech_fixture(temporary, identifier)
+                path = self.task_tech_directory(root, identifier) / "side-effects.json"
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_multi_reference_closure_includes_the_addresses_of_a_task_root(self):
+        """複合ワークスペースの参照計算Bは、TASK起点の`addresses`の先を距離1で閉包へ含め、`requires`を持つTASK起点を拒否する。"""
+        fixture = audit.FIXTURES / "multi/MULTI-028"
+        payload = multi_crosscheck.build(fixture / "repo", root="web::TASK-001")
+        self.assertEqual([item["id"] for item in payload["documents"]], ["api::TECH-020", "web::TASK-001"])
+        self.assertEqual(payload["crossWorkspaceEdges"],
+                         [{"relation": "addresses", "source": "web::TASK-001", "target": "api::TECH-020"}])
+        self.assertEqual([item["id"] for item in payload["workspaces"]], ["web", "api"])
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "repo"
+            shutil.copytree(fixture / "repo", repository)
+            path = repository / verify_task_tech_fixtures.M_TASK_PATH
+            path.write_text(path.read_text().replace("addresses:", "requires: [api::TECH-020]\n  addresses:"))
+            with self.assertRaises(ValueError):
+                multi_crosscheck.build(repository, root="web::TASK-001")
+            path.write_text(path.read_text().replace("requires: [api::TECH-020]\n  ", "").replace(
+                "addresses: [api::TECH-020]", "addresses: [api::TECH-999]"))
+            with self.assertRaises(ValueError):
+                multi_crosscheck.build(repository, root="web::TASK-001")
+
     def copy_fixture(self, temporary, identifier):
         root = Path(temporary)
         shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier, symlinks=True)
@@ -595,6 +1523,310 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value))
                 self.assertEqual(multi_identity_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_relation_type_fixtures(self):
+        result = multi_relation_type_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_relation_type_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_relation_type_audit_rejects_state_diagnostic_and_erased_diagnostic(self):
+        """他のメンバーの文書の型制約を、状態の診断への置換、診断の消去（成功への改変）、発生元の改変で崩した写しを拒否する。"""
+        def to_state(diagnostic):
+            diagnostic.update(code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")
+            diagnostic["source"] = {"kind": "file", "workspaceId": "api", "path": ".spec/decisions/ADR-001.md"}
+            diagnostic.pop("evidence")
+
+        def erase_context(value):
+            value.update(status="passed")
+            value["diagnostics"] = []
+            value["resolution"].update(complete=True, unresolvedStrongRelations=0)
+
+        def erase_verify(value):
+            value.update(status="passed")
+            value["targetResults"][0].update(status="passed", diagnostics=[])
+
+        mutations = [
+            ("MULTI-027-01", "expected/context.json", lambda v: to_state(v["diagnostics"][0])),
+            ("MULTI-027-02", "expected/verify.json", lambda v: to_state(v["targetResults"][0]["diagnostics"][0])),
+            ("MULTI-027-01", "expected/context.json", erase_context),
+            ("MULTI-027-02", "expected/verify.json", erase_verify),
+            ("MULTI-027-01", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0]["source"].update(workspaceId="web")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(workspaceId="web")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(evidence="api::ADR-001")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0]["diagnostics"][0]["source"].pop("key")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["resolution"].update(unresolvedStrongRelations=0)),
+            ("MULTI-027-01", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v.update(diagnostics=v["targetResults"][0]["diagnostics"])),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(bindingRefs=["web::frontend"])),
+            ("MULTI-027-01", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-027-02", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("MULTI-027-01", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_relation_type_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_relation_type_audit_rejects_changed_corpus(self):
+        """原因はTECH-020から状態`proposed`のADR-001への`requires`の1つだけである。入力を変えた写しは、期待値が同じでも拒否する。"""
+        edits = [
+            ("services/api/.spec/decisions/ADR-001.md", b"status: proposed", b"status: accepted"),
+            ("apps/web/.spec/requirements/REQ-001.md", b"requires: [api::TECH-020]",
+             b"requires: [api::TECH-020]\n  refines: [api::TECH-020]"),
+            ("services/api/.spec/technical/TECH-020.md", b"requires: [ADR-001]", b"requires: [api::ADR-001]"),
+        ]
+        for relative, old, new in edits:
+            with self.subTest(relative=relative, new=new), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, "MULTI-027-01")
+                path = root / "multi/MULTI-027-01/repo" / relative
+                self.assertIn(old, path.read_bytes())
+                path.write_bytes(path.read_bytes().replace(old, new))
+                self.assertEqual(multi_relation_type_fixtures.validate(root, {"MULTI-027-01"})["status"], "Failed")
+        # 入力の一致の検査と別に、原因の単一性の検査が、入力の木構造と参照計算から拒否する。
+        for relative, old, new in edits[:2]:
+            with self.subTest(single_cause=relative), tempfile.TemporaryDirectory() as temporary:
+                fixture = audit.FIXTURES / "multi/MULTI-027-01"
+                repository = Path(temporary) / "repo"
+                shutil.copytree(fixture / "repo", repository)
+                path = repository / relative
+                path.write_bytes(path.read_bytes().replace(old, new))
+                result = json.loads((fixture / "expected/context.json").read_text())
+                with self.assertRaises(ValueError):
+                    multi_relation_type_fixtures.check_single_cause("MULTI-027-01", repository, result)
+
+    def test_multi_check_fixtures(self):
+        result = multi_check_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["MULTI-029-01", "MULTI-029-02", "MULTI-029-03"])
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in multi_check_fixtures.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(multi_check_fixtures.validate(root, {identifier})["errors"], [])
+
+    def test_multi_check_reference_follows_the_inputs(self):
+        """参照計算は入力の木構造とGitの変更集合から、作業ワークスペース、完全検査の対象、件数、診断を導く。"""
+        module = multi_check_fixtures
+        expected = {
+            "MULTI-029-01": ("full", "apps/web", None, ["api::TECH-020", "platform::REQ-001", "web::TECH-010", "web::TECH-011"]),
+            "MULTI-029-02": ("full", ".", "web", ["api::TECH-020", "platform::REQ-001", "web::TECH-010", "web::TECH-011"]),
+            "MULTI-029-03": ("changed", "apps/web", None, ["api::TECH-020", "api::TECH-040", "web::TECH-030"]),
+        }
+        for identifier, (kind, cwd, option, inspected) in expected.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                reference = module.reference_check(repository, kind, "web", cwd, option)
+                self.assertEqual(reference["workspace"], {"id": "web", "path": "apps/web"})
+                self.assertEqual(reference["inspected"], inspected)
+                self.assertEqual(reference["documentCount"], len(inspected))
+                result = json.loads((fixture / "expected/check.json").read_text())
+                module.check_result_against_reference(result, reference)
+                # オプションと実行ディレクトリが作業ワークスペースを決める。ルートの既定は`platform`、メンバーの中は`web`。
+                _, workspaces, _ = multi_crosscheck.load_workspaces(repository)
+                self.assertEqual(module.select_workspace(workspaces, ".", None), "platform")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web", None), "web")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web/src", None), "web")
+                self.assertEqual(module.select_workspace(workspaces, ".", "api"), "api")
+                self.assertEqual(module.select_workspace(workspaces, "apps/web", "platform"), "platform")
+                with self.assertRaises(ValueError):
+                    module.select_workspace(workspaces, ".", "missing")
+                # 作業ワークスペースの取り違え（ルート）では、期待と一致しない。
+                with self.assertRaises(ValueError):
+                    module.reference_check(repository, kind, "web", ".", None)
+                # 期待値の改変（修正前の値、他の範囲、所有ワークスペースの取り違え）を、参照計算との比較が拒否する。
+                changes = [lambda v: v["workspace"].update(path="."),
+                           lambda v: v["workspace"].update(id="platform", path="."),
+                           lambda v: v.update(status="passed" if v["status"] == "failed" else "failed")]
+                if kind == "full":
+                    changes += [lambda v: v.update(checkedDocumentCount=2), lambda v: v.update(checkedDocumentCount=5),
+                                lambda v: v.update(checkedStatementCount=0), lambda v: v.update(checkedStatementCount=2)]
+                else:
+                    changes += [lambda v: v.update(diagnostics=[]),
+                                lambda v: v["selection"].update(targetDocumentCount=3),
+                                lambda v: v["selection"].update(changedPathCount=2),
+                                lambda v: v["selection"].update(excludedCodeTestPathCount=1),
+                                lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+                                lambda v: v["diagnostics"][1]["source"].update(workspaceId="platform"),
+                                lambda v: v["diagnostics"].reverse(),
+                                lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))]
+                for index, change in enumerate(changes):
+                    with self.subTest(identifier=identifier, change=index):
+                        changed = copy.deepcopy(result)
+                        change(changed)
+                        self.assertNotEqual(changed, result)
+                        with self.assertRaises(ValueError):
+                            module.check_result_against_reference(changed, reference)
+
+    def test_multi_check_audit_rejects_changed_expectations(self):
+        """修正前の誤検出、`workspace.path`の改変、件数の改変、他のメンバーの診断の所有ワークスペースの改変などを拒否する。"""
+        pre_fix = {
+            "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+            "summary": "strong relationの参照先が存在しません", "evidence": "api::TECH-020",
+            "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
+                       "key": "relations.requires"}}
+
+        def false_positive(value):
+            value.update(status="failed", diagnostics=[copy.deepcopy(pre_fix)])
+
+        full = [
+            false_positive,
+            lambda v: v["workspace"].update(path="."),
+            lambda v: v["workspace"].update(id="platform", path="."),
+            lambda v: v["workspace"].update(id="api", path="services/api"),
+            lambda v: v.update(checkedDocumentCount=2),
+            lambda v: v.update(checkedDocumentCount=3),
+            lambda v: v.update(checkedDocumentCount=5),
+            lambda v: v.update(checkedStatementCount=0),
+            lambda v: v.update(checkedStatementCount=2),
+            lambda v: v.update(scope="selected"),
+            lambda v: v["revision"].update(dirty=True),
+            lambda v: v.update(status="passed_with_warnings"),
+            lambda v: v.update(diagnostics=[{
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
+                           "key": "relations.requires"}}], status="failed"),
+        ]
+        changed = [
+            lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+            lambda v: v["diagnostics"][1]["source"].update(workspaceId="web"),
+            lambda v: v["diagnostics"][0].update(evidence="api::TECH-999"),
+            lambda v: v["diagnostics"][0]["source"].update(path=".spec/technical/TECH-030.md"),
+            lambda v: v["diagnostics"].pop(0),
+            lambda v: v["diagnostics"].pop(1),
+            lambda v: v["diagnostics"].reverse(),
+            lambda v: v["diagnostics"].append({
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-996",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-060.md",
+                           "key": "relations.requires"}}),
+            lambda v: v["diagnostics"].append({
+                "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
+                "summary": "strong relationの参照先が存在しません", "evidence": "TECH-998",
+                "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-050.md",
+                           "key": "relations.requires"}}),
+            lambda v: v.update(diagnostics=[], status="passed"),
+            lambda v: v["workspace"].update(path="."),
+            lambda v: v["workspace"].update(id="platform", path="."),
+            lambda v: v["selection"].update(targetDocumentCount=3),
+            lambda v: v["selection"].update(targetDocumentCount=0),
+            lambda v: v["selection"].update(changedPathCount=2),
+            lambda v: v["selection"].update(excludedCodeTestPathCount=1),
+            lambda v: v.pop("selection"),
+            lambda v: v["revision"].update(dirty=False),
+            lambda v: v.update(scope="full", checkedDocumentCount=3, checkedStatementCount=0),
+        ]
+        mutations = [(identifier, "expected/check.json", change)
+                     for identifier in ("MULTI-029-01", "MULTI-029-02") for change in full]
+        mutations += [("MULTI-029-03", "expected/check.json", change) for change in changed]
+        mutations += [
+            ("MULTI-029-01", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-029-01", "manifest.json", lambda v: v["invocation"]["argv"].remove("--full")),
+            ("MULTI-029-02", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(1, 3))),
+            ("MULTI-029-02", "manifest.json", lambda v: v["invocation"].update(cwd="apps/web")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("MULTI-029-03", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "--full")),
+            ("MULTI-029-03", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("MULTI-029-01", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("MULTI-029-03", "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_check_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_check_audit_rejects_changed_corpus(self):
+        """原因の構成は、無関係な誤りの文書を完全検査の対象に入れず、閉包と直接の逆参照だけを入れることである。入力を変えた写しは拒否する。"""
+        module = multi_check_fixtures
+        full_ids = ("MULTI-029-01", "MULTI-029-02")
+        web_tech = "repo/apps/web/.spec/technical/TECH-010.md"
+        api_20 = "repo/services/api/.spec/technical/TECH-020.md"
+        api_50 = "repo/services/api/.spec/technical/TECH-050.md"
+        api_40 = "repo/services/api/.spec/technical/TECH-040.md"
+        api_60 = "repo/services/api/.spec/technical/TECH-060.md"
+        web_30 = "changes/TECH-030.md"
+        edits = [
+            # `--full`: 無関係な文書の誤りを消すと、完全検査の対象に入らないことの陰性対照が成り立たない。
+            (full_ids, api_50, "requires: [TECH-998]", "requires: [TECH-020]"),
+            # 他のメンバーの文書から作業ワークスペースの文書への参照は、直接の逆参照の解釈に依存するので置かない。
+            (full_ids, api_20, "status: approved\n", "status: approved\nrelations:\n  related: [web::TECH-011]\n"),
+            (full_ids, api_50, "requires: [TECH-998]", "requires: [TECH-998]\n  refines: [web::TECH-010]"),
+            # 2つ目の原因（存在しない参照）と、閉包の変更。
+            (full_ids, web_tech, "requires: [api::TECH-020]", "requires: [api::TECH-999]"),
+            (full_ids, web_tech, "platform::REQ-001:AC-01", "platform::REQ-001:AC-09"),
+            (full_ids, web_tech, "  requires: [api::TECH-020]\n", ""),
+            (full_ids, web_tech, "status: approved", "status: draft"),
+            (full_ids, "repo/apps/web/.spec/technical/TECH-011.md", "status: approved\n",
+             "status: approved\nrelations:\n  requires: [TECH-010]\n"),
+            # `changed`: 影響候補を避けるための`draft`、閉包の逆参照と無関係な文書の位置づけ、文書ごとに1件の誤り。
+            (("MULTI-029-03",), api_40, "status: draft", "status: approved"),
+            (("MULTI-029-03",), api_60, "refines: [TECH-020]", "refines: [web::TECH-030]"),
+            (("MULTI-029-03",), api_60, "refines: [TECH-020]", "refines: [TECH-050]"),
+            (("MULTI-029-03",), api_50, "requires: [TECH-998]", "requires: [TECH-998]\n  related: [web::TECH-030]"),
+            (("MULTI-029-03",), api_40, "requires: [TECH-997]", "requires: [TECH-997, TECH-995]"),
+            (("MULTI-029-03",), api_40, "refines: [web::TECH-030]", "refines: [web::TECH-031]"),
+            (("MULTI-029-03",), api_20, "requires: [TECH-999]", "requires: [TECH-050]"),
+            (("MULTI-029-03",), api_50, "requires: [TECH-998]", "requires: [TECH-020]"),
+            (("MULTI-029-03",), web_30, "  requires: [api::TECH-020]\n", ""),
+            (("MULTI-029-03",), web_30, "変更後の本文。", "変更前の本文。"),
+            (("MULTI-029-03",), "repo/apps/web/.spec/technical/TECH-030.md", "変更前の本文。", "変更後の本文。"),
+        ]
+        for index, (identifiers, relative, old, new) in enumerate(edits):
+            for identifier in identifiers:
+                with self.subTest(index=index, identifier=identifier, file=relative), \
+                        tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    # 入力のバイト列の一致の検査が拒否する。
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                    # 入力の一致の検査と別に、原因の構成の検査が、入力の木構造から拒否する。
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, repository)
+        # 入力のバイト列だけを変える写し、入力の欠落と余分なファイルを拒否する。
+        for identifier in module.CASES:
+            for name in ("repo/.spec/bitz.yaml", "extra"):
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
     def test_multi_identity_audit_rejects_second_cause_in_the_corpus(self):
         """各種類は原因を1つだけ持つ。入力へ2つ目の原因を足した写しは受理しない。"""
@@ -1540,7 +2772,7 @@ class AuditTests(unittest.TestCase):
     def test_verify_task_root_fixture(self):
         result = validate_verify_task_root()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-068"])
+        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138", "SINGLE-146", "SINGLE-149"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_done_task_root_is_reverifiable_and_cancelled_is_not(self):
@@ -1600,6 +2832,393 @@ class AuditTests(unittest.TestCase):
                 path = fixture / "repo" / verify_task_root_fixtures.TASK_PATH
                 path.write_text(path.read_text().replace("status: done", "status: " + status))
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-068"])["errors"])
+
+    def test_prerequisite_state_decides_verify_of_a_task_root(self):
+        """関係・トレースモデル §6.3、ADR-029: 目的`verify`でも、起点のTASKの`requires`の参照先のTASKが
+        すべて`done`でなければ`CTX-TASK-DEPENDENCY-001`の`blocked`とする（実装の確認事項C11）。"""
+        blocked = json.loads((audit.FIXTURES / "single/SINGLE-137/expected/verify.json").read_text())
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_prerequisite("SINGLE-137", blocked)
+        verify_task_root_fixtures.check_prerequisite("SINGLE-138", passed)
+        target = blocked["targetResults"][0]
+        self.assertEqual((blocked["status"], target["contextDigest"], target["statements"], target["bindingRefs"],
+                          blocked["commands"]), ("blocked", None, [], [], []))
+        self.assertEqual([d["code"] for d in target["diagnostics"]], ["CTX-TASK-DEPENDENCY-001"])
+        self.assertEqual(target["diagnostics"][0]["source"]["key"], "relations.requires")
+        self.assertEqual(passed["status"], "passed")
+        self.assertEqual(passed["targetResults"][0]["diagnostics"], [])
+        self.assertEqual(passed["targetResults"][0]["statements"], ["REQ-001:AC-01"])
+        # 起点のTASKの`requires`の閉包は含めないので、先行TASK-002はコンテキストへ入らない。
+        payload = json.loads(digest_reference.canonical_bytes(
+            verify_task_root_fixtures.reviewed_digest_input("SINGLE-138")).decode())
+        self.assertEqual([d["id"] for d in payload["documents"]], ["REQ-001", "TASK-001", "TECH-001"])
+        task = payload["documents"][1]
+        self.assertEqual(task["strongRelations"], [{"relation": "addresses", "target": "REQ-001:AC-01"},
+                                                   {"relation": "requires", "target": "TASK-002"}])
+
+    def test_prerequisite_audit_rejects_tampered_expectations(self):
+        # 先行TASKが未完了の起点（SINGLE-137）を`passed`や診断なしにすること、先行TASKが`done`の起点
+        # （SINGLE-138）を`blocked`にしたり診断を足したりすることを、監査は拒否する。
+        def blocked_target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def drop_diagnostic(v):
+            v["targetResults"][0]["diagnostics"] = []
+
+        def wrong_code(v):
+            v["targetResults"][0]["diagnostics"][0].update(code="CTX-STATE-001")
+
+        def add_diagnostic(code):
+            def mutate(v):
+                diagnostic = json.loads((audit.FIXTURES / "single/SINGLE-137/expected/verify.json").read_text()
+                                        )["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, code=code))
+            return mutate
+
+        mutations = [
+            ("SINGLE-137", "expected/verify.json", drop_diagnostic),
+            ("SINGLE-137", "expected/verify.json", wrong_code),
+            ("SINGLE-137", "expected/verify.json", lambda v: v.update(status="passed")),
+            ("SINGLE-137", "expected/verify.json", blocked_target(status="passed")),
+            ("SINGLE-137", "expected/verify.json",
+             blocked_target(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-137", "expected/verify.json", blocked_target(statements=["REQ-001:AC-01"])),
+            ("SINGLE-137", "expected/verify.json", blocked_target(bindingRefs=["root::default"])),
+            ("SINGLE-137", "expected/verify.json",
+             lambda v: v["commands"].append(json.loads(
+                 (audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())["commands"][0])),
+            ("SINGLE-137", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("SINGLE-138", "expected/verify.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-138", "expected/verify.json", add_diagnostic("CTX-TASK-DEPENDENCY-001")),
+            ("SINGLE-138", "expected/verify.json", add_diagnostic("CTX-STATE-001")),
+            ("SINGLE-138", "expected/verify.json", blocked_target(statements=[])),
+            ("SINGLE-138", "expected/verify.json",
+             blocked_target(statements=["REQ-001:AC-01", "REQ-001:AC-02"])),
+            ("SINGLE-138", "expected/verify.json", blocked_target(contextDigest=None)),
+            ("SINGLE-138", "expected/verify.json", blocked_target(bindingRefs=[])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(tests=["tests/test_auth.py", "tests/test_session.py"])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(covers=["REQ-001:AC-01", "REQ-001:AC-02"])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(argv=["/bin/true", "tests/test_auth.py", "tests/test_session.py"])),
+            ("SINGLE-138", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, [identifier])["errors"])
+
+    def test_inapplicable_requires_closure_blocks_verify_of_a_task_root(self):
+        """関係・トレースモデル §6.3、ADR-034の`Decision`の5番目の項目: 目的`verify`でも、コンテキストへ含めない
+        起点の`requires`の閉包の文書（TASKを除く）の適用可能性を検査する。状態`draft`のREQ-002を`requires`する
+        状態`done`のTASKは、`CTX-STATE-001`の`blocked`になる（実装の確認事項C15）。"""
+        blocked = json.loads((audit.FIXTURES / "single/SINGLE-146/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_inapplicable_closure(blocked)
+        target = blocked["targetResults"][0]
+        self.assertEqual((blocked["status"], target["contextDigest"], target["statements"], target["bindingRefs"],
+                          blocked["commands"], blocked["diagnostics"]), ("blocked", None, [], [], [], []))
+        self.assertEqual([(d["code"], d["source"]["path"]) for d in target["diagnostics"]],
+                         [("CTX-STATE-001", ".spec/requirements/REQ-002.md")])
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-146")
+        task, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.TASK_PATH].decode())
+        inapplicable, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.INAPPLICABLE_PATH].decode())
+        self.assertEqual((task["status"], task["relations"]["requires"], inapplicable["status"]),
+                         ("done", ["REQ-002"], "draft"))
+        # `addresses`の参照先（REQ-001）は`approved`でテスト対応を持つので、`blocked`の原因はREQ-002だけである。
+        self.assertEqual(task["relations"]["addresses"], ["REQ-001:AC-01"])
+
+    def test_inapplicable_closure_audit_rejects_tampered_expectations(self):
+        # 起点の`requires`の閉包の文書が適用できない起点を、`passed`にする、診断を消す、診断を重ねる、別の診断へ置換する、
+        # テストを開始したことにする改変を、監査は拒否する。
+        def target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def add_diagnostic(**changes):
+            def mutate(v):
+                diagnostic = v["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, **changes))
+            return mutate
+
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        mutations = [
+            ("expected/verify.json", lambda v: v.update(status="passed")),
+            ("expected/verify.json", lambda v: v.update(status="failed")),
+            ("expected/verify.json", target(status="passed")),
+            ("expected/verify.json", target(diagnostics=[])),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-STATE-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/tasks/TASK-001.md")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                key="relations.requires")),
+            ("expected/verify.json", lambda v: v.update(diagnostics=[v["targetResults"][0]["diagnostics"][0]])),
+            ("expected/verify.json", target(contextDigest="sha256:" + "0" * 64)),
+            ("expected/verify.json", target(statements=["REQ-001:AC-01"])),
+            ("expected/verify.json", target(bindingRefs=["root::default"])),
+            ("expected/verify.json", lambda v: v["commands"].append(passed["commands"][0])),
+            ("manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=0)),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative, mutation=mutations.index((relative, mutate))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-146"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-146", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-146"])["errors"])
+
+    def test_inapplicable_closure_audit_rejects_repaired_causes(self):
+        # 原因を入力側で直す（REQ-002を`approved`へ、`requires`を消す、TASKを`open`へ、`addresses`の参照先を`draft`へ）と、
+        # 期待値との組が成り立たなくなる。
+        mutations = [
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: draft", "status: approved"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: draft", "status: outdated"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "related: [REQ-002]"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: open"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: cancelled"),
+            (verify_task_root_fixtures.ADDRESSED_PATH, "status: approved", "status: draft"),
+        ]
+        for relative, before, after in mutations:
+            with self.subTest(relative=relative, after=after), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-146"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-146", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / relative
+                self.assertIn(before, path.read_text())
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-146"])["errors"])
+
+    def test_proposed_adr_in_requires_closure_fails_verify_of_a_task_root(self):
+        """関係・トレースモデル §4・§6.3、診断レジストリ`RELATION-TYPE`: 目的`verify`でも、コンテキストへ含めない起点の
+        `requires`の閉包の文書（REQ-002）の強い関係が`proposed`のADRを指せば、型制約の`CTX-RELATION-TYPE-001`（`failed`）にする
+        （実装の確認事項C17）。状態の診断（`CTX-STATE-001`、`blocked`）にしない。"""
+        failed = json.loads((audit.FIXTURES / "single/SINGLE-149/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_type_closure(failed)
+        target = failed["targetResults"][0]
+        self.assertEqual((failed["status"], target["status"], target["contextDigest"], target["statements"],
+                          target["bindingRefs"], failed["commands"], failed["diagnostics"]),
+                         ("failed", "failed", None, [], [], [], []))
+        self.assertEqual([(d["code"], d["source"]["path"], d["source"]["key"], d["evidence"]) for d in target["diagnostics"]],
+                         [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md", "relations.requires", "ADR-001")])
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-149")
+        task, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.TASK_PATH].decode())
+        closure, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.INAPPLICABLE_PATH].decode())
+        adr, _ = digest_crosscheck.split_document(inputs[".spec/decisions/ADR-001.md"].decode())
+        # TASK-001はADR-001を直接`requires`しない。REQ-002（`approved`）を経由して推移的に到達する。
+        self.assertEqual((task["status"], task["relations"]["requires"], closure["status"], closure["relations"]["requires"],
+                          adr["status"]), ("done", ["REQ-002"], "approved", ["ADR-001"], "proposed"))
+        self.assertEqual(task["relations"]["addresses"], ["REQ-001:AC-01"])
+
+    def test_type_closure_audit_rejects_tampered_expectations(self):
+        # `proposed`のADRへの`requires`を、`passed`にする、診断を消す、状態の診断へ置換する、診断を重ねる、
+        # テストを開始したことにする改変を、監査は拒否する。
+        def target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def first(**changes):
+            return lambda v: v["targetResults"][0]["diagnostics"][0].update(**changes)
+
+        def add_diagnostic(**changes):
+            def mutate(v):
+                diagnostic = v["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, **changes))
+            return mutate
+
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        mutations = [
+            ("expected/verify.json", lambda v: v.update(status="passed")),
+            ("expected/verify.json", lambda v: v.update(status="blocked")),
+            ("expected/verify.json", target(status="passed")),
+            ("expected/verify.json", target(status="blocked")),
+            ("expected/verify.json", target(diagnostics=[])),
+            ("expected/verify.json", first(code="CTX-STATE-001", resultStatus="blocked")),
+            ("expected/verify.json", lambda v: (v.update(status="blocked"), v["targetResults"][0].update(status="blocked"),
+                                                v["targetResults"][0]["diagnostics"][0].update(
+                                                    code="CTX-STATE-001", resultStatus="blocked"))),
+            ("expected/verify.json", first(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-STATE-001", resultStatus="blocked")),
+            ("expected/verify.json", add_diagnostic()),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].pop("evidence")),
+            ("expected/verify.json", first(evidence="REQ-002")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].pop("key")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/tasks/TASK-001.md")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/decisions/ADR-001.md")),
+            ("expected/verify.json", lambda v: v.update(diagnostics=[v["targetResults"][0]["diagnostics"][0]])),
+            ("expected/verify.json", target(contextDigest="sha256:" + "0" * 64)),
+            ("expected/verify.json", target(statements=["REQ-001:AC-01"])),
+            ("expected/verify.json", target(bindingRefs=["root::default"])),
+            ("expected/verify.json", lambda v: v["commands"].append(passed["commands"][0])),
+            ("manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=2)),
+        ]
+        for index, (relative, mutate) in enumerate(mutations):
+            with self.subTest(relative=relative, mutation=index), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-149"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-149", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-149"])["errors"])
+
+    def test_type_closure_contract_rejects_state_replacement(self):
+        """完全比較とは別に、`check_type_closure`だけが、型制約の診断の状態の診断への置換や、`blocked`への変更を拒否する。"""
+        value = json.loads((audit.FIXTURES / "single/SINGLE-149/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_type_closure(value)
+        state = verify_task_root_fixtures.inapplicable_diagnostic()
+        for index, mutate in enumerate([
+            lambda v: v["targetResults"][0].update(diagnostics=[state]),
+            lambda v: v["targetResults"][0]["diagnostics"].append(state),
+            lambda v: v["targetResults"][0].update(diagnostics=[]),
+            lambda v: (v.update(status="blocked"), v["targetResults"][0].update(status="blocked")),
+            lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(path=".spec/tasks/TASK-001.md"),
+            lambda v: v["targetResults"][0]["diagnostics"][0].update(evidence="REQ-002"),
+        ]):
+            with self.subTest(index=index):
+                changed = copy.deepcopy(value)
+                mutate(changed)
+                with self.assertRaises(ValueError):
+                    verify_task_root_fixtures.check_type_closure(changed)
+
+    def test_type_closure_audit_rejects_repaired_causes(self):
+        # 原因を入力側で直す（ADR-001を`accepted`へ、REQ-002の`requires`を消す、TASKからREQ-002への`requires`を消す、
+        # ADR-001への`requires`をTASK-001へ移す、TASKを`open`へ、`addresses`の参照先を`draft`へ）と、期待値との組が成り立たなくなる。
+        mutations = [
+            (".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            (".spec/decisions/ADR-001.md", "status: proposed", "status: rejected"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "requires: [ADR-001]", "related: [ADR-001]"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: approved", "status: draft"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "requires: [ADR-001]"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "related: [REQ-002]"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: open"),
+            (verify_task_root_fixtures.ADDRESSED_PATH, "status: approved", "status: draft"),
+        ]
+        for relative, before, after in mutations:
+            with self.subTest(relative=relative, after=after), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-149"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-149", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / relative
+                self.assertIn(before, path.read_text())
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-149"])["errors"])
+
+    def test_prerequisite_addresses_stays_out_of_the_obligation(self):
+        """`verify` §3、関係・トレースモデル §6.4の4.: `requires`先のTASKの`addresses`の参照先は、起点の義務へ加えない。
+        SINGLE-138の先行TASK-002は、起点が`addresses`しないREQ-001:AC-02を`addresses`する。"""
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-138")
+        prerequisite, _ = digest_crosscheck.split_document(
+            inputs[verify_task_root_fixtures.PREREQUISITE_PATH].decode())
+        self.assertEqual((prerequisite["status"], prerequisite["relations"]["addresses"]),
+                         ("done", ["REQ-001:AC-02"]))
+        result = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        self.assertEqual(result["targetResults"][0]["statements"], ["REQ-001:AC-01"])
+        self.assertEqual(result["commands"][0]["covers"], ["REQ-001:AC-01"])
+        self.assertEqual(result["commands"][0]["tests"], ["tests/test_auth.py"])
+        # 参照計算Bは、閉包の外のTASK-002が閉包の文書REQ-001を`addresses`しても、材料へ入れない。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            for name, data in inputs.items():
+                (repository / name).parent.mkdir(parents=True, exist_ok=True)
+                (repository / name).write_bytes(data)
+            built = digest_crosscheck.build(repository, root="TASK-001")
+            self.assertEqual([d["id"] for d in built["documents"]], ["REQ-001", "TASK-001", "TECH-001"])
+            self.assertEqual(digest_crosscheck.canonical_bytes(built), digest_reference.canonical_bytes(
+                verify_task_root_fixtures.reviewed_digest_input("SINGLE-138")))
+        # 入力側で先行TASKの`addresses`を消す、または起点と同じ規範文へ変えると、監査は拒否する。
+        for replacement in ("", "relations:\n  addresses: [REQ-001:AC-01]\n"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-138"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-138", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / verify_task_root_fixtures.PREREQUISITE_PATH
+                path.write_text(path.read_text().replace("relations:\n  addresses: [REQ-001:AC-02]\n", replacement))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-138"])["errors"])
+
+    def test_closure_accepts_only_the_verify_task_root_prerequisite_addresses(self):
+        """参照計算Bの`closure`は、閉包の外のTASKの`addresses`を一律には受理しない。受理するのは、目的`verify`で
+        TASKを起点にしたときの、起点が`requires`する先行TASKの`addresses`だけである（関係・トレースモデル §6.3、§6.4の4.）。"""
+        requirement = (audit.FIXTURES / "single/SINGLE-138/repo/.spec/requirements/REQ-001.md").read_text()
+        body = digest_crosscheck.normalize_body(requirement.split("---\n", 2)[2])
+
+        def corpus(*tasks):
+            documents = {"REQ-001": {"kind": "requirement", "path": "r",
+                                     "frontmatter": {"id": "REQ-001", "title": "t", "status": "approved"}, "body": body}}
+            for identifier, status, relations in tasks:
+                documents[identifier] = {"kind": "task", "path": "t", "body": "",
+                                         "frontmatter": {"id": identifier, "title": "t", "status": status,
+                                                         "relations": relations}}
+            return documents
+
+        root = ("TASK-001", "open", {"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]})
+        done = ("TASK-002", "done", {"addresses": ["REQ-001:AC-02"]})
+        outside = lambda status: ("TASK-009", status, {"addresses": ["REQ-001:AC-01"]})
+        # 受理: verifyでTASKを起点にし、先行TASKが閉包の規範文を`addresses`する。先行TASKは閉包へ入らない。
+        ordered, _ = digest_crosscheck.closure(corpus(root, done), "TASK-001", "verify")
+        self.assertEqual(ordered, ["TASK-001", "REQ-001"])
+        # 受理（従来どおり）: implementで、閉包の規範文を`addresses`する`open`のTASKは閉包へ加える。
+        ordered, _ = digest_crosscheck.closure(corpus(outside("open")), "REQ-001", "implement")
+        self.assertEqual(ordered, ["REQ-001", "TASK-009"])
+        rejected = {
+            "implementでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "implement"),
+            "interpretでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "interpret"),
+            "verifyでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "verify"),
+            "interpretでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "interpret"),
+            "implementでREQを起点にし、`done`のTASKが`addresses`する": (corpus(outside("done")), "REQ-001", "implement"),
+            "閉包の外のTASKが`requires`で閉包の文書を指す": (
+                corpus(("TASK-009", "open", {"requires": ["REQ-001"]})), "REQ-001", "verify"),
+            "後続のTASKが起点を`requires`する": (
+                corpus(root, done, ("TASK-003", "open", {"requires": ["TASK-001"]})), "TASK-001", "verify"),
+        }
+        for name, (documents, start, purpose) in rejected.items():
+            with self.subTest(name), self.assertRaises(ValueError):
+                digest_crosscheck.closure(documents, start, purpose)
+
+    def test_prerequisite_audit_rejects_a_changed_prerequisite_state(self):
+        # 先行TASKの状態を入力側で変えると、期待値との組が成り立たなくなる。
+        for identifier, status in (("SINGLE-137", "done"), ("SINGLE-137", "cancelled"),
+                                   ("SINGLE-138", "open"), ("SINGLE-138", "cancelled")):
+            with self.subTest(identifier=identifier, status=status), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / verify_task_root_fixtures.PREREQUISITE_PATH
+                text = path.read_text()
+                self.assertIn("status: " + verify_task_root_fixtures.PREREQUISITE_STATUS[identifier], text)
+                path.write_text(text.replace("status: " + verify_task_root_fixtures.PREREQUISITE_STATUS[identifier],
+                                             "status: " + status))
+                self.assertTrue(validate_verify_task_root(root, [identifier])["errors"])
 
     def test_verify_document_fixture(self):
         result = validate_verify_document()
@@ -2327,8 +3946,75 @@ class AuditTests(unittest.TestCase):
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
         self.assertEqual(result["core_execution"], "Not run")
+
+    def test_proposed_adr_requires_is_a_type_constraint_not_a_state_check(self):
+        """関係・トレースモデル §4・§5.1、`context` §3、診断レジストリ: 状態が`accepted`でないADRへの`requires`は、状態の診断
+        （`CTX-STATE-001`、`blocked`）ではなく型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す（実装の確認事項C17）。
+        `SINGLE-148`は、独立した別の原因の状態の診断も併記し、状態は最悪値の`failed`とする。"""
+        for identifier, codes in (("SINGLE-147", ["CTX-RELATION-TYPE-001"]),
+                                  ("SINGLE-148", ["CTX-RELATION-TYPE-001", "CTX-STATE-001"])):
+            with self.subTest(identifier=identifier):
+                result = json.loads((audit.FIXTURES / f"single/{identifier}/expected/context.json").read_text())
+                context_failure_fixtures.check_type_constraint(identifier, result)
+                self.assertEqual([d["code"] for d in result["diagnostics"]], codes)
+                self.assertEqual((result["status"], result["resolution"]["unresolvedStrongRelations"]), ("failed", 1))
+                self.assertEqual(result["diagnostics"][0]["evidence"], "ADR-001")
+        inputs = context_failure_fixtures.reviewed_documents("SINGLE-148")
+        self.assertEqual([inputs[path][1]["status"] for path in (
+            ".spec/requirements/REQ-002.md", ".spec/decisions/ADR-001.md")], ["draft", "proposed"])
+
+    def test_type_constraint_contract_rejects_state_replacement_and_lost_diagnostics(self):
+        """完全比較とは別に、`check_type_constraint`だけが、型制約の診断の状態の診断への置換、片方の診断の消去、重複、
+        状態や未解決の件数の改変を拒否する（`SINGLE-147`、`SINGLE-148`）。"""
+        def state(path=".spec/requirements/REQ-002.md"):
+            return {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                    "summary": "ADR-001は現在のpurposeに適用できません",
+                    "source": {"kind": "file", "workspaceId": "root", "path": path}}
+
+        def replace_first(v):
+            v.update(status="blocked")
+            v["diagnostics"][0] = state(".spec/decisions/ADR-001.md")
+
+        changes = {
+            "SINGLE-147": [
+                replace_first,
+                lambda v: v["diagnostics"].append(state(".spec/decisions/ADR-001.md")),
+                lambda v: v["diagnostics"].insert(0, state(".spec/decisions/ADR-001.md")),
+                lambda v: v.update(diagnostics=[]),
+                lambda v: v.update(status="blocked"),
+                lambda v: v["diagnostics"][0].update(resultStatus="blocked"),
+                lambda v: v["diagnostics"][0].pop("evidence"),
+                lambda v: v["diagnostics"][0].update(evidence="REQ-001"),
+                lambda v: v["diagnostics"][0]["source"].pop("key"),
+                lambda v: v["diagnostics"][0]["source"].update(path=".spec/decisions/ADR-001.md"),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=0),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=2),
+                lambda v: v["resolution"].update(complete=True),
+            ],
+            "SINGLE-148": [
+                replace_first,
+                lambda v: v["diagnostics"].pop(),
+                lambda v: v["diagnostics"].pop(0),
+                lambda v: v["diagnostics"].reverse(),
+                lambda v: v["diagnostics"].append(state(".spec/decisions/ADR-001.md")),
+                lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+                lambda v: v["diagnostics"][1].update(resultStatus="failed"),
+                lambda v: v["diagnostics"][1]["source"].update(path=".spec/decisions/ADR-001.md"),
+                lambda v: v.update(status="blocked"),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=2),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=0),
+            ],
+        }
+        for identifier, mutations in changes.items():
+            for index, mutate in enumerate(mutations):
+                with self.subTest(identifier=identifier, index=index):
+                    value = json.loads((audit.FIXTURES / f"single/{identifier}/expected/context.json").read_text())
+                    context_failure_fixtures.check_type_constraint(identifier, value)
+                    mutate(value)
+                    with self.assertRaises(ValueError):
+                        context_failure_fixtures.check_type_constraint(identifier, value)
 
     def test_context_failures_reject_partial_success_or_replacement(self):
         mutations = [
@@ -2336,6 +4022,47 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-050", "expected/context.json", lambda v: v.update(roots=["TECH-001"])),
             ("SINGLE-051", "expected/context.json", lambda v: v.update(status="passed")),
             ("SINGLE-051", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
+            # 先行TASKが`cancelled`の起点は、`CTX-TASK-DEPENDENCY-001`だけを返す。同じ原因の`CTX-STATE-001`を重ねない
+            # （診断レジストリの主診断の規則）。診断の置換、追加、状態の改変、`blocked`の取消しを拒否する。
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].append(dict(
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].insert(0, dict(
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-144", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            # 状態が`accepted`でないADRへの`requires`は、型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す。状態の診断
+            # （`CTX-STATE-001`、`blocked`）への置換、診断の消去、独立した原因の診断の消去、状態の改変を拒否する。
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"})),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].pop("evidence")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=0)),
+            ("SINGLE-147", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-147", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].pop(0)),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].append(dict(
+                v["diagnostics"][1], summary="ADR-001は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"}))),
+            ("SINGLE-148", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-148", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=2)),
+            ("SINGLE-148", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-148", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(roots=["TECH-002"])),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
             ("SINGLE-052-02", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
@@ -2366,6 +4093,21 @@ class AuditTests(unittest.TestCase):
         mutations = [
             ("SINGLE-050", ".spec/technical/TECH-001.md", "TECH-001", "TECH-999"),
             ("SINGLE-051", ".spec/tasks/TASK-002.md", "status: open", "status: done"),
+            # 先行TASKの状態を`done`や`open`へ直す、先行TASKへの`requires`を消す、起点の`addresses`を消す入力は、期待値と組にならない。
+            ("SINGLE-144", ".spec/tasks/TASK-002.md", "status: cancelled", "status: done"),
+            ("SINGLE-144", ".spec/tasks/TASK-002.md", "status: cancelled", "status: open"),
+            ("SINGLE-144", ".spec/tasks/TASK-001.md", "requires: [TASK-002]", "related: [TASK-002]"),
+            ("SINGLE-144", ".spec/tasks/TASK-001.md", "  addresses: [REQ-001:AC-01]\n", ""),
+            # ADR-001を`accepted`へ直す、`requires`を消す、起点やREQ-002の状態を変える入力は、期待値と組にならない。
+            ("SINGLE-147", ".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            ("SINGLE-147", ".spec/decisions/ADR-001.md", "status: proposed", "status: rejected"),
+            ("SINGLE-147", ".spec/tasks/TASK-001.md", "requires: [ADR-001]", "related: [ADR-001]"),
+            ("SINGLE-147", ".spec/tasks/TASK-001.md", "status: open", "status: done"),
+            ("SINGLE-147", ".spec/requirements/REQ-001.md", "status: approved", "status: draft"),
+            ("SINGLE-148", ".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            ("SINGLE-148", ".spec/requirements/REQ-002.md", "status: draft", "status: approved"),
+            ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [ADR-001]"),
+            ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [REQ-002]"),
             ("SINGLE-052-01", ".spec/technical/TECH-002.md", "supersedes:", "related:"),
             ("SINGLE-052-02", ".spec/technical/TECH-003.md", "requires:", "related:"),
             ("SINGLE-053", ".spec/technical/TECH-003.md", "status: approved", "status: draft"),
@@ -2382,7 +4124,7 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
 
     def test_context_failure_git_state_rejects_staging_or_commit(self):
-        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
+        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 repo = fixture_setup(audit.FIXTURES / "single" / identifier, context_failure_manifest(identifier), Path(temporary) / "repo")
                 check_context_unborn(repo, identifier)
@@ -3102,6 +4844,75 @@ class AuditTests(unittest.TestCase):
         for name, (runs, scales) in cases.items():
             with self.subTest(name):
                 self.assertTrue(certify.judge(runs, scales))
+
+    def test_gate_a_certification_names_the_scale_failure(self):
+        # 規模の検証が理由を返したときは、認定の理由にその先頭を示す（原因を「形式が不正」に埋もれさせない）。
+        conformance, scale = self.certification_runs()
+        failed = {"exitCode": 1, "stdout": json.dumps({"status": "Failed", "durationSeconds": 1.0, "results": [],
+                                                      "errors": ["MULTI-020-01: 照合を完了できません（TimeoutExpired: git）"]}).encode()}
+        reasons = certify.judge(conformance, [failed, dict(failed)])
+        self.assertIn("規模の検証1: 成功していません（MULTI-020-01: 照合を完了できません（TimeoutExpired: git））", reasons)
+
+    def test_scale_validation_reports_setup_failures_as_json(self):
+        # 準備手順のGit操作がタイムアウトしても、規模の検証はJSONのレポートを出し、失敗として数える（C14）。
+        import contextlib
+        import io
+        import subprocess
+        import validate_scale
+        first = next(iter(validate_scale.multi_limit_fixtures.CASES))
+
+        def fake(identifier):
+            if identifier == first:
+                raise subprocess.TimeoutExpired(["git", "add"], 120)
+            return {"fixtureId": identifier, "errors": []}
+
+        output = io.StringIO()
+        with patch.object(validate_scale, "validate_fixture", fake), contextlib.redirect_stdout(output):
+            exit_code = validate_scale.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(report["status"], "Failed")
+        self.assertEqual(report["fixtures"], len(validate_scale.multi_limit_fixtures.CASES))
+        self.assertEqual(len(report["errors"]), 1)
+        self.assertTrue(report["errors"][0].startswith(f"{first}: 照合を完了できません（TimeoutExpired: "))
+        conformance, _scale = self.certification_runs()
+        reasons = certify.judge(conformance, [{"exitCode": exit_code, "stdout": output.getvalue().encode()}] * 2)
+        self.assertEqual([reason for reason in reasons if reason.startswith("規模の検証1")],
+                         [f"規模の検証1: 成功していません（{report['errors'][0]}）"])
+        self.assertFalse(any("形式が不正" in reason for reason in reasons), reasons)
+
+    def test_scale_validation_does_not_swallow_other_exceptions(self):
+        # 捕まえる範囲は準備手順・ファイル操作・照合の不一致に限り、それ以外の例外（実装の欠陥など）は伝える。
+        import validate_scale
+
+        def broken(identifier):
+            raise KeyError(identifier)
+
+        with patch.object(validate_scale, "validate_fixture", broken):
+            with self.assertRaises(KeyError):
+                validate_scale.main()
+
+    def test_gate_a_certification_shows_the_stderr_of_an_unreadable_report(self):
+        conformance, _scale = self.certification_runs()
+        crashed = {"exitCode": 1, "stdout": b"", "stderr": b"Traceback (most recent call last):\n  ...\nKeyError: 'x'\n"}
+        reasons = certify.judge(conformance, [crashed, dict(crashed)])
+        self.assertIn("規模の検証1: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        self.assertIn("規模の検証2: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        _conformance, scale = self.certification_runs()
+        reasons = certify.judge([crashed, dict(crashed)], scale)
+        self.assertIn("監査1: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        # 実行の結果は標準エラー出力を保持する（`judge`へ渡す材料）。
+        completed = certify.subprocess.CompletedProcess(["uv"], 1, stdout=b"", stderr=b"KeyError: 'y'\n")
+        with patch.object(certify.subprocess, "run", return_value=completed):
+            result = certify.run("uv", ["fixtures/validate_scale.py"], Path("."), 900)
+        self.assertEqual(result, {"exitCode": 1, "stdout": b"", "stderr": b"KeyError: 'y'\n"})
+
+    def test_fixture_git_uses_the_shared_timeout(self):
+        from conformance import harness
+        self.assertEqual(harness.GIT_TIMEOUT_SECONDS, 120)
+        with patch.object(harness.subprocess, "check_output", return_value=b"") as check_output:
+            harness.git(Path("."), "status")
+        self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
 
     def test_gate_a_certification_requires_a_committed_worktree(self):
         with tempfile.TemporaryDirectory() as temporary:

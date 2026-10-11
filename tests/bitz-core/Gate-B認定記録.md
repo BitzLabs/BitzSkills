@@ -240,3 +240,217 @@ fixtureを追加した後、Coreを追従させる前に、新規の2件が0件`
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は549件がすべて成功した。
+
+## 2026-10-05: 先行TASKが完了済みのTASKの`implement`を直した後のStep 1〜5の再判定
+
+目的`implement`でTASKを起点にしたとき、`requires`する先行TASKが`done`でも`CTX-STATE-001`で止めていた欠陥を直し
+（`targetexpand.py`。`done`のTASKを止めるのは起点にした場合だけ）、これを固定する`SINGLE-134`（Step 3）を追加した。
+fixtureを追加した後、修正前のCoreでは`SINGLE-134`が`blocked`／終了コード2（`CTX-STATE-001`）で失敗し、修正後のCoreでは`passed`となることを確かめた。
+
+コミット`283bf33b4634f227d74316b5b3ebbd04f398583a`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 321件（`SINGLE-134`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`2f2806785f93c39cb3bbbe60a4c4f8cd3e2aed5efdbcbc8256f39496d5522e84` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は578件がすべて成功した。
+
+## 2026-10-05: 具体化文書の提示形式を直した後のStep 1〜5の再判定
+
+距離2以上の具体化文書を、所有する規範文が制約台帳になくても提示形式`normative`にしていた欠陥を直し（`context.py`。
+`normative`にするのは所有する規範文がすべて制約台帳に収録される具体化文書だけ）、これを固定する`SINGLE-135`と`SINGLE-136`（Step 3）を追加した。
+fixtureを追加した後、修正前のCoreでは2件が`normative`を返して失敗し、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`d7b91a57c096a4a393aeae750dac9197418087e4`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 323件（`SINGLE-135`と`SINGLE-136`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`247d53070dadd839e831f084f9485fa2d52fcf6120a7d617b3cf7004a76354c6` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は583件がすべて成功した。
+
+## 2026-10-05: 目的verifyでの先行TASKの検査を直した後のStep 1〜5の再判定
+
+目的`verify`でTASKを起点にしたとき、先行TASKが`done`でなくても検査せずに通していた欠陥を直し（`targetexpand.py`。
+`CTX-TASK-DEPENDENCY-001`を目的`implement`と`verify`の両方で返す）、これを固定する`SINGLE-137`と`SINGLE-138`（Step 4）を追加した。
+fixtureを追加した後、修正前のCore（コミット`a869bbc7`の版）では`SINGLE-137`が`passed`／終了コード0で失敗し、`SINGLE-138`は修正の前後とも
+`passed`となることと、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`588e3b1e4d54af0925d913e8262b93f2bc95bbc6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 325件（`SINGLE-137`と`SINGLE-138`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`d3c827d01412b450df4c205eb2f1daa4594527afdc3ece9a09b2c50c861671c5` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は587件がすべて成功した。
+
+## 2026-10-06: 文書の距離を最短にした後のStep 1〜5の再判定
+
+文書の距離を、閉包を作るときに辿ったエッジ1本を1段とした起点からの最短の段数にし（`targetexpand.py`。置換済みの起点の後継は距離1）、
+これを固定する`SINGLE-139`〜`141`（Step 3）を追加した。修正の前後で、既存の325件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`5d4ab90c`の1つ前の版）では3件とも失敗し（差異は並び順と提示形式だけで、コンテキストのハッシュ値と
+診断は一致する）、修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`e734456fc6bea6661619bb85d0d3f7d3323fa580`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 328件（`SINGLE-139`〜`141`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`414feb812703e35006595a6245a02fe0f3a8c6c2ee69fe72d1eaa1074a46daae` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は595件がすべて成功した。
+
+## 2026-10-06: 目的implementとverifyで状態draftの文書を含めないようにした後のStep 1〜5の再判定
+
+目的`implement`と`verify`では、閉包の文書を`refines`する状態`draft`の文書を閉包へ含めないようにし（`targetexpand.py`）、これを固定する
+`SINGLE-142`（Step 3）と`SINGLE-143`（Step 4）を追加した。修正の前後で、既存の328件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`90ba92a3`の版）では2件とも失敗し、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`b3b14b113312089505eaea845bf5d9c438370509`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 330件（`SINGLE-142`と`SINGLE-143`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`bbdedfa655f1f4d9717c9d1088a146d76ef248dc7d973f3ca22a385d9a187fe5` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は597件がすべて成功した。
+
+## 2026-10-07: TASKを起点にしたときの依存先の状態検査を直した後のStep 1〜5の再判定
+
+TASKを起点にしたときの依存先の状態検査を直し（`targetexpand.py`。先行TASKは直接の参照先だけを`CTX-TASK-DEPENDENCY-001`で扱い、目的`verify`では
+起点の`requires`の閉包（TASKとADRを除く）の適用可能性も検査する）、これを固定する`SINGLE-144`〜`146`（Step 3とStep 4）を追加した。修正の前後で、
+既存の330件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`863b5b33`の版）では3件とも失敗し、修正後のCoreでは
+3件とも`passed`となることを確かめた。
+
+コミット`eea1c2cf00c48cf15416b2ad4cd376cd0a0afb6b`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 333件（`SINGLE-144`〜`146`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`701e7ddfd4f84526ca95a3c2ed53c6b74521a87086073fe6239fd9f39facb195` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は602件がすべて成功した。
+
+## 2026-10-07: 状態acceptedでないADRへのrequiresを型制約で返すようにした後のStep 1〜5の再判定
+
+状態が`accepted`でないADRへの`requires`を型制約の`CTX-RELATION-TYPE-001`で返し、状態の診断と併記するようにし（`targetexpand.py`、`context.py`、`verify.py`）、
+これを固定する`SINGLE-147`〜`149`（Step 3とStep 4）と`MULTI-027-01`／`02`（Step 5）を追加した。修正の前後で、既存の333件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`60c3d849`の版）では5件とも失敗し、修正後のCoreでは5件とも`passed`となることを確かめた。
+`MULTI-027-01`／`02`は、独立レビューで見つかった修正途中の回帰（他のメンバーの文書を経由した`proposed`のADRが診断なしで成功する）でも失敗する。
+
+コミット`cf98a189af4b48f4279d1457538b0dbd2632b067`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 338件（`SINGLE-147`〜`149`と`MULTI-027-01`／`02`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`84a69ec27a8402273d1cc26d93269b3c4981e2e634209cf5f43655ed97804b0e` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は609件がすべて成功した。
+
+## 2026-10-10: contextの設定の診断を直した後のStep 1〜5の再判定
+
+`context`の設定の不在と不適合を正しい診断で返し、設定の警告を`context`と`verify`の結果に加えるようにし（`context.py`、`verify.py`、`contextrender.py`）、
+これを固定する`SINGLE-150`〜`153`（Step 3）を追加した。修正の前後で、既存の338件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`5e70ea3d`の版）では4件とも失敗し、修正後のCoreでは4件とも`passed`となることを確かめた。
+
+コミット`532a9e1d1f7fce797a76d0682376db73f1aa5269`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 342件（`SINGLE-150`〜`153`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`3256b39221e01b3012ddda0366d61ddca936a0d6e3efe774e2e4695f9237395d` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は617件がすべて成功した。
+
+## 2026-10-10: ハッシュ値の材料のコマンドとタイムアウトを共通化した後のStep 1〜5の再判定
+
+ハッシュ値の材料の`commands`と`verifyTimeouts`を、文書の`verify`で補完して解決した収録したテスト割当てから、`context`と`verify`で同じ関数で作るようにし
+（`context.py`、`verify.py`）、これを固定する`SINGLE-154`（Step 3）と`SINGLE-155`（Step 4）を追加した。修正の前後で、既存の342件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`5b61a822`の版）では2件とも失敗し（2件のハッシュ値は互いにも食い違う）、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`f4a2bcd5e75284a652ac43fabf6c139f54ef8029`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 344件（`SINGLE-154`と`SINGLE-155`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0fac8044b8b55c603ac0cd91ee6aadab9252ed427068871dba6aa32a2b6b605c` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は621件がすべて成功した。
+
+## 2026-10-11: TASKがaddressesする規範文のないTECHのテスト割当てを作るようにした後のStep 1〜5の再判定
+
+TASKが`addresses`する規範文のないTECHの文書単位のテスト割当てを`verify`で作り、`addresses`の参照が規範文かどうかを索引で判定するようにし
+（`targetexpand.py`、`verify.py`）、これを固定する`SINGLE-156`、`SINGLE-157`（Step 4）と`MULTI-028`（Step 5）を追加した。修正の前後で、
+既存の344件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`88896f3a`の版）では3件とも失敗し
+（`MULTI-028`は例外で終了する）、修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`f2a4fa5a804b63ec71a6ff986301215f27f16983`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 347件（`SINGLE-156`、`SINGLE-157`、`MULTI-028`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`7f59a8a18b9a585156d14a6f37cca4929f75a605764ea06e0193ef0434453e37` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は627件がすべて成功した。
+
+## 2026-10-11: 引数なしのcheckと--full、--workspaceを複合ワークスペースに対応させた後のStep 1〜5の再判定
+
+`check`を複合ワークスペースに対応させ（`check.py`、`basecompare.py`、`multirelate.py`）、これを固定する`MULTI-029-01`〜`03`（Step 5）を追加した。
+修正の前後で、既存の347件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`82d60f2d`の版）では3件とも失敗し、
+修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`584e509fa54c92059d3b5a4ee2016fc8b4d5be27`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 350件（`MULTI-029-01`〜`03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`25b7fcb004e1bace1f8fb7ebed0881c707df7f60e561bc3e76dcb32412c6993c` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は647件がすべて成功した。

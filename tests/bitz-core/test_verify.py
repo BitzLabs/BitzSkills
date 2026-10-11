@@ -430,5 +430,188 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIn("[REDACTED]", result["commands"][0]["stdoutExcerpt"])
 
 
+class StateAndTypeConstraintTogetherTests(unittest.TestCase):
+    """状態の診断と型制約の診断は、独立した元の原因として両方を返す（`context` §3、診断レジストリ）。TASKを起点にした`verify`で、
+    先行の`requires`が`draft`のREQ-003を指し、`addresses`の参照先のREQ-001が`proposed`のADRを`requires`する場合。"""
+
+    def test_verify_reports_both_state_and_relation_type(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001").replace("status: approved\n", "status: approved\nrelations:\n  requires: [ADR-001]\n"))
+            _write(tmp, ".spec/requirements/REQ-003.md", _req("REQ-003", status="draft"))
+            _write(tmp, ".spec/decisions/ADR-001.md",
+                   "---\nid: ADR-001\ntitle: 判断\nstatus: proposed\n---\n\n# ADR-001 判断\n\n## Context\n\n背景。\n\n## Decision\n\n決定。\n\n## Consequences\n\n帰結。\n")
+            _write(tmp, ".spec/tasks/TASK-001.md",
+                   "---\nid: TASK-001\ntitle: 作業\nstatus: done\nrelations:\n  requires: [REQ-003]\n  addresses: [REQ-001:AC-01]\n---\n\n# TASK-001 作業\n\n## Objective\n\n作業する。\n")
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("failed", 1), result)
+            diags = result["targetResults"][0]["diagnostics"]
+            self.assertEqual(
+                sorted((d["code"], d["source"]["path"]) for d in diags),
+                [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-001.md"), ("CTX-STATE-001", ".spec/requirements/REQ-003.md")],
+            )
+            self.assertEqual(result["commands"], [])
+
+
+class ConfigWarningTests(unittest.TestCase):
+    def test_config_warning_is_added_when_there_are_no_targets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n') + "futureKey: 1\n")
+            _write(tmp, "README.md", "x\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, [])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2), result)
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["SPEC-CONFIG-UNKNOWN-001", "SPEC-VERIFY-BLOCKED-002"])
+
+    def test_config_warning_is_added_to_a_successful_verify(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n') + "futureKey: 1\n")
+            _write(tmp, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("passed_with_warnings", 0), result)
+            self.assertEqual([(d["code"], d["source"].get("key")) for d in result["diagnostics"]],
+                             [("SPEC-CONFIG-UNKNOWN-001", "futureKey")])
+
+
+
+def _req_doc_default(doc_id: str, command_line: str) -> str:
+    """テスト対応が`command`を持たず、文書の`verify`で既定のコマンドを指定するREQ。"""
+    return _req(doc_id, tests_block=f"{command_line}tests:\n  - path: tests/test_auth.py\n    covers: [{doc_id}:AC-01]\n")
+
+
+class DigestCommandMaterialsTests(unittest.TestCase):
+    """ハッシュ値の材料の`commands`と`verifyTimeouts`は、収録したテスト割当て（`tests[].command`、なければ文書の`verify`で解決し、
+    定義があるもの）だけから作り、`context --purpose verify`と`verify`で一致する（正規化仕様 §3、`context` §6、ADR-026）。"""
+
+    def _digests(self, tmp: str, root: str = "REQ-001") -> tuple[str | None, str | None]:
+        from bitz import context as context_mod
+        ctx, _ = context_mod.run(parse_argv(["context", root, "--purpose", "verify", "--format", "json"]), tmp, dict(os.environ))
+        ver, _ = _run_verify(tmp, [root])
+        return ctx["contextDigest"], ver["targetResults"][0]["contextDigest"]
+
+    def _write_base(self, tmp: str, argv: str) -> None:
+        _write(tmp, ".spec/bitz.yaml", _bitz_yaml(f'    default:\n      argv: ["{argv}", "{{tests}}"]\n      cwd: .\n'))
+        _write(tmp, ".spec/requirements/REQ-001.md", _req_doc_default("REQ-001", "verify: default\n"))
+        _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+        _init_repo(tmp)
+
+    def test_document_default_command_is_in_the_digest_of_both_operations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write_base(tmp, "/bin/true")
+            ctx_digest, verify_digest = self._digests(tmp)
+            self.assertIsNotNone(ctx_digest)
+            self.assertEqual(ctx_digest, verify_digest)
+
+    def test_changing_the_document_default_command_changes_the_digest(self):
+        digests = []
+        for argv in ("/bin/true", "/usr/bin/true"):
+            with tempfile.TemporaryDirectory() as tmp:
+                self._write_base(tmp, argv)
+                digests.append(self._digests(tmp))
+        self.assertNotEqual(digests[0][0], digests[1][0])
+        self.assertNotEqual(digests[0][1], digests[1][1])
+
+    def test_undefined_command_gives_the_same_digest_in_both_operations(self):
+        # 未定義のコマンド名のテスト対応は収録したテスト割当てにならず、`commands`にも`verifyTimeouts`にも入らない（SINGLE-061と同じ読み）。
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/requirements/REQ-001.md", _req_doc_default("REQ-001", "verify: missing\n"))
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            ctx_digest, verify_digest = self._digests(tmp)
+            self.assertIsNotNone(verify_digest)
+            self.assertEqual(ctx_digest, verify_digest)
+            # 両操作が同じ関数を使うので、関数の結果そのものも確かめる（未定義のコマンドは材料に入らない）。
+            from bitz import config as config_mod
+            from bitz import context as context_mod
+            from bitz import document as doc_mod
+            from bitz import relations as rel_mod
+            id_index = rel_mod.build_id_index(doc_mod.build_catalog(tmp, "root").entries)
+            config_raw = config_mod.read_config(os.path.join(tmp, ".spec", "bitz.yaml")).config
+            materials = context_mod.digest_command_materials(
+                ["REQ-001"], id_index, lambda d: "root",
+                lambda wid, name: (config_raw.get("_resolvedCommands") or {}).get(name), lambda wid: 300,
+            )
+            self.assertEqual(materials, ([], []))
+
+
+
+def _tech_without_statements(doc_id: str, command: str = "default") -> str:
+    return (f"---\nid: {doc_id}\ntitle: 技術契約\nstatus: approved\n"
+            f"tests:\n  - path: tests/test_tech.py\n    covers: [{doc_id}]\n    command: {command}\n"
+            f"---\n\n# {doc_id} 技術契約\n\n## Context\n\n規範文を持たない。\n")
+
+
+def _task_addressing(refs: str) -> str:
+    return (f"---\nid: TASK-001\ntitle: 作業\nstatus: open\nrelations:\n  addresses: {refs}\n---\n\n"
+            "# TASK-001 作業\n\n## Objective\n\n作業する。\n")
+
+
+class TaskAddressingTechWithoutStatementsTests(unittest.TestCase):
+    """TASKが規範文のないTECHを`addresses`する場合、そのTECHの文書単位の`tests`を`verify`の実行対象に含め、規範文は増やさない
+    （ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3）。"""
+
+    def _run(self, tmp: str, argv: str, refs: str, extra=None):
+        _write(tmp, ".spec/bitz.yaml", _bitz_yaml(f'    default:\n      argv: ["{argv}", "{{tests}}"]\n      cwd: .\n'))
+        _write(tmp, ".spec/technical/TECH-001.md", _tech_without_statements("TECH-001"))
+        _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing(refs))
+        _write(tmp, "tests/test_tech.py", "x\n")
+        for path, content in (extra or {}).items():
+            _write(tmp, path, content)
+        _init_repo(tmp)
+        return _run_verify(tmp, ["TASK-001"])
+
+    def test_document_unit_tests_are_run(self):
+        for argv, status in (("/bin/true", "passed"), ("/bin/false", "failed")):
+            with self.subTest(argv=argv), tempfile.TemporaryDirectory() as tmp:
+                result, _exit_code = self._run(tmp, argv, "[TECH-001]")
+                target = result["targetResults"][0]
+                self.assertEqual(target["statements"], [])
+                self.assertEqual(target["bindingRefs"], ["root::default"])
+                self.assertEqual(result["commands"][0]["tests"], ["tests/test_tech.py"])
+                self.assertEqual(result["status"], status)
+
+    def test_unresolved_command_blocks_with_the_tech_as_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/technical/TECH-001.md", _tech_without_statements("TECH-001", command="nope"))
+            _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing("[TECH-001]"))
+            _write(tmp, "tests/test_tech.py", "x\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2), result)
+            diags = result["targetResults"][0]["diagnostics"]
+            self.assertEqual([(d["code"], d["source"]["workspaceId"], d["source"]["path"], d["source"]["key"]) for d in diags],
+                             [("SPEC-VERIFY-BLOCKED-001", "root", ".spec/technical/TECH-001.md", "tests[0].command")])
+            self.assertEqual(result["commands"], [])
+
+    def test_tech_without_tests_passes_without_bindings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/technical/TECH-001.md",
+                   "---\nid: TECH-001\ntitle: 技術契約\nstatus: approved\n---\n\n# TECH-001 技術契約\n\n## Context\n\n規範文を持たない。\n")
+            _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing("[TECH-001]"))
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("passed", 0), result)
+            self.assertEqual(result["targetResults"][0]["bindingRefs"], [])
+
+    def test_statements_and_document_unit_tests_are_combined(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result, exit_code = self._run(
+                tmp, "/bin/true", "[REQ-001:AC-01, TECH-001]",
+                {".spec/requirements/REQ-001.md": _req("REQ-001"), "tests/test_auth.py": "x\n"},
+            )
+            self.assertEqual((result["status"], exit_code), ("passed", 0), result)
+            target = result["targetResults"][0]
+            self.assertEqual(target["statements"], ["REQ-001:AC-01"])
+            self.assertEqual(result["commands"][0]["tests"], ["tests/test_auth.py", "tests/test_tech.py"])
+
+
 if __name__ == "__main__":
     unittest.main()

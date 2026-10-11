@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TECH-005"
+  ],
+  "contextDigest": "sha256:ed56a773972db9c71816e343864776e6776a9d6eaf2f6b4c3fbb5acd288296fa",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TECH-005",
+      "kind": "technical",
+      "status": "approved",
+      "role": "advisory",
+      "path": ".spec/technical/TECH-005.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-007",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-007.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TECH-005"
+      ],
+      "statementRefs": [
+        "TECH-007:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-007",
+        "title": "前提技術契約",
+        "status": "approved"
+      },
+      "bodyText": "# TECH-007 前提技術契約\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-007:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 前提形式を定義する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-009",
+      "kind": "technical",
+      "status": "approved",
+      "role": "replacement",
+      "path": ".spec/technical/TECH-009.md",
+      "projection": "full",
+      "reachedBy": [
+        "supersedes:TECH-009"
+      ],
+      "statementRefs": [
+        "TECH-009:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-009",
+        "title": "後継の技術契約",
+        "status": "approved",
+        "relations": {
+          "supersedes": [
+            "TECH-005"
+          ]
+        }
+      },
+      "bodyText": "# TECH-009 後継の技術契約\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-009:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 新形式を使う。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

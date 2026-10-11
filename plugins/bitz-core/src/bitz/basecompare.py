@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from . import gitutil
 from . import messages
 from .config import Diagnostic
@@ -33,6 +35,19 @@ _TASK_TRANSITIONS: dict[str, set[str]] = {
 
 #: 関係・トレースモデル §3「強さ」。`related`は弱い関係のため含めない。
 STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
+
+
+def ref_document_id(ref: str) -> str:
+    """関係の参照先（文書ID・規範文ID、修飾の有無を問わない）から、文書IDの部分を返す。
+
+    ``DOC:AC-01``は``DOC``、``ws::DOC``は``ws::DOC``、``ws::DOC:AC-01``は``ws::DOC``を返す。修飾子の``::``は
+    規範文の接尾辞の``:``とは別に扱う（``ref.split(":", 1)[0]``は``ws::DOC``を``ws``へ誤って縮めるため）。
+    """
+
+    if "::" in ref:
+        workspace, _, local = ref.partition("::")
+        return f"{workspace}::{local.split(':', 1)[0]}"
+    return ref.split(":", 1)[0]
 
 
 def _transition_table(kind: str) -> dict[str, set[str]] | None:
@@ -306,11 +321,15 @@ def impact_candidate_diagnostics(
     workspace_id: str,
     *,
     source_ids: set[str] | None = None,
+    normalize: Callable[[str], str] | None = None,
 ) -> list[Diagnostic]:
     """変更されたREQまたはTECHへ強く依存する`approved`の文書を警告する（`check.md §8`）。
 
     ``source_ids``（`scope: selected`の`full_check_ids`）を渡すと、警告を出す側（依存元）の文書を
     その集合内だけへ絞る（`check.md §5`）。
+
+    ``normalize``（複合ワークスペース内の単独操作）は、参照先の文書ID（修飾IDを含む）を``changed_doc_ids``と
+    同じ表現へそろえる。作業ワークスペース自身を修飾した参照（``ws::DOC``）を修飾のないIDへ戻すのに使う。
     """
 
     diags: list[Diagnostic] = []
@@ -324,7 +343,9 @@ def impact_candidate_diagnostics(
         for relation in STRONG_RELATIONS:
             hit_id: str | None = None
             for ref in relations.get(relation) or []:
-                target_id = ref.split(":", 1)[0] if ":" in ref else ref
+                target_id = ref_document_id(ref)
+                if normalize is not None:
+                    target_id = normalize(target_id)
                 if target_id in changed_doc_ids:
                     hit_id = target_id
                     break
@@ -343,8 +364,19 @@ def impact_candidate_diagnostics(
     return diags
 
 
-def strong_dependency_closure(start_ids: set[str], current_by_id: dict[str, DocEntry]) -> set[str]:
-    """``start_ids``から強い関係（`STRONG_RELATIONS`）を前方へ辿った推移閉包を返す（`check.md §3`）。"""
+def strong_dependency_closure(
+    start_ids: set[str],
+    current_by_id: dict[str, DocEntry],
+    *,
+    normalize: Callable[[str], str] | None = None,
+) -> set[str]:
+    """``start_ids``から強い関係（`STRONG_RELATIONS`）を前方へ辿った推移閉包を返す（`check.md §3`）。
+
+    複合ワークスペースの統合索引（``current_by_id``が``ws::ID``のキーを含む）では、修飾した参照
+    （``ws::DOC``・``ws::DOC:AC-01``）の文書IDを修飾のまま索引から引き、ワークスペースをまたいで辿る。
+    ``normalize``は、辿る前に文書IDを``start_ids``と同じ表現へそろえる（作業ワークスペース自身を指す
+    ``ws::DOC``を修飾のない``DOC``へ戻す）。
+    """
 
     seen: set[str] = set()
     frontier = list(start_ids)
@@ -356,7 +388,9 @@ def strong_dependency_closure(start_ids: set[str], current_by_id: dict[str, DocE
         relations = (entry.frontmatter or {}).get("relations") or {}
         for relation in STRONG_RELATIONS:
             for ref in relations.get(relation) or []:
-                target_id = ref.split(":", 1)[0] if ":" in ref else ref
+                target_id = ref_document_id(ref)
+                if normalize is not None:
+                    target_id = normalize(target_id)
                 if target_id in current_by_id and target_id not in seen and target_id not in start_ids:
                     seen.add(target_id)
                     frontier.append(target_id)

@@ -204,8 +204,8 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertEqual(by_id["REQ-020"]["projection"], "full")
 
     def test_distance2_refinement_is_normative(self):
-        # 距離2以上の具体化文書（役割`refinement`）は提示形式`normative`にする（起点・TASK・`replacement`・
-        # `requirement`・`constraint`ではないため。`context`仕様 §5）。
+        # 距離2以上の具体化文書（役割`refinement`）は、所有する規範文がすべて制約台帳（対象規範文）にあれば
+        # 提示形式`normative`にする（`context`仕様 §5）。規範文を持たない具体化文書は条件を満たす。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
@@ -217,7 +217,7 @@ class ProjectionFieldTests(unittest.TestCase):
             _write(
                 root,
                 ".spec/technical/TECH-003.md",
-                _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n"),
+                _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n", with_statement=False),
             )
             result, _ = _run_context(root, ["REQ-001"], purpose="verify")
             by_id = {d["id"]: d for d in result["documents"]}
@@ -225,6 +225,78 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertEqual(by_id["TECH-002"]["projection"], "full")
             self.assertEqual(by_id["TECH-003"]["role"], "refinement")
             self.assertEqual(by_id["TECH-003"]["projection"], "normative")
+
+    def test_distance2_refinement_with_statements_in_ledger_is_normative(self):
+        # 規範文単位で具体化した文書の規範文は対象規範文になる（関係・トレースモデル §6.4）。制約台帳にあるので`normative`にできる。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/technical/TECH-002.md",
+                   _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001:AC-01]\n"))
+            _write(root, ".spec/technical/TECH-003.md",
+                   _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002:AC-01]\n"))
+            result, _ = _run_context(root, ["REQ-001"], purpose="verify")
+            by_id = {d["id"]: d for d in result["documents"]}
+            ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+            self.assertIn("TECH-003:AC-01", ledger)
+            self.assertEqual(by_id["TECH-003"]["projection"], "normative")
+
+    def test_distance2_refinement_never_drops_must_text(self):
+        # 所有する規範文が制約台帳にない具体化文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも
+        # 失われる（ADR-014の`Decision`の4番目の項目、`context`仕様 §5）。規範文が制約台帳になければ`full`で本文を返す。
+        # 文書単位で具体化した文書の規範文を対象規範文に含めるか（関係・トレースモデル §6.4の規則1）は未決のため、
+        # 目的`implement`と`verify`では制約台帳への収録の有無を固定せず、どちらでも文面が残ることだけを確かめる。
+        for purpose in ("interpret", "implement", "verify"):
+            with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as root:
+                _write(root, ".spec/bitz.yaml", _bitz_yaml())
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                _write(root, ".spec/technical/TECH-002.md",
+                       _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+                _write(root, ".spec/technical/TECH-003.md",
+                       _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n"))
+                result, _ = _run_context(root, ["REQ-001"], purpose=purpose)
+                by_id = {d["id"]: d for d in result["documents"]}
+                ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+                self.assertEqual(by_id["TECH-003"]["role"], "refinement")
+                if purpose == "interpret":
+                    # 目的`interpret`では対象規範文が空なので、制約台帳も空になる（関係・トレースモデル §6.4）。
+                    self.assertEqual(ledger, set())
+                if "TECH-003:AC-01" not in ledger:
+                    self.assertEqual(by_id["TECH-003"]["projection"], "full")
+                    self.assertIn("具体化された制約", by_id["TECH-003"]["bodyText"])
+
+    def test_refines_target_reached_first_by_requires_is_full(self):
+        # 起点の`refines`の参照先に、`requires`の鎖で先に到達した場合も`full`にする。この文書の距離は最短の1で
+        # （関係・トレースモデル §7の6.）、距離1の文書として`full`になる。その規範文は対象規範文にならない（§6.4の規則4）。
+        # 制約台帳の条件（`context`仕様 §5）は、距離2以上の具体化文書の試験（上の`never_drops_must_text`など）が確かめる。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n  refines: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-003.md", _req("REQ-003"))
+            result, _ = _run_context(root, ["REQ-001"], purpose="implement")
+            by_id = {d["id"]: d for d in result["documents"]}
+            ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+            self.assertNotIn("REQ-003:AC-01", ledger)
+            self.assertEqual(by_id["REQ-003"]["projection"], "full")
+            self.assertIn("bodyText", by_id["REQ-003"])
+
+    def test_full_refinement_counts_toward_byte_limit(self):
+        # バイト数の上限は詳細度`standard`の提示量で測る（`context`仕様 §8）。規範文が制約台帳にない距離2の具体化文書は
+        # `full`になるため、その本文も上限の計数に入る。
+        long_text = "長い本文。" * 400
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml("context:\n  maxBytes: 4096\n"))
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/technical/TECH-002.md",
+                   _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+            _write(root, ".spec/technical/TECH-003.md",
+                   _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n") + "\n## Notes\n\n" + long_text + "\n")
+            result, _ = _run_context(root, ["REQ-001"], purpose="interpret")
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("CTX-LIMIT-001", [d["code"] for d in result["diagnostics"]])
 
     def test_expand_upgrades_reference_to_full(self):
         with tempfile.TemporaryDirectory() as root:
@@ -622,6 +694,137 @@ class UnresolvedStrongRelationsTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(result["resolution"]["unresolvedStrongRelations"], 0)
             self.assertEqual(result["resolution"]["complete"], True)
+
+
+
+def _adr_doc(doc_id: str, status: str) -> str:
+    return f"""---
+id: {doc_id}
+title: 判断
+status: {status}
+---
+
+# {doc_id} 判断
+
+## Context
+
+背景。
+
+## Decision
+
+決定。
+
+## Consequences
+
+帰結。
+"""
+
+
+class AdrTypeConstraintTests(unittest.TestCase):
+    """状態`accepted`でないADRへの`requires`は、状態の診断ではなく型制約の`CTX-RELATION-TYPE-001`とする（関係・トレースモデル §4）。
+    状態の診断と型制約の診断は、独立した元の原因としてそれぞれ返す（診断レジストリ）。"""
+
+    def _codes(self, result: dict) -> list[tuple[str, str]]:
+        return sorted((d["code"], d["source"]["path"]) for d in result["diagnostics"])
+
+    def test_implement_reports_relation_type_for_non_accepted_adr(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", extra_frontmatter="relations:\n  requires: [ADR-001]\n  addresses: [REQ-001:AC-01]\n"))
+            result, exit_code = _run_context(root, ["TASK-001"], purpose="implement")
+            self.assertEqual((result["status"], exit_code), ("failed", 1))
+            self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/tasks/TASK-001.md")])
+
+    def test_state_and_relation_type_are_both_reported(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002, ADR-001]\n"))
+            _write(root, ".spec/requirements/REQ-002.md", _req("REQ-002", status="draft"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            result, exit_code = _run_context(root, ["REQ-001"], purpose="implement")
+            self.assertEqual(self._codes(result), [
+                ("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-001.md"),
+                ("CTX-STATE-001", ".spec/requirements/REQ-002.md"),
+            ])
+            self.assertEqual(result["resolution"]["unresolvedStrongRelations"], 1)
+
+    def test_verify_task_root_checks_relations_of_the_requires_closure(self):
+        # TASK-001 -> REQ-002（approved）-> ADR-001（proposed）。REQ-002はコンテキストへ含めないが、その強い関係の型制約を検査する。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [ADR-001]\n"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", status="done", extra_frontmatter="relations:\n  requires: [REQ-002]\n  addresses: [REQ-001:AC-01]\n"))
+            result, exit_code = _run_context(root, ["TASK-001"], purpose="verify")
+            self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md")])
+
+
+class ConfigDiagnosticsTests(unittest.TestCase):
+    """設定の不在は`SPEC-WORKSPACE-MISSING-001`（発生元`environment`）、不適合は設定の検査の診断（`SPEC-CONFIG-SCHEMA-001`など）を
+    そのまま返し、設定の警告はどの結果にも加える（ワークスペース・設定仕様、診断レジストリ、`context` §6）。"""
+
+    def test_invalid_config_returns_config_schema_diagnostic(self):
+        for name, extra, key in (("language", None, "language"), ("maxBytes", "context:\n  maxBytes: 100\n", "context.maxBytes")):
+            with self.subTest(name), tempfile.TemporaryDirectory() as root:
+                yaml = _bitz_yaml() if extra is not None else _bitz_yaml().replace("language: ja", "language: 42")
+                _write(root, ".spec/bitz.yaml", yaml + (extra or ""))
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                result, exit_code = _run_context(root, ["REQ-001"])
+                self.assertEqual((result["status"], exit_code), ("error", 3))
+                self.assertEqual([(d["code"], d["source"]["path"], d["source"].get("key")) for d in result["diagnostics"]],
+                                 [("SPEC-CONFIG-SCHEMA-001", ".spec/bitz.yaml", key)])
+                self.assertIsNone(result["contextDigest"])
+
+    def test_missing_config_is_an_environment_diagnostic(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2))
+            self.assertEqual(result["diagnostics"][0]["code"], "SPEC-WORKSPACE-MISSING-001")
+            self.assertIsNone(result["workspace"]["id"])
+            self.assertEqual(result["diagnostics"][0]["source"], {"kind": "environment", "component": "workspace", "identifier": "."})
+
+    def test_config_warning_is_added_to_a_failed_result_without_changing_its_status(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml() + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-999"])
+            self.assertEqual((result["status"], exit_code), ("failed", 1))
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["CTX-ROOT-MISSING-001", "SPEC-CONFIG-UNKNOWN-001"])
+
+    def test_stopped_config_returns_its_warning_exactly_once(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml().replace("language: ja", "language: 42") + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("error", 3))
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["SPEC-CONFIG-SCHEMA-001", "SPEC-CONFIG-UNKNOWN-001"])
+
+    def test_markdown_shows_null_workspace_id(self):
+        # 値のないフィールドは`null`と示す（`context` §9.1）。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, _exit_code = _run_context(root, ["REQ-001"])
+            text = render_context_markdown(result)
+            self.assertIn("- workspace: null (.)", text)
+            self.assertNotIn("None", text)
+
+    def test_config_warning_is_added_to_a_successful_result(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml() + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("passed_with_warnings", 0))
+            self.assertEqual([(d["code"], d["source"].get("key")) for d in result["diagnostics"]],
+                             [("SPEC-CONFIG-UNKNOWN-001", "futureKey")])
+            self.assertIsNotNone(result["contextDigest"])
 
 
 if __name__ == "__main__":

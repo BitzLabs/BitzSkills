@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed_with_warnings",
+  "purpose": "implement",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TASK-001"
+  ],
+  "contextDigest": "sha256:e09309f88d6d61b6225d1de6594f638e040d1887f4b1a96c8336a120667af47b",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "root",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-001",
+        "title": "対象句の実装",
+        "status": "open",
+        "relations": {
+          "requires": [
+            "TASK-002"
+          ],
+          "addresses": [
+            "REQ-001:AC-01"
+          ]
+        }
+      },
+      "bodyText": "# TASK-001 対象句の実装\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "テスト対応のない対象要求",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 テスト対応のない対象要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\nテスト対応は宣言しない。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TASK-002",
+      "kind": "task",
+      "status": "done",
+      "role": "work",
+      "path": ".spec/tasks/TASK-002.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TASK-001"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-002",
+        "title": "完了済みの先行作業",
+        "status": "done"
+      },
+      "bodyText": "# TASK-002 完了済みの先行作業\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "requirement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01"
+      ],
+      "addressed": [
+        "REQ-001:AC-01"
+      ],
+      "tested": [],
+      "unaddressed": [],
+      "untested": [
+        "REQ-001:AC-01"
+      ]
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-COVERAGE-TEST-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "MUST REQ-001:AC-01がtestされていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md"
+      }
+    }
+  ]
+}

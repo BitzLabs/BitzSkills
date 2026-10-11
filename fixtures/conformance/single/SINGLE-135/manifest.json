@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-135",
+  "description": "起点のrefinesの参照先にrequiresの鎖でも到達しても、役割refinementのMUSTの本文を提示から落とさない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

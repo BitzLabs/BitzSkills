@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::TASK-001",
+      "status": "passed",
+      "contextDigest": "sha256:8678b52b4a826ee2a9c6658e58ccf9f105ba7eaf65714ec25cd7215d1b04163e",
+      "statements": [],
+      "bindingRefs": [
+        "api::backend"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "api::backend",
+      "workspaceId": "api",
+      "name": "backend",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_audit.py"
+      ],
+      "tests": [
+        "tests/test_audit.py"
+      ],
+      "covers": [
+        "api::TECH-020"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

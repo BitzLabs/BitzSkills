@@ -508,7 +508,12 @@ def coverage_diagnostics(
 
 
 def build_multi_context(
-    active_ws_id: str, active_entries: list[DocEntry], pre: "multiws.PrecheckResult", *, keep_body: bool = False
+    active_ws_id: str,
+    active_entries: list[DocEntry],
+    pre: "multiws.PrecheckResult",
+    *,
+    keep_body: bool = False,
+    catalogs_out: "dict[str, document_mod.CatalogResult] | None" = None,
 ):
     """複合ワークスペース内の単独操作の`check`（修飾IDで明示した対象）向けに、横断の解決の材料を組み立てる。
 
@@ -519,6 +524,9 @@ def build_multi_context(
     用意すれば、横断する`refines`／`requires`の閉包が既存のTargetExpansionのコードのまま動く）。
     ``local_*``はワークスペース単位の非修飾の索引（``resolve_edge``が参照元の所有ワークスペースだけを対象に
     非修飾の参照を解決するために使う）。
+
+    ``catalogs_out``を渡すと、読み込んだ他のワークスペースのカタログ（診断と、修飾する前の文書のエントリ）を
+    ``{workspace_id: CatalogResult}``として書き込む（`check`が他のメンバーの文書を完全検査するときに使う）。
     """
 
     local_id_indices: dict[str, dict[str, DocEntry]] = {
@@ -551,6 +559,8 @@ def build_multi_context(
         if not keep_body:
             for e in catalog.entries:
                 e.body = None
+        if catalogs_out is not None:
+            catalogs_out[wid] = catalog
         qualified_entries = [_qualified_relations_view(e, wid) for e in catalog.entries]
         lid = relations_mod.build_id_index(qualified_entries)
         lstmt = relations_mod.build_statement_index(qualified_entries)

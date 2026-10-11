@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6c8352693dd41723e5cf2dc70a9f4a97d6832a5f3de2f24264741b40b4d8bf56"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "699ed0d4f7e75582dd74eddca129f300f76b8c8c8a8fb917cbd0fd1e30070d83"
+      },
+      ".spec/tasks/TASK-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a60038c91eeedba79979b0c07b1fcec48748fa821573225c80798619f6d2aa9"
+      },
+      ".spec/tasks/TASK-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff3df50a7757a3bcc3ad7afcadad196bceaf6f5a972f893bcf1400f02849a495"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n?? .spec/tasks/TASK-002.md\n?? .spec/tasks/TASK-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6c8352693dd41723e5cf2dc70a9f4a97d6832a5f3de2f24264741b40b4d8bf56"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "699ed0d4f7e75582dd74eddca129f300f76b8c8c8a8fb917cbd0fd1e30070d83"
+      },
+      ".spec/tasks/TASK-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a60038c91eeedba79979b0c07b1fcec48748fa821573225c80798619f6d2aa9"
+      },
+      ".spec/tasks/TASK-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff3df50a7757a3bcc3ad7afcadad196bceaf6f5a972f893bcf1400f02849a495"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n?? .spec/tasks/TASK-002.md\n?? .spec/tasks/TASK-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

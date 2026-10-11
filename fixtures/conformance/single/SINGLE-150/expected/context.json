@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "error",
+  "purpose": "interpret",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": null,
+  "revision": null,
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "languageはstringで指定してください",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "language"
+      }
+    }
+  ]
+}

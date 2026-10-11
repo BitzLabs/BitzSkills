@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a7fb30f300b4fa422002efd7baab1666c43209508fda47860896bf7e5a8ce89c"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "efe371bd1ca01442c68778161ef8d5d15fba25d9dca969dfc75ab95801792693"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/decisions/ADR-001.md\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a7fb30f300b4fa422002efd7baab1666c43209508fda47860896bf7e5a8ce89c"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "efe371bd1ca01442c68778161ef8d5d15fba25d9dca969dfc75ab95801792693"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/decisions/ADR-001.md\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

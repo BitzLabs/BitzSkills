@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TASK-001",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-RELATION-TYPE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "REQからADRへのrequiresは許可されません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/requirements/REQ-002.md",
+            "key": "relations.requires"
+          },
+          "evidence": "ADR-001"
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

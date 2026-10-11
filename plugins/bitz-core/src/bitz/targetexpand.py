@@ -2,7 +2,8 @@
 
 起点から対象を展開する唯一の契約。`context`、明示対象の`check`、`verify`はこの関数を再利用する
 （同 §6.4）。`purpose=interpret`は`check`の明示対象の検査が使う閉包の規則と完全に同じコードを使う
-（Step 2 フェーズCで実装済み。挙動を変えないため:func:`_interpret_closure`は変更しない）。
+（Step 2 フェーズCで実装済み）。:func:`_interpret_closure`は閉包の集合と到達したエッジを変えずに保ち、
+距離は到達元の記録から最短の段数として求める（関係・トレースモデル §7の6.。2026-10-06）。
 
 `implement`／`verify`はStep 3で追加した。`context`だけがこれらの目的（`purpose`）を使う。返り値
 :class:`TargetExpansionResult` は、`context`が必要とする追加の情報（到達したエッジ、距離、役割`advisory`として含めた、閉包内の文書を`refines`する
@@ -40,9 +41,13 @@ class TargetExpansionResult:
     #: 計算に使う。
     document_distance: dict[str, int] = field(default_factory=dict)
     #: §6.1「6.」で役割`advisory`として含めた、閉包内の文書を`refines`する、状態`draft`の文書の``doc_id``の集合。
+    #: 目的`interpret`のときだけ空でない（§6.1の末尾）。
     draft_advisory: set[str] = field(default_factory=set)
     #: 目的が`implement`または`verify`のときの状態違反（§10「状態と閉包」）。空でなければ閉包を完全解決の不成立とする。
     errors: list[dict] = field(default_factory=list)
+    #: 強い関係（型制約）を検査する文書の``doc_id``。目的が`implement`または`verify`のときに設定する（`contextDocuments`に加え、
+    #: `verify`のTASK起点では起点の`requires`の閉包）。
+    relation_scope: list[str] = field(default_factory=list)
     #: §6.1「5.」: `interpret`で起点が置換済み（有効な後継が単一）のときの``(origin_id, successor_id)``。
     #: `context`は``origin``を参考（`advisory`）、``successor``を後継（`replacement`）として示す（暗黙に差し替えはしない）。
     superseded_origin: tuple[str, str] | None = None
@@ -179,20 +184,58 @@ def _owning_document_id(root: str, id_index: dict[str, DocEntry], statement_inde
     return root if root in id_index else None
 
 
-def _interpret_closure(
-    owning_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
-) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str]]:
-    """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。挙動は変更しない）。
+def _shortest_distances(owning_id: str, preds: dict[str, set[str]], fallback: dict[str, int]) -> dict[str, int]:
+    """到達元の記録から、起点からの最短の段数を幅優先探索で求める（関係・トレースモデル §7の6.）。
 
-    戻り値は``(context_order, document_edges, document_distance, draft_advisory)``。
+    ``preds``は``doc_id -> {到達元のdoc_id, ...}``。閉包を作るときに辿ったエッジ1本を1段とする。到達元の記録が
+    ない文書（起こらない想定）は``fallback``の値を残す。
+    """
+
+    succs: dict[str, list[str]] = {}
+    for doc_id, sources in preds.items():
+        for source in sources:
+            succs.setdefault(source, []).append(doc_id)
+    distance = {owning_id: 0}
+    frontier = [owning_id]
+    while frontier:
+        current = frontier.pop(0)
+        for doc_id in sorted(succs.get(current, [])):
+            if doc_id not in distance:
+                distance[doc_id] = distance[current] + 1
+                frontier.append(doc_id)
+    for doc_id, value in fallback.items():
+        distance.setdefault(doc_id, value)
+    return distance
+
+
+def _interpret_closure(
+    owning_id: str,
+    id_index: dict[str, DocEntry],
+    statement_index: dict[str, dict],
+    *,
+    include_draft: bool = True,
+) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str], dict[str, set[str]]]:
+    """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。閉包と到達したエッジの挙動は変更しない）。
+
+    ``include_draft``が偽のときは§6.1の6.（`refines`する状態`draft`の文書）を適用しない。目的`implement`と`verify`は
+    `draft`の文書を閉包へ含めない（§6.1の末尾）。
+
+    戻り値は``(context_order, document_edges, document_distance, draft_advisory, preds)``。``preds``は
+    ``doc_id -> {到達元のdoc_id, ...}``で、距離は閉包を作った後に``preds``から最短の段数として求める（§7の6.）。
     """
 
     context_set: set[str] = {owning_id}
     context_order: list[str] = [owning_id]
     edges: dict[str, list[tuple[str, str]]] = {owning_id: []}
     distance: dict[str, int] = {owning_id: 0}
+    preds: dict[str, set[str]] = {}
 
-    def _add(doc_id: str, relation: str, source_id: str, dist_from: int) -> None:
+    def _add(
+        doc_id: str, relation: str, source_id: str, dist_from: int, pred: str | None = None, *, record_pred: bool = True
+    ) -> None:
+        # ``pred``は到達元の文書（省略時は``source_id``）。``record_pred=False``は、到達元を呼び出し側で記録する場合。
+        if record_pred and doc_id != owning_id:
+            preds.setdefault(doc_id, set()).add(source_id if pred is None else pred)
         is_new = doc_id not in context_set
         if is_new:
             context_set.add(doc_id)
@@ -222,13 +265,17 @@ def _interpret_closure(
         target = frontier4.pop(0)
         target_dist = distance.get(target, 0)
         for cand_id, cand_entry in id_index.items():
-            if cand_id == owning_id or cand_id in refiner_seen:
+            if cand_id == owning_id:
                 continue
             if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                 continue
             if target in _refines_targets(cand_entry, id_index, statement_index):
+                if cand_id in refiner_seen:
+                    # 2つ目以降の参照先からの到達も、最短の段数の計算のために記録する。
+                    preds.setdefault(cand_id, set()).add(target)
+                    continue
                 refiner_seen.add(cand_id)
-                _add(cand_id, "refines", cand_id, target_dist)
+                _add(cand_id, "refines", cand_id, target_dist, pred=target)
                 refiners.append(cand_id)
                 frontier4.append(cand_id)
     # `refines`する文書の`requires`の閉包（推移的）。
@@ -237,15 +284,23 @@ def _interpret_closure(
 
     # 6. 閉包内の文書を`refines`する、状態`draft`の文書を役割`advisory`として含める（`requires`・逆方向の`refines`は辿らない）。
     draft_advisory: set[str] = set()
-    for doc_id in _draft_refinements(context_set, id_index, statement_index):
+    closure_docs = set(context_set)
+    for doc_id in (_draft_refinements(context_set, id_index, statement_index) if include_draft else []):
         entry = id_index[doc_id]
-        for target_id in _refines_targets(entry, id_index, statement_index):
+        targets = _refines_targets(entry, id_index, statement_index)
+        for target_id in targets:
             if target_id in context_set:
-                _add(doc_id, "refines", doc_id, distance.get(target_id, 0))
+                _add(doc_id, "refines", doc_id, distance.get(target_id, 0), record_pred=False)
                 break
+        # 到達元は、閉包（`draft`の文書を加える前）にある参照先のすべてとする（エッジは上の1件のまま）。`advisory`の文書を
+        # `refines`する文書は辿らないので（§6.1の6.）、先に加えた`draft`の文書は到達元にしない。
+        for target_id in targets:
+            if target_id in closure_docs and doc_id != owning_id:
+                preds.setdefault(doc_id, set()).add(target_id)
         draft_advisory.add(doc_id)
 
-    return context_order, edges, distance, draft_advisory
+    distance = _shortest_distances(owning_id, preds, distance)
+    return context_order, edges, distance, draft_advisory, preds
 
 
 def target_expansion(
@@ -261,7 +316,12 @@ def target_expansion(
         return None
     root_entry = id_index[owning_id]
 
-    context_order, edges, distance, draft_advisory = _interpret_closure(owning_id, id_index, statement_index)
+    context_order, edges, distance, draft_advisory, preds = _interpret_closure(
+        owning_id, id_index, statement_index, include_draft=purpose == "interpret"
+    )
+
+    def _owner(ref: str) -> str | None:
+        return _resolve_ref(ref, id_index, statement_index)[1]
 
     result = TargetExpansionResult(
         root_documents=[owning_id],
@@ -295,7 +355,9 @@ def target_expansion(
                 if successor_id not in edges:
                     edges[successor_id] = []
                     context_order.append(successor_id)
-                    distance[successor_id] = distance.get(owning_id, 0)
+                # 後継は起点から`supersedes`のエッジを1本辿って到達する（距離1）。
+                preds.setdefault(successor_id, set()).add(owning_id)
+                distance = _shortest_distances(owning_id, preds, distance)
                 pair = ("supersedes", successor_id)
                 if pair not in edges[successor_id]:
                     edges[successor_id].append(pair)
@@ -363,7 +425,10 @@ def target_expansion(
                         "doc_id": doc_id,
                     }
                 )
-            elif purpose == "implement" and entry.status == "done":
+            elif purpose == "implement" and entry.status == "done" and is_root:
+                # 文書・フロントマター・状態仕様 §7: `done`のTASKを`blocked`にするのは、目的`implement`で起点にした場合だけ。
+                # 起点のTASKが`requires`する先行TASKは`done`であることが前提（関係・トレースモデル §6.2）で、未完了は
+                # 下の`CTX-TASK-DEPENDENCY-001`が扱う。
                 errors.append(
                     {
                         "code": "CTX-STATE-001",
@@ -373,18 +438,8 @@ def target_expansion(
                         "doc_id": doc_id,
                     }
                 )
-        elif entry.kind == "ADR":
-            # 状態`accepted`のADRだけを規範的な強い依存先にできる（文書・フロントマター・状態仕様 §7）。
-            if entry.status != "accepted":
-                errors.append(
-                    {
-                        "code": "CTX-STATE-001",
-                        "severity": "error",
-                        "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id),
-                        "doc_id": doc_id,
-                    }
-                )
+        # ADRは状態の診断を出さない。状態`accepted`でないADRへの`requires`は、関係・トレースモデル §4の状態を含む型制約であり、
+        # 関係の検査が`CTX-RELATION-TYPE-001`として返す（呼び出し側は``relation_scope``の文書の強い関係を検査する）。
 
     _check_state(owning_id, is_root=True)
     if root_entry.kind in ("REQ", "TECH"):
@@ -395,7 +450,10 @@ def target_expansion(
     elif root_entry.kind == "TASK":
         # 関係・トレースモデル §6.2・§6.3・§10、文書・フロントマター・状態仕様 §7: TASKを起点にした場合の依存先も状態を検査する。
         # `implement`は`addresses`の参照先の所有文書と`requires`の閉包（すでに`context_order`にある）、
-        # `verify`は`addresses`の参照先の所有文書とそこからの`interpret`の閉包上の強い依存先を対象とする。
+        # `verify`は`addresses`の参照先の所有文書とそこからの`interpret`の閉包上の強い依存先に加え、コンテキストへ含めない
+        # 起点の`requires`の閉包（ADRを除く）を対象とする（ADR-034の`Decision`の5番目の項目）。
+        # 起点以外のTASKの状態は検査しない。先行TASKは下の`CTX-TASK-DEPENDENCY-001`が直接の参照先だけを扱い（ADR-029、ADR-036の
+        # `Decision`の8番目の項目）、推移的に到達したTASKは対象にしない。
         dep_ids: set[str] = set()
         addressed_owning: set[str] = set()
         for ref in _addresses_targets(root_entry, id_index, statement_index):
@@ -408,14 +466,27 @@ def target_expansion(
         elif purpose == "verify":
             dep_ids |= addressed_owning
             for target_doc_id in addressed_owning:
-                sub_order, _e, _d, _da = _interpret_closure(target_doc_id, id_index, statement_index)
+                sub_order, _e, _d, _da, _p = _interpret_closure(
+                    target_doc_id, id_index, statement_index, include_draft=False
+                )
                 dep_ids |= set(sub_order)
+            # ADRは除く。状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）で扱う（関係の検査）。
+            dep_ids |= {
+                target_id
+                for target_id, _source in _requires_closure([owning_id], id_index, statement_index)
+                if target_id in id_index and id_index[target_id].kind != "ADR"
+            }
         for dep_id in sorted(dep_ids):
             if dep_id == owning_id:
                 continue
+            dep_entry = id_index.get(dep_id)
+            if dep_entry is None or dep_entry.kind == "TASK":
+                continue
             _check_state(dep_id, is_root=False)
 
-    if root_entry.kind == "TASK" and purpose == "implement":
+    if root_entry.kind == "TASK" and purpose in ("implement", "verify"):
+        # ADR-029 Decision 1、`verify` §4の手順2: 目的`implement`と`verify`では、起点のTASKの`requires`が指すTASKがすべて`done`であることを
+        # 要求する。`verify`では`requires`の閉包をコンテキストへ含めない（関係・トレースモデル §6.3）が、この検査は行う。
         for target_id in _requires_targets(root_entry, id_index, statement_index):
             target_entry = id_index.get(target_id)
             if target_entry is not None and target_entry.kind == "TASK" and target_entry.status != "done":
@@ -430,10 +501,8 @@ def target_expansion(
                     }
                 )
 
-    if errors:
-        result.errors = errors
-        return result
-
+    # 状態の診断があっても閉包の構成を続け、型制約の検査の範囲（``relation_scope``）を確定してから返す。独立した元の原因は
+    # それぞれ主診断を持つため、呼び出し側は状態の診断と型制約の診断の両方を返す（診断レジストリ）。
     if purpose == "verify" and root_entry.kind == "TASK":
         # §6.3: 起点のTASKの`addresses`の参照先と、当該の参照先を所有する文書を`contextDocuments`へ含め、
         # それらから`interpret`の閉包の規則を適用する（起点自身の`requires`の閉包は含めない）。
@@ -449,11 +518,15 @@ def target_expansion(
         merged_edges: dict[str, list[tuple[str, str]]] = {owning_id: []}
         merged_distance: dict[str, int] = {owning_id: 0}
         merged_draft_advisory: set[str] = set()
+        merged_preds: dict[str, set[str]] = {}
 
         for target_doc_id in addressed_owning_ids:
-            sub_order, sub_edges, sub_distance, sub_draft = _interpret_closure(
-                target_doc_id, id_index, statement_index
+            sub_order, sub_edges, sub_distance, sub_draft, sub_preds = _interpret_closure(
+                target_doc_id, id_index, statement_index, include_draft=False
             )
+            for doc_id, sources in sub_preds.items():
+                merged_preds.setdefault(doc_id, set()).update(sources)
+            merged_preds.setdefault(target_doc_id, set()).add(owning_id)
             for doc_id in sub_order:
                 is_new = doc_id not in merged_edges
                 if is_new:
@@ -473,12 +546,18 @@ def target_expansion(
         edges = merged_edges
         distance = merged_distance
         draft_advisory = merged_draft_advisory
+        preds = merged_preds
 
     # --- 対象規範文の決定（§6.4）。 -----------------------------------------
 
-    def _ensure_in_context(doc_id: str, relation: str, source_id: str) -> None:
-        """``doc_id``がまだコンテキストになければ、エッジ付きで追加する（`refines`する文書の遅延追加）。"""
+    def _ensure_in_context(doc_id: str, relation: str, source_id: str, pred: str | None = None) -> None:
+        """``doc_id``がまだコンテキストになければ、エッジ付きで追加する（`refines`する文書の遅延追加）。
 
+        ``pred``は到達元の文書（具体化された規範文を所有する文書）で、最短の段数の計算に使う。
+        """
+
+        if pred is not None and doc_id != owning_id:
+            preds.setdefault(doc_id, set()).add(pred)
         if doc_id not in edges:
             edges[doc_id] = []
             context_order.append(doc_id)
@@ -510,7 +589,7 @@ def target_expansion(
             # 修飾形式）であり、``cand_entry.doc_id``（常に修飾なし）ではなくこちらをコンテキストの追跡のキーに使う
             # （単一ワークスペースでは両者が一致するため挙動を変えない）。
             for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
-                _ensure_in_context(cand_id, "refines", cand_id)
+                _ensure_in_context(cand_id, "refines", cand_id, pred=_owner(target))
                 ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
                 for stmt in cand_entry.statements:
                     sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
@@ -533,7 +612,9 @@ def target_expansion(
         # 3. TASKを起点にした場合: `addresses`する規範文と、その具体化文書の規範文。
         addressed_refs = _addresses_targets(root_entry, id_index, statement_index)
         for ref in addressed_refs:
-            if ":" in ref:
+            # 規範文IDかどうかは索引で判定する（複合ワークスペースの修飾ID`ws::TECH-010`も`:`を含むため）。規範文のないTECHの文書IDは
+            # 対象規範文を増やさず、`verify`の文書単位のテスト割当てとする（§6.4の規則3）。
+            if ref in statement_index:
                 _add_target(ref)
                 for s in _applicable_refinement_statements(ref):
                     _add_target(s)
@@ -568,6 +649,8 @@ def target_expansion(
                     context_order.append(target_doc_id)
                     distance[target_doc_id] = distance.get(owning_id, 0) + 1
                 if target_doc_id is not None:
+                    if target_doc_id != owning_id:
+                        preds.setdefault(target_doc_id, set()).add(owning_id)
                     pair = ("addresses", owning_id)
                     if pair not in edges[target_doc_id]:
                         edges[target_doc_id].append(pair)
@@ -584,6 +667,11 @@ def target_expansion(
                     edges[task_id] = []
                     context_order.append(task_id)
                     distance[task_id] = 1
+                # TASKは、`addresses`する対象規範文を所有する文書から1段で到達する。
+                for ref in _addresses_targets(id_index[task_id], id_index, statement_index):
+                    owner = _owner(ref) if ref in target_set else None
+                    if owner is not None and task_id != owning_id:
+                        preds.setdefault(task_id, set()).add(owner)
                 pair = ("addresses", task_id)
                 if pair not in edges[task_id]:
                     edges[task_id].append(pair)
@@ -591,9 +679,60 @@ def target_expansion(
     result.root_documents = [owning_id]
     result.context_documents = sorted(set(context_order))
     result.document_edges = edges
-    result.document_distance = distance
+    result.document_distance = _shortest_distances(owning_id, preds, distance)
     result.draft_advisory = draft_advisory
+    # 呼び出し側の関係の検査は、コンテキストの文書のうち起点ワークスペースが所有するもの（修飾のないID）が宣言する関係を対象にする。
+    result.relation_scope = sorted(set(context_order))
+    # その検査が見ない文書（複合ワークスペースの他のメンバーの文書と、目的`verify`でTASKを起点にした場合のコンテキストへ含めない
+    # 起点の`requires`の閉包）については、閉包を構成する`requires`の辺の型制約だけをここで検査する。状態が`accepted`でないADRへの
+    # `requires`は、関係・トレースモデル §4の状態を含む型制約である（同 §6.3、ユーザー決定）。
+    extra = set(context_order)
+    if purpose == "verify" and root_entry.kind == "TASK":
+        extra |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
+    # 複合ワークスペースの統合索引は、起点ワークスペースの文書にも修飾形の別名（`<起点>::<ID>`）を登録するため、同じ文書が
+    # 2つのIDで閉包へ入り得る。同じ辺の診断を2件返さないよう、文書の実体で判定する（診断レジストリ: 同じ原因から同義の診断を複数生成しない）。
+    covered = {id(id_index[d]) for d in context_order if "::" not in d and d in id_index}
+    for doc_id in sorted(extra):
+        entry = id_index.get(doc_id)
+        if entry is None or id(entry) in covered:
+            continue
+        covered.add(id(entry))
+        errors.extend(_adr_requires_type_errors(doc_id, id_index, statement_index))
+    result.errors = errors
     return result
+
+
+def _adr_requires_type_errors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[dict]:
+    """``doc_id``の`requires`のうち、状態が`accepted`でないADRを指すものを`CTX-RELATION-TYPE-001`の候補として返す。
+
+    診断の形は関係の検査（`relations.check_relations`）と同じにする。発生元は関係を宣言した文書の`relations.requires`、
+    ``evidence``は宣言した参照先（複合ワークスペースの他のメンバーの文書では、そのメンバーの中で書いた修飾のない形）。
+    """
+
+    entry = id_index.get(doc_id)
+    if entry is None:
+        return []
+    owner = doc_id.partition("::")[0] if "::" in doc_id else None
+    out: list[dict] = []
+    for ref in (entry.frontmatter.get("relations") or {}).get("requires") or []:
+        if not isinstance(ref, str):
+            continue
+        target_entry, _target_doc_id = _resolve_ref(ref, id_index, statement_index)
+        if target_entry is None or target_entry.kind != "ADR" or target_entry.status == "accepted":
+            continue
+        evidence = ref[len(owner) + 2 :] if owner is not None and ref.startswith(f"{owner}::") else ref
+        out.append(
+            {
+                "code": "CTX-RELATION-TYPE-001",
+                "severity": "error",
+                "resultStatus": "failed",
+                "summary": messages.relation_type_mismatch(entry.kind, target_entry.kind, "requires"),
+                "doc_id": doc_id,
+                "key": "relations.requires",
+                "evidence": evidence,
+            }
+        )
+    return out
 
 
 def _successors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:

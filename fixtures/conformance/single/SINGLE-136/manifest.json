@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-136",
+  "description": "文書単位で具体化した距離2の文書は、対象規範文が空のinterpretでMUSTの本文を提示から落とさない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

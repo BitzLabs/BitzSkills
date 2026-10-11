@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import Callable
 
 from . import basecompare
 from . import config as config_mod
@@ -215,12 +216,75 @@ def _task_boundary_diagnostics(
     return diags
 
 
+def _alias_normalizer(active_ws_id: str) -> Callable[[str], str]:
+    """作業ワークスペース自身を指す修飾ID（``<作業>::<ID>``）を、修飾のない``<ID>``へ戻す関数を返す。
+
+    複合ワークスペースの統合索引は、作業ワークスペースの文書にも``<作業>::<ID>``の別名を登録する
+    （他のワークスペースの文書が作業ワークスペースを修飾して参照するため）。完全検査の対象の集合では、
+    作業ワークスペースの文書を常に修飾のないIDで持ち、他のメンバーの文書だけを``ws::ID``で持つ。
+    """
+
+    prefix = f"{active_ws_id}::"
+
+    def _normalize(doc_id: str) -> str:
+        return doc_id[len(prefix):] if doc_id.startswith(prefix) else doc_id
+
+    return _normalize
+
+
+def _count_checked(check_ids: set[str], id_index: dict[str, DocEntry]) -> tuple[int, int]:
+    """完全検査の対象の文書の数と規範文の数を返す（`check.md §9`。数えない文書は含めない）。"""
+
+    documents = 0
+    statements = 0
+    for doc_id in check_ids:
+        entry = id_index.get(doc_id)
+        if entry is not None and entry.counted:
+            documents += 1
+            statements += entry.statement_count
+    return documents, statements
+
+
+def _exclude_member_paths(
+    changed: list[gitutil.ChangedPath], member_paths: list[str]
+) -> list[gitutil.ChangedPath]:
+    """ルートワークスペースの変更集合から、登録したメンバーの配下のパスを除く（複合ワークスペース仕様 §5）。
+
+    リネームの片側だけがメンバーの配下にある場合は、ルートワークスペースの側から見て削除または追加に読み替える
+    （`gitutil.collect_changed_paths`がワークスペースの外との間のリネームを扱うのと同じ）。
+    """
+
+    prefixes = tuple(p.rstrip("/") + "/" for p in member_paths)
+
+    def _inside(path: str | None) -> bool:
+        return path is not None and path.startswith(prefixes)
+
+    out: list[gitutil.ChangedPath] = []
+    for c in changed:
+        if c.status == "R" and c.old_path is not None:
+            new_in, old_in = _inside(c.path), _inside(c.old_path)
+            if new_in and old_in:
+                continue
+            if new_in:
+                out.append(gitutil.ChangedPath(status="D", path=c.old_path))
+            elif old_in:
+                out.append(gitutil.ChangedPath(status="A", path=c.path))
+            else:
+                out.append(c)
+            continue
+        if _inside(c.path):
+            continue
+        out.append(c)
+    return out
+
+
 def _direct_reverse_references(
     context_ids: set[str],
     id_index: dict[str, DocEntry],
     statement_index: dict[str, dict],
     *,
     source_index: dict[str, DocEntry] | None = None,
+    normalize: Callable[[str], str] | None = None,
 ) -> set[str]:
     """``context_ids``内のいずれかを直接参照する文書IDの集合を返す（`check.md §3`「直接逆参照」）。
 
@@ -228,23 +292,39 @@ def _direct_reverse_references(
     対象とする。参照先の解決は関係型が妥当かを問わない（存在するIDへの直接参照であれば、明示対象の
     完全検査の対象へ含める。型の不適合そのものは`relations.check_relations`が別途診断にする）。
 
-    ``source_index``を渡すと、逆参照の走査元（＝完全検査の対象へ加える候補）をその索引だけへ絞る
-    （複合ワークスペース内の単独操作の`check`。`複合ワークスペース仕様 §7`「無関係なメンバーを完全検査しない」。
-    参照先の解決自体は``id_index``全体（修飾エイリアスを含む）から行い、他のワークスペースの文書が偶然同じ
-    参照先を参照していても、作業ワークスペース以外の文書を完全検査の対象へ引き込まない）。
+    ``source_index``を渡すと、逆参照の走査元（＝完全検査の対象へ加える候補）をその索引だけへ絞る。複合ワークスペース内の
+    単独操作では、作業ワークスペースの文書の別名（``<作業>::<ID>``）を除いた、各文書を1回だけ含む索引を渡す
+    （作業ワークスペースと、ワークスペースをまたいで参照する他のメンバーの文書が候補になる。無関係なメンバーの文書は、
+    ``context_ids``のいずれも参照しないため含まれない。複合ワークスペース仕様 §7）。
+
+    ``normalize``を渡す複合ワークスペース内の単独操作では、採用する逆参照の文書を所有者で分ける。作業ワークスペースの
+    文書（修飾のないID）は、``context_ids``のどの文書を参照していても採用する。他のメンバーの文書（``ws::ID``）は、
+    ``context_ids``のうち作業ワークスペースの文書（修飾のないID）を参照するものだけを採用し、強い関係の閉包で到達した
+    他のメンバーの文書を参照するだけの文書へは広げない（check §6「別のワークスペースの無関係な変更を対象へ混ぜない」）。
+
+    ``normalize``は、文書IDを``context_ids``と同じ表現へそろえる（作業ワークスペース自身を指す修飾IDを
+    修飾のないIDへ戻す）。返す集合の要素も正規化後の表現である。
     """
+
+    def _norm(doc_id: str) -> str:
+        return normalize(doc_id) if normalize is not None else doc_id
+
+    # 他のメンバーの文書を採用する根拠にできる参照先（作業ワークスペースの文書）。
+    working_ids = {i for i in context_ids if "::" not in i} if normalize is not None else context_ids
 
     result: set[str] = set()
     for doc_id, entry in (source_index if source_index is not None else id_index).items():
-        if doc_id in context_ids:
+        source_id = _norm(doc_id)
+        if source_id in context_ids:
             continue
+        targets = working_ids if normalize is not None and "::" in source_id else context_ids
         relations = (entry.frontmatter or {}).get("relations") or {}
         for relation_name in ("requires", "refines", "addresses", "supersedes", "related"):
             hit = False
             for ref in relations.get(relation_name) or []:
                 _target_entry, target_doc_id = relations_mod.resolve_ref(ref, id_index, statement_index)
-                if target_doc_id is not None and target_doc_id in context_ids:
-                    result.add(doc_id)
+                if target_doc_id is not None and _norm(target_doc_id) in targets:
+                    result.add(source_id)
                     hit = True
                     break
             if hit:
@@ -621,12 +701,19 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     loc = locate_workspace(cwd, git, env)
 
-    # --- 修飾IDを起点にする場合の作業ワークスペースの決定（複合ワークスペース仕様 §3）。--------------------
-    # 明示対象のいずれかが修飾ID（`ws::local`）なら、その所有ワークスペースを作業ワークスペースへ切り替える。
-    # 複数の修飾IDの起点が異なるワークスペースを持てば引数不正（終了コード4）。`--all-workspaces`は別の経路
-    # （`_run_all_workspaces`）が処理するためここには来ない。修飾を持たない通常の`check`は
-    # ここを一切通らず、既存の単一ワークスペースの経路（`cwd`を探索の開始位置とする`locate_workspace`）をそのまま使う。
-    multi_pre: multiws.PrecheckResult | None = None
+    requested_workspace = parsed.single.get("--workspace")
+
+    # --- 作業ワークスペースの決定（複合ワークスペース仕様 §3）。--------------------------------------------
+    # リポジトリのルートが複合ワークスペースを宣言している場合は、修飾IDの起点の有無によらず事前検査を行い、
+    # 作業ワークスペースを (a) 修飾IDの起点の所有ワークスペース、(b) `--workspace`、(c) 現在のディレクトリの
+    # 最寄りの設定のワークスペース、の順で決める（`context`と同じ。(a)と(b)が食い違えば引数不正＝終了コード4）。
+    # 単一ワークスペースは軽量な従来の経路のまま、事前検査を行わない。`--all-workspaces`は別の経路
+    # （`_run_all_workspaces`）が処理するためここには来ない。
+    multi_pre: multiws.PrecheckResult | None = (
+        multiws.precheck(cwd, git, env, extra_config_revs=[base_commit] if base_commit is not None else [])
+        if multiws.is_declared(cwd, git, env)
+        else None
+    )
     workspace_rel_path = "."
     qualified_prefixes = {
         q[0] for t in parsed.positionals if (q := multirelate.parse_qualified(t)) is not None
@@ -635,25 +722,28 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if len(qualified_prefixes) > 1:
             raise CliArgError("check", "複数の起点が異なるworkspaceに属しています")
         target_ws_id = next(iter(qualified_prefixes))
-        multi_pre = multiws.precheck(
-            cwd, git, env, extra_config_revs=[base_commit] if base_commit is not None else []
-        )
-        if multi_pre.ok:
-            if target_ws_id == multi_pre.root_id:
-                loc = WorkspaceLocation(
-                    root=multi_pre.repo_root,
-                    config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml"),
-                )
-                workspace_rel_path = "."
-            else:
-                member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-                if member is not None:
-                    loc = WorkspaceLocation(
-                        root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                    )
-                    workspace_rel_path = member.path
+        if requested_workspace is not None and requested_workspace != target_ws_id:
+            raise CliArgError("check", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
+    else:
+        target_ws_id = requested_workspace
 
-    requested_workspace = parsed.single.get("--workspace")
+    if multi_pre is not None and multi_pre.ok:
+        if target_ws_id is None and loc.config_path is not None:
+            target_ws_id = config_mod.read_config(loc.config_path).workspace_id
+        if target_ws_id == multi_pre.root_id:
+            assert multi_pre.repo_root is not None
+            loc = WorkspaceLocation(
+                root=multi_pre.repo_root,
+                config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml"),
+            )
+            workspace_rel_path = "."
+        else:
+            member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
+            if member is not None:
+                loc = WorkspaceLocation(
+                    root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
+                )
+                workspace_rel_path = member.path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
@@ -704,7 +794,13 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             catalog = document_mod.build_catalog(loc.root, workspace_id)
             catalog_diags = catalog.diagnostics
 
-            multi_active = multi_pre is not None and multi_pre.ok
+            # 複合ワークスペースの統合索引は、作業ワークスペースがカタログ（ルートまたはメンバー）に登録されている
+            # ときだけ使う（カタログ外の入れ子のワークスペースは、従来どおり単一ワークスペースとして扱う）。
+            ws_roots: dict[str, str] = {}
+            if multi_pre is not None and multi_pre.ok:
+                ws_roots = {wid: root for wid, root, _rel in multiws.ordered_workspaces(multi_pre)}
+            multi_active = multi_pre is not None and multi_pre.ok and workspace_id in ws_roots
+            member_catalogs: dict[str, document_mod.CatalogResult] = {}
             if multi_active:
                 assert multi_pre is not None
                 (
@@ -713,10 +809,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     local_id_indices,
                     local_stmt_indices,
                     known_ws_ids,
-                ) = multirelate.build_multi_context(workspace_id, catalog.entries, multi_pre)
-                real_roots = {
-                    wid: os.path.realpath(root) for wid, root, _rel in multiws.ordered_workspaces(multi_pre)
-                }
+                ) = multirelate.build_multi_context(
+                    workspace_id, catalog.entries, multi_pre, catalogs_out=member_catalogs
+                )
+                real_roots = {wid: os.path.realpath(root) for wid, root in ws_roots.items()}
             else:
                 id_index = relations_mod.build_id_index(catalog.entries)
                 statement_index = relations_mod.build_statement_index(catalog.entries)
@@ -724,6 +820,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 local_stmt_indices = {workspace_id: statement_index}
                 known_ws_ids = {workspace_id}
                 real_roots = {}
+            # 作業ワークスペース自身の文書の索引（修飾の別名と他のメンバーの文書を含まない）。
+            # 基準版との比較・所有文書の逆索引は、作業ワークスペースの文書だけを対象にする。
+            active_index = local_id_indices[workspace_id]
+            # 統合索引は作業ワークスペースの文書にも`<作業>::<ID>`の別名を持つ。閉包と逆参照で別名に入った
+            # 作業ワークスペースの文書は、修飾のないIDへ正規化する（他のメンバーの文書は`ws::ID`のまま）。
+            normalize = _alias_normalizer(workspace_id) if multi_active else None
+            # 逆参照の走査元（各文書を1回だけ。作業ワークスペースの別名は除く）。
+            reverse_source_index = (
+                {k: v for k, v in id_index.items() if normalize is not None and normalize(k) == k}
+                if multi_active
+                else None
+            )
             current_by_path = {e.path: e for e in relations_mod.valid_entries(catalog.entries)}
 
             # --- Gitの基準版を解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
@@ -740,16 +848,40 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     changed_paths = gitutil.collect_changed_paths(
                         git.executable, cwd, env, base_commit, loc.root
                     )
+                    if multi_active and workspace_rel_path == ".":
+                        # ルートワークスペースは、登録したメンバーの配下を所有しない（複合ワークスペース仕様 §5）。
+                        assert multi_pre is not None
+                        changed_paths = _exclude_member_paths(changed_paths, [m.path for m in multi_pre.members])
             base_by_path = {e.path: e for e in base_by_id.values()}
 
             current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
 
+            # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
+            # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
+            active_check_ids: set[str] | None = None
+            other_check_ids: set[str] = set()
+
             if scope == "full":
-                # `--full`は文書の一覧全体が完全検査の対象（check.md §3）。`source_ids`で絞らない（`None`）。
+                # `--full`は作業ワークスペースの文書の一覧全体が完全検査の対象（check.md §3）。
+                # `source_ids`で絞らない（`None`）。
                 source_ids: set[str] | None = None
                 checked_document_count = catalog.checked_document_count
                 checked_statement_count = catalog.checked_statement_count
                 extra_diags: list[Diagnostic] = []
+                if multi_active:
+                    # 複合ワークスペースでは、作業ワークスペースの文書から強い関係の閉包で到達した他のメンバーの文書と、
+                    # 作業ワークスペースの文書を直接参照する他のメンバーの文書も完全検査の対象に含める。閉包で到達した
+                    # 他のメンバーの文書を参照するだけの他のメンバーの文書へは広げない（仕様 §7）。
+                    start_ids = set(active_index)
+                    reached = basecompare.strong_dependency_closure(start_ids, id_index, normalize=normalize)
+                    reached |= _direct_reverse_references(
+                        start_ids | reached, id_index, statement_index,
+                        source_index=reverse_source_index, normalize=normalize,
+                    )
+                    other_check_ids = reached - start_ids
+                    extra_documents, extra_statements = _count_checked(other_check_ids, id_index)
+                    checked_document_count += extra_documents
+                    checked_statement_count += extra_statements
             elif scope == "selected":
                 # `scope: selected`の完全検査の対象は`TargetExpansion(root, interpret).contextDocuments`と
                 # それらへの直接逆参照の和集合だけに限る（check.md §3）。
@@ -760,20 +892,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     active_ws_id=workspace_id if multi_active else None,
                     local_entries=catalog.entries if multi_active else None,
                 )
+                if normalize is not None:
+                    context_ids = {normalize(i) for i in context_ids}
                 full_check_ids = context_ids | _direct_reverse_references(
                     context_ids, id_index, statement_index,
-                    source_index=local_id_indices[workspace_id] if multi_active else None,
+                    source_index=reverse_source_index, normalize=normalize,
                 )
-                source_ids = full_check_ids
-                checked_paths = {e.path for e in catalog.entries if e.doc_id in full_check_ids}
+                other_check_ids = {i for i in full_check_ids if "::" in i}
+                active_check_ids = full_check_ids - other_check_ids
+                source_ids = active_check_ids
+                checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
 
-                checked_document_count = 0
-                checked_statement_count = 0
-                for doc_id in full_check_ids:
-                    entry = id_index.get(doc_id)
-                    if entry is not None and entry.counted:
-                        checked_document_count += 1
-                        checked_statement_count += entry.statement_count
+                checked_document_count, checked_statement_count = _count_checked(full_check_ids, id_index)
 
                 task_diags: list[Diagnostic] = []
                 for task_entry in task_roots:
@@ -787,17 +917,25 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
             else:
                 # `scope: changed`: Gitの変更集合から選んだ所有文書、強い関係の閉包、直接逆参照が
-                # 完全検査の対象（check.md §3・§6）。
-                implements_index = basecompare.build_reverse_index(id_index, "implements")
-                tests_index = basecompare.build_reverse_index(id_index, "tests")
+                # 完全検査の対象（check.md §3・§6）。複合ワークスペースでは、出発点は作業ワークスペースが所有する
+                # 変更されたパスだけで、閉包と直接の逆参照はワークスペースをまたいで辿る。
+                implements_index = basecompare.build_reverse_index(active_index, "implements")
+                tests_index = basecompare.build_reverse_index(active_index, "tests")
                 owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
                     changed_paths, current_by_path, base_by_path, implements_index, tests_index
                 )
-                strong_closure = basecompare.strong_dependency_closure(owning_ids, id_index)
+                strong_closure = basecompare.strong_dependency_closure(
+                    owning_ids, id_index, normalize=normalize
+                )
                 full_check_ids = owning_ids | strong_closure
-                full_check_ids |= _direct_reverse_references(full_check_ids, id_index, statement_index)
-                source_ids = full_check_ids
-                checked_paths = {e.path for e in catalog.entries if e.doc_id in full_check_ids}
+                full_check_ids |= _direct_reverse_references(
+                    full_check_ids, id_index, statement_index,
+                    source_index=reverse_source_index, normalize=normalize,
+                )
+                other_check_ids = {i for i in full_check_ids if "::" in i}
+                active_check_ids = full_check_ids - other_check_ids
+                source_ids = active_check_ids
+                checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
                 extra_diags = []
                 selection = {
@@ -807,10 +945,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 }
 
             if multi_active:
-                # 複合ワークスペース内の単独操作の`check`（明示した修飾ID）: 修飾IDの解決の優先順位
-                # （関係・トレースモデル §5.1）と所有境界（複合ワークスペース仕様 §5.1）を適用する。
-                # 診断は作業ワークスペース自身の完全検査の対象文書（source_ids）だけへ生成する
-                # （`relations.py`の``_source_entries``と同じ絞り込みを`entries`側で行う）。
+                # 複合ワークスペース内の単独操作の`check`: 修飾IDの解決の優先順位（関係・トレースモデル §5.1）と
+                # 所有境界（複合ワークスペース仕様 §5.1）を適用する。診断は完全検査の対象文書だけへ生成する
+                # （`relations.py`の``_source_entries``と同じ絞り込みを`entries`側で行う）。作業ワークスペースの
+                # 文書は``source_ids``、他のメンバーの文書は到達したものだけを、所有ワークスペースのIDと
+                # そのルート相対のパスで返す。
                 scoped_entries = (
                     catalog.entries if source_ids is None
                     else [e for e in catalog.entries if e.doc_id in source_ids]
@@ -820,36 +959,78 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     relation_diags.extend(
                         multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                     )
+                path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, real_roots)
+                coverage_diags = multirelate.coverage_diagnostics(
+                    scoped_entries, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids
+                )
+
+                # 到達した他のメンバーの文書（修飾する前の元のエントリ）。
+                other_ids_by_ws: dict[str, set[str]] = {}
+                for qualified_id in other_check_ids:
+                    q = multirelate.parse_qualified(qualified_id)
+                    if q is not None:
+                        other_ids_by_ws.setdefault(q[0], set()).add(q[1])
+                other_entries_by_ws: dict[str, list[DocEntry]] = {}
+                for other_ws in sorted(other_ids_by_ws):
+                    member_catalog = member_catalogs.get(other_ws)
+                    if member_catalog is None:
+                        continue
+                    other_entries_by_ws[other_ws] = [
+                        e
+                        for e in relations_mod.valid_entries(member_catalog.entries)
+                        if e.doc_id in other_ids_by_ws[other_ws]
+                    ]
+                for other_ws, other_entries in other_entries_by_ws.items():
+                    for e in other_entries:
+                        relation_diags.extend(
+                            multirelate.field_diagnostics(e, other_ws, local_id_indices, local_stmt_indices, known_ws_ids)
+                        )
+                    path_diags.extend(
+                        multirelate.path_diagnostics(other_entries, other_ws, ws_roots[other_ws], real_roots)
+                    )
+                    coverage_diags.extend(
+                        multirelate.coverage_diagnostics(
+                            other_entries, other_ws, local_id_indices, local_stmt_indices, known_ws_ids
+                        )
+                    )
+                    # 到達した文書のファイル単位の構文の診断（フロントマター・EARS-AI・スタイル）。
+                    other_paths = {e.path for e in other_entries}
+                    catalog_diags = list(catalog_diags) + [
+                        d
+                        for d in member_catalogs[other_ws].diagnostics
+                        if d.source.get("kind") == "file" and d.source.get("path") in other_paths
+                    ]
+
                 # 横断エッジを含めたグラフで循環を検査する（関係・トレースモデル §4）。読み込み済みの
-                # すべてのワークスペース（作業ワークスペースと、修飾参照で読み込んだ他のワークスペース）を1つのグラフとして計算し、
-                # 作業ワークスペースへ帰属するエッジだけをこの結果へ残す（この単独操作の`check`が返すのは
-                # 作業ワークスペース自身の診断だけ）。
+                # すべてのワークスペース（作業ワークスペースと、修飾参照で読み込んだ他のワークスペース）を1つのグラフとして
+                # 計算し、完全検査の対象の文書へ帰属するエッジだけをこの結果へ残す。
+                checked_cycle_paths: dict[str, set[str]] = {
+                    workspace_id: {e.path for e in scoped_entries},
+                    **{other_ws: {e.path for e in ents} for other_ws, ents in other_entries_by_ws.items()},
+                }
                 cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
                 relation_diags.extend(
                     d
                     for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-                    if d.source.get("workspaceId") == workspace_id
-                )
-                path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, real_roots)
-                coverage_diags = multirelate.coverage_diagnostics(
-                    scoped_entries, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids
+                    if d.source.get("path") in checked_cycle_paths.get(d.source.get("workspaceId"), set())
                 )
             else:
                 relation_diags = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=source_ids)
                 path_diags = relations_mod.check_paths(catalog.entries, loc.root, workspace_id, source_ids=source_ids)
                 coverage_diags = relations_mod.check_coverage(catalog.entries, workspace_id, source_ids=source_ids)
 
-            # `scope: selected`は完全検査の対象（`full_check_ids`＝`source_ids`）だけへ、状態遷移・
+            # `scope: selected`は完全検査の対象（`active_check_ids`）だけへ、状態遷移・
             # 承認済み要求の保護・影響候補を絞る（検収指摘: `check.md §5`は`scope`を限定しない）。
             # `scope: full`・`changed`は従来どおり絞らない（未変更の文書は基準版と現在版が同一の内容の
-            # ため、これらの検査は自然に何もせず安全）。
-            base_source_ids = full_check_ids if scope == "selected" else None
+            # ため、これらの検査は自然に何もせず安全）。基準版との比較は作業ワークスペースの文書だけが対象
+            # （他のメンバーの文書は、そのメンバーの基準版を読まない）。
+            base_source_ids = active_check_ids if scope == "selected" else None
             base_diags: list[Diagnostic] = []
             if base_commit is not None:
                 base_diags.extend(
                     basecompare.state_transition_diagnostics(
                         base_by_id,
-                        id_index,
+                        active_index,
                         workspace_id,
                         current_ids_present=current_ids_present,
                         source_ids=base_source_ids,
@@ -857,7 +1038,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 )
                 base_diags.extend(
                     basecompare.approved_protection_diagnostics(
-                        base_by_id, id_index, workspace_id, source_ids=base_source_ids
+                        base_by_id, active_index, workspace_id, source_ids=base_source_ids
                     )
                 )
                 changed_doc_ids = basecompare.changed_spec_document_ids(
@@ -865,7 +1046,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 )
                 base_diags.extend(
                     basecompare.impact_candidate_diagnostics(
-                        changed_doc_ids, id_index, workspace_id, source_ids=base_source_ids
+                        changed_doc_ids, active_index, workspace_id,
+                        source_ids=base_source_ids, normalize=normalize,
                     )
                 )
 

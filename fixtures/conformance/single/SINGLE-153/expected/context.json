@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed_with_warnings",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:d9af01889134acb3760d4a4eb655888544251c446cb36520e61a3c7d089e5a6f",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 1,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "文書の検査",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 文書の検査\n\n## Intent\n\n文書構造を検査する。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\nCore実装後に確認する。現時点では未証明。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-UNKNOWN-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "未知の設定keyです",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml",
+        "key": "futureOption"
+      }
+    }
+  ]
+}

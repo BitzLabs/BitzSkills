@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6db540b79cc5b2d92dbcdd141fc9b56d66a93ac105b2414bf6bd6d6265763d82"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87be76f17d12b1f8dc23d94483c704e56f324d95ce13e9edbb5bae797b0f8032"
+      },
+      ".spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f0677dedcaf507d27b91ebbd8da60eb88f6ce3ca3960f7fe490fb3484765fccd"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n?? .spec/requirements/REQ-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6db540b79cc5b2d92dbcdd141fc9b56d66a93ac105b2414bf6bd6d6265763d82"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87be76f17d12b1f8dc23d94483c704e56f324d95ce13e9edbb5bae797b0f8032"
+      },
+      ".spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f0677dedcaf507d27b91ebbd8da60eb88f6ce3ca3960f7fe490fb3484765fccd"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n?? .spec/requirements/REQ-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import unittest
+import uuid
 from pathlib import Path
 
 from bitz import procrun
@@ -82,6 +83,10 @@ class TimeoutTests(unittest.TestCase):
         """検収是正6: 直接のプロセスが`SIGTERM`で終了しても、プロセスグループへ`SIGKILL`を送り、
         `TERM`を無視する子孫（同じプロセスグループに残る）を確実に止める。"""
 
+        # 子孫のコマンド行へ実行ごとに一意な目印を入れ、pgrepがこの試験の子孫だけを探すようにする。
+        # 同じコマンド行を使うほかの試験（並列に動く別の試験スイートを含む）の子孫を拾わないためである。
+        # 目印は`sleep`の後ろに置くので、シェルが最後のコマンドを`exec`で置き換えて目印が消えることもない。
+        marker = f"bitz-procrun-orphan-{uuid.uuid4().hex}"
         with tempfile.TemporaryDirectory() as tmp:
             script = Path(tmp) / "leave_orphan.sh"
             _write_script(
@@ -89,14 +94,14 @@ class TimeoutTests(unittest.TestCase):
                 "#!/bin/sh\n"
                 # 子孫は`TERM`を無視して`sleep`し続ける。親は`TERM`を普通に受けて即終了する
                 # （`trap`を設定しないので、`SIGTERM`で直接のプロセスは速やかに死ぬ）。
-                "sh -c \"trap '' TERM; sleep 60\" &\n"
+                f"sh -c \"trap '' TERM; sleep 60; : {marker}\" &\n"
                 "echo ready\n"
                 "sleep 60\n",
             )
             result = procrun.run([str(script)], tmp, dict(os.environ), 1)
         self.assertEqual(result["termination"], "timeout")
         time.sleep(0.3)
-        check = subprocess.run(["pgrep", "-f", "trap '' TERM; sleep 60"], capture_output=True, text=True)
+        check = subprocess.run(["pgrep", "-f", marker], capture_output=True, text=True)
         self.assertEqual(check.stdout.strip(), "", "TERMを無視する子孫が生き残っています")
 
     def test_no_leftover_process_after_timeout(self):

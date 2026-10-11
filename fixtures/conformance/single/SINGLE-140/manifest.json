@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-140",
+  "description": "TASK起点の具体化の鎖は、起点からの最短の距離で並べ、距離2以上の文書をnormativeで提示する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

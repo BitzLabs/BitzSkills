@@ -44,7 +44,8 @@ def _manifest_lines(result: dict) -> list[str]:
         f"- purpose: {result['purpose']}",
     ]
     ws = result["workspace"]
-    lines.append(f"- workspace: {ws['id']} ({ws['path']})")
+    ws_id = ws["id"] if ws["id"] is not None else "null"
+    lines.append(f"- workspace: {ws_id} ({ws['path']})")
     lines.append(f"- roots: {_join_or_none(result['roots'])}")
     digest_value = result["contextDigest"] if result["contextDigest"] is not None else "null"
     lines.append(f"- contextDigest: {digest_value}")

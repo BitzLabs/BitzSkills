@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "blocked",
+  "purpose": "interpret",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": null,
+  "revision": null,
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-WORKSPACE-MISSING-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": ".spec/bitz.yamlがありません",
+      "source": {
+        "kind": "environment",
+        "component": "workspace",
+        "identifier": "."
+      }
+    }
+  ]
+}

@@ -63,7 +63,7 @@ fixtures/conformance/manifest.schema.json
 固定入力であり、実行リポジトリへは自動でコピーしない。通常ファイルのバイト列と実行ビット、シンボリックリンクの
 リンク文字列をバージョン管理する。Gitの履歴と基準版コミット後の状態は、マニフェストだけから構築する。
 `expected/<operation>.txt`は、テキスト出力を比較するfixtureだけが持つ。
-`dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.5）。
+`dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.4）。
 `manifest.schema.json`は全マニフェストが従う機械可読なスキーマであり、harnessは実行前にマニフェストを検証する。
 契約の正本である公開結果とフロントマターのスキーマは[`docs/03.詳細設計/schemas/`](../schemas/)に置き、
 fixtureは参照するだけで写しを持たない（[ADR-050](../../02.設計書/10_決定記録/ADR-050_契約スキーマの正本を詳細設計へ置く.md)）。
@@ -120,7 +120,7 @@ fixture IDは`SINGLE-NNN`または`MULTI-NNN`をケースファミリーとし�
 | `fixtureId` | ○ | 本matrixのID |
 | `description` | ○ | 検査する論点の1行要約 |
 | `setup.git` | ○ | Gitのリポジトリを作るかどうか。`false`はGit不在のfixture |
-| `setup.generate` | — | 生成する入力。`repo/`と排他。§3.5 |
+| `setup.generate` | — | 生成する入力。`repo/`と排他。§3.4 |
 | `setup.baseCommit` | — | 基準版コミットの作り方。省略時はコミットを作らない |
 | `setup.operations` | ○ | 基準版コミットの後に順番に適用する準備の処理。0件でも配列を置く |
 | `invocation.runner` | ○ | `bitz`、`consumer`、`migration`、`package`のいずれか |
@@ -425,10 +425,14 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-049` | 提示の絶対上限超過 | context | failed／1 | `CTX-PROJECTION-LIMIT-001` |
 | `SINGLE-050` | 起点ID不在 | context | failed／1 | `CTX-ROOT-MISSING-001` |
 | `SINGLE-051` | 先行TASKが未`done` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001` |
+| `SINGLE-144` | 先行TASKが`cancelled` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001`だけを返し、同じ原因の`CTX-STATE-001`を重ねない |
+| `SINGLE-147` | 状態`open`のTASK起点が、状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`） | context --purpose implement | failed／1 | 状態の検査の`CTX-STATE-001`ではなく、型制約の`CTX-RELATION-TYPE-001`の1件（発生元は起点のTASK-001の`relations.requires`、`evidence`はADR-001）。`unresolvedStrongRelations`は1 |
+| `SINGLE-148` | `approved`のREQ-001が、状態`draft`のREQ-002と状態`proposed`のADR-001を`requires`する | context --purpose implement | failed／1 | 独立した2つの原因を両方返す。REQ-001の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）とREQ-002の`CTX-STATE-001`の順で、状態は最悪値の`failed`、`unresolvedStrongRelations`は型制約の1件だけ |
 | `SINGLE-052-01` | 起点が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-052-02` | 依存先が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-053` | 有効な後継が複数 | context | failed／1 | `CTX-STATE-SUPERSEDED-002` |
 | `SINGLE-054` | `implement`対象の`MUST`が未`addressed` | context --purpose implement | passed_with_warnings／0 | `CTX-COVERAGE-TASK-001`、カバレッジ5区分 |
+| `SINGLE-154` | テスト対応が`command`を持たず、文書の`verify: default`でコマンド名を解決する（設定に`default`を定義。起点のREQ-001のみ） | context --purpose verify | passed／0 | ハッシュ値の材料の`commands`は`root::default`の1件、`verifyTimeouts`は`root`の1件（既定値300）。ハッシュ値は2系統の参照計算と一致 |
 
 ### 6.6 `verify`
 
@@ -448,6 +452,14 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-066` | 規範文なしTECHの文書単位のテスト対応 | verify | passed／0 | `statements: []`でも`bindingRefs`を持つ |
 | `SINGLE-067` | `cancelled`のTASK起点 | verify | blocked／2 | `CTX-STATE-001` |
 | `SINGLE-068` | `done`のTASK起点 | verify | passed／0 | 再検証を許可 |
+| `SINGLE-137` | 先行TASKが未完了（`open`）のTASK起点 | verify | blocked／2 | `CTX-TASK-DEPENDENCY-001`、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
+| `SINGLE-138` | 先行TASKがすべて`done`のTASK起点 | verify | passed／0 | `CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない、先行TASKとその`addresses`の参照先を対象に加えない |
+| `SINGLE-143` | `open`のTASK起点で、TASKが`addresses`するREQ-001を状態`draft`のTECH-005が文書単位で`refines`する（REQ-001とTECH-005のテスト対応はどちらもREQ-001:AC-01を`covers`する） | verify | passed／0 | TECH-005を閉包へ含めず、その状態を検査しないので`CTX-STATE-001`を返さない。テストのコマンドはREQ-001のテスト対応だけで、TECH-005のテストを実行しない |
+| `SINGLE-146` | `done`のTASK起点が、状態`draft`のREQ-002を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | blocked／2 | REQ-002の`CTX-STATE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、適用可能性は検査する |
+| `SINGLE-149` | `done`のTASK起点が、状態`approved`のREQ-002を`requires`し、REQ-002が状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | failed／1 | REQ-002の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、強い関係の型制約は検査する |
+| `SINGLE-155` | `SINGLE-154`と同じ入力 | verify | passed／0 | `root::default`を実行し、検証対象の`contextDigest`が`SINGLE-154`と同じ値（`context`と`verify`が同じ材料を作る） |
+| `SINGLE-156` | `open`のTASK起点が、規範文のないTECH-001（文書単位のテストを宣言する）だけを`addresses`する | verify | passed／0 | `statements: []`、`bindingRefs`は`root::default`の1件、`commands`はTECH-001のテストを実行する（TECHを起点にした`SINGLE-066`と同じ文書単位のテスト割当て）。規範文を足さない |
+| `SINGLE-157` | `SINGLE-156`の入力に、テスト対応を持つREQ-001を加え、TASK-001がREQ-001:AC-01とTECH-001を`addresses`する（2つのテスト対応は同じコマンド名`default`） | verify | passed／0 | `statements`はREQ-001:AC-01だけ、`bindingRefs`は`root::default`の1件、`commands`の`tests`と`covers`はREQ-001とTECH-001の両方 |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
@@ -508,6 +520,10 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-093` | 単一ワークスペースでGit不在 | doctor | passed_with_warnings／0 | `SPEC-DOCTOR-GIT-001`だけ |
 | `SINGLE-094` | `.spec/bitz.yaml`不在 | check | blocked／2 | `SPEC-WORKSPACE-MISSING-001`だけ |
 | `SINGLE-095` | 未知のEARS-AIメジャーバージョン | check | blocked／2 | `SPEC-EARS-VERSION-001`だけ |
+| `SINGLE-150` | 設定フィールドの型不正（`SINGLE-004-01`と同じ設定。起点のREQ-001は有効） | context | error／3 | `SPEC-CONFIG-SCHEMA-001`（`source.key`は`language`）の1件だけ。`SPEC-WORKSPACE-MISSING-001`を返さない。`contextDigest: null`、`documents: []` |
+| `SINGLE-151` | 設定`context.maxBytes`が値の範囲外（100。下限は4,096。起点のREQ-001は有効） | context | error／3 | `SPEC-CONFIG-SCHEMA-001`（`source.key`は`context.maxBytes`）の1件だけ。`SPEC-WORKSPACE-MISSING-001`を返さない。`contextDigest: null`、`documents: []` |
+| `SINGLE-152` | `.spec/bitz.yaml`不在（仕様文書のREQ-001はある） | context | blocked／2 | `SPEC-WORKSPACE-MISSING-001`の1件だけ。発生元は`environment`（`component: workspace`、`identifier: .`）。`SINGLE-094`の`check`と同じ診断。`contextDigest: null` |
+| `SINGLE-153` | 未知の標準キー`futureOption`を持つ設定（起点のREQ-001は有効、目的`interpret`） | context | passed_with_warnings／0 | 成功した結果に`SPEC-CONFIG-UNKNOWN-001`（`warning`）の1件だけを加える。`complete: true`、`contextDigest`は設定にキーのない同じ入力と同じ値（未知のキーは許可リストにない） |
 
 ### 6.10 EARS-AI文法、走査器、位置
 
@@ -544,8 +560,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-104-04` | `--format`省略の`doctor` | doctor | passed／0 | 標準出力はテキスト、`scope=`なし |
 | `SINGLE-105-01` | Gitありの`context`の`revision` | context | passed／0 | コミットは40桁の小文字16進 |
 | `SINGLE-105-02` | Gitなしの`verify`の`revision` | verify | passed／0 | `revision: null` |
-| `SINGLE-106-01` | コンテキストの`full`提示 | context | passed／0 | `full`だけの必須フィールドと禁止フィールドをスキーマで検証 |
-| `SINGLE-106-02` | コンテキストの`normative`提示 | context | passed／0 | `normative`だけの必須フィールドと禁止フィールドをスキーマで検証 |
+| `SINGLE-106-01` | コンテキスト一式の`full`提示 | context | passed／0 | `full`だけの必須フィールドと禁止フィールドをスキーマで検証 |
+| `SINGLE-106-02` | コンテキスト一式の`normative`提示 | context | passed／0 | `normative`だけの必須フィールドと禁止フィールドをスキーマで検証 |
 | `SINGLE-106-03` | `interpret`で起点を具体化する`draft`文書 | context | passed／0 | `advisory`を`reference`で提示し、必須フィールドと禁止フィールドをスキーマで検証 |
 | `SINGLE-106-04` | 標準出力、標準エラー出力とも空の`verify`コマンド | verify | passed／0 | 空の抜粋、両方とも切り詰めフラグは`false` |
 | `SINGLE-106-05` | 2つの検証対象に同じ診断の条件 | verify | failed／1 | テキストの`diagnostics`は両方の検証対象上の診断の総数 |
@@ -562,10 +578,18 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-108-02` | `SINGLE-108-01`と同じ起点 | verify | passed／0 | `context`と同じ対象規範文の集合 |
 | `SINGLE-109` | 規範文起点と同じ文書のほかの規範文 | context --purpose implement | passed／0 | 起点に指定した規範文と具体化文書は対象規範文、同じ文書のほかの規範文は隣接規範文 |
 | `SINGLE-110` | TASKの`addresses`先と`requires`先のTASK | context --purpose verify | passed／0 | 自身の`addresses`先だけが対象規範文、`requires`先のTASKとその`addresses`先をコンテキスト文書へ含めない |
-| `SINGLE-111-01` | カタログにない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-134` | 先行TASKがすべて`done`のTASKが、テスト対応のない`MUST`を`addresses`する | context --purpose implement | passed_with_warnings／0 | `CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`を返さない。先行TASKは役割`work`でコンテキストへ含め、対象規範文は対応済み・未テストで、`CTX-COVERAGE-TEST-001`が警告1件 |
+| `SINGLE-145` | 直接の先行TASKは`done`で、そのTASKが`requires`するTASKが`cancelled`（TASK-001が`requires`でTASK-002、TASK-002が`requires`でTASK-003。TASK-001はテスト対応のない`MUST`を`addresses`する） | context --purpose implement | passed_with_warnings／0 | `CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`を返さない（推移的に到達したTASKの状態は検査しない）。TASK-002とTASK-003は`requires`の閉包として役割`work`で含め、並びはTASK-001、REQ-001、TASK-002、TASK-003。`CTX-COVERAGE-TEST-001`が警告1件 |
+| `SINGLE-135` | 起点の`refines`の参照先に、`requires`の鎖でも到達する（REQ-001が`requires`でREQ-002、`refines`でREQ-003、REQ-002が`requires`でREQ-003） | context --purpose implement | passed_with_warnings／0 | REQ-003は役割`refinement`（役割の表の上から最初に該当する行）で、その規範文は制約台帳にない。提示形式`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる。`CTX-COVERAGE-TASK-001`が警告1件 |
+| `SINGLE-136` | 文書単位で具体化した距離2の文書（REQ-001をTECH-002が、TECH-002をTECH-003が文書単位で`refines`する） | context --purpose interpret | passed／0 | 対象規範文と制約台帳が空なので、距離2のTECH-003は役割`refinement`でも`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる |
+| `SINGLE-139` | 起点の`refines`の参照先に、`requires`の鎖より短い経路で到達する（REQ-001が`requires`でREQ-003、`refines`でREQ-002、REQ-003が`requires`でREQ-002） | context --purpose interpret | passed／0 | REQ-002とREQ-003はどちらも距離1（最短の段数）で、文書の並びはREQ-001、REQ-002、REQ-003。REQ-002は役割`refinement`、REQ-003は役割`requirement`で、どちらも`full` |
+| `SINGLE-140` | TASKを起点にした具体化の鎖（TASK-001が`addresses`でREQ-001:AC-01、TECH-002が規範文REQ-001:AC-01を、TECH-003が規範文TECH-002:AC-01を`refines`する） | context --purpose implement | passed_with_warnings／0 | 距離はTASK-001が0、REQ-001が1、TECH-002が2、TECH-003が3。TECH-002とTECH-003の規範文は制約台帳にあるので提示形式`normative`、REQ-001は役割`requirement`で`full`。未対応のTECH-002:AC-01とTECH-003:AC-01の`CTX-COVERAGE-TASK-001`が警告2件 |
+| `SINGLE-141` | 置換済みの起点の後継（TECH-005が`requires`でTECH-007、TECH-009が`supersedes`でTECH-005） | context --purpose interpret | passed／0 | TECH-005は役割`advisory`で`reference`、TECH-009は役割`replacement`で距離1、TECH-007も距離1で、並びはTECH-005、TECH-007、TECH-009。ハッシュ値の材料の適用可能性はTECH-009が`replacement` |
+| `SINGLE-142` | 目的`implement`で、REQ-001:AC-01を`refines`する状態`draft`のTECH-005がある（TECH-005のテスト対応がREQ-001:AC-01を`covers`し、REQ-001自身のテスト対応はない） | context --purpose implement | passed_with_warnings／0 | `refines`する状態`draft`の文書を閉包へ含めないので、文書はREQ-001だけで役割`advisory`の文書はない。TECH-005のテスト対応をテスト済みに数えず、REQ-001:AC-01は未対応・未テストで、`CTX-COVERAGE-TASK-001`と`CTX-COVERAGE-TEST-001`が警告各1件 |
+| `SINGLE-111-01` | ワークスペースの仕様文書にない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-02` | 所有文書はあるが規範文IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書の`check`へ置換しない |
-| `SINGLE-111-03` | カタログにない構文上妥当なSPECのパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
-| `SINGLE-111-04` | カタログにない明示の文書ID | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
+| `SINGLE-111-03` | ワークスペースに存在しない、構文上妥当な仕様文書のパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-111-04` | ワークスペースの仕様文書にない明示の文書ID | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
 | `SINGLE-112-01` | ADR起点 | context --purpose interpret | passed／0 | 対象規範文は空 |
 | `SINGLE-112-02` | ADR起点 | context --purpose implement | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `SINGLE-112-03` | ADR起点 | check | passed／0 | 文書検査だけを行う |
@@ -632,7 +656,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-127-10` | `--timeout +1` | verify | 結果なし／4 | 非正規の十進表記 |
 | `SINGLE-127-11` | `--report=out.json` | check | 結果なし／4 | 未知オプション形式、任意のパスへ書かない |
 | `SINGLE-127-12` | `--format json --report` | check | passed／0 | 両オプションを受理し、標準出力JSONと規定のレポートを生成 |
-| `SINGLE-127-13` | カタログにない構文上妥当な起点 | context | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-127-13` | ワークスペースの仕様文書にない構文上妥当な起点 | context | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-127-14` | カタログにない`--workspace` | doctor | 結果なし／4 | ワークスペース探索後、公開操作結果なし |
 | `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
 | `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
@@ -660,6 +684,12 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-003` | 非修飾で別ワークスペースだけにある参照先 | check all | failed／1 | `SPEC-MULTI-REF-001`だけ |
 | `MULTI-004-01` | `context`時に存在するワークスペース内の参照先が不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
 | `MULTI-004-02` | `check`時に存在するワークスペース内の参照先が不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
+| `MULTI-027-01` | メンバー`web`のREQ-001が、メンバー`api`のTECH-020を`requires`し、TECH-020が状態`proposed`のADR-001を`requires`する（`web`の作業ディレクトリから起点`REQ-001`） | context --purpose implement | failed／1 | 他のメンバーの文書でも、状態の検査の`CTX-STATE-001`ではなく、型制約の`CTX-RELATION-TYPE-001`の1件（発生元は`workspaceId: api`の`.spec/technical/TECH-020.md`の`relations.requires`、`evidence`は`ADR-001`）。`unresolvedStrongRelations`は1、`contextDigest`は`null` |
+| `MULTI-027-02` | `MULTI-027-01`と同じ入力（REQ-001は通るテスト対応を持つ） | verify `web::REQ-001` | failed／1 | 同じ`CTX-RELATION-TYPE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
+| `MULTI-028` | メンバー`web`のTASK-001が、メンバー`api`の規範文のないTECH-020（`api`のコマンド`backend`で文書単位のテストを宣言する）を`addresses`する | verify `web::TASK-001` | passed／0 | `statements: []`、`bindingRefs`は`api::backend`の1件、`commands`は`api`が所有するテストを実行し、`covers`は`api::TECH-020`。修飾IDの`api::TECH-020`を文書として扱い、例外で失敗しない |
+| `MULTI-029-01` | ルート`platform`のREQ-001（`MUST`の規範文1件）、`web`のTECH-010（`api::TECH-020`を`requires`し、`platform::REQ-001:AC-01`を`refines`する）とTECH-011（関係なし）、`api`のTECH-020（関係なし）と無関係なTECH-050（存在しないTECH-998を`requires`する）。状態はすべて`approved`で、変更集合は空（`apps/web`で実行） | check --full | passed／0 | 修飾した参照を`SPEC-RELATION-MISSING-001`にしない。`workspace`は`web`（`apps/web`）。完全検査は`web`の2文書と、閉包で到達した`api::TECH-020`、`platform::REQ-001`の4文書、規範文1件で、無関係な`api::TECH-050`の誤りは返さない |
+| `MULTI-029-02` | `MULTI-029-01`と同じ入力（リポジトリのルートで実行） | check --workspace web --full | passed／0 | `MULTI-029-01`と同じ結果。ルートで`--workspace`を指定すると作業ワークスペースが`web`になる |
+| `MULTI-029-03` | `web`のTECH-030（`api::TECH-020`を`requires`する）の本文を変更する。`api`のTECH-020（存在しないTECH-999を`requires`する）、TECH-030を`refines`するTECH-040（状態`draft`。存在しないTECH-997を`requires`する）、TECH-020を`refines`するTECH-060と無関係なTECH-050（それぞれ存在しない参照を1件持つ）（`apps/web`で実行） | check（引数なし） | failed／1 | `scope: changed`、`workspace`は`web`（`apps/web`）、`selection`は`changedPathCount: 1`、`targetDocumentCount: 1`、`excludedCodeTestPathCount: 0`。診断は閉包で到達した`api::TECH-020`と直接の逆参照の`api::TECH-040`の`SPEC-RELATION-MISSING-001`の2件で、`workspaceId`は`api`。閉包の逆参照の`api::TECH-060`と無関係な`api::TECH-050`は対象にしない |
 | `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、コマンドなし |
 | `MULTI-007-01` | メンバーの入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
@@ -714,7 +744,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-024-03` | 部分的なロールバック | migration test | rejected／1 | 部分的なロールバックを拒否 |
 | `MULTI-025-01` | 存在するワークスペースの、不在の修飾起点 | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
 | `MULTI-025-02` | 存在するワークスペースの、不在の修飾起点 | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
-| `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、グローバルとメンバーの検査項目を分離 |
+| `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、ワークスペースに依存しない検査項目とメンバーの検査項目を分離 |
 | `MULTI-026-02` | 1つのメンバーのコマンドが不在 | doctor all | blocked／2 | 後続メンバーを継続、メンバーの診断と全体の状態を集約、テキストの件数 |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を

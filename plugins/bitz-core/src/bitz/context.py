@@ -35,7 +35,7 @@ from . import targetexpand
 from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
-from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics
+from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
 from .workspace import WorkspaceLocation, locate_workspace
 
 _KIND_RANK = {"REQ": 0, "TECH": 1, "ADR": 2, "TASK": 3}
@@ -280,6 +280,42 @@ def _resolve_command(name: str | None, config_raw: dict) -> dict | None:
     return resolved
 
 
+def _referenced_command_names(entry: DocEntry) -> list[str]:
+    """文書のテスト対応が参照するコマンド名を返す。`tests[].command`、なければ文書の`verify`の順で解決する
+    （文書・フロントマター・状態仕様 §6。`verify`のテスト割当ての解決と同じ規則）。"""
+
+    default = entry.frontmatter.get("verify")
+    names: set[str] = set()
+    for t in entry.frontmatter.get("tests") or []:
+        if not isinstance(t, dict):
+            continue
+        name = t.get("command") or default
+        if isinstance(name, str) and name:
+            names.add(name)
+    return sorted(names)
+
+
+def digest_command_materials(doc_ids, id_index: dict[str, DocEntry], owner_of, resolve, timeout_for) -> tuple[list, list]:
+    """ハッシュ値の材料の``commands``と``verifyTimeouts``を作る（正規化仕様 §3、`context` §6、複合ワークスペース仕様 §6）。
+
+    収録したテスト割当て（コマンド名を解決でき、そのワークスペースの設定に定義があるもの）が参照するコマンドだけを
+    ``(workspaceId, name)``の順で並べ、``verifyTimeouts``はそのテスト割当てを1件以上持つワークスペースだけを置く。
+    `context --purpose verify`と`verify`で同じ関数を使い、両者のハッシュ値を一致させる。
+    """
+
+    pairs = {(owner_of(d), name) for d in doc_ids for name in _referenced_command_names(id_index[d])}
+    commands: list[dict] = []
+    workspaces: set[str] = set()
+    for wid, name in sorted(pairs):
+        resolved = resolve(wid, name)
+        if resolved is None:
+            continue
+        workspaces.add(wid)
+        commands.append({"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")})
+    timeouts = [{"workspaceId": wid, "timeoutSeconds": timeout_for(wid)} for wid in sorted(workspaces)]
+    return commands, timeouts
+
+
 def _merge_expansions(
     expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ):
@@ -352,6 +388,19 @@ def _merge_expansions(
 
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    """`bitz context`を実行する。設定の警告（`SPEC-CONFIG-UNKNOWN-001`、`SPEC-INPUT-BOM-001`。診断レジストリで全操作の
+    `continue`）は、どの結果にも加える（設定を解釈できず停止した結果は、停止の経路で警告も返す）。"""
+
+    sink: dict = {}
+    result, _exit_code = _run(parsed, cwd, env, sink)
+    warnings = [w.to_dict() for w in sink.get("config_warnings", [])]
+    if warnings:
+        result["diagnostics"] = sort_diagnostics(list(result.get("diagnostics") or []) + warnings)
+        result["status"] = worst_status([result["status"]] + [w["resultStatus"] for w in warnings])
+    return result, EXIT_CODE_BY_STATUS[result["status"]]
+
+
+def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple[dict, int]:
     started = time.monotonic_ns() // 1_000_000
     purpose = parsed.single.get("--purpose", "interpret")
     detail = parsed.single.get("--detail", "standard")
@@ -410,7 +459,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if effective_id != requested_workspace:
             raise CliArgError("context", f"指定したworkspaceが見つかりません: {requested_workspace}")
 
-    workspace_id = outcome.workspace_id if outcome is not None else "root"
+    # 設定がない、または不適合で同一性が確定しない場合は null（結果・診断・終了コード §2。`check`、`verify`と同じ）。
+    workspace_id = outcome.workspace_id if outcome is not None else None
 
     multi_active = multi_pre is not None and multi_pre.ok
 
@@ -420,23 +470,36 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if head_commit is not None:
             revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
-    if loc.config_path is None or outcome is None or outcome.stop or outcome.config is None:
+    if loc.config_path is None or outcome is None:
+        # 設定ファイルがない（診断レジストリ`WORKSPACE-CONFIG-MISSING`。発生元は`environment`）。
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
-            _file_diag(
-                "SPEC-WORKSPACE-MISSING-001",
-                "error",
-                "blocked",
-                ".spec/bitz.yamlがありません",
-                workspace_id,
-                ".spec/bitz.yaml",
-            )
+            {
+                "code": "SPEC-WORKSPACE-MISSING-001",
+                "severity": "error",
+                "resultStatus": "blocked",
+                "summary": ".spec/bitz.yamlがありません",
+                "source": {"kind": "environment", "component": "workspace", "identifier": "."},
+            }
         ]
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS["blocked"]
+    if outcome.stop or outcome.config is None:
+        # 設定の構文、型、値の範囲、必須キー、メジャーバージョンなどの不適合（ワークスペース・設定仕様、`context` §6）。
+        # ハッシュ値を計算する前に停止し、設定の検査の診断と警告をそのまま返す。
+        diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
+        worst = status_from_diagnostics(diags) if diags else "error"
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle["status"] = worst
+        bundle["diagnostics"] = sort_diagnostics(diags)
+        if multi_active:
+            bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
+        bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+        return bundle, EXIT_CODE_BY_STATUS[worst]
+    sink["config_warnings"] = list(outcome.warnings)
 
     config_raw = outcome.config
     assert loc.root is not None
@@ -527,8 +590,41 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         expansions.append(exp)
         all_errors.extend(exp.errors)
 
+    # --- 強い関係の解決検査（context.md §3「ID、型、状態、強い関係、循環を検査する」）。
+    # 閉包内の文書が宣言する強い関係のうち、解決できないものが1件でもあれば、一部が欠けたコンテキスト一式を
+    # 成功の結果として返さない（同 §3末尾）。複合ワークスペースでは修飾IDの解決の優先順位（関係・
+    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、起点ワークスペース自身が
+    # 所有する完全解決の対象文書だけへ診断を生成する（複合ワークスペース仕様 §7「無関係なメンバーを
+    # 完全検査しない」）。検査する文書は展開が返した範囲（``relation_scope``）で、状態の診断の有無によらず検査し、
+    # 独立した元の原因として両方を返す（診断レジストリ）。
+    relation_scope_ids: set[str] = set()
+    for exp in expansions:
+        relation_scope_ids |= set(exp.relation_scope or exp.context_documents)
+
+    def _relation_errors(scope_ids: set[str]) -> list:
+        if multi_active:
+            scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in scope_ids]
+            raw: list = []
+            for e in scoped_entries:
+                raw.extend(
+                    multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
+                )
+            cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
+            raw.extend(
+                d
+                for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
+                if d.source.get("workspaceId") == workspace_id
+            )
+        else:
+            raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
+        return [d for d in raw if d.severity == "error"]
+
+    def _unresolved_count(diag_dicts: list[dict]) -> int:
+        return len([d for d in diag_dicts if d["code"] in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")])
+
     if all_errors:
-        diags = []
+        relation_error_diags = _relation_errors(relation_scope_ids)
+        diags = [d.to_dict() for d in relation_error_diags]
         for err in all_errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -540,16 +636,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 doc_id = err["doc_id"]
                 owner = _owner_of(doc_id, workspace_id) if multi_active else workspace_id
                 doc_path = id_index[doc_id].path
-                diags.append(
-                    _file_diag(
-                        err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path,
-                        key=err.get("key"),
-                    )
+                diag = _file_diag(
+                    err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path,
+                    key=err.get("key"),
                 )
+                if err.get("evidence") is not None:
+                    diag["evidence"] = err["evidence"]
+                diags.append(diag)
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
+        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
@@ -558,40 +656,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     expansion = _merge_expansions(expansions, id_index, statement_index)
     context_documents = expansion.context_documents
 
-    # --- 強い関係の解決検査（context.md §3「ID、型、状態、強い関係、循環を検査する」）。
-    # 閉包内の文書が宣言する強い関係のうち、解決できないものが1件でもあれば、一部が欠けたコンテキスト一式を
-    # 成功の結果として返さない（同 §3末尾）。複合ワークスペースでは修飾IDの解決の優先順位（関係・
-    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、起点ワークスペース自身が
-    # 所有する完全解決の対象文書だけへ診断を生成する（複合ワークスペース仕様 §7「無関係なメンバーを
-    # 完全検査しない」）。
-    if multi_active:
-        scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in context_documents]
-        relation_diags_raw: list = []
-        for e in scoped_entries:
-            relation_diags_raw.extend(
-                multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
-            )
-        cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
-        relation_diags_raw.extend(
-            d
-            for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-            if d.source.get("workspaceId") == workspace_id
-        )
-    else:
-        relation_diags_raw = relations_mod.check_relations(
-            catalog.entries, workspace_id, source_ids=set(context_documents)
-        )
-    relation_error_diags = [d for d in relation_diags_raw if d.severity == "error"]
+    relation_error_diags = _relation_errors(relation_scope_ids | set(context_documents))
     if relation_error_diags:
         diags = [d.to_dict() for d in relation_error_diags]
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
-        unresolved_count = len(
-            [d for d in relation_error_diags if d.code in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")]
-        )
-        bundle["resolution"]["unresolvedStrongRelations"] = unresolved_count
+        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
@@ -629,6 +701,20 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             else:
                 roles[doc_id] = "constraint"
 
+    # 提示形式`normative`は本文を省き、規範文を制約台帳だけに残す。所有する規範文が1件でも対象規範文（制約台帳）にない
+    # 文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも失われる（ADR-014の`Decision`の4番目の項目）。
+    # そのため、`normative`にできるのは、所有する規範文がすべて対象規範文に含まれる具体化文書だけとする（`bitz context`仕様 §5）。
+    # 他のワークスペースの文書の規範文は、対象規範文と同じ`ws::local`の表現にそろえて比べる。
+    target_statement_set = set(expansion.target_statements)
+
+    def _statements_in_ledger(doc_id: str) -> bool:
+        entry = id_index[doc_id]
+        prefix = doc_id.partition("::")[0] if "::" in doc_id else None
+        return all(
+            (f"{prefix}::{stmt['id']}" if prefix is not None else stmt["id"]) in target_statement_set
+            for stmt in entry.statements
+        )
+
     def _projection_for(doc_id: str, use_detail: str) -> str:
         if use_detail == "full":
             return "full"
@@ -645,7 +731,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             return "full"
         if expansion.document_distance.get(doc_id, 0) <= 1:
             return "full"
-        if role == "refinement":
+        if role == "refinement" and _statements_in_ledger(doc_id):
             return "normative"
         return "full"
 
@@ -844,32 +930,16 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     timeout_seconds = verify_cfg.get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT)
 
     if multi_active:
-        binding_ws_ids: set[str] = set()
-        referenced_commands_multi: set[tuple[str, str]] = set()
         if purpose == "verify":
-            for doc_id in context_documents:
-                owner = _owner_of(doc_id, workspace_id)
-                for t in id_index[doc_id].frontmatter.get("tests") or []:
-                    name = t.get("command")
-                    if name:
-                        binding_ws_ids.add(owner)
-                        referenced_commands_multi.add((owner, name))
-        verify_timeouts = []
-        for wid in sorted(binding_ws_ids):
-            cfg = _config_for(wid)
-            vcfg = cfg.get("verify") or {}
-            verify_timeouts.append(
-                {"workspaceId": wid, "timeoutSeconds": vcfg.get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT)}
+            commands_settings, verify_timeouts = digest_command_materials(
+                context_documents,
+                id_index,
+                lambda d: _owner_of(d, workspace_id),
+                lambda wid, name: (_config_for(wid).get("_resolvedCommands") or {}).get(name),
+                lambda wid: (_config_for(wid).get("verify") or {}).get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT),
             )
-        commands_settings = []
-        for wid, name in sorted(referenced_commands_multi):
-            cfg = _config_for(wid)
-            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
+        else:
+            commands_settings, verify_timeouts = [], []
         settings_ws_ids = sorted(set(reached_other) | {workspace_id})
         settings_workspaces = []
         for wid in settings_ws_ids:
@@ -886,30 +956,16 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             {"id": w, "path": ws_path_by_id.get(w, ".")} for w in reached_other
         ]
     else:
-        has_binding = purpose == "verify" and any(
-            (id_index[d].frontmatter.get("tests") or []) for d in context_documents
-        )
-        referenced_commands: set[str] = set()
         if purpose == "verify":
-            for doc_id in context_documents:
-                for t in id_index[doc_id].frontmatter.get("tests") or []:
-                    name = t.get("command")
-                    if name:
-                        referenced_commands.add(name)
-        commands_settings = []
-        for name in sorted(referenced_commands):
-            resolved = _resolve_command(name, config_raw)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {
-                    "workspaceId": workspace_id,
-                    "name": name,
-                    "argv": list(resolved["argv"]),
-                    "cwd": resolved.get("cwd", "."),
-                }
+            commands_settings, verify_timeouts = digest_command_materials(
+                context_documents,
+                id_index,
+                lambda d: workspace_id,
+                lambda wid, name: _resolve_command(name, config_raw),
+                lambda wid: timeout_seconds,
             )
-        verify_timeouts = [{"workspaceId": workspace_id, "timeoutSeconds": timeout_seconds}] if has_binding else []
+        else:
+            commands_settings, verify_timeouts = [], []
         settings_workspaces = [
             {
                 "id": workspace_id,

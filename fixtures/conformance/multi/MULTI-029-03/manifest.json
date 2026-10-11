@@ -1,0 +1,39 @@
+{
+  "fixtureId": "MULTI-029-03",
+  "description": "メンバー内の引数なしの`check`が、他のメンバーの閉包と直接の逆参照を所有ワークスペースの名前で診断する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "apps/web/.spec/technical/TECH-030.md",
+        "source": "changes/TECH-030.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

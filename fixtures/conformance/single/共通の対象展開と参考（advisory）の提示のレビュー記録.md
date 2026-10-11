@@ -90,3 +90,279 @@ Core実装の結果ではなく、Gate Bで実出力と副作用を比較する�
 根拠は[`context`仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式)、
 [ADR-014](../../../docs/02.設計書/10_決定記録/ADR-014_意味中間表現とコンテキストの段階的な提示.md)。
 Core実装の観測出力を根拠にしていない。
+
+## 2026-10-05追記: 制約台帳にない規範文を持つ具体化文書の提示形式（`SINGLE-135`、`SINGLE-136`）
+
+### 追加の理由（実装の確認事項C1）
+
+Coreが、距離2以上の役割`refinement`の文書を、所有する規範文が制約台帳（対象規範文）にない場合も提示形式`normative`にしていた。
+`normative`は本文を省くため、その文書の`MUST`の文面が提示からも制約台帳からも失われた。上の`SINGLE-107-01`（制約台帳に収録される
+`TECH-003:AC-01`を`normative`で提示する）と`SINGLE-106-06`（距離2の役割`requirement`・`constraint`を`full`で提示する）は、
+この欠陥を固定していなかったため、fixtureが通ったまま欠陥が残った。固定していない経路は次の2つである。
+
+- 起点の`refines`の参照先に、`requires`の鎖でも到達する場合（`SINGLE-135`）。
+- 文書単位で具体化した距離2の文書を、対象規範文が空の目的`interpret`で提示する場合（`SINGLE-136`）。
+
+根拠は次の規範文である（`context`仕様 §5は2026-10-05にユーザーが承認し、`normative`にする条件へ「所有する規範文がすべて制約台帳に収録される」を加えた）。
+
+- [`context`仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式): 距離2以上の具体化文書を`normative`にするのは、
+  所有する規範文がすべて制約台帳に収録されるものだけである。1件でも制約台帳にない具体化文書は、距離によらず`full`にする。
+  理由は、`normative`にすると`MUST`の文面が提示からも制約台帳からも失われ、ADR-014の`Decision`の4番目の項目に反するためである。
+- [関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose):
+  目的`interpret`の`targetStatements`は空（表）。起点がREQの文書のときは、起点の規範文と、その具体化文書の規範文が対象になり（1.）、
+  `requires`の参照先と、起点が`refines`する先の規範文は対象に昇格しない（4.）。
+- [関係・トレースモデル §7](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#7-決定論的探索)の役割の表
+  （2026-10-05にユーザーが承認し、`refinement`の行を「具体化の関係で到達した文書（起点の`refines`の参照先と、具体化文書）」と明記した）。
+  複数に該当する文書は表の上から最初の行なので、起点の`refines`の参照先は、`requires`でも到達するが`requirement`ではなく`refinement`である。
+
+### `SINGLE-135`: 起点の`refines`の参照先に`requires`の鎖でも到達する
+
+`context REQ-001 --purpose implement --format json`。corpusは`corpus_refines_target_by_requires()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。`requires: [REQ-002]`、`refines: [REQ-003]`。`REQ-001:AC-01`のテスト対応を宣言する |
+| REQ-002 | `approved` | `REQ-002:AC-01`（`MUST`）を1件持つ。`requires: [REQ-003]` |
+| REQ-003 | `approved` | `REQ-003:AC-01`（`MUST`、本文は「秘密鍵を保持しない」）を1件持つ |
+
+起点のREQ-001のテスト対応を宣言するのは、未テストの警告を消し、診断を未対応の警告1件だけにするためである。
+REQ-001は`REQ-002`を`requires`し、`REQ-003`を`refines`する。REQ-003は`REQ-001`→`REQ-002`→`REQ-003`の`requires`の鎖と、
+`REQ-001`から`REQ-003`への`refines`の両方で到達する。循環はない。
+
+期待値は、Coreの出力を根拠にせず、次の規範文と参照計算から決めた。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed_with_warnings`／0 | 診断は警告1件だけ（関係・トレースモデル §8、診断レジストリの`CTX-COVERAGE-TASK-MUST`） |
+| `contextDocuments`の順 | REQ-001、REQ-002、REQ-003 | 関係・トレースモデル §7の6.（最短距離、種別、IDの順）。REQ-002とREQ-003はどちらも起点から1段で、同じ種別なのでIDの順 |
+| 役割 | REQ-001は`root`、REQ-002は`requirement`、REQ-003は`refinement` | §7の役割の表の上から最初の行。REQ-003は`refinement`の行（起点の`refines`の参照先）が`requirement`の行より上 |
+| 提示形式 | すべて`full` | `context`仕様 §5。REQ-003は、距離1であり、かつ所有する規範文が制約台帳にないので`full` |
+| `reachedBy` | REQ-003は`refines:REQ-001`と`requires:REQ-002` | `context`仕様 §5（`<relation>:<宣言した文書のID>`、コードポイント辞書順） |
+| 対象規範文（制約台帳） | `REQ-001:AC-01`だけ | §6.4の1.と4.。`REQ-003:AC-01`と`REQ-002:AC-01`は昇格しない |
+| カバレッジ | `must`の`total`が`REQ-001:AC-01`、`tested`が`REQ-001:AC-01`、`addressed`は空、`unaddressed`が`REQ-001:AC-01` | §8（`implement`の対象に対応するTASKがなく、起点自身のテスト対応が閉包にある） |
+| 診断 | `CTX-COVERAGE-TASK-001`／`warning`／`passed_with_warnings`が1件。`source`は`REQ-001.md` | 診断レジストリの`CTX-COVERAGE-TASK-MUST`。`summary`は`SINGLE-054`（同じ診断）の文言にそろえた |
+| コンテキストのハッシュ値 | `sha256:d6ae753bd61ddf02f3b8d5579f1b0f92f0cb46f1c921e13fb7a010b3c9036938` | 参照計算Aと参照計算Bの正規JSONが一致することを監査で確認した |
+
+距離について。`context`の距離は、閉包を作るときに辿ったエッジ1本を1段とした最短の段数である（関係・トレースモデル §7の6.）。
+REQ-003は起点の`refines`の参照先なので最短で1段である。このfixtureの`full`は、距離1の規則と、制約台帳にない規範文を持つ
+という規則のどちらからも導かれ、どちらの規則による`full`かは区別しない。制約台帳の規則だけを区別するのは`SINGLE-136`である。
+
+### `SINGLE-136`: 文書単位で具体化した距離2の文書（目的`interpret`）
+
+`context REQ-001 --purpose interpret --format json`。corpusは`corpus_document_refinement_chain()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ |
+| TECH-002 | `approved` | `TECH-002:AC-01`（`MUST`）を1件持つ（`Contract`の節）。`refines: [REQ-001]`（文書単位） |
+| TECH-003 | `approved` | `TECH-003:AC-01`（`MUST`、本文は「形式違反を拒否する」）を1件持つ（`Contract`の節）。`refines: [TECH-002]`（文書単位） |
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed`／0 | 目的`interpret`にカバレッジの診断はない |
+| `contextDocuments`の順 | REQ-001、TECH-002、TECH-003 | TECH-002は起点を`refines`する文書で距離1、TECH-003は`TECH-002`を推移的に具体化するので距離2（§6.1の4.、§7の6.） |
+| 役割 | REQ-001は`root`、TECH-002とTECH-003は`refinement` | §7の役割の表 |
+| 提示形式 | すべて`full` | TECH-002は距離1。TECH-003は距離2だが、所有する`TECH-003:AC-01`が制約台帳にない（`context`仕様 §5） |
+| `reachedBy` | TECH-002は`refines:TECH-002`、TECH-003は`refines:TECH-003` | `context`仕様 §5（`refines`は具体化する文書が宣言する） |
+| 対象規範文（制約台帳）とカバレッジ | すべて空 | §6.4の表（目的`interpret`の`targetStatements`は空） |
+| 診断 | なし | |
+| コンテキストのハッシュ値 | `sha256:2e6af084acba6f9b25580f85b7fc21798517fd9a03e74cf36130f16ce3231379` | 参照計算AとBの一致を監査で確認した |
+
+### 監査の検査
+
+`expansion_fixtures.py`の`check_contract`に、すべての`context`の期待値に対する「提示形式`normative`の文書の規範文がすべて
+制約台帳にあること」と、135・136の固有の検査（対象の文書が役割`refinement`、提示形式`full`、`MUST`の本文が`bodyText`に現れる、
+その規範文が制約台帳にない）を加えた。回帰試験は、提示形式の`normative`化、役割の取り違え、`reachedBy`の欠落、
+対象規範文でない規範文の制約台帳への収録、状態の取り違えを拒否することと、`check_contract`だけが`normative`を拒否することを確かめる。
+
+### 限界
+
+- 修正前のCore（`context.py`の、修正のコミットの1つ前の版）では、135と136の両方が失敗する。差異は、REQ-003とTECH-003の
+  `projection`が`full`ではなく`normative`であり、`frontmatter`と`bodyText`がないことだけである（陰性対照）。
+- 起点の`refines`の参照先が、`requires`の鎖で先に到達するときのCoreの距離は2であり、仕様の最短距離（1）と異なる。
+  この差は135の提示形式の期待値を変えない（上の「距離について」）。距離そのものは別に固定しておらず、このfixtureの対象外とする。
+  （2026-10-06に直した。Coreが距離を最短にし（コミット`5d4ab90c`）、この差は成り立たなくなった。距離が並び順と提示形式に現れる経路は
+  `SINGLE-139`〜`141`が固定する。上の記述は、2026-10-05時点の履歴として残す。）
+- 他のワークスペースの文書の規範文（複合ワークスペース）は、このfixtureでは固定しない。
+- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は上の陰性対照を含め、期待値を決めた後に行い、Gate Bで判定する。
+
+## 2026-10-06追記: 文書の距離を最短にした場合の並び順と提示形式（`SINGLE-139`、`SINGLE-140`、`SINGLE-141`）
+
+### 追加の理由（実装の確認事項C2）
+
+Coreが、文書の距離を探索の段階ごとに最初に到達した値で確定していたため、最短の段数と異なる距離になる経路があった。
+距離は並び順と提示形式にだけ現れ、コンテキストのハッシュ値の材料に含まれないので、既存の325件の期待値は、
+欠陥があっても通っていた。固定していなかった経路は次の3つである。
+
+- 起点の`refines`の参照先に、`requires`の鎖でも到達する場合の距離（`SINGLE-135`は距離1と2のどちらでも期待値が同じになる。上の「距離について」）。
+- TASKを起点にして、規範文単位で具体化した文書（`refines`する文書）と、`implement`で加える状態`open`のTASKの距離。
+  修正前は常に1だったが、仕様では、具体化された規範文を所有する文書の距離+1である。
+- 置換済みの起点の後継（役割`replacement`）の距離。修正前は0だったが、仕様では起点から`supersedes`のエッジを1本辿った距離1である。
+
+根拠は次の規範文である。
+
+- [関係・トレースモデル §7の6.](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#7-決定論的探索):
+  最短距離、種別の順（REQ／TECH／ADR／TASK）、IDの辞書順で並べる。距離は、起点を所有する文書を0とし、閉包を作るときに辿った
+  エッジ1本を1段とした、起点からの最短の段数であり、置換済みの起点の後継は`supersedes`のエッジを1本辿った距離1とする
+  （2026-10-06にユーザーが承認し、後継の距離1を明記した。コミット`fe213c6f`）。
+- [`context`仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式): 提示形式`full`にするのは、起点、TASK、
+  後継、要求、制約と、距離1の文書で、`normative`にするのは、それ以外の距離2以上の具体化文書のうち、所有する規範文がすべて
+  制約台帳に収録されるものである。
+- 関係・トレースモデル §6.1の4.・5.、§6.3、§6.4の3.（閉包と対象規範文）、§8（カバレッジ）、診断レジストリの`CTX-COVERAGE-TASK-MUST`。
+
+期待値は、Coreの出力を根拠にせず、上の規範文と、参照計算A（`expansion_fixtures.py`のリテラル）、参照計算B
+（`digest_crosscheck.py`。入力のリポジトリから閉包を計算する）から決めた。参照計算Bは、置換済みの起点の閉包（起点を`advisory`、後継を
+`replacement`にし、起点の`requires`は通常どおり辿る）を扱えるように直した。既存の期待値は変わらない（`closure()`の戻り値は2つのまま）。
+参照計算Bの文書の並び（最短の段数、種別、IDの順）と、参照計算Aの並びが一致することを、`validate()`の検査に加えた。
+この並びの検査は、既存の16件にも適用し、すべて一致した。
+
+### `SINGLE-139`: `requires`の鎖より短い`refines`の経路（並び順）
+
+`context REQ-001 --purpose interpret --format json`。corpusは`corpus_shorter_refines_path()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。`requires: [REQ-003]`、`refines: [REQ-002]` |
+| REQ-002 | `approved` | `REQ-002:AC-01`（`MUST`）を1件持つ |
+| REQ-003 | `approved` | `REQ-003:AC-01`（`MUST`）を1件持つ。`requires: [REQ-002]` |
+
+REQ-002へは、`refines`の1段と、`requires`の2段（REQ-001、REQ-003、REQ-002）の両方で到達する。循環はない。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed`／0 | 目的`interpret`にカバレッジの診断はない |
+| `contextDocuments`の順 | REQ-001、REQ-002、REQ-003 | REQ-002は最短で1段（`refines`）、REQ-003も1段（`requires`）で距離は同じ。同じ種別なのでIDの順。距離2なら、REQ-001、REQ-003、REQ-002の順になる |
+| 役割 | REQ-001は`root`、REQ-002は`refinement`、REQ-003は`requirement` | §7の役割の表の上から最初の行。REQ-002は起点の`refines`の参照先なので`refinement`の行が`requirement`の行より上 |
+| 提示形式 | すべて`full` | `root`と`requirement`は役割で`full`、REQ-002は距離1 |
+| `reachedBy` | REQ-002は`refines:REQ-001`と`requires:REQ-003`、REQ-003は`requires:REQ-001` | `context`仕様 §5（`<relation>:<宣言した文書のID>`、コードポイント辞書順） |
+| 対象規範文（制約台帳）とカバレッジ | すべて空 | §6.4の表（目的`interpret`の`targetStatements`は空） |
+| 診断 | なし | |
+| コンテキストのハッシュ値 | `sha256:6f115498560ac173e1fd6a7270bd74f7994e0fb61caef7d19cbd2e05424e44bd` | 参照計算AとBの一致を監査で確認した |
+
+### `SINGLE-140`: TASKを起点にした具体化の鎖（提示形式）
+
+`context TASK-001 --purpose implement --format json`。corpusは`corpus_task_refinement_chain()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| TASK-001 | `open` | `addresses: [REQ-001:AC-01]` |
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。テスト対応を宣言する |
+| TECH-002 | `approved` | `TECH-002:AC-01`（`MUST`）を1件持つ。`refines: [REQ-001:AC-01]`（規範文単位）。テスト対応を宣言する |
+| TECH-003 | `approved` | `TECH-003:AC-01`（`MUST`）を1件持つ。`refines: [TECH-002:AC-01]`（規範文単位）。テスト対応を宣言する |
+
+3つの文書にテスト対応を宣言するのは、未テストの警告を消し、診断を未対応の警告だけにするためである。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed_with_warnings`／0 | 診断は警告2件（下記） |
+| `contextDocuments`の順 | TASK-001、REQ-001、TECH-002、TECH-003 | 距離は0、1（`addresses`の1段）、2（REQ-001:AC-01を具体化）、3（TECH-002:AC-01を具体化）。§6.3、§6.1の4.、§7の6. |
+| 役割 | TASK-001は`root`、REQ-001は`requirement`、TECH-002とTECH-003は`refinement` | §7の役割の表。`addresses`で到達したREQは`requirement` |
+| 提示形式 | TASK-001とREQ-001は`full`、TECH-002とTECH-003は`normative` | `context`仕様 §5。TECH-002とTECH-003は距離2以上の具体化文書で、所有する規範文がすべて制約台帳にある。修正前のCoreは両方を距離1にして`full`にした |
+| `reachedBy` | TASK-001は`root`、REQ-001は`addresses:TASK-001`、TECH-002は`refines:TECH-002`、TECH-003は`refines:TECH-003` | `context`仕様 §5 |
+| 対象規範文（制約台帳） | `REQ-001:AC-01`、`TECH-002:AC-01`、`TECH-003:AC-01`（`documentRole`は`requirement`、`refinement`、`refinement`） | §6.4の3.（TASKが`addresses`する規範文と、その具体化文書の規範文。推移的）。順は`contextDocuments`の順 |
+| カバレッジ | `must`の`total`が3件、`addressed`が`REQ-001:AC-01`、`tested`が3件、`unaddressed`が`TECH-002:AC-01`と`TECH-003:AC-01`、`untested`は空 | §8。対応済みは、閉包に含まれるTASKが`addresses`で直接参照する規範文だけ。テスト済みは、閉包の文書の`tests[].covers`が含む規範文 |
+| 診断 | `CTX-COVERAGE-TASK-001`／`warning`／`passed_with_warnings`が2件。`source`は`TECH-002.md`、`TECH-003.md` | 診断レジストリの`CTX-COVERAGE-TASK-MUST`。`summary`は`SINGLE-054`、`SINGLE-135`と同じ文言。順は`path`の辞書順（`01_結果・診断・終了コード.md` §7） |
+| コンテキストのハッシュ値 | `sha256:05a685d1484fb6e0ab47cc9a0c553a0c47fda56dde11ad68207344842ef79639` | 参照計算AとBの一致を監査で確認した |
+
+### `SINGLE-141`: 置換済みの起点の後継（並び順）
+
+`context TECH-005 --purpose interpret --format json`。corpusは`corpus_superseded_origin()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| TECH-005 | `approved` | `TECH-005:AC-01`（`MUST`）を1件持つ。`requires: [TECH-007]` |
+| TECH-007 | `approved` | `TECH-007:AC-01`（`MUST`）を1件持つ |
+| TECH-009 | `approved` | `TECH-009:AC-01`（`MUST`）を1件持つ。`supersedes: [TECH-005]` |
+
+TECH-005は、`approved`の有効な後継TECH-009から`supersedes`されているので、置換済みの起点である（用語集の「置換済み」）。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed`／0 | 目的`interpret`は、置換済みの起点を旧文書`advisory`、後継`replacement`として示す（§6.1の5.）。`CTX-STATE-SUPERSEDED-001`で遮断するのは目的`implement`と`verify`の起点・強い依存先だけである（ADR-012の`Decision`の3番目の項目。`context` §10の表は索引で、目的を書いていない）。目的`implement`の遮断（`SINGLE-052-01`）は変えない |
+| `contextDocuments`の順 | TECH-005、TECH-007、TECH-009 | 後継は起点から`supersedes`のエッジを1本辿った距離1（§7の6.）、TECH-007は`requires`の1段で距離1。同じ種別なのでIDの順。後継を距離0にすると、TECH-005、TECH-009、TECH-007の順になる |
+| 役割 | TECH-005は`advisory`、TECH-007は`constraint`、TECH-009は`replacement` | §7の役割の表（`root`は置換済みの起点を除く）。TECH-007は`requires`で到達したTECH。置換済みの起点も起点を所有する文書であり、その`requires`は§6.1の2.で辿る（§6.1の6.の「`advisory`の文書の`requires`を辿らない」は、`refines`する`draft`の文書の規則） |
+| 提示形式 | TECH-005は`reference`、TECH-007とTECH-009は`full` | `context`仕様 §5（`advisory`は`reference`、`constraint`と`replacement`は`full`） |
+| `reachedBy` | TECH-005は`root`、TECH-007は`requires:TECH-005`、TECH-009は`supersedes:TECH-009` | `context`仕様 §5（`<relation>:<宣言した文書のID>`。`supersedes`は後継が宣言する） |
+| 対象規範文（制約台帳）とカバレッジ | すべて空 | §6.4の表 |
+| 診断 | なし | |
+| コンテキストのハッシュ値 | `sha256:ed56a773972db9c71816e343864776e6776a9d6eaf2f6b4c3fbb5acd288296fa` | 材料の`applicability`はTECH-005が`advisory`、TECH-009が`replacement`、TECH-007が`applicable`（正規化仕様 §3.1の表）。参照計算AとBの一致を監査で確認した |
+
+### 監査の検査（C2）
+
+`expansion_fixtures.py`の`check_contract`に、139〜141の文書ごとの役割、提示形式、`reachedBy`の検査（`DISTANCE_CHECKS`）を加えた。
+`LITERAL_SETS`は`contextDocuments`の並びを固定する。`validate()`は、参照計算Bの閉包が距離で並べた文書の並びを、期待する並びと照合する。
+回帰試験は、並び順の入替え、`normative`の`full`への改変、`full`の`normative`への改変、役割の取り違え、後継の`reachedBy`の取り違え、
+制約台帳の欠落を拒否することを確かめる。
+
+### 限界（C2）
+
+- 修正前のCore（`5d4ab90c`の1つ前の`targetexpand.py`）では、3件とも失敗する。差異は、139のREQ-002とREQ-003の並び（と、それに伴う
+  `documents[1]`と`documents[2]`の内容）、140のTECH-002とTECH-003の`projection`（`normative`ではなく`full`、`frontmatter`と`bodyText`が入る）、
+  141のTECH-007とTECH-009の並びだけである。コンテキストのハッシュ値と診断は一致する（陰性対照）。
+- 距離そのものはJSONの出力に現れず、並び順と提示形式を通じてだけ固定する。バイト数の上限（`context` §8）への影響は固定しない。
+- 置換済みの起点の後継の`requires`や、後継が複数ある場合（`CTX-STATE-SUPERSEDED-002`）は、このfixtureの対象外とする。
+- 目的`implement`で加える状態`open`のTASKの距離（`addresses`する対象規範文を所有する文書の距離+1）と、状態`draft`の文書（役割`advisory`）の距離
+  （閉包内の参照先のうち最も近いものの距離+1）は、このfixtureでは固定せず、Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の
+  `ShortestDistanceTests`）だけで確かめる。
+- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+
+## 2026-10-06追記: 目的`implement`で`refines`する状態`draft`の文書を閉包へ含めない（`SINGLE-142`）
+
+### 追加の理由（実装の確認事項C16）
+
+[関係・トレースモデル §6.1](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#61-interpret)の末尾は、
+「`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない」と定める。`advisory`として提示するのは目的`interpret`だけである
+（6.の`advisory`は§6.1の`interpret`の規則であり、状態仕様 §7と用語集の「参考（advisory）」も同じ）。
+Coreは6.を目的によらず適用し、`implement`でも`draft`の文書を役割`advisory`として含めていた。このため、`draft`の文書の
+`tests[].covers`をテスト済みに数え、`documents`に不要な文書が入り、コンテキストのハッシュ値の材料も変わった。
+既存の`implement`と`verify`のfixtureには、`refines`する`draft`の文書を持つものがなく、欠陥があっても通っていた。
+`SINGLE-106-03`は目的`interpret`で、`draft`の文書を`advisory`として含める陽性対照であり、`SINGLE-142`はその`implement`版である。
+
+### 入力と起動
+
+`context REQ-001 --purpose implement --format json`。corpusは`corpus_draft_excluded()`である。`SINGLE-106-03`と同じ関係
+（`draft`のTECH-005が`approved`のREQ-001:AC-01を`refines`する）に、TECH-005のテスト対応を足した。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。テスト対応を持たない |
+| TECH-005 | `draft` | `TECH-005:AC-01`（`MUST`）を1件持つ。`refines: [REQ-001:AC-01]`（規範文単位）。`tests`は`tests/test_candidate.py`が`REQ-001:AC-01`と`TECH-005:AC-01`を`covers`する |
+
+TECH-005のテスト対応が`REQ-001:AC-01`を`covers`するのは、`draft`の文書のテスト対応をテスト済みに数える欠陥を、
+REQ-001が自分のテスト対応で隠さないようにするためである。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed_with_warnings`／0 | 診断は警告2件（下記） |
+| `contextDocuments` | REQ-001だけ。役割`advisory`の文書はない | §6.1の末尾（`draft`の文書を含めない）。`draft`は適用可能でないので、§6.2の具体化文書にも加えない |
+| 役割、提示形式、`reachedBy` | REQ-001は`root`、`full`、`root` | §7の役割の表 |
+| 対象規範文（制約台帳） | `REQ-001:AC-01`だけ（`documentRole`は`root`） | §6.4の1.（起点の所有する規範文と、具体化文書の規範文）。`draft`のTECH-005は具体化文書として加えない |
+| カバレッジ | `must`の`total`は`REQ-001:AC-01`、`addressed`と`tested`は空、`unaddressed`と`untested`が`REQ-001:AC-01` | §8。対応済みは閉包に含まれる状態`open`のTASKが`addresses`する規範文だけで、TASKがない。テスト済みは**閉包の文書**の`tests[].covers`が含む規範文で、TECH-005は閉包の外なので数えない |
+| 診断 | `CTX-COVERAGE-TASK-001`、`CTX-COVERAGE-TEST-001`の順に、どちらも`warning`／`passed_with_warnings`。`source`は`REQ-001.md`。`summary`は`SINGLE-134`、`SINGLE-135`と同じ文言 | §8の表（`implement`の`MUST`の未対応・未テストは警告）、診断レジストリの`CTX-COVERAGE-TASK-MUST`、`CTX-COVERAGE-TEST-MUST-IMPLEMENT`。順は`01_結果・診断・終了コード.md`の診断の順序で、ワークスペースID、`path`が同じなので`code`の辞書順（`TA` < `TE`） |
+| コンテキストのハッシュ値 | `sha256:4ab733a53cdad37a6a2c36f0324fe687a971f0ff38e100486c62cc3b4f0b1b5e` | 材料の`documents[]`はREQ-001だけ（`purpose`は`implement`）。参照計算AとBの正規JSONの一致を監査で確認した。`SINGLE-106-03`（`sha256:3bf944a0…`）とは、目的、文書の集合ともに異なる |
+
+### 参照計算Bの修正
+
+参照計算B（`digest_crosscheck.py`の`_closure`）は、`draft`の文書を目的`interpret`のときだけ`advisory`にしていたが、`implement`と`verify`では
+その文書の`refines`のエッジを説明せず、「閉包の外の強いエッジ」として入力を拒否していた。`implement`と`verify`では、閉包へ含めない`draft`の文書の
+`refines`のエッジを、辿らない辺として記録する（既存の、`verify`の起点のTASKの`requires`の記録と同じ書き方。§6.1の末尾）。
+適用範囲は状態`draft`だけで、状態`rejected`などの適用可能でない文書の`refines`のエッジは、従来どおり拒否する
+（`test_conformance_audit.py`の`test_reference_closure_excludes_draft_refinements_unless_interpret`が確かめる）。
+既存のfixtureの期待値は変わらない。
+
+### 監査の検査と限界（C16）
+
+`check_contract`の`check_draft_excluded`が、結果のどこにもTECH-005とそのテストが現れないこと、`CTX-STATE-001`がないこと、閉包がREQ-001だけで
+役割`advisory`の文書がないこと、診断が上の2件の順であること、`tested`が空であることを、完全比較とは別に確かめる。回帰試験は、`draft`の文書の追加、
+テスト済みへの計上、診断の欠落・順序の入替え、制約台帳への規範文の追加、マニフェストの状態の`passed`化と目的の`interpret`化を拒否することと、
+`check_contract`だけが拒否することを確かめる。
+
+- 修正前のCore（コミット`90ba92a3`の`targetexpand.py`）では失敗する。差異は、`documents`が2件（TECH-005が役割`advisory`、提示形式`reference`）、
+  `tested`が`REQ-001:AC-01`、`untested`が空、診断が`CTX-COVERAGE-TASK-001`だけの1件、`contextDigest`が異なる値（陰性対照）。
+- `draft`の文書が複数ある場合、`draft`の文書をさらに`refines`する`draft`の文書、文書単位で`refines`する場合は固定しない（文書単位は`SINGLE-143`が`verify`で固定する）。
+- 起点が規範文の場合、TECH起点の場合は固定しない。
+- TASKを起点にした`implement`で、`draft`の文書が閉包の文書を`refines`する場合（修正前は`CTX-STATE-001`で止めていた経路）は固定せず、
+  Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の`DraftRefinementPurposeTests`）だけで確かめる。
+- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
