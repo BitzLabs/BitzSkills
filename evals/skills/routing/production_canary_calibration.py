@@ -105,7 +105,7 @@ def verify(repository, manifest_raw, profile, contract):
     require(len(turns)==1,'one original calibration turn')
     request=trace.strict_json(originals['request-1.json'])
     import production_canary_rollout as rollout
-    rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0])
+    rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0],profile='local-calibration')
     rollout.initial_context(request,sent,profile,turn=turns[0])
     require([f['method'] for f in raw]==[sdk.RAW_METHODS[0]]*4+[sdk.RAW_METHODS[1]],'calibration complete original raw inventory')
     for frame,item in zip(raw[:3],request['input'][2:]):

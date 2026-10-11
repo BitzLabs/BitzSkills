@@ -145,6 +145,18 @@ class CanaryRolloutTests(unittest.TestCase):
                 with self.subTest(names=names,fault=fault),self.assertRaises(ValueError):
                     rollout.request_policy(changed,value['sent'],thread='thread',turn='turn',mcp_sources=names)
 
+    def test_local_calibration_metadata_profile_cannot_be_selected_by_primary(self):
+        value=self.fixture('no-exec')
+        e=next(e for e in value['events'] if e['payload']['type']=='inference_started')
+        request=json.loads(value['payloads'][e['payload']['request_payload']['path']])
+        for key in ['mcp_attribution','guardian_credits_requested']:del request['client_metadata'][key]
+        rollout.request_policy(request,value['sent'],thread='thread',turn='turn',profile='local-calibration')
+        with self.assertRaisesRegex(ValueError,'client metadata fields'):
+            rollout.request_policy(request,value['sent'],thread='thread',turn='turn')
+        for profile in ['unknown',None,True]:
+            with self.subTest(profile=profile),self.assertRaises(ValueError):
+                rollout.request_policy(request,value['sent'],thread='thread',turn='turn',profile=profile)
+
     def test_removing_attribution_from_every_request_cannot_select_legacy_contract(self):
         value=self.fixture('two-exec')
         for e in value['events']:

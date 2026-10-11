@@ -29,6 +29,7 @@ class CanaryCalibrationTests(unittest.TestCase):
         value=rollout_fixture.CanaryRolloutTests(methodName='runTest').fixture()
         profile=value['context_profile'];profile.update(calibrationSource=self.source)
         request=json.loads(next(raw for name,raw in value['payloads'].items() if 'client_metadata' in json.loads(raw)))
+        for key in ['mcp_attribution','guardian_credits_requested']:request['client_metadata'].pop(key)
         request['prompt_cache_key']='t';request['client_metadata'].update(thread_id='t',turn_id='u',root_turn_id='u',session_id='t')
         request['client_metadata']['x-codex-window-id']='t:0'
         extra=json.loads(request['client_metadata']['x-codex-turn-metadata'])

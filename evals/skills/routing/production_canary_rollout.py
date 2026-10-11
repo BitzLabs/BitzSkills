@@ -89,7 +89,7 @@ def initial_context(request, sent, context_profile, *, turn):
     require(len({v['id'] for v in inputs}) == len(inputs), 'unique initial message IDs')
 
 
-def request_policy(request, sent, *, thread, turn, mcp_sources=()):
+def request_policy(request, sent, *, thread, turn, mcp_sources=(), profile='public-primary'):
     require(isinstance(request, dict) and set(request) == REQUEST_KEYS and request['model'] == 'gpt-6.1-sol' and
             request['tool_choice'] == 'auto' and request['parallel_tool_calls'] is False and
             request['reasoning'] == dict(effort='low', context='all_turns') and request['store'] is False and
@@ -98,12 +98,14 @@ def request_policy(request, sent, *, thread, turn, mcp_sources=()):
             trace.json_equal(request['text'], dict(verbosity='low', format=dict(type='json_schema', strict=True,
                 schema=sent[3]['params']['outputSchema'], name='codex_output_schema'))), 'fixed entire client request policy')
     value = request['client_metadata']
+    require(profile in {'public-primary','local-calibration'},'closed request metadata profile')
     keys={'x-codex-turn-metadata','x-codex-installation-id','thread_id','turn_id','root_turn_id','session_id','x-codex-window-id'}
-    require(isinstance(value,dict) and set(value)==keys | {'mcp_attribution','guardian_credits_requested'}, 'client metadata fields')
+    require(isinstance(value,dict) and set(value)==keys | ({'mcp_attribution','guardian_credits_requested'} if profile=='public-primary' else set()), 'client metadata fields')
     require(isinstance(mcp_sources,(list,tuple)),'fixed MCP source list')
-    expected=dict(status='complete',sources=[dict(server_name='production-routing',tool_name=name,first_turn_id=turn) for name in mcp_sources]) if mcp_sources else dict(status='none')
-    require(value['guardian_credits_requested']=='true' and isinstance(value['mcp_attribution'],str) and
-            trace.json_equal(trace.strict_json(value['mcp_attribution']),expected),'fixed original guardian and MCP attribution')
+    if profile=='public-primary':
+        expected=dict(status='complete',sources=[dict(server_name='production-routing',tool_name=name,first_turn_id=turn) for name in mcp_sources]) if mcp_sources else dict(status='none')
+        require(value['guardian_credits_requested']=='true' and isinstance(value['mcp_attribution'],str) and
+                trace.json_equal(trace.strict_json(value['mcp_attribution']),expected),'fixed original guardian and MCP attribution')
     require(all(nonempty(v) for v in value.values()) and value['thread_id'] == value['session_id'] == thread and
             value['turn_id'] == value['root_turn_id'] == turn and value['x-codex-window-id'] == thread + ':0',
             'client metadata context')
