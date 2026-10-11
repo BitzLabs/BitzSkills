@@ -108,12 +108,12 @@ class ConnectionProbeTests(unittest.TestCase):
 
     def test_deltas_require_an_active_matching_item_and_thread_starts_before_turn(self):
         for failed in [False, True]:
-            for mutation in ['ghost', 'late', 'wrong-type', 'payload', 'text-mismatch', 'late-thread', 'turn-before-thread']:
+            for mutation in ['ghost', 'late', 'wrong-type', 'payload', 'text-mismatch', 'late-thread', 'turn-before-thread', 'thread-before-init']:
                 sent, frames, _, _ = copy.deepcopy(self.fixture())
                 frames[-1]['params']['turn']['status'] = 'failed' if failed else 'completed'
-                if mutation in {'late-thread', 'turn-before-thread'}:
+                if mutation in {'late-thread', 'turn-before-thread', 'thread-before-init'}:
                     frame = frames.pop(2)
-                    frames.insert(len(frames) if mutation == 'late-thread' else 3, frame)
+                    frames.insert(len(frames) if mutation == 'late-thread' else 0 if mutation == 'thread-before-init' else 3, frame)
                 else:
                     delta = {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
                              'itemId': 'message', 'delta': frames[6]['params']['item']['text']}}
@@ -144,6 +144,27 @@ class ConnectionProbeTests(unittest.TestCase):
         self.assertEqual(config['model_providers.openai.request_max_retries'], 0)
         self.assertFalse(config['features.code_mode_host'])
         self.assertFalse(any(key.startswith('mcp_servers.') for key in config))
+
+    def test_http_alias_keeps_standard_auth_without_overriding_builtin_or_adding_destination(self):
+        config = probe.http_config_for(Path('/private-diagnostic'))
+        self.assertEqual(config['model_provider'], 'bitz_openai_http')
+        self.assertFalse(any(k.startswith('model_providers.openai.') for k in config))
+        self.assertTrue(config['model_providers.bitz_openai_http.requires_openai_auth'])
+        self.assertEqual(config['model_providers.bitz_openai_http.name'], 'OpenAI')
+        self.assertEqual(config['model_providers.bitz_openai_http.request_max_retries'], 0)
+        self.assertFalse(config['model_providers.bitz_openai_http.supports_websockets'])
+        self.assertFalse(any(k.endswith(('base_url', 'env_key', 'experimental_bearer_token')) for k in config))
+
+    def test_original_inventory_excludes_home_and_caches_and_rejects_rollout_root_symlink(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
+            base = Path(temporary)
+            (base / 'codex-home').mkdir()
+            (base / 'codex-home/auth.json').touch()
+            (base / 'config.json').write_text('{}')
+            (base / 'cache.bin').touch()
+            self.assertEqual(probe.original_artifact_paths(base), [base / 'config.json'])
+            (base / 'rollout-traces').symlink_to(base / 'codex-home')
+            with self.assertRaises(ValueError): probe.original_artifact_paths(base)
 
 
 if __name__ == '__main__':

@@ -42,7 +42,8 @@ def correlate(sent, received, *, allow_turn_error=False):
     require(len(starts) == len(ends) == 1 and reply_positions[1] < starts[0] < ends[0] and
             reply_positions[2] < ends[0], 'one native turn lifecycle')
     thread_starts = [i for i, f in enumerate(received) if f.get('method') == 'thread/started']
-    require(len(thread_starts) == 1 and thread_starts[0] < starts[0], 'one native thread before turn')
+    require(len(thread_starts) == 1 and reply_positions[0] < thread_starts[0] < starts[0],
+            'native thread after initialization and before turn')
     active, completed = {}, set()
     summaries, deltas = {}, {}
     for i, frame in enumerate(received):

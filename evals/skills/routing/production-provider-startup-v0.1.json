@@ -1,0 +1,27 @@
+{
+  "version": "production-provider-startup-0.1.0",
+  "phase": 4,
+  "scope": "isolated-unpaid-sdk-initialize-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "maximumInvocations": 1,
+  "maximumLogicalTurns": 0,
+  "timeoutSeconds": 30,
+  "paidModelCalls": 0,
+  "outputRelativeRoot": ".venv/production-provider-startup-01",
+  "diagnosticTracing": {"format": "json", "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"},
+  "sourceFiles": [
+    "evals/skills/routing/production_startup_probe.py",
+    "evals/skills/routing/production-provider-startup-v0.1.json",
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py"
+  ],
+  "limitations": ["network隔離・認証なし。initialize/initializedのみ、thread/turn/model要求0。",
+    "組込みopenai IDを上書きせず、bitz_openai_http別名の公式provider設定の読込みだけを確認。実接続・認証・モデル動作・Gate・Phaseは未認定。"]
+}

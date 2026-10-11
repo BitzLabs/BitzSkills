@@ -82,6 +82,43 @@ def reserve(repository, source, contract_raw, storage=None):
     return dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest(), **value)
 
 
+def http_config_for(base):
+    """組込みproviderを上書きせず、標準OpenAI認証/URL解決を使う公式の別名設定。"""
+    config = {k: v for k, v in config_for(base).items() if not k.startswith('model_providers.openai.')}
+    config['model_provider'] = 'bitz_openai_http'
+    prefix = 'model_providers.bitz_openai_http.'
+    config.update({prefix + 'name': 'OpenAI', prefix + 'wire_api': 'responses',
+                   prefix + 'requires_openai_auth': True, prefix + 'request_max_retries': 0,
+                   prefix + 'stream_max_retries': 0, prefix + 'supports_websockets': False,
+                   prefix + 'include_internal_metadata': True, prefix + 'http_headers.version': '0.160.1'})
+    return config
+
+
+def original_artifact_paths(base):
+    """任意cache/homeファイルを読まない。原記録の固定名とrollout payloadだけ。"""
+    names = {'contract.json', 'reservation.json', 'invocation.json', 'config.json', 'version.stdout', 'version.stderr',
+             'rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-stderr.bin', 'trace-safe.jsonl', 'runtime-result.json',
+             'isolated-result.json', 'namespace.stdout', 'namespace.stderr', 'dialogue-stop.json'}
+    paths = [base / name for name in sorted(names) if (base / name).is_file()]
+    root = base / 'rollout-traces'
+    if root.is_symlink():
+        raise ValueError('rollout root symlink')
+    if root.exists():
+        for path in root.rglob('*'):
+            if path.is_symlink():
+                raise ValueError('rollout artifact symlink')
+            if path.is_file():
+                relative = path.relative_to(root).parts
+                if len(relative) == 2 and relative[1] in {'manifest.json', 'trace.jsonl'} or \
+                        len(relative) == 3 and relative[1] == 'payloads' and re.fullmatch(r'[0-9]+\.json', relative[2]):
+                    paths.append(path)
+                else:
+                    raise ValueError('unknown rollout artifact')
+    if any(path.is_symlink() for path in paths):
+        raise ValueError('original artifact symlink')
+    return paths
+
+
 def evaluate(sent, frames, api, runtime):
     """原SDK文脈とAPI観測を照合する。HTTP回数の事前強制を意味しない。"""
     from production_trace import require, strict_json, json_equal
@@ -250,7 +287,7 @@ def run(source, dry_run=False):
     cli.exclusive(base / 'namespace.stdout', stdout)
     cli.exclusive(base / 'namespace.stderr', stderr)
     after = guard.verify(ROOT, source, contract['sourceFiles'])
-    artifact_paths = [p for p in base.rglob('*') if p.is_file()]
+    artifact_paths = original_artifact_paths(base)
     if any(p.is_symlink() for p in base.rglob('*')):
         raise ValueError('artifact symlink; reservation remains consumed')
     value = dict(status='connection_diagnostic_stopped', sourceCommit=source, namespaceExitCode=process.returncode,
