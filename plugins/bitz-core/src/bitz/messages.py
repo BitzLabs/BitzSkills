@@ -401,3 +401,12 @@ def multi_ownership_symlink_base(path: str, workspace_id: str) -> str:
 
 def multi_ownership_symlink_current(path: str, workspace_id: str) -> str:
     return f"{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します"
+
+
+# --- doctorのプラグインの要求（`SPEC-DOCTOR-PLUGIN-001`／`SPEC-DOCTOR-API-001`／`SPEC-DOCTOR-CAPABILITY-001`、ADR-061） ---
+
+DOCTOR_PLUGIN_REQUEST_INCOMPLETE = (
+    "プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください"
+)
+DOCTOR_API_INCOMPATIBLE = "CoreのAPIのバージョンがプラグインの要求する範囲を満たしません"
+DOCTOR_CAPABILITY_MISSING = "プラグインの要求する対応機能をCoreが公開していません"

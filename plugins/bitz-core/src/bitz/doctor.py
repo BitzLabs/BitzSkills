@@ -11,8 +11,9 @@ import sys
 from . import config as config_mod
 from . import execfile
 from . import gitutil
+from . import messages
 from . import multiws
-from .cliargs import ParsedArgs
+from .cliargs import ParsedArgs, parse_core_api_range
 from .errors import CliArgError
 from .resultmodel import doctor_status, sort_diagnostics, worst_status
 from .workspace import WorkspaceLocation, locate_workspace
@@ -27,6 +28,84 @@ _GIT_LOST_GUARANTEES = [
     "status-transition",
     "task-boundary",
 ]
+
+
+_COMPARATORS = {
+    ">=": lambda a, b: a >= b,
+    ">": lambda a, b: a > b,
+    "<=": lambda a, b: a <= b,
+    "<": lambda a, b: a < b,
+    "=": lambda a, b: a == b,
+}
+
+
+def _core_api_satisfies(required: str) -> bool:
+    """Core APIのバージョンが範囲のすべての比較子を満たすか。(MAJOR, MINOR)の整数の組で比べる。"""
+    comparators = parse_core_api_range(required)
+    assert comparators is not None  # 字句は`parse_doctor`で検査済み
+    major, minor = (int(part) for part in CORE_API_VERSION.split("."))
+    return all(_COMPARATORS[op]((major, minor), version) for op, version in comparators)
+
+
+def _plugin_request_checks(parsed: ParsedArgs) -> tuple[list[dict], list[dict]]:
+    """検査2（`plugin`）と検査3（`capability`）。`doctor.md` §3・§4.1、ADR-061。
+
+    4種のオプションのどれも指定しなければ、検査項目も診断も置かない。ワークスペースや
+    Gitの状態に依存せず、後続の検査の失敗とも独立に行う。
+    """
+    plugin = parsed.single.get("--plugin")
+    plugin_version = parsed.single.get("--plugin-version")
+    core_api = parsed.single.get("--require-core-api")
+    capabilities = parsed.repeat.get("--require-capability", [])
+    if plugin is None and plugin_version is None and core_api is None and not capabilities:
+        return [], []
+
+    source: dict = {"kind": "environment", "component": "plugin"}
+    if plugin is not None:
+        source["identifier"] = plugin
+
+    given = {"--plugin": plugin, "--plugin-version": plugin_version, "--require-core-api": core_api}
+    missing_options = sorted(name for name, value in given.items() if value is None)
+    if missing_options:
+        return [{"name": "plugin", "status": "failed"}], [{
+            "code": "SPEC-DOCTOR-PLUGIN-001",
+            "severity": "error",
+            "resultStatus": "failed",
+            "summary": messages.DOCTOR_PLUGIN_REQUEST_INCOMPLETE,
+            "source": source,
+            "evidence": {"missing": missing_options},
+        }]
+
+    assert core_api is not None
+    checks: list[dict] = []
+    diagnostics: list[dict] = []
+    if _core_api_satisfies(core_api):
+        checks.append({"name": "plugin", "status": "passed"})
+    else:
+        checks.append({"name": "plugin", "status": "blocked"})
+        diagnostics.append({
+            "code": "SPEC-DOCTOR-API-001",
+            "severity": "error",
+            "resultStatus": "blocked",
+            "summary": messages.DOCTOR_API_INCOMPATIBLE,
+            "source": dict(source),
+            "evidence": {"coreApi": CORE_API_VERSION, "required": core_api},
+        })
+
+    missing_capabilities = sorted(name for name in set(capabilities) if name not in CORE_CAPABILITIES)
+    if missing_capabilities:
+        checks.append({"name": "capability", "status": "blocked"})
+        diagnostics.append({
+            "code": "SPEC-DOCTOR-CAPABILITY-001",
+            "severity": "error",
+            "resultStatus": "blocked",
+            "summary": messages.DOCTOR_CAPABILITY_MISSING,
+            "source": dict(source),
+            "evidence": {"missing": missing_capabilities},
+        })
+    else:
+        checks.append({"name": "capability", "status": "passed"})
+    return checks, diagnostics
 
 
 def _workspace_missing_diagnostic() -> dict:
@@ -82,7 +161,7 @@ def _resolve_command_file(argv0: str, cwd: str, env: dict[str, str]) -> bool:
     return execfile.resolve_executable(argv0, cwd, env) is not None
 
 
-def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     """全体事前検査を通過したルートワークスペースとすべてのメンバーを診断する（複合ワークスペース仕様 §8）。"""
 
     started = _now_ms()
@@ -91,6 +170,9 @@ def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     checks: list[dict] = []
     python_ok = sys.version_info[:2] >= (3, 12)
     checks.append({"name": "core", "status": "passed" if python_ok else "blocked"})
+    # プラグインの要求の検査（検査2・3）は、Coreの検査項目の結果やワークスペースに依存しない。
+    plugin_checks, plugin_diagnostics = _plugin_request_checks(parsed)
+    checks.extend(plugin_checks)
     if not python_ok:
         diagnostics = [
             {
@@ -99,7 +181,8 @@ def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 "resultStatus": "blocked",
                 "summary": "実行環境のCPython versionが下限未満です",
                 "source": {"kind": "environment", "component": "core"},
-            }
+            },
+            *plugin_diagnostics,
         ]
         return _build_multi_result(None, checks, diagnostics, started)
 
@@ -111,7 +194,7 @@ def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if pre.catalog_status is not None:
         checks.append({"name": "catalog", "status": pre.catalog_status})
 
-    diagnostics = [d.to_dict() for d in pre.diagnostics]
+    diagnostics = [d.to_dict() for d in pre.diagnostics] + plugin_diagnostics
     workspaces = []
     if pre.ok:
         for wid, root, path in multiws.ordered_workspaces(pre):
@@ -174,7 +257,7 @@ def _build_multi_result(
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if "--all-workspaces" in parsed.flags:
-        return _run_all_workspaces(cwd, env)
+        return _run_all_workspaces(parsed, cwd, env)
 
     started = _now_ms()
     git = gitutil.detect_git(cwd, env)
@@ -197,6 +280,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # 1. core
     python_ok = sys.version_info[:2] >= (3, 12)
     checks.append({"name": "core", "status": "passed" if python_ok else "blocked"})
+    # プラグインの要求の検査（検査2・3）は、Coreの検査項目の結果やワークスペースに依存しない。
+    plugin_checks, plugin_diagnostics = _plugin_request_checks(parsed)
+    checks.extend(plugin_checks)
+    diagnostics.extend(plugin_diagnostics)
     if not python_ok:
         diagnostics.append(
             {
