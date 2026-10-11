@@ -1378,3 +1378,24 @@ commit `584e509fa54c92059d3b5a4ee2016fc8b4d5be27`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-11: `SINGLE-158`と`MULTI-030-01`、`02`を追加した後のGate Aの再認定
+
+`gitutil.py`のGitの呼び出しが現在のディレクトリに依存していたため、複合ワークスペースのメンバーの中やワークスペースのサブディレクトリで`check`を実行すると
+基準版の仕様文書の一覧が空になって削除の検出、状態遷移、承認済み要求の保護が省かれ、全体事前検査の未登録の判定も実行場所で変わっていた欠陥を直した
+（`git ls-tree`に`--full-tree`、`git ls-files`をリポジトリのルートで実行、`git diff`に`--no-relative`。実装の確認事項C26）。`check` §5と複合ワークスペース仕様 §8に、
+現在のディレクトリによらないことを明記した。これを固定する`SINGLE-158`（単一ワークスペースのサブディレクトリでの`--full`）、`MULTI-030-01`（メンバーの中での`--full`）、
+`MULTI-030-02`（メンバーの中での`check --all-workspaces`の未登録の判定）を追加した（ADR-051の追加、新しい群`repo_root_fixtures`）。引数なしの`check`で削除した文書を
+`selection.targetDocumentCount`に数えるかは規範文が定めていないため（実装の確認事項C28、ユーザー決定で後で決める）、引数なしを使わない。matrix、Step 3とStep 5の割当て、
+実装計画の完了条件、網羅表が固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `a15fcb036089d15da0f21d2e9877c90abb418aa6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`e69d4c90d81db2f0b6917b0aa919b0c0c6cb7c4d59ef2f6677ca0fe2c64e7cb4`。前回から変わったのは次の値だけである: 3件の追加によるmatrixと網羅の件数（350件→353件）、Step 3の件数（89件→90件）、Step 5の件数（68件→70件）、新しい群`repo_root_fixtures`、実行ビットを確かめたファイル数（1916件→1927件）、網羅表が固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
