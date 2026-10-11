@@ -12,6 +12,21 @@ import production_ledger as ledger
 
 
 class CanaryRolloutTests(unittest.TestCase):
+    def test_reasoning_empty_content_omission_preserves_all_other_original_values(self):
+        actual=dict(type='reasoning',id='reasoning-id',summary=[],encrypted_content='fixed opaque original')
+        expected=dict(actual,content=[])
+        self.assertTrue(rollout.original_item_equal(actual,expected))
+        self.assertTrue(rollout.original_item_equal(expected,expected))
+        self.assertNotIn('content',actual)
+        for field,value in [('id','different'),('summary',[{'type':'summary_text','text':'changed'}]),
+                            ('encrypted_content','changed'),('extra','unknown')]:
+            with self.subTest(field=field):self.assertFalse(rollout.original_item_equal(dict(actual,**{field:value}),expected))
+        for content in [None,'',{},False,[{'type':'reasoning_text','text':'nonempty'}]]:
+            with self.subTest(content=content):self.assertFalse(rollout.original_item_equal(actual,dict(expected,content=content)))
+        self.assertFalse(rollout.original_item_equal(expected,actual))
+        self.assertFalse(rollout.original_item_equal(dict(actual,content=None),expected))
+        self.assertFalse(rollout.original_item_equal(dict(actual,type='message'),dict(expected,type='message')))
+
     def fixture(self,profile='single-exec'):
         thread,turn='thread','turn'
         tools=[dict(type='namespace',name='functions',tools=[])];supplement=[dict(type='input_text',text=x) for x in ['synthetic permissions','synthetic mode']]
@@ -98,6 +113,24 @@ class CanaryRolloutTests(unittest.TestCase):
     def check(self,value):
         return rollout.correlate(ledger.encoded(value['manifest']),b''.join(ledger.encoded(e)+b'\n' for e in value['events']),
             value['payloads'],value['sent'],value['received'],value['native'],value['context_profile'],host_events=value['host_events'])
+
+    def test_no_exec_raw_reasoning_omission_correlates_without_discarding_nonempty_values(self):
+        value=self.fixture('no-exec')
+        reasoning=dict(type='reasoning',id='reasoning-id',summary=[],encrypted_content='fixed original',content=[])
+        self.alter_payload(value,'inference_completed',lambda x:x['output_items'].insert(0,copy.deepcopy(reasoning)))
+        index=next(i for i,f in enumerate(value['received']) if f.get('method')=='rawResponseItem/completed' and f['params']['item'].get('id')=='final')
+        raw=dict(reasoning);raw.pop('content');raw['internal_chat_message_metadata_passthrough']=dict(turn_id='turn')
+        value['received'].insert(index,dict(method='rawResponseItem/completed',params=dict(threadId='thread',turnId='turn',item=raw)))
+        before=copy.deepcopy(value);result=self.check(value)
+        self.assertEqual(result['inferences'],1);self.assertTrue(result['rawPayloadCorrelationVerified']);self.assertEqual(value,before)
+        for fault in ['nonempty','null','encrypted','missing-summary','unknown']:
+            changed=copy.deepcopy(value)
+            if fault=='nonempty':self.alter_payload(changed,'inference_completed',lambda x:x['output_items'][0].update(content=[dict(type='reasoning_text',text='unmatched')]))
+            elif fault=='null':self.alter_payload(changed,'inference_completed',lambda x:x['output_items'][0].update(content=None))
+            elif fault=='encrypted':changed['received'][index]['params']['item']['encrypted_content']='changed'
+            elif fault=='missing-summary':changed['received'][index]['params']['item'].pop('summary')
+            else:changed['received'][index]['params']['item']['unknown']='extra'
+            with self.subTest(fault=fault),self.assertRaisesRegex(ValueError,'raw item payload binding'):self.check(changed)
 
     def test_fixed_cli_seven_manifest_fields_bind_to_original_start_and_reject_drift(self):
         self.check(self.fixture())

@@ -259,6 +259,15 @@ def code_mode_events(records, requests, responses, native, host_events):
     return dict(cells=len(seen_cells),tools=len(seen_mcp),originalValuesVerified=True,
                 certifiesMcpTransportEnvelope=False)
 
+def original_item_equal(actual,expected):
+    """CLIのreasoning空content省略だけを正規化し、他の原値は完全一致させる。"""
+    if trace.json_equal(actual,expected):return True
+    if not isinstance(actual,dict) or not isinstance(expected,dict):return False
+    if actual.get('type')!= 'reasoning' or expected.get('type')!='reasoning':return False
+    # 実0.160.1 raw通知だけが空contentを省略する。逆向きやnullは許可しない。
+    if 'content' in actual or 'content' not in expected or expected['content']!=[]:return False
+    return trace.json_equal(actual,{k:v for k,v in expected.items() if k!='content'})
+
 def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events):
     """原artifact検査後の値比較。wire bytesやserver内部入力は認定しない。"""
     require(isinstance(host_events,list) and len(host_events) == len(native['nativeChildIds']), 'original host child body count')
@@ -390,7 +399,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
         expected = metadata(item,turn,required=False)
         require(nonempty(value.get('id')) and value['id'] not in raw_ids, 'unique original raw item ID')
         raw_ids.add(value['id'])
-        require(nonempty(value.get('id')) and trace.json_equal(
+        require(nonempty(value.get('id')) and original_item_equal(
             {k:v for k,v in value.items() if k != 'id' or 'id' in expected}, expected), 'original raw item payload binding')
         return value
     for item in requests[0]['input'][2:]:consume(item)
