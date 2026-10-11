@@ -437,7 +437,7 @@ REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診�
 | `diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。`CTX-STATE-001`を返さない | 関係・トレースモデル §4・§5.1。`proposed`のADRへの`requires`は、同じ原因（参照先ADRが`accepted`でない）を型制約の主診断1件で返す。`context` §3 |
 | 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/tasks/TASK-001.md`、`key: relations.requires` | 診断レジストリ`RELATION-TYPE`の発生元`file`。原因は関係を宣言したTASK-001の`requires`。`SINGLE-021`（関係を宣言したREQ-001の`relations.refines`）と同じ形 |
 | `evidence` | `ADR-001` | 結果・診断・終了コード §4（関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりに持つ） |
-| `summary` | `TASKからADRへのrequiresは許可されません` | 規範文を持たない文言。`SINGLE-021`の形（`<参照元の型>から<参照先の型>への<関係型>は許可されません`）にそろえた。下の「`summary`の扱い」を参照 |
+| `summary` | `TASKからADRへの関係型requiresは許可されません` | 規範文を持たない文言。`SINGLE-021`の形（`<参照元の型>から<参照先の型>への関係型<関係型>は許可されません`）にそろえた。下の「`summary`の扱い」を参照。（変更後の文言は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)で管理者が承認した値である） |
 | `resolution` | `complete: false`、`documentCount: 0`、`unresolvedStrongRelations: 1` | コンテキストを構成する前に止まるので`complete`は偽、`documents`は空。型制約を満たさない強い関係のエッジ1件を未解決として数える（ユーザー決定。結果の`resolution.unresolvedStrongRelations`は、型制約と関係の不在の件数） |
 | 本体 | `contextDigest: null`、`documents: []`、制約台帳とカバレッジは空 | `SINGLE-144`と同じ |
 
@@ -459,14 +459,14 @@ REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診�
 | `targetResults[0].diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。最上位の`diagnostics`は空 | 関係・トレースモデル §4・§6.3（コンテキストへ含めない起点の`requires`の閉包の文書も、強い関係の型制約を検査する）。結果・診断・終了コード §6.1（検証対象の`diagnostics`へ置く） |
 | 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/requirements/REQ-002.md`、`key: relations.requires` | 関係を宣言した文書は、`requires`でADR-001を指すREQ-002である。TASK-001は宣言していない |
 | `evidence` | `ADR-001` | 結果・診断・終了コード §4 |
-| `summary` | `REQからADRへのrequiresは許可されません` | 参照元の型はREQ（REQ-002）。`SINGLE-021`の形 |
+| `summary` | `REQからADRへの関係型requiresは許可されません` | 参照元の型はREQ（REQ-002）。`SINGLE-021`の形 |
 | `contextDigest`、`statements`、`bindingRefs`、`commands` | `null`、`[]`、`[]`、`[]`。テストを開始しない | `verify` §9、`SINGLE-146`と同じ理由（検査はコンテキストの構成より前で止まる） |
 
 ### `summary`の扱い
 
 `CTX-RELATION-TYPE-001`の`summary`は規範文を持たない。比較には含まれるので、既存の`SINGLE-021`の形（型の名前を使う）にそろえた。ただし、`SINGLE-021`は型の組そのものが不許可
 （REQからTECHへの`refines`）であるのに対し、`SINGLE-147`〜`149`は、型の組（TASK、REQから`ADR`への`requires`）は許可されており、参照先ADRの状態が`accepted`でないことが原因である。
-この文言（`TASKからADRへのrequiresは許可されません`）は、原因が状態であることを表さない。規範文で状態を含む型制約の`summary`を定めるときは、3件を改める。
+この文言（`TASKからADRへの関係型requiresは許可されません`）は、原因が状態であることを表さない。規範文で状態を含む型制約の`summary`を定めるときは、3件を改める。
 
 ### 監査の検査と回帰試験
 

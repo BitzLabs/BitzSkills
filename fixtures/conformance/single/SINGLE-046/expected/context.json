@@ -55,7 +55,7 @@
       "code": "CTX-STALE-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "期待Digestが現在のContext Digestと一致しません",
+      "summary": "期待したハッシュ値が現在のコンテキストのハッシュ値と一致しません",
       "source": {
         "kind": "invocation",
         "argument": "--expect-digest"

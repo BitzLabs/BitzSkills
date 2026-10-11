@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-021",
-  "description": "REQからTECHへのrefinesは許可されません",
+  "description": "REQからTECHへの関係型refinesは許可されません",
   "setup": {
     "git": true,
     "baseCommit": {

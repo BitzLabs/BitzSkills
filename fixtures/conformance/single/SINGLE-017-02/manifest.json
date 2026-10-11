@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-017-02",
-  "description": "REQ必須section Verificationがありません",
+  "description": "REQの必須の節Verificationがありません",
   "setup": {
     "git": true,
     "baseCommit": {

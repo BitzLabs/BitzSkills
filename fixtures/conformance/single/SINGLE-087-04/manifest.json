@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-087-04",
-  "description": "Frontmatterのmerge keyは禁止です",
+  "description": "フロントマターのマージキーは禁止です",
   "setup": {
     "git": true,
     "baseCommit": {

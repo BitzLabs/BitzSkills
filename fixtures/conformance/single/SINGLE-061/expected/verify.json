@@ -22,7 +22,7 @@
           "code": "SPEC-VERIFY-BLOCKED-001",
           "severity": "error",
           "resultStatus": "blocked",
-          "summary": "command名missingが設定に定義されていません",
+          "summary": "コマンド名missingが設定に定義されていません",
           "source": {
             "kind": "file",
             "workspaceId": "root",
@@ -34,7 +34,7 @@
           "code": "SPEC-VERIFY-BLOCKED-001",
           "severity": "error",
           "resultStatus": "blocked",
-          "summary": "command名missingが設定に定義されていません",
+          "summary": "コマンド名missingが設定に定義されていません",
           "source": {
             "kind": "file",
             "workspaceId": "root",

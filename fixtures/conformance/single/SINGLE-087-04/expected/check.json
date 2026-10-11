@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatterのmerge keyは禁止です",
+      "summary": "フロントマターのマージキーは禁止です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

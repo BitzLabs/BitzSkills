@@ -20,7 +20,7 @@
       "code": "EAI-CORE-SYNTAX-001",
       "severity": "warning",
       "resultStatus": "passed_with_warnings",
-      "summary": "tagの順序が不正です",
+      "summary": "タグの順序が不正です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

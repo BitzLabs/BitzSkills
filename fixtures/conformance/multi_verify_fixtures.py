@@ -294,7 +294,7 @@ def command_result(workspace_id, name, executable, tests, covers, status="passed
 def dependency_diagnostic(path, workspace_id):
     return {
         "code": "SPEC-MULTI-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
-        "summary": "依存するworkspaceの非成功によりContextを構成できません",
+        "summary": "依存するワークスペースの非成功によりコンテキストを構成できません",
         "source": {"kind": "file", "workspaceId": workspace_id, "path": path},
         "evidence": {"stage": "context", "dependencyWorkspaces": ["api"],
                      "dependencySpecRefs": ["api::TECH-020"]},

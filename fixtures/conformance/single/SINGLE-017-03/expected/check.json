@@ -20,7 +20,7 @@
       "code": "SPEC-STYLE-PLACEMENT-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "ADRに規範行を配置できません",
+      "summary": "ADRに規範文を配置できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

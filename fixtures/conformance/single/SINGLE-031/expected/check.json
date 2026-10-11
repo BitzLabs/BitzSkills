@@ -20,7 +20,7 @@
       "code": "SPEC-SAFETY-APPROVED-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "approved REQの意味変更時にstatusが戻されていません",
+      "summary": "状態approvedのREQの意味変更時に文書の状態が戻されていません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

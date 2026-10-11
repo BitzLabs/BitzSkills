@@ -20,7 +20,7 @@
       "code": "SPEC-REQ-STATEMENT-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "approved REQに妥当な規範文がありません",
+      "summary": "状態approvedのREQに妥当な規範文がありません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

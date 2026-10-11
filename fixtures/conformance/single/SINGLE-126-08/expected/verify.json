@@ -297,7 +297,7 @@
       "code": "SPEC-VERIFY-BLOCKED-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "{tests}展開後のargvがbyte上限1 MiBを超えます",
+      "summary": "{tests}展開後のargvがバイト数上限1 MiBを超えます",
       "source": {
         "kind": "file",
         "workspaceId": "root",

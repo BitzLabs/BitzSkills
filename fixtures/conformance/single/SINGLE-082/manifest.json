@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-082",
-  "description": "SPEC file先頭のBOMを除いて解析を続行します",
+  "description": "仕様文書のファイル先頭のBOMを除いて解析を続行します",
   "setup": {
     "git": true,
     "baseCommit": {

@@ -16,7 +16,7 @@
       "code": "SPEC-TASK-BOUNDARY-002",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "Git不在のためTASK-001の変更境界を検査できません",
+      "summary": "Git不在のためTASK-001のTASK境界を検査できません",
       "source": {
         "kind": "environment",
         "component": "git",

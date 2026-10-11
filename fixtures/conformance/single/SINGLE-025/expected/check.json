@@ -20,7 +20,7 @@
       "code": "SPEC-PATH-INVALID-001",
       "severity": "warning",
       "resultStatus": "passed_with_warnings",
-      "summary": "draftの実装pathは未作成です",
+      "summary": "状態draftの実装パスは未作成です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

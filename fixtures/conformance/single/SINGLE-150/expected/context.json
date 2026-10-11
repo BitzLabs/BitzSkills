@@ -55,7 +55,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "languageはstringで指定してください",
+      "summary": "設定キーlanguageは文字列で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": null,

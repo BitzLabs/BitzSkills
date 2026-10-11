@@ -35,12 +35,12 @@ API_MISMATCH = (
 )
 FILE_NAME = {
     "code": "SPEC-FILE-NAME-001", "severity": "error", "resultStatus": "failed",
-    "summary": "file名IDとFrontmatter IDが一致しません",
+    "summary": "ファイル名のIDとフロントマターのIDが一致しません",
     "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-020.md"},
 }
 DELETED = {
     "code": "SPEC-STATE-TRANSITION-001", "severity": "error", "resultStatus": "failed",
-    "summary": "管理済みSPECが削除されています",
+    "summary": "管理済みの仕様文書が削除されています",
     # 基準版のワークスペースIDと、そのワークスペースのルートからの相対パスで指す。現在版にこのワークスペースはない。
     "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md"},
 }

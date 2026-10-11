@@ -38,7 +38,7 @@
       "code": "SPEC-MULTI-PATH-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "member pathが別のworktreeです",
+      "summary": "メンバーのパスが別のワークツリーです",
       "source": {
         "kind": "file",
         "workspaceId": "platform",

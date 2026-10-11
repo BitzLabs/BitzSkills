@@ -62,18 +62,18 @@ WEB_TASK = (
 )
 OWNERSHIP_IMPLEMENTS = {
     "code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-    "summary": "src/shared.pyの解決先がwebの所有範囲外です",
+    "summary": "パスsrc/shared.pyの解決先がワークスペースwebの所有領域の外です",
     "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
                "key": "implements"},
 }
 TASK_BOUNDARY = {
     "code": "SPEC-TASK-BOUNDARY-001", "severity": "error", "resultStatus": "failed",
-    "summary": "src2/outside.pyはweb::TASK-010の許可変更path外です",
+    "summary": "パスsrc2/outside.pyはweb::TASK-010の変更許可パスの外です",
     "source": {"kind": "file", "workspaceId": "web", "path": "src2/outside.py"},
 }
 OWNERSHIP_BASE_LINK = {
     "code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-    "summary": "src/linkの基準版のsymlinkがwebの所有範囲外を指します",
+    "summary": "パスsrc/linkの基準版のシンボリックリンクがワークスペースwebの所有領域の外を指します",
     "source": {"kind": "file", "workspaceId": "web", "path": "src/link"},
 }
 # id: (引数列の残り, 状態, 検査文書数, 検査規範文数, 診断, 説明)

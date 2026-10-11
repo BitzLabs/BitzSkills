@@ -32,7 +32,7 @@ FRONTMATTER_LIMIT = 32 * 1024
 CONFIG = CONFIGS["SINGLE-001"] + 'verify:\n  commands:\n    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'
 TITLE = "長いtest path群"
 BODY_TEMPLATE = "# {id} " + TITLE + "\n\n## Context\n\n展開後argvの上限を検査する。\n"
-SUMMARY = "{tests}展開後のargvがbyte上限1 MiBを超えます"
+SUMMARY = "{tests}展開後のargvがバイト数上限1 MiBを超えます"
 ARGV_KEY = "verify.commands.default.argv"
 
 

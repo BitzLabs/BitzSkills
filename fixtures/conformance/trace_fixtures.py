@@ -19,27 +19,27 @@ TECH = "---\nid: TECH-001\ntitle: 前提技術\nstatus: approved\n---\n\n# TECH-
 # id: (YAMLのフィールド, デコード後のフィールド, 診断コード, 発生元のキー, 要約, 状態, 文書数, `evidence`)
 CASES = {
     "SINGLE-020": ("relations:\n  requires: [REQ-999]\n", {"relations": {"requires": ["REQ-999"]}},
-        "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1,
+        "SPEC-RELATION-MISSING-001", "relations.requires", "強い関係の参照先が存在しません", "failed", 1,
         "REQ-999"),
     "SINGLE-021": ("relations:\n  refines: [TECH-001]\n", {"relations": {"refines": ["TECH-001"]}},
-        "CTX-RELATION-TYPE-001", "relations.refines", "REQからTECHへのrefinesは許可されません", "failed", 2,
+        "CTX-RELATION-TYPE-001", "relations.refines", "REQからTECHへの関係型refinesは許可されません", "failed", 2,
         "TECH-001"),
     "SINGLE-023": ("refs: [TECH-001]\n", {"refs": ["TECH-001"]},
-        "SPEC-RELATION-LEGACY-001", "refs", "旧refs fieldは使用できません", "failed", 2, None),
+        "SPEC-RELATION-LEGACY-001", "refs", "旧フィールドrefsは使用できません", "failed", 2, None),
     "SINGLE-024": ("implements: [src/missing.py]\n", {"implements": ["src/missing.py"]},
-        "SPEC-PATH-INVALID-001", "implements", "実装pathが存在しません", "failed", 1, None),
+        "SPEC-PATH-INVALID-001", "implements", "実装パスが存在しません", "failed", 1, None),
     "SINGLE-025": ("implements: [src/missing.py]\n", {"implements": ["src/missing.py"]},
-        "SPEC-PATH-INVALID-001", "implements", "draftの実装pathは未作成です", "passed_with_warnings", 1, None),
+        "SPEC-PATH-INVALID-001", "implements", "状態draftの実装パスは未作成です", "passed_with_warnings", 1, None),
     "SINGLE-026": ("tests:\n  - path: tests/test_contract.py\n    covers: [REQ-001:AC-99]\n    command: default\n",
         {"tests": [{"path": "tests/test_contract.py", "covers": ["REQ-001:AC-99"], "command": "default"}]},
-        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "coversが存在しない規範文を参照しています", "failed", 1,
+        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "フィールドcoversが存在しない規範文を参照しています", "failed", 1,
         "REQ-001:AC-99"),
     # 同じ`source.key`（`relations.requires`）の下に独立した参照切れが2件ある場合、
     # `workspace`／`path`／`line`／`column`／`code`／`specRefs`がすべて同一でも、`evidence`で区別できることを固定する
     # （結果・診断・終了コード §4、診断レジストリ §2。共通の並べ替えの規則は`evidence`を鍵にしない）。
     "SINGLE-133": ("relations:\n  requires: [REQ-997, REQ-998]\n",
         {"relations": {"requires": ["REQ-997", "REQ-998"]}},
-        "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1,
+        "SPEC-RELATION-MISSING-001", "relations.requires", "強い関係の参照先が存在しません", "failed", 1,
         ["REQ-997", "REQ-998"]),
 }
 

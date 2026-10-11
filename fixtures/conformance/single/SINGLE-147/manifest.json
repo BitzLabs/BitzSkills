@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-147",
-  "description": "TASKからADRへのrequiresは許可されません",
+  "description": "TASKからADRへの関係型requiresは許可されません",
   "setup": {
     "git": true,
     "operations": []

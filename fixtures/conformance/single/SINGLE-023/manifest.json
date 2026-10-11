@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-023",
-  "description": "旧refs fieldは使用できません",
+  "description": "旧フィールドrefsは使用できません",
   "setup": {
     "git": true,
     "baseCommit": {

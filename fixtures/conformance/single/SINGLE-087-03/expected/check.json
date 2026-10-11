@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatterのaliasは禁止です",
+      "summary": "フロントマターのエイリアスは禁止です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

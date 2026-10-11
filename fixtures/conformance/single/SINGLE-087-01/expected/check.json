@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatterのcustom tagは禁止です",
+      "summary": "フロントマターのカスタムタグは禁止です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

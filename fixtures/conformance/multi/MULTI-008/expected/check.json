@@ -38,7 +38,7 @@
           "code": "SPEC-MULTI-OWNERSHIP-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "src/shared.pyの解決先がwebの所有範囲外です",
+          "summary": "パスsrc/shared.pyの解決先がワークスペースwebの所有領域の外です",
           "source": {
             "kind": "file",
             "workspaceId": "web",

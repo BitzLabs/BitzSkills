@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-088",
-  "description": "Frontmatter titleはstringが必要です",
+  "description": "フロントマターのフィールドtitleは文字列が必要です",
   "setup": {
     "git": true,
     "baseCommit": {

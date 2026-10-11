@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-087-03",
-  "description": "Frontmatterのaliasは禁止です",
+  "description": "フロントマターのエイリアスは禁止です",
   "setup": {
     "git": true,
     "baseCommit": {

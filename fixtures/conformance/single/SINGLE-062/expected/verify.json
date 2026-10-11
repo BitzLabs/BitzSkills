@@ -16,7 +16,7 @@
       "code": "SPEC-VERIFY-BLOCKED-002",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "verify対象が0件です",
+      "summary": "検証対象がありません",
       "source": {
         "kind": "invocation"
       }

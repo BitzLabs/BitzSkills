@@ -532,7 +532,7 @@ EXPANSIONS = {
                    "adjacent": [], "advisory": [],
                    "diagnostics": [{"code": "CTX-COVERAGE-TASK-001", "severity": "warning",
                                     "resultStatus": "passed_with_warnings",
-                                    "summary": "implement対象のMUST REQ-001:AC-01を実装するTASKがありません",
+                                    "summary": "目的implementの対象規範文MUST REQ-001:AC-01を実装するTASKがありません",
                                     "source": {"kind": "file", "workspaceId": "root",
                                                "path": ".spec/requirements/REQ-001.md"}}]},
     # 136は、TECH-002（距離1）とTECH-003（距離2）が文書単位で具体化の鎖を作る。目的`interpret`の対象規範文は空
@@ -572,7 +572,7 @@ EXPANSIONS = {
                    "adjacent": [], "advisory": [],
                    "diagnostics": [{"code": "CTX-COVERAGE-TASK-001", "severity": "warning",
                                     "resultStatus": "passed_with_warnings",
-                                    "summary": f"implement対象のMUST {statement}を実装するTASKがありません",
+                                    "summary": f"目的implementの対象規範文MUST {statement}を実装するTASKがありません",
                                     "source": {"kind": "file", "workspaceId": "root", "path": path}}
                                    for statement, path in (("TECH-002:AC-01", ".spec/technical/TECH-002.md"),
                                                            ("TECH-003:AC-01", ".spec/technical/TECH-003.md"))]},
@@ -603,7 +603,7 @@ EXPANSIONS = {
                                                "path": ".spec/requirements/REQ-001.md"}}
                                    for code, summary in (
                                        ("CTX-COVERAGE-TASK-001",
-                                        "implement対象のMUST REQ-001:AC-01を実装するTASKがありません"),
+                                        "目的implementの対象規範文MUST REQ-001:AC-01を実装するTASKがありません"),
                                        ("CTX-COVERAGE-TEST-001", "MUST REQ-001:AC-01がtestされていません"))]},
     # 143は、起点がTASKの目的`verify`。TASK-001（距離0）が`addresses`するREQ-001を所有する文書として含め（距離1、役割
     # `requirement`）、REQ-001を文書単位で`refines`する状態`draft`のTECH-005は閉包へ含めない（§6.1の末尾）。含めると

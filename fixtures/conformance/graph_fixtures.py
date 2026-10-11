@@ -40,7 +40,7 @@ def reviewed_result(identifier):
     passed = identifier == "SINGLE-022-03"
     diagnostics = [] if passed else [{
         "code": "SPEC-ID-DUPLICATE-001" if duplicate else "CTX-CYCLE-001", "severity": "error", "resultStatus": "failed",
-        "summary": "文書ID TECH-001が重複しています" if duplicate else f"{CASES[identifier]}に禁止循環があります",
+        "summary": "文書ID TECH-001が重複しています" if duplicate else f"関係型{CASES[identifier]}に禁止された循環があります",
         "source": {"kind": "file", "workspaceId": "root", "path": DUPLICATE_PATHS[0] if duplicate else TECH_PATH,
                    "key": "id" if duplicate else f"relations.{CASES[identifier]}"}}]
     return {"schemaVersion": "1.0", "operation": "check", "status": "passed" if passed else "failed", "scope": "full",

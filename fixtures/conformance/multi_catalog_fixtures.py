@@ -26,7 +26,7 @@ CAPABILITIES = ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorksp
 CORE = {"version": "1.0.0", "apiVersion": "1.0", "capabilities": list(CAPABILITIES)}
 UNREGISTERED = {
     "code": "SPEC-MULTI-UNREGISTERED-001", "severity": "error", "resultStatus": "blocked",
-    "summary": "Gitが認識する設定fileがcatalogに登録されていません",
+    "summary": "Gitが認識する設定ファイルがカタログに登録されていません",
     # 未登録の設定はワークスペースではないので、所有ワークスペースを持たない。
     "source": {"kind": "file", "workspaceId": None, "path": UNREGISTERED_PATH},
 }
@@ -39,12 +39,12 @@ def path_diagnostic(summary):
     }
 
 
-NESTED_PATH = path_diagnostic("member pathが別のmemberの配下にあります")
-SUBMODULE_PATH = path_diagnostic("member pathがGit submoduleです")
-WORKTREE_PATH = path_diagnostic("member pathが別のworktreeです")
+NESTED_PATH = path_diagnostic("メンバーのパスが別のメンバーの配下にあります")
+SUBMODULE_PATH = path_diagnostic("メンバーのパスがGitのサブモジュールです")
+WORKTREE_PATH = path_diagnostic("メンバーのパスが別のワークツリーです")
 NO_GIT = {
     "code": "SPEC-MULTI-GIT-001", "severity": "error", "resultStatus": "blocked",
-    "summary": "Git repositoryの境界を確定できません",
+    "summary": "Gitのリポジトリの境界を確定できません",
     "source": {"kind": "environment", "component": "git"},
 }
 # id: (corpus, 引数列の残り, Gitの有無, 状態, 終了コード, 説明)

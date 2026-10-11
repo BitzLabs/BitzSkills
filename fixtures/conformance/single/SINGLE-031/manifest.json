@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-031",
-  "description": "approved REQの意味変更時にstatusが戻されていません",
+  "description": "状態approvedのREQの意味変更時に文書の状態が戻されていません",
   "setup": {
     "git": true,
     "baseCommit": {

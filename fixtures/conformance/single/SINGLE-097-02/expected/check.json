@@ -20,7 +20,7 @@
       "code": "EAI-CORE-SYNTAX-004",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "未知のescapeです",
+      "summary": "未知のエスケープです",
       "source": {
         "kind": "file",
         "workspaceId": "root",

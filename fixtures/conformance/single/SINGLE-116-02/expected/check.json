@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatter titleは改行を含まない1〜120文字で指定してください",
+      "summary": "フロントマターのフィールドtitleは改行を含まない1〜120文字で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": "root",

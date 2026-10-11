@@ -39,20 +39,20 @@ REQUIREMENT_2 = (
     "## Verification\n\nCore実装後に確認する。現時点では未証明。\n")
 # ID: (診断コード, 発生元のパス, 発生元のキー, 要約, 状態, 検査文書数, 検査規範文数, description)
 CASES = {
-    "SINGLE-078": (LIMIT_CODE, CONFIG_PATH, None, "設定fileが64 KiB上限を超過しました",
+    "SINGLE-078": (LIMIT_CODE, CONFIG_PATH, None, "設定ファイルが64 KiB上限を超過しました",
                    "failed", 0, 0, "設定fileの上限超過で読取りを続けない"),
-    "SINGLE-079-01": (LIMIT_CODE, REQ_PATH, None, "SPEC Markdownが1 MiB上限を超過しました",
+    "SINGLE-079-01": (LIMIT_CODE, REQ_PATH, None, "仕様文書のMarkdownが1 MiB上限を超過しました",
                       "failed", 0, 0, "SPEC Markdownの上限超過で文書を検査しない"),
-    "SINGLE-079-02": (LIMIT_CODE, REQ_PATH, None, "Frontmatterが32 KiB上限を超過しました",
+    "SINGLE-079-02": (LIMIT_CODE, REQ_PATH, None, "フロントマターが32 KiB上限を超過しました",
                       "failed", 0, 0, "Frontmatterの上限超過で文書を検査しない"),
     "SINGLE-080-01": (None, None, None, None,
                       "passed", 1, ITEM_LIMIT, "上限ちょうどの規範文と関係配列を遮断しない"),
     "SINGLE-080-02": (LIMIT_CODE, REQ_PATH, None, "1文書の規範文数が1,000上限を超過しました",
                       "failed", 0, 0, "規範文数の上限超過で文書を検査しない"),
     "SINGLE-080-03": (LIMIT_CODE, REQ_PATH, "tests[0].covers",
-                      "1文書の関係・path配列の項目数が1,000上限を超過しました",
+                      "1文書の関係・パスの配列の項目数が1,000上限を超過しました",
                       "failed", 1, 1, "配列項目数の上限超過で文書を検査しない"),
-    "SINGLE-083": ("SPEC-WORKSPACE-UNKNOWN-001", UNKNOWN_PATH, None, ".spec/内の未知fileをSPECとして読みません",
+    "SINGLE-083": ("SPEC-WORKSPACE-UNKNOWN-001", UNKNOWN_PATH, None, ".spec/内の未知のファイルを仕様文書として読みません",
                    "passed_with_warnings", 1, 1, ".spec/内の未知fileを警告しSPECとして読まない"),
 }
 # 各fixtureが越えてよいレビュー済みの次元。それ以外はすべて上限内に収める。

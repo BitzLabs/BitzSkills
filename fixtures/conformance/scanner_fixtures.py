@@ -31,12 +31,12 @@ SUPPRESSION = {
 # ID: (16行目の内容, 診断コード, 要約, アンカーのトークン, レビュー済みの列)
 CASES = {
     "SINGLE-096-02": (BASE + "ログに ``secret` を出力しない。", "EAI-CORE-SYNTAX-005",
-                      "code spanが閉じられていません", "``", 73),
+                      "コードスパンが閉じられていません", "``", 73),
     "SINGLE-097-02": (BASE + "秘密情報を\\出力しない。", "EAI-CORE-SYNTAX-004",
-                      "未知のescapeです", "\\", 74),
+                      "未知のエスケープです", "\\", 74),
     "SINGLE-098-02": ('- [REQ-001:AC-02] [quality:LEVEL="basic] [ACTOR:TargetSystem] [ALWAYS] [MUST] '
                       "[CONSTRAINT] 秘密情報を出力しない。", "EAI-CORE-SYNTAX-004",
-                      "extension値のquoteが閉じられていません", '"', 34),
+                      "拡張タグの値の引用符が閉じられていません", '"', 34),
     "SINGLE-099-01": (SUPPRESSION["SINGLE-099-01"], None, None, None, None),
     "SINGLE-099-02": (SUPPRESSION["SINGLE-099-02"], None, None, None, None),
     "SINGLE-099-03": (SUPPRESSION["SINGLE-099-03"], None, None, None, None),
@@ -51,16 +51,16 @@ CASES = {
                       "EAI-CORE-ID-001", "規範文IDの形式が不正です", "[", 3),
     "SINGLE-101-02": ("- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [REASON] 確認のため "
                       "[CONSTRAINT] 秘密情報を出力しない。", "EAI-CORE-SYNTAX-001",
-                      "tagの順序が不正です", "[REASON]", 56),
+                      "タグの順序が不正です", "[REASON]", 56),
     "SINGLE-101-03": ("- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MAY] [REASON] 確認のため "
                       "[CONSTRAINT] 秘密情報を出力しない。", "EAI-CORE-SYNTAX-001",
-                      "tagの順序が不正です", "[REASON]", 55),
+                      "タグの順序が不正です", "[REASON]", 55),
     "SINGLE-102": (BASE + "全角文字と\tタブの後に[未知tagを置かない。", "EAI-CORE-SYNTAX-004",
-                   "tagが閉じられていません", "[未知", 80),
+                   "タグが閉じられていません", "[未知", 80),
     "SINGLE-103-01": (BASE + "ログに `secret [TAG を出力しない。", "EAI-CORE-SYNTAX-005",
-                      "code spanが閉じられていません", "`", 73),
+                      "コードスパンが閉じられていません", "`", 73),
     "SINGLE-103-02": ("- [REQ-01:AC-02 [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
-                      "EAI-CORE-SYNTAX-004", "tagが閉じられていません", "[", 3),
+                      "EAI-CORE-SYNTAX-004", "タグが閉じられていません", "[", 3),
 }
 DESCRIPTIONS = {
     "SINGLE-096-02": "開始runと同じ終了runがないcode spanを拒否する",

@@ -38,7 +38,7 @@
       "code": "SPEC-MULTI-PATH-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "member pathが別のmemberの配下にあります",
+      "summary": "メンバーのパスが別のメンバーの配下にあります",
       "source": {
         "kind": "file",
         "workspaceId": "platform",

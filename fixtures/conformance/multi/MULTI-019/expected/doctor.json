@@ -34,7 +34,7 @@
       "code": "SPEC-MULTI-GIT-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "Git repositoryの境界を確定できません",
+      "summary": "Gitのリポジトリの境界を確定できません",
       "source": {
         "kind": "environment",
         "component": "git"

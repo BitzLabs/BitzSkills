@@ -12,7 +12,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "設定YAMLのanchorは禁止です",
+      "summary": "設定YAMLのアンカーは禁止です",
       "source": {
         "kind": "file",
         "workspaceId": null,

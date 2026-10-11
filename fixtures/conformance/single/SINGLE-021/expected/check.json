@@ -20,7 +20,7 @@
       "code": "CTX-RELATION-TYPE-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "REQからTECHへのrefinesは許可されません",
+      "summary": "REQからTECHへの関係型refinesは許可されません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

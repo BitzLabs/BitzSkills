@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-148",
-  "description": "REQからADRへのrequiresは許可されません",
+  "description": "REQからADRへの関係型requiresは許可されません",
   "setup": {
     "git": true,
     "operations": []

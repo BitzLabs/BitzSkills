@@ -82,10 +82,10 @@ CASES = {
 }
 # 設定違反のケースの(キー, 要約)。
 CONFIG_ERRORS = {
-    "SINGLE-126-01": (ARGV_KEY + "[1]", "argvの要素はstringで指定してください"),
-    "SINGLE-126-02": (ARGV_KEY + "[0]", "argv[0]は空stringにできません"),
+    "SINGLE-126-01": (ARGV_KEY + "[1]", "argvの要素は文字列で指定してください"),
+    "SINGLE-126-02": (ARGV_KEY + "[0]", "argv[0]は空文字列にできません"),
     "SINGLE-126-03": (ARGV_KEY + "[1]", "argvの要素にNULは使用できません"),
-    "SINGLE-126-04": (ARGV_KEY, "argv templateは256要素以下で指定してください"),
+    "SINGLE-126-04": (ARGV_KEY, "引数列テンプレートは256要素以下で指定してください"),
     "SINGLE-126-05": (ARGV_KEY + "[1]", "argvの各要素はUTF-8で32 KiB以下で指定してください"),
 }
 SCRIPTS = {
@@ -94,7 +94,7 @@ SCRIPTS = {
     "SINGLE-126-11": ("tests/probe.awk", PROBE_SCRIPT),
 }
 ENVIRONMENTS = {"SINGLE-126-11": PROBE_ENV}
-BLOCKED_SUMMARY = "command実行fileをPATHから解決できません"
+BLOCKED_SUMMARY = "コマンドの実行可能ファイルを環境変数PATHから解決できません"
 
 
 def cwd(identifier):

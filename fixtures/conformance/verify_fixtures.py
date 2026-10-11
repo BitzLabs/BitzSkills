@@ -148,7 +148,7 @@ def target_diagnostic(identifier):
         # 原因であり、それぞれ主診断として返す（診断レジストリ §2。同じコマンド名を参照していても、
         # 配列の添字ごとに別の元の原因とする）。
         return [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
-                 "summary": "command名missingが設定に定義されていません",
+                 "summary": "コマンド名missingが設定に定義されていません",
                  "source": {"kind": "file", "workspaceId": "root",
                             "path": digest_reference.TECH_PATH, "key": f"tests[{index}].command"}}
                 for index in (0, 1)]
@@ -164,7 +164,7 @@ def reviewed_result(identifier):
     if identifier == "SINGLE-062":
         target_results, commands, diagnostics = [], [], [{
             "code": "SPEC-VERIFY-BLOCKED-002", "severity": "error", "resultStatus": "blocked",
-            "summary": "verify対象が0件です",
+            "summary": "検証対象がありません",
             "source": {"kind": "invocation"}}]
     else:
         executed = identifier in {"SINGLE-055", "SINGLE-056"}

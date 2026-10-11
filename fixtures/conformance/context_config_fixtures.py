@@ -49,13 +49,13 @@ def config_source(workspace, key):
 CASES = {
     "SINGLE-150": {
         "status": "error", "config": CONFIGS["SINGLE-004-01"], "workspace": None,
-        "code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "summary": "languageはstringで指定してください",
+        "code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "summary": "設定キーlanguageは文字列で指定してください",
         "source": config_source(None, "language"),
         "description": "contextで設定の型不正を設定の診断で返しハッシュ値を計算しない"},
     "SINGLE-151": {
         "status": "error", "config": RANGE_CONFIG, "workspace": None,
         "code": "SPEC-CONFIG-SCHEMA-001", "severity": "error",
-        "summary": "context.maxBytesは4096〜1048576のintegerで指定してください",
+        "summary": "設定キーcontext.maxBytesは4096〜1048576の整数で指定してください",
         "source": config_source(None, "context.maxBytes"),
         "description": "contextで設定の値の範囲外を設定の診断で返しハッシュ値を計算しない"},
     "SINGLE-152": {
@@ -65,7 +65,7 @@ CASES = {
         "description": "contextで設定の不在をワークスペースの不在としてenvironmentの発生元で止める"},
     "SINGLE-153": {
         "status": "passed_with_warnings", "config": CONFIGS["SINGLE-005-01"], "workspace": "root",
-        "code": "SPEC-CONFIG-UNKNOWN-001", "severity": "warning", "summary": "未知の設定keyです",
+        "code": "SPEC-CONFIG-UNKNOWN-001", "severity": "warning", "summary": "未知の設定キーです",
         "source": config_source("root", "futureOption"),
         "description": "contextの成功の結果に設定の未知のキーの警告を加える"},
 }
