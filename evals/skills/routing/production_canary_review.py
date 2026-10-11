@@ -49,6 +49,8 @@ def verify_native(capture):
     require(isinstance(capture, evidence.VerifiedCapture), 'verified capture context required')
     originals, fixed = capture.originals, capture.fixed
     sent, received = json_lines(originals['rpc-in.jsonl']), json_lines(originals['rpc-out.jsonl'])
+    require({name: evidence.ledger.sha(raw) for name, raw in originals.items()} ==
+            capture.result['artifactSha256'], 'consumed original artifact binding drift')
     schema = trace.strict_json(fixed.decision_schema_raw)
     sdk.requests(sent, profile='public-canary', output_schema=schema)
     projected, raw = raw_projection(sent, received)

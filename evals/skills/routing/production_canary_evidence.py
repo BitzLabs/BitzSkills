@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
 import math
 import os
 from pathlib import Path
@@ -216,15 +217,23 @@ def load_verified_capture(repository, source, ordinal):
         certifiesBehavior=False, certifiesSkillGate=False, independentReviewPerformed=False,
         ledgerFinalized=False)
 
-    return VerifiedCapture(fixed, base, originals, result)
+    return VerifiedCapture(fixed, base, tuple(originals.items()), ledger.encoded(result))
 
 
 @dataclass(frozen=True)
 class VerifiedCapture:
     fixed: FixedInputs
     base: Path
-    originals: dict[str, bytes]
-    result: dict
+    original_items: tuple[tuple[str, bytes], ...]
+    result_raw: bytes
+
+    @property
+    def originals(self):
+        return MappingProxyType(dict(self.original_items))
+
+    @property
+    def result(self):
+        return trace.strict_json(self.result_raw)
 
 
 def verify_capture(repository, source, ordinal):

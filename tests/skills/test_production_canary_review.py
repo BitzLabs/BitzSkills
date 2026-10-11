@@ -45,6 +45,21 @@ class CanaryReviewTests(unittest.TestCase):
             self.capture.rewrite(name, b''.join(review.evidence.ledger.encoded(value) + b'\n' for value in values))
         return review.evidence.load_verified_capture(self.capture.repository, self.capture.source, 1)
 
+    def test_consumed_bytes_and_binding_cannot_be_mutated_after_loading(self):
+        from dataclasses import replace
+        context = self.save()
+        with self.assertRaises(TypeError):
+            context.originals['rpc-out.jsonl'] = b'changed'
+        report = context.result
+        report['artifactSha256']['rpc-out.jsonl'] = '0' * 64
+        self.assertNotEqual(context.result, report)
+        originals = dict(context.originals)
+        originals['rpc-out.jsonl'] += review.evidence.ledger.encoded(dict(method='account/updated',
+            params=dict(authMode='chatgpt', planType='plus'))) + b'\n'
+        tampered = replace(context, original_items=tuple(originals.items()))
+        with self.assertRaisesRegex(ValueError, 'consumed original artifact binding drift'):
+            review.verify_native(tampered)
+
     def test_known_primary_profiles_use_fixed_input_host_and_native_final(self):
         for profile in ['single-exec', 'two-exec', 'exec-wait']:
             with self.subTest(profile=profile):
