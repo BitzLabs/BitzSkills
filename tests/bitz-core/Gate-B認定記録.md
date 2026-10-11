@@ -435,3 +435,22 @@ TASKが`addresses`する規範文のないTECHの文書単位のテスト割当�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は627件がすべて成功した。
+
+## 2026-10-11: 引数なしのcheckと--full、--workspaceを複合ワークスペースに対応させた後のStep 1〜5の再判定
+
+`check`を複合ワークスペースに対応させ（`check.py`、`basecompare.py`、`multirelate.py`）、これを固定する`MULTI-029-01`〜`03`（Step 5）を追加した。
+修正の前後で、既存の347件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`82d60f2d`の版）では3件とも失敗し、
+修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`584e509fa54c92059d3b5a4ee2016fc8b4d5be27`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 350件（`MULTI-029-01`〜`03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`25b7fcb004e1bace1f8fb7ebed0881c707df7f60e561bc3e76dcb32412c6993c` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は647件がすべて成功した。
