@@ -1438,3 +1438,20 @@ commit `9ee8a756d03b5cb57bdbdbcd0fc8a5c0338607cf`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 1とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: Coreの出力文言の規範（ADR-062）を定めた後のGate Aの再認定
+
+表記規則にCoreの出力文言の書き方（§3.5）と変更の手順（§8の8）を定め、[ADR-062](../../docs/02.設計書/10_決定記録/ADR-062_Coreの出力文言の規範と適合fixtureの期待値の扱いを確定する.md)で、
+文言だけの変更に伴う適合fixtureの期待値の変更を期待値の訂正として管理者の承認を得る扱いにした（ユーザーの決定）。結果・診断・終了コード §3・§4と
+適合fixture仕様 §1.1から表記規則 §3.5を参照したため、網羅表が固定する`01_結果・診断・終了コード.md`のハッシュ値を更新した。matrixとfixtureは変えていない。
+
+commit `681862928a3e2f66470349ef236e5219e038728a`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`d717fd6fce62f915e22984f0a1afa030ee86745200ceb9ae925a78cd58064c5d`。前回から変わったのは、網羅表が固定する根拠文書のハッシュ値と、リンクを確かめた件数だけである |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureとCoreを変えていないため、Gate Bは判定し直さない。
