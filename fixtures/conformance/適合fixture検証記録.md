@@ -1547,3 +1547,19 @@ commit `c51c8bdd89b8df2192791f2e02c925db3e617295`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureとCoreを変えていないため、Gate Bは判定し直さない。
+
+## 2026-10-12: 用語集 §14.2の2件の記述を直した後のGate Aの再認定
+
+用語集 §14.2のうち2件を仕様側で直した（ユーザーが案と推奨どおりに承認。規範の意味は変えない）。文書・フロントマター・状態仕様 §8の承認済み要求の保護の
+意味フィールドの書き方と、複合ワークスペース仕様 §6の設定の許可リストの目的`verify`の条件である。網羅表が固定する根拠文書のハッシュ値を更新した。matrixとfixtureは変えていない。
+
+commit `47f91577f7cb2eb62f731e6f3ae4874afd231df6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`d4c81d459af99959bbd6503352f446c6b46c9899e98fd92d3f43bb4da8f87c01`（前回と同じ） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureとCoreを変えていないため、Gate Bは判定し直さない。
