@@ -74,6 +74,7 @@ def _plugin_request_checks(parsed: ParsedArgs) -> tuple[list[dict], list[dict]]:
             "summary": messages.DOCTOR_PLUGIN_REQUEST_INCOMPLETE,
             "source": source,
             "evidence": {"missing": missing_options},
+            "suggestedAction": messages.DOCTOR_PLUGIN_REQUEST_ACTION,
         }]
 
     assert core_api is not None
@@ -90,6 +91,7 @@ def _plugin_request_checks(parsed: ParsedArgs) -> tuple[list[dict], list[dict]]:
             "summary": messages.DOCTOR_API_INCOMPATIBLE,
             "source": dict(source),
             "evidence": {"coreApi": CORE_API_VERSION, "required": core_api},
+            "suggestedAction": messages.doctor_api_incompatible_action(core_api, CORE_API_VERSION),
         })
 
     missing_capabilities = sorted(name for name in set(capabilities) if name not in CORE_CAPABILITIES)
@@ -102,6 +104,7 @@ def _plugin_request_checks(parsed: ParsedArgs) -> tuple[list[dict], list[dict]]:
             "summary": messages.DOCTOR_CAPABILITY_MISSING,
             "source": dict(source),
             "evidence": {"missing": missing_capabilities},
+            "suggestedAction": messages.doctor_capability_missing_action(missing_capabilities),
         })
     else:
         checks.append({"name": "capability", "status": "passed"})
@@ -153,6 +156,7 @@ def _append_git_check(git: gitutil.GitInfo | None, checks: list[dict], diagnosti
             "resultStatus": "passed_with_warnings",
             "summary": "Git不在のため差分に依存する保証を提供できません",
             "source": {"kind": "environment", "component": "git", "identifier": "git"},
+            "suggestedAction": messages.DOCTOR_GIT_DEGRADED_ACTION,
         }
     )
 
@@ -181,6 +185,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
                 "resultStatus": "blocked",
                 "summary": "実行環境のCPythonのバージョンが下限未満です",
                 "source": {"kind": "environment", "component": "core"},
+                "suggestedAction": messages.DOCTOR_RUNTIME_VERSION_ACTION,
             },
             *plugin_diagnostics,
         ]
@@ -292,6 +297,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 "resultStatus": "blocked",
                 "summary": "実行環境のCPythonのバージョンが下限未満です",
                 "source": {"kind": "environment", "component": "core"},
+                "suggestedAction": messages.DOCTOR_RUNTIME_VERSION_ACTION,
             }
         )
         result = _build_result(None, checks, diagnostics, started)
@@ -375,6 +381,7 @@ def _diagnose_workspace(
                         "path": config_mod.CONFIG_PATH,
                         "key": f"verify.commands.{name}.cwd",
                     },
+                    "suggestedAction": messages.doctor_command_cwd_action(name),
                 }
             )
             continue
@@ -392,6 +399,7 @@ def _diagnose_workspace(
                         "path": config_mod.CONFIG_PATH,
                         "key": f"verify.commands.{name}.argv",
                     },
+                    "suggestedAction": messages.doctor_command_file_action(name),
                 }
             )
     checks.append({"name": "command", "status": command_status})
