@@ -441,7 +441,7 @@ REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診�
 | `diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。`CTX-STATE-001`を返さない | 関係・トレースモデル §4・§5.1。`proposed`のADRへの`requires`は、同じ原因（参照先ADRが`accepted`でない）を型制約の主診断1件で返す。`context` §3 |
 | 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/tasks/TASK-001.md`、`key: relations.requires` | 診断レジストリ`RELATION-TYPE`の発生元`file`。原因は関係を宣言したTASK-001の`requires`。`SINGLE-021`（関係を宣言したREQ-001の`relations.refines`）と同じ形 |
 | `evidence` | `ADR-001` | 結果・診断・終了コード §4（関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりに持つ） |
-| `summary` | `TASKからADRへの関係型requiresは許可されません` | 規範文を持たない文言。`SINGLE-021`の形（`<参照元の型>から<参照先の型>への関係型<関係型>は許可されません`）にそろえた。下の「`summary`の扱い」を参照。（変更後の文言は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)で管理者が承認した値である） |
+| `summary` | `TASKから状態proposedのADRへの関係型requiresは許可されません` | 規範文を持たない文言。`SINGLE-021`の形で、参照先のADRの部分にだけ状態を添える。下の「`summary`の扱い」を参照。2026-10-12に状態を添えた（末尾の節。変更後の文言は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)で管理者が承認した値である） |
 | `resolution` | `complete: false`、`documentCount: 0`、`unresolvedStrongRelations: 1` | コンテキストを構成する前に止まるので`complete`は偽、`documents`は空。型制約を満たさない強い関係のエッジ1件を未解決として数える（ユーザー決定。結果の`resolution.unresolvedStrongRelations`は、型制約と関係の不在の件数） |
 | 本体 | `contextDigest: null`、`documents: []`、制約台帳とカバレッジは空 | `SINGLE-144`と同じ |
 
