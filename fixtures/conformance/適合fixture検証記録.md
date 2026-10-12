@@ -1473,3 +1473,21 @@ commit `5db2711417c177167be360434292699058ad0af9`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 1〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: 同じ条件の診断の文言をそろえ、16件の期待値を訂正した後のGate Aの再認定
+
+管理者が承認した文言（ADR-062の期待値の訂正）で、`CTX-STATE-001`を目的と状態を差し込む1つの文型にそろえ（`cancelled`のTASKを起点にすると目的`implement`でも
+「verify」と出ていた誤りを直した）、`CTX-COVERAGE-TEST-001`を`context`と`verify`で同じ文言にし、承認されていないADRへの`requires`の`CTX-RELATION-TYPE-001`で
+参照先にADRの状態を添え、`CTX-TASK-DEPENDENCY-001`に先行TASKの状態を差し込んで修復手順（`suggestedAction`）を足した。16件のfixtureの期待値を訂正した。
+入力、状態、終了コード、診断コード、発生元は変えていない。承認の記録は[Coreの出力文言のレビュー記録](Coreの出力文言のレビュー記録.md)のPR-3の節と、各fixture群のレビュー記録にある。
+
+commit `6f4be139fbf61c01d6e8432cba5e388cf9c47333`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`d717fd6fce62f915e22984f0a1afa030ee86745200ceb9ae925a78cd58064c5d`（前回と同じ） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
