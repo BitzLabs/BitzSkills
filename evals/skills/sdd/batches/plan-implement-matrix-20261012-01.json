@@ -361,6 +361,7 @@
   "usagePolicy": "一次Codex exec軌跡単位。trace usageと実時間を保存し、独立usage・provider請求の欠測を0扱いしない",
   "limitations": [
     "新source/CLI版/入力/環境/保存先/共有台帳は起動前に固定し準備独立検分する。現manifest保存だけでは起動許可条件を満たさない。",
-    "公開合成17ケースの2反復比較だけ。3反復以上・保持・別モデル系統・実地・sdd-converge行動は別測定。"
+    "公開合成17ケースの2反復比較だけ。3反復以上・保持・別モデル系統・実地・sdd-converge行動は別測定。",
+    "実行版0.1.4は原native正常終端/usageと固定artifactを照合し、独立失敗/原不整合の永久stopを保存。新refの準備検分が必要。"
   ]
 }

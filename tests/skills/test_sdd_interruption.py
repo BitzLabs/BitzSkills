@@ -61,7 +61,7 @@ class SddInterruptionRegression(unittest.TestCase):
             if kind in ("post-interrupt", "capture-interrupt", "capture-both-fail"):
                 child[-1] = "import sys; sys.stdout.buffer.write(b'native trace\\n'); sys.stderr.buffer.write(b'native stderr\\n')"
             return original_run(child, **kwargs)
-        with patch.object(evaluation, "identity", return_value={"sourceCommit": "synthetic-fixed-ref"}), \
+        with patch.object(evaluation, "identity", return_value={"sourceCommit": "synthetic-fixed-ref", "subjectCommit": "synthetic-fixed-ref"}), \
                 patch.object(evaluation.subprocess, "run", side_effect=dispatch), \
                 patch.object(evaluation, "snapshot", side_effect=snapshot), \
                 patch.object(Path, "write_bytes", write_bytes):

@@ -20,7 +20,7 @@ sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 PASS = {"passed", "passed_with_warnings"}
-EXECUTION_VERSION = "sdd-execution-0.1.3"
+EXECUTION_VERSION = "sdd-execution-0.1.4"
 SOURCE = "def validate(value):\n    return []\n"
 FIXED = 'def validate(value):\n    return ["入力エラー"] if value == "" else []\n'
 TEST = '''import importlib.util
@@ -266,7 +266,80 @@ def serve(host, source=sys.stdin, output=sys.stdout):
 
 
 def read_events(path):
-    return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    def pairs(values):
+        result = {}
+        for key, value in values:
+            if key in result:
+                raise ValueError("duplicate JSON key: " + key)
+            result[key] = value
+        return result
+    def constant(value):
+        raise ValueError("non-finite JSON value: " + value)
+    return [json.loads(line, object_pairs_hook=pairs, parse_constant=constant)
+            for line in Path(path).read_text().splitlines() if line.strip()]
+
+
+def native_completion(events):
+    """固定CLI0.160.1の単一turn・許可item・原usageだけを認める。"""
+    def require(condition, message):
+        if not condition:
+            raise ValueError("native trace: " + message)
+    require(isinstance(events, list) and len(events) >= 4, "incomplete lifecycle")
+    require(isinstance(events[0], dict) and set(events[0]) == {"type", "thread_id"}
+            and events[0]["type"] == "thread.started" and isinstance(events[0]["thread_id"], str)
+            and bool(events[0]["thread_id"].strip()), "thread start")
+    require(events[1] == {"type": "turn.started"}, "single turn start")
+    terminal = events[-1]
+    require(isinstance(terminal, dict) and set(terminal) == {"type", "usage"}
+            and terminal["type"] == "turn.completed", "normal terminal")
+    usage = terminal["usage"]
+    require(isinstance(usage, dict) and set(usage) == {"input_tokens", "cached_input_tokens",
+            "cache_write_input_tokens", "output_tokens", "reasoning_output_tokens"}
+            and all(type(v) is int and v >= 0 for v in usage.values()), "original usage fields")
+    require(usage["input_tokens"] > 0 and usage["output_tokens"] > 0
+            and usage["cached_input_tokens"] <= usage["input_tokens"]
+            and usage["reasoning_output_tokens"] <= usage["output_tokens"], "usage bounds")
+    pending, completed = {}, set()
+    tools = {"list_files", "read_file", "read_diff", "run_bitz", "write_file"}
+    for event in events[2:-1]:
+        require(isinstance(event, dict) and set(event) == {"type", "item"}
+                and event["type"] in {"item.started", "item.updated", "item.completed"}, "unknown or failed event")
+        item = event["item"]
+        require(isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"].strip(), "item identity")
+        identity, kind = item["id"], item.get("type")
+        require(identity not in completed, "duplicate or post-completion item")
+        if kind in {"agent_message", "reasoning"}:
+            require(set(item) == {"id", "type", "text"} and isinstance(item["text"], str)
+                    and event["type"] == "item.completed" and identity not in pending, "message item")
+        elif kind == "mcp_tool_call":
+            require(set(item) == {"id", "type", "server", "tool", "arguments", "result", "error", "status"}
+                    and item["server"] == "sdd_eval" and item["tool"] in tools
+                    and isinstance(item["arguments"], dict) and item["error"] is None, "MCP item fields or failed tool")
+            binding = json.dumps({k:item[k] for k in ("server", "tool", "arguments")}, sort_keys=True)
+            if event["type"] == "item.started":
+                require(identity not in pending and item["status"] == "in_progress"
+                        and item["result"] is None, "MCP start")
+                pending[identity] = binding
+            elif event["type"] == "item.updated":
+                require(pending.get(identity) == binding and item["status"] == "in_progress"
+                        and item["result"] is None, "MCP update")
+            else:
+                require(pending.pop(identity, None) == binding and item["status"] == "completed", "MCP completion lifecycle")
+                result = item["result"]
+                require(isinstance(result, dict) and {"content", "structured_content"} <= set(result)
+                        <= {"content", "structured_content", "_meta"} and isinstance(result["content"], list)
+                        and len(result["content"]) == 1 and result["structured_content"] is None, "MCP result")
+                content = result["content"][0]
+                require(isinstance(content, dict) and set(content) == {"type", "text"}
+                        and content["type"] == "text" and isinstance(content["text"], str), "MCP content")
+        else:
+            raise ValueError("native trace: forbidden or unknown item")
+        if event["type"] == "item.completed":
+            completed.add(identity)
+    require(not pending, "unfinished MCP item")
+    final = events[-2]
+    require(final.get("type") == "item.completed" and final.get("item", {}).get("type") == "agent_message", "final agent response")
+    return usage
 
 
 def core_results(calls):
@@ -309,6 +382,11 @@ def final_task_boundaries(directory):
 def inspect_valid_artifacts(record, case, directory):
     from jsonschema import Draft202012Validator
     errors = {name: [] for name in load(HERE / "protocol.json")["requiredChecks"]}
+    required_artifacts = {"trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json"}
+    if record["identity"].get("executionVersion") == EXECUTION_VERSION:
+        required_artifacts |= {"stderr.log", "prompt.txt", "invocation.json"}
+    if set(record["artifacts"]) != required_artifacts:
+        raise ValueError("fixed artifact inventory mismatch")
     for name, wanted in record["artifacts"].items():
         if digest((directory / name).read_bytes()) != wanted:
             errors["deterministic"].append("artifact hash: " + name)
@@ -320,6 +398,9 @@ def inspect_valid_artifacts(record, case, directory):
     if decision != record["decision"]:
         errors["deterministic"].append("decision record mismatch")
     trace = read_events(directory / "trace.jsonl")
+    usage = native_completion(trace)
+    if record["identity"].get("executionVersion") == EXECUTION_VERSION and json.dumps(record.get("providerUsage"), sort_keys=True) != json.dumps(usage, sort_keys=True):
+        errors["deterministic"].append("original provider usage mismatch")
     messages = [e["item"].get("text") for e in trace if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "agent_message"]
     if not messages or json.loads(messages[-1]) != decision:
         errors["deterministic"].append("trace final response mismatch")
@@ -541,6 +622,9 @@ def run_one(args, case):
     for key, value in model_configs(directory, workspace).items():
         command.extend(["-c", key + "=" + json.dumps(value, ensure_ascii=False)])
     command.append("-")
+    write(directory, "prompt.txt", prompt)
+    write(directory, "invocation.json", json.dumps({"argv": command, "timeoutSeconds": args.timeout,
+          "sourceCommit": wanted["subjectCommit"], "pythonExecutable": sys.executable}, ensure_ascii=False))
     started = time.monotonic()
     try:
         process = subprocess.run(command, input=prompt.encode("utf-8"), capture_output=True, timeout=args.timeout)
@@ -574,7 +658,9 @@ def run_one(args, case):
                                 and before.get(c["arguments"]["path"]) != after.get(c["arguments"]["path"])})
         write(directory, "changes.json", json.dumps({"before": before, "after": after, "modelChanged": model_changed}, ensure_ascii=False))
         record = {"identity": wanted, "decision": load(directory / "decision.json"), "wallMs": round((time.monotonic() - started) * 1000),
-                  "artifacts": {name: digest((directory / name).read_bytes()) for name in ("trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json")}}
+                  "artifacts": {name: digest((directory / name).read_bytes()) for name in ("trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json", "stderr.log", "prompt.txt", "invocation.json")}}
+        record["providerUsage"] = native_completion(read_events(directory / "trace.jsonl"))
+        record["providerCost"] = None
         record["checks"] = inspect(record, case, directory)
         write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
     except (OSError, ValueError, KeyError, TypeError, KeyboardInterrupt) as error:

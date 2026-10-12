@@ -108,6 +108,10 @@ def directory(args, slot):
     return args.output / slot["variant"] / f"repetition-{slot['repetition']}" / slot["caseId"]
 
 
+class IndependentReviewPending(FileNotFoundError):
+    """未提出だけは待機。失敗や原不整合へ復元可能な待機を適用しない。"""
+
+
 def verify_previous(evaluation, args, attempt, cases):
     if attempt["status"] != "completed":
         raise ValueError("失敗・中断済み測定を自動再開しません")
@@ -117,7 +121,10 @@ def verify_previous(evaluation, args, attempt, cases):
             or evaluation.inspect(record, cases[attempt["slot"]["caseId"]], target) != record["checks"]
             or not all(c["passed"] for c in record["checks"].values())):
         raise ValueError("前件の実証拠または必須検査が一致しません")
-    receipt = evaluation.load(target / "independent-review.json")
+    review_path = target / "independent-review.json"
+    if not review_path.exists():
+        raise IndependentReviewPending("前件の独立検分は未提出です")
+    receipt = evaluation.load(review_path)
     required = set(record["checks"]) | {"semantic"}
     if (receipt.get("schemaVersion") != "1.0" or receipt.get("status") != "passed"
             or receipt.get("independent") is not True or receipt.get("implementationPrivateHistoryInherited") is not False
@@ -153,9 +160,28 @@ def run(evaluation, args, cases):
                 or count > batch["maximumPrimaryCalls"]
                 or [a["slot"] for a in ledger["attempts"]] != batch["slots"][:count]):
             raise ValueError("台帳の呼出し数または固定順序が不正です")
+        if "stop" in ledger:
+            raise ValueError("失敗または原証拠不適合で恒久停止した測定は再開しません")
         by_id = {c["id"]: c for c in cases}
         for attempt in ledger["attempts"]:
-            verify_previous(evaluation, args, attempt, by_id)
+            try:
+                verify_previous(evaluation, args, attempt, by_id)
+            except IndependentReviewPending:
+                raise
+            except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+                target = directory(args, attempt["slot"])
+                review_path = target / "independent-review.json"
+                receipt_hash = None
+                try:
+                    receipt_hash = evaluation.digest(review_path.read_bytes())
+                except OSError:
+                    pass  # 読取失敗自体も停止理由。hash取得不能でstop保存を省略しない。
+                ledger["stop"] = {"reason": "previous-evidence-or-review-rejected",
+                                  "slot": attempt["slot"], "errorType": type(error).__name__,
+                                  "runSha256": attempt.get("runSha256"),
+                                  "independentReceiptSha256": receipt_hash}
+                save(path, ledger)
+                raise
         if count == batch["maximumPrimaryCalls"]:
             raise ValueError("固定した一次評価の呼出し上限に到達しました")
         slot = batch["slots"][count]

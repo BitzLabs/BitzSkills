@@ -82,6 +82,62 @@ class SddBatchTests(unittest.TestCase):
     def next(self):
         self.args.case = ["SI-007"]
 
+    def test_failed_independent_receipt_permanently_stops_even_after_restore(self):
+        self.measure()
+        path, original = self.receipt()
+        failed = copy.deepcopy(original)
+        failed["status"] = "failed"
+        failed["checks"]["semantic"] = "failed"
+        self.write(path, failed)
+        self.next()
+        with self.assertRaises(ValueError):
+            self.measure()
+        stopped = self.evaluation.load(self.ledger_path)
+        self.assertIn("stop", stopped)
+        self.assertEqual(stopped["attemptCount"], 1)
+        self.write(path, original)
+        with self.assertRaisesRegex(ValueError, "恒久停止"):
+            self.measure()
+        self.assertEqual(self.calls, ["SI-001"])
+        self.assertEqual(self.evaluation.load(self.ledger_path), stopped)
+
+    def test_unreadable_independent_receipt_stops_even_if_hash_unavailable(self):
+        self.measure()
+        review_path, original = self.receipt()
+        self.next()
+        load = self.evaluation.load
+        read_bytes = Path.read_bytes
+        def denied_load(path):
+            if Path(path) == review_path:
+                raise PermissionError("synthetic unreadable independent receipt")
+            return load(path)
+        def denied_bytes(path):
+            if path == review_path:
+                raise PermissionError("synthetic unreadable independent receipt")
+            return read_bytes(path)
+        with patch.object(self.evaluation, "load", side_effect=denied_load), patch.object(Path, "read_bytes", denied_bytes):
+            with self.assertRaises(PermissionError):
+                self.measure()
+        stopped = load(self.ledger_path)
+        self.assertIsNone(stopped["stop"]["independentReceiptSha256"])
+        with self.assertRaisesRegex(ValueError, "恒久停止"):
+            self.measure()
+        self.assertEqual(self.calls, ["SI-001"])
+
+    def test_original_run_drift_permanently_stops_after_bytes_restored(self):
+        self.measure()
+        self.receipt()
+        target = self.args.output / "skill/repetition-1/SI-001/run.json"
+        original = target.read_bytes()
+        target.write_bytes(original + b" ")
+        self.next()
+        with self.assertRaises(ValueError):
+            self.measure()
+        target.write_bytes(original)
+        with self.assertRaisesRegex(ValueError, "恒久停止"):
+            self.measure()
+        self.assertEqual(self.calls, ["SI-001"])
+
     def test_missing_receipt_blocks_next_process(self):
         self.assertEqual(0, self.measure())
         self.next()
@@ -154,19 +210,31 @@ class SddBatchTests(unittest.TestCase):
         self.assertEqual(1, len(self.calls))
 
     def test_self_review_failed_or_stale_receipt_blocks_next(self):
-        self.measure()
-        path, valid = self.receipt()
-        self.next()
         changes = [{"independent": False}, {"implementationPrivateHistoryInherited": True},
-                   {"reviewRunId": valid["evaluationRunId"]}, {"status": "unknown"},
+                   {"reviewRunId": "same-evaluation-run"}, {"status": "unknown"},
                    {"subjectCommit": "b" * 40}, {"runSha256": "b" * 64},
-                   {"checks": valid["checks"] | {"semantic": "failed"}}, {"directChecks": []}]
+                   {"semantic": "failed"}, {"directChecks": []}]
         for change in changes:
             with self.subTest(change=change):
-                self.write(path, valid | change)
-                with self.assertRaisesRegex(ValueError, "実検分"):
-                    self.measure()
-        self.assertEqual(1, len(self.calls))
+                # 恒久停止を別の負例へ流用せず、各負例をfresh台帳で検査する。
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    path, valid = fixture.receipt()
+                    fixture.next()
+                    changed = dict(change)
+                    if changed.get("reviewRunId") == "same-evaluation-run":
+                        changed["reviewRunId"] = valid["evaluationRunId"]
+                    if "semantic" in changed:
+                        changed = {"checks": valid["checks"] | {"semantic": changed["semantic"]}}
+                    fixture.write(path, valid | changed)
+                    with self.assertRaisesRegex(ValueError, "実検分"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                    self.assertIn("stop", fixture.evaluation.load(fixture.ledger_path))
+                finally:
+                    fixture.doCleanups()
 
     def test_concurrent_process_lock_prevents_a_second_call(self):
         with batch.locked(self.ledger_path.with_suffix(".lock")):

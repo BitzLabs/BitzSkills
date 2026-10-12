@@ -77,9 +77,15 @@ class SddEvaluationTests(unittest.TestCase):
                     "humanReviewPending": True, "readyClaimed": False, "changedPaths": changed,
                     "coreResults": results, "reason": "これは単体試験用の合成モデル応答で、実モデル測定ではない。"}
         evaluation.write(self.directory, "decision.json", json.dumps(decision))
-        events = [{"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "sdd_eval", "tool": c["tool"],
-                  "arguments": c["arguments"], "result": {"content": [{"type": "text", "text": json.dumps(c)}]}}} for c in calls]
-        events.append({"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(decision)}})
+        events = [{"type":"thread.started","thread_id":"synthetic-unit-thread"}, {"type":"turn.started"}]
+        for index, call in enumerate(calls):
+            item = {"id":f"item_{index}","type":"mcp_tool_call","server":"sdd_eval","tool":call["tool"],
+                    "arguments":call["arguments"],"result":None,"error":None,"status":"in_progress"}
+            events.append({"type":"item.started","item":dict(item)})
+            item.update(status="completed",result={"content":[{"type":"text","text":json.dumps(call)}],"structured_content":None})
+            events.append({"type":"item.completed","item":item})
+        events.append({"type":"item.completed","item":{"id":f"item_{len(calls)}","type":"agent_message","text":json.dumps(decision)}})
+        events.append({"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":20,"reasoning_output_tokens":0}})
         evaluation.write(self.directory, "trace.jsonl", "\n".join(json.dumps(e) for e in events))
         evaluation.write(self.directory, "changes.json", json.dumps({"before": self.before, "after": after, "modelChanged": changed}))
         record = {"identity": {"variant": "skill"}, "decision": decision,
@@ -304,6 +310,26 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertFalse(evaluation.safe_source("import os\ndef validate(value):\n    return []\n"))
         self.assertFalse(evaluation.safe_source("def validate(value):\n    while True: pass\n"))
 
+    def test_original_usage_and_fixed_new_artifacts_cannot_be_omitted_or_retyped(self):
+        import copy
+        self.prepare("SI-010")
+        self.read_sources()
+        record = self.record()
+        record["identity"]["executionVersion"] = evaluation.EXECUTION_VERSION
+        record["providerUsage"] = evaluation.read_events(self.directory / "trace.jsonl")[-1]["usage"]
+        for name, text in [("stderr.log", ""), ("prompt.txt", "synthetic prompt only"), ("invocation.json", '{"synthetic":true}')]:
+            evaluation.write(self.directory, name, text)
+            record["artifacts"][name] = evaluation.digest((self.directory / name).read_bytes())
+        self.assertTrue(all(c["passed"] for c in self.inspect(record).values()))
+        changed = copy.deepcopy(record)
+        changed["providerUsage"]["input_tokens"] = float(record["providerUsage"]["input_tokens"])
+        self.assertFalse(self.inspect(changed)["deterministic"]["passed"])
+        for name in ["trace.jsonl", "stderr.log", "prompt.txt", "invocation.json"]:
+            changed = copy.deepcopy(record)
+            del changed["artifacts"][name]
+            with self.subTest(name=name):
+                self.assertTrue(all(not c["passed"] for c in self.inspect(changed).values()))
+
     def test_missing_mcp_trace_and_changed_artifact_hash_are_detected(self):
         self.prepare()
         self.flow()
@@ -324,7 +350,7 @@ class SddEvaluationTests(unittest.TestCase):
         decision["coreResults"].append({"operation": "verify", "target": "REQ-001", "status": "passed", "exitCode": 0})
         evaluation.write(self.directory, "decision.json", json.dumps(decision))
         events = evaluation.read_events(self.directory / "trace.jsonl")
-        events[-1]["item"]["text"] = json.dumps(decision)
+        events[-2]["item"]["text"] = json.dumps(decision)
         evaluation.write(self.directory, "trace.jsonl", "\n".join(json.dumps(e) for e in events))
         for name in ("trace.jsonl", "decision.json"):
             record["artifacts"][name] = evaluation.digest((self.directory / name).read_bytes())
@@ -377,7 +403,7 @@ class SddEvaluationTests(unittest.TestCase):
         self.flow()
         record = self.record()
         events = evaluation.read_events(self.directory / "trace.jsonl")
-        events[-1]["item"]["text"] = "{ broken JSON"
+        events[-2]["item"]["text"] = "{ broken JSON"
         evaluation.write(self.directory, "trace.jsonl", "\n".join(json.dumps(e) for e in events))
         record["artifacts"]["trace.jsonl"] = evaluation.digest((self.directory / "trace.jsonl").read_bytes())
         self.assertTrue(all(not c["passed"] for c in self.inspect(record).values()))
