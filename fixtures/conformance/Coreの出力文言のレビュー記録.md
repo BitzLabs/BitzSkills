@@ -208,9 +208,9 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 | P5 | CTX-COVERAGE-TEST-001（CTX-COVERAGE-TEST-*） | messages.py:316（verify.py:537、543） | `対象{modality} {stmt_id}にtest対応がありません` | 2件（SINGLE-060、SINGLE-064） |
 | P6 | CTX-RELATION-TYPE-001（RELATION-TYPE。承認されていない ADR への `requires`） | targetexpand.py:729（messages.py:175 の `relation_type_mismatch` を呼ぶ） | `{source_kind}から{target_kind}への{relation}は許可されません`（出力例: `TASKからADRへのrequiresは許可されません`） | 該当fixture: MULTI-027-01、MULTI-027-02、SINGLE-147、SINGLE-148、SINGLE-149 |
 | P7 | CTX-TASK-DEPENDENCY-001 の `suggestedAction` | （現在のCoreにない） | なし。先行TASKが `cancelled` の場合の `suggestedAction` と文言は PR-3 で加える | — |
-| P8 | `doctor` の診断の `suggestedAction` の追加（C29） | doctor.py（現在は `SPEC-DOCTOR-WORKSPACE-001` の1件だけが `suggestedAction` を持つ。適合済み） | 追加は PR-3。既存の1件の文言は §3.5 に合うので変えない | — |
+| P8 | `doctor` の診断の `suggestedAction` の追加（C29） | doctor.py（現在は `SPEC-DOCTOR-WORKSPACE-001` の1件だけが `suggestedAction` を持つ。適合済み） | 追加は PR-3 に回した。既存の1件の文言は §3.5 に合うので変えない。**PR-4 で扱った**（下の PR-4 の節） | — |
 
-P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い違いの修正）」の節で直した。P8 はこの記録の範囲に含めない。
+P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い違いの修正）」の節で直した。P8 は、その下の「2026-10-12: 出力文の見直し PR-4（doctorの修復手順）」の節で扱った。
 
 補足: P6 は、行 #7 の関数 `relation_type_mismatch` を共通に使うため、#7 の文型の変更（「関係型{relation}」）が ADR の場合の出力にも及ぶ。PR-3 がこの診断の文言を差し替えるまでは、#7 の変更後の文型で出る。PR-3 の対象のfixture（P1〜P5）は 12 件ある。
 
@@ -303,4 +303,71 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 - 先行TASKが`open`と`cancelled`以外の状態の場合（TASKの状態は`open`、`done`、`cancelled`の3つだけ）。
 - ADRの状態が`proposed`以外（`rejected`、`superseded`）の場合の`summary`は、fixtureでは固定しない（単体試験で押さえる）。
+- 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。
+
+## 2026-10-12: 出力文の見直し PR-4（doctorの修復手順）
+
+### 追加の理由
+
+- 出力文の計画の PR-4。[`doctor`仕様](../../docs/03.詳細設計/03_操作仕様/04_doctor.md) §1は、診断に「貼付け可能な最小の修復手順」を付けると定める。
+  実際に`suggestedAction`を持つ`doctor`の診断は`SPEC-DOCTOR-WORKSPACE-001`の1件だけだった（実装の確認事項C29）。
+- §8に、`SPEC-DOCTOR-CORE-002`（Core実行体を観測できない）と`SPEC-MULTI-DEPENDENCY-001`（根本の原因は別の検査項目の診断にある）を除く
+  すべての`doctor`の診断に`suggestedAction`を付けることを明記した（コミット`ae7bdd0c`。文字列そのものは規範文で定めない。ADR-062）。
+  これは上の「PR-3 に回した文言」のP8にあたる。
+- `check`などが返す`SPEC-EARS-VERSION-001`には付けない。`SPEC-DOCTOR-EARS-001`は`doctor`の診断だけに付ける。
+- 修復手順を足すと、`SPEC-DOCTOR-PLUGIN-001`の`summary`が末尾に同じ内容を含んでしまうため、`summary`を短くする。
+
+### 管理者の承認
+
+- 2026-10-12、人間の管理者（ユーザー）が、下の表の`suggestedAction`の文言と、`SPEC-DOCTOR-PLUGIN-001`の`summary`の短縮を**このまま承認した**（ADR-062 Decision 2）。
+- **変更後の文字列は、規範文から一意に導いた値ではなく、表記規則 §3.5に合わせて管理者が承認した値である。**
+  期待値の根拠はこの承認済みの表であり、Coreの出力ではない（ADR-051、ADR-062）。
+
+### 承認済みの表
+
+`{…}`は実行時に差し込む値を示す。`SPEC-DOCTOR-WORKSPACE-001`の既存の`suggestedAction`は変えない。
+
+| 診断（条件ID） | `suggestedAction`（新設、承認済み） | 差し込む値 |
+|---|---|---|
+| `SPEC-DOCTOR-CORE-001`（DOCTOR-RUNTIME-VERSION） | `CPython 3.12以上でCoreを実行してください` | なし |
+| `SPEC-DOCTOR-PLUGIN-001`（DOCTOR-PLUGIN-FORMAT） | `--plugin、--plugin-version、--require-core-apiを同時に指定してください` | なし |
+| `SPEC-DOCTOR-API-001`（DOCTOR-API-VERSION） | `範囲{required}を満たすCoreへ更新するか、Core APIのバージョン{core_api}に対応するプラグインを使ってください` | `{required}`は指定した範囲の文字列そのまま（`evidence.required`と同じ）、`{core_api}`はCore APIのバージョン（`1.0`） |
+| `SPEC-DOCTOR-CAPABILITY-001`（DOCTOR-CAPABILITY） | `対応機能{missing}を公開するCoreへ更新するか、プラグインの要求を見直してください` | `{missing}`は不足した対応機能の名前を`evidence.missing`と同じ辞書順で「、」で連結したもの |
+| `SPEC-DOCTOR-EARS-001`（DOCTOR-EARS-VERSION） | `設定キーearsAiをCoreが対応するメジャーバージョン1に合わせてください` | なし |
+| `SPEC-DOCTOR-GIT-001`（DOCTOR-GIT-DEGRADED） | `Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください` | なし |
+| `SPEC-DOCTOR-COMMAND-001`（DOCTOR-COMMAND-CWD） | `設定キーverify.commands.{name}.cwdのディレクトリを作成するか、正しいパスを指定してください` | `{name}`はコマンド名（発生元の`key`と同じ名前） |
+| `SPEC-DOCTOR-COMMAND-001`（DOCTOR-COMMAND-FILE） | `設定キーverify.commands.{name}.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください` | 同上 |
+
+あわせて承認した変更: `SPEC-DOCTOR-PLUGIN-001`の`summary`を「プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください」から
+**「プラグインの要求が不完全です」**へ短くする（修復手順と重なるため）。
+
+### 変更したfixture
+
+- 期待値を変えたfixtureは9件（SINGLE 7、MULTI 2）。承認前の予測と一致した。`SINGLE-002`（`SPEC-DOCTOR-WORKSPACE-001`）は既存の`suggestedAction`を変えないので対象外である。
+  `SPEC-DOCTOR-CORE-001`と`SPEC-DOCTOR-EARS-001`を固定するfixtureは現在ない。単体試験で押さえる。
+
+| fixture | 診断 | 変えた期待値 |
+|---|---|---|
+| SINGLE-006-01 | `SPEC-DOCTOR-COMMAND-001`（実行ファイル） | `suggestedAction`の追加（`{name}`は`default`） |
+| SINGLE-006-02 | `SPEC-DOCTOR-COMMAND-001`（作業ディレクトリ） | `suggestedAction`の追加（`{name}`は`default`） |
+| SINGLE-093 | `SPEC-DOCTOR-GIT-001` | `suggestedAction`の追加 |
+| SINGLE-127-15 | `SPEC-DOCTOR-GIT-001` | `suggestedAction`の追加 |
+| SINGLE-161 | `SPEC-DOCTOR-API-001` | `suggestedAction`の追加（`{required}`は`>=1.1`） |
+| SINGLE-162 | `SPEC-DOCTOR-CAPABILITY-001` | `suggestedAction`の追加（`{missing}`は`context.v2`） |
+| SINGLE-163 | `SPEC-DOCTOR-PLUGIN-001` | `suggestedAction`の追加、`summary`の短縮 |
+| MULTI-026-02 | `SPEC-DOCTOR-COMMAND-001`（実行ファイル） | `suggestedAction`の追加（`{name}`は`backend`）、テキストの期待値に`  -> `の継続行の追加 |
+| MULTI-032 | `SPEC-DOCTOR-API-001` | `suggestedAction`の追加（`{required}`は`^2.0`） |
+
+- 入力、状態、終了コード、診断コード、重大度、結果への効果、発生元、`evidence`、検査項目、manifest、副作用の期待値は変えていない。
+- 期待値の更新は、承認済みの表の文言を生成器・監査（`doctor_plugin_fixtures.py`、`registry_closure_fixtures.py`、`environment_fixtures.py`、`multi_doctor_fixtures.py`、
+  `initial_fixtures.py`）のリテラルへ書き、`expected/*`を書き直した。Coreを実行して期待値を作っていない。
+  `doctor_plugin_fixtures.py`の参照計算は、承認済みの文型へ`evidence`の値を差し込んで求め、リテラルとの一致を要求する。
+  `generate`を持つ`doctor_plugin_fixtures.py`は再生成して差分が期待値の行だけであること、`PYTHONHASHSEED`を変えても同じことを確かめた。
+- 監査の回帰試験（`test_conformance_audit.py`）に、`suggestedAction`の欠落、別の条件の文言との取り違え、旧`summary`の復活、テキストの継続行の欠落を拒否する変異を足した。
+
+### 固定しない範囲
+
+- `SPEC-DOCTOR-CORE-001`（CPythonの下限未満）、`SPEC-DOCTOR-EARS-001`、複数の対応機能の連結（辞書順）の文字列。fixtureがなく、単体試験
+  （`tests/bitz-core/test_doctor_suggested_action.py`）で押さえる。
+- `SPEC-DOCTOR-CORE-002`と`SPEC-MULTI-DEPENDENCY-001`に`suggestedAction`を付けないこと（`SPEC-DOCTOR-CORE-002`はCoreが返す経路を持たない。`SPEC-MULTI-DEPENDENCY-001`は根本の原因が別の検査項目の診断にある）。
 - 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。

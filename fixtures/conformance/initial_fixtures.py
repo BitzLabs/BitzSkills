@@ -131,6 +131,12 @@ def validate(root=HERE):
                             or diagnostic["resultStatus"] != "blocked" or diagnostic["source"] != {
                                 "kind": "file", "workspaceId": "root", "path": ".spec/bitz.yaml", "key": key}):
                         raise ValueError("コマンドの診断が正しくありません")
+                    # 管理者が2026-10-12に承認した文言（ADR-062 Decision 2。Coreの出力を写したものではない）。
+                    approved = ("設定キーverify.commands.default.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください"
+                                if identifier.endswith("01") else
+                                "設定キーverify.commands.default.cwdのディレクトリを作成するか、正しいパスを指定してください")
+                    if diagnostic.get("suggestedAction") != approved:
+                        raise ValueError("コマンドの診断の修復手順が承認済みの文言と異なります")
                 elif diagnostics:
                     diagnostic = diagnostics[0]
                     if (diagnostic["code"] != "SPEC-DOCTOR-WORKSPACE-001" or diagnostic["severity"] != "error"

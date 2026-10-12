@@ -90,3 +90,13 @@ Coreの文言に合わせてきた慣行（`SINGLE-159`のレビュー記録の�
 - 参照計算とリテラルの期待値は、Coreの出力を見る前に決めた。Coreで一致を確かめたところ、12件とも期待値のまま通過し、期待値をCoreに合わせて直した箇所はない。
 - 陰性対照として、修正前のCore（コミット`5927890b`の`cliargs.py`、`doctor.py`、`messages.py`）を作業ツリーの外のコピーに置いて実行した。
   `SINGLE-160`〜`163`は検査項目の欠落（`plugin`、`capability`）と診断・状態・終了コードの相違で、`SINGLE-164-01`〜`08`は終了コード0（拒否されない）で、すべて失敗した。
+
+## 2026-10-12: doctorの修復手順（`suggestedAction`）の追加に伴う期待値の訂正
+
+`doctor`の診断に`suggestedAction`を付けたため（実装の確認事項C29。管理者が文言を承認）、次のfixtureの期待値を訂正した（ADR-062の期待値の訂正）。
+3つの診断が`suggestedAction`を持つ。`SPEC-DOCTOR-PLUGIN-001`の`summary`は修復手順と重なるため「プラグインの要求が不完全です」へ短くした。
+上の5の`summary`の説明は、この短縮を含めて読む。`suggestedAction`の文言も、`summary`と同じく規範文から導いた値ではなく、管理者が承認した値である。
+入力、状態、終了コード、診断コード、重大度、発生元は変えていない。
+承認済みの文言と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の「PR-4（doctorの修復手順）」の節にまとめた。
+
+- 対象: `SINGLE-161`（`SPEC-DOCTOR-API-001`）、`SINGLE-162`（`SPEC-DOCTOR-CAPABILITY-001`）、`SINGLE-163`（`SPEC-DOCTOR-PLUGIN-001`。`summary`も短縮）

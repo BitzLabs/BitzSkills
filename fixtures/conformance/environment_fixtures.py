@@ -81,7 +81,8 @@ def reviewed_result(identifier):
         result["diagnostics"] = [{
             "code": "SPEC-DOCTOR-GIT-001", "severity": "warning", "resultStatus": "passed_with_warnings",
             "summary": "Git不在のため差分に依存する保証を提供できません",
-            "source": {"kind": "environment", "component": "git", "identifier": "git"}}]
+            "source": {"kind": "environment", "component": "git", "identifier": "git"},
+            "suggestedAction": "Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください"}]
     return result
 
 

@@ -12,7 +12,7 @@
       "code": "SPEC-DOCTOR-PLUGIN-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください",
+      "summary": "プラグインの要求が不完全です",
       "source": {
         "kind": "environment",
         "component": "plugin",
@@ -23,7 +23,8 @@
           "--plugin-version",
           "--require-core-api"
         ]
-      }
+      },
+      "suggestedAction": "--plugin、--plugin-version、--require-core-apiを同時に指定してください"
     }
   ],
   "core": {

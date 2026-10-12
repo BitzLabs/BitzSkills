@@ -21,7 +21,8 @@
       "evidence": {
         "coreApi": "1.0",
         "required": ">=1.1"
-      }
+      },
+      "suggestedAction": "範囲>=1.1を満たすCoreへ更新するか、Core APIのバージョン1.0に対応するプラグインを使ってください"
     }
   ],
   "core": {

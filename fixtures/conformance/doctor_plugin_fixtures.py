@@ -13,6 +13,8 @@
 期待値は、規範文から導いたリテラルと、このモジュールが引数列だけから導く参照計算（`reference_lexical_errors`、`reference_plugin_outcome`）の
 両方で求め、一致を要求する。Coreの出力は期待値の根拠にしない。ただし`summary`の文字列は規範文が定めないため、Coreの`messages.py`の文言を
 既存の慣行どおりに使う。規範文から導いた値ではない。
+`suggestedAction`の文字列は、管理者が2026-10-12に承認した文言である（ADR-062 Decision 2、`Coreの出力文言のレビュー記録.md` PR-4の節）。
+これも規範文から導いた値ではなく、Coreの出力を写したものでもない。
 """
 import json
 from pathlib import Path
@@ -37,9 +39,15 @@ PLUGIN = "bitz-sdd"
 VERSION = "1.2.0"
 # 規範文が文言を定めないため、Coreの`messages.py`の文言を使う（規範文から導いた値ではない）。
 SUMMARIES = {
-    "SPEC-DOCTOR-PLUGIN-001": "プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください",
+    "SPEC-DOCTOR-PLUGIN-001": "プラグインの要求が不完全です",
     "SPEC-DOCTOR-API-001": "CoreのAPIのバージョンがプラグインの要求する範囲を満たしません",
     "SPEC-DOCTOR-CAPABILITY-001": "プラグインの要求する対応機能をCoreが公開していません",
+}
+# 管理者が承認した`suggestedAction`の文型（`{…}`は差し込む値）。参照計算が使う。リテラルの期待値は文字列全体を別に書く。
+ACTION_TEMPLATES = {
+    "SPEC-DOCTOR-PLUGIN-001": "--plugin、--plugin-version、--require-core-apiを同時に指定してください",
+    "SPEC-DOCTOR-API-001": "範囲{required}を満たすCoreへ更新するか、Core APIのバージョン{core_api}に対応するプラグインを使ってください",
+    "SPEC-DOCTOR-CAPABILITY-001": "対応機能{missing}を公開するCoreへ更新するか、プラグインの要求を見直してください",
 }
 REQUEST_OPTIONS = ("--plugin", "--plugin-version", "--require-core-api", "--require-capability")
 
@@ -196,8 +204,10 @@ def reference_plugin_outcome(argv):
 
 
 def _diagnostic(code, status, source, evidence):
+    action = ACTION_TEMPLATES[code].format(
+        required=evidence.get("required"), core_api=evidence.get("coreApi"), missing="、".join(evidence.get("missing", [])))
     return {"code": code, "severity": "error", "resultStatus": status, "summary": SUMMARIES[code],
-            "source": dict(source), "evidence": evidence}
+            "source": dict(source), "evidence": evidence, "suggestedAction": action}
 
 
 def sort_diagnostics(diagnostics):
@@ -220,15 +230,18 @@ def diagnostic_literals(identifier):
     if identifier in api:
         return [{"code": "SPEC-DOCTOR-API-001", "severity": "error", "resultStatus": "blocked",
                  "summary": SUMMARIES["SPEC-DOCTOR-API-001"], "source": source,
-                 "evidence": {"coreApi": "1.0", "required": api[identifier]}}]
+                 "evidence": {"coreApi": "1.0", "required": api[identifier]},
+                 "suggestedAction": f"範囲{api[identifier]}を満たすCoreへ更新するか、Core APIのバージョン1.0に対応するプラグインを使ってください"}]
     if identifier == "SINGLE-162":
         return [{"code": "SPEC-DOCTOR-CAPABILITY-001", "severity": "error", "resultStatus": "blocked",
                  "summary": SUMMARIES["SPEC-DOCTOR-CAPABILITY-001"], "source": source,
-                 "evidence": {"missing": ["context.v2"]}}]
+                 "evidence": {"missing": ["context.v2"]},
+                 "suggestedAction": "対応機能context.v2を公開するCoreへ更新するか、プラグインの要求を見直してください"}]
     if identifier == "SINGLE-163":
         return [{"code": "SPEC-DOCTOR-PLUGIN-001", "severity": "error", "resultStatus": "failed",
                  "summary": SUMMARIES["SPEC-DOCTOR-PLUGIN-001"], "source": source,
-                 "evidence": {"missing": ["--plugin-version", "--require-core-api"]}}]
+                 "evidence": {"missing": ["--plugin-version", "--require-core-api"]},
+                 "suggestedAction": "--plugin、--plugin-version、--require-core-apiを同時に指定してください"}]
     return []
 
 

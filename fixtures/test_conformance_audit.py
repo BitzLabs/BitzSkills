@@ -499,6 +499,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-127-15", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.30.0")),
             ("SINGLE-127-16", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.31.0")),
             ("SINGLE-127-15", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-127-15", "expected/doctor.json", lambda v: v["diagnostics"][0].pop("suggestedAction")),
             ("SINGLE-127-19", "manifest.json", lambda v: v["invocation"].update(python="3.13")),
             ("SINGLE-127-17", "expected/package.json", lambda v: v.update(outcome="rejected")),
             ("SINGLE-127-18", "manifest.json", lambda v: v["invocation"].update(argv=["metadata"])),
@@ -688,6 +689,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-091", "expected/check.json", lambda v: v["workspace"].update(id="root")),
             ("SINGLE-092", "expected/doctor.json", lambda v: v["checks"][2].update(status="passed")),
             ("SINGLE-093", "expected/doctor.json", lambda v: v["checks"][5]["lostGuarantees"].pop()),
+            ("SINGLE-093", "expected/doctor.json", lambda v: v["diagnostics"][0].pop("suggestedAction")),
             ("SINGLE-093", "side-effects.json",
              lambda v: v["before"].update(git={"status": "", "index": ""})),
             ("SINGLE-094", "expected/check.json",
@@ -2404,6 +2406,8 @@ class AuditTests(unittest.TestCase):
              lambda v: v["workspaces"][1].update(path="apps/api")),
             ("MULTI-026-02", "expected/doctor.json", lambda v: v.update(status="passed")),
             ("MULTI-026-02", "expected/doctor.json",
+             lambda v: v["workspaces"][1]["diagnostics"][0].pop("suggestedAction")),
+            ("MULTI-026-02", "expected/doctor.json",
              lambda v: v["workspaces"][1]["diagnostics"][0]["source"].update(workspaceId="platform")),
         ]
         for identifier, relative, mutate in mutations:
@@ -2419,6 +2423,13 @@ class AuditTests(unittest.TestCase):
             root = self.copy_multi_fixture(temporary, "MULTI-026-02")
             path = root / "multi/MULTI-026-02/expected/doctor.txt"
             path.write_text(path.read_text().replace("diagnostics=1", "diagnostics=0"))
+            self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-026-02"})["status"], "Failed")
+        # テキストの`suggestedAction`の継続行（`  -> `）が欠けても拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-026-02")
+            path = root / "multi/MULTI-026-02/expected/doctor.txt"
+            path.write_text("".join(line for line in path.read_text().splitlines(keepends=True)
+                                    if not line.startswith("  -> ")))
             self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-026-02"})["status"], "Failed")
 
     def copy_doctor_plugin_fixture(self, temporary, identifier):
@@ -2558,6 +2569,9 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(resultStatus="failed")),
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(severity="warning")),
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["evidence"].update(coreApi="1.1")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).pop("suggestedAction")),
+            ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(
+                suggestedAction="範囲^1.0を満たすCoreへ更新するか、Core APIのバージョン1.0に対応するプラグインを使ってください")),
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["evidence"].update(required="^1.0")),
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v).update(evidence=">=1.1")),
             ("SINGLE-161", "expected/doctor.json", lambda v: diag(v)["source"].update(identifier="other-plugin")),
@@ -2571,6 +2585,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-162", "expected/doctor.json", lambda v: v["checks"][2].update(status="passed")),
             ("SINGLE-162", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=["context.v2", "check.v1"])),
             ("SINGLE-162", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=[])),
+            ("SINGLE-162", "expected/doctor.json", lambda v: diag(v).pop("suggestedAction")),
             ("SINGLE-162", "expected/doctor.json", lambda v: diag(v).update(code="SPEC-DOCTOR-API-001")),
             ("SINGLE-162", "expected/doctor.json", lambda v: diag(v).update(resultStatus="failed")),
             ("SINGLE-162", "expected/doctor.json", lambda v: v.update(status="failed")),
@@ -2581,6 +2596,9 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["evidence"].update(
                 missing=["--require-core-api", "--plugin-version"])),
             ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["evidence"].update(missing=["--plugin-version"])),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v).pop("suggestedAction")),
+            ("SINGLE-163", "expected/doctor.json", lambda v: diag(v).update(
+                summary="プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください")),
             ("SINGLE-163", "expected/doctor.json", lambda v: diag(v)["source"].pop("identifier")),
             ("SINGLE-163", "expected/doctor.json", lambda v: v.update(status="blocked")),
             ("SINGLE-163", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
@@ -2614,6 +2632,7 @@ class AuditTests(unittest.TestCase):
             ("MULTI-032", "expected/doctor.json", lambda v: v.update(status="passed")),
             ("MULTI-032", "expected/doctor.json", lambda v: v["diagnostics"].append(dict(v["diagnostics"][0]))),
             ("MULTI-032", "expected/doctor.json", lambda v: diag(v)["evidence"].update(required="^1.0")),
+            ("MULTI-032", "expected/doctor.json", lambda v: diag(v).pop("suggestedAction")),
             ("MULTI-032", "expected/doctor.json", lambda v: diag(v)["source"].pop("identifier")),
             # メンバーへの複製：診断
             ("MULTI-032", "expected/doctor.json", lambda v: v["workspaces"][1]["diagnostics"].append(dict(diag(v)))),
@@ -5487,6 +5506,11 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-005-01/expected/check.json", lambda value: value["diagnostics"][0].update(severity="error")),
             ("SINGLE-005-02/expected/check.json", lambda value: value["diagnostics"].append(copy.deepcopy(value["diagnostics"][0]))),
             ("SINGLE-006-01/expected/doctor.json", lambda value: value["diagnostics"][0]["source"].update(key="verify.commands.default.cwd")),
+            ("SINGLE-006-01/expected/doctor.json", lambda value: value["diagnostics"][0].pop("suggestedAction")),
+            ("SINGLE-006-02/expected/doctor.json", lambda value: value["diagnostics"][0].pop("suggestedAction")),
+            # 修復手順の文字列は、承認済みの文言の差し替え（条件の取り違え）も拒否する。
+            ("SINGLE-006-01/expected/doctor.json", lambda value: value["diagnostics"][0].update(
+                suggestedAction="設定キーverify.commands.default.cwdのディレクトリを作成するか、正しいパスを指定してください")),
             ("SINGLE-006-02/expected/doctor.json", lambda value: value["checks"][6].update(status="passed")),
         ]
         for relative, mutate in mutations:
