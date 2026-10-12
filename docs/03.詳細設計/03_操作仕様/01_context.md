@@ -174,7 +174,7 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 制約台帳、カバレッジ、境界、参照を返し、すべての文書を提示形式`reference`にする。詳細度`full`では、
 解決したすべての文書を提示形式`full`にする。
 
-役割`requirement`と`constraint`の文書を`normative`ではなく`full`にするのは、`requires`で到達したそれらの文書の規範文と、`addresses`で到達したそれらの文書の`addresses`されていない規範文は
+役割`requirement`と`constraint`の文書を`normative`ではなく`full`にするのは、`requires`または`addresses`で到達したそれらの文書の規範文のうち、起点のTASKが`addresses`していないものは
 `targetStatements`にならず（[関係・トレースモデル §6.4](../02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
 の規則3、規則4）、制約台帳に収録されない（本仕様§4）ためである。`normative`にすると、それらが持つ`MUST`の本文が
 提示からも制約台帳からも失われ、依存の距離を理由に必須の制約を参照だけへ落とさないという、ADR-014の`Decision`の4番目の項目に
