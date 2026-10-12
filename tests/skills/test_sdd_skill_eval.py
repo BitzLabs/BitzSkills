@@ -543,8 +543,16 @@ class SddEvaluationTests(unittest.TestCase):
                 if kind == "log-write":
                     self.assertEqual(b"partial trace\n", base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
                     self.assertEqual([{"path": "trace.jsonl", "errorType": "OSError", "errno": 28}], record["outputSaveErrors"])
+                self.assertEqual(set(record["artifacts"]), {
+                    "trace.jsonl", "host.jsonl", "stderr.log", "decision.json", "changes.json",
+                    "control.json", "prompt.txt", "invocation.json"})
                 for name, value in record["artifacts"].items():
-                    self.assertEqual(evaluation.digest((target / name).read_bytes()), value)
+                    if value is None:
+                        self.assertIn(name, set(record["missingArtifacts"]) | set(record["artifactReadErrors"]))
+                        if name in record["missingArtifacts"]:
+                            self.assertFalse((target / name).exists())
+                    else:
+                        self.assertEqual(evaluation.digest((target / name).read_bytes()), value)
                 self.assertEqual("partial stderr\n" if kind == "timeout" else
                     "" if kind == "oserror" else "native initialization failed\n",
                     (target / "stderr.log").read_text())
