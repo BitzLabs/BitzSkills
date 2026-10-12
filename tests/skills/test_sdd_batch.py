@@ -177,6 +177,106 @@ class SddBatchTests(unittest.TestCase):
         finally:
             subject.doCleanups()
 
+    def test_deep_json_run_and_receipt_stop_even_after_restore(self):
+        for name in ("run.json", "independent-review.json"):
+            with self.subTest(name=name):
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    path, receipt = fixture.receipt()
+                    path = path.parent / name
+                    original = path.read_bytes()
+                    path.write_text("[" * 10000 + "0" + "]" * 10000)
+                    fixture.next()
+                    with self.assertRaises((ValueError, RecursionError)):
+                        fixture.measure()
+                    stopped = fixture.evaluation.load(fixture.ledger_path)
+                    self.assertIn("stop", stopped)
+                    path.write_bytes(original)
+                    with self.assertRaisesRegex(ValueError, "恒久停止"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                    self.assertEqual(fixture.evaluation.load(fixture.ledger_path), stopped)
+                finally:
+                    fixture.doCleanups()
+
+    def test_unknown_previous_verifier_exceptions_permanently_stop(self):
+        for error_type in (RecursionError, RuntimeError, MemoryError, OverflowError):
+            with self.subTest(error_type=error_type):
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    fixture.receipt()
+                    fixture.next()
+                    with patch.object(fixture.evaluation, "inspect", side_effect=error_type("synthetic verifier failure")):
+                        with self.assertRaises(error_type):
+                            fixture.measure()
+                    stopped = fixture.evaluation.load(fixture.ledger_path)
+                    self.assertEqual(stopped["stop"]["errorType"], error_type.__name__)
+                    with self.assertRaisesRegex(ValueError, "恒久停止"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                    self.assertEqual(fixture.evaluation.load(fixture.ledger_path), stopped)
+                finally:
+                    fixture.doCleanups()
+
+    def test_run_and_review_symlink_stop_without_reading_link_target(self):
+        for name in ("run.json", "independent-review.json"):
+            with self.subTest(name=name):
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    path, receipt = fixture.receipt()
+                    path = path.parent / name
+                    original = path.read_bytes()
+                    saved = path.with_name("synthetic-original.json")
+                    saved.write_bytes(original)
+                    path.unlink()
+                    path.symlink_to(saved)
+                    fixture.next()
+                    read_bytes = Path.read_bytes
+                    def guarded_read(candidate):
+                        if candidate == path:
+                            raise AssertionError("must not read symlink target")
+                        return read_bytes(candidate)
+                    with patch.object(Path, "read_bytes", autospec=True, side_effect=guarded_read):
+                        with self.assertRaisesRegex(ValueError, "symlink"):
+                            fixture.measure()
+                    stopped = fixture.evaluation.load(fixture.ledger_path)
+                    self.assertIn("stop", stopped)
+                    if name == "independent-review.json":
+                        self.assertIsNone(stopped["stop"]["independentReceiptSha256"])
+                    path.unlink()
+                    path.write_bytes(original)
+                    with self.assertRaisesRegex(ValueError, "恒久停止"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                finally:
+                    fixture.doCleanups()
+
+    def test_unknown_receipt_hash_error_does_not_prevent_permanent_stop(self):
+        self.measure()
+        review_path, valid = self.receipt()
+        self.write(review_path, valid | {"status": "failed"})
+        self.next()
+        read_bytes = Path.read_bytes
+        def failed_hash_read(candidate):
+            if candidate == review_path:
+                raise RuntimeError("synthetic hash retrieval failure")
+            return read_bytes(candidate)
+        with patch.object(Path, "read_bytes", autospec=True, side_effect=failed_hash_read):
+            with self.assertRaises(ValueError):
+                self.measure()
+        stopped = self.evaluation.load(self.ledger_path)
+        self.assertIsNone(stopped["stop"]["independentReceiptSha256"])
+        self.write(review_path, valid)
+        with self.assertRaisesRegex(ValueError, "恒久停止"):
+            self.measure()
+        self.assertEqual(self.calls, ["SI-001"])
+
     def test_unreadable_independent_receipt_stops_even_if_hash_unavailable(self):
         self.measure()
         review_path, original = self.receipt()

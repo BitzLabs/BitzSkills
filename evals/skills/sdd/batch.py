@@ -118,12 +118,19 @@ def verify_previous(evaluation, args, attempt, cases):
     if attempt["status"] != "completed":
         raise ValueError("失敗・中断済み測定を自動再開しません")
     target = directory(args, attempt["slot"])
-    record = evaluation.load(target / "run.json")
-    if (evaluation.digest((target / "run.json").read_bytes()) != attempt["runSha256"]
-            or evaluation.inspect(record, cases[attempt["slot"]["caseId"]], target) != record["checks"]
+    run_path = target / "run.json"
+    if run_path.is_symlink():
+        raise ValueError("前件の原run symlinkは許可しません")
+    raw = run_path.read_bytes()
+    if evaluation.digest(raw) != attempt["runSha256"]:
+        raise ValueError("前件の実証拠または必須検査が一致しません")
+    record = evaluation.parse_json(raw)
+    if (evaluation.inspect(record, cases[attempt["slot"]["caseId"]], target) != record["checks"]
             or not all(c["passed"] for c in record["checks"].values())):
         raise ValueError("前件の実証拠または必須検査が一致しません")
     review_path = target / "independent-review.json"
+    if review_path.is_symlink():
+        raise ValueError("前件の独立検分記録symlinkは許可しません")
     if not review_path.exists():
         raise IndependentReviewPending("前件の独立検分は未提出です")
     receipt = evaluation.load(review_path)
@@ -172,14 +179,15 @@ def run(evaluation, args, cases):
                 verify_previous(evaluation, args, attempt, by_id)
             except IndependentReviewPending:
                 raise
-            except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
+            except Exception as error:  # 未提出だけ待機。その他の検査例外は恒久stop。
                 target = directory(args, attempt["slot"])
                 review_path = target / "independent-review.json"
                 receipt_hash = None
                 try:
-                    receipt_hash = evaluation.digest(review_path.read_bytes())
-                except OSError:
-                    pass  # 読取失敗自体も停止理由。hash取得不能でstop保存を省略しない。
+                    if not review_path.is_symlink():
+                        receipt_hash = evaluation.digest(review_path.read_bytes())
+                except Exception:
+                    pass  # hash取得例外でも元のstop保存を省略しない。
                 ledger["stop"] = {"reason": "previous-evidence-or-review-rejected",
                                   "slot": attempt["slot"], "errorType": type(error).__name__,
                                   "runSha256": attempt.get("runSha256"),

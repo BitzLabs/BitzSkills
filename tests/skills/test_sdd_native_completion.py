@@ -62,6 +62,13 @@ class SddNativeCompletionTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertIsNone(evaluation.core_results([call])[0][1])
 
+    def test_deep_json_is_reported_as_invalid_input(self):
+        for raw in ("[" * 10000 + "0" + "]" * 10000,
+                    '{"nested":' * 10000 + "0" + "}" * 10000):
+            with self.subTest(prefix=raw[:20]), self.assertRaisesRegex(ValueError, "nesting"):
+                evaluation.parse_json(raw)
+        self.assertEqual(evaluation.parse_json('[[[[0]]]]'), [[[[0]]]])
+
     def test_finite_metadata_numbers_remain_observable(self):
         value=evaluation.parse_json('{"_meta":{"fraction":1.25,"small":1e-9},"count":1000000000000000000000}')
         self.assertEqual(value["_meta"],{"fraction":1.25,"small":1e-9})

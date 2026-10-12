@@ -373,5 +373,14 @@
     "preparationIndependentSolConsumed": 1,
     "primaryConsumed": 0,
     "reason": "non-object Core stdout and malformed original artifacts bypassed permanent stop; original preparation P2 retained"
+  },
+  "preparationStop": {
+    "status": "stopped_preparation",
+    "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+    "receiptRelativePath": ".venv/r05-matrix-prelaunch-sol-04/receipt.json",
+    "receiptSha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91",
+    "preparationIndependentSolConsumed": 1,
+    "primaryConsumed": 0,
+    "reason": "deep JSON RecursionError bypassed permanent stop; original preparation P2 retained"
   }
 }

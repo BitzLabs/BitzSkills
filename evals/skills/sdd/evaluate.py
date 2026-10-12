@@ -56,7 +56,10 @@ def parse_json(raw):
         if not math.isfinite(result):
             raise ValueError("non-finite JSON number: " + value)
         return result
-    return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant, parse_float=finite_float)
+    try:
+        return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant, parse_float=finite_float)
+    except RecursionError as error:
+        raise ValueError("JSON nesting exceeds decoder capacity") from error
 
 
 def load(path):
@@ -369,7 +372,7 @@ def core_results(calls):
 def inspect(record, case, directory):
     try:
         return inspect_valid_artifacts(record, case, directory)
-    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError, subprocess.SubprocessError) as error:
+    except Exception as error:  # 未知の構造/検査例外も適合へ変換しない。
         return {name: {"passed": False, "errors": ["invalid evidence: " + type(error).__name__ + ": " + str(error)]}
                 for name in load(HERE / "protocol.json")["requiredChecks"]}
 
@@ -674,7 +677,7 @@ def run_one(args, case):
         record["providerCost"] = None
         record["checks"] = inspect(record, case, directory)
         write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
-    except (OSError, ValueError, KeyError, TypeError, AttributeError, KeyboardInterrupt) as error:
+    except (Exception, KeyboardInterrupt) as error:  # 後処理の未知例外も原失敗を保存する。
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
                                     error_type=type(error).__name__, exit_code=process.returncode,
                                     errno=getattr(error, "errno", None))
