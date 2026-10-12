@@ -134,6 +134,18 @@ class DoctorSuggestedActionTests(unittest.TestCase):
         web = next(w for w in result["workspaces"] if w["id"] == "web")
         self.assertEqual(self.one(web, "SPEC-DOCTOR-EARS-001")["suggestedAction"], EARS_ACTION)
 
+    def test_ears_version_of_root_in_all_workspaces_uses_doctor_code(self):
+        # 全体事前検査がルートの設定のEARS-AIのメジャーバージョンの非互換で停止する経路でも、doctorの診断コードと修復手順を返す
+        # （診断レジストリの`DOCTOR-EARS-VERSION`。`check`用の`SPEC-EARS-VERSION-001`を返さない。実装の確認事項C31）。
+        self.write_config(".", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "2.0"\nworkspace:\n  id: platform\n'
+                          "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n")
+        self.write_config("apps/web", CONFIG + "workspace:\n  id: web\n")
+        result, code = doctor.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), self.env)
+        self.assertEqual(code, 2)
+        codes = [d["code"] for d in result["diagnostics"]]
+        self.assertNotIn("SPEC-EARS-VERSION-001", codes)
+        self.assertEqual(self.one(result, "SPEC-DOCTOR-EARS-001")["suggestedAction"], EARS_ACTION)
+
     def test_check_ears_version_has_no_suggested_action(self):
         outcome = config_mod.load_config(b'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "2.0"\n')
         diagnostics = [d.to_dict() for d in outcome.diagnostics]
