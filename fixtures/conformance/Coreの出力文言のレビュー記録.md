@@ -347,6 +347,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 - 期待値を変えたfixtureは9件（SINGLE 7、MULTI 2）。承認前の予測と一致した。`SINGLE-002`（`SPEC-DOCTOR-WORKSPACE-001`）は既存の`suggestedAction`を変えないので対象外である。
   `SPEC-DOCTOR-CORE-001`と`SPEC-DOCTOR-EARS-001`を固定するfixtureは現在ない。単体試験で押さえる。
+  （2026-10-12追記: `SPEC-DOCTOR-EARS-001`は、その後の実装の確認事項C31の修正で追加した`MULTI-033`が、`doctor --all-workspaces`の全体事前検査の経路で固定する。）
 
 | fixture | 診断 | 変えた期待値 |
 |---|---|---|
@@ -370,6 +371,6 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 ### 固定しない範囲
 
 - `SPEC-DOCTOR-CORE-001`（CPythonの下限未満）、`SPEC-DOCTOR-EARS-001`、複数の対応機能の連結（辞書順）の文字列。fixtureがなく、単体試験
-  （`tests/bitz-core/test_doctor_suggested_action.py`）で押さえる。
+  （`tests/bitz-core/test_doctor_suggested_action.py`）で押さえる（`SPEC-DOCTOR-EARS-001`の全体事前検査の経路は、2026-10-12に追加した`MULTI-033`が固定する）。
 - `SPEC-DOCTOR-CORE-002`と`SPEC-MULTI-DEPENDENCY-001`に`suggestedAction`を付けないこと（`SPEC-DOCTOR-CORE-002`はCoreが返す経路を持たない。`SPEC-MULTI-DEPENDENCY-001`は根本の原因が別の検査項目の診断にある）。
 - 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。
