@@ -747,7 +747,9 @@ def precheck(
             root_id=outcome.workspace_id,
             diagnostics=diags,
             git_status="passed" if git_confirmed else "blocked",
-            catalog_status=None,
+            # ルートの設定のスキーマまたはEARS-AIのメジャーバージョンが非互換なら、メンバーの非互換（`SPEC-MULTI-VERSION-001`）と
+            # 同じく、カタログの検査項目を`blocked`で置く（`04_doctor.md` §3。ユーザーの決定）。そのほかの停止では置かない。
+            catalog_status="blocked" if outcome.stop_stage in ("schema-major", "ears-major") else None,
             repo_root=root,
         )
 
