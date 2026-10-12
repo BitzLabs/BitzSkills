@@ -310,6 +310,25 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertFalse(evaluation.safe_source("import os\ndef validate(value):\n    return []\n"))
         self.assertFalse(evaluation.safe_source("def validate(value):\n    while True: pass\n"))
 
+    def test_wrong_artifact_shapes_fail_closed_without_attribute_errors(self):
+        self.prepare("SI-010")
+        self.read_sources()
+        self.bitz("context", "TASK-001", "--purpose", "implement")
+        record = self.record()
+        self.assertTrue(all(c["passed"] for c in self.inspect(record).values()))
+        for name in ["trace.jsonl", "host.jsonl", "decision.json", "changes.json"]:
+            path = self.directory / name
+            original = path.read_bytes()
+            for value in [None, [], True, 1, "invalid"]:
+                with self.subTest(name=name, value=value):
+                    changed = copy.deepcopy(record)
+                    raw = json.dumps(value).encode()
+                    path.write_bytes(raw)
+                    changed["artifacts"][name] = evaluation.digest(raw)
+                    checks = self.inspect(changed)
+                    self.assertTrue(all(not c["passed"] for c in checks.values()), checks)
+            path.write_bytes(original)
+
     def test_overflowing_native_metadata_fails_complete_scoring_entry(self):
         self.prepare("SI-010")
         self.read_sources()

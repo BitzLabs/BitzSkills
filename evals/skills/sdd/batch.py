@@ -78,7 +78,7 @@ def plan(evaluation, args, cases):
     if doctor.returncode != 0:
         raise ValueError("公開Core doctorが起動前検査で非成功でした")
     doctor_result = evaluation.parse_json(doctor.stdout)
-    if doctor_result.get("status") not in evaluation.PASS:
+    if not isinstance(doctor_result, dict) or doctor_result.get("status") not in evaluation.PASS:
         raise ValueError("公開Core doctorが起動前検査で非成功でした")
     doctor_result.pop("durationMs", None)  # 実時間は同条件で変動するため入力同一性へ含めない。
     return batch, {"output": str(args.output), "batchSha256": evaluation.digest(committed),
@@ -172,7 +172,7 @@ def run(evaluation, args, cases):
                 verify_previous(evaluation, args, attempt, by_id)
             except IndependentReviewPending:
                 raise
-            except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+            except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
                 target = directory(args, attempt["slot"])
                 review_path = target / "independent-review.json"
                 receipt_hash = None

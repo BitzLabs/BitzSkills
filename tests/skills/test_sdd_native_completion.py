@@ -56,6 +56,12 @@ class SddNativeCompletionTests(unittest.TestCase):
         call={"tool":"run_bitz","accepted":True,"result":{"stdout":raw}}
         self.assertEqual(evaluation.core_results([call])[0][1]["status"],"passed")
 
+    def test_non_object_core_stdout_is_invalid_not_an_attribute_error(self):
+        for raw in ["null", "[]", '["result"]', "true", "1", '"result"']:
+            call={"tool":"run_bitz","accepted":True,"result":{"stdout":raw}}
+            with self.subTest(raw=raw):
+                self.assertIsNone(evaluation.core_results([call])[0][1])
+
     def test_finite_metadata_numbers_remain_observable(self):
         value=evaluation.parse_json('{"_meta":{"fraction":1.25,"small":1e-9},"count":1000000000000000000000}')
         self.assertEqual(value["_meta"],{"fraction":1.25,"small":1e-9})

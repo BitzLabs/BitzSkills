@@ -358,6 +358,8 @@ def core_results(calls):
             value = call["result"]
             try:
                 result = parse_json(value["stdout"])
+                if not isinstance(result, dict):
+                    result = None
             except ValueError:
                 result = None
             results.append((call, result))
@@ -367,7 +369,7 @@ def core_results(calls):
 def inspect(record, case, directory):
     try:
         return inspect_valid_artifacts(record, case, directory)
-    except (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.SubprocessError) as error:
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError, subprocess.SubprocessError) as error:
         return {name: {"passed": False, "errors": ["invalid evidence: " + type(error).__name__ + ": " + str(error)]}
                 for name in load(HERE / "protocol.json")["requiredChecks"]}
 
@@ -398,7 +400,7 @@ def inspect_valid_artifacts(record, case, directory):
         raise ValueError("fixed artifact inventory mismatch")
     for name, wanted in record["artifacts"].items():
         if digest((directory / name).read_bytes()) != wanted:
-            errors["deterministic"].append("artifact hash: " + name)
+            raise ValueError("artifact hash: " + name)
     decision = load(directory / "decision.json")
     schema_errors = [e.message for e in Draft202012Validator(load(HERE / "decision.schema.json")).iter_errors(decision)]
     errors["deterministic"].extend(schema_errors)
@@ -672,7 +674,7 @@ def run_one(args, case):
         record["providerCost"] = None
         record["checks"] = inspect(record, case, directory)
         write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
-    except (OSError, ValueError, KeyError, TypeError, KeyboardInterrupt) as error:
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, KeyboardInterrupt) as error:
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
                                     error_type=type(error).__name__, exit_code=process.returncode,
                                     errno=getattr(error, "errno", None))

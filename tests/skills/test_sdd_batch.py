@@ -126,6 +126,57 @@ class SddBatchTests(unittest.TestCase):
                 finally:
                     fixture.doCleanups()
 
+    def test_core_stdout_drift_stops_even_after_original_bytes_restored(self):
+        spec = importlib.util.spec_from_file_location("sdd_core_object_fixture",
+                                                    ROOT / "tests/skills/test_sdd_skill_eval.py")
+        fixture_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fixture_module)
+        import shutil
+        subject = fixture_module.SddEvaluationTests()
+        subject.setUp()
+        try:
+            subject.prepare("SI-010")
+            subject.read_sources()
+            subject.bitz("context", "TASK-001", "--purpose", "implement")
+            evaluation = fixture_module.evaluation
+            record = subject.record()
+            record["identity"]["subjectCommit"] = "a" * 40
+            record["checks"] = subject.inspect(record)
+            self.assertTrue(all(c["passed"] for c in record["checks"].values()))
+            for invalid in (None, [], True, 1, "invalid"):
+                with self.subTest(invalid=invalid):
+                    fixture = SddBatchTests()
+                    fixture.setUp()
+                    try:
+                        fixture.measure()
+                        target = fixture.args.output / "skill/repetition-1/SI-001"
+                        shutil.copytree(subject.directory, target, dirs_exist_ok=True)
+                        fixture.write(target / "run.json", record)
+                        state = fixture.evaluation.load(fixture.ledger_path)
+                        state["attempts"][0]["runSha256"] = evaluation.digest((target / "run.json").read_bytes())
+                        fixture.write(fixture.ledger_path, state)
+                        fixture.evaluation.inspect = lambda r, c, d: evaluation.inspect(r, subject.case, d)
+                        fixture.receipt()
+                        path = target / "host.jsonl"
+                        original = path.read_bytes()
+                        calls = evaluation.read_events(path)
+                        next(c for c in calls if c["tool"] == "run_bitz")["result"]["stdout"] = json.dumps(invalid)
+                        path.write_text("\n".join(json.dumps(c) for c in calls) + "\n")
+                        fixture.next()
+                        with self.assertRaises(ValueError):
+                            fixture.measure()
+                        stopped = fixture.evaluation.load(fixture.ledger_path)
+                        self.assertIn("stop", stopped)
+                        path.write_bytes(original)
+                        with self.assertRaisesRegex(ValueError, "恒久停止"):
+                            fixture.measure()
+                        self.assertEqual(fixture.calls, ["SI-001"])
+                        self.assertEqual(fixture.evaluation.load(fixture.ledger_path), stopped)
+                    finally:
+                        fixture.doCleanups()
+        finally:
+            subject.doCleanups()
+
     def test_unreadable_independent_receipt_stops_even_if_hash_unavailable(self):
         self.measure()
         review_path, original = self.receipt()

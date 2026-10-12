@@ -135,3 +135,5 @@ traceのusageとwallMsを保存し、取得できないprovider費用は欠測�
 Core結果のstdout内部・最終境界のcontext・起動前doctor・MCP JSON-RPC要求にも同じ厳格JSONパーサーを適用する。旧plan-implement-matrix-20261012-01は準備SOLのP2で一次0のまま停止、新02は是正sourceと別出力/台帳/準備1枠で固定する。旧準備1枠の消費と原応答を新条件へ付け替えない。
 
 独立検分記録はJSON objectの型検査を先に行い、null・配列・真偽値・数値・文字列も不適合として恒久stopを保存する。旧新02は準備SOLの型不正P2で一次0のまま停止し、新03を別source/出力/台帳/準備1枠へ固定する。旧01/02の準備枠・原結果は保持する。
+
+Core stdoutの非objectを不正結果として扱い、原artifact hash不一致は内容検査前に拒否する。型不正によるAttributeErrorも不適合として捕捉し、前件検査の恒久stop・当件の原失敗保存へ送る。旧新03は準備P2で一次0のまま停止し、新04を専用source/出力/台帳/準備1枠へ固定する。旧01/02/03の消費と原結果は保持する。

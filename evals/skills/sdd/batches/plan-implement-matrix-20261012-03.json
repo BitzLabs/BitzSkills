@@ -373,5 +373,14 @@
     "preparationIndependentSolConsumed": 1,
     "primaryConsumed": 0,
     "reason": "non-object independent receipt bypassed permanent stop; original preparation P2 retained"
+  },
+  "preparationStop": {
+    "status": "stopped_preparation",
+    "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+    "receiptRelativePath": ".venv/r05-matrix-prelaunch-sol-03/receipt.json",
+    "receiptSha256": "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+    "preparationIndependentSolConsumed": 1,
+    "primaryConsumed": 0,
+    "reason": "non-object Core stdout and malformed original artifacts bypassed permanent stop; original preparation P2 retained"
   }
 }
