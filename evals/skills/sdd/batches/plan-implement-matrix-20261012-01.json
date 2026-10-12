@@ -1,0 +1,366 @@
+{
+  "schemaVersion": "1.0",
+  "id": "plan-implement-matrix-20261012-01",
+  "purpose": "現在候補の計画7・実装10を同一新条件のskill/baseline各2反復で測る。SI-010の旧中断・是正後の限定適合を保持し、固定テスト説明を明確にした新実行器条件。保持・実地・Skill Gate・Phase・リリースは未認定",
+  "model": "gpt-6.1-sol",
+  "candidateVersion": "0.3.0",
+  "protocolSha256": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+  "casesSha256": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+  "automaticRetries": 0,
+  "maximumPrimaryCalls": 68,
+  "timeoutSeconds": 240,
+  "slots": [
+    {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "baseline",
+      "repetition": 2
+    }
+  ],
+  "stopPolicy": "毎回1枠を起動前に消費。機械不適合・中断・原証拠不一致・独立意味不適合で残枠を恒久停止。同条件の自動再試行0。独立receipt未完了では次を拒否",
+  "reviewBudget": {
+    "preparationIndependentSol": 1,
+    "semanticIndependentSolMaximum": 68,
+    "maximumPerPrimary": 1,
+    "automaticRetries": 0
+  },
+  "usagePolicy": "一次Codex exec軌跡単位。trace usageと実時間を保存し、独立usage・provider請求の欠測を0扱いしない",
+  "limitations": [
+    "新source/CLI版/入力/環境/保存先/共有台帳は起動前に固定し準備独立検分する。現manifest保存だけでは起動許可条件を満たさない。",
+    "公開合成17ケースの2反復比較だけ。3反復以上・保持・別モデル系統・実地・sdd-converge行動は別測定。"
+  ]
+}
