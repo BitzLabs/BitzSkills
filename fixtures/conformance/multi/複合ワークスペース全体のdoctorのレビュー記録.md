@@ -81,13 +81,13 @@ Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本�
 実装の確認事項C31。`doctor --all-workspaces`は、ルートの設定の`earsAi`のメジャーバージョンが非互換のとき、全体事前検査（`multiws.precheck`）が
 `check`用の`SPEC-EARS-VERSION-001`を最上位に返し、修復手順も付けていなかった。診断レジストリは、`doctor`のEARS-AIのメジャーバージョンの非互換を
 別の条件`DOCTOR-EARS-VERSION`（`SPEC-DOCTOR-EARS-001`、`error`、`blocked`、発生元`file`、継続`skip-check`）として`EARS-SCHEMA-MAJOR`（操作は`context`、`check`、`verify`）と分けている。
-このfixtureは、`doctor`が`doctor`のコードを返し、メンバーの診断を始めないことを固定する（ADR-051の追加。Coreの修正はコミット`5946271c`）。
+このfixtureは、`doctor`が`doctor`のコードを返し、メンバーの診断を始めないことを固定する（ADR-051の追加。Coreの修正はコミット`5946271c`と、カタログの検査項目を`blocked`で置く`a7b8e9a5`）。
 単一ワークスペースの`doctor`の`SPEC-DOCTOR-EARS-001`は、[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の PR-4 の節が「fixtureがなく単体試験で押さえる」とした範囲で、
 このfixtureは全体操作の経路だけを固定する。
 
 | fixture | 独立した原因 | 必須確認 |
 |---|---|---|
-| `MULTI-033` | ルートの設定の`earsAi`が`2.0`（Coreが対応するメジャーバージョンは1） | 診断は`SPEC-DOCTOR-EARS-001`の1件で、`SPEC-EARS-VERSION-001`を含まない。メンバーの診断を開始せず`workspaces`は空。最上位の`checks[]`は`core`、`git`。状態は`blocked`、終了コード2 |
+| `MULTI-033` | ルートの設定の`earsAi`が`2.0`（Coreが対応するメジャーバージョンは1） | 診断は`SPEC-DOCTOR-EARS-001`の1件で、`SPEC-EARS-VERSION-001`を含まない。メンバーの診断を開始せず`workspaces`は空。最上位の`checks[]`は`core`、`git`（ともに`passed`）と`catalog`（`blocked`）。状態は`blocked`、終了コード2 |
 
 ### 入力
 
@@ -127,3 +127,4 @@ Gitでコミット済み（`baseCommit`は全体）で、リポジトリのル�
 ### 陰性対照
 
 修正前のCore（コミット`f5de9a43`）のコピーでは、診断が`SPEC-EARS-VERSION-001`（`suggestedAction`なし）で失敗する（検証の結果は報告に記す）。
+カタログの検査項目を置く修正の直前のCore（コミット`bff2f546`の`multiws.py`）のコピーでは、`$/checks: 期待=length=3 実際=length=2`で失敗する。
