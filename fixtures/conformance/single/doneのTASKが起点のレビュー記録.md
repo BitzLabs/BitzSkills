@@ -110,9 +110,10 @@ Coreの出力は根拠にせず、次の規範文と参照計算から決めた�
 ### 診断の`summary`
 
 `summary`は「人に向けた短い説明」（結果・診断・終了コードの仕様 §4）であり、規範文を持たない。ユーザーの決定（2026-10-05）により、
-Coreの`context`操作の文言「MUST REQ-001:AC-01がtestされていません」にそろえた。同じ診断コード`CTX-COVERAGE-TEST-001`について、
-`verify`は「対象MUST …にtest対応がありません」を返し（`SINGLE-060`、`SINGLE-064`）、操作ごとに文言が割れている。
-この点はCoreの出力文言の別計画で扱う。
+Coreの`context`操作の文言（当時は「MUST REQ-001:AC-01がtestされていません」）にそろえた。当時は同じ診断コード`CTX-COVERAGE-TEST-001`について、
+`verify`が別の文言（「対象MUST …にtest対応がありません」）を返し（`SINGLE-060`、`SINGLE-064`）、操作ごとに文言が割れていた。
+2026-10-12に、`context`と`verify`で同じ「対象規範文MUST REQ-001:AC-01にテスト対応がありません」へそろえた
+（[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の2026-10-12 PR-3の節）。
 
 ### 限界
 
@@ -173,7 +174,8 @@ Coreの出力は根拠にせず、上の規範文と、`SINGLE-067`、`SINGLE-06
 | `contextDigest` | `null` | `verify` §9: コンテキストを構成できない場合は`null` |
 | `statements` | `[]` | 先行TASKの検査はコンテキストの構成より前で止めるため、`addresses`の参照先を展開しない。展開していない規範文を並べると、行っていない作業を主張することになる（`SINGLE-067`と同じ理由。下の「迷った点」を参照） |
 | `bindingRefs`、`commands` | どちらも空。テストのコマンドを実行しない | `verify` §9、結果のフィールドの説明（実行計画の作成前に非成功となった検証対象は`bindingRefs: []`） |
-| `summary` | `先行TASK-002が完了していません` | 規範文を持たない文言のため、同じ診断コードの`context`操作の`SINGLE-051`にそろえた（`SINGLE-134`で決めた方針と同じ） |
+| `summary` | `先行するTASK-002が状態openで、状態doneではありません` | 規範文を持たない文言のため、同じ診断コードの`context`操作の`SINGLE-051`にそろえた（`SINGLE-134`で決めた方針と同じ）。2026-10-12に文型を訂正した（末尾の節） |
+| `suggestedAction` | `先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください` | 2026-10-12に足した。`SINGLE-051`と同じ文言（末尾の節） |
 
 `SINGLE-138`（`passed`）:
 
@@ -322,7 +324,8 @@ C12とC15は、既存のfixtureの期待値を変えない欠陥の修正であ�
 | 結果の状態／終了コード | `blocked`／2 | 診断の結果への効果が`blocked`の1件だけ |
 | `diagnostics` | `CTX-TASK-DEPENDENCY-001`／`error`／`blocked`の1件だけ。`CTX-STATE-001`を返さない | ADR-029、ADR-036の`Decision`の8番目の項目。同じ原因（TASK-002が`done`でない）を主診断の規則により1件にする。`CTX-STATE-001`はTASK-002を起点にしたときの診断である |
 | 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/tasks/TASK-001.md`、`key: relations.requires` | 診断レジストリの発生元`file`。原因は起点のTASKが宣言した`requires`で、`SINGLE-051`と同じキー |
-| `summary` | `先行TASK-002が完了していません` | 規範文を持たない文言で、`SINGLE-051`、`SINGLE-137`にそろえた |
+| `summary` | `先行するTASK-002が状態cancelledで、状態doneではありません` | 規範文を持たない文言で、`SINGLE-051`、`SINGLE-137`にそろえた。先行TASKの状態だけが`SINGLE-051`、`SINGLE-137`（`open`）と異なる。2026-10-12に文型を訂正した（末尾の節） |
+| `suggestedAction` | `先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください` | 2026-10-12に足した。`SINGLE-051`と同じ文言（末尾の節） |
 | 本体 | `contextDigest: null`、`resolution.complete: false`、`documents: []`、制約台帳とカバレッジは空 | `SINGLE-051`と同じ。コンテキストを構成する前に止まる |
 
 `SINGLE-145`（`passed_with_warnings`）。`SINGLE-134`の期待値の形に、距離2のTASK-003が加わる。
@@ -349,14 +352,15 @@ C12とC15は、既存のfixtureの期待値を変えない欠陥の修正であ�
 | `contextDigest` | `null` | コンテキストを構成できない（`verify` §9）。`requires`の閉包はそもそもコンテキストへ含めないが、適用可能性の検査で止まる |
 | `statements` | `[]` | 検査はコンテキストの構成より前で止まるため、`addresses`の参照先の対象規範文を展開しない（`SINGLE-067`、`SINGLE-137`と同じ理由） |
 | `bindingRefs`、`commands` | どちらも空。テストを開始しない | `verify` §9、`verify`仕様 §4の手順4（コンテキストが通過状態の検証対象だけ`bindingRefs[]`を作る） |
-| `summary` | `REQ-002は現在のpurposeに適用できません` | 規範文を持たない文言。下の「迷った点」を参照 |
+| `summary` | `REQ-002は状態draftのため目的verifyに適用できません` | 規範文を持たない文言。下の「`summary`と発生元の扱い」を参照。2026-10-12に文型を訂正した（末尾の節） |
 
 ### `summary`と発生元の扱い
 
 `summary`は「人に向けた短い説明」（結果・診断・終了コードの仕様 §4）であり、規範文を持たない。比較には含まれるので、`SINGLE-144`の`summary`は既存の
 `SINGLE-051`にそろえた。`SINGLE-146`の`CTX-STATE-001`には、規範文にも既存のfixtureにも、依存先の適用不能を表す文言がない
-（`SINGLE-067`は起点の`cancelled`で、文言が異なる）。このため、Coreが`CTX-STATE-001`の依存先に使う既存の文言
-（`<ID>は現在のpurposeに適用できません`）をそのまま使った。文言を観測して期待値にしたことになるので、規範文で文言を定めるときは、このfixtureを改める。
+（`SINGLE-067`は起点の`cancelled`で、文言が異なる）。このため、当時はCoreが`CTX-STATE-001`の依存先に使う既存の文言
+（`<ID>は現在のpurposeに適用できません`）をそのまま使った。文言を観測して期待値にしたことになっていたので、2026-10-12に、管理者が承認した文型
+`<ID>は状態<状態>のため目的<目的>に適用できません`へ訂正した（末尾の節）。
 `source.path`を適用できない文書（REQ-002）にしたのは、`SINGLE-052-02`の前例に合わせた読みである。起点のTASKの`requires`の宣言を発生元にする案
 （`SINGLE-137`と同じ`TASK-001.md`と`relations.requires`）もあり得るが、診断レジストリは`file`だけを定めるので、どちらの読みも規範文に反しない。
 
@@ -459,14 +463,15 @@ REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診�
 | `targetResults[0].diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。最上位の`diagnostics`は空 | 関係・トレースモデル §4・§6.3（コンテキストへ含めない起点の`requires`の閉包の文書も、強い関係の型制約を検査する）。結果・診断・終了コード §6.1（検証対象の`diagnostics`へ置く） |
 | 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/requirements/REQ-002.md`、`key: relations.requires` | 関係を宣言した文書は、`requires`でADR-001を指すREQ-002である。TASK-001は宣言していない |
 | `evidence` | `ADR-001` | 結果・診断・終了コード §4 |
-| `summary` | `REQからADRへの関係型requiresは許可されません` | 参照元の型はREQ（REQ-002）。`SINGLE-021`の形 |
+| `summary` | `REQから状態proposedのADRへの関係型requiresは許可されません` | 参照元の型はREQ（REQ-002）。`SINGLE-021`の形で、参照先のADRの部分にだけ状態を添える。2026-10-12に状態を添えた（末尾の節） |
 | `contextDigest`、`statements`、`bindingRefs`、`commands` | `null`、`[]`、`[]`、`[]`。テストを開始しない | `verify` §9、`SINGLE-146`と同じ理由（検査はコンテキストの構成より前で止まる） |
 
 ### `summary`の扱い
 
 `CTX-RELATION-TYPE-001`の`summary`は規範文を持たない。比較には含まれるので、既存の`SINGLE-021`の形（型の名前を使う）にそろえた。ただし、`SINGLE-021`は型の組そのものが不許可
 （REQからTECHへの`refines`）であるのに対し、`SINGLE-147`〜`149`は、型の組（TASK、REQから`ADR`への`requires`）は許可されており、参照先ADRの状態が`accepted`でないことが原因である。
-この文言（`TASKからADRへの関係型requiresは許可されません`）は、原因が状態であることを表さない。規範文で状態を含む型制約の`summary`を定めるときは、3件を改める。
+当時の文言（`TASKからADRへの関係型requiresは許可されません`）は、原因が状態であることを表さなかった。
+2026-10-12に、参照先のADRの部分にだけ状態を添える文型（`TASKから状態proposedのADRへの関係型requiresは許可されません`）へ訂正した（末尾の節）。
 
 ### 監査の検査と回帰試験
 
@@ -615,10 +620,10 @@ B（`digest_crosscheck.build`）は入力の木構造から導出した材料で
    `unresolvedStrongRelations`は0（強い関係は解決できている）。`contextDigest`は`null`、`documents`・制約台帳・カバレッジは空、`revision`は`null`（コミットがない）。
 3. 発生元は起点のTASK-001の文書: `{kind: file, workspaceId: root, path: .spec/tasks/TASK-001.md}`。`key`は付けない。診断の原因は`relations`などのフィールドではなく、起点そのものの状態だからである
    （`SINGLE-067`の`cancelled`のTASK、`SINGLE-148`のREQ-002の`CTX-STATE-001`と同じ形）。
-4. 診断の`summary`は`TASK-001は現在のpurposeに適用できません`である。`SINGLE-148`のREQ-002の`CTX-STATE-001`が使う文字列と同じ形（`<文書ID>は現在のpurposeに適用できません`）に合わせた。
-   規範文は`summary`の文字列を定めない（人に向けた短い説明。結果・診断・終了コード §4）。起点のTASKの`CTX-STATE-001`には`SINGLE-067`（`verify`の`cancelled`のTASK）の
-   `起点TASK-001はcancelledでありverifyに適用できません`という別の形もあるが、これは`verify`の検証対象の診断の文言であり、`context`の`CTX-STATE-001`の先例は`SINGLE-148`の形だけである。
-   ランナーは`summary`を完全一致で比べるため、この1点は既存の`context`の文言の形に従った値であり、規範文から導いた値ではない（Coreの出力文言の別計画で見直す範囲）。
+4. 診断の`summary`は`TASK-001は状態doneのため目的implementに適用できません`である。`SINGLE-148`のREQ-002の`CTX-STATE-001`が使う文型（`<文書ID>は状態<状態>のため目的<目的>に適用できません`）に合わせた。
+   規範文は`summary`の文字列を定めない（人に向けた短い説明。結果・診断・終了コード §4）。ランナーは`summary`を完全一致で比べるため、この1点は管理者が承認した文型に従った値であり、
+   規範文から導いた値ではない。当時は既存の`context`の文言（`TASK-001は現在のpurposeに適用できません`）に従っており、`SINGLE-067`（`verify`の`cancelled`のTASK）の
+   `起点TASK-001はcancelledでありverifyに適用できません`という別の形も残っていたが、2026-10-12に両方を同じ文型へそろえた（末尾の節）。
 
 監査は、`context_failure_fixtures.check_done_root`が、結果の診断が`CTX-STATE-001`の1件だけであること、`blocked`であること、発生元が起点のTASKのファイルであること、起点・目的・ハッシュ値・解決の状態を確かめる。
 `check_done_root_inputs`が、入力が TASK-001とREQ-001の2文書だけで、TASK-001が状態`done`・`requires`なし・`addresses`のみ、REQ-001が`approved`であることを確かめる。
@@ -646,3 +651,18 @@ Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本�
 承認済みの対応表と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)にまとめた。
 
 - 対象: `SINGLE-147`、`SINGLE-148`、`SINGLE-149`
+
+## 2026-10-12: Coreの出力文言の意味の食い違いの修正に伴う期待値の訂正（PR-3）
+
+Coreの出力文言の意味の食い違い（同じ条件IDの診断の文型の不一致など）を表記規則 §3.5の7に沿って直したため、次のfixtureの期待値を訂正した（ADR-062の期待値の訂正。管理者が表を承認）。
+入力、状態、終了コード、診断コード、発生元は変えていない。承認済みの表と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の2026-10-12の「PR-3」の節にまとめた。
+
+- 対象: `SINGLE-134`、`SINGLE-137`、`SINGLE-144`、`SINGLE-145`、`SINGLE-146`、`SINGLE-147`、`SINGLE-148`、`SINGLE-149`、`SINGLE-159`
+- 訂正の内容:
+  - `SINGLE-134`、`SINGLE-145`: `CTX-COVERAGE-TEST-001`の`summary`を「対象規範文MUST REQ-001:AC-01にテスト対応がありません」にした。
+  - `SINGLE-137`、`SINGLE-144`: `CTX-TASK-DEPENDENCY-001`の`summary`を「先行するTASK-002が状態openで、状態doneではありません」（`SINGLE-144`は状態cancelled）にし、
+    `suggestedAction`（「先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください」）を足した。`SINGLE-144`のmanifestの`description`は`summary`と同じ文字列に変わった。
+  - `SINGLE-146`: `CTX-STATE-001`の`summary`を「REQ-002は状態draftのため目的verifyに適用できません」にした。
+  - `SINGLE-159`: `CTX-STATE-001`の`summary`を「TASK-001は状態doneのため目的implementに適用できません」にした。
+  - `SINGLE-147`、`SINGLE-148`、`SINGLE-149`: `CTX-RELATION-TYPE-001`の`summary`に参照先のADRの状態を添えた（「TASKから状態proposedのADRへの関係型requiresは許可されません」など）。
+    `SINGLE-148`のREQ-002の`CTX-STATE-001`の`summary`は「REQ-002は状態draftのため目的implementに適用できません」になった。`SINGLE-147`、`SINGLE-148`のmanifestの`description`は`summary`と同じ文字列に変わった。

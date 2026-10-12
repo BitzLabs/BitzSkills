@@ -19,7 +19,7 @@
           "code": "CTX-STATE-001",
           "severity": "error",
           "resultStatus": "blocked",
-          "summary": "REQ-002は現在のpurposeに適用できません",
+          "summary": "REQ-002は状態draftのため目的verifyに適用できません",
           "source": {
             "kind": "file",
             "workspaceId": "root",

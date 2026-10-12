@@ -130,6 +130,14 @@ def reference_diagnostics(documents, root):
                                            item["evidence"]))
 
 
+def type_summary(source_kind, target):
+    """型に反する`requires`の`summary`（表記規則 §3.5の7、ADR-062）。参照先が承認されていないADRなら、同じ文型の参照先の部分に
+    状態を添える（`<参照元の型>から状態<状態>のADRへの関係型requiresは許可されません`）。種別の組合せの誤りは添えない。"""
+    if target["kind"] == "decision":
+        return f"{KIND_LABEL[source_kind]}から状態{target['frontmatter']['status']}のADRへの関係型requiresは許可されません"
+    return f"{KIND_LABEL[source_kind]}から{KIND_LABEL[target['kind']]}への関係型requiresは許可されません"
+
+
 def requires_edges(documents, identifier):
     """文書1件の`requires`の辺ごとに(型に反するときの診断または`None`, 修飾した参照先)を返す。"""
     document = documents[identifier]
@@ -142,8 +150,7 @@ def requires_edges(documents, identifier):
         if not allowed(document["kind"], documents[target]):
             diagnostic = {
                 "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
-                "summary": f"{KIND_LABEL[document['kind']]}から{KIND_LABEL[documents[target]['kind']]}への"
-                           "関係型requiresは許可されません",
+                "summary": type_summary(document["kind"], documents[target]),
                 "source": {"kind": "file", "workspaceId": document["workspaceId"],
                            "path": f".spec/{KIND_DIRECTORY[document['kind']]}/{document['frontmatter']['id']}.md",
                            "key": "relations.requires"},
@@ -156,7 +163,7 @@ def requires_edges(documents, identifier):
 def reviewed_diagnostics():
     return [{
         "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
-        "summary": "TECHからADRへの関係型requiresは許可されません",
+        "summary": "TECHから状態proposedのADRへの関係型requiresは許可されません",
         "source": dict(ORIGIN), "evidence": "ADR-001",
     }]
 

@@ -209,7 +209,8 @@ def blocked_diagnostic():
     継続単位`skip-target`（検証対象の`diagnostics`）。`summary`と`source.key`は`SINGLE-051`（`context`）と同じ。"""
     return {
         "code": "CTX-TASK-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
-        "summary": "先行TASK-002が完了していません",
+        "summary": f"先行するTASK-002が状態{PREREQUISITE_STATUS['SINGLE-137']}で、状態doneではありません",
+        "suggestedAction": "先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください",
         "source": {"kind": "file", "workspaceId": "root", "path": TASK_PATH,
                    "key": "relations.requires"},
     }
@@ -221,7 +222,7 @@ def inapplicable_diagnostic():
     `summary`は規範文を持たず、Coreの既存の文言（`context`と`verify`の`CTX-STATE-001`の依存先）にそろえた。"""
     return {
         "code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-        "summary": "REQ-002は現在のpurposeに適用できません",
+        "summary": "REQ-002は状態draftのため目的verifyに適用できません",
         "source": {"kind": "file", "workspaceId": "root", "path": INAPPLICABLE_PATH},
     }
 
@@ -233,7 +234,7 @@ def type_diagnostic():
     許可されません`）にそろえた。"""
     return {
         "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
-        "summary": "REQからADRへの関係型requiresは許可されません",
+        "summary": "REQから状態proposedのADRへの関係型requiresは許可されません",
         "source": {"kind": "file", "workspaceId": "root", "path": INAPPLICABLE_PATH, "key": "relations.requires"},
         "evidence": "ADR-001",
     }

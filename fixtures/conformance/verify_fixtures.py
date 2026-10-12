@@ -140,7 +140,7 @@ def executed_command(identifier):
 def target_diagnostic(identifier):
     if identifier == "SINGLE-060":
         return [{"code": "CTX-COVERAGE-TEST-001", "severity": "error", "resultStatus": "blocked",
-                 "summary": "対象MUST REQ-001:AC-01にtest対応がありません",
+                 "summary": "対象規範文MUST REQ-001:AC-01にテスト対応がありません",
                  "source": {"kind": "file", "workspaceId": "root",
                             "path": digest_reference.REQ_PATH}}]
     if identifier == "SINGLE-061":
@@ -154,7 +154,7 @@ def target_diagnostic(identifier):
                 for index in (0, 1)]
     if identifier == "SINGLE-067":
         return [{"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-                 "summary": "起点TASK-001はcancelledでありverifyに適用できません",
+                 "summary": "TASK-001は状態cancelledのため目的verifyに適用できません",
                  "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-001.md"}}]
     return []
 
