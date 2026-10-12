@@ -167,6 +167,36 @@ class SddEvaluationTests(unittest.TestCase):
         checks = self.inspect(self.record())
         self.assertTrue(all(c["passed"] for c in checks.values()), checks)
 
+    def test_registered_existing_tests_draft_reaches_real_boundary_stop(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        requirement = (examples / "registered-tests/REQ-001.md").read_text()
+        self.assertTrue(self.call("write_file", path=".spec/requirements/REQ-001.md", content=requirement)["accepted"])
+        self.assertTrue(self.call("write_file", path=".spec/tasks/TASK-001.md", content=(examples / "TASK-001.md").read_text())["accepted"])
+        self.assertEqual("passed", self.bitz("check", "REQ-001")["status"])
+        failed = self.bitz("check", "TASK-001")
+        self.assertEqual("failed", failed["status"])
+        self.assertIn("SPEC-TASK-BOUNDARY-001", [d["code"] for d in failed["diagnostics"]])
+        checks = self.inspect(self.record())
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+
+    def test_string_only_tests_draft_cannot_be_a_successful_plan(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        requirement = (examples / "registered-tests/REQ-001.md").read_text().replace(
+            "tests:\n  - path: tests/test_input.py\n    covers: [REQ-001:AC-01]\n    command: default\n",
+            "tests:\n  - tests/test_input.py\n")
+        self.call("write_file", path=".spec/requirements/REQ-001.md", content=requirement)
+        self.call("write_file", path=".spec/tasks/TASK-001.md", content=(examples / "TASK-001.md").read_text())
+        failed = self.bitz("check", "REQ-001")
+        self.assertEqual("failed", failed["status"])
+        self.assertIn("CTX-ROOT-MISSING-001", [d["code"] for d in failed["diagnostics"]])
+        checks = self.inspect(self.record(outcome="stop"))
+        self.assertTrue(all(not c["passed"] for c in checks.values()), checks)
+        self.assertTrue(all("最終TASK境界" in c["errors"][0] for c in checks.values()), checks)
+
     def test_broadened_task_boundary_is_not_the_expected_plan_stop(self):
         self.prepare("SP-001")
         self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")

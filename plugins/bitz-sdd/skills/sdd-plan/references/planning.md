@@ -23,6 +23,22 @@ TASKは規範文を再掲せず、addressesで対象の規範文IDを列挙す�
 Verificationでは本番の入口、重要な失敗条件、予定と未証明事項を区別する。
 存在しないテストのパスをtestsに登録せず、必要なテストを計画に残す。
 
+登録する既存テストの各要素はobjectで、pathに所有ワークスペース相対の実在パス、
+coversに実際のassertが対応する規範文ID、commandに.spec/bitz.yamlのverify.commandsで定義した名前を書く。
+tests: [tests/test_input.py]のような文字列の配列ではない。実在・assert・コマンド定義を読んで確認した場合の形は次のとおり。
+
+```yaml
+tests:
+  - path: tests/test_input.py
+    covers: [REQ-001:AC-01]
+    command: default
+```
+
+commandはシェル文字列やargvではなく登録名である。coversへ文書IDだけを入れず、未検査の条件を割り当てない。
+未実装のテストは登録せず予定へ残す。[登録済みテストのREQ例](../examples/registered-tests/REQ-001.md)も
+実在するテストと登録コマンドを確認した場合の見本であり、未実行の結果・要求承認を証明しない。
+
+
 テスト名や説明ではなく実際のassertを契約条件に対応付ける。件数だけを検査するassertは、
 戻り値の型や要素の型・内容を検査した証拠にはならない。コードからの推論はその根拠として示し、
 assertがない条件は不足または追加予定に残す。既存テストも未実行なら結果は未実証である。
