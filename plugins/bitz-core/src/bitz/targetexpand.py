@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import messages
+from . import relations as relations_mod
 from .document import DocEntry
 from .relations import RELATION_ALLOWED_TARGET_KINDS, resolve_ref as _resolve_ref
 
@@ -407,21 +408,18 @@ def target_expansion(
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id),
+                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
         elif entry.kind == "TASK":
             if entry.status == "cancelled":
-                summary = (
-                    messages.state_task_cancelled(doc_id) if is_root else messages.state_inapplicable(doc_id)
-                )
                 errors.append(
                     {
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": summary,
+                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
@@ -434,7 +432,7 @@ def target_expansion(
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id),
+                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
@@ -495,7 +493,8 @@ def target_expansion(
                         "code": "CTX-TASK-DEPENDENCY-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.task_dependency_incomplete(target_id),
+                        "summary": messages.task_dependency_incomplete(target_id, target_entry.status),
+                        "suggestedAction": messages.task_dependency_suggested_action(target_id),
                         "doc_id": owning_id,
                         "key": "relations.requires",
                     }
@@ -726,7 +725,7 @@ def _adr_requires_type_errors(doc_id: str, id_index: dict[str, DocEntry], statem
                 "code": "CTX-RELATION-TYPE-001",
                 "severity": "error",
                 "resultStatus": "failed",
-                "summary": messages.relation_type_mismatch(entry.kind, target_entry.kind, "requires"),
+                "summary": relations_mod.type_mismatch_summary(entry, "requires", target_entry),
                 "doc_id": doc_id,
                 "key": "relations.requires",
                 "evidence": evidence,
