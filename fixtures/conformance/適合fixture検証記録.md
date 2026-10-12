@@ -1510,3 +1510,22 @@ commit `aac53402e52f000f1370a55744666afeda1688ad`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 1〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: `MULTI-033`を追加した後のGate Aの再認定
+
+`doctor --all-workspaces`で、ルートの設定の`earsAi`のメジャーバージョンが非対応のとき、全体事前検査が`check`用の`SPEC-EARS-VERSION-001`を返していた欠陥を直し、
+`doctor`の`SPEC-DOCTOR-EARS-001`と修復手順を返すようにした（実装の確認事項C31）。あわせて、ルートの設定のスキーマまたはEARS-AIのメジャーバージョンが非対応で
+全体事前検査が止まった場合は、最上位の`checks[]`に検査項目`catalog`を`blocked`で置くことを`doctor`仕様 §3に明記し、Coreを合わせた（ユーザーの決定）。
+これを固定する`MULTI-033`を追加した（ADR-051の追加、群`multi_doctor_fixtures`）。matrix、Step 5の割当て、実装計画の完了条件、網羅表が固定する根拠文書のハッシュ値を合わせた。
+既存のfixtureの入力と期待値は変えていない。
+
+commit `6c4b36907a654d2e20d51e37312c34cffaad00a2`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`10fba34c2db8998a2ad24886508843eef29b1385c45c6d08275fa189fe463fd9`。前回から変わったのは次の値だけである: 1件の追加によるmatrixと網羅の件数（369件→370件）、Step 5の件数（73件→74件）、群`multi_doctor_fixtures`の件数、実行ビットを確かめたファイル数（1959件→1961件）、網羅表が固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

@@ -566,3 +566,22 @@ Core固有の単体試験は721件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は733件がすべて成功した。
+
+## 2026-10-12: doctor --all-workspacesのルートのEARS-AIの非互換をdoctorの診断コードで返すようにした後のStep 1〜5の再判定
+
+全体事前検査が`doctor`の`SPEC-DOCTOR-EARS-001`を返すようにし、ルートの設定の版が非対応で止まったときに`catalog`を`blocked`で置くようにした（`multiws.py`、`doctor.py`）。
+これを固定する`MULTI-033`（Step 5）を追加した。修正の前後で、既存の369件の期待値はすべて変わらないことを確かめた。修正前のCore（コミット`f5de9a43`の版）と、
+カタログの検査項目の修正の直前のCore（コミット`bff2f546`の`multiws.py`）では`MULTI-033`が失敗し、修正後のCoreでは`passed`となることを確かめた。
+
+コミット`6c4b36907a654d2e20d51e37312c34cffaad00a2`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 370件（`MULTI-033`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0965316ad03cc61b7b5c37e4ed230d63efdfa5fb1c250a1382ad8c15a0484eab` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は735件がすべて成功した。
