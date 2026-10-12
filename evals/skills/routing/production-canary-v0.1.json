@@ -78,9 +78,9 @@
     "第四空reasoning是正条件の一次4/独立4を別計測する。先行3停止条件の一次消費5/意味独立2は保持し、第四を使い切った通算一次上限9。静的準備検分は別記録。旧受理2を新refへ合算しない。",
     "第五時刻是正条件は新一次4/意味独立4/300秒/retry0。先行4条件の一次7/意味独立3/受理3を保持し、新4を使い切った通算一次上限11。旧受理を合算しない。wall clock rollback/jumpは有限測定profileの停止対象で、producerの単調時刻保証は認定しない。"
   ],
-  "contextProfileSha256": "d0b72f85991f5273615d9286adea2a2ca27b603cfcfcde213755feda0d2227f4",
+  "contextProfileSha256": "47924991f8d93264f3757672dcf9216dd85b7e4b76dc9aa1dbc751afc2eebe1b",
   "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
-  "calibrationManifestSha256": "15e4520beb03347006f3497afe8ca95d51651b13bddd94517d909f96ca7f3e97",
+  "calibrationManifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
   "stoppedPredecessor": {
     "campaignId": "public-initial-canary",
     "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",

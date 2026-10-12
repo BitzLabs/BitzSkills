@@ -1,17 +1,17 @@
 {
   "version": "primary-client-calibration-originals-0.1.2",
-  "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+  "sourceCommit": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
   "artifactSha256": {
-    "config.json": "92815a80dab3c2eddd8123f9c00cb69602c1f53010b80038621175937b713f13",
-    "contract.json": "3f43ab3127a1e85170cd541c81873def9d44eca88e88d5520442846e997171c2",
+    "config.json": "fd39bf0294e6a5cba9caee1a1fb3dbb19e8dbe0de498f1412f38c6448e9674b1",
+    "contract.json": "eb4b7d6a3623f74eaf5ff21a075c8656b0a5d5e3a5bdfc1bd2122061918bf63f",
     "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
-    "invocation.json": "3fdb500263882854ffd2baef523172af7b09c8ff1e2afe2862bc7835987b31b9",
+    "invocation.json": "cc45d9bb0dff6655b99fe322503401a89fd8d0428ec0ae1b60ccb7dac3643847",
     "isolated-result.json": "ee1f95b3d363cb73ae1a2ebc73b0c98d97a55d69084c8367b6bf2095ee473d8a",
     "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
-    "receipt.json": "ce404c07894e7b23d7f24a0e6103c8aad8e764cf06e393750eab9879883a2fc1",
-    "request-1.json": "2e6b3cea6cd68c8bab93b9902e1d251f2d52db13f0a83dc4d7f36f28bc62ff24",
-    "rpc-in.jsonl": "efffc3a558f64cbf03bd12c449bd51f9f63a84dc937863282732b31f789304ec",
-    "rpc-out.jsonl": "098761d2ac7d3d751053a554daded9e18f3642898b826a038805cf559d39bec1",
+    "receipt.json": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+    "request-1.json": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+    "rpc-in.jsonl": "590b4008c61f8e4db9931e24846db3333053332de8c2c91fe9f117adf8c725fd",
+    "rpc-out.jsonl": "bca27e2f5dba43c971038797d30db5819250c95d7aa9370a41da21409b39854f",
     "runtime-result.json": "28b5c6f075b67543cac8b1d207294f74cf54d959b1c83ae23cec2f4b4480dacd",
     "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
   }
