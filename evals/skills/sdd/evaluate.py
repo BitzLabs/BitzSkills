@@ -78,7 +78,7 @@ def json_digest(value):
 
 
 def snapshot(workspace):
-    return {p.relative_to(workspace).as_posix(): digest(p.read_bytes())
+    return {p.relative_to(workspace).as_posix(): digest(read_original(p))
             for p in workspace.rglob("*") if p.is_file() and ".git" not in p.relative_to(workspace).parts}
 
 
@@ -591,18 +591,35 @@ def preserve_invocation_failure(directory, wanted, workspace, before, command, t
                                 *, error_type, exit_code=None, errno=None, output_save_errors=None, unsaved_outputs=None,
                                 native_outputs_obtained=True, native_output_availability=None):
     """失敗を採点結果に変換せず、実条件・時間・差分と残った原証拠を保存する。"""
-    after = snapshot(workspace)
-    artifacts = {name: digest((directory / name).read_bytes())
-                 for name in ("trace.jsonl", "host.jsonl", "stderr.log", "decision.json", "changes.json", "control.json")
-                 if (directory / name).is_file()}
+    after, snapshot_error = None, None
+    try:
+        after = snapshot(workspace)
+    except (Exception, KeyboardInterrupt) as error:
+        snapshot_error = {"errorType": type(error).__name__, "errno": getattr(error, "errno", None),
+                          "message": str(error)}
+    artifacts, artifact_errors, missing_artifacts = {}, {}, []
+    for name in ("trace.jsonl", "host.jsonl", "stderr.log", "decision.json", "changes.json", "control.json", "prompt.txt", "invocation.json"):
+        try:
+            artifacts[name] = digest(read_original(directory / name))
+        except FileNotFoundError:
+            artifacts[name] = None
+            missing_artifacts.append(name)
+        except (Exception, KeyboardInterrupt) as error:
+            artifacts[name] = None
+            artifact_errors[name] = {"errorType": type(error).__name__, "errno": getattr(error, "errno", None),
+                                     "message": str(error)}
+    changed_paths = None if after is None else sorted(
+        p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     record = {"schemaVersion": "1.0", "status": "interrupted", "identity": wanted,
               "errorType": error_type, "exitCode": exit_code, "errno": errno,
               "wallMs": round((time.monotonic() - started) * 1000),
               "invocation": {"argv": command, "cwd": str(workspace), "timeoutSeconds": timeout,
                              "stateDirectory": str(directory / "state"), "logDirectory": str(directory / "logs")},
               "changes": {"before": before, "after": after,
-                          "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
-              "artifacts": artifacts, "providerUsage": None, "providerCost": None,
+                          "changedPaths": changed_paths, "afterObtained": after is not None,
+                          "snapshotError": snapshot_error},
+              "artifacts": artifacts, "artifactReadErrors": artifact_errors, "missingArtifacts": missing_artifacts,
+              "providerUsage": None, "providerCost": None,
               "nativeOutputsObtained": native_outputs_obtained,
               "nativeOutputAvailability": native_output_availability if native_output_availability is not None else
                   {"stdout": native_outputs_obtained, "stderr": native_outputs_obtained},
