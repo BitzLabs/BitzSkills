@@ -720,7 +720,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-008` | シンボリックリンクで別メンバーを所有 | check all | failed／1 | 所有境界のコード、TASKのコードなし |
 | `MULTI-009` | `src/`と`src2/`のTASK変更 | explicit TASK check | failed／1 | セグメント境界 |
 | `MULTI-010` | 基準版と現在版でシンボリックリンクのリンク先を変更 | explicit TASK check | failed／1 | 双方の所有判定 |
-| `MULTI-011` | 1メンバーの文書が`failed`、後続メンバーは独立 | check all | failed／1 | 後続メンバーの件数を保持 |
+| `MULTI-011` | 1メンバーの文書が`failed`、後続のワークスペースは独立 | check all | failed／1 | 後続のワークスペースの件数を保持 |
 | `MULTI-012` | 不正な文書に強く依存する検証対象 | verify all | failed／1 | 依存する検証対象は`blocked`、独立した検証対象は実行 |
 | `MULTI-013` | 異なる2つのコンテキスト、共有するテスト割当て | verify all | passed／0 | ハッシュ値2件、コマンド1件 |
 | `MULTI-014` | コマンド失敗後に独立したテスト割当てあり | verify all | failed／1 | 後続のテスト割当ても実行 |
@@ -767,9 +767,9 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-025-01` | 存在するワークスペースの、不在の修飾起点 | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
 | `MULTI-025-02` | 存在するワークスペースの、不在の修飾起点 | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
 | `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、ワークスペースに依存しない検査項目とメンバーの検査項目を分離 |
-| `MULTI-026-02` | 1つのメンバーのコマンドが不在 | doctor all | blocked／2 | 後続メンバーを継続、メンバーの診断と全体の状態を集約、テキストの件数 |
+| `MULTI-026-02` | 1つのメンバーのコマンドが不在 | doctor all | blocked／2 | 後続のワークスペースを継続、各ワークスペースの診断と全体の状態を集約、テキストの件数 |
 | `MULTI-032` | `MULTI-026-01`と同じ入力（`apps/web`で実行）。`doctor --all-workspaces --plugin bitz-sdd --plugin-version 1.2.0 --require-core-api ^2.0 --require-capability context.v1 --require-capability check.v1` | doctor all | blocked／2 | 最上位の`checks[]`は`core`、`plugin`（`blocked`）、`capability`（`passed`）、`git`、`catalog`の順で、`plugin`と`capability`は1回だけ。診断は最上位の`SPEC-DOCTOR-API-001`の1件（メジャーバージョンが異なる範囲。`evidence`は`{"coreApi": "1.0", "required": "^2.0"}`）で、メンバーの`checks[]`と`diagnostics[]`には複製しない。プラグインとCoreの検査はメンバーの診断を止めないので、3つのワークスペースは`MULTI-026-01`と同じく`passed` |
-| `MULTI-033` | ルートの設定の`earsAi`が`2.0`（Coreが対応するメジャーバージョンは1）で、メンバー`web`は正しい。リポジトリのルートで`doctor --all-workspaces` | doctor all | blocked／2 | 全体事前検査が非成功なので、メンバーの診断を開始せず`workspaces`は空配列。最上位の`checks[]`は`core`、`git`（ともに`passed`）と、ルートの設定のメジャーバージョンが非対応なので`blocked`の`catalog`（`doctor`仕様 §3）。診断は`doctor`のコード`SPEC-DOCTOR-EARS-001`の1件（`error`、発生元はルートの`.spec/bitz.yaml`のキー`earsAi`、修復手順`suggestedAction`つき）で、`check`などのコード`SPEC-EARS-VERSION-001`を返さない |
+| `MULTI-033` | ルートの設定の`earsAi`が`2.0`（Coreが対応するメジャーバージョンは1）で、メンバー`web`は正しい。リポジトリのルートで`doctor --all-workspaces` | doctor all | blocked／2 | 全体事前検査が非成功なので、ワークスペースの診断を開始せず`workspaces`は空配列。最上位の`checks[]`は`core`、`git`（ともに`passed`）と、ルートの設定のメジャーバージョンが非対応なので`blocked`の`catalog`（`doctor`仕様 §3）。診断は`doctor`のコード`SPEC-DOCTOR-EARS-001`の1件（`error`、発生元はルートの`.spec/bitz.yaml`のキー`earsAi`、修復手順`suggestedAction`つき）で、`check`などのコード`SPEC-EARS-VERSION-001`を返さない |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
