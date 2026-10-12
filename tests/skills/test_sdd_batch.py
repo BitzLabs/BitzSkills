@@ -101,6 +101,31 @@ class SddBatchTests(unittest.TestCase):
         self.assertEqual(self.calls, ["SI-001"])
         self.assertEqual(self.evaluation.load(self.ledger_path), stopped)
 
+    def test_non_object_receipt_permanently_stops_even_after_restore(self):
+        for invalid in (None, [], ["receipt"], True, 1, "receipt"):
+            with self.subTest(invalid=invalid):
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    path, valid = fixture.receipt()
+                    fixture.write(path, invalid)
+                    fixture.next()
+                    with self.assertRaisesRegex(ValueError, "JSON object"):
+                        fixture.measure()
+                    stopped = fixture.evaluation.load(fixture.ledger_path)
+                    self.assertEqual(stopped["attemptCount"], 1)
+                    self.assertEqual(stopped["stop"]["errorType"], "ValueError")
+                    self.assertEqual(stopped["stop"]["independentReceiptSha256"],
+                                     fixture.evaluation.digest(path.read_bytes()))
+                    fixture.write(path, valid)
+                    with self.assertRaisesRegex(ValueError, "恒久停止"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                    self.assertEqual(fixture.evaluation.load(fixture.ledger_path), stopped)
+                finally:
+                    fixture.doCleanups()
+
     def test_unreadable_independent_receipt_stops_even_if_hash_unavailable(self):
         self.measure()
         review_path, original = self.receipt()

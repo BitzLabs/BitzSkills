@@ -373,5 +373,14 @@
     "preparationIndependentSolConsumed": 1,
     "primaryConsumed": 0,
     "reason": "Core stdout duplicate keys and non-finite values accepted; original preparation P2 retained"
+  },
+  "preparationStop": {
+    "status": "stopped_preparation",
+    "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+    "receiptRelativePath": ".venv/r05-matrix-prelaunch-sol-02/receipt.json",
+    "receiptSha256": "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+    "preparationIndependentSolConsumed": 1,
+    "primaryConsumed": 0,
+    "reason": "non-object independent receipt bypassed permanent stop; original preparation P2 retained"
   }
 }

@@ -127,6 +127,8 @@ def verify_previous(evaluation, args, attempt, cases):
     if not review_path.exists():
         raise IndependentReviewPending("前件の独立検分は未提出です")
     receipt = evaluation.load(review_path)
+    if not isinstance(receipt, dict):
+        raise ValueError("前件の独立検分記録はJSON objectである必要があります")
     required = set(record["checks"]) | {"semantic"}
     if (receipt.get("schemaVersion") != "1.0" or receipt.get("status") != "passed"
             or receipt.get("independent") is not True or receipt.get("implementationPrivateHistoryInherited") is not False
