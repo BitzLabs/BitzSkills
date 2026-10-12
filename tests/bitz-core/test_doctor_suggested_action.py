@@ -145,6 +145,19 @@ class DoctorSuggestedActionTests(unittest.TestCase):
         codes = [d["code"] for d in result["diagnostics"]]
         self.assertNotIn("SPEC-EARS-VERSION-001", codes)
         self.assertEqual(self.one(result, "SPEC-DOCTOR-EARS-001")["suggestedAction"], EARS_ACTION)
+        # メンバーの非対応のメジャーバージョンと同じく、カタログの検査項目を`blocked`で置く（`04_doctor.md` §3）。
+        self.assertEqual(result["checks"], [{"name": "core", "status": "passed"}, {"name": "git", "status": "passed"},
+                                            {"name": "catalog", "status": "blocked"}])
+        self.assertEqual(result["workspaces"], [])
+
+    def test_schema_version_of_root_in_all_workspaces_blocks_catalog(self):
+        self.write_config(".", 'schemaVersion: "2.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: platform\n'
+                          "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n")
+        self.write_config("apps/web", CONFIG + "workspace:\n  id: web\n")
+        result, code = doctor.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), self.env)
+        self.assertEqual(code, 2)
+        self.assertIn({"name": "catalog", "status": "blocked"}, result["checks"])
+        self.assertEqual(result["workspaces"], [])
 
     def test_check_ears_version_has_no_suggested_action(self):
         outcome = config_mod.load_config(b'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "2.0"\n')
