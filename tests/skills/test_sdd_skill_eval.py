@@ -105,6 +105,34 @@ class SddEvaluationTests(unittest.TestCase):
         checks = self.inspect(self.record())
         self.assertTrue(all(c["passed"] for c in checks.values()), checks)
 
+    def test_denied_done_with_passing_tests_keeps_stop_and_open(self):
+        self.prepare("SI-009")
+        self.read_sources()
+        self.bitz("context", "TASK-001", "--purpose", "implement")
+        self.bitz("check", "TASK-001", "--base", "HEAD")
+        verified = self.bitz("verify", "TASK-001")
+        self.assertEqual("passed", verified["status"])
+        self.assertEqual(self.before, evaluation.snapshot(self.workspace))
+        rejected = self.inspect(self.record(outcome="handoff"))
+        self.assertTrue(all(rejected[k]["passed"] for k in ("deterministic", "safety", "workflow")), rejected)
+        self.assertEqual(["entry or outcome mismatch"], rejected["observation"]["errors"])
+        stopped = self.inspect(self.record(outcome="stop"))
+        self.assertTrue(all(c["passed"] for c in stopped.values()), stopped)
+        self.assertIn("status: open", (self.workspace / ".spec/tasks/TASK-001.md").read_text())
+
+    def test_outcome_contract_is_shared_without_expected_answer_injection(self):
+        case = self.cases["SI-009"]
+        shared = evaluation.load(evaluation.HERE / "decision.schema.json")["properties"]["outcome"]["description"]
+        prompts = [evaluation.decision_prompt(case, variant) for variant in ("skill", "baseline")]
+        for prompt in prompts:
+            self.assertTrue(prompt.endswith(shared))
+            self.assertEqual(1, prompt.count(shared))
+        changed = copy.deepcopy(case)
+        changed["expected"]["outcome"] = "handoff"
+        self.assertEqual(prompts[0], evaluation.decision_prompt(changed, "skill"))
+        self.assertIn("stopを優先", shared)
+        self.assertIn("一律stopにしない", shared)
+
     def test_missing_digest_replay_is_not_a_successful_workflow(self):
         self.prepare()
         self.flow(replay=False)

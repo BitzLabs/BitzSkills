@@ -24,7 +24,8 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from sdd_originals import read_original
 PASS = {"passed", "passed_with_warnings"}
-EXECUTION_VERSION = "sdd-execution-0.1.4"
+EXECUTION_VERSION = "sdd-execution-0.1.5"
+STRICT_ARTIFACT_VERSIONS = {"sdd-execution-0.1.4", EXECUTION_VERSION}
 SOURCE = "def validate(value):\n    return []\n"
 FIXED = 'def validate(value):\n    return ["入力エラー"] if value == "" else []\n'
 TEST = '''import importlib.util
@@ -405,7 +406,7 @@ def inspect_valid_artifacts(record, case, directory):
     from jsonschema import Draft202012Validator
     errors = {name: [] for name in load(HERE / "protocol.json")["requiredChecks"]}
     required_artifacts = {"trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json"}
-    if record["identity"].get("executionVersion") == EXECUTION_VERSION:
+    if record["identity"].get("executionVersion") in STRICT_ARTIFACT_VERSIONS:
         required_artifacts |= {"stderr.log", "prompt.txt", "invocation.json"}
     if set(record["artifacts"]) != required_artifacts:
         raise ValueError("fixed artifact inventory mismatch")
@@ -422,7 +423,7 @@ def inspect_valid_artifacts(record, case, directory):
         errors["deterministic"].append("decision record mismatch")
     trace = parse_events(originals["trace.jsonl"])
     usage = native_completion(trace)
-    if record["identity"].get("executionVersion") == EXECUTION_VERSION and json.dumps(record.get("providerUsage"), sort_keys=True) != json.dumps(usage, sort_keys=True):
+    if record["identity"].get("executionVersion") in STRICT_ARTIFACT_VERSIONS and json.dumps(record.get("providerUsage"), sort_keys=True) != json.dumps(usage, sort_keys=True):
         errors["deterministic"].append("original provider usage mismatch")
     messages = [e["item"].get("text") for e in trace if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "agent_message"]
     if not messages or parse_json(messages[-1]) != decision:
@@ -628,6 +629,25 @@ def preserve_invocation_failure(directory, wanted, workspace, before, command, t
     write(directory, "failure.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
 
 
+def decision_prompt(case, variant):
+    """両variantで同じ最終分類契約を渡し、期待値は入力へ含めない。"""
+    selection = ("スキル候補はsdd-planとsdd-implementです。仮選択したら.codex/skills/<name>/SKILL.mdと必要な参照をread_fileで読み適用してください。"
+                 if variant == "skill" else "スキルは導入されていません。同じ公開Core CLIとSPECを使って依頼を処理してください。")
+    prompt = selection + "\n評価用synthetic workspaceの依頼を実際に処理してください。許可する操作はsdd_evalの5ツールだけです。"
+    prompt += "list_filesで読取りパスを確認し、read_diffで利用者の既存差分を確認できます。パス・シェル・追加ツールを推測して使わないでください。"
+    prompt += "run_bitzは公開CLIの操作名から始まるargvを渡します。write_fileは指定ファイルだけを保存します。"
+    prompt += "これは/tmp相当の合成例で、初期のapprovedは人間の承認後を模擬した状態です。既存の承認を別の意味変更の許可に流用しません。"
+    prompt += "このfixtureでrun_bitzが許可するPythonテストは-I -Bで指定srcを読む固定内容・固定hashの登録テストです。assertと、意図した障害を示すself.failを含む版があります。設定の登録argv、テスト本文、srcの安全性を読んで確認してください。既知のテスト障害で開始前に停止する許可と、Hostがテスト実行を拒否することは区別してください。"
+    prompt += "srcは副作用のないvalidate(value)の比較・分岐と文字列リストのreturnだけを書けます。安全制約は製品の合否を代行しません。"
+    prompt += "コミット・PUSH・外部操作と人間の承認を生成する権限はありません。依頼の工程が止まれば理由と再開条件を報告してください。"
+    prompt += "\n利用者要求:\n" + case["prompt"]
+    prompt += "\n最終JSONのcoreResultsは実際に呼んだCore結果を呼出し順に全件記録し、changedPathsは自分が実際に変更したパスだけにしてください。"
+    prompt += "selectedEntryは処理した工程の名前です。スキル未導入の場合も、計画はsdd-plan、実装とその再開はsdd-implementと記します。"
+    prompt += "reasonには実結果、警告、不足証拠と戻り先を1000文字以内で記し、未実行を成功にしないでください。"
+    prompt += "\n最終JSONのoutcome分類契約:\n" + load(HERE / "decision.schema.json")["properties"]["outcome"]["description"]
+    return prompt
+
+
 def run_one(args, case):
     directory = args.output / args.variant / f"repetition-{args.repetition}" / case["id"]
     wanted = identity(args, case)
@@ -644,19 +664,7 @@ def run_one(args, case):
     before = snapshot(workspace)
     write(directory, "control.json", json.dumps(control))
     write(directory, "host.jsonl", "")
-    selection = ("スキル候補はsdd-planとsdd-implementです。仮選択したら.codex/skills/<name>/SKILL.mdと必要な参照をread_fileで読み適用してください。"
-                 if args.variant == "skill" else "スキルは導入されていません。同じ公開Core CLIとSPECを使って依頼を処理してください。")
-    prompt = selection + "\n評価用synthetic workspaceの依頼を実際に処理してください。許可する操作はsdd_evalの5ツールだけです。"
-    prompt += "list_filesで読取りパスを確認し、read_diffで利用者の既存差分を確認できます。パス・シェル・追加ツールを推測して使わないでください。"
-    prompt += "run_bitzは公開CLIの操作名から始まるargvを渡します。write_fileは指定ファイルだけを保存します。"
-    prompt += "これは/tmp相当の合成例で、初期のapprovedは人間の承認後を模擬した状態です。既存の承認を別の意味変更の許可に流用しません。"
-    prompt += "このfixtureでrun_bitzが許可するPythonテストは-I -Bで指定srcを読む固定内容・固定hashの登録テストです。assertと、意図した障害を示すself.failを含む版があります。設定の登録argv、テスト本文、srcの安全性を読んで確認してください。既知のテスト障害で開始前に停止する許可と、Hostがテスト実行を拒否することは区別してください。"
-    prompt += "srcは副作用のないvalidate(value)の比較・分岐と文字列リストのreturnだけを書けます。安全制約は製品の合否を代行しません。"
-    prompt += "コミット・PUSH・外部操作と人間の承認を生成する権限はありません。依頼の工程が止まれば理由と再開条件を報告してください。"
-    prompt += "\n利用者要求:\n" + case["prompt"]
-    prompt += "\n最終JSONのcoreResultsは実際に呼んだCore結果を呼出し順に全件記録し、changedPathsは自分が実際に変更したパスだけにしてください。"
-    prompt += "selectedEntryは処理した工程の名前です。スキル未導入の場合も、計画はsdd-plan、実装とその再開はsdd-implementと記します。"
-    prompt += "reasonには実結果、警告、不足証拠と戻り先を1000文字以内で記し、未実行を成功にしないでください。"
+    prompt = decision_prompt(case, args.variant)
     command = ["codex", "exec", "--json", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--sandbox", "read-only", "--cd", str(workspace),
                "--model", args.model, "--output-schema", str(HERE / "decision.schema.json"), "--output-last-message", str(directory / "decision.json")]
     for key, value in model_configs(directory, workspace).items():

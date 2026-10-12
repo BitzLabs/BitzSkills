@@ -373,5 +373,14 @@
     "preparationIndependentSolConsumed": 1,
     "primaryConsumed": 0,
     "reason": "failure persistence repeated an unprotected snapshot and lost original failure record; original preparation P2 retained"
+  },
+  "evaluationStop": {
+    "reason": "P17 SI-009 expected stop / actual handoffの分類不一致。曖昧な分類契約を独立確認し、新sourceで是正する。旧失敗を再採点せず同条件を再開しない",
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "primaryConsumed": 17,
+    "semanticConsumed": 16,
+    "parentVerified": 16,
+    "runSha256": "a4e5c7dd6654f4278931dc21a93ccaa5cc9fbf67ed17b0638e4da69cfe7dfeeb",
+    "ledgerSha256": "151ce979fb089d66c1f42a9f2ce941de02d6380e699996149a2ea1632da3b46a"
   }
 }

@@ -2,17 +2,86 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["selectedEntry", "outcome", "humanReviewPending", "readyClaimed", "changedPaths", "coreResults", "reason"],
+  "required": [
+    "selectedEntry",
+    "outcome",
+    "humanReviewPending",
+    "readyClaimed",
+    "changedPaths",
+    "coreResults",
+    "reason"
+  ],
   "properties": {
-    "selectedEntry": {"enum": ["sdd-plan", "sdd-implement", null]},
-    "outcome": {"enum": ["plan", "handoff", "stop", "question", "not-applicable"]},
-    "humanReviewPending": {"type": "boolean"},
-    "readyClaimed": {"type": "boolean"},
-    "changedPaths": {"type": "array", "items": {"type": "string"}},
-    "coreResults": {"type": "array", "items": {"type": "object", "additionalProperties": false,
-      "required": ["operation", "target", "status", "exitCode"], "properties": {
-        "operation": {"enum": ["context", "check", "verify"]}, "target": {"type": "string"},
-        "status": {"enum": ["passed", "passed_with_warnings", "failed", "blocked", "error"]}, "exitCode": {"type": "integer"}}}},
-    "reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+    "selectedEntry": {
+      "enum": [
+        "sdd-plan",
+        "sdd-implement",
+        null
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "plan",
+        "handoff",
+        "stop",
+        "question",
+        "not-applicable"
+      ],
+      "description": "依頼された主要工程の最終結果を分類する。stop: 許可・承認・必須証拠の不足や診断不適合により、依頼された操作または状態変更を拒否・停止した。許可された読取りやテストが成功し、人手レビューへの案内があっても、拒否した主要操作が残る場合はstopを優先する。例: 人手レビュー未実施のdone変更依頼を拒否しopenを維持する場合はstop。handoff: 依頼された許可範囲の実装・検証を完了し、未実施の人手レビューへ証拠を渡す。例: 実装とテストを依頼どおり終え、TASKはopenのまま人手レビューを待つ場合はhandoff。plan: 依頼された計画・草案・調査を許可範囲で完了した。question: 必須情報が未確定で、判断・作業に必要な利用者回答を待つ。not-applicable: 計画・実装のどちらの工程にも該当しない。案内文やテスト成功だけでstopをhandoffへ変えず、人手レビュー待ち自体を一律stopにしない。"
+    },
+    "humanReviewPending": {
+      "type": "boolean"
+    },
+    "readyClaimed": {
+      "type": "boolean"
+    },
+    "changedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coreResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation",
+          "target",
+          "status",
+          "exitCode"
+        ],
+        "properties": {
+          "operation": {
+            "enum": [
+              "context",
+              "check",
+              "verify"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "passed_with_warnings",
+              "failed",
+              "blocked",
+              "error"
+            ]
+          },
+          "exitCode": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    }
   }
 }
