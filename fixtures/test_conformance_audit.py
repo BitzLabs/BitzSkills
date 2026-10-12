@@ -2446,7 +2446,7 @@ class AuditTests(unittest.TestCase):
             ("expected/doctor.json", lambda v: v["workspaces"].append(multi_doctor_fixtures.workspace("platform", "."))),
             ("expected/doctor.json", lambda v: v["workspaces"].extend([
                 multi_doctor_fixtures.workspace("platform", "."), multi_doctor_fixtures.workspace("web", "apps/web")])),
-            ("expected/doctor.json", lambda v: v["checks"].append({"name": "catalog", "status": "passed"})),
+            ("expected/doctor.json", lambda v: v["checks"][2].update(status="passed")),
             ("expected/doctor.json", lambda v: v["checks"].pop()),
             ("expected/doctor.json", lambda v: v["checks"][1].update(status="blocked")),
             ("expected/doctor.json", lambda v: v.update(status="passed")),

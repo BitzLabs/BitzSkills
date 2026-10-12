@@ -25,6 +25,10 @@
     {
       "name": "git",
       "status": "passed"
+    },
+    {
+      "name": "catalog",
+      "status": "blocked"
     }
   ],
   "workspaces": [],

@@ -141,7 +141,8 @@ def ears_diagnostic():
 
 
 def reviewed_stopped_result(identifier):
-    """全体事前検査が止まる結果。最上位は`core`と`git`だけで、依存する`catalog`は実行せず、`workspaces`は空である。"""
+    """全体事前検査が止まる結果。ルートの設定のメジャーバージョンが非対応なので、最上位の`catalog`は`blocked`（`doctor`仕様 §3）で、
+    `workspaces`は空である。"""
     return {
         "schemaVersion": "1.0",
         "operation": "doctor",
@@ -151,6 +152,7 @@ def reviewed_stopped_result(identifier):
         "checks": [
             {"name": "core", "status": "passed"},
             {"name": "git", "status": "passed"},
+            {"name": "catalog", "status": "blocked"},
         ],
         "workspaces": [],
         "durationMs": 0,
@@ -277,9 +279,10 @@ def check_stopped_contract(manifest, result):
     # 全体事前検査が非成功なら、メンバーの診断を開始しない（`doctor`仕様 §3）。
     if result["workspaces"]:
         raise ValueError("全体事前検査が非成功の結果は、メンバーの診断を開始してはいけません")
-    names = [item["name"] for item in result["checks"]]
-    if names != ["core", "git"]:
-        raise ValueError("設定に依存するカタログの検査項目は実行しない必要があります")
+    # ルートの設定のメジャーバージョンが非対応なら、カタログの検査項目を`blocked`で置く（`doctor`仕様 §3）。
+    if result["checks"] != [{"name": "core", "status": "passed"}, {"name": "git", "status": "passed"},
+                            {"name": "catalog", "status": "blocked"}]:
+        raise ValueError("最上位の検査項目は`core`、`git`と、`blocked`の`catalog`である必要があります")
     if result["status"] != "blocked" or manifest["expect"]["exitCode"] != 2:
         raise ValueError("診断の効果`blocked`は終了コード2である必要があります")
 
