@@ -122,8 +122,8 @@ ADRを起点にできるのは、目的が`interpret`のときだけである。
 ```
 
 `resolution.complete: true`は、型、状態、循環、上限を含めて完全解決が成立したことを示す。
-`constraintLedger`は、適用可能な文書が持つ対象規範文を、意味中間表現の意味フィールドで
-1回だけ保持する。隣接規範文と、適用可能性が`advisory`の文書の規範文は、制約台帳にも、
+`constraintLedger`は、適用可能な文書が持つ対象規範文を、`id`、`documentId`、`documentRole`と、
+`extensions`を除く意味フィールド（`modality`、`reason`、`actor`、`activation`、`operation`）で1回だけ保持する。隣接規範文と、適用可能性が`advisory`の文書の規範文は、制約台帳にも、
 カバレッジの各規範強度にも含めない。
 `coverage.adjacent`は`TargetExpansion`の`adjacentStatements`を同じ順序で保持し、該当がなければ空配列とする。
 `reason`はすべての規範文で必須とし、理由付きの`SHOULD`では正規化した後のテキスト、それ以外では`null`とする。
@@ -174,9 +174,9 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 制約台帳、カバレッジ、境界、参照を返し、すべての文書を提示形式`reference`にする。詳細度`full`では、
 解決したすべての文書を提示形式`full`にする。
 
-役割`requirement`と`constraint`の文書を`normative`ではなく`full`にするのは、`requires`または`addresses`で到達したそれらの文書が所有する規範文は
-`targetStatements`へ昇格せず（[関係・トレースモデル §6.4](../02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
-の規則4）、制約台帳に収録されない（本仕様§4）ためである。`normative`にすると、それらが持つ`MUST`の本文が
+役割`requirement`と`constraint`の文書を`normative`ではなく`full`にするのは、`requires`で到達したそれらの文書の規範文と、`addresses`で到達したそれらの文書の`addresses`されていない規範文は
+`targetStatements`にならず（[関係・トレースモデル §6.4](../02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
+の規則3、規則4）、制約台帳に収録されない（本仕様§4）ためである。`normative`にすると、それらが持つ`MUST`の本文が
 提示からも制約台帳からも失われ、依存の距離を理由に必須の制約を参照だけへ落とさないという、ADR-014の`Decision`の4番目の項目に
 反する。役割を先に適用し（`root`、`work`、`replacement`、`requirement`、`constraint`は`full`、`advisory`は`reference`）、
 依存の距離は具体化文書を
@@ -339,8 +339,8 @@ YAMLへ直列化し直さない。`bodyText`は、`- bodyText:`の行と空行1�
 | `CTX-STATE-SUPERSEDED-001` | `blocked` | 起点または依存先が置換済み |
 | `CTX-STATE-SUPERSEDED-002` | `failed` | 有効な後継が複数ある |
 | `CTX-LIMIT-001` | `blocked` | 完全な閉包が上限を超えた |
-| `CTX-COVERAGE-TASK-001` | `passed_with_warnings` | 目的`implement`の対象の`MUST`が未対応 |
-| `CTX-COVERAGE-TEST-001` | 警告／`blocked` | 目的`implement`では警告、`verify`では`blocked` |
+| `CTX-COVERAGE-TASK-001` | `passed_with_warnings` | 目的`implement`の対象の`MUST`または`SHOULD`が未対応 |
+| `CTX-COVERAGE-TEST-001` | `passed_with_warnings`／`blocked` | 目的`implement`の`MUST`と、目的`implement`・`verify`の`SHOULD`の未テストは`passed_with_warnings`、目的`verify`の`MUST`の未テストは`blocked` |
 | `CTX-STALE-001` | `blocked` | 期待したハッシュ値と一致しない |
 | `CTX-PROJECTION-001` | `failed` | 展開指定の対象が解決した集合の外にある |
 | `CTX-PROJECTION-LIMIT-001` | `failed` | 提示量が絶対上限を超えた |
