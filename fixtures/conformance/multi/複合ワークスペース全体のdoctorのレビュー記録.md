@@ -73,3 +73,57 @@ Coreの出力文言の英語の一般語を表記規則 §3.5に沿って日本�
 承認済みの文言と根拠は[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の「PR-4（doctorの修復手順）」の節にまとめた。
 
 - 対象: `MULTI-026-02`（メンバー`api`の`SPEC-DOCTOR-COMMAND-001`。`{name}`は`backend`。テキストの期待値に`  -> `の継続行を足した）、`MULTI-032`（最上位の`SPEC-DOCTOR-API-001`。`{required}`は`^2.0`）
+
+## 2026-10-12: ルートのEARS-AIのメジャーバージョンの非互換で全体事前検査が止まる場合（`MULTI-033`）
+
+### 追加の理由
+
+実装の確認事項C31。`doctor --all-workspaces`は、ルートの設定の`earsAi`のメジャーバージョンが非互換のとき、全体事前検査（`multiws.precheck`）が
+`check`用の`SPEC-EARS-VERSION-001`を最上位に返し、修復手順も付けていなかった。診断レジストリは、`doctor`のEARS-AIのメジャーバージョンの非互換を
+別の条件`DOCTOR-EARS-VERSION`（`SPEC-DOCTOR-EARS-001`、`error`、`blocked`、発生元`file`、継続`skip-check`）として`EARS-SCHEMA-MAJOR`（操作は`context`、`check`、`verify`）と分けている。
+このfixtureは、`doctor`が`doctor`のコードを返し、メンバーの診断を始めないことを固定する（ADR-051の追加。Coreの修正はコミット`5946271c`）。
+単一ワークスペースの`doctor`の`SPEC-DOCTOR-EARS-001`は、[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の PR-4 の節が「fixtureがなく単体試験で押さえる」とした範囲で、
+このfixtureは全体操作の経路だけを固定する。
+
+| fixture | 独立した原因 | 必須確認 |
+|---|---|---|
+| `MULTI-033` | ルートの設定の`earsAi`が`2.0`（Coreが対応するメジャーバージョンは1） | 診断は`SPEC-DOCTOR-EARS-001`の1件で、`SPEC-EARS-VERSION-001`を含まない。メンバーの診断を開始せず`workspaces`は空。最上位の`checks[]`は`core`、`git`。状態は`blocked`、終了コード2 |
+
+### 入力
+
+ルートワークスペース`platform`の設定（`earsAi: "2.0"`、`multiWorkspace.members`は`web`の1件）と、正しいメンバー`web`（`earsAi: "1.0"`）の2ファイルだけで、
+仕様文書は置かない。`earsAi`以外はカタログとして正しい（`multi_reference.root_config`の最小のカタログと`earsAi`の値だけが異なる）。
+Gitでコミット済み（`baseCommit`は全体）で、リポジトリのルートで`doctor --all-workspaces --format json`を実行する。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+1. 状態と終了コード: 診断レジストリの`DOCTOR-EARS-VERSION`は結果への効果が`blocked`、結果・診断・終了コード §3は`blocked`を終了コード2とする。診断はこの1件だけなので最上位も`blocked`。
+2. 診断コード: `doctor`の条件は`SPEC-DOCTOR-EARS-001`（`doctor`仕様 §8、診断レジストリ §6）。`SPEC-EARS-VERSION-001`は`EARS-SCHEMA-MAJOR`（`context`、`check`、`verify`）のコードで、`doctor`の結果には含まれない。
+3. メンバーの診断: `doctor`仕様 §3は、非対応のメジャーバージョンの全体事前検査が非成功ならメンバーの診断を開始しないと定める。複合ワークスペース仕様 §8は、非成功なら`workspaces: []`で結果を返すと定める。
+   したがって`workspaces`は空配列で、`web`の結果も置かない。
+4. 最上位の`checks[]`: `doctor`仕様 §3は、全体操作でCore、プラグイン、対応機能、Git、カタログを最上位で1回検査すると定める。プラグインの要求を渡さないので`plugin`と`capability`は置かない（§4.1）。
+   `core`は`passed`。Gitは利用でき、リポジトリの境界を確定できるので`git`は`passed`。カタログの検査は、メンバーの一覧を持つルートの設定を解釈できないと実行できない。
+   `doctor`仕様 §3は「設定を解釈できないとき…依存する検査項目は実行しない」と定めるので、`catalog`は置かない。
+   Git不在で全体事前検査が止まる`MULTI-019`が`catalog`を置かない前例と同じ扱いである。この読み（`catalog`を置かない）は継続の規則（§3）からの導出で、`catalog`の状態を個別に明示した規範文はない。
+5. `multiWorkspace`: 結果・診断・終了コード §2.3は、`id`を`null`にするのはルートの設定の構文、型、ID不正でIDを構成できない場合だけと定める。
+   メジャーバージョンの非互換はこれに当たらないので、`id`は`platform`、`path`は`.`である。
+6. 発生元: 診断レジストリの発生元は`file`。`{kind: "file", workspaceId: "platform", path: ".spec/bitz.yaml", key: "earsAi"}`。`key`は、単一ワークスペースの同種の診断（`SINGLE-095`の
+   `SPEC-EARS-VERSION-001`）が設定キー`earsAi`を指すのと同じ形である。`workspaceId`はルートワークスペースの`platform`。
+7. `summary`と`suggestedAction`: 管理者が承認した文言である。規範文から導いた値ではなく、Coreの出力を写した値でもない。
+   `summary`は「未対応のEARS-AIのメジャーバージョンです」（[Coreの出力文言のレビュー記録](../Coreの出力文言のレビュー記録.md)の表の45番）、
+   `suggestedAction`は「設定キーearsAiをCoreが対応するメジャーバージョン1に合わせてください」（同記録の PR-4 の承認済みの表）。
+
+`multi_doctor_fixtures.py`は、ルートの設定の`earsAi`のメジャーバージョンだけから診断を導く参照計算（`reference_ears_precheck`）を持ち、リテラルの期待値との一致を要求する。
+互換な値（`1.0`、`1.9`）では診断を導かない陰性対照を、監査の回帰試験に置いた。
+
+### 固定しない範囲
+
+- `catalog`を置かないことは、上の導出（継続の規則）に基づく。`catalog`を`blocked`で置く読みは採らない。規範文が明示した場合は見直す。
+- `schemaVersion`のメジャーバージョンの非互換（`SPEC-CONFIG-SCHEMA-001`）、メンバー側の非互換（`SPEC-MULTI-VERSION-001`）、`earsAi`が不正な形の場合。
+- `HEAD`のスナップショットのルートの設定だけが非互換の場合と、`apps/web`など配下から実行した場合。
+- `--workspace`を指定した`doctor`の`SPEC-DOCTOR-EARS-001`（単一ワークスペースの経路は単体試験で押さえる）。
+- 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。
+
+### 陰性対照
+
+修正前のCore（コミット`f5de9a43`）のコピーでは、診断が`SPEC-EARS-VERSION-001`（`suggestedAction`なし）で失敗する（検証の結果は報告に記す）。
