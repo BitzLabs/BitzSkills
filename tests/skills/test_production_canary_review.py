@@ -18,11 +18,11 @@ class CanaryReviewTests(unittest.TestCase):
         if hasattr(self, 'context_profile_raw'):
             self.capture.context_profile_raw = self.context_profile_raw
         if hasattr(self,'cases_raw'):self.capture.cases_raw=self.cases_raw
-        self.capture.setUp()
         self.addCleanup(self.capture.doCleanups)
+        self.capture.setUp()
         self.trace = trace_fixture.PrimaryCanaryTraceTests(methodName='runTest')
-        self.trace.setUp()
         self.addCleanup(self.trace.doCleanups)
+        self.trace.setUp()
         primary = self.trace.fixture
         primary.sent[3]['params']['outputSchema']=review.evidence.capture.execution_schema(json.loads(self.capture.fixed.decision_schema_raw))
         primary.sent[2]['params'].update(cwd=str(self.capture.base / 'work'),
@@ -137,8 +137,8 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         self.fixture = CanaryReviewTests(methodName='runTest')
         self.fixture.context_profile_raw = review.evidence.ledger.encoded(original['context_profile'])
         if hasattr(self,'cases_raw'):self.fixture.cases_raw=self.cases_raw
-        self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp()
         self.capture = self.fixture.capture
         native = review.verify_native(self.fixture.save())['native']
         mapping = {'thread':'t','turn':'u','thread:0':'t:0','parent0':native['parentCallIds'][0],

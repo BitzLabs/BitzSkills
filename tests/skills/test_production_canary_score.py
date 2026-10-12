@@ -18,7 +18,8 @@ class CanaryScoreTests(unittest.TestCase):
         cases=json.loads((ROOT/score.evidence.CASES).read_bytes())
         cases[0].update(prompt='公開合成のSDD計画を作成して',expected=dict(sixSkill='sdd-plan',outcome='proceed'))
         self.primary.cases_raw=score.ledger.encoded(cases)
-        self.primary.setUp();self.addCleanup(self.primary.doCleanups)
+        self.addCleanup(self.primary.doCleanups)
+        self.primary.setUp()
         self.capture=self.primary.capture;self.repository=self.capture.repository
         for name in [score.CONTRACT,score.SCHEMA,'evals/skills/sol-authorization.json']:
             self.capture.git_raws[name]=(ROOT/name).read_bytes()

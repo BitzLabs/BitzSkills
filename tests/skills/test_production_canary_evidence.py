@@ -23,8 +23,8 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.repository = Path(self.temp.name)
         self.source = 'b' * 40
         fixture = host_fixture.RoutingHostTests(methodName='runTest')
-        fixture.setUp()
         self.addCleanup(fixture.doCleanups)
+        fixture.setUp()
         self.contract = json.loads((ROOT / capture.CONTRACT).read_bytes())
         context_raw = getattr(self, 'context_profile_raw', (ROOT / evidence.CONTEXT).read_bytes())
         self.contract['contextProfileSha256'] = ledger.sha(context_raw)
