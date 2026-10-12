@@ -219,7 +219,7 @@ def blocked_diagnostic():
 def inapplicable_diagnostic():
     """診断レジストリの`CTX-STATE-INAPPLICABLE`: `CTX-STATE-001`、`error`、`blocked`、発生元`file`、継続単位`skip-target`
     （検証対象の`diagnostics`）。適用できない文書の発生元はその文書のファイルとする（`SINGLE-052-02`の依存先と同じ）。
-    `summary`は規範文を持たず、Coreの既存の文言（`context`と`verify`の`CTX-STATE-001`の依存先）にそろえた。"""
+    `summary`は規範文を持たず、ADR-062 Decision 2で管理者が承認した文型（`{doc_id}は状態{status}のため目的{purpose}に適用できません`）とする。"""
     return {
         "code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
         "summary": "REQ-002は状態draftのため目的verifyに適用できません",
@@ -230,8 +230,8 @@ def inapplicable_diagnostic():
 def type_diagnostic():
     """診断レジストリの`RELATION-TYPE`: `CTX-RELATION-TYPE-001`、`error`、`failed`、発生元`file`、継続単位`skip-edge`
     （検証対象の`diagnostics`）。発生元は関係を宣言した文書（REQ-002）の`relations.requires`、`evidence`は宣言どおりの参照先
-    （結果・診断・終了コード §4）。`summary`は規範文を持たず、`SINGLE-021`と同じ形（`<参照元の型>から<参照先の型>への<関係型>は
-    許可されません`）にそろえた。"""
+    （結果・診断・終了コード §4）。`summary`は規範文を持たず、ADR-062 Decision 2で管理者が承認した文型（承認されていないADRへの
+    `requires`は`<参照元の型>から状態<状態>のADRへの関係型requiresは許可されません`）とする。"""
     return {
         "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
         "summary": "REQから状態proposedのADRへの関係型requiresは許可されません",
