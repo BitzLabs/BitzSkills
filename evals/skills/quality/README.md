@@ -145,3 +145,23 @@ Core context/checkと一次資料の読取りだけを許可し、件数assert�
 準備独立1枠、軌跡独立最大4枠、自動再試行0。各軌跡の独立receiptと親再監査が
 通過するまで次を起動しない。未取得証拠、上位リスクの根拠、停止条件を意味検分する。
 比較優位・実保持ケース・実課題・全Skill Gateは認定しない。
+
+## 原証拠検査の実行版0.1.6
+
+実行版0.1.5で、正常な実Core結果を使った合成原からnative開始/終端や正しいusageを除去しても
+受理すること、artifact一覧が空でも受理すること、中断保存中のsnapshot/原読取失敗で
+元TimeoutExpiredとinterruptionを失うことを独立再現した。旧原結果は保持する。
+
+0.1.6では固定CLI0.160.1の単一thread/turn、quality_evalの既知操作と開始/終了ID、
+正常な最終応答、型と相互上限を満たす5つのusage字段を要求する。必須7原artifactと任意の
+保存advice以外を認めず、NOFOLLOW/single-linkで一度取得したbytesのhashを照合してから
+同じbytesを解析する。JSONの重複key・非有限値・過深な構造・不正型・未知検査例外は不適合。
+元Core stdout、documentJson、MCP textにも厳格JSONを使い、adviceは元応答とCore転記へ照合する。
+
+中断保存ではbefore/afterと各artifact取得を個別保護し、取得不能値はnullと理由を残す。
+元errorType/exitCode/errno/reasonと取得済みnative bytesを保存し、保存不能な原は取得済みとして
+扱わない。interruptionファイル自体を書けない場合まで保存を保証しない。
+前件のreceipt未提出は待機とし、提出済み不適合・原破損・中断を検知した条件には恒久stopを
+台帳へ保存する。原やreceiptを復元しても同条件を再開しない。旧版の部分traceを新版の
+成功証拠へ移さず、是正後の実モデル測定は別source・出力・契約・台帳・有限予算で固定する。
+これらの合成試験はモデル行動・品質比較・Gate・releaseの認定を代行しない。

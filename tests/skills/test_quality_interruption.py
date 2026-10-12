@@ -70,13 +70,16 @@ class QualityInterruptionTests(unittest.TestCase):
         self.assertEqual(b"\xff", base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
         self.assertFalse(record["automaticRetry"])
 
-    def replay(self, outcome, *, failing_outputs=(), keyboard_outputs=(), change=False):
+    def replay(self, outcome, *, failing_outputs=(), keyboard_outputs=(), change=False, snapshot_failure=False, artifact_failure=False):
         """実measure/台帳/保存を接続し、CodexだけをSpyへ置換する。"""
         replay_dir = Path(tempfile.mkdtemp(prefix="replay-", dir=self.directory))
         output = replay_dir / "synthetic-measurement"
         scope_dir = replay_dir / "synthetic-authorization"
         scope_dir.mkdir()
-        raw_trace = b'{"type":"turn.completed","usage":{"synthetic":true}}\n'
+        raw_trace = (b'{"type":"thread.started","thread_id":"synthetic-unit"}\n'
+                     b'{"type":"turn.started"}\n'
+                     b'{"type":"item.completed","item":{"id":"final","type":"agent_message","text":"{}"}}\n'
+                     b'{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":20,"reasoning_output_tokens":0}}\n')
         raw_stderr = b"synthetic native stderr\n"
         native_calls = []
 
@@ -108,6 +111,16 @@ class QualityInterruptionTests(unittest.TestCase):
             stdout = b"\xffnon-UTF8 trace\n" if outcome == "non-utf8" else raw_trace
             return subprocess.CompletedProcess(command, 2 if outcome == "nonzero" else 0, stdout, raw_stderr)
 
+        snapshot = evaluate.preflight.files
+        reader = evaluate.read_original
+        def files(path):
+            if snapshot_failure and native_calls:
+                raise OSError(errno.EIO, "synthetic after snapshot unavailable")
+            return snapshot(path)
+        def read_original(path):
+            if artifact_failure and native_calls and path.name == "trace.jsonl":
+                raise PermissionError(errno.EACCES, "synthetic original unreadable")
+            return reader(path)
         original_write = Path.write_bytes
 
         def write_bytes(path, content):
@@ -124,7 +137,9 @@ class QualityInterruptionTests(unittest.TestCase):
              patch("evaluate.setup", side_effect=setup), \
              patch("evaluate.subprocess.run", side_effect=backend), \
              patch("evaluate.inspect_record", return_value=({"mechanical": [], "safety": [], "evidence": []}, None)), \
-             patch.object(Path, "write_bytes", autospec=True, side_effect=write_bytes), redirect_stdout(io.StringIO()):
+             patch.object(Path, "write_bytes", autospec=True, side_effect=write_bytes), \
+             patch.object(evaluate.preflight, "files", side_effect=files), \
+             patch.object(evaluate, "read_original", side_effect=read_original), redirect_stdout(io.StringIO()):
             raised = None
             try:
                 result = evaluate.measure(args)
@@ -136,13 +151,46 @@ class QualityInterruptionTests(unittest.TestCase):
                 before = {str(p): p.read_bytes() for p in [output / "attempts.json", *scope_dir.glob("*.json")]}
                 with self.assertRaises((OSError, ValueError)):
                     evaluate.measure(args)
-                self.assertEqual(before, {name: Path(name).read_bytes() for name in before})
+                after = {name: Path(name).read_bytes() for name in before}
+                self.assertEqual(before[str(output / "attempts.json")], after[str(output / "attempts.json")])
+                saved_ledger = next(path for path in before if path != str(output / "attempts.json"))
+                self.assertEqual(1, evaluate.load(Path(saved_ledger))["attemptCount"])
+                self.assertIn("stop", evaluate.load(Path(saved_ledger)))
+                with self.assertRaisesRegex(ValueError, "permanently stopped"):
+                    evaluate.measure(args)
+                self.assertEqual(after, {name: Path(name).read_bytes() for name in after})
                 self.assertEqual(1, len(native_calls), "interrupted attempt must block another backend")
         self.assertEqual(1, len(evaluate.load(output / "attempts.json")))
         ledgers = list(scope_dir.glob("*-authorization.json"))
         self.assertEqual(1, len(ledgers))
         self.assertEqual(1, evaluate.load(ledgers[0])["attemptCount"])
         return directory, native_calls[0], raised, result, raw_trace, raw_stderr
+
+    def test_timeout_survives_snapshot_and_artifact_read_failure_without_next_model(self):
+        for snapshot_failure, artifact_failure in ((True, False), (False, True), (True, True)):
+            with self.subTest(snapshot=snapshot_failure, artifact=artifact_failure):
+                directory, _, error, _, _, _ = self.replay("timeout-bytes", snapshot_failure=snapshot_failure,
+                                                          artifact_failure=artifact_failure)
+                self.assertIsInstance(error, subprocess.TimeoutExpired)
+                record = evaluate.load(directory / "interruption.json")
+                self.assertEqual("TimeoutExpired", record["errorType"])
+                if snapshot_failure:
+                    self.assertIsNone(record["changes"]["after"])
+                    self.assertIsNone(record["changes"]["changedPaths"])
+                    self.assertEqual(errno.EIO, record["changes"]["snapshotErrors"]["after"]["errno"])
+                if artifact_failure:
+                    self.assertIsNone(record["artifacts"]["trace.jsonl"])
+                    self.assertEqual("PermissionError", record["artifactReadErrors"]["trace.jsonl"]["errorType"])
+
+    def test_invalid_before_snapshot_is_missing_without_losing_original_failure(self):
+        (self.directory / "workspace-before.json").write_bytes(b"null")
+        evaluate.preserve_invocation_failure(self.directory, {}, self.workspace, ["codex"], 600, time.monotonic(),
+                                            error_type="TimeoutExpired", reason="synthetic timeout")
+        record = evaluate.load(self.directory / "interruption.json")
+        self.assertEqual("TimeoutExpired", record["errorType"])
+        self.assertIsNone(record["changes"]["before"])
+        self.assertIsNone(record["changes"]["changedPaths"])
+        self.assertIn("before", record["changes"]["snapshotErrors"])
 
     def test_postprocessing_oserror_preserves_completed_native_outputs(self):
         directory, _, error, _, trace, stderr = self.replay("missing-response")

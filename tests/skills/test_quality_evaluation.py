@@ -159,6 +159,13 @@ class QualityEvaluationTests(unittest.TestCase):
             evaluate.write(run / "control.json", {"subjectCommit": "a" * 40})
             with self.assertRaisesRegex(ValueError, "review failed"):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
+            ledger = self.directory / "quality-pilot-authorization.json"
+            stopped = ledger.read_bytes()
+            self.assertIn("stop", evaluate.load(ledger))
+            (run / "independent-receipt.json").unlink()
+            with self.assertRaisesRegex(ValueError, "permanently stopped"):
+                evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
+            self.assertEqual(stopped, ledger.read_bytes())
 
     def test_remediation_keeps_exact_case_and_pending_approval_cannot_execute(self):
         protocol = evaluate.load(HERE / "remediation-protocol.json")
@@ -344,6 +351,9 @@ class QualityEvaluationTests(unittest.TestCase):
         evaluate.write(self.directory / "response.json", response)
         errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertTrue(any("artifact hash" in e for e in errors["evidence"]))
+        # hash不一致は内容を読む前に拒否する。新hashを伴う偽装も別に拒否する。
+        record["artifacts"]["response.json"] = sha((self.directory / "response.json").read_bytes())
+        errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertTrue(any("actual trace" in e for e in errors["evidence"]))
         self.assertTrue(any("Core observation IDs" in e for e in errors["evidence"]))
 
@@ -352,6 +362,7 @@ class QualityEvaluationTests(unittest.TestCase):
         trace = evaluate.jsonl(self.directory / "trace.jsonl")
         trace.insert(0, {"type": "item.completed", "item": {"type": "command_execution", "command": "synthetic disallowed command"}})
         (self.directory / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in trace) + "\n")
+        record["artifacts"]["trace.jsonl"] = sha((self.directory / "trace.jsonl").read_bytes())
         errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertIn("native tool use outside fixed host", errors["safety"])
 

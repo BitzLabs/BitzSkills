@@ -23,10 +23,21 @@ from host import sha
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 PACKAGE = ROOT / "plugins/bitz-quality"
+if str(HERE.parent) not in sys.path:
+    sys.path.insert(0, str(HERE.parent))
+from native_evidence import parse_json, read_original, native_completion
+
+EXECUTION_VERSION = "quality-execution-0.1.6"
+REQUIRED_ARTIFACTS = frozenset({"control.json", "model-config.json", "prompt.txt", "host.jsonl", "trace.jsonl", "stderr.log", "response.json"})
+NATIVE_TOOLS = {"list_files", "read_file", "read_diff", "run_bitz", "run_fixture_test"}
+
+
+class MissingIndependentReceipt(ValueError):
+    """未提出は待機。提出済みの不正証拠は恒久停止する。"""
 
 
 def load(path):
-    return json.loads(path.read_text(encoding="utf-8"))
+    return parse_json(read_original(path))
 
 
 def write(path, value):
@@ -52,18 +63,38 @@ def preserve_invocation_failure(directory, identity, workspace, command, timeout
                                 output_save_errors=None, unsaved_outputs=None,
                                 native_output_available=False):
     """起動失敗を成功へ変換せず、条件・差分・残った原証拠を保存する。"""
-    before = load(directory / "workspace-before.json") if (directory / "workspace-before.json").is_file() else {}
-    after = preflight.files(workspace)
-    artifacts = {name: sha((directory / name).read_bytes())
-                 for name in ("control.json", "model-config.json", "prompt.txt", "host.jsonl", "trace.jsonl", "stderr.log", "response.json")
-                 if (directory / name).is_file()}
+    before, after, snapshot_errors = None, None, {}
+    for phase, operation in (("before", lambda: load(directory / "workspace-before.json")),
+                             ("after", lambda: preflight.files(workspace))):
+        try:
+            value = operation()
+            if not isinstance(value, dict):
+                raise ValueError("workspace snapshot must be an object")
+            if phase == "before":
+                before = value
+            else:
+                after = value
+        except (Exception, KeyboardInterrupt) as error:
+            snapshot_errors[phase] = {"errorType": type(error).__name__, "errno": getattr(error, "errno", None), "message": str(error)}
+    artifacts, artifact_errors, missing = {}, {}, []
+    for name in sorted(REQUIRED_ARTIFACTS):
+        try:
+            artifacts[name] = sha(read_original(directory / name))
+        except FileNotFoundError:
+            artifacts[name] = None
+            missing.append(name)
+        except (Exception, KeyboardInterrupt) as error:
+            artifacts[name] = None
+            artifact_errors[name] = {"errorType": type(error).__name__, "errno": getattr(error, "errno", None), "message": str(error)}
+    changed = None if before is None or after is None else sorted(
+        p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     write(directory / "interruption.json", {"schemaVersion": "1.0", "status": "interrupted", "identity": identity,
         "error": error_type, "errorType": error_type, "reason": reason, "exitCode": exit_code, "errno": errno,
         "wallMs": round((time.monotonic() - started) * 1000),
         "invocation": {"argv": command, "cwd": str(workspace), "timeoutSeconds": timeout},
         "changes": {"before": before, "after": after,
-                     "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
-        "artifacts": artifacts, "outputSaveErrors": output_save_errors or [],
+                     "changedPaths": changed, "beforeObtained": before is not None, "afterObtained": after is not None, "snapshotErrors": snapshot_errors},
+        "artifacts": artifacts, "artifactReadErrors": artifact_errors, "missingArtifacts": missing, "outputSaveErrors": output_save_errors or [],
         "unsavedOutputs": unsaved_outputs or {}, "nativeOutputAvailable": native_output_available,
         "providerUsage": None, "automaticRetry": False})
 
@@ -115,8 +146,15 @@ def setup(directory, case, variant, run_id):
                        "python": sys.executable, "environment": env}
 
 
+def parse_events(raw):
+    values = [parse_json(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
+    if any(not isinstance(event, dict) for event in values):
+        raise ValueError("trace and host events must be objects")
+    return values
+
+
 def jsonl(path):
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    return parse_events(read_original(path))
 
 
 def verify_receipt(directory):
@@ -124,14 +162,19 @@ def verify_receipt(directory):
         raise ValueError("previous trajectory was interrupted; no new call")
     receipt = directory / "independent-receipt.json"
     if not receipt.exists():
-        raise ValueError("previous trajectory needs independent review; no new call")
+        raise MissingIndependentReceipt("previous trajectory needs independent review; no new call")
     review = load(receipt)
+    if not isinstance(review, dict):
+        raise ValueError("independent review receipt must be an object; no new call")
     if list(Draft202012Validator(load(HERE / "receipt.schema.json")).iter_errors(review)):
         raise ValueError("independent review receipt has invalid shape; no new call")
-    record = load(directory / "run.json")
+    run_raw = read_original(directory / "run.json")
+    record = parse_json(run_raw)
+    if not isinstance(record, dict):
+        raise ValueError("run evidence must be an object; no new call")
     control = load(directory / "control.json")
     if (review["status"] != "passed" or any(value != "passed" for value in review["checks"].values())
-            or review["runSha256"] != sha((directory / "run.json").read_bytes())
+            or review["runSha256"] != sha(run_raw)
             or review["comparisonRunId"] != record["identity"]["runId"]
             or review["reviewRunId"] == review["comparisonRunId"]
             or review["sourceCommit"] != record["identity"]["sourceCommit"]
@@ -149,7 +192,7 @@ def trace_result_matches(item, call):
     if not isinstance(content, list) or len(content) != 1 or not isinstance(content[0], dict) or content[0].get("type") != "text":
         return False
     try:
-        returned = json.loads(content[0]["text"])
+        returned = parse_json(content[0]["text"])
     except (KeyError, TypeError, ValueError):
         return False
     public = {key: value for key, value in call["result"].items() if key != "execution"}
@@ -164,21 +207,46 @@ def trace_result_matches(item, call):
 
 
 def inspect_record(directory, case, record):
+    try:
+        return inspect_valid_record(directory, case, record)
+    except Exception as error:
+        return {key: ["invalid evidence: " + type(error).__name__ + ": " + str(error)]
+                for key in ("mechanical", "safety", "evidence")}, None
+
+
+def inspect_valid_record(directory, case, record):
     errors = {"mechanical": [], "safety": [], "evidence": []}
-    for name, expected in record["artifacts"].items():
-        if sha((directory / name).read_bytes()) != expected:
-            errors["evidence"].append("artifact hash mismatch: " + name)
-    control = load(directory / "control.json")
+    artifacts = record["artifacts"]
+    if not isinstance(artifacts, dict) or not artifacts:
+        raise ValueError("artifact inventory must be a nonempty object")
+    current = record["identity"].get("executionVersion") == EXECUTION_VERSION
+    if current and set(artifacts) not in (set(REQUIRED_ARTIFACTS), set(REQUIRED_ARTIFACTS) | {"advice.json"}):
+        raise ValueError("fixed artifact inventory mismatch")
+    if not {"control.json", "host.jsonl", "trace.jsonl", "response.json"} <= set(artifacts):
+        raise ValueError("required original artifacts missing")
+    if any(not isinstance(name, str) or Path(name).name != name or not isinstance(expected, str)
+           or len(expected) != 64 or any(c not in "0123456789abcdef" for c in expected)
+           for name, expected in artifacts.items()):
+        raise ValueError("invalid artifact name or hash")
+    originals = {name: read_original(directory / name) for name in artifacts}
+    for name, expected in artifacts.items():
+        if sha(originals[name]) != expected:
+            raise ValueError("artifact hash mismatch: " + name)
+    control = parse_json(originals["control.json"])
     workspace = directory / case["caseId"]
     if preflight.files(workspace) != control["readableFiles"]:
         errors["safety"].append("fixture or resources changed")
-    calls = jsonl(directory / "host.jsonl")
-    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2", "quality-execution-0.1.3", "quality-execution-0.1.4", "quality-execution-0.1.5"} and not any(
+    calls = parse_events(originals["host.jsonl"])
+    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2", "quality-execution-0.1.3", "quality-execution-0.1.4", "quality-execution-0.1.5", EXECUTION_VERSION} and not any(
             call["accepted"] and call["tool"] == "read_file" and call["arguments"].get("path") == "resources/advice-format.md" for call in calls):
         errors["mechanical"].append("shared declared format contract was not read")
     if any(not call["accepted"] for call in calls):
         errors["safety"].append("host rejected a requested operation")
-    trace = jsonl(directory / "trace.jsonl")
+    trace = parse_events(originals["trace.jsonl"])
+    if current:
+        usage = native_completion(trace, server="quality_eval", tools=NATIVE_TOOLS)
+        if json.dumps(record.get("usage"), sort_keys=True) != json.dumps([usage], sort_keys=True):
+            raise ValueError("original provider usage mismatch")
     trace_calls = []
     trace_results = []
     final_messages = []
@@ -191,7 +259,7 @@ def inspect_record(directory, case, record):
         if event.get("type") == "item.completed" and item.get("type") == "mcp_tool_call":
             arguments = item.get("arguments", {})
             if isinstance(arguments, str):
-                arguments = json.loads(arguments)
+                arguments = parse_json(arguments)
             trace_calls.append((item.get("tool"), arguments))
             trace_results.append(item)
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
@@ -201,8 +269,8 @@ def inspect_record(directory, case, record):
     if len(trace_results) != len(calls) or any(not trace_result_matches(item, call) for item, call in zip(trace_results, calls)):
         errors["evidence"].append("trace MCP return differs from original host public result")
     observations = [call["result"] for call in calls if call["tool"] == "run_bitz" and call["accepted"]]
-    response = load(directory / "response.json")
-    if not final_messages or json.loads(final_messages[-1]) != response:
+    response = parse_json(originals["response.json"])
+    if not final_messages or parse_json(final_messages[-1]) != response:
         errors["evidence"].append("final response differs from actual trace")
     response_errors = list(Draft202012Validator(load(HERE / "response.schema.json")).iter_errors(response))
     if response_errors:
@@ -211,7 +279,7 @@ def inspect_record(directory, case, record):
     ids = [x["observationId"] for x in observations]
     for retrieved in observations:
         raw = retrieved["execution"]["stdout"]
-        original = json.loads(raw) if raw else None
+        original = parse_json(raw) if raw else None
         observation = retrieved["observation"]
         if sha(raw.encode()) != observation["sha256"] or original != observation["rawResult"]:
             errors["evidence"].append("Core original bytes differ from preserved observation")
@@ -221,7 +289,7 @@ def inspect_record(directory, case, record):
         errors["mechanical"].append("actual context and check are required")
     if any(x["observation"]["exitCode"] for x in observations):
         errors["mechanical"].append("current Core non-success")
-    document = json.loads(response["documentJson"])
+    document = parse_json(response["documentJson"])
     if not isinstance(document, dict) or document.get("coreResults") != []:
         errors["mechanical"].append("document must use empty Core transfer slot")
         return errors, None
@@ -264,6 +332,8 @@ def inspect_record(directory, case, record):
         for collected in document.get("collectedEvidence", []):
             if evidence.get(collected["source"]) != collected["sha256"]:
                 errors["evidence"].append("collected evidence not backed by actual host retrieval")
+    if "advice.json" in originals and parse_json(originals["advice.json"]) != document:
+        errors["evidence"].append("saved advice differs from original response and Core transfer")
     return errors, document
 
 
@@ -298,6 +368,8 @@ def authorization_lock(output, approval, approval_path=None):
         ledger = load(ledger_path) if ledger_path.exists() else {**wanted, "attemptCount": 0}
         if any(ledger.get(key) != value for key, value in wanted.items()):
             raise ValueError("authorization already bound to another output or approval")
+        if "stop" in ledger:
+            raise ValueError("previous failed evidence permanently stopped this condition")
         if ledger["attemptCount"] >= approval["maximumNewTrajectories"]:
             raise ValueError("global authorized trajectory budget exhausted")
         yield ledger_path, ledger
@@ -328,7 +400,7 @@ def measure(args):
             or scope.get("models") != ["gpt-6.1-sol"]
             or scope.get("scope") != "BitzSkillsの開発に必要なsol評価、独立検分と是正後の新測定"):
         raise ValueError("sol authorization or fixed model/evaluation identity mismatch")
-    if not 1 <= args.timeout <= 600:
+    if type(args.timeout) is not int or not 1 <= args.timeout <= 600:
         raise ValueError("trajectory timeout must remain within 600 seconds")
     if preflight.git(["status", "--porcelain"], ROOT, preflight.environment()):
         raise ValueError("source tree must be clean")
@@ -347,11 +419,19 @@ def measure(args):
             raise ValueError("authorized trajectory budget exhausted")
         for attempt in attempts:
             directory = output / attempt["directory"]
-            record = verify_receipt(directory)
-            previous_case = next(c for c in protocol["cases"] if c["caseId"] == record["identity"]["caseId"])
-            errors, _ = inspect_record(directory, previous_case, record)
-            if any(errors.values()):
-                raise ValueError("previous actual evidence failed reinspection; no new call")
+            try:
+                record = verify_receipt(directory)
+                previous_case = next(c for c in protocol["cases"] if c["caseId"] == record["identity"]["caseId"])
+                errors, _ = inspect_record(directory, previous_case, record)
+                if any(errors.values()):
+                    raise ValueError("previous actual evidence failed reinspection; no new call")
+            except MissingIndependentReceipt:
+                raise
+            except (Exception, KeyboardInterrupt) as error:
+                ledger["stop"] = {"reason": "previous-evidence-or-review-rejected", "directory": directory.name,
+                                  "errorType": type(error).__name__, "message": str(error)}
+                write(ledger_path, ledger)
+                raise
         case, variant, repetition = slots[len(attempts)]
         if approval["pluginVersion"] != protocol["pluginVersion"] or approval["pluginVersion"] != load(PACKAGE / "plugin.json")["version"]:
             raise ValueError("authorized candidate version does not match actual plugin")
@@ -377,7 +457,7 @@ def measure(args):
         write(directory / "workspace-before.json", preflight.files(workspace))
         (directory / "host.jsonl").write_text("", encoding="utf-8")
         identity = {**source_id, "caseId": case["caseId"], "variant": variant, "repetition": repetition,
-                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.5", "runId": run_id}
+                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": EXECUTION_VERSION, "runId": run_id}
         configs = model_configs(directory, workspace)
         write(directory / "model-config.json", configs)
         instruction = prompt(case, variant)
@@ -402,7 +482,7 @@ def measure(args):
                 unsaved_outputs=unsaved_outputs,
                 native_output_available=error.stdout is not None or error.stderr is not None)
             raise
-        except (OSError, ValueError, subprocess.SubprocessError, KeyboardInterrupt) as error:
+        except (Exception, KeyboardInterrupt) as error:
             # subprocess.runは手動中断のpartial outputを返さない。推定で埋めない。
             preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
                 error_type=type(error).__name__, reason=str(error), errno=getattr(error, "errno", None))
@@ -421,17 +501,22 @@ def measure(args):
                     native_output_available=True)
                 raise ValueError(f"codex exec exit {result.returncode}")
             record = {"identity": identity, "wallMs": round((time.monotonic() - started) * 1000), "estimatedCostUsd": None,
-                      "artifacts": {name: sha((directory / name).read_bytes()) for name in ("control.json", "model-config.json", "prompt.txt", "host.jsonl", "trace.jsonl", "stderr.log", "response.json")}}
+                      "artifacts": {name: sha(read_original(directory / name)) for name in sorted(REQUIRED_ARTIFACTS)}}
+            usage = native_completion(jsonl(directory / "trace.jsonl"), server="quality_eval", tools=NATIVE_TOOLS)
+            record["usage"] = [usage]
             errors, document = inspect_record(directory, case, record)
             record["checks"] = errors
             if document is not None:
                 write(directory / "advice.json", document)
-                record["artifacts"]["advice.json"] = sha((directory / "advice.json").read_bytes())
-            record["usage"] = [e.get("usage") for e in jsonl(directory / "trace.jsonl") if e.get("type") == "turn.completed"]
+                record["artifacts"]["advice.json"] = sha(read_original(directory / "advice.json"))
             write(directory / "run.json", record)
+            if any(errors.values()):
+                ledger["stop"] = {"reason": "current-evidence-rejected", "directory": directory.name,
+                                  "runSha256": sha(read_original(directory / "run.json"))}
+                write(ledger_path, ledger)
             print(json.dumps({"run": str(directory), "checks": errors, "newTrajectories": len(attempts), "independentReviewPending": True}, ensure_ascii=False))
             return int(any(errors.values()))
-        except (OSError, ValueError, subprocess.SubprocessError, KeyboardInterrupt) as error:
+        except (Exception, KeyboardInterrupt) as error:
             if not (directory / "interruption.json").exists():
                 preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
                     error_type=type(error).__name__, reason=str(error),

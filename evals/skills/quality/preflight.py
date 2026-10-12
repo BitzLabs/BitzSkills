@@ -16,6 +16,9 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
+if str(HERE.parent) not in sys.path:
+    sys.path.insert(0, str(HERE.parent))
+from native_evidence import read_original
 
 
 def digest(data: bytes) -> str:
@@ -43,7 +46,7 @@ def git(args: list[str], cwd: Path, env: dict) -> bytes:
 
 
 def files(directory: Path) -> dict[str, str]:
-    return {p.relative_to(directory).as_posix(): digest(p.read_bytes())
+    return {p.relative_to(directory).as_posix(): digest(read_original(p))
             for p in sorted(directory.rglob("*")) if p.is_file() and ".git" not in p.relative_to(directory).parts}
 
 
