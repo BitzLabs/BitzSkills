@@ -529,3 +529,22 @@ Coreの出力文言の英語の一般語を日本語にし（ADR-062、表記規
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は705件がすべて成功した。
+
+## 2026-10-12: 同じ条件の診断の文言をそろえた後のStep 1〜5の再判定
+
+`CTX-STATE-001`、`CTX-COVERAGE-TEST-001`、承認されていないADRへの`requires`の`CTX-RELATION-TYPE-001`、`CTX-TASK-DEPENDENCY-001`の文言を、管理者が承認した文型にそろえ
+（ADR-062、表記規則 §3.5の7）、16件のfixtureの期待値を訂正した。修正前のCore（コミット`1141b313`の版）では、期待値を訂正した16件だけが失敗し、ほかの353件は
+通過することを確かめた。修正後のCoreでは369件すべてが`passed`となる。
+
+コミット`6f4be139fbf61c01d6e8432cba5e388cf9c47333`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は721件がすべて成功した。
