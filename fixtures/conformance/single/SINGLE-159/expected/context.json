@@ -55,7 +55,7 @@
       "code": "CTX-STATE-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "TASK-001は現在のpurposeに適用できません",
+      "summary": "TASK-001は状態doneのため目的implementに適用できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

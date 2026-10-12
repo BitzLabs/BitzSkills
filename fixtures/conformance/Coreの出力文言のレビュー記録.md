@@ -210,6 +210,8 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 | P7 | CTX-TASK-DEPENDENCY-001 の `suggestedAction` | （現在のCoreにない） | なし。先行TASKが `cancelled` の場合の `suggestedAction` と文言は PR-3 で加える | — |
 | P8 | `doctor` の診断の `suggestedAction` の追加（C29） | doctor.py（現在は `SPEC-DOCTOR-WORKSPACE-001` の1件だけが `suggestedAction` を持つ。適合済み） | 追加は PR-3。既存の1件の文言は §3.5 に合うので変えない | — |
 
+P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い違いの修正）」の節で直した。P8 はこの記録の範囲に含めない。
+
 補足: P6 は、行 #7 の関数 `relation_type_mismatch` を共通に使うため、#7 の文型の変更（「関係型{relation}」）が ADR の場合の出力にも及ぶ。PR-3 がこの診断の文言を差し替えるまでは、#7 の変更後の文型で出る。PR-3 の対象のfixture（P1〜P5）は 12 件ある。
 
 ### 変更したfixture
@@ -228,3 +230,77 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 - すでに§3.5に合っていた文言（承認時の対応表で「適合」とした53件）。
 - fixtureの`description`のうち、Coreの出力ではないもの。
 - 診断の`summary`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。診断コード、重大度、結果への効果、発生元、`evidence`は変えていない。
+
+## 2026-10-12: 出力文の見直し PR-3（意味の食い違いの修正）
+
+### 追加の理由
+
+- 出力文の計画の PR-3。PR-2 で言葉を日本語にした後も、同じ条件IDの診断の文型が操作や経路によって割れたり、診断が原因を表さなかったり、
+  目的を取り違えたりする文言が残っていた。上の「PR-3 に回した文言」（P1〜P7）がこれにあたる。
+- 表記規則 §3.5の7は、同じ条件IDの診断を、それを返す操作によらず同じ文型にすると定める。次の食い違いがこれに反していた。
+  - `CTX-COVERAGE-TEST-001`（C10）: `context`は「{modality} {stmt_id}がtestされていません」、`verify`は「対象{modality} {stmt_id}にtest対応がありません」と割れていた。
+  - `CTX-STATE-001`: 経路ごとに「{doc_id}は現在のpurposeに適用できません」と「起点{doc_id}はcancelledでありverifyに適用できません」の2つの文型があった。
+- 起点が`cancelled`のTASKのとき、`targetexpand.py`は目的によらず「…verifyに適用できません」の文言を使っていた。目的`implement`で起点にした`context`でも「verify」と出る、
+  目的の取り違えである（修正前のCoreで実測し、単体試験で押さえた）。
+- 承認されていない（状態が`accepted`でない）ADRへの`requires`の文言は、種別の組合せの誤りと同じ文型で、原因（ADRの状態）が文に現れなかった。
+- 先行TASKが完了していないときの文言は、先行TASKの状態を示さず、利用者が次に何をすればよいかも示さなかった。`suggestedAction`は現在のCoreに無かった。
+
+### 管理者の承認
+
+- 2026-10-12、人間の管理者（ユーザー）が、下の表のA〜Eを**このまま承認した**（ADR-062 Decision 2）。
+- D・Eは、当初「先行するTASK{prereq}」と提案した。`{prereq}`がTASKのIDそのもの（`TASK-002`）なので「先行するTASKTASK-002」になる誤りが見つかり、
+  管理者が同日に「先行する{prereq}」へ直すことを承認した。下の表は直した後の文言である。
+- **変更後の文字列は、規範文から一意に導いた値ではなく、表記規則 §3.5に合わせて管理者が承認した値である。**
+  期待値の根拠はこの承認済みの表であり、Coreの出力ではない（ADR-051、ADR-062）。
+
+### 承認済みの表
+
+`{…}`は実行時に差し込む値を示す。`{doc_id}`と`{prereq}`は、Coreが従来差し込んでいた値（複合ワークスペースでは修飾ID）をそのまま使う。
+
+| # | 診断（条件ID） | 場所 | 変更前 | 変更後（承認済み） | 固定しているfixture |
+|---|---|---|---|---|---|
+| A | `CTX-STATE-001`（CTX-STATE-INAPPLICABLE） | messages.py（`state_inapplicable`、`state_task_cancelled`）、targetexpand.py（3か所） | `{doc_id}は現在のpurposeに適用できません`<br>`起点{doc_id}はcancelledでありverifyに適用できません` | `{doc_id}は状態{status}のため目的{purpose}に適用できません`（どの経路も1つの文型。`{status}`は対象の文書の状態、`{purpose}`は操作の目的。`verify`操作からの検査では目的は`verify`） | SINGLE-067、SINGLE-146、SINGLE-148、SINGLE-159（`state_task_cancelled`を廃止し、すべての経路が`state_inapplicable`を使う） |
+| B | `CTX-COVERAGE-TEST-001`（CTX-COVERAGE-TEST-SHOULD／MUST／MUST-IMPLEMENT） | messages.py（`coverage_test_untested`、`verify_coverage_untested`） | context: `{modality} {stmt_id}がtestされていません`<br>verify: `対象{modality} {stmt_id}にtest対応がありません` | `対象規範文{modality} {stmt_id}にテスト対応がありません`（`context`と`verify`で同じ） | SINGLE-060、SINGLE-064、SINGLE-134、SINGLE-142、SINGLE-145 |
+| C | `CTX-RELATION-TYPE-001`（RELATION-TYPE。承認されていないADRへの`requires`） | relations.py、multirelate.py、targetexpand.py（共通の`type_mismatch_summary`） | `{source_kind}からADRへの関係型requiresは許可されません`（出力は`{source_kind}から{target_kind}への関係型{relation}は許可されません`の形） | `{source_kind}から状態{status}のADRへの関係型requiresは許可されません`（`{status}`はADRの状態）。種別の組合せの誤りの文言（`{source_kind}から{target_kind}への関係型{relation}は許可されません`）は変えない。同じ文型の中で参照先の部分にだけ状態を添える | SINGLE-147、SINGLE-148、SINGLE-149、MULTI-027-01、MULTI-027-02 |
+| D | `CTX-TASK-DEPENDENCY-001`（CTX-TASK-DEPENDENCY） | messages.py（`task_dependency_incomplete`）、targetexpand.py | `先行{prereq}が完了していません` | `先行する{prereq}が状態{status}で、状態doneではありません`（`{prereq}`は先行TASKのID、`{status}`はその状態。未完了も`cancelled`も同じ文型） | SINGLE-051（`open`）、SINGLE-137（`open`）、SINGLE-144（`cancelled`） |
+| E | `CTX-TASK-DEPENDENCY-001`の`suggestedAction`（新設） | messages.py（`task_dependency_suggested_action`）、targetexpand.py、context.py、verify.py | なし | `先行する{prereq}を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください` | SINGLE-051、SINGLE-137、SINGLE-144 |
+
+- P1 はD、P2・P3はA、P4・P5はB、P6はC、P7はEにあたる。P8（`doctor`の診断の`suggestedAction`の追加。C29）は、この節の範囲に含めない。
+- E の`suggestedAction`は、既存の`suggestedAction`を持つ診断（`SPEC-DOCTOR-WORKSPACE-001`）と同じく、結果のスキーマが許す任意のフィールドとして`context`と`verify`の診断に出る。
+  テキスト出力と`context`のMarkdown出力は、`suggestedAction`を持つ診断の直後に`  -> `の継続行を1行出す（結果・診断・終了コード §7、`context`仕様 §9.4）。
+
+### 変更したfixture
+
+- 期待値を変えたfixtureは16件（SINGLE 14、MULTI 2）。承認時の予測と一致した。
+
+| fixture | 変えた期待値 | 理由（表の行） |
+|---|---|---|
+| SINGLE-051 | `summary`、`suggestedAction`の追加、manifestの`description` | D、E |
+| SINGLE-137 | `summary`、`suggestedAction`の追加 | D、E |
+| SINGLE-144 | `summary`、`suggestedAction`の追加、manifestの`description` | D、E |
+| SINGLE-060 | `summary` | B |
+| SINGLE-064 | `summary` | B |
+| SINGLE-134 | `summary` | B |
+| SINGLE-142 | `summary`（`CTX-COVERAGE-TEST-001`の1件） | B |
+| SINGLE-145 | `summary` | B |
+| SINGLE-067 | `summary` | A（`cancelled`のTASKを起点にした`verify`） |
+| SINGLE-146 | `summary` | A（`draft`のREQ-002） |
+| SINGLE-159 | `summary` | A（状態`done`のTASKを目的`implement`の起点にする） |
+| SINGLE-147 | `summary`、manifestの`description` | C |
+| SINGLE-148 | `summary`（型制約の診断と、REQ-002の`CTX-STATE-001`）、manifestの`description` | C、A |
+| SINGLE-149 | `summary` | C |
+| MULTI-027-01 | `summary` | C |
+| MULTI-027-02 | `summary` | C |
+
+- manifestの`description`は、`context_failure_fixtures.py`が診断の`summary`をそのまま説明に使う件（SINGLE-051、144、147、148）で、`summary`と同じ文字列に変わった。
+- 入力、状態、終了コード、診断コード、重大度、結果への効果、発生元、`evidence`、コンテキストのハッシュ値は変えていない。
+- 期待値の更新は、承認済みの表の文言を生成器（`context_failure_fixtures.py`、`verify_fixtures.py`、`verify_binding_fixtures.py`、`verify_task_root_fixtures.py`、
+  `expansion_fixtures.py`、`multi_relation_type_fixtures.py`）のリテラルへ書き、各生成器の期待値の構築関数から`expected/*`とmanifestを書き直した。
+  Coreを実行して期待値を作っていない。監査の回帰試験（`test_conformance_audit.py`）のリテラルも、承認済みの文型に直した。
+- 参照計算（`multi_relation_type_fixtures.py`の`type_summary`）は、参照先が承認されていないADRなら状態を添え、そうでなければ種別の組合せの文言を返す。
+
+### 固定しない範囲
+
+- 先行TASKが`open`と`cancelled`以外の状態の場合（TASKの状態は`open`、`done`、`cancelled`の3つだけ）。
+- ADRの状態が`proposed`以外（`rejected`、`superseded`）の場合の`summary`は、fixtureでは固定しない（単体試験で押さえる）。
+- 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。

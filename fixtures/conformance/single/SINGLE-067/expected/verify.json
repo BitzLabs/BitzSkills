@@ -19,7 +19,7 @@
           "code": "CTX-STATE-001",
           "severity": "error",
           "resultStatus": "blocked",
-          "summary": "起点TASK-001はcancelledでありverifyに適用できません",
+          "summary": "TASK-001は状態cancelledのため目的verifyに適用できません",
           "source": {
             "kind": "file",
             "workspaceId": "root",

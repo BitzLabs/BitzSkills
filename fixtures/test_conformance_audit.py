@@ -307,10 +307,10 @@ class AuditTests(unittest.TestCase):
         """完全比較とは別に、`check_contract`だけが、推移的に到達した`cancelled`のTASKの状態の診断と、その`blocked`、
         閉包からの除外を拒否する（`SINGLE-145`、関係・トレースモデル §6.2）。"""
         state = {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-                 "summary": "TASK-003は現在のpurposeに適用できません",
+                 "summary": "TASK-003は状態cancelledのため目的implementに適用できません",
                  "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-003.md"}}
         dependency = {"code": "CTX-TASK-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
-                      "summary": "先行TASK-003が完了していません",
+                      "summary": "先行するTASK-003が状態cancelledで、状態doneではありません",
                       "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md",
                                  "key": "relations.requires"}}
 
@@ -1534,7 +1534,7 @@ class AuditTests(unittest.TestCase):
     def test_multi_relation_type_audit_rejects_state_diagnostic_and_erased_diagnostic(self):
         """他のメンバーの文書の型制約を、状態の診断への置換、診断の消去（成功への改変）、発生元の改変で崩した写しを拒否する。"""
         def to_state(diagnostic):
-            diagnostic.update(code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")
+            diagnostic.update(code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は状態proposedのため目的implementに適用できません")
             diagnostic["source"] = {"kind": "file", "workspaceId": "api", "path": ".spec/decisions/ADR-001.md"}
             diagnostic.pop("evidence")
 
@@ -4729,7 +4729,7 @@ class AuditTests(unittest.TestCase):
         状態や未解決の件数の改変を拒否する（`SINGLE-147`、`SINGLE-148`）。"""
         def state(path=".spec/requirements/REQ-002.md"):
             return {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-                    "summary": "ADR-001は現在のpurposeに適用できません",
+                    "summary": "ADR-001は状態proposedのため目的implementに適用できません",
                     "source": {"kind": "file", "workspaceId": "root", "path": path}}
 
         def replace_first(v):
@@ -4785,10 +4785,10 @@ class AuditTests(unittest.TestCase):
             # （診断レジストリの主診断の規則）。診断の置換、追加、状態の改変、`blocked`の取消しを拒否する。
             ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
             ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].append(dict(
-                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は状態cancelledのため目的implementに適用できません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
             ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].insert(0, dict(
-                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は状態cancelledのため目的implementに適用できません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
             ("SINGLE-144", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
             ("SINGLE-144", "expected/context.json", lambda v: v.update(status="failed")),
@@ -4803,10 +4803,10 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001")),
             ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001")),
             ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].append(dict(
-                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません",
+                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行するTASK-002が状態openで、状態doneではありません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-001.md", "key": "relations.requires"}))),
             ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].insert(0, dict(
-                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません",
+                v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行するTASK-002が状態openで、状態doneではありません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-001.md", "key": "relations.requires"}))),
             ("SINGLE-159", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
             ("SINGLE-159", "expected/context.json", lambda v: v.update(diagnostics=[])),
@@ -4832,9 +4832,9 @@ class AuditTests(unittest.TestCase):
             # 状態が`accepted`でないADRへの`requires`は、型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す。状態の診断
             # （`CTX-STATE-001`、`blocked`）への置換、診断の消去、独立した原因の診断の消去、状態の改変を拒否する。
             ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
-                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")),
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は状態proposedのため目的implementに適用できません")),
             ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
-                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません",
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は状態proposedのため目的implementに適用できません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"})),
             ("SINGLE-147", "expected/context.json", lambda v: v.update(status="blocked")),
             ("SINGLE-147", "expected/context.json", lambda v: v.update(status="passed")),
@@ -4848,7 +4848,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].pop(0)),
             ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].reverse()),
             ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].append(dict(
-                v["diagnostics"][1], summary="ADR-001は現在のpurposeに適用できません",
+                v["diagnostics"][1], summary="ADR-001は状態proposedのため目的implementに適用できません",
                 source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"}))),
             ("SINGLE-148", "expected/context.json", lambda v: v.update(status="blocked")),
             ("SINGLE-148", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=2)),
@@ -4891,7 +4891,7 @@ class AuditTests(unittest.TestCase):
         context_failure_fixtures.check_done_root_inputs(documents)
         self.assertEqual(documents[".spec/tasks/TASK-001.md"][1]["status"], "done")
         self.assertNotIn("requires", documents[".spec/tasks/TASK-001.md"][1]["relations"])
-        dependency = dict(result["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行TASK-002が完了していません")
+        dependency = dict(result["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001", summary="先行するTASK-002が状態openで、状態doneではありません")
         changes = [
             lambda v: v["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001"),
             lambda v: v["diagnostics"].append(copy.deepcopy(dependency)),

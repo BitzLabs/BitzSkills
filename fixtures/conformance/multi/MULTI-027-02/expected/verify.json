@@ -19,7 +19,7 @@
           "code": "CTX-RELATION-TYPE-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "TECHからADRへの関係型requiresは許可されません",
+          "summary": "TECHから状態proposedのADRへの関係型requiresは許可されません",
           "source": {
             "kind": "file",
             "workspaceId": "api",

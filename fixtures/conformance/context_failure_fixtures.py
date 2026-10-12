@@ -27,16 +27,18 @@ from .expansion_fixtures import requirement
 HERE = Path(__file__).resolve().parent
 CASES = {
     "SINGLE-050": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
-    "SINGLE-051": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
-    "SINGLE-144": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
-    "SINGLE-159": ("TASK-001", "implement", "blocked", "CTX-STATE-001", "TASK-001は現在のpurposeに適用できません"),
-    "SINGLE-147": ("TASK-001", "implement", "failed", "CTX-RELATION-TYPE-001", "TASKからADRへの関係型requiresは許可されません"),
-    "SINGLE-148": ("REQ-001", "implement", "failed", "CTX-RELATION-TYPE-001", "REQからADRへの関係型requiresは許可されません"),
+    "SINGLE-051": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行するTASK-002が状態openで、状態doneではありません"),
+    "SINGLE-144": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行するTASK-002が状態cancelledで、状態doneではありません"),
+    "SINGLE-159": ("TASK-001", "implement", "blocked", "CTX-STATE-001", "TASK-001は状態doneのため目的implementに適用できません"),
+    "SINGLE-147": ("TASK-001", "implement", "failed", "CTX-RELATION-TYPE-001", "TASKから状態proposedのADRへの関係型requiresは許可されません"),
+    "SINGLE-148": ("REQ-001", "implement", "failed", "CTX-RELATION-TYPE-001", "REQから状態proposedのADRへの関係型requiresは許可されません"),
     "SINGLE-052-01": ("TECH-001", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "起点TECH-001はTECH-002に置換されています"),
     "SINGLE-052-02": ("TECH-003", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "依存先TECH-001はTECH-002に置換されています"),
     "SINGLE-053": ("TECH-001", "implement", "failed", "CTX-STATE-SUPERSEDED-002", "TECH-001の有効な後継が複数存在します"),
     "SINGLE-127-13": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
 }
+# `CTX-TASK-DEPENDENCY-001`の`suggestedAction`（表記規則 §3.5の7、ADR-062 Decision 2で管理者が承認した文言）。先行TASKはどちらもTASK-002。
+DEPENDENCY_SUGGESTED_ACTION = "先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
 # 診断の要約と異なる、検査する論点の1行要約（既存の件は診断の要約を説明に使う）。
 DESCRIPTIONS = {"SINGLE-159": "状態doneのTASKを目的implementの起点にするとCTX-STATE-001でblockedにし、先行TASKの診断を返さない"}
 TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# TASK-001 先行作業の確認\n\n## Objective\n\n先行作業の完了を確認する。\n"
@@ -174,7 +176,7 @@ def reviewed_result(identifier):
             # 独立した別の原因。状態`draft`のREQ-002は目的`implement`に適用できない。発生元は適用できない文書のファイル。
             # 診断の順序は`path`の辞書順（REQ-001.md < REQ-002.md）なので、型制約の診断が先になる。
             diagnostics.append({"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-                                "summary": "REQ-002は現在のpurposeに適用できません",
+                                "summary": "REQ-002は状態draftのため目的implementに適用できません",
                                 "source": {"kind": "file", "workspaceId": "root", "path": DRAFT_REQ_PATH}})
         source = None
     elif identifier in {"SINGLE-050", "SINGLE-127-13"}:
@@ -194,7 +196,8 @@ def reviewed_result(identifier):
                        for modality in ("must", "should", "may")}, "adjacent": []},
         "durationMs": 0,
         "diagnostics": diagnostics if diagnostics is not None else
-        [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source}]}
+        [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source,
+          **({"suggestedAction": DEPENDENCY_SUGGESTED_ACTION} if code == "CTX-TASK-DEPENDENCY-001" else {})}]}
 
 
 def check_cancelled_prerequisite(result):

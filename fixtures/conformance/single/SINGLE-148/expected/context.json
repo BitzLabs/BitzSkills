@@ -55,7 +55,7 @@
       "code": "CTX-RELATION-TYPE-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "REQからADRへの関係型requiresは許可されません",
+      "summary": "REQから状態proposedのADRへの関係型requiresは許可されません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
@@ -68,7 +68,7 @@
       "code": "CTX-STATE-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "REQ-002は現在のpurposeに適用できません",
+      "summary": "REQ-002は状態draftのため目的implementに適用できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-144",
-  "description": "先行TASK-002が完了していません",
+  "description": "先行するTASK-002が状態cancelledで、状態doneではありません",
   "setup": {
     "git": true,
     "operations": []
