@@ -174,7 +174,7 @@ class StateInapplicableTextTests(unittest.TestCase):
             self.assertEqual([d["summary"] for d in diags], ["TASK-001は状態cancelledのため目的verifyに適用できません"])
 
     def test_expansion_uses_one_sentence_for_every_path(self):
-        # 起点のTASK（cancelled）、起点のTASK（done、implement）、依存先のREQ（draft）が同じ文型になる。
+        # 起点のTASK（cancelled）は目的によらず同じ文型で、目的を差し込む。doneとdraftの経路は下の試験で確かめる。
         cases = [
             ("TASK-001", "implement", "cancelled", "TASK-001は状態cancelledのため目的implementに適用できません"),
             ("TASK-001", "verify", "cancelled", "TASK-001は状態cancelledのため目的verifyに適用できません"),
