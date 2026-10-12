@@ -131,3 +131,5 @@ traceのusageとwallMsを保存し、取得できないprovider費用は欠測�
 新測定は固定CLI0.160.1の公開exec event形式に照合する。thread/turn開始各1、正常turn.completed終端1、許可されたagent_message/reasoningとsdd_evalの5ツールだけ、MCP開始/終了IDと引数一致、未完了なしを要求する。失敗/未知イベント・操作・重複ID・終端後出力・usage欠測/型違い・非有限JSON・重複JSON keyを拒否する。原usageをrunへ保存し費用は未確定として扱う。成功時もprompt/argv/timeout/stderrを保存し、版に応じた固定artifact一覧を検査する。
 
 前件の独立receipt未提出は待機として次枠を拒否する。提出された失敗/不正な検分や一次原証拠の不整合は、同じロック内で共有台帳へstopを保存する。receiptや原bytesを元へ戻しても同条件を再開しない。読取り不能なreceiptのhashは欠測とし、stop保存自体は行う。旧測定は元refと原archiveを保持し、新版で成功へ置換しない。
+
+Core結果のstdout内部・最終境界のcontext・起動前doctor・MCP JSON-RPC要求にも同じ厳格JSONパーサーを適用する。旧plan-implement-matrix-20261012-01は準備SOLのP2で一次0のまま停止、新02は是正sourceと別出力/台帳/準備1枠で固定する。旧準備1枠の消費と原応答を新条件へ付け替えない。

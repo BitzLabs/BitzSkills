@@ -47,6 +47,15 @@ class SddNativeCompletionTests(unittest.TestCase):
                 path.write_text(raw)
                 with self.subTest(raw=raw),self.assertRaises(ValueError):evaluation.read_events(path)
 
+    def test_nested_core_stdout_duplicate_status_and_overflow_rejected(self):
+        for raw in ['{"status":"failed","status":"passed"}', '{"status":"passed","extra":1e999}', '{"status":"passed","nested":{"extra":NaN}}']:
+            call={"tool":"run_bitz","accepted":True,"result":{"stdout":raw}}
+            with self.subTest(raw=raw):
+                self.assertIsNone(evaluation.core_results([call])[0][1])
+        raw='{"schemaVersion":"1.0","operation":"check","status":"passed"}'
+        call={"tool":"run_bitz","accepted":True,"result":{"stdout":raw}}
+        self.assertEqual(evaluation.core_results([call])[0][1]["status"],"passed")
+
     def test_finite_metadata_numbers_remain_observable(self):
         value=evaluation.parse_json('{"_meta":{"fraction":1.25,"small":1e-9},"count":1000000000000000000000}')
         self.assertEqual(value["_meta"],{"fraction":1.25,"small":1e-9})

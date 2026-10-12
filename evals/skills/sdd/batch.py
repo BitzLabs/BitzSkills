@@ -32,6 +32,8 @@ def plan(evaluation, args, cases):
     if committed != manifest.read_bytes():
         raise ValueError("測定条件が確定refと一致しません")
     batch = evaluation.load(manifest)
+    if "preparationStop" in batch:
+        raise ValueError("独立準備検分で停止した旧条件は起動しません")
     protocol = evaluation.load(here / "protocol.json")
     if (batch.get("schemaVersion") != "1.0" or not re.fullmatch(r"[a-z0-9-]+", batch.get("id", ""))
             or batch.get("model") != args.model or batch.get("automaticRetries") != 0
@@ -75,7 +77,7 @@ def plan(evaluation, args, cases):
             capture_output=True, text=True, timeout=20)
     if doctor.returncode != 0:
         raise ValueError("公開Core doctorが起動前検査で非成功でした")
-    doctor_result = json.loads(doctor.stdout)
+    doctor_result = evaluation.parse_json(doctor.stdout)
     if doctor_result.get("status") not in evaluation.PASS:
         raise ValueError("公開Core doctorが起動前検査で非成功でした")
     doctor_result.pop("durationMs", None)  # 実時間は同条件で変動するため入力同一性へ含めない。

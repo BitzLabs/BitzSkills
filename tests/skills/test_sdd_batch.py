@@ -33,7 +33,7 @@ class SddBatchTests(unittest.TestCase):
         self.evaluation = SimpleNamespace(ROOT=self.root, HERE=self.root / "evals/skills/sdd",
             PASS={"passed", "passed_with_warnings"},
             setup=lambda workspace, *unused: workspace.mkdir(),
-            load=lambda p: json.loads(Path(p).read_text()), digest=lambda b: hashlib.sha256(b).hexdigest(),
+            load=lambda p: json.loads(Path(p).read_text()), parse_json=json.loads, digest=lambda b: hashlib.sha256(b).hexdigest(),
             json_digest=lambda v: hashlib.sha256(json.dumps(v, sort_keys=True).encode()).hexdigest(),
             identity=lambda args, case: {"model": args.model, "modelVersion": args.model_version,
                 "subjectCommit": "a" * 40, "variant": args.variant, "repetition": args.repetition, "caseId": case["id"]},
@@ -262,6 +262,30 @@ class SddBatchTests(unittest.TestCase):
         self.check_ignore.start()
         self.addCleanup(self.check_output.stop)
         self.addCleanup(self.check_ignore.stop)
+
+    def test_stopped_preparation_rejected_before_runtime_or_budget(self):
+        self.prepare_plan()
+        self.fixed["preparationStop"] = {"status":"stopped_preparation","primaryConsumed":0}
+        self.write(self.args.batch,self.fixed)
+        with self.assertRaisesRegex(ValueError,"旧条件"):
+            batch.plan(self.evaluation,self.args,self.cases)
+        self.assertFalse(self.ledger_path.exists())
+        self.assertFalse(self.args.output.exists())
+        self.assertEqual(self.calls,[])
+
+    def test_doctor_stdout_duplicate_and_nonfinite_rejected_before_budget(self):
+        import importlib.util
+        specification=importlib.util.spec_from_file_location('strict_preflight_sdd',ROOT/'evals/skills/sdd/evaluate.py')
+        strict=importlib.util.module_from_spec(specification);specification.loader.exec_module(strict)
+        self.evaluation.parse_json = strict.parse_json
+        self.prepare_plan()
+        for raw in ['{"status":"failed","status":"passed"}','{"status":"passed","extra":1e999}']:
+            doctor=SimpleNamespace(returncode=0,stdout=raw)
+            with self.subTest(raw=raw), patch.object(batch.subprocess,"run",side_effect=[SimpleNamespace(returncode=0),doctor]):
+                with self.assertRaises(ValueError):
+                    batch.plan(self.evaluation,self.args,self.cases)
+                self.assertFalse(self.ledger_path.exists())
+                self.assertEqual(self.calls,[])
 
     def test_plan_binds_each_slot_variant_and_repetition(self):
         self.prepare_plan()

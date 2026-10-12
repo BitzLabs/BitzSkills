@@ -263,7 +263,7 @@ TOOLS = [{"name": name, "description": description,
 
 def serve(host, source=sys.stdin, output=sys.stdout):
     for line in source:
-        request = json.loads(line)
+        request = parse_json(line)
         if "id" not in request:
             continue
         method = request["method"]
@@ -357,8 +357,8 @@ def core_results(calls):
         if call["tool"] == "run_bitz" and call["accepted"]:
             value = call["result"]
             try:
-                result = json.loads(value["stdout"])
-            except json.JSONDecodeError:
+                result = parse_json(value["stdout"])
+            except ValueError:
                 result = None
             results.append((call, result))
     return results
@@ -382,7 +382,7 @@ def final_task_boundaries(directory):
                              env={"PATH": "/usr/bin:/bin", "PYTHONPATH": control["pythonpath"], "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"})
     if process.returncode:
         raise ValueError("最終TASK境界の公開contextを取得できません")
-    result = json.loads(process.stdout)
+    result = parse_json(process.stdout)
     if result.get("schemaVersion") != "1.0" or result.get("operation") != "context" or result.get("status") not in PASS or not result.get("resolution", {}).get("complete"):
         raise ValueError("最終TASK境界の公開contextが不完全です")
     return {d["id"]: d["frontmatter"].get("changes", []) for d in result["documents"] if d["kind"] == "task"}
