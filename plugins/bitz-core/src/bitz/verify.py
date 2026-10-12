@@ -490,6 +490,8 @@ def _process_single_target(
                 diag = _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
                 if err.get("evidence") is not None:
                     diag["evidence"] = err["evidence"]
+                if err.get("suggestedAction") is not None:
+                    diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
         entry_out["diagnostics"] = sort_diagnostics(diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in diags])

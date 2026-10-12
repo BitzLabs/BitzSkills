@@ -122,6 +122,15 @@ def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[
     return entry, (ref if "::" in ref else entry.doc_id)
 
 
+def type_mismatch_summary(entry: DocEntry, relation: str, target_entry: DocEntry) -> str:
+    """`CTX-RELATION-TYPE-001`の`summary`。種別の組合せが許可される`requires`の参照先ADRが承認されていない場合だけ、状態を添える。"""
+
+    allowed = RELATION_ALLOWED_TARGET_KINDS.get((entry.kind, relation), set())
+    if relation == "requires" and target_entry.kind == "ADR" and "ADR" in allowed and target_entry.status != "accepted":
+        return messages.relation_requires_adr_not_accepted(entry.kind, target_entry.status)
+    return messages.relation_type_mismatch(entry.kind, target_entry.kind, relation)
+
+
 def _target_kind_ok(entry: DocEntry, relation: str, ref: str, target_entry: DocEntry) -> bool:
     """参照先の種別（＋関係・トレースモデル §4が型表へ織り込む状態の条件）が妥当かを判定する。
 
@@ -213,7 +222,7 @@ def _field_diagnostics(
                         "CTX-RELATION-TYPE-001",
                         "error",
                         "failed",
-                        messages.relation_type_mismatch(entry.kind, target_entry.kind, relation),
+                        type_mismatch_summary(entry, relation, target_entry),
                         entry.path,
                         workspace_id,
                         key=f"relations.{relation}",

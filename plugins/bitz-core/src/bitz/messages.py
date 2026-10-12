@@ -175,6 +175,12 @@ def relation_type_mismatch(source_kind: str, target_kind: str, relation: str) ->
     return f"{source_kind}から{target_kind}への関係型{relation}は許可されません"
 
 
+def relation_requires_adr_not_accepted(source_kind: str, status: str) -> str:
+    """承認されていないADRへの`requires`。種別の組合せの文型の参照先の部分にだけ状態を添える。"""
+
+    return f"{source_kind}から状態{status}のADRへの関係型requiresは許可されません"
+
+
 def relation_cycle(relation: str) -> str:
     return f"関係型{relation}に禁止された循環があります"
 
@@ -242,12 +248,16 @@ REPORT_WRITE_FAILED = "レポートの保存先へ排他的に作成できませ
 # --- `context`操作（`CTX-*`） -----------------------------------------------------
 
 
-def task_dependency_incomplete(prereq_task_id: str) -> str:
-    return f"先行{prereq_task_id}が完了していません"
+def task_dependency_incomplete(prereq_task_id: str, status: str) -> str:
+    return f"先行する{prereq_task_id}が状態{status}で、状態doneではありません"
 
 
-def state_inapplicable(doc_id: str) -> str:
-    return f"{doc_id}は現在のpurposeに適用できません"
+def task_dependency_suggested_action(prereq_task_id: str) -> str:
+    return f"先行する{prereq_task_id}を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
+
+
+def state_inapplicable(doc_id: str, status: str, purpose: str) -> str:
+    return f"{doc_id}は状態{status}のため目的{purpose}に適用できません"
 
 
 def state_superseded_origin(doc_id: str, successor_id: str) -> str:
@@ -271,7 +281,7 @@ def coverage_task_unaddressed(modality: str, stmt_id: str) -> str:
 
 
 def coverage_test_untested(modality: str, stmt_id: str) -> str:
-    return f"{modality} {stmt_id}がtestされていません"
+    return f"対象規範文{modality} {stmt_id}にテスト対応がありません"
 
 
 def projection_outside(expand_id: str) -> str:
@@ -314,7 +324,7 @@ def verify_command_undefined(name: str) -> str:
 
 
 def verify_coverage_untested(modality: str, stmt_id: str) -> str:
-    return f"対象{modality} {stmt_id}にtest対応がありません"
+    return coverage_test_untested(modality, stmt_id)
 
 
 def verify_executable_unavailable_path() -> str:
@@ -327,10 +337,6 @@ def verify_argv_expanded_count_limit() -> str:
 
 def verify_cwd_unavailable() -> str:
     return "コマンドの作業ディレクトリが利用できません"
-
-
-def state_task_cancelled(doc_id: str) -> str:
-    return f"起点{doc_id}はcancelledでありverifyに適用できません"
 
 
 # --- 複合ワークスペース（`SPEC-MULTI-*`） ---------------------------------------------

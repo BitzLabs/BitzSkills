@@ -642,6 +642,8 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 )
                 if err.get("evidence") is not None:
                     diag["evidence"] = err["evidence"]
+                if err.get("suggestedAction") is not None:
+                    diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)

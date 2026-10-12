@@ -264,7 +264,7 @@ def field_diagnostics(
                 diags.append(
                     _mk(
                         "CTX-RELATION-TYPE-001", "error", "failed",
-                        messages.relation_type_mismatch(entry.kind, target_entry.kind, relation),
+                        relations_mod.type_mismatch_summary(entry, relation, target_entry),
                         entry.path, ws_id, key=f"relations.{relation}", evidence=ref,
                     )
                 )
