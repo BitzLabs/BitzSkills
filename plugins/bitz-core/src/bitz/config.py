@@ -504,6 +504,10 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                     resultStatus="blocked",
                     summary="未対応のEARS-AIのメジャーバージョンです",
                     source=_file_source(workspace_id, "earsAi"),
+                    # 修復手順は`doctor`の診断だけに付ける（`check`などの`SPEC-EARS-VERSION-001`には付けない）。
+                    suggestedAction=(
+                        messages.DOCTOR_EARS_VERSION_ACTION if ears_version_code == "SPEC-DOCTOR-EARS-001" else None
+                    ),
                 )
             ],
             workspace_id,

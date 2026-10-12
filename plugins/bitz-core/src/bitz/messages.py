@@ -411,8 +411,30 @@ def multi_ownership_symlink_current(path: str, workspace_id: str) -> str:
 
 # --- doctorのプラグインの要求（`SPEC-DOCTOR-PLUGIN-001`／`SPEC-DOCTOR-API-001`／`SPEC-DOCTOR-CAPABILITY-001`、ADR-061） ---
 
-DOCTOR_PLUGIN_REQUEST_INCOMPLETE = (
-    "プラグインの要求が不完全です。--plugin、--plugin-version、--require-core-apiを同時に指定してください"
-)
+DOCTOR_PLUGIN_REQUEST_INCOMPLETE = "プラグインの要求が不完全です"
 DOCTOR_API_INCOMPATIBLE = "CoreのAPIのバージョンがプラグインの要求する範囲を満たしません"
 DOCTOR_CAPABILITY_MISSING = "プラグインの要求する対応機能をCoreが公開していません"
+
+
+# --- doctorの診断の`suggestedAction`（`04_doctor.md` §1・§8、ADR-062 Decision 2。管理者が2026-10-12に承認した文言） ---
+
+DOCTOR_RUNTIME_VERSION_ACTION = "CPython 3.12以上でCoreを実行してください"
+DOCTOR_PLUGIN_REQUEST_ACTION = "--plugin、--plugin-version、--require-core-apiを同時に指定してください"
+DOCTOR_EARS_VERSION_ACTION = "設定キーearsAiをCoreが対応するメジャーバージョン1に合わせてください"
+DOCTOR_GIT_DEGRADED_ACTION = "Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください"
+
+
+def doctor_api_incompatible_action(required: str, core_api: str) -> str:
+    return f"範囲{required}を満たすCoreへ更新するか、Core APIのバージョン{core_api}に対応するプラグインを使ってください"
+
+
+def doctor_capability_missing_action(missing: list[str]) -> str:
+    return f"対応機能{'、'.join(missing)}を公開するCoreへ更新するか、プラグインの要求を見直してください"
+
+
+def doctor_command_cwd_action(name: str) -> str:
+    return f"設定キーverify.commands.{name}.cwdのディレクトリを作成するか、正しいパスを指定してください"
+
+
+def doctor_command_file_action(name: str) -> str:
+    return f"設定キーverify.commands.{name}.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください"
