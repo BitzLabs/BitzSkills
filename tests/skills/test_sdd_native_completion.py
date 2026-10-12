@@ -43,9 +43,14 @@ class SddNativeCompletionTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory(dir=ROOT/'.venv/test-temp') as tmp:
             path=Path(tmp)/'trace.jsonl'
-            for raw in ['{"type":"turn.started","type":"turn.completed"}', '{"type":"turn.completed","usage":NaN}']:
+            for raw in ['{"type":"turn.started","type":"turn.completed"}', '{"type":"turn.completed","usage":NaN}', '{"overflow":1e999}', '{"nested":[{"overflow":-1e999}]}']:
                 path.write_text(raw)
                 with self.subTest(raw=raw),self.assertRaises(ValueError):evaluation.read_events(path)
+
+    def test_finite_metadata_numbers_remain_observable(self):
+        value=evaluation.parse_json('{"_meta":{"fraction":1.25,"small":1e-9},"count":1000000000000000000000}')
+        self.assertEqual(value["_meta"],{"fraction":1.25,"small":1e-9})
+        self.assertEqual(value["count"],1000000000000000000000)
 
     def test_unknown_missing_bool_and_out_of_bounds_usage_rejected(self):
         for key,value in [('input_tokens',True),('input_tokens',0),('output_tokens',0),('output_tokens',None),('input_tokens',-1),('cached_input_tokens',101),('reasoning_output_tokens',11),('unknown',0)]:

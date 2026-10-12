@@ -9,6 +9,7 @@ import base64
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -40,8 +41,26 @@ if __name__ == "__main__":
 FAIL_TEST = TEST.replace('self.assertEqual(1, len(module.validate("")))', 'self.fail("合成例の未解消テスト障害")')
 
 
+def parse_json(raw):
+    def pairs(values):
+        result = {}
+        for key, value in values:
+            if key in result:
+                raise ValueError("duplicate JSON key: " + key)
+            result[key] = value
+        return result
+    def constant(value):
+        raise ValueError("non-finite JSON value: " + value)
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError("non-finite JSON number: " + value)
+        return result
+    return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant, parse_float=finite_float)
+
+
 def load(path):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return parse_json(Path(path).read_text(encoding="utf-8"))
 
 
 def digest(content):
@@ -266,17 +285,7 @@ def serve(host, source=sys.stdin, output=sys.stdout):
 
 
 def read_events(path):
-    def pairs(values):
-        result = {}
-        for key, value in values:
-            if key in result:
-                raise ValueError("duplicate JSON key: " + key)
-            result[key] = value
-        return result
-    def constant(value):
-        raise ValueError("non-finite JSON value: " + value)
-    return [json.loads(line, object_pairs_hook=pairs, parse_constant=constant)
-            for line in Path(path).read_text().splitlines() if line.strip()]
+    return [parse_json(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 
 def native_completion(events):
@@ -402,7 +411,7 @@ def inspect_valid_artifacts(record, case, directory):
     if record["identity"].get("executionVersion") == EXECUTION_VERSION and json.dumps(record.get("providerUsage"), sort_keys=True) != json.dumps(usage, sort_keys=True):
         errors["deterministic"].append("original provider usage mismatch")
     messages = [e["item"].get("text") for e in trace if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "agent_message"]
-    if not messages or json.loads(messages[-1]) != decision:
+    if not messages or parse_json(messages[-1]) != decision:
         errors["deterministic"].append("trace final response mismatch")
     calls = read_events(directory / "host.jsonl")
     if any(not c["accepted"] for c in calls):
@@ -418,7 +427,7 @@ def inspect_valid_artifacts(record, case, directory):
         item = event.get("item", {})
         if event.get("type") == "item.completed" and item.get("type") == "mcp_tool_call" and item.get("server") == "sdd_eval":
             content = item.get("result", {}).get("content", [])
-            payloads = [json.loads(c["text"]) for c in content if c.get("type") == "text"]
+            payloads = [parse_json(c["text"]) for c in content if c.get("type") == "text"]
             if len(payloads) != 1 or payloads[0] not in calls or item.get("arguments") != payloads[0]["arguments"] or item.get("tool") != payloads[0]["tool"]:
                 errors["deterministic"].append("MCP trace/host mismatch")
             else:

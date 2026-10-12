@@ -310,6 +310,20 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertFalse(evaluation.safe_source("import os\ndef validate(value):\n    return []\n"))
         self.assertFalse(evaluation.safe_source("def validate(value):\n    while True: pass\n"))
 
+    def test_overflowing_native_metadata_fails_complete_scoring_entry(self):
+        self.prepare("SI-010")
+        self.read_sources()
+        record = self.record()
+        events = evaluation.read_events(self.directory / "trace.jsonl")
+        item = next(e["item"] for e in events if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "mcp_tool_call")
+        item["result"]["_meta"] = {"overflow":"SYNTHETIC_OVERFLOW"}
+        raw = "\n".join(json.dumps(e) for e in events).replace('"SYNTHETIC_OVERFLOW"','1e999')
+        evaluation.write(self.directory,"trace.jsonl",raw)
+        record["artifacts"]["trace.jsonl"] = evaluation.digest(raw.encode())
+        checks = self.inspect(record)
+        self.assertTrue(all(not check["passed"] for check in checks.values()),checks)
+        self.assertIn("non-finite",str(checks))
+
     def test_original_usage_and_fixed_new_artifacts_cannot_be_omitted_or_retyped(self):
         import copy
         self.prepare("SI-010")
