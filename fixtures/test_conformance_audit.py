@@ -2432,6 +2432,60 @@ class AuditTests(unittest.TestCase):
                                     if not line.startswith("  -> ")))
             self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-026-02"})["status"], "Failed")
 
+    def test_multi_doctor_precheck_stop_audit_rejects_wrong_code_and_member_diagnostics(self):
+        """`MULTI-033`: ルートのEARS-AIの非互換は`doctor`のコードで返し、メンバーの診断を開始しない（実装の確認事項C31）。"""
+        mutations = [
+            ("expected/doctor.json", lambda v: v["diagnostics"][0].update(code="SPEC-EARS-VERSION-001")),
+            ("expected/doctor.json", lambda v: v["diagnostics"][0].pop("suggestedAction")),
+            ("expected/doctor.json", lambda v: v["diagnostics"][0].update(suggestedAction="")),
+            ("expected/doctor.json", lambda v: v["diagnostics"][0].update(summary="未対応のEARS-AI majorです")),
+            ("expected/doctor.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("expected/doctor.json", lambda v: v["diagnostics"][0]["source"].update(workspaceId="web")),
+            ("expected/doctor.json", lambda v: v["diagnostics"].append(dict(v["diagnostics"][0], code="SPEC-EARS-VERSION-001"))),
+            ("expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("expected/doctor.json", lambda v: v["workspaces"].append(multi_doctor_fixtures.workspace("platform", "."))),
+            ("expected/doctor.json", lambda v: v["workspaces"].extend([
+                multi_doctor_fixtures.workspace("platform", "."), multi_doctor_fixtures.workspace("web", "apps/web")])),
+            ("expected/doctor.json", lambda v: v["checks"].append({"name": "catalog", "status": "passed"})),
+            ("expected/doctor.json", lambda v: v["checks"].pop()),
+            ("expected/doctor.json", lambda v: v["checks"][1].update(status="blocked")),
+            ("expected/doctor.json", lambda v: v.update(status="passed")),
+            ("expected/doctor.json", lambda v: v.update(status="failed")),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=0, status="passed")),
+            ("manifest.json", lambda v: v["invocation"].update(cwd="apps/web")),
+            ("manifest.json", lambda v: v["invocation"]["argv"].remove("--all-workspaces")),
+        ]
+        for index, (relative, mutate) in enumerate(mutations):
+            with self.subTest(relative=relative, index=index), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, "MULTI-033")
+                path = root / "multi/MULTI-033" / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-033"})["status"], "Failed")
+        # 入力：`earsAi`が互換なら、診断を持つ期待値を受理しない。メンバー側が非互換になっても受理しない。
+        for relative, old, new in ((".spec/bitz.yaml", 'earsAi: "2.0"', 'earsAi: "1.0"'),
+                                   ("apps/web/.spec/bitz.yaml", 'earsAi: "1.0"', 'earsAi: "2.0"')):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, "MULTI-033")
+                path = root / "multi/MULTI-033/repo" / relative
+                path.write_text(path.read_text().replace(old, new))
+                self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-033"})["status"], "Failed")
+
+    def test_multi_doctor_reference_ears_precheck(self):
+        """参照計算：ルートの設定の`earsAi`のメジャーバージョンだけから、`doctor`の診断を導く。互換なら診断なし（陰性対照）。"""
+        root = (audit.FIXTURES / "multi/MULTI-033/repo/.spec/bitz.yaml").read_text()
+        diagnostics = multi_doctor_fixtures.reference_ears_precheck(root)
+        self.assertEqual([d["code"] for d in diagnostics], ["SPEC-DOCTOR-EARS-001"])
+        for compatible in ("1.0", "1.9"):
+            self.assertEqual(multi_doctor_fixtures.reference_ears_precheck(
+                root.replace('earsAi: "2.0"', f'earsAi: "{compatible}"')), [])
+        for incompatible in ("2.1", "3.0"):
+            self.assertEqual(len(multi_doctor_fixtures.reference_ears_precheck(
+                root.replace('earsAi: "2.0"', f'earsAi: "{incompatible}"'))), 1)
+
     def copy_doctor_plugin_fixture(self, temporary, identifier):
         multi = identifier in doctor_plugin_fixtures.MULTI
         return self.copy_multi_fixture(temporary, identifier) if multi else self.copy_fixture(temporary, identifier)
