@@ -18,7 +18,8 @@
         "workspaceId": "root",
         "path": ".spec/bitz.yaml",
         "key": "verify.commands.default.argv"
-      }
+      },
+      "suggestedAction": "設定キーverify.commands.default.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください"
     }
   ],
   "core": {

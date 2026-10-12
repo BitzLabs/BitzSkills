@@ -18,7 +18,8 @@
         "workspaceId": "root",
         "path": ".spec/bitz.yaml",
         "key": "verify.commands.default.cwd"
-      }
+      },
+      "suggestedAction": "設定キーverify.commands.default.cwdのディレクトリを作成するか、正しいパスを指定してください"
     }
   ],
   "core": {

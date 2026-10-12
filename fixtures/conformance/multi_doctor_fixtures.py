@@ -84,6 +84,8 @@ def command_diagnostic():
         "summary": "コマンドの実行可能ファイルを解決できません",
         "source": {"kind": "file", "workspaceId": "api", "path": ".spec/bitz.yaml",
                    "key": "verify.commands.backend.argv"},
+        "suggestedAction": "設定キーverify.commands.backend.argvの先頭の実行可能ファイルを"
+                           "インストールするか、正しいパスを指定してください",
     }
 
 
@@ -129,6 +131,8 @@ def reviewed_text(identifier):
         "doctor blocked targets=21 diagnostics=1 (0ms)\n"
         "api:.spec/bitz.yaml::: error: SPEC-DOCTOR-COMMAND-001: "
         "コマンドの実行可能ファイルを解決できません\n"
+        "  -> 設定キーverify.commands.backend.argvの先頭の実行可能ファイルを"
+        "インストールするか、正しいパスを指定してください\n"
     )
 
 

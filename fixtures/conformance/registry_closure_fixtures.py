@@ -83,6 +83,7 @@ CASES = {
         "code": "SPEC-DOCTOR-GIT-001",
         "summary": "Git不在のため差分に依存する保証を提供できません",
         "source": {"kind": "environment", "component": "git", "identifier": "git"},
+        "suggestedAction": "Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください",
         "checks": doctor_checks({"git": {"status": "warning", "lostGuarantees": LOST_GUARANTEES}}),
         "description": "Git不在の単一workspace doctorを警告で継続する"},
     "SINGLE-094": {
@@ -138,7 +139,8 @@ def reviewed_result(identifier):
               "diagnostics": [{"code": case["code"],
                                "severity": "warning" if status == "passed_with_warnings" else "error",
                                "resultStatus": status, "summary": case["summary"], "source": case["source"],
-                               **({"evidence": case["evidence"]} if "evidence" in case else {})}]}
+                               **({"evidence": case["evidence"]} if "evidence" in case else {}),
+                               **({"suggestedAction": case["suggestedAction"]} if "suggestedAction" in case else {})}]}
     if case["operation"] == "doctor":
         result["core"] = CORE
         result["checks"] = case["checks"]

@@ -1,2 +1,3 @@
 doctor blocked targets=21 diagnostics=1 (0ms)
 api:.spec/bitz.yaml::: error: SPEC-DOCTOR-COMMAND-001: コマンドの実行可能ファイルを解決できません
+  -> 設定キーverify.commands.backend.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください

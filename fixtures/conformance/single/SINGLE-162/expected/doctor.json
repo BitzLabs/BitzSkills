@@ -22,7 +22,8 @@
         "missing": [
           "context.v2"
         ]
-      }
+      },
+      "suggestedAction": "対応機能context.v2を公開するCoreへ更新するか、プラグインの要求を見直してください"
     }
   ],
   "core": {
