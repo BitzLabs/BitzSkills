@@ -463,6 +463,9 @@ class SddBatchTests(unittest.TestCase):
             destination = here / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
+        # 歴史manifestの原hashは保持し、この合成fixtureだけを現protocolへ束縛する。
+        self.fixed["protocolSha256"] = self.evaluation.digest((here / "protocol.json").read_bytes())
+        self.fixed["casesSha256"] = self.evaluation.digest((here / "cases.json").read_bytes())
         self.write(self.args.batch, self.fixed)
         self.write(here.parent / "sol-authorization.json", json.loads((ROOT / "evals/skills/sol-authorization.json").read_text()))
         self.write(self.root / "plugins/bitz-sdd/plugin.json", {"version": "0.3.0"})
