@@ -312,7 +312,9 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - 出力文の計画の PR-4。[`doctor`仕様](../../docs/03.詳細設計/03_操作仕様/04_doctor.md) §1は、診断に「貼付け可能な最小の修復手順」を付けると定める。
   実際に`suggestedAction`を持つ`doctor`の診断は`SPEC-DOCTOR-WORKSPACE-001`の1件だけだった（実装の確認事項C29）。
 - §8に、`SPEC-DOCTOR-CORE-002`（Core実行体を観測できない）と`SPEC-MULTI-DEPENDENCY-001`（根本の原因は別の検査項目の診断にある）を除く
-  すべての`doctor`の診断に`suggestedAction`を付けることを明記した（コミット`ae7bdd0c`。文字列そのものは規範文で定めない。ADR-062）。
+  §8の表の診断のすべてに`suggestedAction`を付けることを明記した（コミット`ae7bdd0c`。文字列そのものは規範文で定めない。ADR-062）。
+  §8の表にない、`doctor`が返す設定の診断（`SPEC-CONFIG-SCHEMA-001`など）と複合ワークスペースの診断（`SPEC-MULTI-PATH-001`、`SPEC-MULTI-GIT-001`など）に
+  修復手順を付けるかは、ユーザーの決定で実装の確認事項C32として後で決める。
   これは上の「PR-3 に回した文言」のP8にあたる。
 - `check`などが返す`SPEC-EARS-VERSION-001`には付けない。`SPEC-DOCTOR-EARS-001`は`doctor`の診断だけに付ける。
 - 修復手順を足すと、`SPEC-DOCTOR-PLUGIN-001`の`summary`が末尾に同じ内容を含んでしまうため、`summary`を短くする。
