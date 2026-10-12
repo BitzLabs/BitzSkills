@@ -1491,3 +1491,22 @@ commit `6f4be139fbf61c01d6e8432cba5e388cf9c47333`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: doctorの診断に修復手順を付け、9件の期待値を訂正した後のGate Aの再認定
+
+`doctor` §8に、§1の「貼付け可能な最小の修復手順」を診断の`suggestedAction`として返し、`SPEC-DOCTOR-CORE-002`と`SPEC-MULTI-DEPENDENCY-001`を除く§8の表の
+診断のすべてに付けることを明記した（実装の確認事項C29、ユーザーの決定）。管理者が承認した文言（ADR-062の期待値の訂正）で、`SPEC-DOCTOR-CORE-001`、`PLUGIN-001`、
+`API-001`、`CAPABILITY-001`、`EARS-001`、`GIT-001`、`COMMAND-001`に修復手順を付け、`SPEC-DOCTOR-PLUGIN-001`の`summary`を短くした。9件のfixtureの期待値を訂正した。
+入力、状態、終了コード、診断コード、発生元は変えていない。網羅表が固定する`04_doctor.md`のハッシュ値を更新した。承認の記録は
+[Coreの出力文言のレビュー記録](Coreの出力文言のレビュー記録.md)のPR-4の節と、各fixture群のレビュー記録にある。
+
+commit `aac53402e52f000f1370a55744666afeda1688ad`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`b1fe98faf519008d4f9a5a68ad8ce71f1fb916db24d69729939deccfd52c2464`。前回から変わったのは、網羅表が固定する根拠文書のハッシュ値だけである |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 1〜5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

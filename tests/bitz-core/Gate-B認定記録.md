@@ -548,3 +548,21 @@ Core固有の単体試験は705件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は721件がすべて成功した。
+
+## 2026-10-12: doctorの診断に修復手順を付けた後のStep 1〜5の再判定
+
+`doctor`の診断に、管理者が承認した修復手順（`suggestedAction`）を付け（`doctor` §8、ADR-062、実装の確認事項C29）、9件のfixtureの期待値を訂正した。
+修正前のCore（コミット`414c0de0`の版）では、期待値を訂正した9件だけが失敗し、ほかの360件は通過することを確かめた。修正後のCoreでは369件すべてが`passed`となる。
+
+コミット`aac53402e52f000f1370a55744666afeda1688ad`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は733件がすべて成功した。
