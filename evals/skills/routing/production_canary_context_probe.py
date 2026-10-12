@@ -18,7 +18,7 @@ import production_trace as trace
 import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = '.venv/primary-context-calibration-05'
+OUTPUT = '.venv/primary-context-calibration-06'
 SOURCES = ['evals/skills/routing/production_canary_context_probe.py']
 CODE = [*capture.CODE, 'production_canary_context_probe.py']
 

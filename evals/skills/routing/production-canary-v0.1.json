@@ -25,8 +25,8 @@
   "sdkVersion": "0.160.1",
   "sdkRelativePath": ".venv/codex-python-sdk-deps",
   "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
-  "snapshotRelativePath": ".venv/production-routing-preparation-02/snapshot",
-  "manifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+  "snapshotRelativePath": ".venv/production-routing-preparation-03/snapshot",
+  "manifestSha256": "c5cb450d1b1d81e4cfb38cf417af22491ea6ad9603a55525c9b8dd24c8ff9f3c",
   "diagnosticTracing": {
     "format": "json",
     "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"

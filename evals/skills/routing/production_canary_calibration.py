@@ -9,7 +9,7 @@ import production_ledger as ledger
 import production_trace as trace
 import source_guard as guard
 
-ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-05'
+ROOT=runtime.ROOT.parent/'development-review-20261011/.venv/primary-context-calibration-06'
 MANIFEST='evals/skills/routing/production-canary-calibration-v0.1.json'
 FILES={'request-1.json','receipt.json','config.json','contract.json','invocation.json','rpc-in.jsonl','rpc-out.jsonl',
        'model-input.json','decision-schema.json','runtime-result.json','isolated-result.json','version.stdout'}
