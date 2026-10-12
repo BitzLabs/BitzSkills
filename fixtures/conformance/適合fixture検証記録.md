@@ -1529,3 +1529,21 @@ commit `6c4b36907a654d2e20d51e37312c34cffaad00a2`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-12: 用語集 §14.2の6件の記述を直した後のGate Aの再認定
+
+用語集 §14.2（記述の食い違い・曖昧さ）のうち6件を仕様側で直した（ユーザーが案と推奨どおりに承認。規範の意味は変えない）。`context`仕様 §4の制約台帳の項目、
+§5の対象規範文にならない範囲、§10と関係・トレースモデル §11の`CTX-COVERAGE-*`の行、関係・トレースモデル §5の索引の説明と修飾IDの書き方、§6.4の複数の起点の
+`adjacentStatements`である。構文エラーの規範文を索引に入れるかは実装の確認事項C34として後で決める。網羅表と対象展開の契約（`targets/cases.json`）が固定する
+根拠文書のハッシュ値を更新した。matrixとfixtureは変えていない。
+
+commit `c51c8bdd89b8df2192791f2e02c925db3e617295`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`d4c81d459af99959bbd6503352f446c6b46c9899e98fd92d3f43bb4da8f87c01`。前回から変わったのは、網羅表と対象展開の契約が固定する根拠文書のハッシュ値と、リンクを確かめた件数だけである |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureとCoreを変えていないため、Gate Bは判定し直さない。
