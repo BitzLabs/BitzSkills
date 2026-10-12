@@ -257,17 +257,56 @@ class SddBatchTests(unittest.TestCase):
                 finally:
                     fixture.doCleanups()
 
+    def test_link_replacement_at_original_read_cannot_start_next_slot(self):
+        for name in ("run.json", "independent-review.json"):
+            with self.subTest(name=name):
+                fixture = SddBatchTests()
+                fixture.setUp()
+                try:
+                    fixture.measure()
+                    path, valid = fixture.receipt()
+                    path = path.parent / name
+                    original = path.read_bytes()
+                    saved = path.with_name("public-original.json")
+                    saved.write_bytes(original)
+                    fixture.next()
+                    read_original = batch.read_original
+                    changed = False
+                    def switched(candidate):
+                        nonlocal changed
+                        if candidate == path and not changed:
+                            path.unlink()
+                            path.symlink_to(saved)
+                            changed = True
+                        return read_original(candidate)
+                    with patch.object(batch, "read_original", side_effect=switched):
+                        with self.assertRaises(OSError):
+                            fixture.measure()
+                    self.assertTrue(changed)
+                    self.assertIn("stop", fixture.evaluation.load(fixture.ledger_path))
+                    path.unlink()
+                    path.write_bytes(original)
+                    with self.assertRaisesRegex(ValueError, "恒久停止"):
+                        fixture.measure()
+                    self.assertEqual(fixture.calls, ["SI-001"])
+                finally:
+                    fixture.doCleanups()
+
     def test_unknown_receipt_hash_error_does_not_prevent_permanent_stop(self):
         self.measure()
         review_path, valid = self.receipt()
         self.write(review_path, valid | {"status": "failed"})
         self.next()
-        read_bytes = Path.read_bytes
+        read_original = batch.read_original
+        count = 0
         def failed_hash_read(candidate):
+            nonlocal count
             if candidate == review_path:
-                raise RuntimeError("synthetic hash retrieval failure")
-            return read_bytes(candidate)
-        with patch.object(Path, "read_bytes", autospec=True, side_effect=failed_hash_read):
+                count += 1
+                if count == 2:
+                    raise RuntimeError("synthetic hash retrieval failure")
+            return read_original(candidate)
+        with patch.object(batch, "read_original", side_effect=failed_hash_read):
             with self.assertRaises(ValueError):
                 self.measure()
         stopped = self.evaluation.load(self.ledger_path)
@@ -282,16 +321,12 @@ class SddBatchTests(unittest.TestCase):
         review_path, original = self.receipt()
         self.next()
         load = self.evaluation.load
-        read_bytes = Path.read_bytes
-        def denied_load(path):
+        read_original = batch.read_original
+        def denied_original(path):
             if Path(path) == review_path:
                 raise PermissionError("synthetic unreadable independent receipt")
-            return load(path)
-        def denied_bytes(path):
-            if path == review_path:
-                raise PermissionError("synthetic unreadable independent receipt")
-            return read_bytes(path)
-        with patch.object(self.evaluation, "load", side_effect=denied_load), patch.object(Path, "read_bytes", denied_bytes):
+            return read_original(path)
+        with patch.object(batch, "read_original", side_effect=denied_original):
             with self.assertRaises(PermissionError):
                 self.measure()
         stopped = load(self.ledger_path)

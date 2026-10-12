@@ -62,6 +62,36 @@ class SddNativeCompletionTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertIsNone(evaluation.core_results([call])[0][1])
 
+    def test_original_reader_rejects_link_switch_at_open_and_parent_links(self):
+        import os
+        import tempfile
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory(dir=ROOT / ".venv/test-temp") as tmp:
+            root = Path(tmp)
+            public = root / "public.json"
+            original = root / "original.json"
+            public.write_text('{"synthetic":true}')
+            original.write_text('{"original":true}')
+            opener = os.open
+            changed = False
+            def switched(path, flags, *args, **kwargs):
+                nonlocal changed
+                if path == "original.json" and kwargs.get("dir_fd") is not None and not changed:
+                    original.unlink()
+                    original.symlink_to(public)
+                    changed = True
+                return opener(path, flags, *args, **kwargs)
+            with patch.object(os, "open", side_effect=switched):
+                with self.assertRaises(OSError):
+                    evaluation.load(original)
+            self.assertTrue(changed)
+            directory = root / "actual"
+            directory.mkdir()
+            (directory / "value.json").write_text('{}')
+            (root / "parent-link").symlink_to(directory, target_is_directory=True)
+            with self.assertRaises(OSError):
+                evaluation.load(root / "parent-link/value.json")
+
     def test_deep_json_is_reported_as_invalid_input(self):
         for raw in ("[" * 10000 + "0" + "]" * 10000,
                     '{"nested":' * 10000 + "0" + "}" * 10000):

@@ -139,3 +139,5 @@ Core結果のstdout内部・最終境界のcontext・起動前doctor・MCP JSON-
 Core stdoutの非objectを不正結果として扱い、原artifact hash不一致は内容検査前に拒否する。型不正によるAttributeErrorも不適合として捕捉し、前件検査の恒久stop・当件の原失敗保存へ送る。旧新03は準備P2で一次0のまま停止し、新04を専用source/出力/台帳/準備1枠へ固定する。旧01/02/03の消費と原結果は保持する。
 
 原runのbytesを一度読み、hash一致後にそのbytesを解析する。深いJSONのRecursionErrorは不正入力として扱い、前件検査では未提出だけを待機、それ以外のExceptionを恒久stopとして保存する。原run・独立記録のsymlinkはリンク先を読まず拒否する。旧新04は準備P2で一次0のまま停止し、新05を別source/出力/台帳/準備1枠へ固定する。原停止と消費を保持する。
+
+新05の開始前検分でリンク差替えの競合を検出したため、未予約・モデル0の候補を是正する。既存production_ledger.read_regularのopenat/NOFOLLOW/regular single-link検査をsdd_originalsから共用し、run・独立記録・hash保存は同じ原bytes読取りへ接続する。load/read_events/原artifact hashにも適用し、確認とopenの間のリンク差替えや親リンクも拒否する。旧0bbの全700回帰を新版成功へ付け替えない。

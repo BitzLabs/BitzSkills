@@ -11,6 +11,10 @@ import tempfile
 from types import SimpleNamespace
 import uuid
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sdd_originals import read_original
+
 
 def save(path, value):
     temporary = path.with_suffix(".new")
@@ -121,7 +125,7 @@ def verify_previous(evaluation, args, attempt, cases):
     run_path = target / "run.json"
     if run_path.is_symlink():
         raise ValueError("前件の原run symlinkは許可しません")
-    raw = run_path.read_bytes()
+    raw = read_original(run_path)
     if evaluation.digest(raw) != attempt["runSha256"]:
         raise ValueError("前件の実証拠または必須検査が一致しません")
     record = evaluation.parse_json(raw)
@@ -133,7 +137,7 @@ def verify_previous(evaluation, args, attempt, cases):
         raise ValueError("前件の独立検分記録symlinkは許可しません")
     if not review_path.exists():
         raise IndependentReviewPending("前件の独立検分は未提出です")
-    receipt = evaluation.load(review_path)
+    receipt = evaluation.parse_json(read_original(review_path))
     if not isinstance(receipt, dict):
         raise ValueError("前件の独立検分記録はJSON objectである必要があります")
     required = set(record["checks"]) | {"semantic"}
@@ -185,7 +189,7 @@ def run(evaluation, args, cases):
                 receipt_hash = None
                 try:
                     if not review_path.is_symlink():
-                        receipt_hash = evaluation.digest(review_path.read_bytes())
+                        receipt_hash = evaluation.digest(read_original(review_path))
                 except Exception:
                     pass  # hash取得例外でも元のstop保存を省略しない。
                 ledger["stop"] = {"reason": "previous-evidence-or-review-rejected",

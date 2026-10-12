@@ -310,6 +310,24 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertFalse(evaluation.safe_source("import os\ndef validate(value):\n    return []\n"))
         self.assertFalse(evaluation.safe_source("def validate(value):\n    while True: pass\n"))
 
+    def test_original_artifacts_are_parsed_from_the_hash_checked_bytes_once(self):
+        self.prepare("SI-010")
+        self.read_sources()
+        self.bitz("context", "TASK-001", "--purpose", "implement")
+        record = self.record()
+        reader = evaluation.read_original
+        counts = {}
+        def once(path):
+            if path.parent == self.directory and path.name in record["artifacts"]:
+                counts[path.name] = counts.get(path.name, 0) + 1
+                if counts[path.name] != 1:
+                    raise AssertionError("must parse the hash-checked original buffer")
+            return reader(path)
+        with patch.object(evaluation, "read_original", side_effect=once):
+            checks = self.inspect(record)
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+        self.assertEqual(counts, {name: 1 for name in record["artifacts"]})
+
     def test_wrong_artifact_shapes_fail_closed_without_attribute_errors(self):
         self.prepare("SI-010")
         self.read_sources()
