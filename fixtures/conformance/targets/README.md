@@ -99,8 +99,8 @@ CoreのJSON出力、状態の判定、テスト割当て、コンテキストの
 §6の閉包の規則は変えておらず、25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
 （`b7d7da2c609daf2afbd5fcba6d8fb2fb0e9f9c9ca1f4a4534ac0aba3175d141d`）へ更新した。
 
-2026-10-12: 関係・トレースモデル §6.4に、複数の起点の`adjacentStatements`は各結果の和集合から、いずれかの起点の`targetStatements`に含まれる規範文を除いたものとすることを明記した
+2026-10-12: 関係・トレースモデル §6.4に、複数の起点の`adjacentStatements`は各結果の`adjacentStatements`の和集合から、いずれかの起点の`targetStatements`に含まれる規範文を除いたものとすることを明記した
 （承認済みの読みの明記）。あわせて§5の索引の説明、`localId`の書き方、§11の`CTX-COVERAGE-*`の行を直した（用語集 §14.2の記述の食い違いの解消。ユーザーが承認）ため、
 `contractSha256`が失効した。§6の閉包の規則と、25ケースの期待集合は変えず、グラフ、`matrixFamilies`の参照も変えない（`adjacentStatements`の算出規則は
 `MULTI-ROOT-DEDUP`と`target_vectors.py`が既に同じ読みで動いている）。`contractSha256`を新しい文書のハッシュ値
-（`f2ef9693640bdd674cc994679a037d380edc1a8cd5289baf591460aceab2be92`）へ更新した。
+（`0767bcb0c57a92508c63eadd17cb5cfc975d81f3cdc060387806d5daf96be1fb`。同日の独立レビューによる§5・§6.4の言い回しの修正を含む）へ更新した。
