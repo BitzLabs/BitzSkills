@@ -715,6 +715,7 @@ def precheck(
     *,
     extra_config_revs: list[str] | None = None,
     skip_limit_dimensions: frozenset[str] = frozenset(),
+    ears_version_code: str = "SPEC-EARS-VERSION-001",
 ) -> PrecheckResult:
     """`--all-workspaces`の全体事前検査（複合ワークスペース仕様 §8）。
 
@@ -729,13 +730,16 @@ def precheck(
     `verify --all-workspaces`は自分のテスト割当ての計画から`verifyBindingCount`を直接数えるため、
     ここでは`commandDefinitionCount`を渡して一般の事前検査の早期停止を避け、`verify`側の判定を
     優先させる。`check`と`doctor`は空集合のまま呼び出し、この判定順を変えない。
+
+    ``ears_version_code``は、ルートの設定のEARS-AIのメジャーバージョンが非互換のときの診断コードである。`doctor`は
+    `SPEC-DOCTOR-EARS-001`を渡す（診断レジストリの`DOCTOR-EARS-VERSION`。ほかの操作は`EARS-SCHEMA-MAJOR`の`SPEC-EARS-VERSION-001`）。
     """
 
     root, cfg_path, git_confirmed = _locate_root(cwd, git, env)
     if root is None:
         return PrecheckResult(discovery_failed=True)
 
-    outcome = config_mod.read_config(cfg_path)
+    outcome = config_mod.read_config(cfg_path, ears_version_code=ears_version_code)
     if outcome.stop:
         diags = outcome.diagnostics + outcome.warnings
         return PrecheckResult(

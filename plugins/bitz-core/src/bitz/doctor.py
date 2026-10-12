@@ -191,7 +191,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
         ]
         return _build_multi_result(None, checks, diagnostics, started)
 
-    pre = multiws.precheck(cwd, git, env, extra_config_revs=["HEAD"])
+    pre = multiws.precheck(cwd, git, env, extra_config_revs=["HEAD"], ears_version_code="SPEC-DOCTOR-EARS-001")
     if pre.discovery_failed:
         raise CliArgError("doctor", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
