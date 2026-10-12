@@ -373,5 +373,15 @@
     "preparationIndependentSolConsumed": 1,
     "primaryConsumed": 0,
     "reason": "failure persistence repeated an unprotected snapshot and lost original failure record; original preparation P2 retained"
+  },
+  "evaluationStop": {
+    "status": "stopped_primary_checks",
+    "preparationConsumed": 1,
+    "primaryConsumed": 2,
+    "semanticConsumed": 1,
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "caseId": "SP-001",
+    "runSha256": "a54ca4821c0ef0f2861de8e67bd2f4e81231b463620062763d68121ab5d461b3",
+    "reason": "新草案のtests要素が文字列でCoreのobject契約へ不適合、REQ起点とTASK context不解決。原失敗を保持し同条件で再試行しない"
   }
 }

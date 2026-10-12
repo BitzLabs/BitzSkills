@@ -484,6 +484,16 @@ class SddBatchTests(unittest.TestCase):
         self.assertFalse(self.args.output.exists())
         self.assertEqual(self.calls,[])
 
+    def test_stopped_primary_manifest_rejected_before_doctor_or_budget(self):
+        self.fixed["evaluationStop"] = {"status": "stopped_primary_checks", "primaryConsumed": 2, "semanticConsumed": 1}
+        self.prepare_plan()
+        with self.check_output, patch.object(batch.subprocess, "run", side_effect=AssertionError("doctor forbidden")):
+            with self.assertRaisesRegex(ValueError, "行動評価で停止した旧条件"):
+                batch.plan(self.evaluation, self.args, self.cases)
+        self.assertFalse(self.ledger_path.exists())
+        self.assertFalse(self.args.output.exists())
+        self.assertEqual(self.calls, [])
+
     def test_doctor_stdout_duplicate_and_nonfinite_rejected_before_budget(self):
         import importlib.util
         specification=importlib.util.spec_from_file_location('strict_preflight_sdd',ROOT/'evals/skills/sdd/evaluate.py')

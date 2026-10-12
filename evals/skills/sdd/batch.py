@@ -38,6 +38,8 @@ def plan(evaluation, args, cases):
     batch = evaluation.load(manifest)
     if "preparationStop" in batch:
         raise ValueError("独立準備検分で停止した旧条件は起動しません")
+    if "evaluationStop" in batch:
+        raise ValueError("行動評価で停止した旧条件は起動しません")
     protocol = evaluation.load(here / "protocol.json")
     if (batch.get("schemaVersion") != "1.0" or not re.fullmatch(r"[a-z0-9-]+", batch.get("id", ""))
             or batch.get("model") != args.model or batch.get("automaticRetries") != 0

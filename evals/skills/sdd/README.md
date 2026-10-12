@@ -143,3 +143,9 @@ Core stdoutの非objectを不正結果として扱い、原artifact hash不一�
 新05の開始前検分でリンク差替えの競合を検出したため、未予約・モデル0の候補を是正する。既存production_ledger.read_regularのopenat/NOFOLLOW/regular single-link検査をsdd_originalsから共用し、run・独立記録・hash保存は同じ原bytes読取りへ接続する。load/read_events/原artifact hashにも適用し、確認とopenの間のリンク差替えや親リンクも拒否する。旧0bbの全700回帰を新版成功へ付け替えない。
 
 失敗保存中のsnapshotと原artifact読取は個別に保護し、元errorType/exitCode/errnoを保持する。取得不能なafter/changedPathsはnull、snapshotError/artifactReadErrors/missingArtifactsと取得可否を別に記録する。snapshotのfile読取もNOFOLLOW共用入口を使う。失敗記録自体を書けない場合まで保存成功とは扱わない。旧新05は準備P2で一次0のまま停止し、新06へ別source/出力/台帳/準備1枠を固定する。
+
+新条件06はsource97c8で準備SOL48を通過し、SI010の機械四検査・別文脈の意味検分・原照合が通過した。
+2枠目SP001では草案のtests要素を文字列として保存し、Coreのobject契約に適合せず停止した。
+一次2/意味独立1/準備1と原失敗・共有台帳の恒久stopを保持し、残66一次は未実行である。
+計画スキルにpath/covers/commandの登録例を追加した新条件07は別source/出力/台帳でSP001を先頭に68枠を固定する。
+旧条件の成功や消費を移さず、準備独立1・各一次後の独立意味1・retry0を維持する。
