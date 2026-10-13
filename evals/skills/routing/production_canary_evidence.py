@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from contextlib import contextmanager
 from types import MappingProxyType
 import math
 import os
@@ -64,48 +65,51 @@ def artifact_inventory(base, declared, *, additional_artifacts=frozenset()):
     for name, digest in declared.items():
         allowed(name)
         ledger.pin(digest)
-    ledger.safe_tree(base)
-    require(base.is_dir(), 'original capture directory required')
-    require((base / 'rollout-traces').is_dir() and not (base / 'rollout-traces').is_symlink(),
-            'original rollout root required')
+    def metadata(fd,name):
+        value=os.stat(name,dir_fd=fd,follow_symlinks=False)
+        require(not stat.S_ISLNK(value.st_mode),'original artifact symlink')
+        return value
+    def regular(value):
+        require(stat.S_ISREG(value.st_mode) and value.st_nlink==1,'original file type or hardlink')
+    @contextmanager
+    def directory(fd,name,value):
+        require(stat.S_ISDIR(value.st_mode),'original directory shape')
+        child=os.open(name,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+        try:
+            current=os.fstat(child)
+            require((current.st_dev,current.st_ino)==(value.st_dev,value.st_ino),'original directory identity drift')
+            yield child
+        finally:os.close(child)
     actual = set()
-    for child in base.iterdir():
-        require(not child.is_symlink(), 'original artifact symlink')
-        require(child.name not in STOP_FILES, 'primary stop marker')
-        if child.name in OPAQUE_DIRECTORIES:
-            require(child.is_dir(), 'opaque runtime directory shape')
-            continue
-        if child.name == 'receipt.json':
-            require(child.is_file(), 'capture receipt shape')
-            continue
-        if child.name == 'rollout-traces':
-            require(child.is_dir(), 'rollout directory required')
-            groups = list(child.iterdir())
-            require(len(groups) == 1, 'one original rollout required')
-            group = groups[0]
-            require(not group.is_symlink() and group.is_dir(), 'rollout directory symlink or shape')
-            artifact_name(str(group.relative_to(base)) + '/manifest.json')
-            for entry in group.iterdir():
-                require(not entry.is_symlink(), 'original rollout symlink')
-                if entry.name == 'payloads':
-                    require(entry.is_dir(), 'rollout payload directory required')
-                    for payload in entry.iterdir():
-                        require(not payload.is_symlink() and payload.is_file(), 'original payload shape')
-                        name = str(payload.relative_to(base))
-                        artifact_name(name)
-                        actual.add(name)
-                else:
-                    name = str(entry.relative_to(base))
-                    artifact_name(name)
-                    require(entry.is_file(), 'original rollout file shape')
-                    actual.add(name)
-            prefix = str(group.relative_to(base)) + '/'
-            require({prefix + 'manifest.json', prefix + 'trace.jsonl'} <= actual and
-                    any(n.startswith(prefix + 'payloads/') for n in actual), 'incomplete original rollout')
-        else:
-            allowed(child.name)
-            require(child.is_file(), 'original file shape')
-            actual.add(child.name)
+    with ledger.open_directory(base) as root:
+        children=os.listdir(root)
+        require('rollout-traces' in children,'original rollout root required')
+        for child in children:
+            require(child not in STOP_FILES,'primary stop marker')
+            value=metadata(root,child)
+            if child in OPAQUE_DIRECTORIES:
+                require(stat.S_ISDIR(value.st_mode),'opaque runtime directory shape')
+                continue
+            if child=='receipt.json':regular(value);continue
+            if child=='rollout-traces':
+                with directory(root,child,value) as rollout:
+                    groups=os.listdir(rollout)
+                    require(len(groups)==1,'one original rollout required')
+                    group=groups[0];prefix='rollout-traces/'+group+'/'
+                    artifact_name(prefix+'manifest.json')
+                    with directory(rollout,group,metadata(rollout,group)) as group_fd:
+                        for entry in os.listdir(group_fd):
+                            info=metadata(group_fd,entry)
+                            if entry=='payloads':
+                                with directory(group_fd,entry,info) as payload_fd:
+                                    for payload in os.listdir(payload_fd):
+                                        name=prefix+'payloads/'+payload;artifact_name(name)
+                                        regular(metadata(payload_fd,payload));actual.add(name)
+                            else:
+                                name=prefix+entry;artifact_name(name);regular(info);actual.add(name)
+                    require({prefix+'manifest.json',prefix+'trace.jsonl'}<=actual and
+                        any(n.startswith(prefix+'payloads/') for n in actual),'incomplete original rollout')
+            else:allowed(child);regular(value);actual.add(child)
     require(actual == set(declared), 'original artifact inventory drift')
     return sorted(actual)
 

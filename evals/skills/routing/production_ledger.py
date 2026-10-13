@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
@@ -134,6 +135,28 @@ def sync_directory(path: Path):
         os.fsync(directory)
     finally:
         os.close(directory)
+
+
+@contextmanager
+def open_directory(path: Path):
+    """全親もopenat/NOFOLLOWで開き、列挙用の固定directory FDを渡す。"""
+    require(isinstance(path,Path) and path.is_absolute(),'absolute trusted directory required')
+    parts=path.parts[1:]
+    require(bool(parts) and all(p not in {'.','..',''} for p in parts),'original directory segments')
+    fd=os.open('/',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        for name in parts:
+            expected=os.stat(name,dir_fd=fd,follow_symlinks=False)
+            require(stat.S_ISDIR(expected.st_mode),'original parent directory shape')
+            child=os.open(name,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+            try:
+                current=os.fstat(child)
+                require((current.st_dev,current.st_ino)==(expected.st_dev,expected.st_ino),'original parent directory identity drift')
+            except BaseException:
+                os.close(child);raise
+            os.close(fd);fd=child
+        yield fd
+    finally:os.close(fd)
 
 
 def read_regular(path: Path, *, owned=False):

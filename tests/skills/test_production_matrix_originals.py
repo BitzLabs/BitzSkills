@@ -99,5 +99,52 @@ class MatrixOriginalsTests(unittest.TestCase):
         path.write_bytes(raw);self.fixture.receipt['artifactSha256']['config.json']=originals.io.sha(raw);self.persist()
         with self.assertRaisesRegex(ValueError,'config drift'):self.load()
 
+    def test_directory_open_races_never_enumerate_symlink_or_replacement_target(self):
+        inventory=originals.provider.evidence.inventory
+        target=self.fixture.artifact_repository/'public-synthetic-enumeration-target';target.mkdir()
+        (target/'public-unread-sentinel').write_bytes(b'public synthetic target')
+        target_inode=target.stat().st_ino;opened=os.open;listed=os.listdir
+        for relative in ['.','rollout-traces','rollout-traces/synthetic','rollout-traces/synthetic/payloads']:
+            for variant in ['symlink','directory']:
+                folder=self.base if relative=='.' else self.base/relative
+                backup=self.fixture.artifact_repository/'public-directory-backup';triggered=[];outside=[]
+                def race(name,flags,*args,**kwargs):
+                    if name==folder.name and 'dir_fd' in kwargs and not triggered:
+                        triggered.append(True);folder.rename(backup)
+                        if variant=='symlink':folder.symlink_to(target,target_is_directory=True)
+                        else:target.rename(folder)
+                    return opened(name,flags,*args,**kwargs)
+                def list_only_checked(fd):
+                    if type(fd) is int and os.fstat(fd).st_ino==target_inode:outside.append(True)
+                    return listed(fd)
+                try:
+                    with self.subTest(relative=relative,variant=variant),patch.object(os,'open',side_effect=race),patch.object(os,'listdir',side_effect=list_only_checked):
+                        with self.assertRaises((ValueError,OSError)):
+                            inventory.artifact_inventory(self.base,self.fixture.receipt['artifactSha256'],
+                                additional_artifacts=originals.provider.evidence.PROVIDER_ARTIFACTS)
+                    self.assertEqual(triggered,[True]);self.assertEqual(outside,[])
+                finally:
+                    if triggered:
+                        if variant=='symlink':folder.unlink()
+                        else:folder.rename(target)
+                        backup.rename(folder)
+        self.assertEqual(self.load(),self.fixture.bind())
+
+    def test_inventory_never_descends_opaque_and_closes_descriptors_after_rejection(self):
+        inventory=originals.provider.evidence.inventory
+        opaque=self.base/'codex-home';opaque.mkdir(exist_ok=True)
+        marker=opaque/'public-unread-sentinel';marker.write_bytes(b'public sentinel')
+        inode=opaque.stat().st_ino;listed=os.listdir
+        def guarded(fd):
+            if type(fd) is int:self.assertNotEqual(os.fstat(fd).st_ino,inode,'opaque directory enumerated')
+            return listed(fd)
+        with patch.object(os,'listdir',side_effect=guarded):self.load()
+        descriptors=Path('/proc/self/fd') if Path('/proc/self/fd').is_dir() else Path('/dev/fd')
+        before=len(os.listdir(descriptors))
+        (self.base/'unknown.json').write_bytes(b'public invalid original')
+        for _ in range(5):
+            with self.assertRaises(ValueError):self.load()
+        self.assertEqual(len(os.listdir(descriptors)),before)
+
 
 if __name__=='__main__':unittest.main()
