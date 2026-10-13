@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import sys
 
+from . import activews
 from . import config as config_mod
 from . import execfile
 from . import gitutil
@@ -270,6 +271,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     requested_workspace = parsed.single.get("--workspace")
 
+    # 複合ワークスペースを宣言していれば、`--workspace`（ルートまたはメンバーのID）で作業ワークスペースを置き換える（複合ワークスペース仕様 §3の5）。
+    sel = activews.select_active("doctor", [], requested_workspace, cwd, git, env, loc)
+    loc = sel.loc
+    workspace_path = sel.rel_path
+
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
         outcome = config_mod.read_config(loc.config_path, ears_version_code="SPEC-DOCTOR-EARS-001")
@@ -303,7 +309,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         result = _build_result(None, checks, diagnostics, started)
         return result, _exit_code(result["status"])
 
-    return _diagnose_workspace(loc, outcome, git, env, checks, diagnostics, started)
+    result, exit_code = _diagnose_workspace(loc, outcome, git, env, checks, diagnostics, started)
+    # 複合ワークスペース内の単独操作の`workspace.path`は、リポジトリのルートからの相対パス（結果・診断・終了コード §2）。
+    result["workspace"]["path"] = workspace_path
+    return result, exit_code
 
 
 def _diagnose_workspace(

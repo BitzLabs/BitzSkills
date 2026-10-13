@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import time
 
+from . import activews
 from . import config as config_mod
 from . import context as context_mod
 from . import digest as digest_mod
@@ -36,7 +37,7 @@ from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
-from .workspace import WorkspaceLocation, locate_workspace
+from .workspace import locate_workspace
 
 _ARGV_ELEMENT_LIMIT = 32 * 1024
 _ARGV_TOTAL_LIMIT = 1024 * 1024
@@ -809,32 +810,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
 
-    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。修飾した検証対象の所有ワークスペースを作業ワークスペースにする。 ---
-    multi_pre: multiws.PrecheckResult | None = None
-    workspace_path = "."
-    qualified_prefixes = {
-        q[0] for t in parsed.positionals if (q := multirelate.parse_qualified(t)) is not None
-    }
-    if qualified_prefixes:
-        if len(qualified_prefixes) > 1:
-            raise CliArgError("verify", "複数の対象が異なるワークスペースに属しています")
-        target_ws_id = next(iter(qualified_prefixes))
-        if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("verify", f"対象のワークスペースと--workspaceが一致しません: {target_ws_id}")
-        multi_pre = multiws.precheck(cwd, git, env)
-        if multi_pre.ok:
-            if target_ws_id == multi_pre.root_id:
-                loc = WorkspaceLocation(
-                    root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
-                )
-                workspace_path = "."
-            else:
-                member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-                if member is not None:
-                    loc = WorkspaceLocation(
-                        root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                    )
-                    workspace_path = member.path
+    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。`activews.select_active`が、修飾した検証対象の所有ワークスペース、
+    # `--workspace`、最寄りの設定の順で作業ワークスペースを決める（複合ワークスペースを宣言していれば、修飾IDのない対象や引数なしも同じ）。 ---
+    sel = activews.select_active(
+        "verify", parsed.positionals, requested_workspace, cwd, git, env, loc, subject="対象"
+    )
+    multi_pre = sel.pre
+    loc = sel.loc
+    workspace_path = sel.rel_path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
@@ -970,7 +953,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             pending.append((key, root_id, raw))
         pending.sort(key=lambda item: item[0])
     else:
-        pending = [(doc_id, doc_id, doc_id) for doc_id in _default_roots(id_index)]
+        if multi_active:
+            # 統合索引は修飾の別名と他のワークスペースの文書を含むため、起点ワークスペースのローカル索引から列挙し、修飾IDで持つ。
+            pending = [
+                (context_mod._canon(doc_id, workspace_id), doc_id, doc_id)
+                for doc_id in _default_roots(local_id_indices[workspace_id])
+            ]
+        else:
+            pending = [(doc_id, doc_id, doc_id) for doc_id in _default_roots(id_index)]
 
     if not pending:
         diag = _invocation_diag("SPEC-VERIFY-BLOCKED-002", "error", "blocked", messages.VERIFY_TARGETS_EMPTY)
