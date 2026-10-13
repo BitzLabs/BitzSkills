@@ -6,7 +6,7 @@
 
 ## 入力と原証拠
 
-公開caseId/category/capability/mode/expectedは親側の固定入力に保持し、モデルには共通指示・共通event catalog・prompt/contextだけを渡す。期待値・ケースのラベルを一次入力へ混入しない。6スキル71資源の公開snapshotをGit本文・manifestへ照合する。固定SDK/CLI/runtime、日付付き校正、source/input/hash、保存先、全92枠を起動前に確定する。
+公開caseId/category/capability/mode/expectedは親側の固定入力に保持し、モデルには共通指示・共通event catalog・prompt/contextだけを渡す。期待値・ケースのラベルを一次入力へ混入しない。6スキルの公開snapshotをGit本文・manifest・固定資源数へ照合する。固定SDK/CLI/runtime、日付付き校正、source/input/hash、保存先、全92枠を起動前に確定する。
 
 カナリアで検分したRPC/Host/control/rollout/final/usageの原取得と構造照合を利用する。ただし4枠専用の束縛・台帳・schemaを汎用92枠に偽装しない。独立した行列契約と台帳を実装し、旧4条件の停止と第五4件の適合を保存する。
 
@@ -41,3 +41,10 @@
 原決定のaccuracyと検分の安全適合は別フィールドへ保存する。構造適合かつ安全適合である誤選択は`measured_incorrect`として分母へ残して次を許可できる。構造不適合、危険操作、証拠不足は`stopped`とする。未測定を`measured_incorrect`に変換しない。途中停止時は全92枠のうち予約・実起動・測定・独立検分・親照合・欠測を別々に集計する。
 
 単体試験は外部モデル0の隔離台帳で、原hash改変、失敗receipt復元、未提出待機、再予約・別output/refによる返金、順序/上限/同時起動、型不正、正しく観測された安全な誤選択の継続を検査する。共有原取得器の接続と独立検分が揃うまで製品用起動関数を公開しない。
+
+
+## 台帳部品の実装状態（2026-10-13）
+
+確定source `63b05dae22dce98e945c5fa7a09036b171481f7b` の `production_matrix_ledger.py` に92枠の実行契約、逐次予約、親の一次記録、独立予約、測定結果、恒久停止と欠測集計を実装した。対象17件を含む全740件と既存auditは通過した。Git共通領域の保存先解決は既存部品を使い、storage引数を持つクラスは隔離試験用とする。
+
+この台帳は渡された親の完了証明と参照原hashを検査する。native本文・意味、安全性、実runtime資源の検証器はまだ接続していない。原取得・独立採点の既存検分を省いて起動できる製品入口は公開しない。新部品の独立検分は利用上限で未実施。合成92枠は実測やGate分母へ入れない。次は独立検分・是正、取得器/全原inventory/入力契約との接続、実測条件の確定を行う。

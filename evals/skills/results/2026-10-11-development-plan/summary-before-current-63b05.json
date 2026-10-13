@@ -1,0 +1,274 @@
+{
+  "status": "v40_original_findings_verified",
+  "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+  "contractPath": "evals/skills/routing/sdk-trace-review-v0.40.json",
+  "receiptSha256": "4720d7b0ad8aeb8bd7e6b0eed5b1db9571922ee5f6777678d11a6fef1b4a8f04",
+  "responseSha256": "cdc68e6e94a0b53121fdd387ca229a803d40f878569bf5b81bfe95864097a567",
+  "traceSha256": "04b2c667254b611b685a7dac68bb0e89b691601e3614f95fc9ac627f983ace26",
+  "findings": {
+    "P1": 0,
+    "P2": 2,
+    "P3": 0
+  },
+  "usage": {
+    "input_tokens": 21009,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1341,
+    "reasoning_output_tokens": 714
+  },
+  "independentCliInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "originalStatusPreserved": true,
+  "remediationSnapshotCommit": "955c4db248b842673aa57575924f80dce7c43e56",
+  "remediationFullTests": {
+    "sourceCommit": "955c4db248b842673aa57575924f80dce7c43e56",
+    "testCount": 567,
+    "testSeconds": 70.779,
+    "exitCode": 0,
+    "stderrSha256": "f459fb211ea76612660c598da715f7bc65744b7ad86dc445465c0388019e639a",
+    "clean": true
+  },
+  "remediationIndependentReview": {
+    "reviewer": "/root/merge_independent_review",
+    "context": "separate review context",
+    "sourceCommit": "955c4db248b842673aa57575924f80dce7c43e56",
+    "testCount": 33,
+    "testSeconds": 0.514,
+    "exitCode": 0,
+    "cleanBeforeAndAfter": true,
+    "blockingFindings": 0,
+    "fileSha256": {
+      "evals/skills/routing/production_sdk_probe.py": "f27669ff2774f9209dc06bb467fde606f93105054034c20d6f0307da8b17906d",
+      "evals/skills/routing/production_canary_capture.py": "578ff5b2670ea893a610691163d9c5c2aa130219ffeed51494c1be9d4acaf0dd",
+      "tests/skills/test_production_canary_capture.py": "f34f20193a06df631a8b315b76ee89814b67677f7275fcda932705ee2f3490e4"
+    },
+    "scope": "v40 two findings remediation and legacy profile compatibility only"
+  },
+  "certifiesPhaseCompletion": false,
+  "certifiesSkillGate": false,
+  "primarySdkProfile": {
+    "status": "component_reviewed",
+    "snapshotCommit": "4376548a70987ffeb92da25f228b746224070024",
+    "fullTests": {
+      "count": 572,
+      "seconds": 67.208,
+      "exitCode": 0,
+      "stderrSha256": "4ee1ae5c0cc8486378b89d24e327f1a36abc6a9f444a2244173bc5900a4d30cd",
+      "clean": true
+    },
+    "independentReview": {
+      "reviewer": "/root/merge_independent_review",
+      "testCount": 104,
+      "testSeconds": 1.212,
+      "exitCode": 0,
+      "cleanBeforeAndAfter": true,
+      "blockingFindings": 0,
+      "fileSha256": {
+        "evals/skills/routing/production_sdk_trace.py": "d05530c34e784df11153d91edb167ae701f628a6918bbe66750b6cc7f92de2c0",
+        "evals/skills/routing/production_canary_trace.py": "2d495fa11c9048c2cea1a81d918cecf413c35ec369a91ad8eb2dc7f10cc287c1",
+        "tests/skills/test_production_canary_trace.py": "e7fb91a515b5da282be75ecca57dc210069721c4105ac404678d2c692920aa6d"
+      }
+    },
+    "remaining": [
+      "artifact_allowlist_and_fixed_input_binding",
+      "rollout_client_usage_correlation",
+      "independent_scoring_contract_and_runner",
+      "parent_receipt_and_ledger_finalization"
+    ],
+    "primaryModelTrajectories": 0,
+    "certifiesSkillGate": false
+  },
+  "primaryArtifactBinding": {
+    "status": "component_reviewed",
+    "snapshotCommit": "b64772aa1993b4be992ba47275d620f5c7585c30",
+    "fullTests": {
+      "count": 591,
+      "seconds": 68.365,
+      "exitCode": 0,
+      "stderrSha256": "0a91229f812c08ecbce31d6b42b9e5ce3fabf39526aa39851a425c4c2369ba21",
+      "clean": true
+    },
+    "independentReview": {
+      "reviewer": "/root/merge_independent_review",
+      "sourceCommit": "b64772aa1993b4be992ba47275d620f5c7585c30",
+      "relatedCanaryTests": {
+        "count": 44,
+        "seconds": 1.238,
+        "exitCode": 0
+      },
+      "relatedLedgerTests": {
+        "count": 30,
+        "seconds": 0.337,
+        "exitCode": 0
+      },
+      "cleanBeforeAndAfter": true,
+      "blockingFindings": 0,
+      "originalThreeFindingsRemediationVerified": true,
+      "fileSha256": {
+        "evals/skills/routing/production_canary_capture.py": "a76f4896562fe49c61a3dd688aa5532e2b2d49a2ee641bfd697e9a18ef0e27aa",
+        "evals/skills/routing/production_canary_evidence.py": "efcd7e86b38c2bbd3bf00fa04445ca582a60b4262014fb164dadc9b7701418e8",
+        "evals/skills/routing/production_ledger.py": "52a6236cccd264d9bde239e0ea9193b158202b70325401f58e29fd4959003b96",
+        "tests/skills/test_production_canary_evidence.py": "196532ca3408494634e58c8247026e47887ead0bd95a5f95acf3f4214e75c97f"
+      },
+      "scope": "artifact/fixed-input/shared-reservation component only"
+    },
+    "originalFindingsPreserved": true,
+    "originalFindingCount": 3,
+    "primaryModelTrajectories": 0,
+    "independentScoringInvocations": 0,
+    "certifiesSkillGate": false,
+    "remaining": [
+      "primary_rpc_host_final_correlation",
+      "rollout_client_usage_correlation",
+      "independent_scoring_contract_and_runner",
+      "parent_receipt_and_ledger_finalization"
+    ]
+  },
+  "currentDevelopment": {
+    "integrationBranch": "codex/core-sdd-quality-integration",
+    "integrationHead": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+    "verificationSource": "123c89baf6efc094aaa8065cee1f7adaf4286fea",
+    "R02": "actual_telemetry_rejection_under_review",
+    "R03": "new_first_primary_stopped",
+    "R10": "readme_version_aligned_remaining_in_progress",
+    "primaryModelTrajectories": 2,
+    "independentScoringCalls": 0,
+    "originalFindingsPreserved": true,
+    "certifiesSkillGate": false,
+    "reportPaths": [
+      "r02-native-review.json",
+      "r02-rollout-review.json",
+      "r02-runtime-calibration-review.json",
+      "r02-semantic-review.json",
+      "r02-durable-campaign-review.json"
+    ],
+    "conditionCountsKeptSeparate": true
+  },
+  "developmentProgress": {
+    "updatedAt": "2026-10-13",
+    "implementationBranch": "codex/core-sdd-quality-integration",
+    "implementationHead": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+    "verificationRef": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
+    "r03": "limited_four_slot_canary_complete",
+    "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
+    "r09": "local_resources_trial_independently_verified_real_host_pending",
+    "r10": "readme_version_aligned_other_docs_pending",
+    "oldCampaignConsumedPrimary": 1,
+    "oldCampaignConsumedIndependent": 0,
+    "newCampaignConsumedPrimary": 4,
+    "newCampaignConsumedIndependent": 4,
+    "fullSkillTestCount": 709,
+    "coreUnitTestCount": 647,
+    "gateC": false,
+    "skillGates": false,
+    "release": false,
+    "r05": "stopped",
+    "actualCodeModeRemediation": {
+      "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+      "status": "limited_remediation_independently_verified",
+      "fullSkillsTests": 656,
+      "parentRehashedIndependentEvidenceCount": 61,
+      "primaryConsumed": 2,
+      "independentConsumed": 0,
+      "newPrimaryStarted": 0
+    },
+    "codeModeStructurePreparation": {
+      "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+      "status": "independent_static_review_pending",
+      "fullSkillsTests": 659,
+      "newPrimaryStarted": 0,
+      "oldPrimaryConsumed": 2
+    },
+    "emptyReasoningRemediation": {
+      "sourceCommit": "f33148e3e4c8823cd0300222020f9628f7b3f369",
+      "fullSkillsTests": 661,
+      "status": "limited_independent_originals_verified",
+      "primaryConsumed": 5,
+      "semanticIndependentConsumed": 2
+    },
+    "fourthCanaryPreparation": {
+      "sourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110",
+      "fullSkillsTests": 664,
+      "status": "prelaunch_independent_pending",
+      "newPrimary": 0,
+      "cumulativePrimaryMaximum": 9
+    },
+    "coreWheelLocal": {
+      "record": "r09-core-wheel-install.json",
+      "independentRecord": "r09-core-wheel-install-independent.json",
+      "status": "local_independently_verified",
+      "certifiesDistribution": false
+    },
+    "r04": "public_matrix_designed_execution_pending",
+    "rolloutClockCanary": {
+      "record": "r03-rollout-clock-progress.json",
+      "oldPrimary": 7,
+      "oldIndependent": 3,
+      "newPrimary": 4,
+      "newIndependent": 4,
+      "certifiesSkillGate": false
+    },
+    "sddNativeRemediation": {
+      "record": "r05-remediation-source.json",
+      "originalBlockedRecord": "r05-matrix-prelaunch-blocked.json",
+      "newPrimary": 0
+    },
+    "r06": "premesurement_hardening_independently_closed_quality_comparison_pending",
+    "r05LatestFullRegression": {
+      "record": "r05-failure-persistence-remediation.json",
+      "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "exitCode": 0,
+      "testCount": 705,
+      "testSeconds": 73.396,
+      "cleanAfter": true,
+      "certifiesSkillGate": false
+    },
+    "r05New06": {
+      "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "status": "stopped",
+      "preparationConsumed": 1,
+      "primaryConsumed": 2,
+      "semanticConsumed": 1,
+      "semanticPassed": 1,
+      "parentVerified": 1,
+      "maximumPrimary": 68,
+      "maximumSemantic": 68,
+      "certifiesSkillGate": false
+    },
+    "r05New07": {
+      "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+      "status": "stopped",
+      "preparationConsumed": 1,
+      "primaryConsumed": 17,
+      "semanticConsumed": 16,
+      "semanticPassed": 16,
+      "parentVerified": 16,
+      "maximumPrimary": 68,
+      "maximumSemantic": 68,
+      "certifiesSkillGate": false
+    },
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "r05New08": {
+      "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+      "status": "stopped",
+      "preparationConsumed": 1,
+      "primaryConsumed": 9,
+      "semanticConsumed": 8,
+      "semanticPassed": 8,
+      "parentVerified": 8,
+      "maximumPrimary": 68,
+      "maximumSemantic": 68,
+      "certifiesSkillGate": false
+    },
+    "r06Hardening": {
+      "status": "four_original_and_additional_identity_defect_independently_closed_limited_scope",
+      "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+      "executionVersion": "quality-execution-0.1.6",
+      "paidQualityModelsStarted": 0,
+      "certifiesR06Complete": false
+    }
+  }
+}
