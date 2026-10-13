@@ -40,7 +40,7 @@ class CanaryEvidenceTests(unittest.TestCase):
             capture.CONTRACT: ledger.encoded(self.contract),
             evidence.CASES: getattr(self,'cases_raw',(ROOT / evidence.CASES).read_bytes()),
             evidence.CATALOG: (ROOT / evidence.CATALOG).read_bytes(),
-            evidence.INSTRUCTIONS: (ROOT / evidence.INSTRUCTIONS).read_bytes(),
+            evidence.INSTRUCTIONS: getattr(self,'instructions_raw',(ROOT / evidence.INSTRUCTIONS).read_bytes()),
             evidence.SCHEMA: (ROOT / evidence.SCHEMA).read_bytes(),
             evidence.CONTEXT: context_raw,
             capture.fixed_runtime.MANIFEST: runtime_raw,

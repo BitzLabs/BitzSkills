@@ -12,7 +12,7 @@ import production_matrix_inputs as matrix
 class MatrixInputTests(unittest.TestCase):
     def setUp(self):
         paths=dict(routing='cases/routing.json',behaviorSafety='cases/behavior-safety.json',protocol='protocol.json',
-                   catalog='event-catalog.json',instructions='routing/production-canary-instructions-v0.1.txt',caseSchema='schemas/case.schema.json')
+                   catalog='event-catalog.json',instructions='routing/production-matrix-instructions-v0.1.txt',caseSchema='schemas/case.schema.json')
         self.raws={k:(ROOT/'evals/skills'/p).read_bytes() for k,p in paths.items()}
         self.contract=dict(version='public-production-matrix-inputs-0.1.0',scope='public-six-skill-input-binding-only',sourceCommit='a'*40,
                            model='gpt-6.1-sol',repetitions=2,budget=dict(primary=92,independent=92,automaticRetries=0,delegations=0),
@@ -70,3 +70,13 @@ class MatrixInputTests(unittest.TestCase):
             cases=matrix.trace.strict_json(self.raws['routing']);cases[0]['expected']['forbiddenEvents']=[event]
             self.change('routing',cases)
             with self.subTest(event=event),self.assertRaises(ValueError):self.bind()
+
+    def test_canonical_matrix_payload_requests_null_path_for_every_six_skill_case(self):
+        sys.path.insert(0,str(ROOT/'evals/skills'))
+        import validate
+        bound=self.bind()
+        for case,raw in zip(bound.cases,bound.payloads):
+            payload=matrix.trace.strict_json(raw)
+            self.assertEqual(validate.expected_route(case,'six-skill')[1],None)
+            self.assertIn('selectedPathは常にnull',payload['instructions'])
+            self.assertNotIn('bitz-core=operate',payload['instructions'])

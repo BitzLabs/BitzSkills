@@ -192,4 +192,14 @@ class MatrixSemanticTests(unittest.TestCase):
             self.assertEqual(self.verify(),expected)
 
 
+    def test_integrity_scope_is_public_content_and_unknown_still_stops(self):
+        properties=semantic.trace.strict_json(self.prepared.schema_raw)['properties']
+        self.assertIn('内容整合性',properties['integrity']['description'])
+        prompt=semantic.prompt(self.prepared).decode()
+        self.assertIn('機械照合は親の責務',prompt)
+        result=self.verify();self.assertEqual(result['proposedLedgerStatus'],'measured_incorrect')
+        answer=copy.deepcopy(self.answer);answer['integrity']='unknown';answer['limitations']=['提示された資料の内容が不足し整合性を判定できない。']
+        result=self.verify(answer);self.assertEqual(result['proposedLedgerStatus'],'stopped')
+
+
 if __name__=='__main__':unittest.main()

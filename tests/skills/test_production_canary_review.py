@@ -18,6 +18,7 @@ class CanaryReviewTests(unittest.TestCase):
         if hasattr(self, 'context_profile_raw'):
             self.capture.context_profile_raw = self.context_profile_raw
         if hasattr(self,'cases_raw'):self.capture.cases_raw=self.cases_raw
+        if hasattr(self,'instructions_raw'):self.capture.instructions_raw=self.instructions_raw
         self.addCleanup(self.capture.doCleanups)
         self.capture.setUp()
         self.trace = trace_fixture.PrimaryCanaryTraceTests(methodName='runTest')
@@ -137,6 +138,7 @@ class CanaryCompleteReviewTests(unittest.TestCase):
         self.fixture = CanaryReviewTests(methodName='runTest')
         self.fixture.context_profile_raw = review.evidence.ledger.encoded(original['context_profile'])
         if hasattr(self,'cases_raw'):self.fixture.cases_raw=self.cases_raw
+        if hasattr(self,'instructions_raw'):self.fixture.instructions_raw=self.instructions_raw
         self.addCleanup(self.fixture.doCleanups)
         self.fixture.setUp()
         self.capture = self.fixture.capture

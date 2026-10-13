@@ -112,4 +112,20 @@ class MatrixCalibrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'complete Git snapshot'):self.verify()
 
 
+    def test_historical_instruction_mapping_is_bound_to_producer_and_rejects_executable_nodes(self):
+        def producer(expression):
+            fields={**cal.p.INPUT_PATHS,'instructions':None}
+            pairs=[key+'='+ (expression if key=='instructions' else repr(value)) for key,value in fields.items()]
+            return ('INPUT_PATHS=dict('+','.join(pairs)+')').encode()
+        legacy=producer('inventory.INSTRUCTIONS')
+        def historical_git(*args):
+            return legacy if args[-1].endswith('production_matrix_preflight.py') else ('INSTRUCTIONS='+repr(cal.p.inventory.INSTRUCTIONS)).encode()
+        with patch.object(cal.p.guard,'git',side_effect=historical_git):
+            paths=cal.source_input_paths(self.repository,'f'*40)
+            self.assertEqual(paths['instructions'],cal.p.inventory.INSTRUCTIONS)
+            self.assertNotEqual(paths['instructions'],cal.p.INPUT_PATHS['instructions'])
+        for expression in ['load_private()',repr('../private'),repr('evals/skills/cases/heldout.json')]:
+            with self.subTest(expression=expression),patch.object(cal.p.guard,'git',return_value=producer(expression)),self.assertRaises(ValueError):
+                cal.source_input_paths(self.repository,'f'*40)
+
 if __name__=='__main__':unittest.main()

@@ -1,4 +1,5 @@
 """行列の局所校正原を固定Gitへ束縛。旧Canary校正原の形式・保存先を保持する。"""
+import ast
 from pathlib import Path
 import re
 
@@ -12,6 +13,30 @@ FILES=probe.FIXED_FILES|{'receipt.json'}
 MANIFEST_KEYS={'version','sourceCommit','sourceRepository','artifactRepository','outputRelativeRoot','artifactSha256'}
 
 
+def source_input_paths(repository,source):
+    """producerの固定入力宣言だけをASTで読む。歴史的コードは実行しない。"""
+    raw=p.guard.git(repository,'show',source+':evals/skills/routing/production_matrix_preflight.py')
+    nodes=[node.value for node in ast.parse(raw.decode()).body if isinstance(node,ast.Assign)
+        and any(isinstance(t,ast.Name) and t.id=='INPUT_PATHS' for t in node.targets)]
+    require(len(nodes)==1 and isinstance(nodes[0],ast.Call) and isinstance(nodes[0].func,ast.Name)
+        and nodes[0].func.id=='dict' and not nodes[0].args,'matrix historical input declaration')
+    paths={}
+    for item in nodes[0].keywords:
+        require(item.arg in p.INPUT_PATHS and item.arg not in paths,'matrix historical input roles')
+        if isinstance(item.value,ast.Constant):value=item.value.value
+        else:
+            require(item.arg=='instructions' and isinstance(item.value,ast.Attribute)
+                and isinstance(item.value.value,ast.Name) and item.value.value.id=='inventory'
+                and item.value.attr=='INSTRUCTIONS','matrix historical instruction declaration')
+            evidence_raw=p.guard.git(repository,'show',source+':evals/skills/routing/production_canary_evidence.py')
+            value=p.capture.calibration.literal(evidence_raw.decode(),'INSTRUCTIONS')
+        require(type(value) is str and (value in {p.inventory.INSTRUCTIONS,p.INPUT_PATHS['instructions']}
+            if item.arg=='instructions' else value==p.INPUT_PATHS[item.arg]),'matrix historical input path')
+        paths[item.arg]=value
+    require(set(paths)==set(p.INPUT_PATHS),'matrix historical input inventory')
+    return paths
+
+
 def source_files(repository,source):
     """producerの固定MODULES宣言を読む。過去コードの実行や作業tree照合は行わない。"""
     raw=p.guard.git(repository,'show',source+':evals/skills/routing/production_matrix_preflight.py')
@@ -21,7 +46,7 @@ def source_files(repository,source):
         and all(isinstance(n,str) and re.fullmatch(r'[a-z_]+',n) is not None for n in modules),
         'matrix calibration fixed source declaration')
     return tuple(dict.fromkeys([*(f'evals/skills/routing/{n}.py' for n in modules),
-        *p.INPUT_PATHS.values(),p.inventory.SCHEMA,p.inventory.CONTEXT,p.capture.fixed_runtime.MANIFEST,
+        *source_input_paths(repository,source).values(),p.inventory.SCHEMA,p.inventory.CONTEXT,p.capture.fixed_runtime.MANIFEST,
         p.capture.calibration.MANIFEST,'evals/skills/sol-authorization.json']))
 
 
@@ -55,7 +80,7 @@ def verify(repository,manifest_raw,profile,contract):
     require(originals['context-profile.json']==frozen[p.inventory.CONTEXT],'matrix calibration reference profile outside Git')
     execution_raw=originals['contract.json'];c=p.matrix.execution_contract(execution_raw)
     require(c['sourceCommit']==source,'matrix calibration execution source drift')
-    raws={name:frozen[path] for name,path in p.INPUT_PATHS.items()}
+    raws={name:frozen[path] for name,path in source_input_paths(repository,source).items()}
     input_raw=io.encoded(dict(version='public-production-matrix-inputs-0.1.0',scope='public-six-skill-input-binding-only',
         sourceCommit=source,model='gpt-6.1-sol',repetitions=2,budget=dict(primary=92,independent=92,automaticRetries=0,delegations=0),
         inputSha256={name:io.sha(raw) for name,raw in raws.items()},certifiesBehavior=False,certifiesSkillGate=False))

@@ -23,6 +23,7 @@ class MatrixEvidenceTests(unittest.TestCase):
         small[0].update(evidence.trace.project_case(cases[0]))
         self.fixture=native_fixture.CanaryCompleteReviewTests(methodName='runTest')
         self.fixture.cases_raw=evidence.io.encoded(small)
+        self.fixture.instructions_raw=self.raws['instructions']
         self.addCleanup(self.fixture.doCleanups);self.fixture.setUp()
         old=self.fixture.loaded();self.capture=self.fixture.capture
         input_raw=evidence.io.encoded(self.input_contract)

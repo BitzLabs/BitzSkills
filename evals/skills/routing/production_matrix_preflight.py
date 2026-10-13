@@ -23,7 +23,7 @@ require = trace.require
 VERSION = 'public-matrix-deployment-resources-0.1.0'
 INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     behaviorSafety='evals/skills/cases/behavior-safety.json', protocol='evals/skills/protocol.json',
-    catalog='evals/skills/event-catalog.json', instructions=inventory.INSTRUCTIONS,
+    catalog='evals/skills/event-catalog.json', instructions='evals/skills/routing/production-matrix-instructions-v0.1.txt',
     caseSchema='evals/skills/schemas/case.schema.json')
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
     'production_matrix_preflight', 'production_matrix_inputs', 'production_matrix_ledger',
