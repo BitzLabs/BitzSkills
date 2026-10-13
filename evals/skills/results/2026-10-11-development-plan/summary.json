@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T06:25:17.869123+09:00",
+    "updatedAt": "2026-10-14T06:36:35.415126+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "public_campaign01_stopped_on_first_models_http401_primary_reserved1_completed0_authentication_update_and_new_conditions_pending",
+    "r04": "new01_http401_stop_preserved_user_reported_authentication_updated_new02_prelaunch_independently_bound_actual_measurements_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -543,6 +543,20 @@
       "sameAndNextReservationRejected": true,
       "permanentStopPreserved": true,
       "requiresAuthenticationUpdate": true,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false
+    },
+    "r04OperationalNew02": {
+      "record": "r04-operational-new02-prelaunch-independent-20261014.json",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "campaignId": "public-matrix-routing-20261014-02",
+      "authenticationUpdatedReportedByUser": true,
+      "conditionSha256": "45a26330ec910a9c04c6ae2ea1d334242cb30c9566b3b3f49b6dcb1d1994b60c",
+      "actualPrimaryReserved": 0,
+      "primaryCompleted": 0,
+      "independentReserved": 0,
+      "parentVerified": 0,
+      "predecessorNew01StopPreserved": true,
       "eligibleForMeasurement": false,
       "certifiesSkillGate": false
     }
