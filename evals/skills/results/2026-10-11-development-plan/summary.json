@@ -147,20 +147,20 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T02:21:51.616202+09:00",
+    "updatedAt": "2026-10-14T05:00:52.295334+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "f3e2e1821af899efe44a4387abf29320e70838a6",
-    "verificationRef": "f3e2e1821af899efe44a4387abf29320e70838a6",
+    "implementationHead": "d05da654320f1c9ce6cace10d2e806765013242f",
+    "verificationRef": "d05da654320f1c9ce6cace10d2e806765013242f",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
     "r09": "current_72_resources_local_checks_passed_independent_and_real_host_pending",
-    "r10": "source_history_pushed_latest_824_calibration_originals_and_four_independent_reviews_saved",
+    "r10": "source_history_pushed_latest_838_and_primary_capture_controller_evidence_saved",
     "oldCampaignConsumedPrimary": 1,
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 824,
+    "fullSkillTestCount": 838,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "current_matrix_local_calibration_independently_bound_provider_argv_semantic_runner_parent_ledger_measurements_pending",
+    "r04": "single_primary_capture_and_fd_inventory_connected_independently_verified_concrete_prelaunch_semantic_and_parent_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -299,9 +299,9 @@
       "independentReview": "pending_provider_usage_limit"
     },
     "r10LatestSourcePush": {
-      "sourceCommit": "f3e2e1821af899efe44a4387abf29320e70838a6",
-      "remoteConfirmed": "f3e2e1821af899efe44a4387abf29320e70838a6",
-      "documentationCommitAlreadyPushed": "24538149",
+      "sourceCommit": "d05da654320f1c9ce6cace10d2e806765013242f",
+      "remoteConfirmed": "d05da654320f1c9ce6cace10d2e806765013242f",
+      "documentationCommitAlreadyPushed": "afd5d51af4ee8c419750a7806142154c9ac2edfa",
       "confirmationRole": "observed_before_current_progress_documentation_commit",
       "pushAtEveryCommit": true
     },
@@ -461,7 +461,29 @@
         "documentationCommitAlreadyPushed": "a7925ba5ae92f07871240acb84b1bf2a162f6001",
         "confirmationRole": "observed_before_current_progress_documentation_commit",
         "pushAtEveryCommit": true
+      },
+      {
+        "sourceCommit": "f3e2e1821af899efe44a4387abf29320e70838a6",
+        "remoteConfirmed": "f3e2e1821af899efe44a4387abf29320e70838a6",
+        "documentationCommitAlreadyPushed": "24538149",
+        "confirmationRole": "observed_before_current_progress_documentation_commit",
+        "pushAtEveryCommit": true
       }
-    ]
+    ],
+    "r04PrimaryCapture": {
+      "record": "r04-primary-capture-independent-20261014.json",
+      "sourceCommit": "d05da654320f1c9ce6cace10d2e806765013242f",
+      "parentFullTests": 838,
+      "independentTests": 79,
+      "sourceFiles": 39,
+      "snapshotResources": 72,
+      "sdkFiles": 207,
+      "runtimeFiles": 50,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
+      "concreteDeploymentPrelaunchCertified": false,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false
+    }
   }
 }
