@@ -272,7 +272,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     requested_workspace = parsed.single.get("--workspace")
 
     # 複合ワークスペースを宣言していれば、`--workspace`（ルートまたはメンバーのID）で作業ワークスペースを置き換える（複合ワークスペース仕様 §3の5）。
-    sel = activews.select_active("doctor", [], requested_workspace, cwd, git, env, loc)
+    # 事前検査は`--all-workspaces`と同じ条件（`HEAD`のスナップショットのGitが認識する設定も比べる。EARS-AIの版の診断コードは`doctor`のもの）で行う。
+    sel = activews.select_active(
+        "doctor", [], requested_workspace, cwd, git, env, loc,
+        extra_config_revs=["HEAD"], ears_version_code="SPEC-DOCTOR-EARS-001",
+    )
     loc = sel.loc
     workspace_path = sel.rel_path
 

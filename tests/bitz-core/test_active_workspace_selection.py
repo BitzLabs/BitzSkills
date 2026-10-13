@@ -128,6 +128,21 @@ class VerifyWorkspaceSelectionTests(_Base):
         with self.assertRaises(CliArgError):
             self.verify(self.root, "web::TECH-010", "--workspace", "api")
 
+    def test_missing_unqualified_target_is_reported_with_the_qualified_canonical_id(self):
+        for argv in (("REQ-001:AC-09",), ("REQ-009",)):
+            with self.subTest(argv=argv):
+                result, code = self.verify(self.web, *argv)
+                self.assertEqual(code, 1)
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual([t["target"] for t in result["targetResults"]], [f"web::{argv[0]}"])
+                self.assertEqual(
+                    [d["code"] for d in result["targetResults"][0]["diagnostics"]], ["CTX-ROOT-MISSING-001"]
+                )
+
+    def test_missing_target_path_is_not_qualified(self):
+        result, _ = self.verify(self.web, ".spec/technical/TECH-999.md")
+        self.assertEqual([t["target"] for t in result["targetResults"]], [".spec/technical/TECH-999.md"])
+
     def test_qualified_target_still_works(self):
         result, code = self.verify(self.root, "web::TECH-010")
         self.assert_web_target_passes(result, code, scope="selected")
@@ -210,6 +225,24 @@ class DoctorCatalogCheckTests(_Base):
             _write(single, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: solo\n")
             result, _ = doctor_mod.run(parse_argv(["doctor", "--format", "json"]), str(single), dict(os.environ))
             self.assertNotIn("catalog", self.names(result))
+
+    def test_unregistered_config_only_in_head_snapshot_blocks_the_catalog_check(self):
+        # `doctor --all-workspaces`と同じ条件で比べる: HEADのスナップショットにだけ未登録の設定がある。
+        # 事前検査は非成功になり、この段階では従来の単一の経路へ進む（catalogを置かない）。
+        _write(self.root, "tools/x/.spec/bitz.yaml", CONFIG + "workspace:\n  id: x\n")
+        _git(self.root, "add", ".")
+        _git(self.root, "commit", "-q", "-m", "unregistered")
+        (self.root / "tools/x/.spec/bitz.yaml").unlink()
+        all_result, _ = doctor_mod.run(
+            parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), dict(os.environ)
+        )
+        self.assertEqual(
+            [d["code"] for d in all_result["diagnostics"]], ["SPEC-MULTI-UNREGISTERED-001"]
+        )
+        for cwd in (self.web, self.root):
+            with self.subTest(cwd=str(cwd)):
+                result, _ = self.doctor(cwd)
+                self.assertNotIn("catalog", self.names(result))
 
     def test_all_workspaces_top_level_catalog_is_unchanged(self):
         result, _ = doctor_mod.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), dict(os.environ))
