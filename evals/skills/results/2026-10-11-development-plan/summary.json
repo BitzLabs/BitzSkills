@@ -147,20 +147,20 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T01:22:26.326184+09:00",
+    "updatedAt": "2026-10-14T02:21:51.616202+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "9d3a49b406a0b42d26afbce4efedb9982c47ba6a",
-    "verificationRef": "9d3a49b406a0b42d26afbce4efedb9982c47ba6a",
+    "implementationHead": "f3e2e1821af899efe44a4387abf29320e70838a6",
+    "verificationRef": "f3e2e1821af899efe44a4387abf29320e70838a6",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
     "r09": "current_72_resources_local_checks_passed_independent_and_real_host_pending",
-    "r10": "source_history_pushed_latest_811_and_two_independent_fd_reviews_saved",
+    "r10": "source_history_pushed_latest_824_calibration_originals_and_four_independent_reviews_saved",
     "oldCampaignConsumedPrimary": 1,
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 811,
+    "fullSkillTestCount": 824,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "fd_reader_lifecycle_and_public_tree_independently_verified_real_calibration_and_provider_runner_pending",
+    "r04": "current_matrix_local_calibration_independently_bound_provider_argv_semantic_runner_parent_ledger_measurements_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -299,9 +299,9 @@
       "independentReview": "pending_provider_usage_limit"
     },
     "r10LatestSourcePush": {
-      "sourceCommit": "50e829801145f40d2d86d9b851f2ec04cd41111d",
-      "remoteConfirmed": "50e829801145f40d2d86d9b851f2ec04cd41111d",
-      "documentationCommitAlreadyPushed": "a7925ba5ae92f07871240acb84b1bf2a162f6001",
+      "sourceCommit": "f3e2e1821af899efe44a4387abf29320e70838a6",
+      "remoteConfirmed": "f3e2e1821af899efe44a4387abf29320e70838a6",
+      "documentationCommitAlreadyPushed": "24538149",
       "confirmationRole": "observed_before_current_progress_documentation_commit",
       "pushAtEveryCommit": true
     },
@@ -426,6 +426,42 @@
       "actualMatrixReservations": 0,
       "providerLaunchEnabled": false,
       "certifiesSkillGate": false
-    }
+    },
+    "r04MatrixCalibration": {
+      "record": "r04-matrix-calibration-independent-20261014.json",
+      "sourceCommit": "f3e2e1821af899efe44a4387abf29320e70838a6",
+      "producerSource": "595b5d6f2c5159b20deed6b7767f9c5cc3f40a44",
+      "readerSource": "a2561a33def519d03628fa0d6ea781e236f56609",
+      "calibrationDate": "2026-10-14",
+      "referenceDate": "2026-10-13",
+      "requestSha256": "3166b86315d78fb24e2f9422469d54a82d176cbe10299357c04e9e42dc84d875",
+      "receiptSha256": "f3c41a2acd02982479cd868d39eb141e86c47edc174539d7749785ac8b5a6948",
+      "parentFullTests": 824,
+      "independentBootstrapTests": 40,
+      "independentReaderTests": 46,
+      "fixedOriginals": 23,
+      "currentSourceFiles": 38,
+      "producerSourceFiles": 37,
+      "snapshotResources": 72,
+      "sdkFiles": 207,
+      "runtimeFiles": 50,
+      "namespaceInvocations": 1,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
+      "providerLaunchEnabled": false,
+      "certifiesSkillGate": false,
+      "independentProfileRegressionTests": 45,
+      "independentProfileNormalResourceGuardVerified": true,
+      "originalProfileFullFailurePreserved": true
+    },
+    "r10PriorSourcePushes": [
+      {
+        "sourceCommit": "50e829801145f40d2d86d9b851f2ec04cd41111d",
+        "remoteConfirmed": "50e829801145f40d2d86d9b851f2ec04cd41111d",
+        "documentationCommitAlreadyPushed": "a7925ba5ae92f07871240acb84b1bf2a162f6001",
+        "confirmationRole": "observed_before_current_progress_documentation_commit",
+        "pushAtEveryCommit": true
+      }
+    ]
   }
 }
