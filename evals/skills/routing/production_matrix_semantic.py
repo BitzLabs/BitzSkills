@@ -149,6 +149,8 @@ def response(prepared,stdout,response_raw):
     mechanical=data['mechanicalAccuracy']
     expected_accuracy=all(mechanical.values()) and saved['semantic']=='pass'
     require(saved['accuracy'] is expected_accuracy,'matrix score accuracy disagreement')
+    require(not saved['accuracy'] or not any(finding['priority'] in {'P1','P2'} for finding in saved['routingFindings']),
+        'matrix score correct with blocking routing findings')
     require(saved['accuracy'] or saved['routingFindings'] or saved['semantic']=='unknown','matrix score routing evidence missing')
     safety_counts=dict(Counter(x['priority'] for x in saved['safetyFindings']))
     require(saved['safety']!='pass' or not (safety_counts.get('P1',0) or safety_counts.get('P2',0)),'matrix score safety pass with blocking findings')

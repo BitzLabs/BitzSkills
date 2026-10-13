@@ -36,6 +36,61 @@ class MatrixSemanticTests(unittest.TestCase):
         stdout=b''.join(semantic.io.encoded(e)+b'\n' for e in events)
         return semantic.response(prepared or self.prepared,stdout,raw if raw is not None else semantic.io.encoded(answer))
 
+    def matching_originals(self,path):
+        f=self.fixture;old=semantic.trace.strict_json(self.prepared.input_raw)['originalDecision']
+        expected=f.bound.matrix.cases[0]['expected']
+        decision={**old,'selectedEntry':expected['sixSkill'],'selectedPath':path,
+            'outcome':expected['outcome'],'events':expected['requiredEvents']}
+        host=semantic.provider.evidence.primary.json_lines(f.originals['host.jsonl'])
+        old_result=host[-1]['result'];listing=host[0]['result']
+        manifest=semantic.trace.strict_json(f.base.manifest)
+        new_path=next(s['path'] for s in manifest['skills'] if s['name']==decision['selectedEntry'])
+        body=(f.base.capture.snapshot/new_path).read_bytes()
+        new_result={**old_result,'path':new_path,'content':body.decode(),'sha256':semantic.io.sha(body)}
+        def convert(value):
+            if isinstance(value,dict):
+                if value==old:return dict(decision)
+                if value==listing:return value
+                if value==old_result:return dict(new_result)
+                return {k:convert(v) for k,v in value.items()}
+            if isinstance(value,list):return [convert(v) for v in value]
+            if isinstance(value,str):
+                try:parsed=semantic.trace.strict_json(value.encode())
+                except ValueError:parsed=None
+                if isinstance(parsed,(dict,list)):
+                    converted=convert(parsed)
+                    return semantic.io.encoded(converted).decode() if converted!=parsed else value
+                return value.replace(old_result['path'],new_path)
+            return value
+        for name,raw in list(f.originals.items()):
+            if not raw:continue
+            if name.endswith('.json'):
+                value=semantic.trace.strict_json(raw);changed=convert(value)
+                if changed!=value:f.originals[name]=semantic.io.encoded(changed)
+            elif name.endswith('.jsonl') or name=='runtime-stderr.bin':
+                values=semantic.provider.evidence.primary.json_lines(raw);changed=convert(values)
+                if changed!=values:f.originals[name]=b''.join(semantic.io.encoded(v)+b'\n' for v in changed)
+        f.rehash()
+        return semantic.prepare(f.bind(),source_repository=f.source_repository,artifact_repository=f.artifact_repository)
+
+    def test_matching_six_skill_null_path_with_original_host_and_rollout_can_be_correct(self):
+        prepared=self.matching_originals(None);answer=copy.deepcopy(self.answer)
+        answer.update(bindings=prepared.bindings,accuracy=True,semantic='pass',routingFindings=[])
+        result=self.verify(answer,prepared=prepared)
+        self.assertTrue(all(result['mechanicalAccuracy'].values()))
+        self.assertEqual(result['proposedLedgerStatus'],'measured_correct')
+        self.assertFalse(result['eligibleForMeasurement'])
+        answer['routingFindings']=copy.deepcopy(self.answer['routingFindings'])
+        with self.assertRaisesRegex(ValueError,'blocking routing'):self.verify(answer,prepared=prepared)
+
+    def test_known_nonnull_path_remains_safe_incorrect_instead_of_structural_stop(self):
+        prepared=self.matching_originals('operate');answer=copy.deepcopy(self.answer)
+        answer.update(bindings=prepared.bindings,semantic='pass')
+        result=self.verify(answer,prepared=prepared)
+        self.assertFalse(result['mechanicalAccuracy']['selection'])
+        self.assertEqual(result['proposedLedgerStatus'],'measured_incorrect')
+        self.assertEqual(result['blockingSafetyCounts'],dict(P1=0,P2=0))
+
     def test_safe_wrong_selection_is_incorrect_without_safety_blocking_or_live_claims(self):
         result=self.verify()
         self.assertEqual(result['proposedLedgerStatus'],'measured_incorrect')

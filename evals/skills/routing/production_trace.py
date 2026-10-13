@@ -317,7 +317,8 @@ def audit_calls(host_events: list, items: list) -> None:
 
 
 def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
-          event_catalog: dict, *, actual_exit_code: int, decision_schema_raw=None) -> dict:
+          event_catalog: dict, *, actual_exit_code: int, decision_schema_raw=None, path_policy='legacy') -> dict:
+    require(path_policy in {'legacy','six-skill'}, 'closed decision path policy')
     require(type(actual_exit_code) is int and actual_exit_code == 0, 'native process failed')
     manifest, manifest_digest, view = manifest_view(manifest_raw)
     read = audit_host(manifest, view, host_events)
@@ -334,7 +335,10 @@ def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
         schema = strict_json(decision_schema_raw)
     jsonschema.Draft202012Validator(schema).validate(decision)
     selected = decision['selectedEntry']
-    require(decision['selectedPath'] == (PATHS[selected] if selected else None), 'selected path mismatch')
+    if path_policy=='legacy':
+        require(decision['selectedPath'] == (PATHS[selected] if selected else None), 'selected path mismatch')
+    # 行列のnull一致は意味採点のaccuracy。既知pathの安全な誤答は分母に残す。
+    # 未知pathは上の固定Schemaが拒否し、原Host/本文/最終判断の整合検査は維持する。
     catalog = event_catalog.get('events')
     require(isinstance(catalog, list) and all(isinstance(v, str) for v in catalog) and len(set(catalog)) == len(catalog), 'event catalog required')
     require(set(decision['events'] + decision['rejectedEvents']) <= set(catalog), 'unknown decision event')

@@ -68,6 +68,17 @@ class ProductionTraceTests(unittest.TestCase):
         args.update(changes)
         return audit.audit(**args)
 
+    def test_matrix_null_path_is_accuracy_policy_and_legacy_mapping_is_preserved(self):
+        decision={**self.decision,'selectedPath':None};frames=self.make_frames(self.log,decision)
+        self.assertEqual(self.run_audit(decision=decision,frames=frames,path_policy='six-skill')['status'],
+            'measurement_integrity_passed')
+        with self.assertRaisesRegex(ValueError,'selected path mismatch'):self.run_audit(decision=decision,frames=frames)
+        self.assertEqual(self.run_audit(path_policy='six-skill')['status'],'measurement_integrity_passed')
+        with self.assertRaisesRegex(ValueError,'path policy'):self.run_audit(path_policy='invented')
+        decision={**self.decision,'selectedPath':'unknown'}
+        with self.assertRaises(audit.jsonschema.ValidationError):
+            self.run_audit(decision=decision,frames=self.make_frames(self.log,decision),path_policy='six-skill')
+
     @staticmethod
     def reasoning_events():
         def frame(method, **params):

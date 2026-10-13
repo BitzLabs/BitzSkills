@@ -41,7 +41,7 @@ def raw_projection(sent, received):
     require(bool(raw), 'primary raw notifications missing')
     return projected, raw
 
-def native(originals, manifest_raw, catalog_raw, schema_raw, *, cwd):
+def native(originals, manifest_raw, catalog_raw, schema_raw, *, cwd,path_policy='legacy'):
     sent,received=json_lines(originals['rpc-in.jsonl']),json_lines(originals['rpc-out.jsonl'])
     schema=trace.strict_json(schema_raw)
     wire_schema=capture.execution_schema(schema)
@@ -55,7 +55,7 @@ def native(originals, manifest_raw, catalog_raw, schema_raw, *, cwd):
     result=canary.audit(manifest_raw,host,sent,projected,trace.strict_json(catalog_raw),
         raw_stderr=originals['runtime-stderr.bin'],selected_log=originals['trace-safe.jsonl'],profile=profiles[0],
         expected_input=originals['model-input.json'],base_instructions=capture.BASE,developer_instructions=capture.DEVELOPER,
-        cwd=cwd,actual_exit_code=0,sdk_profile='public-canary',output_schema=wire_schema,decision_schema_raw=schema_raw)
+        cwd=cwd,actual_exit_code=0,sdk_profile='public-canary',output_schema=wire_schema,decision_schema_raw=schema_raw,path_policy=path_policy)
     trace.jsonschema.Draft202012Validator(schema).validate(result['decision'])
     return dict(native=result,rawNotificationsValueSha256=sdk.digest(raw),rawNotificationCount=len(raw))
 

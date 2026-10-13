@@ -102,7 +102,8 @@ def verify_complete(context):
     require(rebound == context, 'matrix immutable capture drift')
     receipt = trace.strict_json(context.receipt_raw)
     catalog_raw = context.bound.raw_inputs[matrix.inputs.INPUT_NAMES.index('catalog')]
-    native = primary.native(context.originals, context.manifest_raw, catalog_raw, context.schema_raw, cwd=receipt['cwd'])
+    native = primary.native(context.originals, context.manifest_raw, catalog_raw, context.schema_raw,
+                            cwd=receipt['cwd'],path_policy='six-skill')
     rollout = primary.correlate_rollout(context.originals, native['native'], context.context_raw,
                                        context.receipt_raw, io.sha(context.receipt_raw), receipt['elapsedSeconds'])
     return dict(status='matrix_original_bytes_and_native_correlated', slot=context.bound.slot(context.ordinal),
