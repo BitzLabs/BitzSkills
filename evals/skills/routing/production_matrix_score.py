@@ -120,9 +120,17 @@ def control_root(artifact_repository,bound):
 def run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw):
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
     with capture.locked_control(control_root(artifact_repository,bound)):
-        artifact_repository,instance,prepared=load_primary(source_repository,bound,ordinal,
-            manifest_raw,schema_raw,context_raw,review_raw,report_raw)
-        before=resources(prepared);capture.auth_metadata()
+        instance=matrix.MatrixLedger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
+        with instance.locked():
+            instance.initialize();instance.latest_pending(ordinal)
+            require(not matrix.present(instance.path('independent',ordinal)),'matrix independent already reserved')
+        try:
+            artifact_repository,instance,prepared=load_primary(source_repository,bound,ordinal,
+                manifest_raw,schema_raw,context_raw,review_raw,report_raw)
+            before=resources(prepared);capture.auth_metadata()
+        except BaseException as exc:
+            instance.stop(ordinal,'independent-prelaunch-or-primary-original-rejected',type(exc).__name__)
+            raise
         reservation=instance.reserve_independent(ordinal,prepared.bindings['reviewInputSha256'])
         return execute_reserved(prepared,instance,reservation,before)
 

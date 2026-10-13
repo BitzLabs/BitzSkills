@@ -188,6 +188,10 @@ class MatrixScoreTests(unittest.TestCase):
         path=self.primary_base/'receipt.json';path.write_bytes(self.primary_receipt+b' ')
         with self.assertRaises(ValueError):self.run_score()
         self.spawn.assert_not_called();self.assertFalse(self.instance.path('independent',1).exists())
+        path.write_bytes(self.primary_receipt)
+        self.assertEqual(self.summary()['status'],'stopped')
+        with self.assertRaisesRegex(ValueError,'permanently'):self.run_score()
+        self.spawn.assert_not_called();self.assertFalse(self.instance.path('independent',1).exists())
 
     def test_completed_parent_cannot_be_reapplied_or_replace_its_original_proof(self):
         self.run_score();self.finish();before=score.io.read_regular(self.base/'parent-verification.json')
@@ -226,3 +230,11 @@ class MatrixScoreTests(unittest.TestCase):
         receipt_path.write_bytes(score.io.encoded(receipt));before=score.io.read_regular(receipt_path)
         result=self.finish();self.assertFalse(result['ledgerFinalized']);self.assertEqual(result['errorType'],'ValueError')
         self.assertEqual(before,score.io.read_regular(receipt_path));self.assertEqual(self.summary()['parentVerified'],0)
+
+    def test_prelaunch_resource_failure_remains_stopped_after_resources_are_restored(self):
+        self.check.side_effect=ValueError('synthetic source/runtime mismatch')
+        with self.assertRaisesRegex(ValueError,'source/runtime mismatch'):self.run_score()
+        self.check.side_effect=None
+        self.assertEqual(self.summary()['status'],'stopped')
+        with self.assertRaisesRegex(ValueError,'permanently'):self.run_score()
+        self.spawn.assert_not_called();self.assertEqual(self.summary()['independentReserved'],0)
