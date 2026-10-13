@@ -4,7 +4,7 @@
 現在のディレクトリの最寄りの設定のワークスペースである。`MULTI-029-01`〜`03`と`MULTI-031-01`〜`02`は`check`と`context`でこれを固定した。この群は、同じ規則が
 `verify`と`doctor`にも適用されることを固定する（実装の確認事項C24、C38）。
 
-`verify`（`MULTI-034-01`〜`05`）は、ルート`platform`のREQ-001（`MUST`の規範文1件）、メンバー`web`のTECH-010（`platform::REQ-001:AC-01`を`refines`し、
+`verify`（`MULTI-034-01`〜`06`）は、ルート`platform`のREQ-001（`MUST`の規範文1件）、メンバー`web`のTECH-010（`platform::REQ-001:AC-01`を`refines`し、
 テスト対応を持つ）、メンバー`api`のTECH-010（`web`と同じローカルID。文書単位のテスト対応を持つ）を置く。3つのワークスペースは、どれも引数なしの`verify`の対象を1件ずつ持つ
 （複合ワークスペース仕様 §3、`verify` §7）。
 
@@ -15,8 +15,11 @@
 | `MULTI-034-03` | `.` | `verify --workspace web` | `web`。既定の対象は`web`の文書だけ（`scope: all`） |
 | `MULTI-034-04` | `.` | `verify` | 最寄りの設定の`platform`。既定の対象は`platform`の文書だけ |
 | `MULTI-034-05` | `apps/web` | `verify` | 最寄りの設定の`web`。既定の対象は`web`の文書だけ |
+| `MULTI-034-06` | `apps/web` | `verify REQ-009` | 最寄りの設定の`web`。存在しない非修飾のIDの`target`も、作業ワークスペースで修飾した`web::REQ-009`で返す |
 
 結果の`workspace`は作業ワークスペースの実際のIDとリポジトリのルートからの相対パス、検証対象・規範文・`covers`は修飾IDで返す（`verify` §8、複合ワークスペース仕様 §4）。
+`MULTI-034-06`の存在しない文書IDは、構文上は妥当な明示対象なので診断`CTX-ROOT-MISSING-001`（`failed`。複合ワークスペース仕様 §3の後段、`verify` §3）を当該検証対象へ返し、
+`target`は検証対象の正規ID（`verify` §8）として作業ワークスペースで修飾する。コンテキストを構成できないので`contextDigest`は`null`、`bindingRefs`は空で、コマンドは実行しない（`verify` §9）。
 引数なしの既定の対象は、作業ワークスペースの`approved`のREQ、規範文を持つ`approved`のTECH、規範文を持たず`tests`を宣言する`approved`のTECHである（`verify` §7）。
 他のワークスペースの文書は対象に加えない。統合索引の文書を列挙すると、3つのワークスペースの対象が混ざる（陰性対照）。
 
@@ -30,9 +33,10 @@
 
 `workspace.path`は、複合ワークスペース内のワークスペース単独操作でリポジトリのルートからの相対パスである（結果・診断・終了コード §2、`doctor` §7）。
 検査項目は、`doctor` §3の検査順序の表の順に`core`、`workspace`、`config`、`catalog`（検査6。複合ワークスペースのカタログ、メンバー、パスの所有）、`schema`、`ears`、`git`、`command`、`impact`である。
-複合ワークスペースの中の単独の`doctor`は、全体事前検査が成功したときに`catalog`の検査項目を置く（ユーザーの決定D4。単一ワークスペースは置かない）。
+`doctor` §3は、複合ワークスペースを宣言しているリポジトリの単独の`doctor`が、`--all-workspaces`と同じく全体事前検査を行い、成功したときに検査項目`catalog`を`passed`で`config`の後、`schema`の前に置くと定める
+（複合ワークスペースを宣言していない単一ワークスペースの`doctor`は置かない）。
 
-期待値の根拠は規範文と、このモジュールの参照計算だけである。`verify`は、作業ワークスペース、既定の対象、検証対象ごとの規範文・テスト割当て・コマンド・`covers`・
+期待値の根拠は規範文（複合ワークスペース仕様 §3・§4、`verify` §2〜§9、`doctor` §3・§7、結果・診断・終了コード §2）と、このモジュールの参照計算だけである。`verify`は、作業ワークスペース、既定の対象、検証対象ごとの規範文・テスト割当て・コマンド・`covers`・
 コンテキストのハッシュ値を、入力の木構造から導く`reference_verify`で、`doctor`は、作業ワークスペースと検査項目を入力の木構造から導く`reference_doctor`で、
 リテラルの期待値と照合する。ハッシュ値は、独立に書いた2系統の参照計算（`multi_verify_fixtures`のリテラルA、`multi_crosscheck`の木構造からの導出B）の一致を要求する。
 Coreの出力は期待値の根拠にしない。
@@ -73,6 +77,8 @@ CASES = {
                      "ルートの引数なしの`verify`が、ルートの文書だけを既定の対象にして遮断されない"),
     "MULTI-034-05": ("verify", "apps/web", ["verify"], None, [], "passed", 0,
                      "メンバーの中の引数なしの`verify`が、メンバーの文書だけを既定の対象にする"),
+    "MULTI-034-06": ("verify", "apps/web", ["verify", "REQ-009"], None, ["REQ-009"], "failed", 1,
+                     "メンバーの中の`verify REQ-009`が、存在しない非修飾のIDを作業ワークスペースで修飾した`target`で診断する"),
     "MULTI-035-01": ("doctor", "apps/web", ["doctor", "--workspace", "platform"], "platform", [], "passed", 0,
                      "メンバーの中の`doctor --workspace platform`が、ルートを診断して`workspace.path`を`.`にする"),
     "MULTI-035-02": ("doctor", ".", ["doctor", "--workspace", "web"], "web", [], "passed", 0,
@@ -84,10 +90,12 @@ OPERATION, CWD, ARGV, OPTION, POSITIONALS, STATUS, EXIT = range(7)
 # 作業ワークスペースの期待。ここは参照計算の結果と一致することを要求する。
 ACTIVE = {
     "MULTI-034-01": "web", "MULTI-034-02": "web", "MULTI-034-03": "web", "MULTI-034-04": "platform",
-    "MULTI-034-05": "web", "MULTI-035-01": "platform", "MULTI-035-02": "web", "MULTI-035-03": "web",
+    "MULTI-034-05": "web", "MULTI-034-06": "web", "MULTI-035-01": "platform", "MULTI-035-02": "web", "MULTI-035-03": "web",
 }
+# 存在しない明示対象の文書ID（どのワークスペースにも存在しない）。
+MISSING = {"MULTI-034-06": "REQ-009"}
 SCOPE = {"MULTI-034-01": "selected", "MULTI-034-02": "selected", "MULTI-034-03": "all",
-         "MULTI-034-04": "all", "MULTI-034-05": "all"}
+         "MULTI-034-04": "all", "MULTI-034-05": "all", "MULTI-034-06": "selected"}
 RESULT_FILES = {"verify": "expected/verify.json", "doctor": "expected/doctor.json"}
 WEB_TEST = "apps/web/tests/auth/test_login.py"
 API_TEST = "services/api/tests/test_audit.py"
@@ -155,7 +163,27 @@ def web_command():
     return command_result("web", "frontend", "/bin/true", ["tests/auth/test_login.py"], ["platform::REQ-001:AC-01"])
 
 
+def root_missing_diagnostic(argument):
+    """構文上は妥当な明示対象が仕様文書に存在しない診断（`CTX-ROOT-MISSING-001`、`verify` §3）。発生元は呼出しの引数。
+    `summary`は承認済みの文言「起点<引数>が存在しません」で、IDは`source.argument`と同じ呼出しの引数とする（`MULTI-025-02`は修飾した引数をそのまま使う。文字列そのものは規範文で定めない。ADR-062）。"""
+    return {"code": "CTX-ROOT-MISSING-001", "severity": "error", "resultStatus": "failed",
+            "summary": f"起点{argument}が存在しません",
+            "source": {"kind": "invocation", "argument": argument}}
+
+
 def reviewed_verify_result(identifier):
+    if identifier in MISSING:
+        qualified = f"{ACTIVE[identifier]}::{MISSING[identifier]}"
+        return {
+            "schemaVersion": "1.0", "operation": "verify", "status": "failed", "scope": SCOPE[identifier],
+            "workspace": {"id": "web", "path": "apps/web"},
+            "targetResults": [target_entry(qualified, "failed", None, [], [],
+                                           [root_missing_diagnostic(MISSING[identifier])])],
+            "revision": {"commit": COMMIT, "dirty": False},
+            "commands": [],
+            "durationMs": 0,
+            "diagnostics": [],
+        }
     if ACTIVE[identifier] == "platform":
         workspace, target = {"id": "platform", "path": "."}, root_target_result()
     else:
@@ -229,7 +257,11 @@ def reference_verify(repository, cwd, option, positionals):
     targets, plan = [], {}
     for name in names:
         if name not in documents:
-            raise ValueError(f"検証対象{name}が作業ワークスペースの仕様文書にありません")
+            # 構文上は妥当な明示対象が存在しない: 検証対象の正規ID（修飾ID）で`CTX-ROOT-MISSING-001`を返し、コンテキストもテスト割当ても作らない。
+            raw = next(item for item in positionals if multi_crosscheck.qualify(active, item) == name)
+            targets.append({"target": name, "statements": [], "bindingRefs": [], "contextDigest": None, "untestedMust": [],
+                            "diagnostics": [root_missing_diagnostic(raw)], "status": "failed"})
+            continue
         document = documents[name]
         statements = [f"{document['workspaceId']}::{item['id']}" for item in read_statements(document["body"])]
         selected, _ = multi_crosscheck.closure(documents, name)
@@ -247,7 +279,8 @@ def reference_verify(repository, cwd, option, positionals):
         digest = multi_crosscheck.digest(multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, name)))
         targets.append({"target": name, "statements": sorted(statements),
                         "bindingRefs": sorted({f"{ws}::{command}" for ws, command, _, _ in used}),
-                        "contextDigest": digest, "untestedMust": sorted(musts - tested)})
+                        "contextDigest": digest, "untestedMust": sorted(musts - tested),
+                        "diagnostics": [], "status": "passed" if not (musts - tested) else "blocked"})
         for ws, command, path, covered in used:
             entry = plan.setdefault((ws, command), {"tests": set(), "covers": set()})
             entry["tests"].add(path)
@@ -263,17 +296,17 @@ def reference_verify(repository, cwd, option, positionals):
                          "covers": sorted(entry["covers"]), "argv": argv, "cwd": definition.get("cwd", ".")})
     return {"workspace": {"id": active, "path": workspaces[active]["path"]}, "scope": scope,
             "targets": targets, "commands": commands, "defaults": names,
-            "status": "passed" if all(not item["untestedMust"] for item in targets) and targets else "blocked"}
+            "status": ("failed" if any(item["status"] == "failed" for item in targets)
+                       else "passed" if all(not item["untestedMust"] for item in targets) and targets else "blocked")}
 
 
 def check_verify_against_reference(result, reference):
     """リテラルの期待値が、参照計算と一致することを要求する。"""
     if result["workspace"] != reference["workspace"] or result["scope"] != reference["scope"]:
         raise ValueError("`workspace`または`scope`が入力からの参照計算と異なります")
-    actual = [{"target": item["target"], "statements": item["statements"], "bindingRefs": item["bindingRefs"],
-               "contextDigest": item["contextDigest"]} for item in result["targetResults"]]
-    expected = [{key: item[key] for key in ("target", "statements", "bindingRefs", "contextDigest")}
-                for item in reference["targets"]]
+    keys = ("target", "statements", "bindingRefs", "contextDigest", "diagnostics", "status")
+    actual = [{key: item[key] for key in keys} for item in result["targetResults"]]
+    expected = [{key: item[key] for key in keys} for item in reference["targets"]]
     if actual != expected:
         raise ValueError("検証対象が入力からの参照計算と異なります")
     commands = [{"bindingId": item["bindingId"], "workspaceId": item["workspaceId"], "name": item["name"],
@@ -281,7 +314,7 @@ def check_verify_against_reference(result, reference):
                 for item in result["commands"]]
     if commands != reference["commands"]:
         raise ValueError("コマンドが入力からの参照計算と異なります")
-    if result["status"] != reference["status"] or any(item["status"] != result["status"] for item in result["targetResults"]):
+    if result["status"] != reference["status"]:
         raise ValueError("状態が入力からの参照計算と異なります")
 
 
@@ -329,6 +362,11 @@ def check_doctor_against_reference(result, reference):
 def check_digests(repository, result):
     """検証対象のハッシュ値を、独立に書いた2系統の参照計算（リテラルAと木構造からの導出B）で照合する。"""
     for entry in result["targetResults"]:
+        if entry["contextDigest"] is None:
+            # コンテキストを構成できない検証対象（存在しない明示対象）はハッシュ値を持たない（`verify` §9）。
+            if entry["diagnostics"] == [] or entry["bindingRefs"]:
+                raise ValueError("ハッシュ値を持たない検証対象は診断を持ち、テスト割当てを持たない必要があります")
+            continue
         derived = multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, entry["target"]))
         literal = multi_reference.canonical_bytes(multi_verify_fixtures.reviewed_digest_input(DIGEST_SOURCE, entry["target"]))
         if literal != derived:
@@ -374,8 +412,14 @@ def check_conditions(identifier, repository):
     if any(documents[name]["frontmatter"].get("relations") for name in ("api::TECH-010", "platform::REQ-001")):
         raise ValueError("`api`のTECH-010とルートのREQ-001は関係を宣言してはいけません")
     reference = reference_verify(repository, cwd, option, CASES[identifier][POSITIONALS])
-    if reference["status"] != "passed":
-        raise ValueError("検証対象は通過する構成である必要があります")
+    if reference["status"] != CASES[identifier][STATUS]:
+        raise ValueError("検証対象の状態が期待と異なります")
+    if identifier in MISSING:
+        # 存在しない文書IDは、どのワークスペースにもローカルIDとして存在しない。非修飾のIDと修飾した正規IDが区別できる。
+        if any(name.partition("::")[2] == MISSING[identifier] for name in documents):
+            raise ValueError("存在しない明示対象の文書IDは、どのワークスペースにも存在してはいけません")
+        if [item["target"] for item in reference["targets"]] != [f"{active}::{MISSING[identifier]}"]:
+            raise ValueError("存在しない明示対象は、作業ワークスペースで修飾した正規IDで返す必要があります")
     all_defaults = [name for names in per_workspace.values() for name in names]
     if not CASES[identifier][POSITIONALS]:
         if reference["defaults"] != per_workspace[active] or len(reference["defaults"]) >= len(all_defaults):

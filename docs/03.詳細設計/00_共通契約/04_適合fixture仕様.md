@@ -717,6 +717,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-034-03` | `MULTI-034-01`と同じ入力（リポジトリのルートで実行） | verify --workspace web | passed／0 | `scope: all`、`workspace`は`web`（`apps/web`）。既定の対象は作業ワークスペース`web`の文書だけで、`targetResults`は`web::TECH-010`の1件（`platform::REQ-001`と`api::TECH-010`を対象に加えない）。`commands`は`web::frontend`の1件 |
 | `MULTI-034-04` | `MULTI-034-01`と同じ入力（リポジトリのルートで実行） | verify | passed／0 | `scope: all`、`workspace`は`platform`（`.`）。誤って`blocked`にならない。既定の対象はルートの`approved`のREQだけで、`targetResults`は`platform::REQ-001`の1件（`statements`は`platform::REQ-001:AC-01`、`bindingRefs`は`web::frontend`）。`web::TECH-010`と`api::TECH-010`を対象に加えない。`commands`は`web::frontend`の1件 |
 | `MULTI-034-05` | `MULTI-034-01`と同じ入力（`apps/web`で実行） | verify | passed／0 | `scope: all`、`workspace`は`web`（`apps/web`）。既定の対象は`web`の文書だけで、`MULTI-034-03`と同じ`targetResults`と`commands` |
+| `MULTI-034-06` | `MULTI-034-01`と同じ入力（`apps/web`で実行） | verify REQ-009 | failed／1 | 存在しない非修飾の文書ID。`scope: selected`、`workspace`は`web`（`apps/web`）。`target`は検証対象の正規ID（`verify` §8、複合ワークスペース仕様 §4）として作業ワークスペースで修飾した`web::REQ-009`（非修飾の`REQ-009`ではない）。診断は`targetResults[]`の`CTX-ROOT-MISSING-001`の1件（`error`、`failed`、発生元は呼出しの引数`REQ-009`）で、`contextDigest`は`null`、`statements`と`bindingRefs`は空、`commands`は空（テストを開始しない）。最上位の`diagnostics`は空 |
 | `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、コマンドなし |
 | `MULTI-007-01` | メンバーの入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
