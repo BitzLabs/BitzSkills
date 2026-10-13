@@ -223,6 +223,37 @@ class MatrixLedgerTests(unittest.TestCase):
         path.write_bytes(before)
         with self.assertRaisesRegex(ValueError,'permanently'):self.open().reserve_independent(1,'c'*64)
 
+    def test_campaign_corruption_or_missing_record_permanently_stops_after_restoration(self):
+        for fault in ['invalid-json','wrong-fields','missing','dangling-symlink']:
+            with self.subTest(fault=fault):
+                self.storage=self.repository/'.venv'/('ledger-'+fault)
+                self.instance=self.open();self.complete()
+                path=self.storage/'campaign.json';before=path.read_bytes()
+                if fault=='invalid-json':path.write_bytes(b'{')
+                elif fault=='wrong-fields':path.write_bytes(b'{}')
+                else:
+                    path.unlink()
+                    if fault=='dangling-symlink':path.symlink_to('absent-campaign.json')
+                with self.assertRaises((ValueError,OSError)):self.instance.reserve(2)
+                self.assertTrue((self.storage/'stop.json').is_file())
+                if matrix.present(path):path.unlink()
+                matrix.io.exclusive(path,before)
+                with self.assertRaisesRegex(ValueError,'permanently'):self.open().reserve(2)
+                self.assertEqual(len(list(self.storage.glob('attempt-*.json'))),1)
+
+    def test_dangling_submitted_stages_are_rejected_and_cannot_reopen(self):
+        for stage in matrix.STAGES[1:]:
+            with self.subTest(stage=stage):
+                self.storage=self.repository/'.venv'/('ledger-dangling-'+stage)
+                self.instance=self.open();self.complete()
+                path=self.instance.path(stage,1);before=path.read_bytes();path.unlink()
+                path.symlink_to('absent-'+stage+'.json')
+                with self.assertRaises((ValueError,OSError)):self.instance.reserve(2)
+                self.assertTrue((self.storage/'stop.json').is_file())
+                path.unlink();matrix.io.exclusive(path,before)
+                with self.assertRaisesRegex(ValueError,'permanently'):self.open().reserve(2)
+                self.assertEqual(len(list(self.storage.glob('attempt-*.json'))),1)
+
     def test_contract_finite_budget_pins_and_immutable_payloads(self):
         original=dict(self.contract)
         for key,value in [('budget',dict(primary=True,independent=92,automaticRetries=0,delegations=0)),

@@ -21,6 +21,11 @@ PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunch
 STAGES = ('attempt', 'started', 'primary', 'independent', 'review')
 
 
+def present(path):
+    """dangling symlinkも提出済み。読取り時にNOFOLLOWで拒否する。"""
+    return os.path.lexists(path)
+
+
 @dataclass(frozen=True)
 class BoundExecution:
     execution_raw: bytes
@@ -108,10 +113,14 @@ class MatrixLedger:
         expected = dict(version=VERSION, contractSha256=io.sha(self.bound.execution_raw),
                         slots=list(self._slots))
         path = self.storage / 'campaign.json'
-        if not path.exists():
-            require({p.name for p in self.storage.iterdir()} == {'lock'}, 'orphan matrix ledger')
-            io.exclusive(path, io.encoded(expected))
-        require(json_equal(io.read_owned(path), expected), 'matrix campaign drift cannot reset consumption')
+        try:
+            if not present(path):
+                require({p.name for p in self.storage.iterdir()} == {'lock'}, 'orphan matrix ledger')
+                io.exclusive(path, io.encoded(expected))
+            require(json_equal(io.read_owned(path), expected), 'matrix campaign drift cannot reset consumption')
+        except Exception as error:
+            self.stop(None, 'stored-campaign-rejected', type(error).__name__)
+            raise
 
     def path(self, stage, ordinal):
         self.slot(ordinal)
@@ -127,7 +136,7 @@ class MatrixLedger:
 
     def stop(self, ordinal, reason, error_type):
         path = self.storage / 'stop.json'
-        if not path.exists():
+        if not present(path):
             io.exclusive(path, io.encoded(dict(status='stopped', ordinal=ordinal, reason=reason,
                 errorType=error_type, executionSha256=io.sha(self.bound.execution_raw), automaticRetries=0)))
 
@@ -195,7 +204,7 @@ class MatrixLedger:
                 'matrix independent original roles')
 
     def checked_count(self):
-        require(not (self.storage / 'stop.json').exists(), 'matrix campaign permanently stopped')
+        require(not present(self.storage / 'stop.json'), 'matrix campaign permanently stopped')
         ordinal = None
         try:
             files = {p.name for p in self.storage.iterdir()}
@@ -205,22 +214,22 @@ class MatrixLedger:
             require({f'attempt-{n:04d}.json' for n in range(1, count+1)} <= files, 'matrix reservation gap')
             for ordinal in range(1, 93):
                 if ordinal > count:
-                    require(not any(self.path(stage, ordinal).exists() for stage in STAGES[1:]), 'unreserved matrix stage')
+                    require(not any(present(self.path(stage, ordinal)) for stage in STAGES[1:]), 'unreserved matrix stage')
                     continue
                 require(json_equal(self.read('attempt', ordinal), self.slot(ordinal)), 'matrix attempt drift')
                 previous = True
                 for stage in STAGES[1:]:
                     path = self.path(stage, ordinal)
-                    present = path.exists()
-                    require(not present or previous, 'matrix stage gap')
-                    if present:
+                    submitted = present(path)
+                    require(not submitted or previous, 'matrix stage gap')
+                    if submitted:
                         value = self.read(stage, ordinal)
                         if stage == 'started':require(json_equal(value, self.slot(ordinal)), 'matrix start drift')
                         elif stage == 'primary':self.primary_valid(value, ordinal)
                         elif stage == 'independent':self.independent_valid(value, ordinal)
                         else:self.review_valid(value, ordinal)
-                    previous = present
-                require(ordinal == count or self.path('review', ordinal).exists(), 'matrix unfinished preceding slot')
+                    previous = submitted
+                require(ordinal == count or present(self.path('review', ordinal)), 'matrix unfinished preceding slot')
             return count
         except Exception as error:
             self.stop(ordinal, 'stored-evidence-rejected', type(error).__name__)
@@ -231,7 +240,7 @@ class MatrixLedger:
             self.initialize()
             count = self.checked_count()
             require(type(ordinal) is int and ordinal == count+1 and ordinal <= 92, 'matrix fixed order or limit')
-            require(count == 0 or self.path('review', count).exists(), 'matrix previous review pending')
+            require(count == 0 or present(self.path('review', count)), 'matrix previous review pending')
             value = self.slot(ordinal)
             io.exclusive(self.path('attempt', ordinal), io.encoded(value))
             return value
@@ -239,7 +248,7 @@ class MatrixLedger:
     def latest_pending(self, ordinal):
         require(type(ordinal) is int and ordinal == self.checked_count() and ordinal > 0,
                 'matrix only latest reserved slot')
-        require(not self.path('review', ordinal).exists(), 'matrix slot already measured')
+        require(not present(self.path('review', ordinal)), 'matrix slot already measured')
 
     def mark_primary_started(self, ordinal):
         with self.locked():
@@ -251,8 +260,8 @@ class MatrixLedger:
         with self.locked():
             self.initialize()
             self.latest_pending(ordinal)
-            require(self.path('started', ordinal).exists(), 'matrix primary launch not marked')
-            require(not self.path('primary', ordinal).exists(), 'matrix primary already recorded')
+            require(present(self.path('started', ordinal)), 'matrix primary launch not marked')
+            require(not present(self.path('primary', ordinal)), 'matrix primary already recorded')
             try:
                 self.primary_valid(value, ordinal)
             except Exception as error:
@@ -264,7 +273,7 @@ class MatrixLedger:
         with self.locked():
             self.initialize()
             self.latest_pending(ordinal)
-            require(self.path('primary', ordinal).exists(), 'matrix primary evidence pending')
+            require(present(self.path('primary', ordinal)), 'matrix primary evidence pending')
             value = dict(self.slot(ordinal), reviewInputSha256=io.pin(review_input_sha256),
                          model='gpt-6.1-sol', maximumInvocations=1, consumedReservations=1)
             io.exclusive(self.path('independent', ordinal), io.encoded(value))
@@ -274,7 +283,7 @@ class MatrixLedger:
         with self.locked():
             self.initialize()
             self.latest_pending(ordinal)
-            require(self.path('independent', ordinal).exists(), 'matrix independent reservation pending')
+            require(present(self.path('independent', ordinal)), 'matrix independent reservation pending')
             try:
                 value = strict_json(review_raw)
                 self.review_valid(value, ordinal)
@@ -288,7 +297,7 @@ class MatrixLedger:
             self.initialize()
             self.latest_pending(ordinal)
             require(phase in {'primary', 'independent'}, 'matrix interrupted phase')
-            require(self.path('started' if phase == 'primary' else 'independent', ordinal).exists(),
+            require(present(self.path('started' if phase == 'primary' else 'independent', ordinal)),
                     'matrix interruption requires consumed launch or reservation')
             self.stop(ordinal, phase+'-interrupted', 'Interrupted')
 
@@ -296,14 +305,14 @@ class MatrixLedger:
         """停止時も予約と完了を区別する。破損記録を成功や誤選択へ数えない。"""
         with self.locked():
             self.initialize()
-            stopped = (self.storage / 'stop.json').exists()
+            stopped = present(self.storage / 'stop.json')
             if not stopped:self.checked_count()
             counts = {stage: 0 for stage in STAGES}
             correct = incorrect = 0
             for ordinal in range(1, 93):
                 for stage in STAGES:
                     path = self.path(stage, ordinal)
-                    if not path.exists():continue
+                    if not present(path):continue
                     value = self.read(stage, ordinal)
                     if stage in {'attempt', 'started'}:require(json_equal(value, self.slot(ordinal)), 'summary identity')
                     elif stage == 'primary':self.primary_valid(value, ordinal)
