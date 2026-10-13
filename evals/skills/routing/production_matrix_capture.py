@@ -38,7 +38,7 @@ def prelaunch_review(bound,deployment_raw,review_raw,review_report_raw):
         'matrix fixed prelaunch review bytes required')
     value=trace.strict_json(review_raw)
     require(isinstance(value,dict) and set(value)==REVIEW_KEYS
-        and value['version']==REVIEW_VERSION and value['scope']=='public-matrix-primary-launch-only'
+        and value['version']==REVIEW_VERSION and value['scope'] in {'public-matrix-primary-launch-only','public-matrix-primary-and-independent-launch-only'}
         and value['sourceCommit']==bound.contract['sourceCommit']
         and value['conditionSha256']==condition_sha256(bound,deployment_raw)
         and value['independentContext'] is True and trace.json_equal(value['severityCounts'],dict(P1=0,P2=0))
@@ -50,7 +50,7 @@ def prelaunch_review(bound,deployment_raw,review_raw,review_report_raw):
     report=trace.strict_json(review_report_raw)
     require(isinstance(report,dict) and report.get('version')=='independent-review-1'
         and report.get('sourceCommit')==bound.contract['sourceCommit']
-        and report.get('status')=='matrix_primary_capture_prelaunch_code_verified'
+        and report.get('status')==('matrix_pipeline_prelaunch_code_verified' if value['scope']=='public-matrix-primary-and-independent-launch-only' else 'matrix_primary_capture_prelaunch_code_verified')
         and report.get('independentContext') is True and report.get('findings')==[]
         and report.get('blockingFindings')==[] and isinstance(report.get('tests'),dict)
         and type(report['tests'].get('count')) is int and report['tests']['count']>0

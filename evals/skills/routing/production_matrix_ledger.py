@@ -1,4 +1,4 @@
-"""公開92枠の台帳部品。実provider取得器・独立採点器への接続は未実装。
+"""公開92枠の台帳部品。一次取得・独立採点・親原照合の予約と確定を記録する。
 
 ここに渡す完了証明は親検分結果であり、台帳がnative軌跡を採点した証拠ではない。
 製品用の起動入口は公開しない。MatrixLedgerのstorage引数は隔離試験用。
@@ -170,7 +170,9 @@ class MatrixLedger:
                 'matrix original name')
         path = Path(relative)
         prefix = Path(self.bound.contract['outputRelativeRoot']) / f'attempt-{ordinal:04d}'
-        require(relative == path.as_posix() and not path.is_absolute() and path.parent == prefix
+        review_prefix = Path(self.bound.contract['outputRelativeRoot']+'-independent') / f'attempt-{ordinal:04d}'
+        permitted_parent = review_prefix if path.name in {'independent-receipt.json','parent-verification.json'} and path.parent == review_prefix else prefix
+        require(relative == path.as_posix() and not path.is_absolute() and path.parent == permitted_parent
                 and not set(path.parts) & {'..', 'state', 'logs', 'auth.json', '.env', '.git', 'codex-home'}
                 and path.name in {'receipt.json', 'rpc-out.jsonl', 'independent-receipt.json', 'parent-verification.json'},
                 'matrix original boundary')

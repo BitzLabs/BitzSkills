@@ -220,6 +220,12 @@ class MatrixCaptureTests(unittest.TestCase):
         client.start.assert_called_once();client.turn_start.assert_called_once();client.close.assert_called_once()
         self.assertEqual(capture.trace.strict_json((self.base/'isolated-result.json').read_bytes()),{'sdkErrorType':None})
 
+    def test_primary_and_combined_review_scope_require_matching_report_status(self):
+        value=dict(self.review,scope='public-matrix-primary-and-independent-launch-only')
+        self.review_raw=capture.io.encoded(value);self.r.execution['pins']['prelaunchReview']=capture.io.sha(self.review_raw)
+        self.r.bound=self.r.bind();self.r.deployment['executionSha256']=capture.io.sha(self.r.bound.execution_raw)
+        with self.assertRaisesRegex(ValueError,'report incomplete'):self.run_capture()
+        self.spawn.assert_not_called();self.assertFalse(self.storage.exists())
 
 AUTH_METADATA=capture.auth_metadata
 VERIFY_LAUNCH=capture.verify_launch
