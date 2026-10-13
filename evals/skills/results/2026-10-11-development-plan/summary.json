@@ -147,20 +147,20 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-13T23:16:22.693653+09:00",
+    "updatedAt": "2026-10-14T01:22:26.326184+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "50e829801145f40d2d86d9b851f2ec04cd41111d",
-    "verificationRef": "50e829801145f40d2d86d9b851f2ec04cd41111d",
+    "implementationHead": "9d3a49b406a0b42d26afbce4efedb9982c47ba6a",
+    "verificationRef": "9d3a49b406a0b42d26afbce4efedb9982c47ba6a",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
     "r09": "current_72_resources_local_checks_passed_independent_and_real_host_pending",
-    "r10": "source_history_and_progress_pushed_latest_806_regression_and_partial_review_saved",
+    "r10": "source_history_pushed_latest_811_and_two_independent_fd_reviews_saved",
     "oldCampaignConsumedPrimary": 1,
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 806,
+    "fullSkillTestCount": 811,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "provider_semantic_bytes_verified_original_reader_fd_open_boundary_partially_verified_additional_independent_checks_pending",
+    "r04": "fd_reader_lifecycle_and_public_tree_independently_verified_real_calibration_and_provider_runner_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -410,6 +410,22 @@
       "remoteConfirmed": "63b05dae22dce98e945c5fa7a09036b171481f7b",
       "documentationCommitAlreadyPushed": "02eb6768f488eaa06bfbf3047b19a31111791735",
       "pushAtEveryCommit": true
+    },
+    "r04FdLifecycleAndPublicTree": {
+      "record": "r04-fd-lifecycle-and-public-tree-independent-20261014.json",
+      "sourceCommit": "9d3a49b406a0b42d26afbce4efedb9982c47ba6a",
+      "readerSource": "7584715d5631f919ddbc42684628c422c1f88719",
+      "parentFullTests": 811,
+      "independentReaderTests": 65,
+      "independentPublicTreeTests": 27,
+      "namedRequiredConditionsVerified": true,
+      "allPossibleToctouWindowsCertified": false,
+      "realCalibrationValidated": false,
+      "sourceFiles": 37,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
+      "providerLaunchEnabled": false,
+      "certifiesSkillGate": false
     }
   }
 }
