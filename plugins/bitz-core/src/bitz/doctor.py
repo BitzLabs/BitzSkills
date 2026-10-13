@@ -309,7 +309,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         result = _build_result(None, checks, diagnostics, started)
         return result, _exit_code(result["status"])
 
-    result, exit_code = _diagnose_workspace(loc, outcome, git, env, checks, diagnostics, started)
+    result, exit_code = _diagnose_workspace(
+        loc, outcome, git, env, checks, diagnostics, started, catalog_status="passed" if sel.multi_active else None
+    )
     # 複合ワークスペース内の単独操作の`workspace.path`は、リポジトリのルートからの相対パス（結果・診断・終了コード §2）。
     result["workspace"]["path"] = workspace_path
     return result, exit_code
@@ -318,8 +320,13 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 def _diagnose_workspace(
     loc: WorkspaceLocation, outcome: config_mod.ConfigOutcome | None, git: gitutil.GitInfo | None,
     env: dict[str, str], checks: list[dict], diagnostics: list[dict], started: int,
+    catalog_status: str | None = None,
 ) -> tuple[dict, int]:
-    """ワークスペース固有の検査。全体操作ではGitの独立した検査を呼出し側へ任せる。"""
+    """ワークスペース固有の検査。全体操作ではGitの独立した検査を呼出し側へ任せる。
+
+    ``catalog_status``は、複合ワークスペース内の単独操作で全体事前検査が成功したときの検査項目`catalog`
+    （`doctor.md` §3検査6。検査5の`config`の後、検査7の`schema`の前）の状態。``None``なら置かない。
+    """
     # 2. workspace
     workspace_found = loc.config_path is not None
     checks.append({"name": "workspace", "status": "passed" if workspace_found else "blocked"})
@@ -334,6 +341,8 @@ def _diagnose_workspace(
     # 3. config（YAMLの構文・禁止された構文・型・必須フィールド、I/O、上限。`doctor.md` §3検査5）
     config_status = _config_check_status(outcome)
     checks.append({"name": "config", "status": config_status})
+    if catalog_status is not None:
+        checks.append({"name": "catalog", "status": catalog_status})
 
     if outcome.stop_stage == "config":
         # `config`の時点で停止。`schema`／`ears`／`command`／`impact`は依存する出力がないため出さない。

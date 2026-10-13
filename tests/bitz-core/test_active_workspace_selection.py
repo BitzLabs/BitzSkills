@@ -175,6 +175,49 @@ class DoctorWorkspaceSelectionTests(_Base):
                 doctor_mod.run(parse_argv(["doctor", "--workspace", "web", "--format", "json"]), str(single), dict(os.environ))
 
 
+class DoctorCatalogCheckTests(_Base):
+    """複合ワークスペース内の単独の`doctor`は、全体事前検査が成功していれば検査項目`catalog`を置く（`doctor.md` §3検査6）。"""
+
+    @staticmethod
+    def names(result):
+        return [c["name"] for c in result["checks"]]
+
+    def assert_catalog_between_config_and_schema(self, result):
+        names = self.names(result)
+        self.assertEqual(names.count("catalog"), 1, names)
+        self.assertEqual(names.index("catalog"), names.index("config") + 1, names)
+        self.assertEqual(names.index("schema"), names.index("catalog") + 1, names)
+        self.assertIn({"name": "catalog", "status": "passed"}, result["checks"])
+
+    def test_inside_member(self):
+        result, _ = self.doctor(self.web)
+        self.assert_catalog_between_config_and_schema(result)
+
+    def test_at_root(self):
+        result, _ = self.doctor(self.root)
+        self.assert_catalog_between_config_and_schema(result)
+
+    def test_with_workspace_option(self):
+        for cwd, wid in ((self.root, "web"), (self.web, "platform"), (self.web, "api")):
+            with self.subTest(cwd=str(cwd), workspace=wid):
+                result, _ = self.doctor(cwd, "--workspace", wid)
+                self.assert_catalog_between_config_and_schema(result)
+
+    def test_single_workspace_has_no_catalog_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            single = Path(tmp)
+            _git(single, "init", "-q", "--initial-branch=main")
+            _write(single, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: solo\n")
+            result, _ = doctor_mod.run(parse_argv(["doctor", "--format", "json"]), str(single), dict(os.environ))
+            self.assertNotIn("catalog", self.names(result))
+
+    def test_all_workspaces_top_level_catalog_is_unchanged(self):
+        result, _ = doctor_mod.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), dict(os.environ))
+        self.assertEqual([c["name"] for c in result["checks"]], ["core", "git", "catalog"])
+        for workspace in result["workspaces"]:
+            self.assertNotIn("catalog", [c["name"] for c in workspace["checks"]])
+
+
 class CheckAndContextUnchangedTests(_Base):
     def test_check_member_default_and_workspace_option(self):
         parsed = parse_argv(["check", "--full", "--format", "json"])
