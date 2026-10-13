@@ -147,10 +147,10 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-13T16:57:24.721979+09:00",
+    "updatedAt": "2026-10-13T17:24:30.953648+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
-    "verificationRef": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+    "implementationHead": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+    "verificationRef": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
@@ -160,7 +160,7 @@
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 752,
+    "fullSkillTestCount": 763,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "original_bytes_native_and_rollout_binding_independently_reviewed_launch_and_measurement_pending",
+    "r04": "resource_preflight_independently_verified_physical_isolation_and_capture_adapter_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -332,6 +332,22 @@
       "snapshotSha256": "04b3d5ed2d11d62b3edfd3b0bb7f7258ac39ccced43bd5c374edcdc19ed7f1c0",
       "originalCalibrationSource": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
       "physicalMatrixIsolationAndArgvTested": false,
+      "launchEnabled": false
+    },
+    "r04ResourcePreflight": {
+      "record": "r04-preflight-resources-independent.json",
+      "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+      "parentFullTests": 763,
+      "independentTargetTests": 77,
+      "independentNegativeCases": 37,
+      "snapshotResources": 72,
+      "sdkFiles": 207,
+      "runtimeFiles": 50,
+      "oldCalibrationOriginals": 12,
+      "sourceFiles": 32,
+      "allSlotsBound": 92,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
       "launchEnabled": false
     }
   }
