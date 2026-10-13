@@ -28,8 +28,14 @@ def launch_settings(execution_raw, deployment_raw):
     return raw
 
 
-def local_namespace_command(source_repository, base, execution_raw, deployment_raw, *, calibration_only=False):
+def local_namespace_command(source_repository, base, execution_raw, deployment_raw, *, calibration_only=False, source_files=None):
     require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
+    require(source_files is None or calibration_only, 'matrix historical mounts require calibration mode')
+    if source_files is None:source_files=preflight.SOURCE_FILES
+    require(isinstance(source_files,tuple) and len(source_files)==len(set(source_files))
+        and all(isinstance(name,str) and (not name.endswith('.py') or re.fullmatch(
+            r'evals/skills/routing/[a-z_]+\.py',name) is not None) for name in source_files),
+        'matrix fixed public source mounts')
     d = preflight.deployment_for_execution(execution_raw, deployment_raw)
     require(source_repository.is_absolute() and base.is_absolute() and '..' not in source_repository.parts
             and '..' not in base.parts, 'matrix absolute namespace paths')
@@ -43,7 +49,7 @@ def local_namespace_command(source_repository, base, execution_raw, deployment_r
     paths = [source_repository/preflight.capture.fixed_runtime.MANIFEST,
         source_repository/d['sdkRelativePath'], source_repository/d['snapshotRelativePath'],
         Path(d['codexPath']).parents[1],
-        *(source_repository/name for name in preflight.SOURCE_FILES if name.endswith('.py'))]
+        *(source_repository/name for name in source_files if name.endswith('.py'))]
     for path in paths:
         args += ['--ro-bind', str(path), str(path)]
     return (args + ['--bind', str(base), str(base), '--chdir', str(base/'work'), '--', '/usr/bin/python3', '-B',

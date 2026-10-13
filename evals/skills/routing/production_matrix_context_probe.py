@@ -104,7 +104,7 @@ def isolated(base, *, calibration_only=False):
 
 
 def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, source_repository, context_raw, resource_proof_raw,
-                     calibration_only=False, calibration_date=None):
+                     calibration_only=False, calibration_date=None, source_files=None):
     require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
     require(calibration_only or calibration_date is None, 'matrix normal probe cannot override context date')
     require(isinstance(originals, dict) and set(originals) == FIXED_FILES
@@ -132,7 +132,7 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     invocation = trace.strict_json(originals['invocation.json'])
     base=Path(cwd).parent
     expected_invocation=dict(version=launch.CALIBRATION_VERSION if calibration_only else launch.PROBE_VERSION,
-        argv=launch.local_namespace_command(source_repository,base,execution_raw,deployment_raw,calibration_only=calibration_only),
+        argv=launch.local_namespace_command(source_repository,base,execution_raw,deployment_raw,calibration_only=calibration_only,source_files=source_files),
         environment=launch.local_environment(base,d,calibration_only=calibration_only),sourceCommit=c['sourceCommit'],executionSha256=io.sha(execution_raw),
         slot=slot,maximumLocalRequests=1,maximumLogicalTurns=1,timeoutSeconds=60,paidModelCalls=0,
         parentNetworkNamespace=invocation.get('parentNetworkNamespace'))

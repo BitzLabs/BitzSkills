@@ -25,7 +25,7 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     behaviorSafety='evals/skills/cases/behavior-safety.json', protocol='evals/skills/protocol.json',
     catalog='evals/skills/event-catalog.json', instructions=inventory.INSTRUCTIONS,
     caseSchema='evals/skills/schemas/case.schema.json')
-MODULES = ('production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
+MODULES = ('production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
     'production_matrix_preflight', 'production_matrix_inputs', 'production_matrix_ledger',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
     'production_canary_host', 'production_canary_review', 'production_canary_evidence',

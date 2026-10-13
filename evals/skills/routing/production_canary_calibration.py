@@ -31,6 +31,9 @@ def verify(repository, manifest_raw, profile, contract):
     import production_sdk_trace as sdk
     require(ledger.sha(manifest_raw)==ledger.pin(contract['calibrationManifestSha256']),'fixed calibration manifest hash')
     manifest=trace.strict_json(manifest_raw)
+    if isinstance(manifest,dict) and manifest.get('version')=='matrix-client-calibration-originals-0.1.0':
+        import production_matrix_calibration as matrix_calibration
+        return matrix_calibration.verify(repository,manifest_raw,profile,contract)
     require(isinstance(manifest,dict) and set(manifest)=={'version','sourceCommit','artifactSha256'} and
         manifest['version'] in {'primary-client-calibration-originals-0.1.1','primary-client-calibration-originals-0.1.2'} and
         manifest['sourceCommit']==profile['calibrationSource'] and re.fullmatch(r'[0-9a-f]{40}',manifest['sourceCommit']) and
