@@ -2075,7 +2075,7 @@ class AuditTests(unittest.TestCase):
         module = multi_active_workspace_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-034-0{number}" for number in range(1, 6)]
+        self.assertEqual(result["prepared"], [f"MULTI-034-0{number}" for number in range(1, 7)]
                          + [f"MULTI-035-0{number}" for number in range(1, 4)])
         self.assertEqual(result["references"], 2)
         self.assertEqual(result["core_execution"], "Not run")
@@ -2112,9 +2112,38 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual([item["target"] for item in reference["targets"]], targets)
                     self.assertEqual([item["bindingRefs"] for item in reference["targets"]], [bindings])
                     self.assertEqual([item["bindingId"] for item in reference["commands"]], bindings)
-            # ルートで非修飾の`TECH-010`を、`--workspace`なしで指定すると、ルートに存在しない。
-            with self.assertRaises(ValueError):
-                module.reference_verify(repository, ".", None, ["TECH-010"])
+            # ルートで非修飾の`TECH-010`を、`--workspace`なしで指定すると、ルートに存在しない。作業ワークスペースで修飾した正規IDの`platform::TECH-010`で
+            # `CTX-ROOT-MISSING-001`を返す（`verify` §8）。メンバーの中の存在しない`REQ-009`は`web::REQ-009`。
+            missing = module.reference_verify(repository, ".", None, ["TECH-010"])
+            self.assertEqual((missing["status"], [item["target"] for item in missing["targets"]], missing["commands"]),
+                             ("failed", ["platform::TECH-010"], []))
+            missing = module.reference_verify(repository, "apps/web", None, ["REQ-009"])
+            self.assertEqual((missing["status"], missing["workspace"], [item["target"] for item in missing["targets"]]),
+                             ("failed", {"id": "web", "path": "apps/web"}, ["web::REQ-009"]))
+            self.assertEqual(missing["targets"][0]["diagnostics"],
+                             [{"code": "CTX-ROOT-MISSING-001", "severity": "error", "resultStatus": "failed",
+                               "summary": "起点REQ-009が存在しません",
+                               "source": {"kind": "invocation", "argument": "REQ-009"}}])
+            self.assertEqual(module.reference_verify(repository, "apps/web", "api", ["REQ-009"])["targets"][0]["target"], "api::REQ-009")
+            expected = json.loads((audit.FIXTURES / "multi/MULTI-034-06/expected/verify.json").read_text())
+            module.check_verify_against_reference(expected, module.reference_verify(repository, "apps/web", None, ["REQ-009"]))
+            for index, change in enumerate([
+                lambda v: v["targetResults"][0].update(target="REQ-009"),
+                lambda v: v["targetResults"][0].update(target="platform::REQ-009"),
+                lambda v: v["targetResults"][0].update(diagnostics=[]),
+                lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(argument="web::REQ-009"),
+                lambda v: v["targetResults"][0]["diagnostics"][0].update(code="SPEC-VERIFY-BLOCKED-001"),
+                lambda v: v["targetResults"][0].update(status="blocked"),
+                lambda v: v.update(status="passed"),
+                lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+                lambda v: v["workspace"].update(id="platform", path="."),
+            ]):
+                with self.subTest(missing_change=index):
+                    changed = copy.deepcopy(expected)
+                    change(changed)
+                    with self.assertRaises(ValueError):
+                        module.check_verify_against_reference(
+                            changed, module.reference_verify(repository, "apps/web", None, ["REQ-009"]))
             # 通るリテラルの期待値と、参照計算の一致。他のワークスペースの対象の混入を拒否する。
             for identifier in ("MULTI-034-03", "MULTI-034-04", "MULTI-034-05"):
                 with self.subTest(identifier=identifier):
@@ -2249,10 +2278,33 @@ class AuditTests(unittest.TestCase):
             lambda v: v["diagnostics"].append({"code": "SPEC-DOCTOR-COMMAND-001"}),
             lambda v: v["core"].update(capabilities=[]),
         ]
+        missing_changes = [
+            swap_workspace,
+            lambda v: v["workspace"].update(path="."),
+            lambda v: v.update(scope="all"),
+            lambda v: v.update(status="blocked"),
+            lambda v: v.update(status="passed"),
+            lambda v: v["targetResults"][0].update(target="REQ-009"),
+            lambda v: v["targetResults"][0].update(target="platform::REQ-009"),
+            lambda v: v["targetResults"][0].update(status="blocked"),
+            lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            lambda v: v["targetResults"][0].update(bindingRefs=["web::frontend"]),
+            lambda v: v["targetResults"][0].update(statements=["web::REQ-009:AC-01"]),
+            lambda v: v["targetResults"][0].update(diagnostics=[]),
+            lambda v: v["targetResults"][0]["diagnostics"][0].update(code="CTX-STATE-001"),
+            lambda v: v["targetResults"][0]["diagnostics"][0].update(severity="warning"),
+            lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(argument="web::REQ-009"),
+            lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(kind="file"),
+            lambda v: v["targetResults"].append(copy.deepcopy(v["targetResults"][0])),
+            lambda v: v["commands"].append(module.web_command()),
+            lambda v: v["diagnostics"].append({"code": "CTX-ROOT-MISSING-001"}),
+            lambda v: v["revision"].update(dirty=True),
+        ]
         mutations = []
         for identifier, (kind, *_rest) in module.CASES.items():
             relative = module.RESULT_FILES[kind]
-            for change in (verify_changes if kind == "verify" else doctor_changes):
+            for change in (missing_changes if identifier in module.MISSING
+                           else verify_changes if kind == "verify" else doctor_changes):
                 mutations.append((identifier, relative, change))
 
         def drop_option(v):
@@ -2268,11 +2320,11 @@ class AuditTests(unittest.TestCase):
         def add_option(value):
             return lambda v: v["invocation"]["argv"].insert(1, "--workspace") or v["invocation"]["argv"].insert(2, value)
 
-        def drop_positional(v):
-            v["invocation"]["argv"].remove("TECH-010")
+        def drop_positional(name):
+            return lambda v: v["invocation"]["argv"].remove(name)
 
-        def change_positional(value):
-            return lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("TECH-010"), value)
+        def change_positional(name, value):
+            return lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index(name), value)
 
         for identifier, (kind, cwd, argv, option, positionals, *_rest) in module.CASES.items():
             if option is not None:
@@ -2284,16 +2336,21 @@ class AuditTests(unittest.TestCase):
                 for value in ("platform", "web", "api"):
                     mutations.append((identifier, "manifest.json", add_option(value)))
             if positionals:
-                mutations.append((identifier, "manifest.json", drop_positional))
-                mutations.append((identifier, "manifest.json", change_positional("api::TECH-010")))
-                mutations.append((identifier, "manifest.json", change_positional("web::TECH-010")))
+                mutations.append((identifier, "manifest.json", drop_positional(positionals[0])))
+                for value in ("api::TECH-010", "web::TECH-010", "web::REQ-009", "TECH-010"):
+                    if value != positionals[0]:
+                        mutations.append((identifier, "manifest.json", change_positional(positionals[0], value)))
             elif kind == "verify":
                 mutations.append((identifier, "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "TECH-010")))
             for value in (".", "apps/web", "services/api"):
                 if value != cwd:
                     mutations.append((identifier, "manifest.json", lambda v, value=value: v["invocation"].update(cwd=value)))
             mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)))
-            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)))
+            if identifier in module.MISSING:
+                # 期待がすでに`failed`／1なので、`passed`／0への改変を試す。
+                mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)))
+            else:
+                mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)))
             mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(exitCode=4)))
             mutations.append((identifier, "manifest.json", lambda v: v["setup"].update(operations=[
                 {"op": "update", "path": ".spec/bitz.yaml", "source": "changes/x.md"}])))

@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-034-06",
+  "description": "メンバーの中の`verify REQ-009`が、存在しない非修飾のIDを作業ワークスペースで修飾した`target`で診断する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "verify",
+      "REQ-009",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}
