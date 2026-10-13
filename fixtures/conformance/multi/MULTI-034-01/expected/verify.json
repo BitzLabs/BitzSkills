@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::TECH-010",
+      "status": "passed",
+      "contextDigest": "sha256:d790a4953dca4e94b75e9abe94ca4529bf0bb00afe63fc325ef8cd5d5a3b5f2d",
+      "statements": [],
+      "bindingRefs": [
+        "web::frontend"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "web::frontend",
+      "workspaceId": "web",
+      "name": "frontend",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/auth/test_login.py"
+      ],
+      "tests": [
+        "tests/auth/test_login.py"
+      ],
+      "covers": [
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

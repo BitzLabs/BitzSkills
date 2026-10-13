@@ -73,6 +73,7 @@ from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_r
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
+from conformance import multi_active_workspace_fixtures
 from conformance import doctor_plugin_fixtures
 
 
@@ -2060,6 +2061,308 @@ class AuditTests(unittest.TestCase):
         # 文書の欠落と余分な文書、設定の変更も、入力のバイト列の検査が拒否する。
         for identifier in module.CASES:
             for name in ("repo/.spec/bitz.yaml", web_req, api_tech, "extra"):
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_active_workspace_fixtures(self):
+        """`MULTI-034-01`〜`05`（`verify`）と`MULTI-035-01`〜`03`（`doctor`）: 作業ワークスペースの決定を固定する（実装の確認事項C24、C38）。"""
+        module = multi_active_workspace_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-034-0{number}" for number in range(1, 6)]
+                         + [f"MULTI-035-0{number}" for number in range(1, 4)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_active_workspace_reference_follows_the_inputs(self):
+        """参照計算は、`--workspace`、最寄りの設定、非修飾のIDの解決、既定の対象が作業ワークスペースの文書だけであることを、入力の木構造から導く。"""
+        module = multi_active_workspace_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-034-01")
+            fixture = root / "multi/MULTI-034-01"
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+            _, workspaces, documents = multi_crosscheck.load_workspaces(repository)
+            # 3つのワークスペースが、既定の対象を1件ずつ持つ。統合索引を列挙すると3件が混ざる（陰性対照）。
+            self.assertEqual({name: module.default_targets(documents, name) for name in workspaces},
+                             {"platform": ["platform::REQ-001"], "web": ["web::TECH-010"], "api": ["api::TECH-010"]})
+            for cwd, option, positionals, active, scope, targets, bindings in [
+                ("apps/web", None, ["TECH-010"], {"id": "web", "path": "apps/web"}, "selected", ["web::TECH-010"], ["web::frontend"]),
+                (".", "web", ["TECH-010"], {"id": "web", "path": "apps/web"}, "selected", ["web::TECH-010"], ["web::frontend"]),
+                (".", "web", [], {"id": "web", "path": "apps/web"}, "all", ["web::TECH-010"], ["web::frontend"]),
+                (".", None, [], {"id": "platform", "path": "."}, "all", ["platform::REQ-001"], ["web::frontend"]),
+                ("apps/web", None, [], {"id": "web", "path": "apps/web"}, "all", ["web::TECH-010"], ["web::frontend"]),
+                ("apps/web", "api", ["TECH-010"], {"id": "api", "path": "services/api"}, "selected", ["api::TECH-010"], ["api::backend"]),
+                ("services/api", None, [], {"id": "api", "path": "services/api"}, "all", ["api::TECH-010"], ["api::backend"]),
+            ]:
+                with self.subTest(cwd=cwd, option=option, positionals=positionals):
+                    reference = module.reference_verify(repository, cwd, option, positionals)
+                    self.assertEqual((reference["workspace"], reference["scope"], reference["status"]), (active, scope, "passed"))
+                    self.assertEqual([item["target"] for item in reference["targets"]], targets)
+                    self.assertEqual([item["bindingRefs"] for item in reference["targets"]], [bindings])
+                    self.assertEqual([item["bindingId"] for item in reference["commands"]], bindings)
+            # ルートで非修飾の`TECH-010`を、`--workspace`なしで指定すると、ルートに存在しない。
+            with self.assertRaises(ValueError):
+                module.reference_verify(repository, ".", None, ["TECH-010"])
+            # 通るリテラルの期待値と、参照計算の一致。他のワークスペースの対象の混入を拒否する。
+            for identifier in ("MULTI-034-03", "MULTI-034-04", "MULTI-034-05"):
+                with self.subTest(identifier=identifier):
+                    case = module.CASES[identifier]
+                    expected = json.loads((audit.FIXTURES / f"multi/{identifier}/expected/verify.json").read_text())
+                    reference = module.reference_verify(repository, case[module.CWD], case[module.OPTION], case[module.POSITIONALS])
+                    module.check_verify_against_reference(expected, reference)
+                    mixed = copy.deepcopy(expected)
+                    mixed["targetResults"] += [
+                        multi_active_workspace_fixtures.target_entry(name, "passed", expected["targetResults"][0]["contextDigest"],
+                                                                     bindings=["web::frontend"])
+                        for name in ("platform::REQ-001", "web::TECH-010", "api::TECH-010")
+                        if name != expected["targetResults"][0]["target"]]
+                    with self.assertRaises(ValueError):
+                        module.check_verify_against_reference(mixed, reference)
+                    mixed = copy.deepcopy(expected)
+                    mixed["targetResults"].append(
+                        multi_active_workspace_fixtures.target_entry("api::TECH-010", "passed", None, bindings=["api::backend"]))
+                    with self.assertRaises(ValueError):
+                        module.check_verify_against_reference(mixed, reference)
+            # `doctor`: 作業ワークスペースの`id`と`path`は、`--workspace`、なければ最寄りの設定で決まる。
+            root = self.copy_multi_fixture(temporary, "MULTI-035-01")
+            fixture = root / "multi/MULTI-035-01"
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            repository = fixture_setup(fixture, manifest, Path(temporary) / "work2" / "repo")
+            for cwd, option, active in [
+                ("apps/web", "platform", {"id": "platform", "path": "."}),
+                (".", "web", {"id": "web", "path": "apps/web"}),
+                ("apps/web", None, {"id": "web", "path": "apps/web"}),
+                (".", None, {"id": "platform", "path": "."}),
+                ("services/api", "web", {"id": "web", "path": "apps/web"}),
+            ]:
+                with self.subTest(doctor_cwd=cwd, option=option):
+                    reference = module.reference_doctor(repository, cwd, option)
+                    self.assertEqual((reference["workspace"], reference["status"]), (active, "passed"))
+                    self.assertEqual([item["name"] for item in reference["checks"]],
+                                     ["core", "workspace", "config", "catalog", "schema", "ears", "git", "command", "impact"])
+            # 参照計算の陽性対照: 作業ワークスペースのコマンドが解決できなければ`command`は`blocked`になり、ほかの作業ワークスペースには及ばない。
+            web_config = repository / "apps/web/.spec/bitz.yaml"
+            web_config.write_text(web_config.read_text() + "verify:\n  commands:\n    frontend:\n      argv: [./missing-command]\n      cwd: .\n")
+            blocked = module.reference_doctor(repository, "apps/web", None)
+            self.assertEqual(blocked["status"], "blocked")
+            self.assertEqual([item["status"] for item in blocked["checks"] if item["name"] == "command"], ["blocked"])
+            self.assertEqual(module.reference_doctor(repository, "apps/web", "platform")["status"], "passed")
+            # 結果の改変を、参照計算との比較が拒否する。
+            expected = json.loads((audit.FIXTURES / "multi/MULTI-035-01/expected/doctor.json").read_text())
+            reference = module.reference_doctor(
+                fixture_setup(fixture, manifest, Path(temporary) / "work3" / "repo"), "apps/web", "platform")
+            module.check_doctor_against_reference(expected, reference)
+            for index, change in enumerate([
+                lambda v: v["workspace"].update(id="web", path="apps/web"),
+                lambda v: v["workspace"].update(path="apps/web"),
+                lambda v: v["workspace"].update(id="web"),
+                lambda v: v["checks"].pop(),
+                lambda v: v["checks"].remove({"name": "catalog", "status": "passed"}),
+                lambda v: v["checks"].append({"name": "catalog", "status": "passed"}),
+                lambda v: v["checks"][3].update(status="blocked"),
+                lambda v: v["checks"][7].update(status="blocked"),
+                lambda v: v.update(status="blocked"),
+            ]):
+                with self.subTest(doctor_change=index):
+                    changed = copy.deepcopy(expected)
+                    change(changed)
+                    with self.assertRaises(ValueError):
+                        module.check_doctor_against_reference(changed, reference)
+
+    def test_multi_active_workspace_audit_rejects_changed_expectations(self):
+        """`workspace`の改変、`scope`・状態・対象・コマンド・ハッシュ値の改変、他のワークスペースの対象の混入、実行ディレクトリと`--workspace`の改変を拒否する。"""
+        module = multi_active_workspace_fixtures
+        target = module.target_entry
+        other = {"platform": "web", "web": "platform", "api": "web"}
+
+        def swap_workspace(v):
+            active = v["workspace"]["id"]
+            v["workspace"].update(id=other[active], path="." if other[active] == "platform" else "apps/web")
+
+        verify_changes = [
+            swap_workspace,
+            lambda v: v["workspace"].update(path="apps/web" if v["workspace"]["path"] == "." else "."),
+            lambda v: v["workspace"].update(id="api", path="services/api"),
+            lambda v: v.update(scope="all" if v["scope"] == "selected" else "selected"),
+            lambda v: v.update(status="failed"),
+            lambda v: v.update(status="blocked"),
+            lambda v: v.update(status="passed_with_warnings"),
+            lambda v: v["revision"].update(dirty=True),
+            lambda v: v["targetResults"][0].update(target="TECH-010" if "::" in v["targetResults"][0]["target"] else "x"),
+            lambda v: v["targetResults"][0].update(
+                target="api::TECH-010" if v["targetResults"][0]["target"] != "api::TECH-010" else "web::TECH-010"),
+            lambda v: v["targetResults"][0].update(
+                target="platform::REQ-001" if v["targetResults"][0]["target"] != "platform::REQ-001" else "web::TECH-010"),
+            lambda v: v["targetResults"][0].update(status="blocked"),
+            lambda v: v["targetResults"][0].update(statements=["platform::REQ-001:AC-01"] if not v["targetResults"][0]["statements"] else []),
+            lambda v: v["targetResults"][0].update(bindingRefs=[]),
+            lambda v: v["targetResults"][0].update(bindingRefs=["api::backend"]),
+            lambda v: v["targetResults"][0].update(contextDigest=None),
+            lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            lambda v: v["targetResults"][0]["diagnostics"].append({"code": "CTX-ROOT-MISSING-001"}),
+            lambda v: v["targetResults"].append(target("api::TECH-010", "passed", v["targetResults"][0]["contextDigest"],
+                                                      bindings=["api::backend"])),
+            lambda v: v["targetResults"].append(target("platform::REQ-001" if v["targetResults"][0]["target"] != "platform::REQ-001"
+                                                      else "web::TECH-010", "passed", v["targetResults"][0]["contextDigest"],
+                                                      bindings=["web::frontend"])),
+            lambda v: v.update(targetResults=[]),
+            lambda v: v.update(commands=[]),
+            lambda v: v["commands"][0].update(bindingId="api::backend", workspaceId="api", name="backend"),
+            lambda v: v["commands"][0].update(tests=["tests/test_audit.py"]),
+            lambda v: v["commands"][0].update(covers=["api::TECH-010"]),
+            lambda v: v["commands"][0].update(covers=["REQ-001:AC-01"]),
+            lambda v: v["commands"][0].update(argv=["/bin/true"]),
+            lambda v: v["commands"][0].update(status="failed", exitCode=1),
+            lambda v: v["commands"].append(copy.deepcopy(v["commands"][0])),
+            lambda v: v["diagnostics"].append({"code": "SPEC-VERIFY-BLOCKED-002"}),
+        ]
+        doctor_changes = [
+            lambda v: v["workspace"].update(id="web" if v["workspace"]["id"] == "platform" else "platform",
+                                            path="apps/web" if v["workspace"]["id"] == "platform" else "."),
+            lambda v: v["workspace"].update(path="apps/web" if v["workspace"]["path"] == "." else "."),
+            lambda v: v["workspace"].update(path="services/api"),
+            lambda v: v["workspace"].update(id="api", path="services/api"),
+            lambda v: v.update(status="blocked"),
+            lambda v: v.update(status="passed_with_warnings"),
+            lambda v: v["checks"].pop(),
+            lambda v: v["checks"].remove({"name": "catalog", "status": "passed"}),
+            lambda v: v["checks"].insert(2, v["checks"].pop(3)),
+            lambda v: v["checks"].reverse(),
+            lambda v: v["checks"][3].update(status="blocked"),
+            lambda v: v["checks"][7].update(status="blocked"),
+            lambda v: v["checks"][6].update(status="warning"),
+            lambda v: v["checks"][8].update(status="passed"),
+            lambda v: v.update(multiWorkspace={"id": "platform", "path": "."}),
+            lambda v: v.update(workspaces=[]),
+            lambda v: v["diagnostics"].append({"code": "SPEC-DOCTOR-COMMAND-001"}),
+            lambda v: v["core"].update(capabilities=[]),
+        ]
+        mutations = []
+        for identifier, (kind, *_rest) in module.CASES.items():
+            relative = module.RESULT_FILES[kind]
+            for change in (verify_changes if kind == "verify" else doctor_changes):
+                mutations.append((identifier, relative, change))
+
+        def drop_option(v):
+            argv = v["invocation"]["argv"]
+            argv.__delitem__(slice(argv.index("--workspace"), argv.index("--workspace") + 2))
+
+        def change_option(value):
+            def mutate(v):
+                argv = v["invocation"]["argv"]
+                argv[argv.index("--workspace") + 1] = value
+            return mutate
+
+        def add_option(value):
+            return lambda v: v["invocation"]["argv"].insert(1, "--workspace") or v["invocation"]["argv"].insert(2, value)
+
+        def drop_positional(v):
+            v["invocation"]["argv"].remove("TECH-010")
+
+        def change_positional(value):
+            return lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("TECH-010"), value)
+
+        for identifier, (kind, cwd, argv, option, positionals, *_rest) in module.CASES.items():
+            if option is not None:
+                for value in ("platform", "web", "api"):
+                    if value != option:
+                        mutations.append((identifier, "manifest.json", change_option(value)))
+                mutations.append((identifier, "manifest.json", drop_option))
+            else:
+                for value in ("platform", "web", "api"):
+                    mutations.append((identifier, "manifest.json", add_option(value)))
+            if positionals:
+                mutations.append((identifier, "manifest.json", drop_positional))
+                mutations.append((identifier, "manifest.json", change_positional("api::TECH-010")))
+                mutations.append((identifier, "manifest.json", change_positional("web::TECH-010")))
+            elif kind == "verify":
+                mutations.append((identifier, "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "TECH-010")))
+            for value in (".", "apps/web", "services/api"):
+                if value != cwd:
+                    mutations.append((identifier, "manifest.json", lambda v, value=value: v["invocation"].update(cwd=value)))
+            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)))
+            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)))
+            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(exitCode=4)))
+            mutations.append((identifier, "manifest.json", lambda v: v["setup"].update(operations=[
+                {"op": "update", "path": ".spec/bitz.yaml", "source": "changes/x.md"}])))
+            mutations.append((identifier, "side-effects.json", lambda v: v["before"].update(git={"status": "", "index": ""})))
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_active_workspace_audit_rejects_changed_corpus(self):
+        """原因の構成は、3つのワークスペースが既定の対象を1件ずつ持ち、`web`と`api`が同じローカルIDを持つことである。入力を変えた写しは拒否する。"""
+        module = multi_active_workspace_fixtures
+        web_tech = "repo/apps/web/.spec/technical/TECH-010.md"
+        api_tech = "repo/services/api/.spec/technical/TECH-010.md"
+        root_req = "repo/.spec/requirements/REQ-001.md"
+        # 原因の構成の検査が、入力の木構造から拒否する写し。
+        breaking_verify = [
+            (root_req, "status: approved", "status: draft"),
+            (web_tech, "status: approved", "status: draft"),
+            (api_tech, "status: approved", "status: draft"),
+            # `api`が既定の対象を持たなくなる（`tests`の削除）。
+            (api_tech, "tests:\n  - path: tests/test_audit.py\n    covers: [TECH-010]\n    command: backend\n", ""),
+            # `web`が既定の対象を持たなくなる。
+            (web_tech, "tests:\n  - path: tests/auth/test_login.py\n    covers: [platform::REQ-001:AC-01]\n    command: frontend\n", ""),
+            # `api`の文書が関係を持つ。
+            (api_tech, "status: approved\n", "status: approved\nrelations:\n  related: [platform::REQ-001]\n"),
+            # `web`と`api`が同じローカルIDでなくなる。
+            (api_tech, "id: TECH-010", "id: TECH-020"),
+        ]
+        for index, (relative, old, new) in enumerate(breaking_verify):
+            for identifier in [name for name, case in module.CASES.items() if case[0] == "verify"]:
+                with self.subTest(index=index, identifier=identifier, file=relative), \
+                        tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                    with self.assertRaises(ValueError):
+                        module.check_conditions(identifier, repository)
+        # `doctor`: 仕様文書を置くと、作業ワークスペースの同一性だけを見る構成ではなくなる。
+        for identifier in [name for name, case in module.CASES.items() if case[0] == "doctor"]:
+            with self.subTest(identifier=identifier, file="document"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                extra = fixture / "repo/.spec/requirements/REQ-001.md"
+                extra.parent.mkdir(parents=True, exist_ok=True)
+                extra.write_bytes(module.requirement("REQ-001", "認証の基準", "REQ-001:AC-01").encode())
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                with self.assertRaises(ValueError):
+                    module.check_conditions(identifier, repository)
+        # 文書とテストの欠落、設定の変更と余分なファイルも、入力のバイト列の検査が拒否する。
+        for identifier, case in module.CASES.items():
+            names = ["repo/.spec/bitz.yaml", "repo/apps/web/.spec/bitz.yaml", "extra"]
+            if case[0] == "verify":
+                names += [web_tech, api_tech, root_req, "repo/apps/web/tests/auth/test_login.py"]
+            for name in names:
                 with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     fixture = root / "multi" / identifier
