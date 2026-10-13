@@ -146,5 +146,53 @@ class MatrixOriginalsTests(unittest.TestCase):
             with self.assertRaises(ValueError):self.load()
         self.assertEqual(len(os.listdir(descriptors)),before)
 
+    def test_open_directory_keeps_original_entries_when_its_name_changes_during_listing(self):
+        inventory=originals.provider.evidence.inventory
+        listed=os.listdir
+        for relative in ['.','rollout-traces','rollout-traces/synthetic','rollout-traces/synthetic/payloads']:
+            folder=self.base if relative=='.' else self.base/relative
+            inode=folder.stat().st_ino;backup=self.fixture.artifact_repository/'public-listing-backup';changed=[]
+            def rename_after_open(fd):
+                if type(fd) is int and os.fstat(fd).st_ino==inode and not changed:
+                    changed.append(True);folder.rename(backup);folder.mkdir()
+                    (folder/'public-other-directory-entry').write_bytes(b'public fixture')
+                return listed(fd)
+            try:
+                with self.subTest(relative=relative),patch.object(os,'listdir',side_effect=rename_after_open):
+                    names=inventory.artifact_inventory(self.base,self.fixture.receipt['artifactSha256'],
+                        additional_artifacts=originals.provider.evidence.PROVIDER_ARTIFACTS)
+                self.assertEqual(changed,[True]);self.assertEqual(set(names),set(self.fixture.originals))
+                self.assertFalse(any('public-other-directory-entry' in name for name in names))
+            finally:
+                if changed:
+                    (folder/'public-other-directory-entry').unlink();folder.rmdir();backup.rename(folder)
+        self.assertEqual(self.load(),self.fixture.bind())
+
+    def test_inventory_closes_every_open_directory_on_exception_and_interrupt(self):
+        inventory=originals.provider.evidence.inventory;listed=os.listdir
+        descriptors=Path('/proc/self/fd') if Path('/proc/self/fd').is_dir() else Path('/dev/fd')
+        for relative in ['.','rollout-traces','rollout-traces/synthetic','rollout-traces/synthetic/payloads']:
+            folder=self.base if relative=='.' else self.base/relative;inode=folder.stat().st_ino
+            for exception in [RuntimeError,KeyboardInterrupt]:
+                before=len(listed(descriptors));raised=[]
+                def interrupted(fd):
+                    if type(fd) is int and os.fstat(fd).st_ino==inode:
+                        raised.append(True);raise exception('public fixture interruption')
+                    return listed(fd)
+                with self.subTest(relative=relative,exception=exception.__name__),patch.object(os,'listdir',side_effect=interrupted):
+                    with self.assertRaises(exception):
+                        inventory.artifact_inventory(self.base,self.fixture.receipt['artifactSha256'],
+                            additional_artifacts=originals.provider.evidence.PROVIDER_ARTIFACTS)
+                self.assertEqual(raised,[True]);self.assertEqual(len(listed(descriptors)),before)
+        self.assertEqual(self.load(),self.fixture.bind())
+
+    def test_original_file_metadata_is_checked_through_descriptors_only(self):
+        expected=self.fixture.bind();lstat=Path.lstat
+        def directories_only(path,*args,**kwargs):
+            if path.is_relative_to(self.base) and str(path.relative_to(self.base)) in self.fixture.originals:
+                raise AssertionError('original file metadata must use the checked directory descriptor')
+            return lstat(path,*args,**kwargs)
+        with patch.object(Path,'lstat',new=directories_only):self.assertEqual(self.load(),expected)
+
 
 if __name__=='__main__':unittest.main()

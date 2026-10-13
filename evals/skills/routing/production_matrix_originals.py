@@ -1,6 +1,5 @@
 """公開行列のprovider原を完全inventory/NOFOLLOWで読取る。起動・予約・確定はしない。"""
 from types import SimpleNamespace
-import stat
 import production_matrix_provider_evidence as provider
 
 io=provider.io
@@ -24,10 +23,8 @@ def load_provider_capture(bound,ordinal,*,source_repository,artifact_repository,
         and receipt['cwd']==environment['cwd'],'matrix original reader source/slot/root drift')
     names=provider.evidence.inventory.artifact_inventory(base,receipt['artifactSha256'],
         additional_artifacts=provider.evidence.PROVIDER_ARTIFACTS)
-    # 既知名のhardlinkも全集合のmetadataで拒否してから原内容を読む。
-    for name in names:
-        metadata=(base/name).lstat()
-        require(stat.S_ISREG(metadata.st_mode) and metadata.st_nlink==1,'matrix original file type or hardlink')
+    # type/nlinkはinventoryが固定directory FDから全集合を検査済み。
+    # 親を名前で再追跡する重複metadata読取りは行わない。
     originals={name:io.read_regular(base/name) for name in names}
     context=provider.evidence.bind_originals(bound,ordinal,originals,receipt_raw,manifest_raw,schema_raw,context_raw)
     provider.verify_bytes(context,source_repository=source_repository,artifact_repository=artifact_repository)
