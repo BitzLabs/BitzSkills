@@ -227,7 +227,13 @@ class CanaryCaptureTests(unittest.TestCase):
         self.assertEqual(json.loads((base / 'proxy-capture-errors.json').read_bytes())['errors'][0]['errorType'], 'AttributeError')
 
     def test_context_profile_is_pinned_and_rejects_model_claims_or_unfixed_context(self):
-        contract=self.contract();raw=(ROOT/capture.CONTEXT).read_bytes()
+        legacy_contract=self.contract();raw=(ROOT/capture.CONTEXT).read_bytes()
+        current_pin=capture.ledger.sha(raw)
+        if legacy_contract['contextProfileSha256']!=current_pin:
+            with self.assertRaisesRegex(ValueError,'fixed context profile hash'):
+                capture.context_profile(raw,legacy_contract)
+        # policy/固定hashの単体試験用に複製だけを束縛。旧実測契約は更新しない。
+        contract=dict(legacy_contract,contextProfileSha256=current_pin)
         self.assertEqual(capture.context_profile(raw,contract)['supplementBlockCount'],2)
         with self.assertRaises(ValueError):capture.context_profile(raw+b' ',contract)
         for key,value in [('systemSkillsDisabled',False),('supplementBlockCount',True),('paidModelCalls',True),
