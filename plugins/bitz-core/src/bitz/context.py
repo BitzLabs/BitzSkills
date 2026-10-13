@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 import time
 
+from . import activews
 from . import config as config_mod
 from . import digest as digest_mod
 from . import document as document_mod
@@ -36,7 +37,7 @@ from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
-from .workspace import WorkspaceLocation, locate_workspace
+from .workspace import locate_workspace
 
 _KIND_RANK = {"REQ": 0, "TECH": 1, "ADR": 2, "TASK": 3}
 _KIND_LABEL = {"REQ": "requirement", "TECH": "technical", "ADR": "decision", "TASK": "task"}
@@ -414,41 +415,12 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     # --- ワークスペースの決定（複合ワークスペース仕様 §3）。 ---------------------------------
     # 複合ワークスペースでは作業ワークスペースの非修飾IDも受け付けるため、修飾IDの起点がある
-    # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う。
+    # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う（`activews.select_active`）。
     # 単一ワークスペースは従来の軽量な経路のままとする。
-    multi_pre: multiws.PrecheckResult | None = (
-        multiws.precheck(cwd, git, env) if multiws.is_declared(cwd, git, env) else None
-    )
-    workspace_path = "."
-    qualified_prefixes = {
-        q[0] for r in roots_raw if (q := multirelate.parse_qualified(r)) is not None
-    }
-    if qualified_prefixes:
-        if len(qualified_prefixes) > 1:
-            raise CliArgError("context", "複数の起点が異なるワークスペースに属しています")
-        target_ws_id = next(iter(qualified_prefixes))
-        if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("context", f"起点のワークスペースと--workspaceが一致しません: {target_ws_id}")
-    else:
-        target_ws_id = requested_workspace
-
-    if multi_pre is not None and multi_pre.ok:
-        if target_ws_id is None and loc.config_path is not None:
-            active_outcome = config_mod.read_config(loc.config_path)
-            target_ws_id = active_outcome.workspace_id
-        if target_ws_id == multi_pre.root_id:
-            assert multi_pre.repo_root is not None
-            loc = WorkspaceLocation(
-                root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
-            )
-            workspace_path = "."
-        else:
-            member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-            if member is not None:
-                loc = WorkspaceLocation(
-                    root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                )
-                workspace_path = member.path
+    sel = activews.select_active("context", roots_raw, requested_workspace, cwd, git, env, loc)
+    multi_pre = sel.pre
+    loc = sel.loc
+    workspace_path = sel.rel_path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
