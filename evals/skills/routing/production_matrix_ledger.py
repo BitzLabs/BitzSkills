@@ -16,8 +16,9 @@ import production_matrix_inputs as inputs
 from production_trace import require, strict_json, json_equal
 
 
-VERSION = 'public-production-matrix-ledger-0.1.0'
-PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli'}
+VERSION = 'public-production-matrix-ledger-0.1.1'
+PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli',
+        'contextProfile', 'decisionSchema'}
 STAGES = ('attempt', 'started', 'primary', 'independent', 'review')
 
 

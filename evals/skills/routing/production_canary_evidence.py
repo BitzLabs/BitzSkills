@@ -30,6 +30,7 @@ INSTRUCTIONS = 'evals/skills/routing/production-canary-instructions-v0.1.txt'
 SCHEMA = 'evals/skills/schemas/decision.schema.json'
 CONTEXT = capture.CONTEXT
 AUDIT_SOURCES = ['evals/skills/routing/production_canary_evidence.py',
+                 'evals/skills/routing/production_primary_review.py',
                  'tests/skills/test_production_canary_evidence.py']
 
 
