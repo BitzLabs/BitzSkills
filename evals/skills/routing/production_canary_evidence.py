@@ -53,11 +53,16 @@ def artifact_name(name):
             'unknown original rollout artifact')
 
 
-def artifact_inventory(base, declared):
+def artifact_inventory(base, declared, *, additional_artifacts=frozenset()):
     """全パスを検査してから内容を読む。opaqueディレクトリには降りない。"""
-    require(isinstance(declared, dict) and FIXED_ARTIFACTS <= set(declared), 'required original artifacts')
+    # callerがコードで固定した追加の公開原名だけを許可する。receiptから許可集合を作らない。
+    require(isinstance(additional_artifacts,frozenset) and all(isinstance(name,str) and
+        re.fullmatch(r'[a-z][a-z0-9-]*\.json',name) for name in additional_artifacts), 'fixed additional original names')
+    def allowed(name):
+        if name not in additional_artifacts:artifact_name(name)
+    require(isinstance(declared, dict) and FIXED_ARTIFACTS | additional_artifacts <= set(declared), 'required original artifacts')
     for name, digest in declared.items():
-        artifact_name(name)
+        allowed(name)
         ledger.pin(digest)
     ledger.safe_tree(base)
     require(base.is_dir(), 'original capture directory required')
@@ -98,7 +103,7 @@ def artifact_inventory(base, declared):
             require({prefix + 'manifest.json', prefix + 'trace.jsonl'} <= actual and
                     any(n.startswith(prefix + 'payloads/') for n in actual), 'incomplete original rollout')
         else:
-            artifact_name(child.name)
+            allowed(child.name)
             require(child.is_file(), 'original file shape')
             actual.add(child.name)
     require(actual == set(declared), 'original artifact inventory drift')
