@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T06:01:55.673400+09:00",
+    "updatedAt": "2026-10-14T06:15:56.514453+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "primary_and_independent_capture_parent_originals_connected_durable_stop_independently_closed_concrete_prelaunch_and_measurements_pending",
+    "r04": "concrete_public46_times2_conditions_independently_reviewed_and_bound_actual_measurements_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -506,6 +506,21 @@
       "actualMatrixModels": 0,
       "actualMatrixReservations": 0,
       "concreteDeploymentPrelaunchCertified": false,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false
+    },
+    "r04OperationalPrelaunch": {
+      "record": "r04-operational-prelaunch-independent-20261014.json",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "conditionSha256": "c5223819fcaebce59d68728749ae1320bf470131a2366ecf0ec694c1ffb24f40",
+      "publicCases": 46,
+      "repetitions": 2,
+      "primaryBudget": 92,
+      "independentBudget": 92,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
+      "prelaunchPermitBound": true,
+      "realAuthenticationAndProviderBehaviorVerified": false,
       "eligibleForMeasurement": false,
       "certifiesSkillGate": false
     }
