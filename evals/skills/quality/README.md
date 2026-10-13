@@ -165,3 +165,9 @@ Core context/checkと一次資料の読取りだけを許可し、件数assert�
 台帳へ保存する。原やreceiptを復元しても同条件を再開しない。旧版の部分traceを新版の
 成功証拠へ移さず、是正後の実モデル測定は別source・出力・契約・台帳・有限予算で固定する。
 これらの合成試験はモデル行動・品質比較・Gate・releaseの認定を代行しない。
+
+是正の独立検分で、前件runのexecutionVersionだけを旧版へ差し替えた合成claimed receiptが
+legacy検分分岐を通り、次の合成backendへ到達する問題を発見した。追加是正は前件run.identityと
+起動前のattempt.identityを完全一致させ、現executionVersion・確定source・protocol hash・model・
+予定case/variant/repetitionもlegacy内容検査前に照合する。旧版の読取再現を、新条件の継続に
+用いない。この差替え検知は台帳へ恒久stopを保存し、実予算を追加せず復元後も拒否する。

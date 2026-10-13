@@ -417,10 +417,21 @@ def measure(args):
             raise ValueError("authorization ledger and attempt evidence disagree")
         if len(attempts) >= approval["maximumNewTrajectories"]:
             raise ValueError("authorized trajectory budget exhausted")
-        for attempt in attempts:
+        expected_source = preflight.git(["rev-parse", "HEAD"], ROOT, preflight.environment()).decode().strip()
+        for index, attempt in enumerate(attempts):
             directory = output / attempt["directory"]
             try:
                 record = verify_receipt(directory)
+                previous_identity = record["identity"]
+                previous_slot = slots[index]
+                if (previous_identity != attempt.get("identity")
+                        or previous_identity.get("executionVersion") != EXECUTION_VERSION
+                        or previous_identity.get("sourceCommit") != expected_source
+                        or previous_identity.get("protocolSha256") != approval["protocolSha256"]
+                        or previous_identity.get("model") != approval["model"]
+                        or (previous_identity.get("caseId"), previous_identity.get("variant"), previous_identity.get("repetition"))
+                           != (previous_slot[0]["caseId"], previous_slot[1], previous_slot[2])):
+                    raise ValueError("previous identity differs from reserved current execution/source/slot; no new call")
                 previous_case = next(c for c in protocol["cases"] if c["caseId"] == record["identity"]["caseId"])
                 errors, _ = inspect_record(directory, previous_case, record)
                 if any(errors.values()):

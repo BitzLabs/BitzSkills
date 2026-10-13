@@ -167,6 +167,44 @@ class QualityEvaluationTests(unittest.TestCase):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
             self.assertEqual(stopped, ledger.read_bytes())
 
+    def test_legacy_version_or_source_cannot_bypass_fixed_continuation_identity(self):
+        approval_path = HERE / "attack-remediation-approval.json"
+        protocol_path = HERE / "attack-remediation-protocol.json"
+        approval = evaluate.load(approval_path)
+        first = evaluate.load(protocol_path)["cases"][0]
+        identity = {"executionVersion": evaluate.EXECUTION_VERSION, "sourceCommit": "a"*40,
+                    "protocolSha256": approval["protocolSha256"], "model": approval["model"],
+                    "caseId": first["caseId"], "variant": "skill", "repetition": 1}
+        for field, replacement, alter_reservation in (("executionVersion", "quality-execution-0.1.5", False),
+                 ("executionVersion", "quality-execution-0.1.5", True), ("sourceCommit", "b"*40, True),
+                 ("caseId", "invented", True)):
+            with self.subTest(field=field, value=replacement, reservation=alter_reservation):
+                parent = self.directory / f"identity-{field}-{alter_reservation}"
+                parent.mkdir()
+                output = parent / "output"
+                output.mkdir()
+                auth = parent / "authorization"
+                auth.mkdir()
+                changed = {**identity, field:replacement}
+                attempt_identity = changed if alter_reservation else identity
+                evaluate.write(output / "attempts.json", [{"directory":"prior", "identity":attempt_identity}])
+                ledger_path = auth / f"quality-pilot-{sha(approval_path.read_bytes())}-authorization.json"
+                evaluate.write(ledger_path, {"output":str(output), "approvalSha256":sha(approval_path.read_bytes()), "attemptCount":1})
+                args = SimpleNamespace(output=output, timeout=10, approval=approval_path, protocol=protocol_path)
+                with patch("evaluate.authorization_directory", return_value=auth), \
+                     patch("preflight.git", side_effect=lambda args, *rest: b"" if args[0]=="status" else b"a"*40), \
+                     patch("evaluate.verify_receipt", return_value={"identity":changed}), \
+                     patch("evaluate.inspect_record", side_effect=AssertionError("must reject before legacy inspection")), \
+                     patch("evaluate.subprocess.run", side_effect=AssertionError("must not spawn model")):
+                    with self.assertRaisesRegex(ValueError, "previous identity"):
+                        evaluate.measure(args)
+                    stopped = ledger_path.read_bytes()
+                    self.assertEqual(1, evaluate.load(ledger_path)["attemptCount"])
+                    self.assertIn("stop", evaluate.load(ledger_path))
+                    with self.assertRaisesRegex(ValueError, "permanently stopped"):
+                        evaluate.measure(args)
+                    self.assertEqual(stopped, ledger_path.read_bytes())
+
     def test_remediation_keeps_exact_case_and_pending_approval_cannot_execute(self):
         protocol = evaluate.load(HERE / "remediation-protocol.json")
         approval = evaluate.load(HERE / "remediation-approval.json")
