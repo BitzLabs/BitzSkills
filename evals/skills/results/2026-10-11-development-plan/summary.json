@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T06:15:56.514453+09:00",
+    "updatedAt": "2026-10-14T06:25:17.869123+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -155,7 +155,7 @@
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
     "r09": "current_72_resources_local_checks_passed_independent_and_real_host_pending",
-    "r10": "source_history_pushed_latest_858_and_matrix_score_blocking_and_closure_evidence_saved",
+    "r10": "latest_858_regressions_prelaunch_and_first_401_stop_originals_and_independent_review_saved_source_history_pushed",
     "oldCampaignConsumedPrimary": 1,
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "concrete_public46_times2_conditions_independently_reviewed_and_bound_actual_measurements_pending",
+    "r04": "public_campaign01_stopped_on_first_models_http401_primary_reserved1_completed0_authentication_update_and_new_conditions_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -521,6 +521,28 @@
       "actualMatrixReservations": 0,
       "prelaunchPermitBound": true,
       "realAuthenticationAndProviderBehaviorVerified": false,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false
+    },
+    "r04OperationalFirstStop": {
+      "record": "r04-operational-first-stop-independent-20261014.json",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "campaignId": "public-matrix-routing-20261014-01",
+      "namespaceInvocations": 1,
+      "primaryReserved": 1,
+      "primaryLaunchMarked": 1,
+      "primaryCompleted": 0,
+      "independentReserved": 0,
+      "parentVerified": 0,
+      "measuredCorrect": 0,
+      "measuredIncorrect": 0,
+      "missingMeasurements": 92,
+      "failedCatalogRequests": 1,
+      "modelApiRequestsObserved": 0,
+      "providerCostKnown": false,
+      "sameAndNextReservationRejected": true,
+      "permanentStopPreserved": true,
+      "requiresAuthenticationUpdate": true,
       "eligibleForMeasurement": false,
       "certifiesSkillGate": false
     }
