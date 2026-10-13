@@ -16,6 +16,9 @@ import production_trace as trace
 io = matrix.io
 require = trace.require
 VERSION = 'public-matrix-original-binding-0.1.0'
+PROVIDER_VERSION = 'public-matrix-original-binding-0.1.1'
+PROVIDER_ARTIFACTS = frozenset({'deployment.json','sdk-manifest.json','runtime-manifest.json',
+    'launch-settings.json','resource-guards.json','capture-environment.json'})
 RECEIPT_KEYS = {'version', 'sourceCommit', 'slot', 'cwd', 'artifactSha256', 'elapsedSeconds',
                 'namespaceExitCode', 'timedOut', 'primaryModelTrajectories', 'independentReviewPerformed',
                 'automaticRetries', 'phaseComplete', 'certifiesSkillGate'}
@@ -43,7 +46,7 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
     require(all(isinstance(raw, bytes) for raw in [receipt_raw, manifest_raw, schema_raw, context_raw]),
             'matrix fixed original bytes')
     receipt = trace.strict_json(receipt_raw)
-    require(isinstance(receipt, dict) and set(receipt) == RECEIPT_KEYS and receipt['version'] == VERSION,
+    require(isinstance(receipt, dict) and set(receipt) == RECEIPT_KEYS and receipt['version'] in {VERSION,PROVIDER_VERSION},
             'matrix receipt inventory')
     require(receipt['sourceCommit'] == slot['sourceCommit'] and trace.json_equal(receipt['slot'], slot),
             'matrix receipt slot or source drift')
@@ -60,11 +63,12 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
     require(type(seconds) in {int, float} and seconds >= 0 and (type(seconds) is int or math.isfinite(seconds)),
             'matrix finite capture elapsed')
     declared = receipt['artifactSha256']
-    require(isinstance(declared, dict) and inventory.FIXED_ARTIFACTS <= set(declared),
+    additions = PROVIDER_ARTIFACTS if receipt['version'] == PROVIDER_VERSION else frozenset()
+    require(isinstance(declared, dict) and inventory.FIXED_ARTIFACTS | additions <= set(declared),
             'matrix original required inventory')
     # 全名前を検査してから原内容を消費する。opaque・未知pathは受け取らない。
     for name, digest in declared.items():
-        inventory.artifact_name(name)
+        if name not in additions:inventory.artifact_name(name)
         io.pin(digest)
     groups = {name.split('/')[1] for name in declared if name.startswith('rollout-traces/')}
     require(len(groups) == 1, 'matrix single original rollout')
