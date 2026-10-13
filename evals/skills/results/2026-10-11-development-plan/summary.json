@@ -147,20 +147,20 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T05:00:52.295334+09:00",
+    "updatedAt": "2026-10-14T06:01:55.673400+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "d05da654320f1c9ce6cace10d2e806765013242f",
-    "verificationRef": "d05da654320f1c9ce6cace10d2e806765013242f",
+    "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+    "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
     "r09": "current_72_resources_local_checks_passed_independent_and_real_host_pending",
-    "r10": "source_history_pushed_latest_838_and_primary_capture_controller_evidence_saved",
+    "r10": "source_history_pushed_latest_858_and_matrix_score_blocking_and_closure_evidence_saved",
     "oldCampaignConsumedPrimary": 1,
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 838,
+    "fullSkillTestCount": 858,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "single_primary_capture_and_fd_inventory_connected_independently_verified_concrete_prelaunch_semantic_and_parent_pending",
+    "r04": "primary_and_independent_capture_parent_originals_connected_durable_stop_independently_closed_concrete_prelaunch_and_measurements_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -299,9 +299,10 @@
       "independentReview": "pending_provider_usage_limit"
     },
     "r10LatestSourcePush": {
-      "sourceCommit": "d05da654320f1c9ce6cace10d2e806765013242f",
-      "remoteConfirmed": "d05da654320f1c9ce6cace10d2e806765013242f",
-      "documentationCommitAlreadyPushed": "afd5d51af4ee8c419750a7806142154c9ac2edfa",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "priorImplementationSource": "deda0556f23ebc09b7019f33a52e638b78867ee0",
+      "remoteConfirmed": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "documentationCommitAlreadyPushed": "b7f12eca7de7e4458b536dad8ebaec44395ba73b",
       "confirmationRole": "observed_before_current_progress_documentation_commit",
       "pushAtEveryCommit": true
     },
@@ -468,6 +469,13 @@
         "documentationCommitAlreadyPushed": "24538149",
         "confirmationRole": "observed_before_current_progress_documentation_commit",
         "pushAtEveryCommit": true
+      },
+      {
+        "sourceCommit": "d05da654320f1c9ce6cace10d2e806765013242f",
+        "remoteConfirmed": "d05da654320f1c9ce6cace10d2e806765013242f",
+        "documentationCommitAlreadyPushed": "afd5d51af4ee8c419750a7806142154c9ac2edfa",
+        "confirmationRole": "observed_before_current_progress_documentation_commit",
+        "pushAtEveryCommit": true
       }
     ],
     "r04PrimaryCapture": {
@@ -479,6 +487,22 @@
       "snapshotResources": 72,
       "sdkFiles": 207,
       "runtimeFiles": 50,
+      "actualMatrixModels": 0,
+      "actualMatrixReservations": 0,
+      "concreteDeploymentPrelaunchCertified": false,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false
+    },
+    "r04MatrixScore": {
+      "record": "r04-matrix-score-independent-20261014.json",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+      "parentFullTests": 858,
+      "independentTests": 96,
+      "sourceFiles": 41,
+      "snapshotResources": 72,
+      "sdkFiles": 207,
+      "runtimeFiles": 50,
+      "priorBlockingP2Preserved": true,
       "actualMatrixModels": 0,
       "actualMatrixReservations": 0,
       "concreteDeploymentPrelaunchCertified": false,
