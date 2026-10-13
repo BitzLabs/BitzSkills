@@ -149,8 +149,8 @@
   "developmentProgress": {
     "updatedAt": "2026-10-13T14:44:24.444869+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "63b05dae22dce98e945c5fa7a09036b171481f7b",
-    "verificationRef": "63b05dae22dce98e945c5fa7a09036b171481f7b",
+    "implementationHead": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+    "verificationRef": "b8aa4e772602c581df4521ab5b6483019d3f830c",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
@@ -160,7 +160,7 @@
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 740,
+    "fullSkillTestCount": 742,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "ledger_component_local_regression_passed_native_connection_and_independent_pending",
+    "r04": "ledger_component_stop_findings_independently_closed_native_connection_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -303,6 +303,16 @@
       "remoteConfirmed": "63b05dae22dce98e945c5fa7a09036b171481f7b",
       "documentationCommitAlreadyPushed": "02eb6768f488eaa06bfbf3047b19a31111791735",
       "pushAtEveryCommit": true
+    },
+    "r04LedgerStopClosure": {
+      "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+      "record": "r04-stop-independent-closure.json",
+      "originalFindings": 2,
+      "independentTargetTests": 25,
+      "independentNegativeCases": 14,
+      "parentFullTests": 742,
+      "actualMatrixReservations": 0,
+      "certifiesSkillGate": false
     }
   }
 }
