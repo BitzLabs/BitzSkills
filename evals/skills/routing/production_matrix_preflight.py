@@ -4,6 +4,9 @@
 行列の物理隔離/argv/独立開始前検分の完了へ読み替えない。
 """
 import hashlib
+import os
+import stat
+from contextlib import contextmanager
 from pathlib import Path
 import re
 from datetime import datetime
@@ -102,21 +105,41 @@ def sdk_manifest(raw, d):
 
 def exact_tree(root, files):
     """有限宣言の親だけを辿る。未知名は内容を読む前に拒否する。"""
-    io.safe_tree(root)
-    require(root.is_dir(), 'matrix public resource directory missing')
-    directories = {root}
-    for name in files:
-        directories.update(p for p in (root/name).parents if p == root or p.is_relative_to(root))
+    require(isinstance(files,dict) and bool(files),'matrix public resource inventory required')
+    directories={''};children={}
+    for name,digest in files.items():
+        require(isinstance(name,str) and name==Path(name).as_posix() and not Path(name).is_absolute()
+            and '\\' not in name and not set(name.split('/')) & {'','.','..','.env','auth.json','.credentials.json','__pycache__'}
+            and not any(p.startswith('.env.') for p in name.split('/')) and not name.endswith('.pyc'),
+            'matrix public resource declared path')
+        io.pin(digest);parts=name.split('/')
+        for i,part in enumerate(parts):
+            parent='/'.join(parts[:i]);children.setdefault(parent,set()).add(part)
+            if i<len(parts)-1:directories.add('/'.join(parts[:i+1]))
+    require(not set(files)&directories,'matrix resource file/directory collision')
     actual = set()
-    for directory in sorted(directories):
-        require(directory.is_dir() and not directory.is_symlink(), 'matrix resource parent shape')
-        for child in directory.iterdir():
-            require(not child.is_symlink(), 'matrix public resource link')
-            if child in directories:
-                continue
-            name = child.relative_to(root).as_posix()
-            require(name in files and child.is_file(), 'unknown matrix public resource')
-            actual.add(name)
+    @contextmanager
+    def directory(fd,name,info):
+        require(stat.S_ISDIR(info.st_mode),'matrix resource parent shape')
+        child=os.open(name,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+        try:
+            observed=os.fstat(child)
+            require((observed.st_dev,observed.st_ino)==(info.st_dev,info.st_ino),'matrix resource directory identity drift')
+            yield child
+        finally:os.close(child)
+    def visit(fd,prefix):
+        names=os.listdir(fd)
+        require(set(names)==children[prefix],'unknown matrix public resource or missing member')
+        for child in names:
+            name=prefix+'/'+child if prefix else child
+            info=os.stat(child,dir_fd=fd,follow_symlinks=False)
+            require(not stat.S_ISLNK(info.st_mode),'matrix public resource link')
+            if name in directories:
+                with directory(fd,child,info) as opened:visit(opened,name)
+            else:
+                require(stat.S_ISREG(info.st_mode) and info.st_nlink==1,'matrix public resource type or hardlink')
+                actual.add(name)
+    with io.open_directory(root) as opened:visit(opened,'')
     require(actual == set(files), 'matrix public resource missing')
     return {name: io.read_regular(root/name) for name in sorted(files)}
 

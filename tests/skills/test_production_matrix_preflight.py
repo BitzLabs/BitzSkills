@@ -104,6 +104,33 @@ class MatrixPreflightTests(unittest.TestCase):
         self.assertEqual(result['realReservations'],0)
         self.assertEqual(before,sorted(p.relative_to(self.repository).as_posix() for p in self.repository.rglob('*')))
 
+    def test_exact_tree_validates_all_declared_paths_before_reading_or_opening_root(self):
+        for name in ['../outside','/outside','folder/auth.json','folder//file','folder/../file','folder/synthetic.pyc']:
+            with self.subTest(name=name),patch.object(preflight.io,'open_directory',side_effect=AssertionError('early root open')),self.assertRaises(ValueError):
+                preflight.exact_tree(self.sdk,{name:'c'*64})
+        with patch.object(preflight.io,'open_directory',side_effect=AssertionError('early root open')),self.assertRaises(ValueError):
+            preflight.exact_tree(self.sdk,{'folder':'c'*64,'folder/child':'d'*64})
+
+    def test_exact_tree_uses_directory_descriptors_and_closes_them_after_interruption(self):
+        listed=os.listdir;opaque=self.sdk/'public-unknown-directory';opaque.mkdir()
+        (opaque/'public-unread-sentinel').write_bytes(b'public fixture')
+        with patch.object(preflight.io,'read_regular',side_effect=AssertionError('unknown tree read')),self.assertRaisesRegex(ValueError,'unknown matrix'):
+            preflight.exact_tree(self.sdk,self.sdk_manifest['files'])
+        (opaque/'public-unread-sentinel').unlink();opaque.rmdir()
+        for root in [self.sdk,self.sdk/'openai_codex']:
+            inode=root.stat().st_ino;called=[]
+            descriptors=Path('/proc/self/fd') if Path('/proc/self/fd').is_dir() else Path('/dev/fd')
+            before=len(listed(descriptors))
+            def interrupted(fd):
+                if type(fd) is int and os.fstat(fd).st_ino==inode:called.append(True);raise KeyboardInterrupt('public fixture')
+                return listed(fd)
+            with self.subTest(root=root.name),patch.object(os,'listdir',side_effect=interrupted),self.assertRaises(KeyboardInterrupt):
+                preflight.exact_tree(self.sdk,self.sdk_manifest['files'])
+            self.assertEqual(called,[True]);self.assertEqual(len(listed(descriptors)),before)
+        with patch.object(Path,'iterdir',side_effect=AssertionError('path enumeration')):
+            result=preflight.exact_tree(self.sdk,self.sdk_manifest['files'])
+        self.assertEqual({name:preflight.io.sha(raw) for name,raw in result.items()},self.sdk_manifest['files'])
+
     def test_closed_deployment_paths_boolean_count_source_and_execution_rejected_before_reads(self):
         original = copy.deepcopy(self.deployment)
         for key,value in [('sourceCommit','f'*40),('executionSha256','e'*64),('snapshotResourceCount',True),
