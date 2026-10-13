@@ -317,7 +317,7 @@ def audit_calls(host_events: list, items: list) -> None:
 
 
 def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
-          event_catalog: dict, *, actual_exit_code: int) -> dict:
+          event_catalog: dict, *, actual_exit_code: int, decision_schema_raw=None) -> dict:
     require(type(actual_exit_code) is int and actual_exit_code == 0, 'native process failed')
     manifest, manifest_digest, view = manifest_view(manifest_raw)
     read = audit_host(manifest, view, host_events)
@@ -325,8 +325,13 @@ def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
     audit_calls(host_events, items)
     messages = [item for item in items if item['type'] == 'agentMessage' and item['phase'] == 'final_answer']
     require(len(messages) == 1 and json_equal(strict_json(messages[0]['text']), decision), 'final response mismatch')
-    schema = copy.deepcopy(strict_json((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes()))
-    schema['properties']['selectedEntry']['enum'] = [None, *sorted(SKILLS)]
+    if decision_schema_raw is None:
+        # 従来の診断入口だけの互換fallback。原bytes入口は固定Schemaを必ず渡す。
+        schema = copy.deepcopy(strict_json((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes()))
+        schema['properties']['selectedEntry']['enum'] = [None, *sorted(SKILLS)]
+    else:
+        require(isinstance(decision_schema_raw, bytes), 'fixed decision schema bytes required')
+        schema = strict_json(decision_schema_raw)
     jsonschema.Draft202012Validator(schema).validate(decision)
     selected = decision['selectedEntry']
     require(decision['selectedPath'] == (PATHS[selected] if selected else None), 'selected path mismatch')

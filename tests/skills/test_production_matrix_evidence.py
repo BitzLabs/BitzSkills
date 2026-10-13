@@ -4,6 +4,7 @@ from dataclasses import replace
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'evals/skills/routing'))
@@ -106,6 +107,13 @@ class MatrixEvidenceTests(unittest.TestCase):
         original=dict(context.originals);original['rpc-out.jsonl']+=b'changed'
         with self.assertRaises(ValueError):evidence.verify_complete(replace(context,original_items=tuple(original.items())))
         with self.assertRaises(ValueError):evidence.verify_complete({})
+
+    def test_bound_bytes_verification_does_not_read_disk_or_depend_on_ambient_schema(self):
+        context=self.bind();expected=evidence.verify_complete(context)
+        with (patch.object(evidence.trace,'ROOT',Path('/unbound-schema-root')),
+             patch.object(Path,'read_bytes',side_effect=AssertionError('unbound disk schema read')),
+             patch.object(evidence.io,'read_regular',side_effect=AssertionError('unbound original read'))):
+            self.assertEqual(evidence.verify_complete(context),expected)
 
     def test_rehashed_original_rpc_policy_and_host_body_tampering_are_rejected(self):
         originals=dict(self.originals)

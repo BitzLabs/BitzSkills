@@ -72,7 +72,7 @@ def primary_usage_telemetry(events, received, thread, turn, api_indices):
 
 def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, selected_log, profile, expected_input,
           base_instructions, developer_instructions, cwd, actual_exit_code,
-          sdk_profile='diagnostic', output_schema=None):
+          sdk_profile='diagnostic', output_schema=None, decision_schema_raw=None):
     """原RPC・host本文・全対象telemetryの相関。固定IDへの別名置換は行わない。"""
     require(isinstance(profile, str) and profile in PROFILES, 'bounded canary profile')
     events = sdk.complete_trace_projection(raw_stderr, selected_log)
@@ -92,7 +92,7 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
     require(len(finals) == 1, 'one canary final required')
     decision = trace.strict_json(finals[0]['text'])
     integrity = trace.audit(manifest_raw, host_events, native['frames'], decision, catalog,
-                            actual_exit_code=actual_exit_code)
+                            actual_exit_code=actual_exit_code, decision_schema_raw=decision_schema_raw)
     require(len(host_events) <= 2, 'bounded child count')
     tools = [event['tool'] for event in host_events]
     selected = decision['selectedEntry']

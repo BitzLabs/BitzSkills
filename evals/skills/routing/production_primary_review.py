@@ -55,7 +55,7 @@ def native(originals, manifest_raw, catalog_raw, schema_raw, *, cwd):
     result=canary.audit(manifest_raw,host,sent,projected,trace.strict_json(catalog_raw),
         raw_stderr=originals['runtime-stderr.bin'],selected_log=originals['trace-safe.jsonl'],profile=profiles[0],
         expected_input=originals['model-input.json'],base_instructions=capture.BASE,developer_instructions=capture.DEVELOPER,
-        cwd=cwd,actual_exit_code=0,sdk_profile='public-canary',output_schema=wire_schema)
+        cwd=cwd,actual_exit_code=0,sdk_profile='public-canary',output_schema=wire_schema,decision_schema_raw=schema_raw)
     trace.jsonschema.Draft202012Validator(schema).validate(result['decision'])
     return dict(native=result,rawNotificationsValueSha256=sdk.digest(raw),rawNotificationCount=len(raw))
 
