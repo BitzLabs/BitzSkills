@@ -46,12 +46,18 @@ SDK_TOP = {'openai_codex', 'openai_codex-0.160.1.dist-info', 'annotated_types',
 def deployment(bound, raw):
     require(bound == matrix.bind(bound.execution_raw, bound.matrix.contract_raw,
         **dict(zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix fixed bound drift')
+    return deployment_for_execution(bound.execution_raw, raw)
+
+
+def deployment_for_execution(execution_raw, raw):
+    """子processへ渡す設定を有限policyへ束縛。全入力の現物検査は親が行う。"""
+    execution = matrix.execution_contract(execution_raw)
     require(isinstance(raw, bytes), 'matrix deployment bytes')
     d = trace.strict_json(raw)
     require(isinstance(d, dict) and set(d) == DEPLOYMENT_KEYS and d['version'] == VERSION,
             'matrix deployment inventory')
-    require(d['sourceCommit'] == bound.contract['sourceCommit']
-        and d['executionSha256'] == io.sha(bound.execution_raw) and d['certifiesSkillGate'] is False,
+    require(d['sourceCommit'] == execution['sourceCommit']
+        and d['executionSha256'] == io.sha(execution_raw) and d['certifiesSkillGate'] is False,
         'matrix deployment source or execution drift')
     require(isinstance(d['sdkRelativePath'], str) and re.fullmatch(
         r'\.venv/matrix-codex-python-sdk-deps-[a-z0-9]+(?:-[a-z0-9]+)*', d['sdkRelativePath']) is not None
@@ -65,7 +71,7 @@ def deployment(bound, raw):
     for key, pin in [('manifestSha256', 'snapshotManifest'), ('sdkTreeSha256', 'sdk'),
         ('runtimeManifestSha256', 'runtimeManifest'), ('contextProfileSha256', 'contextProfile'),
         ('calibrationManifestSha256', 'calibrationManifest')]:
-        require(io.pin(d[key]) == bound.contract['pins'][pin], 'matrix deployment pin drift: '+pin)
+        require(io.pin(d[key]) == execution['pins'][pin], 'matrix deployment pin drift: '+pin)
     io.pin(d['sdkManifestSha256'])
     return d
 

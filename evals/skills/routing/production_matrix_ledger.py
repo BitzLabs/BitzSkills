@@ -43,9 +43,9 @@ class BoundExecution:
                     executionSha256=io.sha(self.execution_raw))
 
 
-def bind(execution_raw, input_contract_raw, **raw_inputs):
+def execution_contract(execution_raw):
+    """子process向けの有限実行policy。全入力のGit一致・起動許可は別検査。"""
     require(isinstance(execution_raw, bytes), 'matrix execution bytes required')
-    matrix = inputs.bind(input_contract_raw, **raw_inputs)
     c = strict_json(execution_raw)
     require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
             'inputContractSha256', 'outputRelativeRoot', 'pins', 'budget', 'timeoutSeconds',
@@ -53,8 +53,7 @@ def bind(execution_raw, input_contract_raw, **raw_inputs):
     require(c['version'] == VERSION and isinstance(c['campaignId'], str)
             and re.fullmatch(r'public-matrix-[a-z0-9]+(?:-[a-z0-9]+)*', c['campaignId']) is not None,
             'matrix campaign identity')
-    require(c['sourceCommit'] == strict_json(input_contract_raw)['sourceCommit']
-            and c['inputContractSha256'] == io.sha(input_contract_raw)
+    require(isinstance(c['sourceCommit'], str) and re.fullmatch(r'[0-9a-f]{40}', c['sourceCommit']) is not None
             and c['model'] == 'gpt-6.1-sol' and c['cliVersion'] == '0.160.1'
             and c['certifiesSkillGate'] is False, 'matrix source and input binding')
     require(isinstance(c['outputRelativeRoot'], str)
@@ -68,6 +67,15 @@ def bind(execution_raw, input_contract_raw, **raw_inputs):
     require(isinstance(c['timeoutSeconds'], dict) and set(c['timeoutSeconds']) == {'primary', 'independent'}
             and all(type(v) is int and 1 <= v <= 600 for v in c['timeoutSeconds'].values()),
             'matrix finite timeouts')
+    io.pin(c['inputContractSha256'])
+    return c
+
+
+def bind(execution_raw, input_contract_raw, **raw_inputs):
+    matrix = inputs.bind(input_contract_raw, **raw_inputs)
+    c = execution_contract(execution_raw)
+    require(c['sourceCommit'] == strict_json(input_contract_raw)['sourceCommit']
+            and c['inputContractSha256'] == io.sha(input_contract_raw), 'matrix source and input binding')
     return BoundExecution(execution_raw, matrix, tuple(raw_inputs[name] for name in inputs.INPUT_NAMES))
 
 

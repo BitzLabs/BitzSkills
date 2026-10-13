@@ -126,10 +126,26 @@ def toml_value(value):
     raise ValueError('unsupported CLI TOML value')
 
 
-def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False, capture_guard=None):
+def launch_settings(raw: bytes):
+    """実行契約とは別の閉じたCLI起動設定。モデルの予算や入力を取り込まない。"""
+    from production_trace import strict_json, require
+    require(isinstance(raw, bytes), 'proxy launch settings bytes required')
+    value = strict_json(raw)
+    require(isinstance(value, dict) and set(value) == {'codexPath', 'diagnosticTracing'},
+            'proxy launch settings inventory')
+    path = value['codexPath']
+    require(isinstance(path, str) and Path(path).is_absolute() and path == Path(path).as_posix()
+            and '..' not in Path(path).parts, 'proxy launch path')
+    require(value['diagnosticTracing'] == DIAGNOSTIC_TRACING, 'known diagnostic tracing policy required')
+    return value
+
+
+def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False,
+          capture_guard=None, *, launch_contract_raw: bytes | None = None):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
-    contract = json.loads((base / 'contract.json').read_bytes())
+    contract = (json.loads((base / 'contract.json').read_bytes()) if launch_contract_raw is None
+                else launch_settings(launch_contract_raw))
     trace_config = contract.get('diagnosticTracing')
     if (capture_guard is not None or trace_config is not None) and trace_config != DIAGNOSTIC_TRACING:
         raise ValueError('known diagnostic tracing policy required before CLI start')
