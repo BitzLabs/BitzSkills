@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T06:36:35.415126+09:00",
+    "updatedAt": "2026-10-14T06:55:33.824720+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "new01_http401_stop_preserved_user_reported_authentication_updated_new02_prelaunch_independently_bound_actual_measurements_pending",
+    "r04": "new02_auth_succeeded_primary1_independent1_parent0_permanent_stop_two_contract_p2_remediated_861_tests_independently_verified_new03_prelaunch_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -552,12 +552,26 @@
       "campaignId": "public-matrix-routing-20261014-02",
       "authenticationUpdatedReportedByUser": true,
       "conditionSha256": "45a26330ec910a9c04c6ae2ea1d334242cb30c9566b3b3f49b6dcb1d1994b60c",
-      "actualPrimaryReserved": 0,
-      "primaryCompleted": 0,
-      "independentReserved": 0,
+      "actualPrimaryReserved": 1,
+      "primaryCompleted": 1,
+      "independentReserved": 1,
       "parentVerified": 0,
       "predecessorNew01StopPreserved": true,
       "eligibleForMeasurement": false,
+      "certifiesSkillGate": false,
+      "status": "permanently_stopped",
+      "stopSha256": "b61c1155b125366eaa879db297a2151572278bd0db0fb95b6333aa5503c5ee50",
+      "missingMeasurements": 92,
+      "actualAuthenticationSucceeded": true
+    },
+    "r04New02ContractRemediation": {
+      "record": "r04-new02-contract-remediation-independent-20261014.json",
+      "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+      "originalContractP2": 2,
+      "regressionTests": 861,
+      "independentTests": 89,
+      "codeStageVerified": true,
+      "new03Measurements": 0,
       "certifiesSkillGate": false
     }
   }
