@@ -50,6 +50,7 @@ def select_active(
     *,
     subject: str = "起点",
     extra_config_revs: list[str] | None = None,
+    ears_version_code: str = "SPEC-EARS-VERSION-001",
 ) -> ActiveSelection:
     """作業ワークスペースを決める。``subject``は引数不正のメッセージの「起点」「対象」の呼び方。"""
 
@@ -66,7 +67,9 @@ def select_active(
     if not multiws.is_declared(cwd, git, env):
         return ActiveSelection(loc, ".", None)
 
-    pre = multiws.precheck(cwd, git, env, extra_config_revs=list(extra_config_revs or []))
+    pre = multiws.precheck(
+        cwd, git, env, extra_config_revs=list(extra_config_revs or []), ears_version_code=ears_version_code
+    )
     rel_path = "."
     if pre.ok:
         if target_ws_id is None and loc.config_path is not None:

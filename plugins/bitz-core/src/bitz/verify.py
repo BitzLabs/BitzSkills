@@ -95,6 +95,12 @@ def _resolve_target(
     return path_index.get(lookup)
 
 
+def _is_id_target(raw: str) -> bool:
+    """``raw``が文書IDまたは規範文IDの字句であれば真（パスの入力は含まない）。複合ワークスペースでは存在しない対象も修飾IDで返すために使う。"""
+
+    return "/" not in raw and not raw.endswith(".md")
+
+
 def _default_roots(id_index: dict[str, DocEntry]) -> list[str]:
     roots = []
     for doc_id, entry in id_index.items():
@@ -946,7 +952,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             root_id = _resolve_target(
                 raw, id_index, statement_index, path_index, active_ws_id=(workspace_id if multi_active else None)
             )
-            key = context_mod._canon(root_id, workspace_id) if (root_id is not None and multi_active) else (root_id if root_id is not None else raw)
+            key = context_mod._canon(root_id if root_id is not None else raw, workspace_id) if multi_active and (
+                root_id is not None or _is_id_target(raw)
+            ) else (root_id if root_id is not None else raw)
             if key in seen_keys:
                 continue
             seen_keys.add(key)
