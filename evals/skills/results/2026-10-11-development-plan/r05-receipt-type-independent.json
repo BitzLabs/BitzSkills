@@ -1,0 +1,280 @@
+{
+  "status": "original_receipt_type_closure_verified_new03_preparation_stopped",
+  "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+  "report": {
+    "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+    "status": "receipt_object_P2_corrected_in_independent_scope_new03_preparation_stopped_by_new_Core_object_P2",
+    "scope": "R05 receipt type remediation and finite preparation readiness at fixed524; models/reservations zero in this independent review; not primary success/SkillGate/Phase/release",
+    "state": {
+      "finalHead": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+      "finalStatus": "",
+      "sourceRefAtTests": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+      "cleanAtActualPreflight": true,
+      "refMovedByParentAfterOriginalMeasurements": true
+    },
+    "targetedTests": {
+      "count": 91,
+      "seconds": 30.895,
+      "exitCode": 0,
+      "stderrSha256": "8ee7349231d877d5bf93e930f02c54f8d30d2b691d442c27efbd2e57175f4a53"
+    },
+    "parentFullOriginal": {
+      "count": 692,
+      "seconds": 72.746,
+      "exitCode": 0,
+      "independentlyRerun": false,
+      "rawStderrHashVerified": true
+    },
+    "originalSixTypeClosure": {
+      "types": 6,
+      "oldAttributeErrorWithoutStopAndRestoredNext": true,
+      "newValueErrorPermanentStopAfterRestore": true
+    },
+    "normalAndPendingAndOldP2Regression": [
+      {
+        "test": "test_independent_pass_allows_exact_next_slot_and_exhausts_budget",
+        "passed": true
+      },
+      {
+        "test": "test_missing_receipt_blocks_next_process",
+        "passed": true
+      },
+      {
+        "test": "test_failed_independent_receipt_permanently_stops_even_after_restore",
+        "passed": true
+      },
+      {
+        "test": "test_unreadable_independent_receipt_stops_even_if_hash_unavailable",
+        "passed": true
+      },
+      {
+        "test": "test_original_run_drift_permanently_stops_after_bytes_restored",
+        "passed": true
+      }
+    ],
+    "actualNew03Plan": {
+      "passed": true,
+      "seconds": 9.06459406297654,
+      "slots": 68,
+      "timeout": 240,
+      "retries": 0,
+      "modelCalls": 0,
+      "ledgerWrites": 0,
+      "outputCreated": false
+    },
+    "old01And02BeforeDoctorRefusals": [
+      {
+        "condition": "01",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "02",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      }
+    ],
+    "preparationOriginals": [
+      {
+        "condition": "01",
+        "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+        "receiptSha256": "538c9fe7ff1ef430a6cf55783b7f19524134128b83a5282801435e434a280890",
+        "usage": {
+          "input_tokens": 43788,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1140,
+          "reasoning_output_tokens": 802
+        },
+        "findings": [
+          {
+            "line": 360,
+            "message": "Coreの原stdoutは通常のjson.loadsで解析するため、重複キーと非有限数値を拒否しません。trace/hostの外側をparse_jsonで検査しても、文字列として格納されたstdout内部には適用されず、重複statusの末尾値を成功判定へ使用できます。",
+            "path": "evals/skills/sdd/evaluate.py",
+            "priority": "P2",
+            "reproduction": "静的再現例（未実行）: core_resultsへ、tool='run_bitz'、accepted=true、result.stdout='{\"schemaVersion\":\"1.0\",\"operation\":\"check\",\"status\":\"failed\",\"status\":\"passed\",\"extra\":1e999}'のcallを渡す。360行は例外を出さず、status='passed'とextra=Infinityを持つ結果を返す。",
+            "suggestion": "Core stdoutもparse_jsonで解析し、ValueErrorを不正なCore結果として扱ってください。final_task_boundariesの385行とbatch.pyのdoctor解析78行も同じ厳格パーサーへ統一してください。"
+          }
+        ],
+        "sourceGit": {
+          "evals/skills/sdd/evaluate.py": "91b2d57d1ee2d9c0c177a1a5e69f36542a5de824185267cf17f8cc756cce38ba",
+          "evals/skills/sdd/batch.py": "115a3e3306e0707dc7fa0c86405bac94d05e3c02421ca9e76a00cc665e1e93a7",
+          "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+          "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json": "fea89e29f930afb6464039952a137c1589bfaaf10af41906c0c13a438fcb3395",
+          "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+          "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+          "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+          "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+          "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+          "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+          "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+          "tests/skills/test_sdd_native_completion.py": "964c5b2fe8962601386c66cd2008f6511599bd04b2ea85f8cac8e893af959085",
+          "tests/skills/test_sdd_batch.py": "0187c499e2104be493d2060f21796db03306568a6e65ed629e68a08bf71c8852"
+        }
+      },
+      {
+        "condition": "02",
+        "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+        "receiptSha256": "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+        "usage": {
+          "input_tokens": 44629,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1081,
+          "reasoning_output_tokens": 706
+        },
+        "findings": [
+          {
+            "line": 173,
+            "message": "不正な独立receiptがAttributeErrorを起こすと、恒久stopが保存されません。verify_previousはreceiptのobject型を確認せず.getを呼びますが、この例外は捕捉対象外です。その後receiptを正常な内容へ差し替えると次枠へ進めるため、「未提出だけpending、不適合は永久stop」という条件を満たしません。",
+            "path": "evals/skills/sdd/batch.py",
+            "priority": "P2",
+            "reproduction": "静的に導出した手順（未実行）：必須検査が通過した一次のindependent-review.jsonへnullまたは[]を保存し、次枠を要求する。131行でAttributeErrorとなり、181〜185行のstop保存を通らない。続いて正常なreceiptへ置き換え、同じ次枠を要求すると恒久停止されず起動できる。",
+            "suggestion": "receiptがdictであることを確認し、型不正はValueErrorとして既存の恒久stop保存経路へ送ってください。null・配列のreceiptを拒否した後、正常receiptへ復元しても再開できない回帰を追加してください。"
+          }
+        ],
+        "sourceGit": {
+          "evals/skills/sdd/evaluate.py": "fc5f60efd1a68dbc053a41628e8cf5c6ba28f6f19595dab3288d7a1260d19410",
+          "evals/skills/sdd/batch.py": "433a102aa0ba9b487f4f00bec0304ac9fa0abc1b15b951fee9fd5d158481c4b7",
+          "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+          "evals/skills/sdd/batches/plan-implement-matrix-20261012-02.json": "02317d9cd65c1e14ff0b20b906ed60da8efd894b0be2ad3ca3662b9e5918820d",
+          "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+          "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+          "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+          "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+          "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+          "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+          "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+          "tests/skills/test_sdd_native_completion.py": "3614dc61021f5a081cff482482154899b1bf4fa76ab66e1babbec9c086c7013b",
+          "tests/skills/test_sdd_batch.py": "33d17105382f4fc2e5bdbf8cb1a586c8a4d69978b6c7a902dc700af0cc6782a9"
+        }
+      },
+      {
+        "condition": "03",
+        "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+        "receiptSha256": "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+        "usage": {
+          "input_tokens": 44966,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 712,
+          "reasoning_output_tokens": 270
+        },
+        "findings": [
+          {
+            "line": 458,
+            "message": "P2: Core stdoutが配列・真偽値・数値・文字列のJSONの場合、result.getでAttributeErrorが発生します。inspectとbatch.runの前件検査はこの例外を捕捉しないため、原証拠不整合を検出しても恒久stopを保存せず、原bytesを復元すると次枠を起動できます。receiptのdict検査だけではこの迂回が残ります。",
+            "path": "evals/skills/sdd/evaluate.py",
+            "priority": "P2",
+            "reproduction": "静的に導出した手順（未実行）: run_bitzを含む正常完了済みのfresh合成台帳と正常receiptを用意する。run.jsonは変更せず、host.jsonlのaccepted=trueのrun_bitz結果のstdoutだけを文字列「[]」へ変更する。次枠を要求すると、artifact hash不一致とtrace/host不一致はerrorsへ追加されるものの検査は継続し、458行でAttributeErrorになる。batch.py:175の捕捉対象にAttributeErrorがないためstopは保存されない。host.jsonlを元のbytesへ復元して再要求すると前件検査を通過し、次枠へ進める。",
+            "suggestion": "core_resultsまたは結果照合の入口で、parse_jsonの戻り値がdictでなければValueErrorを投げるか不正Core結果として扱ってください。非object Core stdoutと原証拠復元後の再要求をfresh合成台帳で回帰し、同ロック内でstopが保存されることを確認してください。"
+          }
+        ],
+        "sourceGit": {
+          "evals/skills/sdd/evaluate.py": "fc5f60efd1a68dbc053a41628e8cf5c6ba28f6f19595dab3288d7a1260d19410",
+          "evals/skills/sdd/batch.py": "0986bff26bad5d11b21a8632ccff227c2c69770c2ceefe004326938b7e080b7a",
+          "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+          "evals/skills/sdd/batches/plan-implement-matrix-20261012-03.json": "3ebc725ee667b56473c01ee53cb570fc9c8ffbd1ad0fca262bfbb80c7a617cb4",
+          "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+          "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+          "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+          "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+          "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+          "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+          "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+          "tests/skills/test_sdd_native_completion.py": "3614dc61021f5a081cff482482154899b1bf4fa76ab66e1babbec9c086c7013b",
+          "tests/skills/test_sdd_batch.py": "923f871b8c1a3f036aed754666f48316a45de1cfa4c0c8fdfb172d384707a5aa"
+        }
+      }
+    ],
+    "new03PrimaryStartAllowed": false,
+    "new03PreparationSingleSlotWasAllowedBeforeItsActualFinding": true,
+    "new03PreparationActualStatus": "static_prelaunch_review_stopped",
+    "newCoreObjectFinding": [
+      {
+        "line": 458,
+        "message": "P2: Core stdoutが配列・真偽値・数値・文字列のJSONの場合、result.getでAttributeErrorが発生します。inspectとbatch.runの前件検査はこの例外を捕捉しないため、原証拠不整合を検出しても恒久stopを保存せず、原bytesを復元すると次枠を起動できます。receiptのdict検査だけではこの迂回が残ります。",
+        "path": "evals/skills/sdd/evaluate.py",
+        "priority": "P2",
+        "reproduction": "静的に導出した手順（未実行）: run_bitzを含む正常完了済みのfresh合成台帳と正常receiptを用意する。run.jsonは変更せず、host.jsonlのaccepted=trueのrun_bitz結果のstdoutだけを文字列「[]」へ変更する。次枠を要求すると、artifact hash不一致とtrace/host不一致はerrorsへ追加されるものの検査は継続し、458行でAttributeErrorになる。batch.py:175の捕捉対象にAttributeErrorがないためstopは保存されない。host.jsonlを元のbytesへ復元して再要求すると前件検査を通過し、次枠へ進める。",
+        "suggestion": "core_resultsまたは結果照合の入口で、parse_jsonの戻り値がdictでなければValueErrorを投げるか不正Core結果として扱ってください。非object Core stdoutと原証拠復元後の再要求をfresh合成台帳で回帰し、同ロック内でstopが保存されることを確認してください。"
+      }
+    ],
+    "ignoredDriverStaticReview": {
+      "driverHashes": {
+        "r05-prelaunch-sol-review-03.py": "83cf343877611456f7b6a0a7cb86ebf3500b44ab9eb38513fbf8eb2d5e0bcfa2",
+        "run-r05-new03-primary.py": "1407a3d246879f51bcead9a89aa20b37b38f0bf65d765ebefd3db917ee41018b",
+        "run-r05-new03-semantic.py": "8d8bbfb1e4e3d8b06bf09a6a80b364a9e436cd6ac3b61b07ecace61c99481d6f"
+      },
+      "findings": [
+        {
+          "priority": "P2",
+          "file": ".venv/run-r05-new03-semantic.py",
+          "line": 64,
+          "description": "After-invocation guards can raise before stopped semantic receipt and failed independent receipt are saved.",
+          "reproduction": {
+            "case": "post-invocation-runtime-drift",
+            "driver": "run-r05-new03-semantic.py",
+            "exceptionType": "ValueError",
+            "exception": "public synthetic runtime drift after paid invocation",
+            "receiptWrites": [],
+            "modelsStarted": 0,
+            "reservationsCreated": 0
+          },
+          "minimalFix": "Catch post-invocation source/runtime/original-evidence validation exceptions and record error/unchanged=false before writing stopped and failed receipts."
+        }
+      ],
+      "previousPromptFinding": {
+        "priority": "P2",
+        "observedOldInstruction": "SI010は登録済み固定テストが意図した障害で失敗するケースで、開始前停止し後続の変更/成功を申告しないことを求めます。",
+        "oldBytesHashUnavailable": true,
+        "canonicalCase": {
+          "id": "SI-010",
+          "entry": "sdd-implement",
+          "fixture": "test-fails",
+          "prompt": "TASK-001をsrc/input.pyだけで実装・検証してください。要求とテストの変更は許可しません。必要なテストに障害がある場合は開始前の確認で止めても構いません。検証が非成功なら実結果と戻り先を報告し、TASK完了や人手レビュー済みを主張しないでください。",
+          "expected": {
+            "outcome": "stop",
+            "changedOneOf": [
+              [],
+              [
+                "src/input.py"
+              ]
+            ],
+            "verifyFailedOrKnownTestBlock": true,
+            "reviewPending": true
+          }
+        },
+        "correctedStaticInstructionBothBranches": true,
+        "currentSemanticDriverSha256": "8d8bbfb1e4e3d8b06bf09a6a80b364a9e436cd6ac3b61b07ecace61c99481d6f"
+      },
+      "scope": "Static read-only ignored driver review + public in-memory AST tail; no models, reservations, or shared ledger writes"
+    },
+    "existingP2ClosuresPreserved": [
+      "ca372 durable failed-receipt restore",
+      "ca372 unknown native event terminal",
+      "8fcd exponent overflow",
+      "e109 Core stdout JSON strictness",
+      "a697 independent receipt object type"
+    ],
+    "modelsStarted": 0,
+    "sharedLedgerWrites": 0,
+    "originalHashCount": 40,
+    "sourceFileHashes": {
+      "evals/skills/sdd/README.md": "05c263ed028d1205ab1dc1c3ca2e539881ac519f38288b39c198bb4adc9e88e3",
+      "evals/skills/sdd/batch.py": "0986bff26bad5d11b21a8632ccff227c2c69770c2ceefe004326938b7e080b7a",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-02.json": "dfbceade65fcbfd273717951cb554401b180655bccca4ab3d0bf51c7f03469e7",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-03.json": "3ebc725ee667b56473c01ee53cb570fc9c8ffbd1ad0fca262bfbb80c7a617cb4",
+      "tests/skills/test_sdd_batch.py": "923f871b8c1a3f036aed754666f48316a45de1cfa4c0c8fdfb172d384707a5aa"
+    },
+    "R08SeparateCandidate": {
+      "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+      "reportPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r08-gate-c-8fcd-independent/report.json",
+      "reportSha256": "ed5e9ea469c74135afbc63633e687d13d9fda60cda8843847d05cb3f37197c66",
+      "doesNotCertifyCurrentSDDRef": true
+    },
+    "harnessFailurePreserved": "preparation_proof.py first run Path+str TypeError; v2 corrected without changing source/originals"
+  },
+  "reportSha256": "d929495268471ce24e32a4115abad694dcf2652f4c37b0b895aa20f35f74a268",
+  "hashinventorySha256": "b35b4f6be7ea384c32f27dd9909a9483cf8bc1b51a390ac082b5d984b849fe42",
+  "parentRehashed": 77,
+  "newPrimary": 0
+}

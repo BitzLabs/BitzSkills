@@ -1,0 +1,42 @@
+{
+  "status": "preparation_passed_parent_originals_native_schema_usage_source_reservation_verified",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "receiptSha256": "2656a695029d0bd45ddf0376589c7dde343bb277d6b875e3a4f804fb8d7fa6a5",
+  "artifactSha256": {
+    "config.json": "5f9b4400e842d9a4a0abdb0e93960e9051583db2ebe491f36f906d3524c38841",
+    "contract.json": "04b791778eb06218f8f423f43adbed5eea57ac6a755e75218a78df4a02c062e8",
+    "invocation.json": "d1e0e68561a77addff62a0587a928d46775c52fdd50c0034912ce64a6919fd43",
+    "prompt.txt": "613f5eec438611438ed4ada25c03f48d6c78bc9b3f978dbf0d3d4be83fe011ab",
+    "reservation.json": "1f397dddb49940cbd0e44bbdcec325a16cebf3104d692c688ae4d533193488a9",
+    "response.json": "020566fde930f99107b0de6d58ac8ca27a05d2331f8f3f0236027eda9986ba5b",
+    "runner.py": "a5365016c0bb26673c51a2c76b1346746b3b40425e009f0bb69112c2306f7d90",
+    "schema.json": "286435e24cd0ccfde06e4df803efdf8c0ee81ed4db16974c3817c59263bb75fc",
+    "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "trace.jsonl": "45dd920e728ae888f761b16d297397be88ecc63bdfb4a676f3d4e4d1a27c2f07"
+  },
+  "payloadGitHashCount": 17,
+  "preparationConsumed": 1,
+  "primaryConsumed": 0,
+  "semanticConsumed": 0,
+  "elapsedSeconds": 42.67427137901541,
+  "usage": {
+    "input_tokens": 66349,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 784,
+    "reasoning_output_tokens": 722
+  },
+  "response": {
+    "findings": [],
+    "scope": "public-sdd-matrix-prelaunch-static-only",
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "verdict": "pass"
+  },
+  "runtimeUnchanged": true,
+  "oldConditionsPreserved": true,
+  "independentRemediationFinalReport": "limited_ready_independently_verified_parent_rehashed_166",
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "providerCost": null,
+  "independentRecord": "r05-failure-persistence-independent.json"
+}

@@ -1,0 +1,98 @@
+{
+  "reportSha256": "13277c7a9f505e25a9b3dffae4faee647ab2ff7d3bdb3bae1a19bc53e6d46871",
+  "report": {
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "status": "new07_p01_independently_verified_next_si010_single_ready",
+    "decision": "SP-001 skill反復1の原9/独立意味原11/実Core/最終workspace/共有予約の照合が通過。次枠SI-010 skill反復1を1枠開始可。以後も各当件の独立意味・原再照合前に次枠を拒否。",
+    "blockingFindings": [],
+    "slot": {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "runId": "2027493c-85d8-46fe-8dfd-837b4e1dc680",
+    "runSha256": "d93bcf91f81a19493677e5019ec823b1233abb565f2a359aff870588b6cca19a",
+    "primaryOriginals": 9,
+    "semanticOriginals": 11,
+    "semanticPayloads": 28,
+    "primaryUsage": {
+      "input_tokens": 103787,
+      "cached_input_tokens": 82432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1723,
+      "reasoning_output_tokens": 32
+    },
+    "semanticUsage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 47095,
+      "output_tokens": 697,
+      "reasoning_output_tokens": 36
+    },
+    "primarySeconds": 74.1710906829685,
+    "semanticSeconds": 24.988715862040408,
+    "primaryChecks": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    },
+    "semanticChecks": {
+      "deterministic": "passed",
+      "observation": "passed",
+      "safety": "passed",
+      "semantic": "passed",
+      "workflow": "passed"
+    },
+    "semanticReceiptSha256": "de261afe7490d467bd7931226b3c939bcc64c560baf89cf9116a1248d69e7223",
+    "sharedSemanticReservationVerified": true,
+    "nativeSchemaAndActualPromptBindingsVerified": true,
+    "actualCoreInspectReexecutionPassed": true,
+    "finalWorkspaceUnchanged": true,
+    "draftRequirementAndOpenTaskMaintained": true,
+    "registeredTestsObjectFormVerified": true,
+    "expectedBoundaryFailureStopPreserved": true,
+    "verifierFormatMismatchClosed": {
+      "oldSha256": "b6ae8cd1be4705b940fbc41620cf7747cc3c048b5506a17515c7cec535c8013c",
+      "fixedSha256": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+      "originalFailureKept": true,
+      "actualSemanticOriginalsModified": false,
+      "exactActualInvocationSixKeysVerified": true
+    },
+    "new07ConsumedAtInspection": {
+      "preparation": 1,
+      "primary": 1,
+      "semantic": 1,
+      "verified": 1,
+      "retries": 0
+    },
+    "old06Consumed": {
+      "preparation": 1,
+      "primary": 2,
+      "semantic": 1,
+      "permanentStopUnchanged": true
+    },
+    "modelsStartedByIndependent": 0,
+    "newReservationsByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "clean": true,
+    "scopeLimits": [
+      "当件の原・意味検分・親verifierの限定検分。意味SOLの代替ではない。",
+      "次SI010の結果、68枠全体、全R05、Skill Gate、Phase、releaseは未認定。"
+    ],
+    "hashInventory": "hashinventory.json"
+  },
+  "scope": "stable report checked before P02; final inventory recorded separately"
+}

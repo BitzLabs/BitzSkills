@@ -1,0 +1,107 @@
+{
+  "status": "tests_assignment_and_snapshot03_regressions_passed_independent_final_review_pending",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "skillVersion": "sdd-plan0.1.2",
+  "changes": [
+    "path/covers/command object registration and existing-test example",
+    "real Core valid/invalid new-draft regression",
+    "old06 primary failure refused before doctor",
+    "new snapshot03 and actual date13 calibration06",
+    "fixed snapshot03 original-reader path",
+    "nested fixture setup-error shared-mock cleanup"
+  ],
+  "regressionAttempts": [
+    {
+      "sourceCommit": "0c17253ae4f081ceac78e25a4d8e17ae39226bbb",
+      "exitCode": 1,
+      "seconds": 2.0297096780268475,
+      "testCount": 5,
+      "testSeconds": 1.829,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "a31a21c7e11470f8509469193a20d95c09e7e8b2f90aa62849df020117c617cf",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-tests-assignment-related-01"
+    },
+    {
+      "sourceCommit": "131b857f83633b27addc64bb40eb9dc19775be7a",
+      "exitCode": 0,
+      "seconds": 2.019176750909537,
+      "testCount": 5,
+      "testSeconds": 1.826,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "d6e49661ace1c5691102f1041391f5791ea052e4a9835fa5b89f76f43c7477c3",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-tests-assignment-related-02"
+    },
+    {
+      "sourceCommit": "131b857f83633b27addc64bb40eb9dc19775be7a",
+      "exitCode": 0,
+      "seconds": 75.0964618989965,
+      "testCount": 708,
+      "testSeconds": 74.688,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "ca650eaedc25c572833a4ca2371d047c2a936029f2d59b01de257ee6647d555e",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-tests-assignment-full"
+    },
+    {
+      "sourceCommit": "9a42fa25dc7ccac2186ebe7a4a390ccbb2195fba",
+      "exitCode": 1,
+      "seconds": 71.78078963293228,
+      "testCount": 708,
+      "testSeconds": 71.268,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "587dd502fa543403addc48f357fe932aea84778ca4b7a440587bee7e942de5c7",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-calibrated-full"
+    },
+    {
+      "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+      "exitCode": 0,
+      "seconds": 6.089263270027004,
+      "testCount": 78,
+      "testSeconds": 5.852,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e07be5072c35375ac27810a6f17f4793818212b3ef73e15486197851151c4c35",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-snapshot03-cleanup-related"
+    },
+    {
+      "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+      "exitCode": 0,
+      "seconds": 74.96399383700918,
+      "testCount": 709,
+      "testSeconds": 74.546,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "b0ecdf6bfc175a119e3a390830befebf0da6dc4b507ab119447164042013ef2d",
+      "modelsStarted": 0,
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-snapshot03-full"
+    }
+  ],
+  "old06": {
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "preparationConsumed": 1,
+    "primaryConsumed": 2,
+    "semanticConsumed": 1,
+    "status": "permanently_stopped",
+    "record": "r05-new06-permanent-stop.json"
+  },
+  "new07": {
+    "preparationConsumed": 0,
+    "primaryConsumed": 0,
+    "semanticConsumed": 0,
+    "maximumPrimary": 68,
+    "maximumSemantic": 68,
+    "maximumPreparation": 1,
+    "timeoutSeconds": 240,
+    "automaticRetries": 0,
+    "firstCase": "SP-001 skill repetition1"
+  },
+  "certifiesSkillGate": false
+}

@@ -1,0 +1,12 @@
+{
+  "status": "fixed_full_and_independent_pending",
+  "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+  "files": [
+    "evals/skills/sdd/evaluate.py",
+    "tests/skills/test_sdd_native_completion.py",
+    "tests/skills/test_sdd_skill_eval.py"
+  ],
+  "relatedTests": 81,
+  "relatedTestSeconds": 32.354,
+  "newPrimary": 0
+}

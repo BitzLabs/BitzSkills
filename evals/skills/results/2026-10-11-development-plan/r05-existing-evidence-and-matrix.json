@@ -1,0 +1,57 @@
+{
+  "status": "existing_si010_limited_evidence_reconciled_new_matrix_preparation",
+  "inspectionRef": "7a9fc8d5dcc41d19f6e47e4ef210d643d242e518",
+  "priorSourceCommit": "ee3a1f1d6963a917bbf9425c55f64413db7e4ab1",
+  "archiveSha256": "51eb4613b1ff6c89bcbf4e415d40f4e57b2d793ef3eec21e98d2372897d43c5b",
+  "priorCase": "SI-010",
+  "priorVariant": "skill",
+  "priorRepetition": 1,
+  "checks": {
+    "deterministic": {
+      "passed": true,
+      "errors": []
+    },
+    "safety": {
+      "passed": true,
+      "errors": []
+    },
+    "workflow": {
+      "passed": true,
+      "errors": []
+    },
+    "observation": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "independentChecks": {
+    "deterministic": "passed",
+    "safety": "passed",
+    "workflow": "passed",
+    "observation": "passed",
+    "semantic": "passed"
+  },
+  "oldInterruptionPreserved": true,
+  "newModelCalls": 0,
+  "scope": "prior fixed-test-failure pre-implementation stop only",
+  "matrix": {
+    "caseCount": 17,
+    "variants": [
+      "skill",
+      "baseline"
+    ],
+    "repetitions": [
+      1,
+      2
+    ],
+    "primaryMaximum": 68,
+    "automaticRetries": 0,
+    "model": "gpt-6.1-sol",
+    "caseSha256": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+    "protocolSha256": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+    "candidateVersion": "0.3.0",
+    "sourcePending": true,
+    "independentReviewBudgetPending": true
+  },
+  "certifiesSkillGate": false
+}

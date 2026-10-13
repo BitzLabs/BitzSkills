@@ -1,4 +1,4 @@
-# bitz-quality 0.1.2
+# bitz-quality 0.1.3
 
 BitzSkills 2系の品質計画と独立レビューの試作版。
 `skills/quality-plan/SKILL.md`は変更リスクと必要な証拠を計画し、

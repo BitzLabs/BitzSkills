@@ -1,0 +1,55 @@
+{
+  "status": "stopped",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "batchId": "plan-implement-matrix-20261013-08",
+  "preparation": {
+    "maximum": 1,
+    "consumed": 1,
+    "staticSharedId": "sdk-trace-review-v0.50.json",
+    "timeoutSeconds": 300
+  },
+  "primary": {
+    "maximum": 68,
+    "consumed": 9,
+    "timeoutSeconds": 240
+  },
+  "semantic": {
+    "maximum": 68,
+    "consumed": 8,
+    "maximumPerPrimary": 1,
+    "timeoutSeconds": 300
+  },
+  "automaticRetries": 0,
+  "old07StoppedPreserved": true,
+  "driverSha256": {
+    "r05-prelaunch-sol-review-08.py": "0552c051a4532dcc17e7377461b2e337524c42125df89b48e0d14563c9407b37",
+    "run-r05-new08-primary.py": "a75d510ae48db9729db29da1a6d1b7a0142078b6ad34af897ee2b4ef722f0e0c",
+    "run-r05-new08-semantic.py": "2d2a9d6ff50407b5e3c4c80d27884863713528f21eda3321b3bb4e63b00f5ba5",
+    "r05-new08-parent-verify.py": "d793b6cc78968c14d00b05057af1368ed096cf32ebe9344e63b0c66978a81322",
+    "r05-new08-update-progress.py": "3cdf79b988d133e5aada0121468fc931481d7827f42a82b125e672cf4cf8de88",
+    "r05-new08-record-primary.py": "0d95eb3826481c299ddafb3732dccd8309c0333222086ad0d799a32dfc82fa5e",
+    "r05-new08-verify-and-record.py": "06b0b5c13b711841d8e014b3227243075de4804f8e37d5c803111cb98d08b7c3"
+  },
+  "driverProvenance": "ignored fixed bytes at recorded hash, not Git tracked",
+  "certifiesGate": false,
+  "prelaunchDraftCorrection": {
+    "models": 0,
+    "reservations": 0,
+    "initialHashRecordSha256": "404a8b79e7080a0b82ddf220ef64c39a36670092d65e23a2a54abe66796335f5",
+    "reason": "新08の進捗keyと表示を旧07から分離。旧07要約を上書きしない。未消費semantic docstring修正後の原hashを親検査へ固定。"
+  },
+  "sourceRebindingBeforeConsumption": {
+    "oldSource": "6cf15b8dee715e392bf4590534305032102f1207",
+    "newSource": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "models": 0,
+    "reservations": 0,
+    "oldDriverHashRecordSha256": "614adce65db34f91c0255452d2a408ec88bfc56c8e1c97de3851de80ec4491dd",
+    "oldDriverBytesPreserved": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-driver-originals-source6cf",
+    "reason": "manifest制約説明のみを新08/実行版0.1.5へ整合。旧6cf原・局所成功・HEAD変化拒否は保持し新refへ成功を付け替えない。"
+  },
+  "outerWrapperSha256": "f9d659999284af4eaa41edbac89104929614ac0bc6253c1ca967a3fa029ae551",
+  "localIndependentReportSha256": "500bb93f21b814cabb838e523ecff68585cf5036a0263e47880b1a2b9c253e4b",
+  "preparationReceiptSha256": "56a21dd35a7eba8b412cb2cd4798ff6e1a95d2af43321759a1ef134390af10d5",
+  "actualIndependentReportSha256": "db870e5077c5a96dc1f4fd5401eabf51c09c4f2b3d6fab4ca714463ce72219b5",
+  "parentVerified": 8
+}

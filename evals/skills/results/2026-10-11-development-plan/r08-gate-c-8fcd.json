@@ -1,0 +1,3829 @@
+{
+  "status": "candidate_gate_c_passed_independently_verified",
+  "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+  "roles": {
+    "minimum": {
+      "row": {
+        "schemaVersion": 1,
+        "commit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+        "role": "minimum",
+        "environmentId": "minimum-cpython-3-12",
+        "referenceManifestSha256": null,
+        "requestedPython": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum/cpython-3.12.0-linux-x86_64-gnu/bin/python3.12",
+        "checkoutId": "deba071c8f9849c49701b66b4a9a3b07",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "environment": {
+          "executable": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum/cpython-3.12.0-linux-x86_64-gnu/bin/python3.12",
+          "implementation": "CPython",
+          "machine": "x86_64",
+          "python": "3.12.0",
+          "system": "Linux",
+          "git": "git version 2.43.0",
+          "kernel": "6.18.40.1-microsoft-standard-WSL2",
+          "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+          "logicalCores": 24,
+          "ramBytes": 32385978368,
+          "platformClass": "WSL2",
+          "storageClass": "wsl2-virtual-disk",
+          "filesystem": "tmpfs",
+          "memoryAccounting": "cgroup-v2-process-tree"
+        },
+        "conformance": {
+          "exitCode": 0,
+          "report": {
+            "allPassed": true,
+            "core": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-formal-minimum-8fcd/scratch/tmp/bitz-gate-c-minimum-0y7g_ajd/checkout/plugins/bitz-core",
+            "counts": {
+              "error": 0,
+              "failed": 0,
+              "passed": 350
+            },
+            "environment": {
+              "git": "git version 2.43.0",
+              "python": "3.12.0",
+              "uv": "uv 0.11.28 (x86_64-unknown-linux-gnu)"
+            },
+            "fixtures": [
+              {
+                "differences": [],
+                "id": "SINGLE-001",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-002",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-003",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-004-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-004-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-005-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-005-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-006-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-006-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-073-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-073-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-078",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-091",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-092",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-093",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-094",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-095",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-17",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-18",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-19",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-007",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-008",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-010-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-010-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-011",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-013",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-014",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-015",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-016",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-019",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-020",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-021",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-023",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-024",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-025",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-026",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-133",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-075-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-075-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-076",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-077",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-079-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-079-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-081",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-082",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-083",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-084",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-085",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-086",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-088",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-089",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-090",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-096-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-097-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-098-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-102",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-103-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-103-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-114",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-128",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-129",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-130",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-131",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-132",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-027",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-028",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-029",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-030",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-031",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-033",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-034",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-035-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-035-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-036",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-037",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-038",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-039",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-040",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-041",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-042",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-043-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-043-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-044-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-044-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-045",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-046",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-047",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-048-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-048-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-049",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-050",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-051",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-144",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-147",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-148",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-052-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-052-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-053",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-054",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-154",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-072",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-150",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-151",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-152",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-153",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-096-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-097-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-098-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-105-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-107-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-108-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-109",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-110",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-134",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-145",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-135",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-136",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-139",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-140",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-141",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-142",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-121",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-122",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-123",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-124",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-055",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-056",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-057",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-058",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-059",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-060",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-061",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-062",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-063",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-064",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-065",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-066",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-067",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-068",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-137",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-138",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-143",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-146",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-149",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-155",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-156",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-157",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-069-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-069-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-105-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-107-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-108-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-113",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-001",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-002-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-002-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-003",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-004-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-004-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-027-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-027-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-028",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-005",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-006",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-008",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-009",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-010",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-011",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-012",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-013",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-014",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-015",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-016",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-017",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-018-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-018-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-019",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-025-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-025-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-026-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-026-02",
+                "result": "passed"
+              }
+            ]
+          },
+          "stderrSha256": "78337a28f019dfbb306e446319caad6dfb38032ae37d0e01add063d53e524531"
+        },
+        "unit": {
+          "exitCode": 0,
+          "testsRun": 647,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "372c96f4e2d3a757573a0a5abedd46da3a7c9f4f4ecd835b0ef9b9fba8d79577"
+        },
+        "errors": []
+      },
+      "summary": {
+        "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+        "role": "minimum",
+        "exitCode": 0,
+        "seconds": 652.1155241109664,
+        "stdoutSha256": "061696cc70230b6badf3c17199a15f0d322b57db4838bc22306cb468a48a0288",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostScratchEmpty": true,
+        "errors": [],
+        "conformanceExitCode": 0,
+        "unit": {
+          "exitCode": 0,
+          "testsRun": 647,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "372c96f4e2d3a757573a0a5abedd46da3a7c9f4f4ecd835b0ef9b9fba8d79577"
+        }
+      },
+      "fileSha256": {
+        "namespace.json": "d2900eb2463d4917e0648c475358af6a284fe3961a3843ff53eb96ac9791374e",
+        "command-2-stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "command-1-stderr": "78337a28f019dfbb306e446319caad6dfb38032ae37d0e01add063d53e524531",
+        "command-1-stdout": "11705dca4eaa3127cbcf7d6dc9324a790883489fb08ba215e2ceb076680a1028",
+        "command-2-stderr": "372c96f4e2d3a757573a0a5abedd46da3a7c9f4f4ecd835b0ef9b9fba8d79577",
+        "command-1.json": "ed7f578fa2fd1ce8eec54a1e0f1e4f79d6a6e26c4d5d19a3b853fd693719f0ca",
+        "minimum.json": "a0d8a5c5798dc380c4ad7f75b695734681778af3b5a7689a8d6a258d914cebe3",
+        "command-2.json": "44102fbcf80469ce89fe986bf6232c49fcdfadffd135da1b7741847ef562a6b6",
+        "stdout": "061696cc70230b6badf3c17199a15f0d322b57db4838bc22306cb468a48a0288",
+        "summary.json": "d4a6f660c74025429526fa8caaac28fa2c59d1c085e811b0762b537cbf6a5229",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "command.json": "4b03f8265c8fb64919c139a5090ebf7da8156446cee97b7b8ecb2ea82ce7b761"
+      }
+    },
+    "reference": {
+      "row": {
+        "schemaVersion": 1,
+        "commit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+        "role": "reference",
+        "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+        "referenceManifestSha256": "ddcbb2b5768359794f72f17afd25aa1b414e69ab5eb9bece4701e8b6a55b4f46",
+        "requestedPython": "/usr/bin/python3",
+        "checkoutId": "72f3c515d1f442b08e81f186f8f191d1",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "environment": {
+          "executable": "/usr/bin/python3",
+          "implementation": "CPython",
+          "machine": "x86_64",
+          "python": "3.12.3",
+          "system": "Linux",
+          "git": "git version 2.43.0",
+          "kernel": "6.18.40.1-microsoft-standard-WSL2",
+          "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+          "logicalCores": 24,
+          "ramBytes": 32385978368,
+          "platformClass": "WSL2",
+          "storageClass": "wsl2-virtual-disk",
+          "filesystem": "ext4",
+          "memoryAccounting": "cgroup-v2-process-tree"
+        },
+        "conformance": {
+          "exitCode": 0,
+          "report": {
+            "allPassed": true,
+            "core": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-formal-reference-8fcd/scratch/tmp/bitz-gate-c-reference-qgvc0pd7/checkout/plugins/bitz-core",
+            "counts": {
+              "error": 0,
+              "failed": 0,
+              "passed": 350
+            },
+            "environment": {
+              "git": "git version 2.43.0",
+              "python": "3.12.3",
+              "uv": "uv 0.11.28 (x86_64-unknown-linux-gnu)"
+            },
+            "fixtures": [
+              {
+                "differences": [],
+                "id": "SINGLE-001",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-002",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-003",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-004-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-004-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-005-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-005-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-006-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-006-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-073-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-073-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-074-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-078",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-091",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-092",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-093",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-094",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-095",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-17",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-18",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-19",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-007",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-008",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-009-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-010-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-010-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-011",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-012-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-013",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-014",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-015",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-016",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-017-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-018-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-019",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-020",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-021",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-022-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-023",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-024",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-025",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-026",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-133",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-075-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-075-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-076",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-077",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-079-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-079-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-080-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-081",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-082",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-083",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-084",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-085",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-086",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-087-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-088",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-089",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-090",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-096-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-097-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-098-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-099-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-100-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-102",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-103-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-103-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-114",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-115-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-116-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-117-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-118-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-119-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-120-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-128",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-129",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-130",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-131",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-132",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-027",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-028",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-029",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-030",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-031",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-032-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-033",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-034",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-035-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-035-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-036",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-037",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-038",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-039",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-040",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-041",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-042",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-043-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-043-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-044-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-044-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-045",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-046",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-047",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-048-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-048-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-049",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-050",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-051",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-144",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-147",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-148",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-052-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-052-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-053",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-054",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-154",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-072",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-150",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-151",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-152",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-153",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-096-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-097-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-098-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-101-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-105-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-107-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-108-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-109",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-110",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-134",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-145",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-135",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-136",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-139",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-140",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-141",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-142",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-121",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-122",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-123",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-124",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-055",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-056",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-057",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-058",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-059",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-060",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-061",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-062",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-063",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-064",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-065",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-066",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-067",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-068",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-137",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-138",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-143",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-146",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-149",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-155",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-156",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-157",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-069-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-069-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-070-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-071-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-104-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-105-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-106-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-107-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-108-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-111-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-112-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-113",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-125-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-126-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "SINGLE-127-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-001",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-002-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-002-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-003",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-004-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-004-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-027-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-027-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-028",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-029-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-005",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-006",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-007-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-008",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-009",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-010",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-011",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-012",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-013",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-014",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-015",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-016",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-017",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-018-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-018-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-019",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-09",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-10",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-11",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-12",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-13",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-14",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-15",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-020-16",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-05",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-06",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-07",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-021-08",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-022-04",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-023-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-024-03",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-025-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-025-02",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-026-01",
+                "result": "passed"
+              },
+              {
+                "differences": [],
+                "id": "MULTI-026-02",
+                "result": "passed"
+              }
+            ]
+          },
+          "stderrSha256": "3cc77544569f50d891333185b89f91869ffb38ca929c04e3d094dcddb40c8b31"
+        },
+        "unit": {
+          "exitCode": 0,
+          "testsRun": 647,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "40b6ca4236d1782c9047b214fb88257363fa22386693485b35b7716f741d5bd5"
+        },
+        "errors": []
+      },
+      "summary": {
+        "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+        "role": "reference",
+        "exitCode": 0,
+        "seconds": 472.74846765503753,
+        "stdoutSha256": "2dca2ec4dda55a9293734f20af8ba391f18727fe7ead02630eeffd7a469d18e7",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostScratchEmpty": null,
+        "errors": [],
+        "conformanceExitCode": 0,
+        "unit": {
+          "exitCode": 0,
+          "testsRun": 647,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "40b6ca4236d1782c9047b214fb88257363fa22386693485b35b7716f741d5bd5"
+        }
+      },
+      "fileSha256": {
+        "namespace.json": "180e6d0c288dcdeab6aa884e18981fad76bf55647677270ca3912845322f9b4a",
+        "reference.json": "882570d1b5d338109031ec475b8c0dd8c4b23e976989b10c310813364e176c7b",
+        "command-2-stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "command-1-stderr": "3cc77544569f50d891333185b89f91869ffb38ca929c04e3d094dcddb40c8b31",
+        "command-1-stdout": "f688e5ba4bbf93c76ccdb14da47e9dbe45dceb46a2f9d811e3168098ac474983",
+        "command-2-stderr": "40b6ca4236d1782c9047b214fb88257363fa22386693485b35b7716f741d5bd5",
+        "command-1.json": "df698feb58b68958bf8244f3091c75965a64ec2fca5739b1f0cb2fd627704e3c",
+        "command-2.json": "f32076e3bc31ae0d54f2c80a9d6275f84750916ff1c3f71e703726910abc5d72",
+        "stdout": "2dca2ec4dda55a9293734f20af8ba391f18727fe7ead02630eeffd7a469d18e7",
+        "summary.json": "6afe8fd4fc2882be888c67cba4ce5c2289c512a4b18ce2ca73f7068496792c7a",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "command.json": "e50f84df19110bf793e6b64d7b76a4bf852d1226eb4207815b9c223f13050a97"
+      }
+    }
+  },
+  "gate": {
+    "commit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+    "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874",
+    "covered": [
+      "all conformance fixtures on CPython 3.12 minimum and reference roles",
+      "Core unit tests on Linux in both roles",
+      "cross-environment conformance determinism",
+      "reference environment manifest and observed comparison key",
+      "read-only/report/cache/timeout/signal/child-process acceptance in the full matrix",
+      "accepted performance baseline and fixed SLO audit",
+      "proposal 25 P0/P1 findings with per-finding acceptance evidence"
+    ],
+    "environments": {
+      "minimum": {
+        "checkoutId": "deba071c8f9849c49701b66b4a9a3b07",
+        "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874",
+        "environmentFingerprint": "4b43e2625fc3fad900bac19c5929602bf3d949d79ad837eaba0c490de1789dd3",
+        "environmentId": "minimum-cpython-3-12",
+        "executable": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum/cpython-3.12.0-linux-x86_64-gnu/bin/python3.12",
+        "fixtureCount": 350,
+        "python": "3.12.0",
+        "role": "minimum",
+        "unitTests": 647
+      },
+      "reference": {
+        "checkoutId": "72f3c515d1f442b08e81f186f8f191d1",
+        "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874",
+        "environmentFingerprint": "8d40512e6827568d4542ced22ad4c4f6cddf476e0969738056bb66de29a928cc",
+        "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+        "executable": "/usr/bin/python3",
+        "fixtureCount": 350,
+        "python": "3.12.3",
+        "role": "reference",
+        "unitTests": 647
+      }
+    },
+    "errors": [],
+    "fixtureCount": 350,
+    "gateC": "Passed",
+    "gateCFoundation": "Passed",
+    "gateCPerformance": "Passed",
+    "gateCPriorityClosure": "Passed",
+    "pending": [],
+    "performance": {
+      "baselines": [
+        {
+          "cases": 7,
+          "coreCommit": "4b3d95982e33bf77486068df57faf3111a1c1152",
+          "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+          "sha256": "7f46db745fe9a7f8fe87bce8b9e5f4e87124cd87dcf990e7fa3de7c90c61f72a"
+        }
+      ],
+      "checkoutId": "bfaa5559f6624fd9b76050c101121672",
+      "validationReportSha256": "9aa3630337bd57d9312c4646e76ad76551b70cf0ddd2307537454da4bfa180d3"
+    },
+    "priorityClosure": {
+      "findingCount": 11,
+      "findings": [
+        {
+          "evidence": "all-conformance",
+          "fixtureCount": 350,
+          "id": "FIN-FIX-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance-and-diagnostic-audit",
+          "fixtureCount": 7,
+          "id": "FIN-DIAG-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 20,
+          "id": "FIN-EAI-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 13,
+          "id": "FIN-OUT-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 15,
+          "id": "FIN-TARGET-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 24,
+          "id": "FIN-FM-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 6,
+          "id": "FIN-DIGEST-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 6,
+          "id": "FIN-IO-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 15,
+          "id": "FIN-PROC-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 19,
+          "id": "FIN-CLI-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "performance",
+          "fixtureCount": 0,
+          "id": "FIN-PERF-001",
+          "priority": "P1"
+        }
+      ],
+      "status": "Passed",
+      "stdoutSha256": "053979ed245e2e13ef8634723d0d7a5f9b019ce54bfdd00131f54c8e0a5ae417"
+    },
+    "referenceManifestSha256": "ddcbb2b5768359794f72f17afd25aa1b414e69ab5eb9bece4701e8b6a55b4f46",
+    "schemaVersion": 1
+  },
+  "collectFilesSha256": {
+    "command-2-stdout": "053979ed245e2e13ef8634723d0d7a5f9b019ce54bfdd00131f54c8e0a5ae417",
+    "command-1-stderr": "e69aadcd12b9cd4bf5f8b81547e35a02e497653654ddeacbad255fc718a020dc",
+    "runner.py": "2bffc27bdea7c01b2877c0230b991cb57258066e319933a3648a12a630f5895a",
+    "command-1-stdout": "9aa3630337bd57d9312c4646e76ad76551b70cf0ddd2307537454da4bfa180d3",
+    "command-2-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command-1.json": "684fd73bd4f2d4f3deafcfe99e7b785d2c3eae18e85929289370b16476b4796d",
+    "command-2.json": "62ea1ef760917fad08ee8650f910240fc607213d2397f57f1488424ca116e5c2",
+    "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary.json": "cdde1c02f657202cde04a9e80702c3e390fb7400f19ae5e4e1308efc827001b0",
+    "gate-c.json": "abd48a3f611d5c8aec18bff9c9663777f2b5b4523807338a78947e1cda09b8f1",
+    "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command.json": "08899a3dbf6d3066ba0b4de8c460ceaa01378fd8b7c4e491a7da3986e66810b9"
+  },
+  "samePhysicalHostAndKernel": true,
+  "certifiesCurrentIntegrationHead": false,
+  "certifiesRelease": false,
+  "independentRecord": "r08-gate-c-8fcd-independent.json"
+}

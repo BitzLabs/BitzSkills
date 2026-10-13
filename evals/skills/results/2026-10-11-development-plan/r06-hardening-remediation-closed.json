@@ -1,0 +1,54 @@
+{
+  "status": "four_original_and_additional_identity_defect_independently_closed_limited_scope",
+  "records": [
+    {
+      "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+      "reportSha256": "6ba97bcca120d91fa836463994a4c804b8152e05e57e9e11c57fd0903d6a295c",
+      "inventorySha256": "4ead021b2e6c4e8b737c46e6a2797ba4e41fcb0bd3e83ade30f98b1752946446",
+      "parentRehashedCounts": {
+        "originalHashes": 26,
+        "sourceGitHashes": 14,
+        "evidenceHashes": 76
+      },
+      "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-continuation-closure-independent/report.json"
+    },
+    {
+      "sourceCommit": "4b35410b3ae008fafb62655af5d2442883f5ffd1",
+      "reportSha256": "da56fa6de1fa009b6070b2125f50553cd474e0d9c544c4f768f9ffae0f24a926",
+      "inventorySha256": "8f4ff13be7218df90cfaa137b3c979704a0b01d8adeaad4fa522a4d1a91d2f95",
+      "parentRehashedCounts": {
+        "originalHashes": 24,
+        "sourceGitHashes": 14,
+        "evidenceHashes": 86
+      },
+      "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-closure-independent/finalization-01/report.json"
+    }
+  ],
+  "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+  "executionVersion": "quality-execution-0.1.6",
+  "independentTests": {
+    "tests": 101,
+    "testSeconds": 22.853,
+    "exitCode": 0
+  },
+  "parentTests": {
+    "tests": 101,
+    "testSeconds": 22.535,
+    "exitCode": 0
+  },
+  "cleanFullTests": {
+    "tests": 723,
+    "testSeconds": 82.736,
+    "exitCode": 0,
+    "stderrSha256": "021ca77aa2d388a059a03ac48154d7c000de70d34608fb719890118e48819947"
+  },
+  "original4bIssueRetained": true,
+  "nextFakeBackendCallsOnDowngrade": 0,
+  "isolatedAttemptCount": 1,
+  "permanentStopAndRestoreRejectionVerified": true,
+  "paidQualityModelsStarted": 0,
+  "sharedReservationsWritten": 0,
+  "certifiesR06Complete": false,
+  "certifiesGate": false,
+  "next": "新source/契約/出力/台帳の有限品質比較を準備し、起動前独立検分後にSOL測定する"
+}

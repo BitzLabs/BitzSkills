@@ -1,0 +1,28 @@
+{
+  "status": "local_preparation_independently_passed_static1_ready",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "reportSha256": "500bb93f21b814cabb838e523ecff68585cf5036a0263e47880b1a2b9c253e4b",
+  "inventorySha256": "e14f1ec270631f99196b775ba186a9b40b73027f727b5662023f87a2539af02d",
+  "parentRehashedCounts": {
+    "originalHashes": 165,
+    "sourceGitHashes": 27,
+    "evidenceHashes": 45
+  },
+  "runtimeReaderSpecialCase": [
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/node",
+      "nlink": 2,
+      "reason": "fixed runtime declared regular hardlink; original evidence reader rules unchanged"
+    }
+  ],
+  "syntheticBuilderPositive": 1,
+  "syntheticBuilderNegative": 24,
+  "modelsStarted": 0,
+  "reservationsWritten": 0,
+  "staticPreparationMaximum": 1,
+  "primaryMaximum": 68,
+  "semanticMaximum": 68,
+  "certifiesPrimaryStart": false,
+  "certifiesGate": false,
+  "originalReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-final-prelaunch-independent/report.json"
+}

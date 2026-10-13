@@ -1,0 +1,104 @@
+{
+  "status": "fixed_full_passed_independent_code_verified_runner_review_running",
+  "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+  "relatedBatchTests": {
+    "count": 25,
+    "seconds": 0.62,
+    "exitCode": 0
+  },
+  "oldCandidateSource": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+  "oldCandidatePrimary": 0,
+  "oldCandidatePreparation": 0,
+  "parentOriginalSymlinkRace": {
+    "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+    "finding": {
+      "priority": "P2",
+      "file": "evals/skills/sdd/batch.py",
+      "lines": [
+        122,
+        141
+      ],
+      "description": "Symlink check and content open are separate; a link switched between the guard and the open is read and accepted.",
+      "minimalFix": "Read known original run/receipt through a common openat/NOFOLLOW read_regular entry and parse that same byte buffer; avoid path follow for hash preservation too."
+    },
+    "publicSyntheticReproductions": [
+      {
+        "file": "run.json",
+        "readMethod": "read_bytes",
+        "symlinkAtRead": true,
+        "passedNext": true,
+        "stopSaved": false,
+        "fakeCalls": [
+          "SI-001",
+          "SI-007"
+        ],
+        "observed": [
+          {
+            "linkWasCreatedAfterGuard": true,
+            "linkTargetPublic": true,
+            "target": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp/bitz-sdd-batch-tests-n9_crln_/.venv/output/skill/repetition-1/SI-001/public-original-run.json"
+          }
+        ]
+      },
+      {
+        "file": "independent-review.json",
+        "readMethod": "read_text",
+        "symlinkAtRead": true,
+        "passedNext": true,
+        "stopSaved": false,
+        "fakeCalls": [
+          "SI-001",
+          "SI-007"
+        ],
+        "observed": [
+          {
+            "linkWasCreatedAfterGuard": true,
+            "linkTargetPublic": true,
+            "target": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp/bitz-sdd-batch-tests-mnooos5d/.venv/output/skill/repetition-1/SI-001/public-original-independent-review.json"
+          }
+        ]
+      }
+    ],
+    "modelsStarted": 0,
+    "sharedLedgerWrites": 0,
+    "authFilesRead": 0
+  },
+  "implementation": "shared openat/NOFOLLOW regular single-link reader, parse the same hash-checked buffers",
+  "independentRecord": "r05-atomic-originals-independent.json",
+  "currentUnlaunchedDrivers": {
+    "run-r05-new05-primary.py": "f20c7939e20f2cc3adacf013cac5ca382a89b853dfed5281290878b8137b5f19",
+    "run-r05-new05-semantic.py": "423f4482d7206e42e5769ce020b371ea2dc0d0eb99135fa2e009fa9b5f93b4a7",
+    "r05-prelaunch-sol-review-05.py": "7b3ba943d9d4fcf7a189c0e81e25ac8a587814dbf97e46c9f836df590a377c84"
+  },
+  "newPrimary": 0,
+  "new05PreparationConsumed": 0,
+  "certifiesSkillGate": false,
+  "fullTests": {
+    "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+    "exitCode": 0,
+    "seconds": 77.29128220002167,
+    "testCount": 703,
+    "testSeconds": 76.813,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "cefcb3e2b121ba2e066deafbb94854fc948a3385e7c4774184048863844eb983"
+  },
+  "primaryDriverIoNameRegression": {
+    "modelsStarted": 0,
+    "reservationsConsumed": 0,
+    "runnerBeforeSha256": "c1d25f567c426872131ab7ca52f859a11983d07944ee69c3f9f5f1ff8fc5312b",
+    "runnerAfterSha256": "f20c7939e20f2cc3adacf013cac5ca382a89b853dfed5281290878b8137b5f19",
+    "syntheticRegression": [
+      {
+        "version": "before",
+        "error": "AttributeError",
+        "readsOriginalBytes": false
+      },
+      {
+        "version": "after",
+        "error": null,
+        "readsOriginalBytes": true
+      }
+    ]
+  }
+}

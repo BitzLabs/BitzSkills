@@ -1,0 +1,193 @@
+{
+  "status": "atomic_original_read_closure_independently_verified_preparation_runner_pending",
+  "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+  "report": {
+    "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "atomic_original_read_P2_closed_in_independent_scope_new05_code_preparation_ready",
+    "targetedTests": {
+      "count": 102,
+      "seconds": 31.974,
+      "exitCode": 0,
+      "stderrSha256": "e0453c86fb57b2e00e945d208887e56236be6fe2215b99326cb525df9482185c"
+    },
+    "parentFull703": {
+      "status": "not_independently_inspected_at_report_time",
+      "countClaimNotUsed": true,
+      "rootPlannedFullRun": true
+    },
+    "actualNew05Preflight": {
+      "passed": true,
+      "seconds": 9.356828260002658,
+      "codexVersion": "codex-cli 0.160.1",
+      "pythonVersion": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "slots": 68,
+      "timeout240": true,
+      "retry0": true,
+      "CoreDoctorExecuted": true,
+      "modelsStarted": 0,
+      "ledgerWrites": 0,
+      "outputCreated": false
+    },
+    "oldNewLinkRaceClosure": {
+      "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+      "oldSourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+      "oldBatchSha256": "fa05f6483f1d61722fdfe5ce71358910524e36c99a655b0cf60797b39555fc85",
+      "oldNewRaceComparisons": [
+        {
+          "subject": "old",
+          "file": "run.json",
+          "linkSwitchedBeforeActualOpen": true,
+          "passedNext": true,
+          "errorType": null,
+          "stopSaved": false,
+          "fakeCalls": [
+            "SI-001",
+            "SI-007"
+          ],
+          "restoredNextRefused": false
+        },
+        {
+          "subject": "new",
+          "file": "run.json",
+          "linkSwitchedBeforeActualOpen": true,
+          "passedNext": false,
+          "errorType": "OSError",
+          "stopSaved": true,
+          "fakeCalls": [
+            "SI-001"
+          ],
+          "restoredNextRefused": true
+        },
+        {
+          "subject": "old",
+          "file": "independent-review.json",
+          "linkSwitchedBeforeActualOpen": true,
+          "passedNext": true,
+          "errorType": null,
+          "stopSaved": false,
+          "fakeCalls": [
+            "SI-001",
+            "SI-007"
+          ],
+          "restoredNextRefused": false
+        },
+        {
+          "subject": "new",
+          "file": "independent-review.json",
+          "linkSwitchedBeforeActualOpen": true,
+          "passedNext": false,
+          "errorType": "OSError",
+          "stopSaved": true,
+          "fakeCalls": [
+            "SI-001"
+          ],
+          "restoredNextRefused": true
+        }
+      ],
+      "endFileSwitchAtOpenRejected": true,
+      "parentStaticLinkRejected": true,
+      "parentLinkSwitchAtOpenRejected": true,
+      "parentNoFollowFlags": true,
+      "hardlinkRejected": true,
+      "singleHashCheckedBufferRegressionPassed": true,
+      "modelsStarted": 0,
+      "sharedLedgerWrites": 0,
+      "authFilesRead": 0
+    },
+    "sameHashCheckedBytes": {
+      "artifactInventoryClosedBeforeRead": true,
+      "eachArtifactReadOnceAndHashCheckedBeforeParse": true,
+      "decisionTraceHostChangesAndFinalContextControlUseSameBuffer": true,
+      "runHashCheckedBeforeParser": true,
+      "reviewAndHashPreservationUseNoFollowReader": true
+    },
+    "sharedReaderDependency": {
+      "unchangedFrom0bb5": true,
+      "knownGitHashes": {
+        "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca"
+      },
+      "regularSingleLinkCheck": true,
+      "parentAndEndNoFollow": true
+    },
+    "old01To04PreparationStops": [
+      {
+        "condition": "01",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "02",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "03",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "04",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      }
+    ],
+    "oldPreparationConsumed": 4,
+    "oldPrimaryConsumed": 0,
+    "newPreparationMaximum": 1,
+    "newPrimaryMaximum": 68,
+    "newSemanticMaximum": 68,
+    "maximumPerPrimary": 1,
+    "automaticRetries": 0,
+    "sourceFileHashes": {
+      "evals/skills/sdd/README.md": "5b15b093b63e44b32db2fbe40d1e3ccd8b64129024a1a2321ab376f88c88c781",
+      "evals/skills/sdd/batch.py": "125a7c6a3c5bc680d44c782425030318f08aa1fb8041ce9d94d2d4b173b91413",
+      "evals/skills/sdd/evaluate.py": "f93af79a4d89cd25a88e6ffada29ee9231d2a9eb9bdd8567aee1da4e5ded4472",
+      "evals/skills/sdd/sdd_originals.py": "a33de77393ea6b17f9ce091b7a6a1f217255528a68efea9038c8ffeaa4363feb",
+      "tests/skills/test_sdd_batch.py": "e16648fba6a43342166120b52614f359ab0a032e05307d81c9f352aeeef2f0ac",
+      "tests/skills/test_sdd_native_completion.py": "bc4eaf23ff0bc5b7164abfce717c155a483462908317c30b0b97494dd014ed65",
+      "tests/skills/test_sdd_skill_eval.py": "937350a9d88e78cbc93d7ce5a6e6884c9738a3f988bc7a68b21a2ad1690b4f83"
+    },
+    "remainingSourceBlockersWithinReviewedScope": [],
+    "new05CodeAndZeroPaidPreparationStartReady": true,
+    "actualSol47DriverLaunchRequires": {
+      "sourcePinUpdate": "All3 ignored drivers still pin0bb5 in the saved snapshot; bind745 before actual launch.",
+      "payloadBinding": "Include new sdd_originals and reviewed shared read_regular dependency in preparation payload/guard.",
+      "then": "Actual one-slot preparation review must pass original response/schema/usage/source/runtime/old-stop recheck before primary starts."
+    },
+    "ignoredDriverPins": {
+      "drivers": [
+        {
+          "file": "r05-prelaunch-sol-review-05.py",
+          "sha256": "5eddb683d184e0cc788313fa880deee197f13e472c3737ed10e3ececcdfe0a52",
+          "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12"
+        },
+        {
+          "file": "run-r05-new05-primary.py",
+          "sha256": "939e5661ef5cd28a960dc54df73f37643148428c9d3551aa3e5f88579ed34eae",
+          "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12"
+        },
+        {
+          "file": "run-r05-new05-semantic.py",
+          "sha256": "119f9810c5f5a45ce2083ed8e691411155df4044670e49fe59bd9725a91d555c",
+          "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12"
+        }
+      ],
+      "actualExecutions": 0,
+      "scope": "Static pin observation; drivers not executed."
+    },
+    "actualDriverExecutionCertified": false,
+    "primaryStartCertified": false,
+    "modelsStartedByIndependent": 0,
+    "reservationsCreatedByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "authFilesRead": 0,
+    "scope": "R05 clean745 source and zero-paid independent corrective/preparation readiness only; no primary/provider behavior/68-slot completion/SkillGate/Phase/release certification. R08 remains candidate8fcd.",
+    "priorReportPreserved": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-deep-json-independent/report.json",
+    "approvalFailureResolvedWithoutBypass": true
+  },
+  "reportSha256": "398ddabe102d59ece418bc22b761c3b05dd8a81712b1813afe2a32aa51da0334",
+  "hashinventorySha256": "ccccc20a334683ce4d2daac924ac52006bdddd95d6f8e53ce75332a573a1b494",
+  "parentRehashed": 89,
+  "new05PreparationConsumed": 0,
+  "newPrimary": 0,
+  "certifiesSkillGate": false
+}

@@ -1,0 +1,23 @@
+{
+  "status": "cause_confirmed_classification_contract_ambiguous",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-p17-cause-independent/report.json",
+  "reportSha256": "2eea8b7d806d235ec9e4dd084a03a21d4a39b20c4463b7c84713b3a6dc8b5998",
+  "inventorySha256": "ece8a5a6f35b09becd6b87f4e3ae3e95d8db36aed4f66203ceae1ffe84cd6c3b",
+  "parentRehashedCounts": {
+    "originalHashes": 39,
+    "sourceGitHashes": 11,
+    "evidenceHashes": 18
+  },
+  "primaryConsumed": 17,
+  "semanticConsumed": 16,
+  "parentVerified": 16,
+  "outcomeMismatch": {
+    "expected": "stop",
+    "actual": "handoff"
+  },
+  "productNormativeViolationConfirmed": false,
+  "oldFailureRetained": true,
+  "automaticRetries": 0,
+  "certifiesGate": false
+}

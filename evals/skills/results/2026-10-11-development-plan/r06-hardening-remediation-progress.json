@@ -1,0 +1,43 @@
+{
+  "status": "four_original_and_additional_identity_defect_independently_closed_limited_scope",
+  "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+  "executionVersion": "quality-execution-0.1.6",
+  "originalFourDefects": "fixed in4b; actual full722 passed, independent original four closure confirmed but new identity downgrade P2 found",
+  "additionalIdentityDefect": "fixed in e05; record equals reservation plus current version/source/protocol/model/slot before legacy inspection",
+  "localRegression": {
+    "tests": 101,
+    "wallSeconds": 22.535,
+    "exitCode": 0,
+    "stderrSha256": "51cb7b3a66d3ee36ebdd17b850b1d0caf1b1f8163b0a547516ddcfc10ba062e9"
+  },
+  "fullRegression": {
+    "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+    "tests": 723,
+    "testSeconds": 82.736,
+    "exitCode": 0,
+    "clean": true,
+    "stderrSha256": "021ca77aa2d388a059a03ac48154d7c000de70d34608fb719890118e48819947"
+  },
+  "paidQualityModelsStarted": 0,
+  "automaticRetries": 0,
+  "certifiesGate": false,
+  "automaticApprovalReviewInterruption": {
+    "action": "r06-continuation-identity-regression-01 quality local regression",
+    "executed": false,
+    "reason": "automatic approval review could not complete due usage limit; not an unsafe determination",
+    "ordinaryUsageAllowedCheckedAt": "2026-10-13 02:20:15 UTC",
+    "resumedUsingNormalApprovalReview": true
+  },
+  "independentClosure": {
+    "sourceCommit": "e05ef60f9d2ce8fe9f50367e8b0c2ce97fb6b1ac",
+    "reportSha256": "6ba97bcca120d91fa836463994a4c804b8152e05e57e9e11c57fd0903d6a295c",
+    "inventorySha256": "4ead021b2e6c4e8b737c46e6a2797ba4e41fcb0bd3e83ade30f98b1752946446",
+    "parentRehashedCounts": {
+      "originalHashes": 26,
+      "sourceGitHashes": 14,
+      "evidenceHashes": 76
+    },
+    "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-continuation-closure-independent/report.json"
+  },
+  "next": "新source/契約/出力/台帳の有限品質比較を準備し、起動前独立検分後にSOL測定する"
+}

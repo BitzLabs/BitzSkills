@@ -1,0 +1,137 @@
+{
+  "status": "review_findings",
+  "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+  "model": "gpt-6.1-sol",
+  "scope": "public-sdk-trace-component-static-review-only",
+  "exitCode": 0,
+  "timedOut": false,
+  "independentReviewerSolInvocations": 1,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "promptSha256": "80ab23aee1d42515629957eec3b57e527e92035520f4765fa081319368364e70",
+  "stdoutSha256": "04b2c667254b611b685a7dac68bb0e89b691601e3614f95fc9ac627f983ace26",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceGuards": {
+    "before": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "observedHead": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_canary_capture.py": "233b84b485a97f23ca74e4b6cc13211811b6ff3698cbabe748e342831ad96e7e",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production_sdk_probe.py": "f81e54762a41e89da347f20fb24d561ac01e17f99400e3ff95f4fc5c1f423ebe",
+        "tests/skills/test_production_canary_capture.py": "ed786f79674a689456b4cb9b26141cbefb93dfa0d86e24081441c275772a5c4b",
+        "evals/skills/routing/production-canary-v0.1.json": "b7f9643fc3ee6bf6ce9d9400a4a0eb4e476c8c2ca82588c06520c12e473a3956",
+        "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+        "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_ledger.py": "0eef6b082b9e5d9c8534e3c3d7063795d55bd944d871d041a5c2390c4a75a345",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "evals/skills/routing/production_review_ledger.py": "373541889b952d45335d15505237d5cfabdffb08506409c957442a8ed6dcf6ed",
+        "evals/skills/routing/run_sdk_trace_review.py": "6b3ccca8dacd47835641dc9fe155e0865ebcc6ba4d45ad9463e4c62812376b7a",
+        "evals/skills/routing/check_canary_design_preparation.py": "173034fd1dbbfcfbb14e89b1d5eaabe1e0dc8fa25f626a5997760616d112fb00",
+        "evals/skills/routing/sdk-trace-review.schema.json": "e427e05660f23001eae4eeb45709ee9c09b14621e0502f199d03591cec9d2e69",
+        "evals/skills/routing/sdk-trace-review-v0.40.json": "86c8d2a7a8be6e0820fcc802e3f8b0238b1226eeff9a3b58826a48f43b5350e5"
+      }
+    },
+    "invoke": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "observedHead": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_canary_capture.py": "233b84b485a97f23ca74e4b6cc13211811b6ff3698cbabe748e342831ad96e7e",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production_sdk_probe.py": "f81e54762a41e89da347f20fb24d561ac01e17f99400e3ff95f4fc5c1f423ebe",
+        "tests/skills/test_production_canary_capture.py": "ed786f79674a689456b4cb9b26141cbefb93dfa0d86e24081441c275772a5c4b",
+        "evals/skills/routing/production-canary-v0.1.json": "b7f9643fc3ee6bf6ce9d9400a4a0eb4e476c8c2ca82588c06520c12e473a3956",
+        "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+        "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_ledger.py": "0eef6b082b9e5d9c8534e3c3d7063795d55bd944d871d041a5c2390c4a75a345",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "evals/skills/routing/production_review_ledger.py": "373541889b952d45335d15505237d5cfabdffb08506409c957442a8ed6dcf6ed",
+        "evals/skills/routing/run_sdk_trace_review.py": "6b3ccca8dacd47835641dc9fe155e0865ebcc6ba4d45ad9463e4c62812376b7a",
+        "evals/skills/routing/check_canary_design_preparation.py": "173034fd1dbbfcfbb14e89b1d5eaabe1e0dc8fa25f626a5997760616d112fb00",
+        "evals/skills/routing/sdk-trace-review.schema.json": "e427e05660f23001eae4eeb45709ee9c09b14621e0502f199d03591cec9d2e69",
+        "evals/skills/routing/sdk-trace-review-v0.40.json": "86c8d2a7a8be6e0820fcc802e3f8b0238b1226eeff9a3b58826a48f43b5350e5"
+      }
+    },
+    "after": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "observedHead": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_canary_capture.py": "233b84b485a97f23ca74e4b6cc13211811b6ff3698cbabe748e342831ad96e7e",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production_sdk_probe.py": "f81e54762a41e89da347f20fb24d561ac01e17f99400e3ff95f4fc5c1f423ebe",
+        "tests/skills/test_production_canary_capture.py": "ed786f79674a689456b4cb9b26141cbefb93dfa0d86e24081441c275772a5c4b",
+        "evals/skills/routing/production-canary-v0.1.json": "b7f9643fc3ee6bf6ce9d9400a4a0eb4e476c8c2ca82588c06520c12e473a3956",
+        "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+        "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_ledger.py": "0eef6b082b9e5d9c8534e3c3d7063795d55bd944d871d041a5c2390c4a75a345",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "evals/skills/routing/production_review_ledger.py": "373541889b952d45335d15505237d5cfabdffb08506409c957442a8ed6dcf6ed",
+        "evals/skills/routing/run_sdk_trace_review.py": "6b3ccca8dacd47835641dc9fe155e0865ebcc6ba4d45ad9463e4c62812376b7a",
+        "evals/skills/routing/check_canary_design_preparation.py": "173034fd1dbbfcfbb14e89b1d5eaabe1e0dc8fa25f626a5997760616d112fb00",
+        "evals/skills/routing/sdk-trace-review.schema.json": "e427e05660f23001eae4eeb45709ee9c09b14621e0502f199d03591cec9d2e69",
+        "evals/skills/routing/sdk-trace-review-v0.40.json": "86c8d2a7a8be6e0820fcc802e3f8b0238b1226eeff9a3b58826a48f43b5350e5"
+      }
+    }
+  },
+  "sharedReservation": {
+    "path": "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-static-review-ledger/sdk-trace-review-v0.40.json",
+    "sha256": "d8799911f82b6d7a23baac4feeded03c22e0eabc1a72486a1088d2ef1c60939a",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.40.json",
+    "sourceCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+    "contractSha256": "86c8d2a7a8be6e0820fcc802e3f8b0238b1226eeff9a3b58826a48f43b5350e5",
+    "maximumInvocations": 1,
+    "consumedReservations": 1,
+    "automaticRetry": false,
+    "primaryModelTrajectories": 0,
+    "model": "gpt-6.1-sol"
+  },
+  "certifiesRuntimeEvidence": false,
+  "certifiesPhaseCompletion": false,
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "evals/skills/routing/production_sdk_probe.py",
+      "line": 134,
+      "message": "capture_guardを指定してもdiagnosticTracingが欠落していると、stderrの監視callbackが一度も呼ばれない。canaryのpolicyもこの設定を必須にしていないため、API・制御監視が無効な状態でもcaptureIntegrity=trueとなり、他の成功条件が成立すれば限定取得成功に進める。",
+      "reproduction": "静的条件追跡のみ。diagnosticTracingを持たないcontractでcapture_guard付きproxyを起動する場合、trace_handleはNoneのままなので146–157行の監視に入らない。stderrにfields=nullやAPI超過通知があっても停止markerは生成されず、relay完了・CLI exit0なら222行はcaptureIntegrity=trueを記録する。試験は実行していない。",
+      "suggestion": "capture_guardがある場合は、既知のdiagnosticTracing設定をCLI起動前に必須検証する。callbackなしの旧模擬profileでは従来の任意設定と結果形式を維持する。"
+    },
+    {
+      "priority": "P2",
+      "path": "evals/skills/routing/production_canary_capture.py",
+      "line": 127,
+      "message": "codex.tool_call_receivedのtool_sourceが欠落または未知の場合、通知を正常として受理し、制御回数にも加算しない。未知の観測入力を停止へ結び付けていないため、制御2回の監視を抜ける経路がある。",
+      "reproduction": "静的条件追跡のみ。CaptureGuardにtool_source=directのexec通知を2回渡した後、同じevent.nameでtool_sourceを省略したwait通知を渡すと、127行の条件が成立せず138行でTrueを返す。controlは2のままで停止markerもない。未知のtool_source文字列でも同様。試験は実行していない。",
+      "suggestion": "codex.tool_call_receivedを先に分岐し、tool_sourceとtool_nameを既知の通知形式として検証する。制御通知の欠落・未知sourceはsticky stopとし、許可する非制御sourceが必要なら明示的に列挙する。"
+    }
+  ],
+  "responseSha256": "cdc68e6e94a0b53121fdd387ca229a803d40f878569bf5b81bfe95864097a567",
+  "usage": {
+    "input_tokens": 21009,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1341,
+    "reasoning_output_tokens": 714
+  },
+  "acceptedStartupWarningHashes": [
+    "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+  ]
+}

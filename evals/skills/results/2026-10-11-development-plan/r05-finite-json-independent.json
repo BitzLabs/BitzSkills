@@ -1,0 +1,106 @@
+{
+  "status": "three_original_P2_limited_closed",
+  "report": {
+    "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "r05_original_three_p2_closed_within_implementation_and_zero_paid_verification",
+    "preparationReadyWithinReviewedScope": true,
+    "certifiesPaidPreparationReview": false,
+    "certifiesActualPrimaryBehavior": false,
+    "originalP2Count": 3,
+    "closedP2Count": 3,
+    "newFindings": [],
+    "sourceSha256": {
+      "evals/skills/sdd/evaluate.py": "91b2d57d1ee2d9c0c177a1a5e69f36542a5de824185267cf17f8cc756cce38ba",
+      "tests/skills/test_sdd_native_completion.py": "964c5b2fe8962601386c66cd2008f6511599bd04b2ea85f8cac8e893af959085",
+      "tests/skills/test_sdd_skill_eval.py": "5bcc76d615269844e455e7acf99fb390f0b8129c4656bb6f583d005030da7246"
+    },
+    "closure": {
+      "exponentOverflow": "Saved original8fcd raw bytes unchanged: old full entry allpassed -> e109 allfailed; shared parse_json rejects float exponent overflow nested/outside text; finite values retained.",
+      "durableStop": "Failed receipt restore rejected with permanent stop and hash; unreadable/hash-unavailable and original run restore remain stopped; missing review stays pending.",
+      "nativeOriginal": "turn.failed/unknown item/unknown event reject; old SI010 original trace remains normal and original usage is preserved."
+    },
+    "targetedTests": {
+      "count": 87,
+      "sdd": 81,
+      "matrix": 6,
+      "seconds": 30.666,
+      "status": "OK",
+      "exitCode": 0
+    },
+    "actualPreflight": {
+      "status": "passed",
+      "seconds": 8.669388848007657,
+      "coreDoctor": "passed/exit0",
+      "cliVersion": "codex-cli 0.160.1",
+      "runtimeKnownFiles": 50,
+      "runtimeProof": {
+        "status": "fixed_runtime_bytes_match",
+        "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+        "files": 50
+      },
+      "pythonVersion": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "jsonschemaPath": "/usr/lib/python3/dist-packages/jsonschema/__init__.py",
+      "ruamelPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/.venv/lib/python3.12/site-packages/ruamel/yaml/__init__.py",
+      "identityCount": 68,
+      "executionVersion": "sdd-execution-0.1.4",
+      "model": "gpt-6.1-sol",
+      "modelVersion": "unversioned-alias-observed-2026-10-12",
+      "primaryBudget": 68,
+      "semanticIndependentMaximum": 68,
+      "maximumPerPrimary": 1,
+      "preparationIndependentMaximum": 1,
+      "timeoutSeconds": 240,
+      "retries": 0,
+      "outputExists": false,
+      "ledgerExists": false,
+      "lockExists": false
+    },
+    "negativeEvidence": {
+      "oldRawSha256": "0d0f9624b57058f153a8cfdedd94fc3429854953bfb97ab7ee9eac2749159408",
+      "fullEntryChecks": 8,
+      "sharedParserChecks": 15,
+      "durableLedgerChecks": 4,
+      "finiteAccepted": [
+        "1.25",
+        "1e-9",
+        "1e308"
+      ],
+      "historicalOriginal": {
+        "traceSha256": "048be2b91f23ae72b130dcb70dd52e72644cf517fa3196fbe04a93332cefbee2",
+        "nativePassed": true,
+        "usage": {
+          "input_tokens": 64887,
+          "cached_input_tokens": 45824,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 637,
+          "reasoning_output_tokens": 35
+        }
+      }
+    },
+    "oldOriginalReportsAndPublicHashesUnchanged": true,
+    "modelsStarted": 0,
+    "newPrimary": 0,
+    "newReservations": 0,
+    "sharedLedgerWrites": 0,
+    "sourceEdits": 0,
+    "refChanges": 0,
+    "mandatoryOperationalRemainders": [
+      "Parent must inspect clean same-ref full688 raw results before paid launch; this independent task ran targeted87 only.",
+      "Separate approved preparationIndependentSol maximum1 is operational accounting; this zero-paid independent context review does not claim that paid SOL preparation run occurred.",
+      "Run exactly next fixed slot, consume before invocation, preserve all native evidence; require actual separate semantic review and parent original recheck before each next slot.",
+      "Record missing independent/provider billing data as missing, never zero; one-independent-per-primary maximum68 and no retry remain external operational budget duties."
+    ],
+    "limits": [
+      "Finite public synthetic17-case skill/baseline 2rep evaluation preparation only; 68 actual primary trajectories are not yet established.",
+      "Restricted fixedCLI profile can conservatively stop on other unauthorized known events; no full CLI event support certification.",
+      "No SkillGate, retention/livepilot, overall behavior, Phase or release certification.",
+      "R08 original fresh collections stay attributed to8fcd; SDD-onlye109 changes do not relabel original Core Gate evidence."
+    ]
+  },
+  "inventorySha256": "2f42148dc6c707b63087d7e3a849191ae5309c51ba5c0e436066a846449ad22f",
+  "parentRecheckedHashes": 56,
+  "preparationSolSeparate": true
+}

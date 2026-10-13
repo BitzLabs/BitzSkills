@@ -1,0 +1,29 @@
+{
+  "status": "verified_source_history_pushed_documentation_commit_in_preparation",
+  "recordedAt": "2026-10-13T14:21:35.984313+09:00",
+  "branch": "codex/core-sdd-quality-integration",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "remoteCommitConfirmed": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "previousIntegrationCommit": "64aed6cc116e2aeefc41039adad41ba15e7f0360",
+  "commitsPreserved": 52,
+  "sourceFilesVerified": 63,
+  "userPushAuthorization": "続きを進めましょう。コミット時にリモートへプッシュしてください",
+  "pushPolicy": "each_new_commit_push_origin_same_branch_without_force",
+  "regression": {
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "skillUnitTests": 723,
+    "exitCode": 0,
+    "seconds": 83.908,
+    "availablePublicRecords": []
+  },
+  "r05": {
+    "status": "permanently_stopped_provider_usage_limit",
+    "primaryConsumed": 9,
+    "primaryCompleted": 8,
+    "semanticConsumed": 8,
+    "parentVerified": 8,
+    "independentCheckpoint": "not_completed_provider_usage_limit"
+  },
+  "gateDecision": "not-certified",
+  "releaseDecision": "not-certified"
+}

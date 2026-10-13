@@ -1,0 +1,752 @@
+{
+  "status": "first06_independent_checkpoint_parent_rehashed",
+  "reportSha256": "95ae70df4320b4cb17ca4189afd52d344cf371d133939bace15c6edf81fe0915",
+  "inventorySha256": "a5b7115247275cccacb93aef2f8c02835c0ba3efc1a73e9db9557dd8180e11cd",
+  "parentRehashedCounts": {
+    "originalHashes": 265,
+    "sourceGitHashes": 3,
+    "evidenceHashes": 12
+  },
+  "report": {
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "status": "first06_originals_and_independent_semantics_verified",
+    "blockingFindings": [],
+    "scope": "新07 skill反復1のSP001/SI010/SP002〜SP005の完了済み6prefixのみ",
+    "verifiedPrefixLength": 6,
+    "rows": [
+      {
+        "ordinal": 1,
+        "slot": {
+          "caseId": "SP-001",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "2027493c-85d8-46fe-8dfd-837b4e1dc680",
+        "primaryRunSha256": "d93bcf91f81a19493677e5019ec823b1233abb565f2a359aff870588b6cca19a",
+        "semanticReceiptSha256": "de261afe7490d467bd7931226b3c939bcc64c560baf89cf9116a1248d69e7223",
+        "independentReviewSha256": "f6c23ba4b0dee87392b182954fb6b706a87ca474a4345d202436854855610910",
+        "parentProofSha256": "81edf06394704133caaca892e3759fc08e6be99cbe880c8ee448585ec15fe4ff",
+        "primaryUsage": {
+          "input_tokens": 103787,
+          "cached_input_tokens": 82432,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1723,
+          "reasoning_output_tokens": 32
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 47095,
+          "output_tokens": 697,
+          "reasoning_output_tokens": 36
+        },
+        "primarySeconds": 74.1710906829685,
+        "semanticSeconds": 24.988715862040408,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "stop",
+        "changes": [
+          ".spec/requirements/REQ-001.md",
+          ".spec/tasks/TASK-001.md"
+        ],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      },
+      {
+        "ordinal": 2,
+        "slot": {
+          "caseId": "SI-010",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "338ed919-3228-40b6-8aca-97e9e3828084",
+        "primaryRunSha256": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df",
+        "semanticReceiptSha256": "1674a8cc79cf83bf565ca023008ce9a5b30e0cc2aedad1596536d20d6f9128b7",
+        "independentReviewSha256": "2f5936b06de4ff61db9a847178eb70c512596b8a4157fa6f42e4b09eae743a62",
+        "parentProofSha256": "898e066695b10fc45f4d1ee7cd8d1d3f2daa80c35b9f27da8c3604d7c1a51620",
+        "primaryUsage": {
+          "input_tokens": 64724,
+          "cached_input_tokens": 45568,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 705,
+          "reasoning_output_tokens": 65
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 43125,
+          "output_tokens": 740,
+          "reasoning_output_tokens": 44
+        },
+        "primarySeconds": 50.01963217300363,
+        "semanticSeconds": 24.534493847982958,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "stop",
+        "changes": [],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      },
+      {
+        "ordinal": 3,
+        "slot": {
+          "caseId": "SP-002",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "c728e1b2-9f3d-4714-839c-8103d4f464ad",
+        "primaryRunSha256": "84c85891f379f9914f623b715796ab9df8a7f927c548dcc4f7c42662b3a8b47a",
+        "semanticReceiptSha256": "000fb14ee7650a00e8d77d9972cc6313d06e1b6e106ef53767100a480d594880",
+        "independentReviewSha256": "503d649933d81152004b87978341b7b9b231c9db325600e22fdbcfcbace6f109",
+        "parentProofSha256": "424449c02f8a39b49d8007d5a01c753ccc9989082712ec1c0637e89045dfde58",
+        "primaryUsage": {
+          "input_tokens": 80783,
+          "cached_input_tokens": 51840,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 791,
+          "reasoning_output_tokens": 0
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 42145,
+          "output_tokens": 689,
+          "reasoning_output_tokens": 38
+        },
+        "primarySeconds": 53.52694700297434,
+        "semanticSeconds": 24.977435459033586,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "plan",
+        "changes": [],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      },
+      {
+        "ordinal": 4,
+        "slot": {
+          "caseId": "SP-003",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "ab08f2be-843a-4e00-b8cc-8446410a8dd3",
+        "primaryRunSha256": "51e7ed047efd24967aeec97967c80bf36ba88e9236e6b935bf0b5e75a4a2dedc",
+        "semanticReceiptSha256": "aff14873521c97cfe46127ea2d6a90d62f1eb27f985ca2607bf0e15c1eb80c0a",
+        "independentReviewSha256": "8298d81f2a2fa116079f147290dd20aee7ced47f04cd3ae4b6a25939b2028f9d",
+        "parentProofSha256": "949eae4a91c775d881926f770c60c391580916a8f45648e24ea2233c19b9dc74",
+        "primaryUsage": {
+          "input_tokens": 80875,
+          "cached_input_tokens": 62080,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 808,
+          "reasoning_output_tokens": 43
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6016,
+          "input_tokens": 42130,
+          "output_tokens": 661,
+          "reasoning_output_tokens": 37
+        },
+        "primarySeconds": 54.73318014503457,
+        "semanticSeconds": 22.90720728004817,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "plan",
+        "changes": [],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      },
+      {
+        "ordinal": 5,
+        "slot": {
+          "caseId": "SP-004",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "02b96039-0891-4152-9b36-f7d3e0c83391",
+        "primaryRunSha256": "69e2457ece06505274872b734ce2fbbb47698ee880ed2ad7fdad4f28bd9b107b",
+        "semanticReceiptSha256": "e84ed52c3e18e7546128f04fbf3990a3bebce7ebaa94a08ef052139b7b36221e",
+        "independentReviewSha256": "786936cf6d5085d7fbf2825b8294e5120a987364004ac75209a672f550da7964",
+        "parentProofSha256": "d3576e34e9ab3ff74f5003f55b147b2598dc18655f9d71cef9568c0088f06de1",
+        "primaryUsage": {
+          "input_tokens": 120669,
+          "cached_input_tokens": 99328,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1618,
+          "reasoning_output_tokens": 17
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 46639,
+          "output_tokens": 680,
+          "reasoning_output_tokens": 24
+        },
+        "primarySeconds": 71.72003244108055,
+        "semanticSeconds": 28.22702421003487,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "plan",
+        "changes": [
+          ".spec/tasks/TASK-001.md"
+        ],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      },
+      {
+        "ordinal": 6,
+        "slot": {
+          "caseId": "SP-005",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "runId": "c6248822-1de0-4b46-955e-39b1c4aa4764",
+        "primaryRunSha256": "dc2617a92e81d51a9f757077e06bd21df288b248d32eff4c6eee6a3dbb985fdf",
+        "semanticReceiptSha256": "755a8217ce5aa61f714b0974ac402209fd979b5a9127d23e92e2e31a023350c5",
+        "independentReviewSha256": "ac0f2828abc648b06dba4ce114008d927633948deb8f7967de2a4f657f892013",
+        "parentProofSha256": "c0589ea091d7d42aa4656e5aeafef409967978bab684d82074f1dd6953e779be",
+        "primaryUsage": {
+          "input_tokens": 80895,
+          "cached_input_tokens": 62080,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1056,
+          "reasoning_output_tokens": 36
+        },
+        "semanticUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 42898,
+          "output_tokens": 661,
+          "reasoning_output_tokens": 40
+        },
+        "primarySeconds": 56.48262011492625,
+        "semanticSeconds": 23.30785081803333,
+        "originalCounts": {
+          "primary": 9,
+          "semantic": 11,
+          "payload": 28
+        },
+        "primaryChecks": {
+          "deterministic": {
+            "passed": true,
+            "errors": []
+          },
+          "safety": {
+            "passed": true,
+            "errors": []
+          },
+          "workflow": {
+            "passed": true,
+            "errors": []
+          },
+          "observation": {
+            "passed": true,
+            "errors": []
+          }
+        },
+        "semanticChecks": {
+          "deterministic": "passed",
+          "observation": "passed",
+          "safety": "passed",
+          "semantic": "passed",
+          "workflow": "passed"
+        },
+        "outcome": "plan",
+        "changes": [],
+        "humanReviewPending": true,
+        "readyClaimed": false,
+        "finalSnapshotAndActualCoreVerified": true
+      }
+    ],
+    "liveLedgerObservation": {
+      "observedAt": "2026-10-13T06:22:33.592877+09:00",
+      "snapshotSha256": "d5cdbfd4fb6d161946faa1189832ed3bd58ea272afe00f4e17475cacd8c50654",
+      "attemptCountObserved": 8,
+      "first06Completed": true,
+      "stopAtObservation": null,
+      "laterRowsNotCertified": true,
+      "ledgerNeverRewritten": true
+    },
+    "totalsVerifiedWithinPrefix": {
+      "primary": 6,
+      "semantic": 6,
+      "parentVerified": 6,
+      "primaryOriginals": 54,
+      "semanticOriginals": 66,
+      "semanticPayloads": 168,
+      "retry": 0
+    },
+    "recordingHelpers": {
+      "sha256": {
+        "r05-new07-record-primary.py": "88d79c235def8f9c12696931965ad84c90d67b8ff6830af0cf4845c3cbd83045",
+        "r05-new07-verify-and-record.py": "34407efdd49bb08a6af0175a086395c5c83b018aacfa5c8f759234b74081a68e",
+        "r05-new07-update-progress.py": "6736c6a1e276f855646eb2de01707633d1c609656705b99f01ecf3fc5df40933"
+      },
+      "primaryRecorderRole": "原9/processのhash・source/ordinal/slotを照合し、機械結果をsemantic_pending/failedとして記録。意味受理や予約を行わない。",
+      "verifyRecorderRole": "原照合childのexit0/errorなしとpassed proof後だけ進捗を記録。モデル/予約は行わない。",
+      "progressUpdaterRole": "連続passed proofとlive消費/意味/利用量を別項目で集計、68時も独立集約待ち、Gate/release false。動的進捗でありimmutable原proofの代替ではない。",
+      "executedByIndependent": false
+    },
+    "old06PermanentStopPreserved": true,
+    "actualCoreAndFinalWorkspaceVerifiedForSix": true,
+    "sourceDateRuntimeGuardPassedForSix": true,
+    "modelsAddedByIndependent": 0,
+    "actualSharedReservationsAddedByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "clean": true,
+    "scopeLimits": [
+      "7件目以降および全68件を認定しない。",
+      "独立意味SOLの代替ではなく、原・入力・親proofの別文脈検分。",
+      "全R05、Skill Gate、Phase、releaseは未認定。"
+    ],
+    "hashInventory": "hashinventory.json"
+  },
+  "inventory": {
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "cleanAtFinalization": true,
+    "scope": "first06 completed prefix only; live ledger is immutable start snapshot; later attempts excluded",
+    "originalHashes": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verify.py": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-record-primary.py": "88d79c235def8f9c12696931965ad84c90d67b8ff6830af0cf4845c3cbd83045",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-verify-and-record.py": "34407efdd49bb08a6af0175a086395c5c83b018aacfa5c8f759234b74081a68e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-update-progress.py": "6736c6a1e276f855646eb2de01707633d1c609656705b99f01ecf3fc5df40933",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/run-r05-new07-semantic.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/batches/plan-implement-matrix-20261012-07.json": "909f1bb0585c51291834e69898dfa570449e35496088b4b536dbe72b019a6d84",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-01/summary.json": "f5d926ba89ac5e9956c73a717872a3c9baf143f999c425c469a981bade1edf66",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/run.json": "d93bcf91f81a19493677e5019ec823b1233abb565f2a359aff870588b6cca19a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-01/stdout": "371eaffd4e37dbe277880b19557b1ed72688e1de9b5be1b015dd2ee2c681f727",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-01/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/trace.jsonl": "c9587ba3e15170714c9e794c41734b9bce5b5619930b624581c1c71421e1590c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/host.jsonl": "a4755b788692de4a504ca6e07ce5e3d89d4b674102780cba9384f2c9c64205b7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/changes.json": "3ad5824a64680f3c826127bb046b03fd82f97ce5947f5856987c08074b66ccfe",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/decision.json": "d4f09f4e9086ba9b425d6382431d15f52465943fdee38cc66b4e4ee847431bc8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/control.json": "ccb29c6b8fc21f7698e094a3c8d4a698d56fde52e52cd4fbea360df05506fe3f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/prompt.txt": "0ee6491a2eac9932a9179c2546a6f70c0a9e4142056a8123e55e0a5f3da22f36",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/invocation.json": "fda8d0927fb39057e2abf7dd43c9f70360ac1f17664472aaccb0a391c0dcdd22",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/receipt.json": "de261afe7490d467bd7931226b3c939bcc64c560baf89cf9116a1248d69e7223",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/contract.json": "abd487a67f83f176e14fdf722fb75cf55da4041bd4f1115fb2ac2a779886adbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/invocation.json": "5a6971eb4fe455ee84ed252f911f1dd6b03fae963b1f0cb5180b7353a3262876",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/independent-review.json": "f6c23ba4b0dee87392b182954fb6b706a87ca474a4345d202436854855610910",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/config.json": "dfe87fcd1c7de796ffc2c32e96fff3e80817ee19cbe6df7db7c5144c19e7e08d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/parent-direct-checks.json": "35624a4b63c6fdbdad1f8ba9a8e86877cc6ea3eb0be9dd5a53f3b312bb07aa3c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/prompt.txt": "06d150c1c67491c92651a5fcbd1cdf9ba210e4eec0a71b4a7fd52903009ce4e5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/reservation.json": "ddf9ba93a31c6160af0a36bbcaa575c324509d0fef2022db27e954aaf23bfd7c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/response.json": "2e51e24c61c7153712126ff7ee35065ebfb1722e9dda2ca72a20547ececf71de",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-01/trace.jsonl": "0406a35c24a9b1af3cea6b2fcec61150e776dcac24cec130c190acfa4160676c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.spec/requirements/REQ-001.md": "c080290148d788c57a0ab6d43771531674408a173dd89cd539c4e932421a5bd2",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/.spec/tasks/TASK-001.md": "6e8016f1a7aac9bda30634c6aa59182e8adf651e98557058647d68843a64fc91",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-001/workspace/tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.1.json": "9778e420c359692df6fb3b92debe9fdd9b36ebba55be752c6770d82aab9f3173",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-01.json": "81edf06394704133caaca892e3759fc08e6be99cbe880c8ee448585ec15fe4ff",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-01.json": "05c42fc6bc51153a24173ab556d41ea25da03799e4d5673fea695e402d4f816b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-02/summary.json": "960d2a9c1d1cb2b0f5f7ced6f46e97b1c7efd308ee4e6b18fb66bd1683b67c59",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/run.json": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-02/stdout": "f3114d4fa2df974d3908505a8dc2c24f7e41c8bca87451b361c05ed6c575142a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-02/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/trace.jsonl": "793354a7ff7b83deb9daf1e6c0a784829eb1f86aeab01c4f26af8e0d94b77fea",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/host.jsonl": "baf7670c2c1fa8ef3fee27aa93cae88b8940980ec51a085ac85e49c6659cb15d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/changes.json": "4e49a475c9fa57dd11fa4e5db33b7c214aa34262c69e75f840bfb31fdccf3468",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/decision.json": "207193fd0d76c746935a2e68e91ffda74e9ff1eb416ebc64f697193eed9840d2",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/control.json": "231c795cea0b93bf3fdd20cd82d4bf503fe4820247d89b4e8e6396f74ec5a39c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/prompt.txt": "0fbf4eb50dd5b18db279e28e1b1ed5fbbc0d4525fad1ba3feb9c967ba0b947af",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/invocation.json": "56e1afa7263402d1d842f815d0c29799c890aa311b3f4a704f382ab0caf9b213",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/receipt.json": "1674a8cc79cf83bf565ca023008ce9a5b30e0cc2aedad1596536d20d6f9128b7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/contract.json": "338840f7615c3dd87a51d0c8d5196c925839708916efefbbda7c38b2fcd78ebd",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/invocation.json": "2d8e4087c239f37e4710b99e3f0c7f896347cc3cb394a2d60d119e4c9202cc88",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/independent-review.json": "2f5936b06de4ff61db9a847178eb70c512596b8a4157fa6f42e4b09eae743a62",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/config.json": "2987cf796fe7c86882a5dabc6b99665969b0020da897d3a8c48c538902acd959",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/parent-direct-checks.json": "80f788def55a9dd90e018432ff256d645db27465895b278aea7ab84cd0e519fc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/prompt.txt": "80fd3d7379b3c0c8fc3f424a009b8c64ddcca61f11eef03da32e134c6b7f83a0",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/reservation.json": "795d3bfa5d93402ab31cbf60bf894ad495a46e1d623ec1fc704e180333322039",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/response.json": "3f945c25c51bbce2e259fb409f4f5ededd60914d45664e785b6a62638ddb8819",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-02/trace.jsonl": "46681e634a2dfa8a6b345c8cd8678146c7545750bc2cc9a136031db089e7de01",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/.spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SI-010/workspace/tests/test_input.py": "6ffb14e4e0394f85051e9ea5d27fbd2a19ef07089ce2e21865eff9bef3cf73c3",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.2.json": "e05cd2dc0bc610c19aabcaeaf72714e897dc3b737b9241b1876a6ca28f47a09a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-02.json": "898e066695b10fc45f4d1ee7cd8d1d3f2daa80c35b9f27da8c3604d7c1a51620",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-02.json": "ad879d9b020f45f58bb3df2bc7f5ed56409a6fb86ac9cecbe1aee5dd726fd0b1",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-03/summary.json": "4d17eb06edb67ce9014cbf34c59bbe91635c0ec317fa4d2c8843e37418fd1a22",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/run.json": "84c85891f379f9914f623b715796ab9df8a7f927c548dcc4f7c42662b3a8b47a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-03/stdout": "14b10fb75ebefbf491ee8f4c1895e3aa1c22fcf95c7c81c03c182c6ef8f8cf54",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-03/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/trace.jsonl": "249febddae8a8c6fd6855967da4706a7327c318d405527a7b59fe76cddabb80c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/host.jsonl": "f088bc525b4469417d9f4db34df48173cdb7d304ba1db2ae76e3d5ca1b4de379",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/changes.json": "4092030fd4a9bafae3373445b4deb63c54a92343bd35f9623de9a655d90559d9",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/decision.json": "0d2de7fbdd73c6bf5420adb85ed38a46620a34253b389aa428453b7a7849ebc2",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/control.json": "323c9023ab9f92fa43f58570cde2f70dfd3e2897a1eae6261a1c74428dd752e8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/prompt.txt": "635fc3bcd88d3f04115f9afd7f340a192c4bbf871fd14809337139e227627b72",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/invocation.json": "cf3ec874d09269859c228937e7fe2ea1364afddec6e1924231c5d8badf037272",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/receipt.json": "000fb14ee7650a00e8d77d9972cc6313d06e1b6e106ef53767100a480d594880",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/contract.json": "357b0b9808fa7e0b78ed6a2bdcd424202b7cb1f193d3c95b6331a999b32eb042",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/invocation.json": "653a78e30ea76cdf93586415af7425342d730728b07721e0435c5960c9df3239",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/independent-review.json": "503d649933d81152004b87978341b7b9b231c9db325600e22fdbcfcbace6f109",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/config.json": "2c13b774e92ea2df5334c7f607c41906f21f41448dfb81cf19906f7fdc600052",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/parent-direct-checks.json": "952f68bad0ebcba5c0fb3953583f4ae940c2abca9a11cf99ef9581ddd4c5ac78",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/prompt.txt": "24d912e225246f59421a0c2b9eabdf12f43841d410677fb6951d91bdab9c4f4f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/reservation.json": "ef76aa449405f41b9b46a2da55ff73171fec8d0df14817f5a31e1c363ced8a90",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/response.json": "4fcdf59537dc497ceb64016c1317c7373ae0eb8c82b1ed034709fd87d0d6aea7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-03/trace.jsonl": "c5c50ee5565bb0c4c80c7a02eee57894b23acd59dee491d5308d0a1f3a52c73a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.spec/requirements/REQ-001.md": "4fb9d549f42283297829fea36a224386f5ab6091c0f49c2271ddca4c42baa511",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/.spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-002/workspace/tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.3.json": "86df998954b3623bb65c6f3c6cc5a75d26f012f1bf564c48d3b9b06c2e5c97b3",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-03.json": "424449c02f8a39b49d8007d5a01c753ccc9989082712ec1c0637e89045dfde58",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-03.json": "9d21c34aec48a989f0b3865a97a787ac641a6160adfe92caa6361d8492e07cec",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-04/summary.json": "249498e5ff056d073bd1d4cff6129f6197f262ef5767f337a1d7e941f9a1b1d3",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/run.json": "51e7ed047efd24967aeec97967c80bf36ba88e9236e6b935bf0b5e75a4a2dedc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-04/stdout": "e9ee2a3e0bdf44a1c0d56736868cbce7b70a20352f3df666424aae4155397583",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-04/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/trace.jsonl": "9ce67e7f4fc04a7dcbdc743c80fc22421bf6009d3e23b16aad1f007efb14a60e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/host.jsonl": "4a37a0ae57015e4895b8f42cd8bba3bd2362f9b4b4565e4c95152177fb107517",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/changes.json": "448e5f85ec4bc228bcac1a6352fb65c4fa4654c6550a732e840a6698de597407",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/decision.json": "cecb9dfee1e92b002402124db6301450b55da2d34f3ee2a982ddae4a3713058f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/control.json": "b4fa942334b3214a2f86feba0be3f1561cc1326d6c0e9438c1e1e4b627bd6a00",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/prompt.txt": "cd7bfddba705c803177975a3b882e7a2a3c86781aab4476aa7c6820215bc0193",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/invocation.json": "9989b941e5da738e94d96355b4d5772628df58d313ae79973a6337c0f0af0c74",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/receipt.json": "aff14873521c97cfe46127ea2d6a90d62f1eb27f985ca2607bf0e15c1eb80c0a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/contract.json": "8d6e22c044b2148d0a15e3e6350a694a07ba9977a64a8dd5ec8da819cb2028a6",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/invocation.json": "52ee763d1755795da487af8bd9c024585798adec73f16e940137bc409f7dd3d1",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/independent-review.json": "8298d81f2a2fa116079f147290dd20aee7ced47f04cd3ae4b6a25939b2028f9d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/config.json": "d8d7239892e048b0d621adb7017dd412857d433b38ebffd9680276d56f5640a3",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/parent-direct-checks.json": "fb7c33bdc54fabb8800ed54b55f7d5a88076f48c0f60271522b7ca5201bc782e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/prompt.txt": "04421ad2cf4569a0a16426302ec40e5001d131537d5fc9c1c10e040b9e37b7ad",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/reservation.json": "622aa1c4493b2184f5c077dec85ad8a6ad5c03192aca155c36c419461965b16f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/response.json": "8a5cd31c05b390ca541d6960eecd309cb502d7f10f493c10357a38e9ae9210bf",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-04/trace.jsonl": "2c66d3273481978892300f0d140c297c8bce052f3708d539bdc0d672999ca440",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/.spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-003/workspace/tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.4.json": "70d6e479a7365e576a3432597eaeb0d8c65945904aaa1d7af1459903fd4595c4",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-04.json": "949eae4a91c775d881926f770c60c391580916a8f45648e24ea2233c19b9dc74",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-04.json": "179802f8dd6e1157c06cf32852cb1017a296a6915090a61843fb5c1c41ecd56a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-05/summary.json": "b7876413b50afda1419c368474f634ba690aa80857e749d51422cd66cc0cfc5a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/run.json": "69e2457ece06505274872b734ce2fbbb47698ee880ed2ad7fdad4f28bd9b107b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-05/stdout": "f6f84b9bb69c02630fc6cad1fd7da57144b1cbc7d7f01e76ae58bd8ffbecdb99",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-05/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/trace.jsonl": "1eef1e1c4f1be3d9eae65ff4d3ce1204d81d27e01ce4e9d2f736e9154cb71961",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/host.jsonl": "9fe9f2d3bf462ab522dcddf704a86f93a611bcd6f4642871f9dbc940100fc051",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/changes.json": "7adf2d005b1835488f0b7db3b9412b8d623198afa6f6d6a268ed59102bc5b37f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/decision.json": "80f32958de64e0f6a62f956dc10d457393f329c327afcdca877841e17826e5ab",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/control.json": "856c84ac08e457a638153b42e6593edbe0555968e2977421620a2487820fa22e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/prompt.txt": "30296ffa08c753a512b32323ae9022bc660813c9822d8ec09f87cfe4e907179d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/invocation.json": "ffcb24c66ff6cf38618846c6d6d03e28c0f79d48021dbfae2445e03402b445d7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/receipt.json": "e84ed52c3e18e7546128f04fbf3990a3bebce7ebaa94a08ef052139b7b36221e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/contract.json": "fe4ad88dd89c7143567f2a482b53a5b2fba6ee1b6f75297ef481ff52aebc3ff1",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/invocation.json": "01acafe9825dfe0a93fa3ab3fbf5e09c689a6b96a277088467b264a75ad10d05",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/independent-review.json": "786936cf6d5085d7fbf2825b8294e5120a987364004ac75209a672f550da7964",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/config.json": "2ec907ea190e29f0f0413c413002b5082afa4c1c080d97784278fbf3bf7498dc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/parent-direct-checks.json": "03c4a8c517d95a148f83a866e6cd4feea0f38d8133da45aa34952035862222a8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/prompt.txt": "2218070ef61341cfb19deed1232da66c28ef39a23224141bda162e6b52bb4737",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/reservation.json": "726f62d3f9b962346b3c38bc0033f3a596757828ddc3e6d967a8b6eb374dfabc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/response.json": "2aa979e5afb9a880daa30b0e8662a4d0c63c58c363cdd8da60fbf7642443ae1e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-05/trace.jsonl": "3d686686536ce065b327b434028bea7d1a501a2152603e82679538146147762e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/.spec/tasks/TASK-001.md": "c254a174ab8f32754dd3c9d3e64aabd478236f3fb52a81f844ed43b2f3dc261c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-004/workspace/tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.5.json": "04efc87bf96753391648666a6b0a2a9296d5aaf99db1d30915303c4c638b456b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-05.json": "d3576e34e9ab3ff74f5003f55b147b2598dc18655f9d71cef9568c0088f06de1",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-05.json": "4769616ce041d0fc6eb96ad31f93be45181ba9507bdb5b6c29b220bd59781918",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-06/summary.json": "df9d0700386ce325ff92b4b0958cc76c353aa2ba966c7672027bb25ab1778309",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/run.json": "dc2617a92e81d51a9f757077e06bd21df288b248d32eff4c6eee6a3dbb985fdf",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-06/stdout": "a7229cec511ba08b2c0bc3c21a101e942a7577406b827ed39009b4645fa08a73",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-primary-process/attempt-06/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/trace.jsonl": "ebf7d485775c41f8d7463d98fb75a5affd3bf6b7519a569618ddd956b0f9278c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/host.jsonl": "d810e4d9113758fac85bd3a043474902eb3ece735c25fcfde501d26a58f3458a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/changes.json": "448e5f85ec4bc228bcac1a6352fb65c4fa4654c6550a732e840a6698de597407",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/decision.json": "bde62a7e251c4ff1d6570ecf16750026ef48a88b0522e3f532d6dc045a74fcc7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/control.json": "715e62216661de46850884e2a175a8ae6efb25d9e5e2aa5c60ebe7887e9b5275",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/prompt.txt": "2d6d5424c226c9af9b9de8df26d335781229430e690e17067a0a346c63e277ff",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/invocation.json": "3ddbb5731c2b494fdbb7b786d44d4a6aeb6a5b273227afa084092f1780de46b6",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/receipt.json": "755a8217ce5aa61f714b0974ac402209fd979b5a9127d23e92e2e31a023350c5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/contract.json": "df2fc46071e2e85e748215dac77feb6c9ec61790088ff8ced819621b3bc7bf96",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/invocation.json": "7d0da23db45dca6945f56465fe50378e98606fe13c31d92b6cfeaf67a70e3308",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/independent-review.json": "ac0f2828abc648b06dba4ce114008d927633948deb8f7967de2a4f657f892013",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/config.json": "e431c4b04a628a9aad96528f0aa8b7bc020f5a2c6b7882cfbab787f08f733b25",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/parent-direct-checks.json": "c7e1b738d7c422184581ecde801aedbc8ba0c3e118562c099167ff0501b1fe31",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/prompt.txt": "b5041ab599f264a49a6e800151e281e4c0f7d2c3cdbb0b93c36e6a97e6eab0f8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/reservation.json": "5e19c36bc7b25579da1cc30dbd9bda6bb400fc73919c0e58af789d9f6fc1bb93",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/response.json": "5ed81cf6dcb74a6ad089ed8de1f6b4609588458539e045a5fa66848ef52f1d3c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/runner.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/schema.json": "00d0a07b6ffce0427002b09d7b7015f3e59049895adb13e7581c649e3700be9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-semantic/attempt-06/trace.jsonl": "418ed9aa2b02eb8327009b64c8c01748d91d783c5c557c28861c5be62933133e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/.spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261012-07/skill/repetition-1/SP-005/workspace/tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/sdd-semantic-review-ledgers/plan-implement-matrix-20261012-07/sdk-trace-review-v0.6.json": "dd8b9c1e73ceb78bab3bd6b780ef92a1b18add514cc1caaf0f76c287171bcedb",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-parent-verifications/attempt-06.json": "c0589ea091d7d42aa4656e5aeafef409967978bab684d82074f1dd6953e779be",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/results/2026-10-11-development-plan/r05-new07-attempt-06.json": "7a0314eff8ed97863cf6f38ece6f8d729c9bca6680df5662b6980b3be03d9da9",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-batch-ledgers/plan-implement-matrix-20261012-06.json": "cf5610308348c7669deefb02ec28a966bfc677e37af0061a6adbfdca5828cfa8"
+    },
+    "sourceGitHashes": {
+      "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+      "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373"
+    },
+    "evidenceHashes": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/first-prefix-readonly.py": "3938d3912a669a4c0d3faa1c15a347d80da3215c6909904ee853484c0b23f274",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/live-ledger-start.snapshot.json": "d5cdbfd4fb6d161946faa1189832ed3bd58ea272afe00f4e17475cacd8c50654",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/original-hashes.json": "a1681d891d9b44ba7b3c96b73506be872575b4b0ab0c5be5a27bd43b255c2a14",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/parent-verifier.snapshot.py": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/r05-new07-record-primary.py.snapshot.py": "88d79c235def8f9c12696931965ad84c90d67b8ff6830af0cf4845c3cbd83045",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/r05-new07-update-progress.py.snapshot.py": "6736c6a1e276f855646eb2de01707633d1c609656705b99f01ecf3fc5df40933",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/r05-new07-verify-and-record.py.snapshot.py": "34407efdd49bb08a6af0175a086395c5c83b018aacfa5c8f759234b74081a68e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/recheck.py": "40006fe3805e004aadd74d5262599704c8dff84c61a84df5ac678a50af59cdb1",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/report.json": "95ae70df4320b4cb17ca4189afd52d344cf371d133939bace15c6edf81fe0915",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/source-git-hashes.json": "5fe688257ffce3d515cae988fd26042b156b50867fedaf3f3ea9acc224125a68",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new07-first06-independent/stdout": "a4c4408afe5a0d1c27ba7f887472e0ee45d454460e135bd2dd131b5c75c0c3fa"
+    },
+    "counts": {
+      "fixedOriginals": 265,
+      "gitSources": 3,
+      "evidence": 12
+    },
+    "reportSha256": "95ae70df4320b4cb17ca4189afd52d344cf371d133939bace15c6edf81fe0915",
+    "liveLedgerNotRewrittenOrRehashedAtFinalization": true,
+    "modelStarts": 0,
+    "newReservations": 0,
+    "sharedLedgerWrites": 0
+  },
+  "parentInventoryReaderCorrection": "initial suffix-based reader selected zero maps; explicit nonempty Hashes sections were then required and all280 values rehashed before completion"
+}

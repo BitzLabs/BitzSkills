@@ -1,0 +1,209 @@
+{
+  "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+  "status": "limited_remediation_independently_verified",
+  "independentReport": {
+    "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "targetFilesGitSha256": {
+      "evals/skills/routing/production_canary_calibration.py": "58f3734c581542d36641ed4599efbe72f89694b7c22127571634565ef1c1a814",
+      "evals/skills/routing/production_canary_campaign.py": "36c2424faec63021a1de6436e04ca20c2fd79f9331ac40241767987259eba330",
+      "evals/skills/routing/production_canary_rollout.py": "78578401476e4a2d79c69e93241b5ec4bbe32dd00ecb35b878c648340dfe0687",
+      "evals/skills/routing/production_canary_trace.py": "062c0892fccde6e6bf1387a2419fc3279dd2007b914a525ea529d76a47de5af1",
+      "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+      "tests/skills/test_production_canary_calibration.py": "8a337795ec077811b4d27f4e035a37700c1466a5c719782c2946d4b6772d6d29",
+      "tests/skills/test_production_canary_campaign.py": "dadabe7064391e3a2b3dba3e876d9098d5faa002870346b9e74e5dedbbdad497",
+      "tests/skills/test_production_canary_review.py": "206bb0ba3be20c05fe63a7e04e4d8386633cd4a7ee3ab8c88a42201357426c1e",
+      "tests/skills/test_production_canary_rollout.py": "3e2063b681bbf70629d8c326053e86e04dc5e41c21a82daf0128fddf0c4a9f23",
+      "tests/skills/test_production_canary_trace.py": "b322d863e3f344c5df6f584cff41292579eacb560726518fbb7e15515470ff7f"
+    },
+    "blockingFindings": [],
+    "correctedFindings": [
+      {
+        "id": "R03-auth-SSE",
+        "scope": "public-canary diagnostic original42",
+        "conclusion": "原auth_mode Chatgptを要求し、閉じたSSE型・件数・原時刻・native last/cumulative/orderを照合。原無改変正常と5実SSE負例を独立確認。"
+      },
+      {
+        "id": "R03-code-mode-events",
+        "scope": "completed two-exec original32event/16milestone",
+        "conclusion": "原source/parent/child/runtime/cell/result/host全文/MCP相関IDを照合。原正常と22実code-mode改変拒否を確認。MCP transport envelopeはfalse。"
+      },
+      {
+        "id": "R03-first-discovery",
+        "scope": "original first parent catalogue491chars",
+        "conclusion": "固定2件catalog value hashとfirst-onlyを要求。実本文正常と改変/unknown/重複/後置/許可なし5負例を確認。"
+      },
+      {
+        "id": "public9-metadata",
+        "scope": "verify_complete actual3request",
+        "conclusion": "default primary9exactを維持。9各keyを全requestから除去し、pair同時除去も拒否。原の旧7profile自動選択を許容しない。"
+      },
+      {
+        "id": "SSE-original-time",
+        "scope": "event.timestamp and original outer timestamp",
+        "conclusion": "値を正しいISO文字列へ改変しても原outerミリ秒一致/順序で拒否。欠落とunknownも拒否。"
+      },
+      {
+        "id": "3cef-local-calibration-boundary",
+        "scope": "7cbb4file delta and actual prepare",
+        "conclusion": "明示local-calibration7exactはcalibration.verifyの固定hash/isolated局所原検査から選択。complete public入口はdefault9を維持。独立通常capture.prepare/load_fixed_inputs/score real source guardが校正05/日付12/runtime原照合を通過。"
+      }
+    ],
+    "verification": {
+      "canary": {
+        "count": 102,
+        "stderr": "Ran 102 tests in 5.444s / OK",
+        "exitCode": 0,
+        "elapsedSeconds": 5.684964912012219,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "75724c1bdd72efc0261d492b469542e5d297186819de993cd2cade869e32d58b",
+        "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+        "cleanAfter": true
+      },
+      "ledger": {
+        "count": 36,
+        "stderr": "Ran 36 tests in 0.458s / OK",
+        "exitCode": 0,
+        "elapsedSeconds": 0.6497713020071387,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "de81010c7a1b4d7e20c32e7501080469af8c17708f8d643e3ada43d6eedff24f",
+        "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+        "cleanAfter": true
+      },
+      "actualOriginal42Rehashed": true,
+      "oldFixedInputsSavedSha256": "f636a56d6900257b5a705d11a9a2397f4d0443c6eef3c4ee1fe00d661b99310f",
+      "oldGitSourceCommit": "123c89baf6efc094aaa8065cee1f7adaf4286fea",
+      "negativeOriginalMutations": 37,
+      "negativeCatalogCases": 5,
+      "normalPrepare": {
+        "status": "normal_prepare_and_load_fixed_inputs_passed",
+        "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+        "boundContractSha256": "6563e71c49532d57ca7eead4aa513f2d8dcd2a2d5c59b0de1e9eda096bb6ef92",
+        "sourceFiles": 35,
+        "scoreSourceFiles": 35,
+        "calibration": {
+          "status": "original_local_calibration_matches",
+          "calibrationManifestSha256": "15e4520beb03347006f3497afe8ca95d51651b13bddd94517d909f96ca7f3e97",
+          "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+          "requestSha256": "2e6b3cea6cd68c8bab93b9902e1d251f2d52db13f0a83dc4d7f36f28bc62ff24",
+          "receiptSha256": "ce404c07894e7b23d7f24a0e6103c8aad8e764cf06e393750eab9879883a2fc1",
+          "paidModelCalls": 0,
+          "primaryModelTrajectories": 0,
+          "certifiesProviderWireBodies": false
+        },
+        "canonicalUniqueItemsPreserved": true,
+        "modelsOrClisStarted": 0,
+        "sharedLedgerWrites": 0
+      }
+    },
+    "preservedStops": {
+      "primaryConsumed": 2,
+      "independentConsumed": 0,
+      "followingReservations": false,
+      "oldReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+      "newReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+      "newLedgerSha256": {
+        "campaign.json": "89adc29480db0a296763328368a346c5da30b2d78c3f9190d46798c2c2215ee9",
+        "attempt-0001.json": "3fb57d3133ecaae18057d47749a862423df4b545448f6dee7ac4a582fa5bdaab",
+        "stop-0001.json": "c5c17e1470bcfa51e4bc0dd290c22e058d42b9d85dcef572109cd40ff3653e23"
+      },
+      "durableReject": "primary stopped before independent review",
+      "originalReceiptAnd42ArtifactsUnchanged": true
+    },
+    "scopeLimits": [
+      "旧停止と原失敗は保持し、診断照合をacceptedや再実行へ変えない。現在schema-projection-01台帳は停止を拒否する。新有料枠の起動可判定はこの報告に含めない。",
+      "実exec-wait code cellは未対応。元合成4profileの正常回帰は実exec-wait検証へ代用できない。",
+      "MCP correlation ID型/一意性/child対照は検分したが、transport envelopeは取得していない。",
+      "実CLI/model追加0・実sharedledger書込0。source/commit/ref変更0。",
+      "実provider成功、独立意味採点成功、行動/Skill Gate/Step/Gate/Phase/リリースは認定しない。",
+      "全repo網羅監査なし。原42は旧123固定入力＋新7cbbmodulesの診断専用。新ref一次原記録取得は行っていない。"
+    ],
+    "harnessFailures": [
+      {
+        "path": "original-check.stderr",
+        "sha256": "fb553bbb7ce52ca02bcd51bc9477987ccfbccb827484b340d911518276cf90a8",
+        "reason": "検分ハーネスがparent_bodies戻り値を本文と誤認。初回失敗を保持し、digest照合へ直した別ハーネスoriginal-check-fixed.pyでexit0。ソース是正なし。"
+      }
+    ],
+    "modelsOrClisStarted": 0,
+    "sharedLedgerWrites": 0,
+    "conclusion": "限定した接続是正と無課金独立検分範囲で新たな阻害指摘なし。旧停止は恒久拒否のまま。"
+  },
+  "independentEvidenceSha256": {
+    "canary.argv.json": "1ccd38b38a9b97578d0ddb1e032af236ad00363698ed572b852847a98c659fdc",
+    "canary.process.json": "2cae615f890454333f984c0f27e2e437b8a69e80fb099cca1c4e9b5a36b8b05f",
+    "canary.stderr": "75724c1bdd72efc0261d492b469542e5d297186819de993cd2cade869e32d58b",
+    "canary.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "code-cell-content.traceback": "eebba9586ad03499682b75aefef4a375ef7f4579fd901650e79435fff131ee5b",
+    "code-cell-duration.traceback": "d2d1f9018691694c1487a4e8caba2356e04fcb2a1670af8e228a033e671198ff",
+    "code-cell-final.traceback": "d2d1f9018691694c1487a4e8caba2356e04fcb2a1670af8e228a033e671198ff",
+    "code-cell-status.traceback": "eada7c58be6fee8a372400e12897aa7f6087a99e5a25d7c913592107c2d81aec",
+    "code-cell.traceback": "f585070d2c922b8d12557acd7ce9133faff019b4ba44b3f7d7f99035f41844c1",
+    "code-correlation-duplicate.traceback": "878044ee98979eb61cb9bf502cf07aabf71a58744aae9bf10900231f70ccd565",
+    "code-correlation-type.traceback": "878044ee98979eb61cb9bf502cf07aabf71a58744aae9bf10900231f70ccd565",
+    "code-duplicate.traceback": "9a5f41c0c6cdab3ca08e326c8b2ab115e4c22aeb27f5d8864b66389acba1b4c6",
+    "code-invoke.traceback": "dab9a8790c4cfa376106b6595332cc45381c8f40dc10669d0a10e4bbf7f6a525",
+    "code-missing.traceback": "5bc4b7968938a9910313f13bc2065f0371ef424cb4cd94e42f6e22b5b51e5f8f",
+    "code-parent.traceback": "f585070d2c922b8d12557acd7ce9133faff019b4ba44b3f7d7f99035f41844c1",
+    "code-requester.traceback": "dff5c7651ffc95b567553e66ccb2a0f81218884669a46fba4b637c02b9701f09",
+    "code-runtime-body.traceback": "b1bdea58b87bdd86e943af23b623dc3673fed7786bcc5c2d8c494ecba7cc40e9",
+    "code-runtime-duration.traceback": "4dee403bab51a43cae59fe544b2a5507763bc9d13cbe8a15ae14df3578a2a683",
+    "code-runtime-id.traceback": "dff5c7651ffc95b567553e66ccb2a0f81218884669a46fba4b637c02b9701f09",
+    "code-runtime-turn.traceback": "aa2a404c96ed59f60bfcae6aa5926c8a7eec1b6b1b22198b76c41e2dd00c4905",
+    "code-source.traceback": "f585070d2c922b8d12557acd7ce9133faff019b4ba44b3f7d7f99035f41844c1",
+    "code-stream-order.traceback": "203342caa16dd910dece4d4e0888c9d93f906403e79726abc59222267f32bdc9",
+    "code-summary.traceback": "dff5c7651ffc95b567553e66ccb2a0f81218884669a46fba4b637c02b9701f09",
+    "code-tool-body.traceback": "4e23a61afa8dc2f924193fddd167eec780a5d623aee38ff997effb8f3c52e16e",
+    "code-tool.traceback": "dff5c7651ffc95b567553e66ccb2a0f81218884669a46fba4b637c02b9701f09",
+    "code-unknown.traceback": "9a5f41c0c6cdab3ca08e326c8b2ab115e4c22aeb27f5d8864b66389acba1b4c6",
+    "ledger.argv.json": "2f0bd25b69f6a28e58693f3d75c17cf786a779885d32be795dc8903444f48576",
+    "ledger.process.json": "853ef708330d4c0fd2e76a9a3087446b20560a5a9ad306da5b14cd9029d4a7d9",
+    "ledger.stderr": "de81010c7a1b4d7e20c32e7501080469af8c17708f8d643e3ada43d6eedff24f",
+    "ledger.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metadata-both-legacy-removal.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-guardian_credits_requested.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-mcp_attribution.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-root_turn_id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-session_id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-thread_id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-turn_id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-x-codex-installation-id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-x-codex-turn-metadata.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "metadata-missing-x-codex-window-id.traceback": "fb5f6aedef4a0168e94886e60ca337da9329a3fd317081d1c4ec847b475babab",
+    "normal-prepare.json": "bced3c903380bdefc66b06534bb3f8439b2bc7feb83ac0cd614cdf76fa672a97",
+    "original-check-fixed.argv.json": "e202b2e1b5e1c8d6a765e7c37999295246b346fedb3062583e0736acd061b341",
+    "original-check-fixed.process.json": "482d9955895436977b8e0ecc3c63d26c2b561bd8774fb0f79c93d0659b0ef096",
+    "original-check-fixed.py": "ac51f2fe95d29b556ca02eb06f84c9a11547efa59dd34b321c6ffeb742219153",
+    "original-check-fixed.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-check-fixed.stdout": "d26693a63303b7b90324f3f9b8d636120464f2707a363c400078ce937ac8c393",
+    "original-check.argv.json": "4153e48a1fc084e0294ee36ed7d3dcb3035d1d231735d2b48f4f50126f866e1a",
+    "original-check.json": "d26693a63303b7b90324f3f9b8d636120464f2707a363c400078ce937ac8c393",
+    "original-check.process.json": "85c3e02dbd10b99bba1e25d036abc3913698b0e92b771a39a87fbcef56ce0ad1",
+    "original-check.py": "1308739917eb33eebb21dc037ddf36bcc2e4718b38c4257aef62a06896ccc520",
+    "original-check.stderr": "fb553bbb7ce52ca02bcd51bc9477987ccfbccb827484b340d911518276cf90a8",
+    "original-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-complete-diagnostic.json": "49d337710006e2686a77341c54f0f81ef70b40a048780cbbefa32d02bcbcb846",
+    "report.json": "0cfaed14fc3a4d2343210d234d2385106e5d2d8c99eb9f142d266ca454c5a85d",
+    "report.md": "711d02e7871e343306ad6224dfe8c2c5dbe1ef2447a7912da11140a5e091896c",
+    "source.json": "2b14d7c4d772ee86678be6a178dc182be5fba96a27452d43f1d24b799a9d3204",
+    "sse-timestamp-drift.traceback": "fc8d3116751313f56605bd5ebd6d834fc98e8b0e9e0a3d07dd044a74cbf96b74",
+    "sse-timestamp-missing.traceback": "979b1e6157bec4b9bf4cc5f5cefed30880a9b75c4543c782b7cf7fe6b0fe84be",
+    "sse-timestamp-unknown.traceback": "979b1e6157bec4b9bf4cc5f5cefed30880a9b75c4543c782b7cf7fe6b0fe84be",
+    "sse-usage-count.traceback": "363220d01dce7f7f9ce794a8beb95203383b305686307635fedb428eb7f3b9c2",
+    "sse-usage-counter.traceback": "4a93e33d9b86c6fc66027ca776bb5f26a826e25105bf42b533d96e2c5960efba"
+  },
+  "parentRehashedEvidenceCount": 61,
+  "fullTests": {
+    "count": 656,
+    "testSeconds": 71.148,
+    "sourceCommit": "7cbbd06c2be32f42e6cd623c4d87a26d7ab3ddae",
+    "exitCode": 0,
+    "seconds": 71.55914102203678,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "790792d9beb9347ef53354daeb4b4dec8abee4a72b3c91b0ed429eb294a2218f"
+  },
+  "certifiesSkillGate": false,
+  "certifiesBehavior": false
+}

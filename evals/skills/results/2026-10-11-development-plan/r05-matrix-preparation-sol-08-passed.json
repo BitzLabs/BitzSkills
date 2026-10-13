@@ -1,0 +1,70 @@
+{
+  "status": "actual_preparation_independently_verified_p01_ready",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "staticSharedId": "sdk-trace-review-v0.50.json",
+  "preparationReceiptSha256": "56a21dd35a7eba8b412cb2cd4798ff6e1a95d2af43321759a1ef134390af10d5",
+  "preparationConsumed": 1,
+  "actualInvocations": 1,
+  "primaryConsumed": 0,
+  "semanticConsumed": 0,
+  "modelSeconds": 18.20037100603804,
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 80877,
+    "output_tokens": 264,
+    "reasoning_output_tokens": 204
+  },
+  "providerCost": null,
+  "parentVerification": {
+    "actualPreparationInvocations": 1,
+    "actualPreparationReservations": 1,
+    "builderSha256": "0552c051a4532dcc17e7377461b2e337524c42125df89b48e0d14563c9407b37",
+    "certifiesGate": false,
+    "certifiesPrimaryStart": true,
+    "closedOriginalCount": 10,
+    "driverSha256": "a75d510ae48db9729db29da1a6d1b7a0142078b6ad34af897ee2b4ef722f0e0c",
+    "modelsStartedByParent": 0,
+    "payloadGitFiles": 20,
+    "preparationModelSeconds": 18.20037100603804,
+    "preparationReceiptSha256": "56a21dd35a7eba8b412cb2cd4798ff6e1a95d2af43321759a1ef134390af10d5",
+    "primaryLedgerExists": false,
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "sourceRuntimePredecessorsUnchanged": true,
+    "status": "passed",
+    "usage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 80877,
+      "output_tokens": 264,
+      "reasoning_output_tokens": 204
+    },
+    "wallSeconds": 1.2795566809363663
+  },
+  "originalReceipt": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-08/receipt.json",
+  "certifiesBehavior": false,
+  "certifiesGate": false,
+  "independentVerification": {
+    "status": "actual_preparation_independently_verified_p01_ready",
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "reportSha256": "db870e5077c5a96dc1f4fd5401eabf51c09c4f2b3d6fab4ca714463ce72219b5",
+    "inventorySha256": "9773594527e5a6f70b35280f0a4e5dca7e789715447a1396f59cdd3e5d570ba1",
+    "parentRehashedCounts": {
+      "originalHashes": 155,
+      "sourceGitHashes": 20,
+      "evidenceHashes": 15
+    },
+    "primaryAtInspection": 0,
+    "preparationConsumed": 1,
+    "primarySlotPermitted": {
+      "ordinal": 1,
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "nextSlotNeedsIndependentSemanticAndParentOriginals": true,
+    "modelsStartedByInspectors": 0,
+    "certifiesGate": false,
+    "originalReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-preparation-actual-independent/finalization-01/report.json"
+  }
+}

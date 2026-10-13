@@ -1,0 +1,166 @@
+{
+  "scope": "R02-semantic-failure-original-findings",
+  "sourceCommit": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+  "fullSuite": {
+    "exitCode": 0,
+    "elapsedSeconds": 71.53161655506119,
+    "sourceCommit": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+    "clean": true,
+    "stderrSha256": "5d9844cb7231191f0598bd0e5b7e2a1abcff55a6ce88af8ef837c31ee656d0ab",
+    "testCount": 627
+  },
+  "independent": {
+    "ref": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 4.09,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "1aaaf0f1dd845893763ce5fc0ef0bb1b03cef7c7f5fb8e0f284aa57914b28a63"
+      },
+      {
+        "check": "ledger",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.567,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "21acda723006a68f4a48716296553886be5645abb137ffd1df8b605072982950"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production-canary-score-v0.1.json": "44ef76decec4090c5e3e6c3d03d0c9f406caf83bb70d51512377c4b2a667ec1a",
+      "evals/skills/routing/production-canary-score.schema.json": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+      "evals/skills/routing/production-canary-v0.1.json": "10e54feca4436b38b6ef738c4b762b3efb37c6b25f55beb5ddbf5f7c0997f254",
+      "evals/skills/routing/production_canary_calibration.py": "b8c27ad3d2066b96d653be782ff4075d4b9cf61212171a0e9dcda34199cb59d1",
+      "evals/skills/routing/production_canary_context_probe.py": "9857309a050edf604507eb352fe017880090450fa1adff268695168bfd0a64c2",
+      "evals/skills/routing/production_canary_score.py": "68dc31a98d125e4bc81179d8133af85050aacf6fb7867fe17ff90839cea1b5cf",
+      "evals/skills/routing/production_ledger.py": "f3590968ddae7992439b12fd92641ac7939d1bd7ea6e9ed22bf719a28c2991e1",
+      "tests/skills/test_production_canary_calibration.py": "e7fe069c102ef69e51cd0ff47bfd321c11fc4b4aec69e790e6392b72ef858619",
+      "tests/skills/test_production_canary_evidence.py": "21c79b083301b5e7abad1864843f38e9bb0982888f06f5bc638d4b6b804574d8",
+      "tests/skills/test_production_canary_review.py": "d07017b1375f0a14f2a2801ce7169bdcac78d4470144aac0435881189000d244",
+      "tests/skills/test_production_canary_score.py": "78cffdc5b606d043fcc5f6b545859443df473da6f8c4a26c2f23d4376da03134",
+      "tests/skills/test_production_ledger.py": "84e565d2cf26f03a82f8efec3d8af6eede1df6145d69f0d39992122fe9437223"
+    }
+  },
+  "originalFindings": {
+    "ref": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "modelsOrClisStarted": 0,
+    "records": [
+      {
+        "name": "unknown_rpc_action",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "SDK item params"
+      },
+      {
+        "name": "error_rpc",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "SDK error frame"
+      },
+      {
+        "name": "wrong_terminal_rpc",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "raw native turn lifecycle"
+      },
+      {
+        "name": "independent_usage_rejection_failure_record",
+        "failure": {
+          "exception": "ValueError",
+          "reason": "independent original usage/terminal receipt"
+        },
+        "reviewRecorded": false,
+        "primaryStopRecorded": false,
+        "parentVerificationRecorded": false,
+        "independentReservationRetained": true
+      },
+      {
+        "name": "same_reserved_attempt_after_rejection",
+        "status": "parent_semantic_originals_verified",
+        "eligibleForMeasurement": true,
+        "ledgerReviewStatus": "accepted"
+      }
+    ]
+  },
+  "originalRunFailure": {
+    "ref": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "record": {
+      "name": "symlink_review_artifact_failure",
+      "failure": {
+        "exception": "OSError",
+        "reason": "[Errno 40] Too many levels of symbolic links: 'response.json'"
+      },
+      "syntheticProcessCalls": 1,
+      "realModelsOrClisStarted": 0,
+      "independentReceiptExists": false,
+      "rawTraceRetained": true,
+      "rawStderrRetained": true,
+      "independentReservationRetained": true
+    }
+  },
+  "originalRecordSha256": {
+    "original-calibration-verification.json": "db635e59cc39bff45e93aaedc62ddfb578f9db92e7b60e58fda8a8bcab6f9ef4",
+    "review.md": "3e326e16c1cbb02e56324dc2b520ee4a8f688d0e68a5f11f2c49983a31a090bb",
+    "verification.json": "ee11230581a2e1dff13dfc113c44d318effbf0a970f2ae228fb8051ba68a56db",
+    "synthetic-inspection.json": "592882ae20da306c4ce03edff343b10bb785cf7a85c3177b84f5aeaa6f78a20a",
+    "finite-timeout-inspection.json": "5376969571bf762b9fabadff59487a234ce904e32534651130a47ff6b2ac696c",
+    "evidence-hashes.json": "c7d56cb7fa6fbf1975a170e1c6af999264271ba29a3d72f1933b6c5e11c75a8d",
+    "run-failure-inspection.json": "613d2cf5d0b6476332031cc2c661132e1382ef003367655a859d2aaa4708b90d"
+  },
+  "remediationPending": false,
+  "primaryModelTrajectories": 0,
+  "independentScoringCalls": 0,
+  "R02Complete": false,
+  "remediationResult": {
+    "sourceCommit": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+    "originalP2sRejected": true,
+    "wholeR02Complete": false
+  }
+}

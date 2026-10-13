@@ -1,0 +1,118 @@
+{
+  "status": "independent_preparation_verified",
+  "scope": "actual tmpfs second fingerprint candidate; formal collection pending",
+  "report": {
+    "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "sourceGitSha256": {
+      "docs/02.設計書/10_決定記録/ADR-053_CPythonの下限を3.12へ引き上げる.md": "c22ddb8bd3a417c24d08bbb308b95d40eba2f21ab68d2eb087660ce6646130dd",
+      "docs/02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・ランナーを確定する.md": "48e87b6a45e19d4e4abdee31482a499e9926dcaba822e7c7330011143af17729",
+      "docs/02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md": "d661f4ca872b4391a68e4a10acde83c8047cdfb470123b0d35b2215a5c2debb5",
+      "docs/04.提案資料/12_Core-1.0実装計画.md": "eed66c5bf83ac0ba703d9da92a2d0353c4eb236369da17d2be327fe72d9d6856",
+      "tests/bitz-core/gate_c.py": "b7fa51550e93d6256e6d4fe21e16690588f1eb0240171b546c1ded1c6c9a8e80",
+      "tests/bitz-core/certify_gate_c.py": "a925fece875b7de99a34ee326d6bae289464cd8029005e8e7072734ca243c1d0",
+      "fixtures/conformance/runner.py": "59bd687e0f663e94db1835e57fc6a3d19e197d8c4751265a71a6afa3b16ad6ca",
+      "fixtures/run_conformance.py": "ca9b3261d1da4050b358e046b4677116b7fc9653b6713b911c8fefd783f29ae7",
+      "fixtures/performance/environments/core-1-reference.json": "bdb45e9330bff3c281e5afbf1206afcab3f59e621c7048ffb37eb91d5b2a5d5e",
+      "tests/bitz-core/run_test_files.py": "71dbd4ee630c94a628777d9542f0ecd7baa0249d135dc29de7d31ddcf279eed2"
+    },
+    "originalPublicEvidenceSha256": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-python-preparation-01/runtime-environments-02.json": "0651b3fe02ac22fff26ea634aa0cd8d6f20b121bd65af6d2b9df5f7fd636ee52",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-01/command.json": "54660e1214ff0eaacaf42a3009e1fd9b01b1fde11642cada073abf8ed35dcac4",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-01/stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-01/stderr": "d9df702287a64dd238bcf0f2835eef05e45b2a533f0a284d89679e39fec7814f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-01/summary.json": "a942f23a2c9df232beb4c13d05f5d972a05ca3c8578a21d351bbe44173162e27",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-02/command.json": "426fff64b28ad6266ac569ed16939570c67b81c4fd2b666e5bac91f64baa3402",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-02/stdout": "5dac8ade5c8fd5201581850ff9eb6cbf0b3246faf0e0e8f269b8120114afa11d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-02/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-filesystem-02/summary.json": "3a3de9b64ebfbca9fec86c8dedc05dd44eade013bb57a2b8fdbab099181c9498"
+    },
+    "fingerprintFields": [
+      "system",
+      "kernel",
+      "machine",
+      "cpuModel",
+      "logicalCores",
+      "platformClass",
+      "storageClass",
+      "filesystem"
+    ],
+    "originalPythonOnlyFingerprint": {
+      "minimum": "8d40512e6827568d4542ced22ad4c4f6cddf476e0969738056bb66de29a928cc",
+      "reference": "8d40512e6827568d4542ced22ad4c4f6cddf476e0969738056bb66de29a928cc",
+      "different": false,
+      "secondEnvironmentEstablished": false
+    },
+    "scouts": {
+      "01": {
+        "exitCode": 1,
+        "initialFailurePreserved": true,
+        "stderrSha256": "d9df702287a64dd238bcf0f2835eef05e45b2a533f0a284d89679e39fec7814f",
+        "hostScratchCurrentlyEmpty": true
+      },
+      "02": {
+        "exitCode": 0,
+        "rawStdoutSha256": "5dac8ade5c8fd5201581850ff9eb6cbf0b3246faf0e0e8f269b8120114afa11d",
+        "officialFingerprintRecomputed": "4b43e2625fc3fad900bac19c5929602bf3d949d79ad837eaba0c490de1789dd3",
+        "differsFromReference": true,
+        "changedFingerprintFields": [
+          "filesystem"
+        ],
+        "actualObservedPython": "3.12.0",
+        "actualObservedFilesystem": "tmpfs",
+        "formalStorageClass": "wsl2-virtual-disk",
+        "hostScratchCurrentlyEmpty": true,
+        "privateDeviceMount": true,
+        "missingFormalEvidenceExecutable": true,
+        "hasNoFullConformanceOrUnitEvidence": true,
+        "certifiesGateC": false
+      }
+    },
+    "normativeConclusion": "同hostを禁止する規範や判定はない。Linux/CPython3.12のminimum/referenceで異なるfresh checkoutIdと正式8field指紋を要求。実tmpfsだけが異なる02観測は異なる指紋の準備候補として矛盾なし。",
+    "hostShared": [
+      "OS",
+      "kernel",
+      "CPU model",
+      "logical cores",
+      "machine",
+      "WSL platform",
+      "RAM/cgroup resource pool"
+    ],
+    "doesNotProveIndependentHardwareOrKernel": true,
+    "storageClassLimitation": "正式storage_classはWSL2を先に判定しSOURCEに関係なくwsl2-virtual-diskを返す。tmpfsの物理媒体証明ではない。正式fieldを手修正せず原findmnt SOURCE/FSTYPE/VFS optionsとnamespace mountinfoを別途保存し、scratchはRAM-backed tmpfsと明記。",
+    "namespaceAssessment": "raw02は/ ro-bind＋repo scratch tmpfs＋private --dev /dev。host /dev treeのbindやrepo外regularfile rw bindはargvにない。private devという追加guest filesystemがあるため「scratch以外一切rwなし」は文字どおり正しくない。host持続regularfile書込はrepo内保存先だけ、private device I/Oは別として記録する。完全なmountinfo/書込み拒否試験は未保存で境界を実証済みとはしない。",
+    "homeHandling": "親HOME/$home/$CODEX_HOMEを作業変数へ転用しない。HOMEを変えない親案でも既存正式fixture runnerは隔離HOME/cache/tmpをscratch内に生成する。uvはUV_NO_CONFIG/UV_CACHE_DIR/UV_PYTHON_INSTALL_DIR/TMPDIR/UV_PROJECT_ENVIRONMENTを明示し、read-only homeへfallbackして成功する扱いをしない。",
+    "requiredBeforeFormalCollection": [
+      "actual argv/cwd/env、canonical scratch/output paths（親リンク/別rw bindなし）、/proc/self/mountinfo/findmnt SOURCE/FSTYPE/VFS optionsをnamespace内で保存。単純probeでは持続hostファイル書込拒否と保存先以外roを未検証。",
+      "tmpfs容量・UID/GID・private dev・network namespace・同host共有CPU/RAM/cgroupを正直に記録。source/SDKを変更せず、認証/private内容を読まない。",
+      "uv cache/data/Python install/project environment、全temp rootsとcollector出力はrepo内許可scratch/保存先へ限定。source/cacheがroでもharness build/installが必要なのでoffline依存を用意し、外側/homeや/tmpにrwを足さない。",
+      "minimum実3.12.0と、CoreEnvironmentが呼ぶuv venv --python 3.12 --no-python-downloadsの実選択を別途確認。外側--pythonだけではfixture用minorの3.12.3 fallbackを排除できない。only-managed/min専用install-dirを選び、actual sys.version/executable/必要binary hashを保存。",
+      "最終確定同refのcleanな別fresh clone/checkoutIdでminimum/reference各350適合＋全Core unit（現在647）を原stdout/stderr/argv/hash/前後cleanつきで収集。単なる02観測にはexecutable/commit/checkout/全件情報がなく正式rowには未達。",
+      "referenceは既存ext4 manifest条件へ実測一致させ、古い7a9等のreference結果を別ref最終minimumへ混ぜない。Pythonだけで異なるfieldを装わない。",
+      "正式collectで2role ID、同commit、異なる実fingerprint/fresh checkout、全matrix順序と成功/digest/unit件数一致、性能baseline/SLOおよびP0/P1閉包再監査を通す。全Step GateB等§9.1前提も保持。",
+      "caller unit PYTHONPATHの必要値と子process cwdでの実import先を確認し、fixed sourceとfresh checkoutの関係を記録。fixtureごとのisolated HOMEを省略/親設定へ混用しない。"
+    ],
+    "noFormalCollectionStarted": true,
+    "noNamespaceOrMountStartedByThisReview": true,
+    "newModelsOrCoreCliStarted": 0,
+    "sharedLedgerWrites": 0,
+    "sourceOrGitChanges": 0,
+    "certifiesGateC": false,
+    "certifiesMacOS": false,
+    "limits": [
+      "01失敗を保持し02成功観測へ上書きしない。",
+      "tmpfs second-fingerprint preparation only。別physical host/OS/kernel/performance環境の実証ではない。",
+      "namespace boundaryはargv/static＋現在hostscratch空の読取りまで。全mount/書込保証や完全試験成功は未認定。",
+      "Docker/CI push/host外書込/規範変更を行わない。"
+    ],
+    "existingMinimumPythonBinarySha256": "bf4365ac4b40ee622ad61129b98359129e8219bd5d4b16db03394045ae8b8f04"
+  },
+  "independentEvidenceSha256": {
+    "report.json": "ef0be677183a40e119697437c306b6accbcf6120fb1324982b85264135688d89",
+    "scout02-observation-copy.json": "5dac8ade5c8fd5201581850ff9eb6cbf0b3246faf0e0e8f269b8120114afa11d",
+    "report.md": "4c4042b8b671121d20af8157c60719421ceaabbc733c092ad53da4ed58ed57fa"
+  },
+  "parentRechecked": true,
+  "certifiesGateC": false
+}

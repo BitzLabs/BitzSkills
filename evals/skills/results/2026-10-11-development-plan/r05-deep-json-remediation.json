@@ -1,0 +1,47 @@
+{
+  "status": "fixed_full_passed_independent_running",
+  "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+  "relatedBatchTests": {
+    "count": 24,
+    "seconds": 0.6,
+    "exitCode": 0
+  },
+  "changes": [
+    "hash original run bytes before parsing",
+    "pending only for unsubmitted independent review; all other verifier exceptions permanent stop",
+    "hash retrieval errors do not prevent stop",
+    "deep JSON is invalid input",
+    "reject run/review symlinks before reading link targets"
+  ],
+  "oldConditions": {
+    "01": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "02": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "03": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "04": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    }
+  },
+  "newCondition": "05 primary68 semantic68 preparation1 retry0",
+  "newPrimary": 0,
+  "certifiesSkillGate": false,
+  "fullTests": {
+    "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+    "exitCode": 0,
+    "seconds": 78.29476178798359,
+    "testCount": 700,
+    "testSeconds": 77.868,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "ed5372df29c99a841b456882b9157d64a2c61e00cc6fd66e9fafaebf2db56c79"
+  }
+}

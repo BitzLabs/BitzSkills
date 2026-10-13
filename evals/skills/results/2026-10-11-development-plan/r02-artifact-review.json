@@ -1,0 +1,147 @@
+{
+  "status": "component_reviewed",
+  "initialSourceCommit": "b0ba6ba9c3e5354f1251525818c882c2a8825020",
+  "initialIndependentReview": {
+    "reviewer": "/root/merge_independent_review",
+    "findings": {
+      "P1": 0,
+      "P2": 2
+    },
+    "relatedCanaryTests": {
+      "count": 40,
+      "seconds": 1.073,
+      "exitCode": 0
+    },
+    "relatedLedgerTests": {
+      "count": 30,
+      "seconds": 0.348,
+      "exitCode": 0
+    },
+    "scope": "artifact and fixed-input component only",
+    "originalVerdictPreserved": true
+  },
+  "initialFullTests": {
+    "count": 587,
+    "seconds": 68.546,
+    "exitCode": 0,
+    "stderrSha256": "7bf251c086aeec824af404563fd801ebccbb9a49a7a017e909193de77a2068e4",
+    "clean": true
+  },
+  "environmentFailure": {
+    "sourceCommit": "b0ba6ba9c3e5354f1251525818c882c2a8825020",
+    "errors": 44,
+    "errorType": "KeyError: PYTHONPATH",
+    "rawOutputPreserved": true
+  },
+  "remediationSourceCommit": "d22c4cb8fe8cd414163d8c1964f51e4e2db981a4",
+  "modelInvocations": 0,
+  "certifiesSkillGate": false,
+  "certifiesPhaseCompletion": false,
+  "remaining": [
+    "primary_rpc_host_final_correlation",
+    "rollout_client_usage_correlation",
+    "independent_scoring_contract_and_runner",
+    "parent_receipt_and_ledger_finalization"
+  ],
+  "secondIndependentReview": {
+    "sourceCommit": "d22c4cb8fe8cd414163d8c1964f51e4e2db981a4",
+    "reviewer": "/root/merge_independent_review",
+    "originalTwoFindingsRemediationVerified": true,
+    "findings": {
+      "P1": 0,
+      "P2": 1
+    },
+    "finding": "elapsedSeconds exponent overflow (1e999 -> inf)",
+    "relatedCanaryTests": {
+      "count": 43,
+      "seconds": 1.172,
+      "exitCode": 0
+    },
+    "relatedLedgerTests": {
+      "count": 30,
+      "seconds": 0.335,
+      "exitCode": 0
+    },
+    "originalVerdictPreserved": true
+  },
+  "secondFullTests": {
+    "sourceCommit": "d22c4cb8fe8cd414163d8c1964f51e4e2db981a4",
+    "count": 590,
+    "seconds": 68.295,
+    "exitCode": 0,
+    "stderrSha256": "9adbcbe75622023db6ba147beecb1f1a79af1a4d8ea3d8a20ea5d720d874c27f",
+    "clean": true
+  },
+  "finalRemediationSourceCommit": "b64772aa1993b4be992ba47275d620f5c7585c30",
+  "finalFullTests": {
+    "sourceCommit": "b64772aa1993b4be992ba47275d620f5c7585c30",
+    "command": [
+      "/home/hide/.local/bin/uv",
+      "--cache-dir",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/uv-cache",
+      "run",
+      "--offline",
+      "--project",
+      "plugins/bitz-core",
+      "--with",
+      "jsonschema==4.23.0",
+      "python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/skills",
+      "-p",
+      "test_*.py"
+    ],
+    "exitCode": 0,
+    "seconds": 68.72750911407638,
+    "testCount": 591,
+    "testSeconds": 68.365,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "0a91229f812c08ecbce31d6b42b9e5ce3fabf39526aa39851a425c4c2369ba21",
+    "fileSha256": {
+      "evals/skills/routing/production_canary_capture.py": "a76f4896562fe49c61a3dd688aa5532e2b2d49a2ee641bfd697e9a18ef0e27aa",
+      "evals/skills/routing/production_canary_evidence.py": "efcd7e86b38c2bbd3bf00fa04445ca582a60b4262014fb164dadc9b7701418e8",
+      "evals/skills/routing/production_ledger.py": "52a6236cccd264d9bde239e0ea9193b158202b70325401f58e29fd4959003b96",
+      "tests/skills/test_production_canary_evidence.py": "196532ca3408494634e58c8247026e47887ead0bd95a5f95acf3f4214e75c97f"
+    },
+    "cleanBeforeAndAfter": true,
+    "modelInvocations": 0,
+    "environment": {
+      "PYTHONPATH": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/src",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "TMPDIR": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp"
+    },
+    "priorRunsPreserved": [
+      ".venv/r02-fixed-evidence-full",
+      ".venv/r02-fixed-evidence-full-restored-env",
+      ".venv/r02-fixed-evidence-remediation-full"
+    ]
+  },
+  "finalIndependentReview": {
+    "reviewer": "/root/merge_independent_review",
+    "sourceCommit": "b64772aa1993b4be992ba47275d620f5c7585c30",
+    "relatedCanaryTests": {
+      "count": 44,
+      "seconds": 1.238,
+      "exitCode": 0
+    },
+    "relatedLedgerTests": {
+      "count": 30,
+      "seconds": 0.337,
+      "exitCode": 0
+    },
+    "cleanBeforeAndAfter": true,
+    "blockingFindings": 0,
+    "originalThreeFindingsRemediationVerified": true,
+    "fileSha256": {
+      "evals/skills/routing/production_canary_capture.py": "a76f4896562fe49c61a3dd688aa5532e2b2d49a2ee641bfd697e9a18ef0e27aa",
+      "evals/skills/routing/production_canary_evidence.py": "efcd7e86b38c2bbd3bf00fa04445ca582a60b4262014fb164dadc9b7701418e8",
+      "evals/skills/routing/production_ledger.py": "52a6236cccd264d9bde239e0ea9193b158202b70325401f58e29fd4959003b96",
+      "tests/skills/test_production_canary_evidence.py": "196532ca3408494634e58c8247026e47887ead0bd95a5f95acf3f4214e75c97f"
+    },
+    "scope": "artifact/fixed-input/shared-reservation component only"
+  }
+}

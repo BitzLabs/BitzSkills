@@ -1,0 +1,64 @@
+{
+  "status": "parent_boundary_and_resolver_verified_independent_pending",
+  "observations": {
+    "scope": "namespace boundary and exact minor resolver preparation",
+    "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch",
+    "python": "3.12.0",
+    "uid": 1000,
+    "gid": 1000,
+    "writeDenied": {
+      "errno": 30,
+      "name": "EROFS"
+    },
+    "privateDeviceMount": true,
+    "networkNamespace": "net:[4026532529]",
+    "mountinfo": "1099 464 8:48 / / ro,nosuid,nodev,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\n1100 1099 0:2 /init /init ro,nosuid,nodev - rootfs rootfs rw,size=15809032k,nr_inodes=3952258\n1101 1099 0:6 / /dev ro,nosuid,nodev,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1102 1101 0:61 / /dev/pts ro,nosuid,nodev,noexec,noatime master:17 - devpts devpts rw,gid=5,mode=620,ptmxmode=000\n1103 1101 0:64 / /dev/shm ro,nosuid,nodev,noatime master:20 - tmpfs none rw\n1104 1101 0:69 / /dev/hugepages ro,nosuid,nodev,relatime master:26 - hugetlbfs hugetlbfs rw,pagesize=2M\n1105 1101 0:38 / /dev/mqueue ro,nosuid,nodev,noexec,relatime master:27 - mqueue mqueue rw\n1106 1099 0:23 / /sys ro,nosuid,nodev,noexec,noatime master:15 - sysfs sysfs rw\n1107 1106 0:24 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime master:23 - cgroup2 cgroup2 rw,nsdelegate\n1108 1106 0:8 / /sys/kernel/debug ro,nosuid,nodev,noexec,relatime master:28 - debugfs debugfs rw\n1109 1106 0:13 / /sys/kernel/tracing ro,nosuid,nodev,noexec,relatime master:29 - tracefs tracefs rw\n1110 1106 0:70 / /sys/fs/fuse/connections ro,nosuid,nodev,noexec,relatime master:30 - fusectl fusectl rw\n1111 1106 0:71 / /sys/kernel/config ro,nosuid,nodev,noexec,relatime master:31 - configfs configfs rw\n1112 1099 0:60 / /proc ro,nosuid,nodev,noexec,noatime master:16 - proc proc rw\n1113 1112 0:34 / /proc/sys/fs/binfmt_misc ro,nosuid,nodev,relatime master:22 - binfmt_misc binfmt_misc rw\n1114 1113 0:62 /wsl/binfmt-status-lock /proc/sys/fs/binfmt_misc/status ro,nosuid,nodev master:18 - tmpfs none rw,mode=755\n1115 1099 0:62 / /run ro,nosuid,nodev master:18 - tmpfs none rw,mode=755\n1116 1115 0:63 / /run/lock ro,nosuid,nodev,noexec,noatime master:19 - tmpfs none rw\n1117 1115 0:64 / /run/shm ro,nosuid,nodev,noatime master:20 - tmpfs none rw\n1118 1115 0:65 / /run/user rw,nosuid,nodev,noexec,noatime master:21 - tmpfs none rw,mode=755\n1119 1118 0:39 /run/user /run/user ro,nosuid,nodev,relatime master:2 - tmpfs none rw\n1120 1119 0:81 / /run/user/1000 ro,nosuid,nodev,relatime master:318 - tmpfs tmpfs rw,size=3162692k,nr_inodes=790673,mode=700,uid=1000,gid=1000\n1121 1115 0:4 net:[4026532235] /run/docker/netns/2e100fa9f83c rw master:328 - nsfs nsfs rw\n1122 1099 0:35 / /usr/lib/wsl/drivers ro,nosuid,nodev,noatime - 9p drivers ro,aname=drivers;fmask=222;dmask=222,cache=0x5,access=client,msize=65536,trans=fd,rfd=8,wfd=8\n1123 1099 0:56 / /usr/lib/wsl/lib ro,nosuid,nodev,noatime - overlay none rw,lowerdir=/gpu_lib_packaged:/gpu_lib_inbox,upperdir=/gpu_lib/rw/upper,workdir=/gpu_lib/rw/work,uuid=on\n1124 1099 0:33 / /mnt/wsl ro,nosuid,nodev,relatime master:1 - tmpfs none rw\n1125 1099 0:39 / /mnt/wslg ro,nosuid,nodev,relatime master:2 - tmpfs none rw\n1126 1125 8:48 / /mnt/wslg/distro ro,nosuid,nodev,relatime master:3 - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\n1127 1125 0:41 /etc/versions.txt /mnt/wslg/versions.txt ro,nosuid,nodev,relatime master:24 - overlay none rw,lowerdir=/systemvhd,upperdir=/system/rw/upper,workdir=/system/rw/work,uuid=on\n1128 1125 0:41 /usr/share/doc /mnt/wslg/doc ro,nosuid,nodev,relatime master:25 - overlay none rw,lowerdir=/systemvhd,upperdir=/system/rw/upper,workdir=/system/rw/work,uuid=on\n1129 1125 0:81 / /mnt/wslg/run/user/1000 ro,nosuid,nodev,relatime master:318 - tmpfs tmpfs rw,size=3162692k,nr_inodes=790673,mode=700,uid=1000,gid=1000\n1130 1099 0:39 /.X11-unix /tmp/.X11-unix ro,nosuid,nodev,relatime master:2 - tmpfs none rw\n1131 1099 0:30 / /usr/lib/modules/6.18.40.1-microsoft-standard-WSL2 ro,nosuid,nodev,noatime - overlay none rw,lowerdir=/modules/6.18.40.1-microsoft-standard-WSL2/modules,upperdir=/lib/modules/6.18.40.1-microsoft-standard-WSL2/rw/upper,workdir=/lib/modules/6.18.40.1-microsoft-standard-WSL2/rw/work,uuid=on\n1132 1099 0:68 / /mnt/c ro,nosuid,nodev,noatime - 9p C:\\134 rw,aname=drvfs;path=C:\\;uid=1000;gid=1000;symlinkroot=/mnt/,cache=0x5,access=client,msize=65536,trans=fd,rfd=6,wfd=6\n1133 1099 8:48 /var/lib/docker /var/lib/docker ro,nosuid,nodev,relatime master:286 - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\n1134 1133 0:82 / /var/lib/docker/overlay2/18b6fb255ae3b02007e341ba3e1494a624a6165069f268ead8ce401da78ed0b6/merged rw,relatime master:327 - overlay overlay rw,lowerdir=/var/lib/docker/overlay2/l/U2AR35P7VGWNHTWBHSULERAHF6:/var/lib/docker/overlay2/l/WPIX2ZXFNRY4LAPZHXAKENKTAF:/var/lib/docker/overlay2/l/ZOSHAYSDA24FTQV4TNSCK345HW:/var/lib/docker/overlay2/l/75SWS3ILYJKL4ACOPPFY5HFSZ6:/var/lib/docker/overlay2/l/SIN3X5NBLNU64XMNFP7FJGK44E:/var/lib/docker/overlay2/l/65E5SHRLFIA7CD7RRFA7WBBL7P:/var/lib/docker/overlay2/l/I3OYRUG4OJOE7NB6IJHEIS67OE:/var/lib/docker/overlay2/l/NMIMNJJYHZGU6P6PA7JPMZSGA2:/var/lib/docker/overlay2/l/QINWA2TH5GVEFCAQIXSZSHJGVD:/var/lib/docker/overlay2/l/2SBR4X574FYVXSR7XQ66D55M6R,upperdir=/var/lib/docker/overlay2/18b6fb255ae3b02007e341ba3e1494a624a6165069f268ead8ce401da78ed0b6/diff,workdir=/var/lib/docker/overlay2/18b6fb255ae3b02007e341ba3e1494a624a6165069f268ead8ce401da78ed0b6/work\n1135 1101 0:141 / /dev rw,nosuid,nodev,relatime - tmpfs tmpfs rw,mode=755,uid=1000,gid=1000\n1136 1135 0:6 /null /dev/null rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1137 1135 0:6 /zero /dev/zero rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1138 1135 0:6 /full /dev/full rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1139 1135 0:6 /random /dev/random rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1140 1135 0:6 /urandom /dev/urandom rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1141 1135 0:6 /tty /dev/tty rw,nosuid,relatime master:14 - devtmpfs none rw,size=15809032k,nr_inodes=3952258,mode=755\n1142 1135 0:142 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,mode=620,ptmxmode=666\n1143 1099 0:143 / /home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch rw,nosuid,nodev,relatime - tmpfs tmpfs rw,mode=755,uid=1000,gid=1000\n",
+    "findmnt": "{\n   \"filesystems\": [\n      {\n         \"source\": \"tmpfs\",\n         \"fstype\": \"tmpfs\",\n         \"vfs-options\": \"rw,nosuid,nodev,relatime\",\n         \"fs-options\": \"rw,mode=755,uid=1000,gid=1000\"\n      }\n   ]\n}\n",
+    "memory": [
+      "MemTotal:       31626932 kB",
+      "MemFree:         5027572 kB",
+      "MemAvailable:   28390536 kB"
+    ],
+    "environmentOverrides": {
+      "TMPDIR": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch/tmp",
+      "UV_CACHE_DIR": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch/uv-cache",
+      "UV_PYTHON_INSTALL_DIR": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum",
+      "UV_PYTHON_PREFERENCE": "only-managed",
+      "UV_PYTHON_DOWNLOADS": "never",
+      "UV_OFFLINE": "1",
+      "UV_NO_CONFIG": "1",
+      "UV_LINK_MODE": "copy",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "resolver": {
+      "argv": [
+        "uv",
+        "venv",
+        "--python",
+        "3.12",
+        "--no-python-downloads",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch/fixture-env"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Using CPython 3.12.0\nCreating virtual environment at: fixture-env\nActivate with: source fixture-env/bin/activate\n",
+      "selectedPython": {
+        "python": "3.12.0",
+        "executable": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r08-minimum-boundary-01/scratch/fixture-env/bin/python",
+        "baseExecutable": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum/cpython-3.12-linux-x86_64-gnu/bin/python3.12"
+      },
+      "binarySha256": "bf4365ac4b40ee622ad61129b98359129e8219bd5d4b16db03394045ae8b8f04"
+    },
+    "certifiesGateC": false
+  },
+  "processSummary": {
+    "exitCode": 0,
+    "seconds": 0.2618000720394775,
+    "stdoutSha256": "a2e83b95826bd25b04c92113dcb0a8b87d74cd4ee8837c62fa73ea84ac49eb40",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hostScratchEmpty": true,
+    "hostOutsideProbeAbsent": true
+  },
+  "commandSha256": "9cc4a0c3529246ae6eee7645d6e0012075159ddbe65180e93d82cc282b96b927",
+  "certifiesGateC": false
+}

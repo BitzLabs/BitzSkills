@@ -1,0 +1,146 @@
+{
+  "sourceCommit": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+  "preflight": {
+    "status": "canary_campaign_preflight_checked",
+    "primaryInvocations": 0,
+    "independentInvocations": 0,
+    "certifiesSkillGate": false
+  },
+  "independentPending": false,
+  "R02Complete": false,
+  "fullSuite": {
+    "exitCode": 0,
+    "elapsedSeconds": 70.3799394229427,
+    "sourceCommit": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+    "clean": true,
+    "stderrSha256": "229426439b4e05fb4fe74aaa07a4c2f441d6107ff3b892c901a73d3f52bbdd3f",
+    "testCount": 638
+  },
+  "initialDependencyFailure": {
+    "exitCode": 1,
+    "elapsedSeconds": 0.10591522499453276,
+    "sourceCommit": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+    "clean": true,
+    "stderrSha256": "e1ebd3dc45b245e1de03ec432c906e06c302c904dc24bfc9bcc7119c4125227d"
+  },
+  "independent": {
+    "ref": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 4.809,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "af031f41bac1f37a30a340ab3c6f4bc31222c34068106b26aaa8dd3fd4d48a19"
+      },
+      {
+        "check": "ledger",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.585,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "3f8fe9b8c204fa901dbb332e05fde2b416f2142e6e2ca52172ee0b5649da8d0a"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production-canary-calibration-v0.1.json": "e48c25cd5864c351f6a5129cbcf9674552cefd56155157c0e5722d010dd8b495",
+      "evals/skills/routing/production-canary-context-v0.1.json": "78485e34aca006daefacef764799c91d5359885f1e75942ef2360f22dd1d427a",
+      "evals/skills/routing/production-canary-v0.1.json": "6832e1a186b9713cc67e57abafd16eb7401da775016d011d61d8d545a1d56fe7",
+      "evals/skills/routing/production_canary_calibration.py": "deaf7a784331bab6088ee4d054ef84f5afc1536df909a31f096777854b25f4c5",
+      "evals/skills/routing/production_canary_campaign.py": "1518c31f3f1598b05583e6cf016c4562598127331d0fdeb4d433cbb0207d54a6",
+      "evals/skills/routing/production_canary_score.py": "9ffc9ffa3dec562bced04bf634e2fdf9d3cae2483d3601ff08060b230794d029",
+      "evals/skills/routing/production_ledger.py": "5fcf4ae71275434a9762bc344b1a1c5fd389fc0fb1e11b2bf60db960658865eb",
+      "tests/skills/test_production_canary_calibration.py": "23b9592d6c65bd2e1e516a71a4787166e9a1cd86156ef879bc3f2700eae1cb1b",
+      "tests/skills/test_production_canary_campaign.py": "0afe223f4dffe46deb80c9704be8964422fff4b15acc047bba277763da957abd",
+      "tests/skills/test_production_canary_score.py": "3e16a848305050c546e9bef403c19e4a381798d8d5ce40f78527c77c9f160646",
+      "tests/skills/test_production_ledger.py": "a41a31f637a8add99ef277b67e42dc0e20a91d5f560069f83ffc50352d8d0cad"
+    }
+  },
+  "originalFindings": {
+    "ref": "912c63fa770581d492da190b3f7d17c9b77f74e8",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "realModelsOrClisStarted": 0,
+    "records": [
+      {
+        "name": "original_usage_rejection_restore",
+        "status": "stopped_independent_verification",
+        "permanentStopStatus": "stopped_independent_verification",
+        "failedReceiptHashMatches": true,
+        "failedOriginalPreserved": true,
+        "restoredReceiptBlocked": true,
+        "nextPrimaryBlocked": true
+      },
+      {
+        "name": "original_symlink_response",
+        "status": "independent_score_stopped",
+        "mockedInvocations": 1,
+        "receiptPreserved": true,
+        "artifactRejection": "OSError",
+        "responseHashExcluded": true,
+        "permanentStop": true,
+        "usage": null,
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "campaign_other_worker_reservation_race",
+        "otherWorkerReservedAttempt": 1,
+        "thisWorkerReservedAttempt": false,
+        "otherWorkerPermanentlyStopped": "stopped_before_independent_review",
+        "stopReason": "primary-receipt-missing",
+        "independentInvocations": 0,
+        "result": "stopped_before_independent_review"
+      }
+    ]
+  },
+  "blockingP2": 1,
+  "originalTwoSemanticFindingsRemediated": true,
+  "remediationSource": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+  "remediationIndependentPending": false,
+  "remediationResult": {
+    "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+    "originalRaceRejected": true,
+    "additionalBlockingFindings": 0
+  }
+}

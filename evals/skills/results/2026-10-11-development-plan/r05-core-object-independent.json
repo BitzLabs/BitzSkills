@@ -1,0 +1,163 @@
+{
+  "status": "original_core_object_closure_verified_new04_preparation_stopped",
+  "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+  "report": {
+    "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "new04_single_preparation_ready_in_independent_zero_paid_scope",
+    "targetedTests": {
+      "count": 94,
+      "seconds": 30.891,
+      "exitCode": 0,
+      "stderrSha256": "ff1aff8c1dff12e1257bf8361d980d4b2a18e52b0f27e13e9a53b78bf74ee308"
+    },
+    "parentFullOriginal": {
+      "count": 695,
+      "seconds": 72.691,
+      "exitCode": 0,
+      "stderrSha256": "e436c33aedfbc8e4cf5a01cf3f33a4501844ca862b4429510cacf869f84f3161",
+      "independentlyRerun": false,
+      "rawVerified": true
+    },
+    "new04ActualPreflight": {
+      "seconds": 8.941482736030594,
+      "codexVersion": "codex-cli 0.160.1",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "CoreDoctorExecuted": true,
+      "slots": 68,
+      "timeoutSeconds": 240,
+      "retries": 0,
+      "outputAbsent": true,
+      "ledgerAbsent": true
+    },
+    "CoreObjectClosure": {
+      "oldNewCompleteComparisons": 10,
+      "oldFourNonNullTypesAttributeErrorNoStopAndRestoreStartsNext": true,
+      "oldNullAlreadyStopped": true,
+      "newAllFiveTypesPermanentStopAfterRestore": true,
+      "rehashedFourArtifactsFiveTypesAllFailed": true,
+      "doctorOldNewNonobjectComparisons": 10
+    },
+    "historicalSI010": {
+      "traceSha256": "048be2b91f23ae72b130dcb70dd52e72644cf517fa3196fbe04a93332cefbee2",
+      "usage": {
+        "input_tokens": 64887,
+        "cached_input_tokens": 45824,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 637,
+        "reasoning_output_tokens": 35
+      },
+      "unchanged": true
+    },
+    "originalPreparationStops": {
+      "old01_02_03BeforeDoctorRefused": true,
+      "preparationConsumed": 3,
+      "primaryConsumed": 0,
+      "oldReceipts": [
+        "538c9fe7ff1ef430a6cf55783b7f19524134128b83a5282801435e434a280890",
+        "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+        "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88"
+      ],
+      "newPreparationMaximum": 1,
+      "newPrimaryMaximum": 68,
+      "newSemanticMaximum": 68,
+      "maximumPerPrimary": 1,
+      "automaticRetries": 0
+    },
+    "ignoredDriverClosure": {
+      "sha256": {
+        "r05-prelaunch-sol-review-04.py": "ed48e5475670e47073d6096f8aace88cf03eb1146340dee751928b0a822f4d1c",
+        "run-r05-new04-primary.py": "6210c8f44620087b57084cb9e5cb865143e8d3c2543ff82225398179480ddb51",
+        "run-r05-new04-semantic.py": "e8d4b8454cc5bf1821d3c055bf863b048a147ace2be2b2de3c962ffe6e13d613"
+      },
+      "SI010BothCanonicalBranchesPreserved": true,
+      "postInvocationFaults": {
+        "modelsStarted": 0,
+        "reservationsConsumed": 0,
+        "syntheticTailTests": [
+          {
+            "kind": "preparation",
+            "fault": "source",
+            "status": "static_prelaunch_review_stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": false
+          },
+          {
+            "kind": "preparation",
+            "fault": "runtime",
+            "status": "static_prelaunch_review_stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": false
+          },
+          {
+            "kind": "preparation",
+            "fault": "artifact",
+            "status": "static_prelaunch_review_stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": false
+          },
+          {
+            "kind": "semantic",
+            "fault": "source",
+            "status": "stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": true
+          },
+          {
+            "kind": "semantic",
+            "fault": "runtime",
+            "status": "stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": true
+          },
+          {
+            "kind": "semantic",
+            "fault": "artifact",
+            "status": "stopped",
+            "error": "ValueError: synthetic afterguard failure; no model called",
+            "actualInvocations": 0,
+            "independentFailedWritten": true
+          }
+        ]
+      },
+      "commonSemanticLedgerReservationIdentity": "batch-id/ordinal; same identity rejects reservation despite changed source/output; maximum ordinal68",
+      "noActualPrimaryOrSemanticDriverExecution": true,
+      "scope": "static + original tail six synthetic faults; filesystem write/I/O failure robustness beyond these faults not exhaustively certified"
+    },
+    "runtimeSourceGuards": {
+      "status": "fixed_runtime_bytes_match",
+      "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+      "files": 50
+    },
+    "remainingBlockersWithinReviewedScope": [],
+    "preparationSol46SingleSlotStartAllowed": true,
+    "primaryStartCertified": false,
+    "primaryStartRequires": "Actual new04 preparation response/schema/usage/source/runtime/old-stop original hashes must pass; then each primary requires its actual independent semantic receipt and full original recheck before the next slot.",
+    "modelsStartedByIndependent": 0,
+    "reservationsCreatedByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "sourceFileHashes": {
+      "evals/skills/sdd/README.md": "36016495c5b6f3b333c998967573f45820085ade48321f771e9f5f62029ac690",
+      "evals/skills/sdd/batch.py": "090275bde86f1115b5c39140c49b58c94c5e85939c0084e24f7cc5d3b45a5992",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-03.json": "f721c3e31732ad46f556f179e721d5679baa4d900851fd3bbd39d9c62d470544",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-04.json": "c8f9f37910337843387dd347d47965cfb320cd0de0890ca2cee95ea12184d843",
+      "evals/skills/sdd/evaluate.py": "3d1a35a25d5067093054935b181695d7038835fbaccd189bb472bdb7c8252ca1",
+      "tests/skills/test_sdd_batch.py": "19a6b4d7a6abf2e0362b1a97e43ecd4248010048fd4b05b452c2636483c13018",
+      "tests/skills/test_sdd_native_completion.py": "2fce5848374839a369ab036b905439ff10fcb5904a0343aeb8821975823d3a30",
+      "tests/skills/test_sdd_skill_eval.py": "daa69159e9ed3eb9ca7132d6dd7400105983f086a0df11f6b5b46c992290139c"
+    },
+    "scope": "R05 clean9518 implementation/corrective/preparation readiness only; no provider behavior/68-run completion/SkillGate/Phase/release certification; R08 formal GateC remains candidate8fcd only",
+    "preservedPreviousReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-receipt-type-independent/report.json"
+  },
+  "reportSha256": "f23802452318d6caeeae13f6313f38eb34ed9a02fd30318a6c2b1f60ed241777",
+  "hashinventorySha256": "255d83ac187db885066c8efbd3b004c7bda299a72f1b539b3128eae3088afaed",
+  "parentRehashed": 148,
+  "newPrimary": 0
+}

@@ -1,0 +1,230 @@
+{
+  "independentReport": {
+    "currentCleanSourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110",
+    "artifactSourceCommit": "f33148e3e4c8823cd0300222020f9628f7b3f369",
+    "reportSha256": "640ad1fcd4e30bca00f03d232a26adb4ea71666118fd638d1a8424bd2549dfb5",
+    "originalRawSha256": {
+      "report.json": "640ad1fcd4e30bca00f03d232a26adb4ea71666118fd638d1a8424bd2549dfb5",
+      "steps.json": "301274b00402b1563530a68885fde8f1ea961b123cc23ba84c69cf7e2243553c",
+      "build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "build.stderr": "b6532887340a4c13e8d01791ee9dde3a1cc202d1fe2cb0ebbfbaf73d8ade60db",
+      "venv.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "venv.stderr": "003b3687d3723c8631ac4d18e7f60578a000a321e7d0a3bf5850a50231a61a98",
+      "before-import.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "before-import.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "install.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "install.stderr": "f49c0cf3d080c20ace24401b7c77f16d8c5f8ceda819cafb7761f9ede70688e0",
+      "installed-metadata.stdout": "c5cd0936a69f5435313f75264bea838d20f737bcf6c17a40f960d4fa9a6782f8",
+      "installed-metadata.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fixture-commit.stdout": "c82f4b70ccecf1ba7121e25823c07247b5b43614d962c3e07df0f3c3b1ab0f99",
+      "fixture-commit.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cli-doctor.stdout": "a817ea7deaba79f9c76961160e05156e19f213bac39f4e86bfbaeae1e0cd3a30",
+      "cli-doctor.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cli-context.stdout": "f01717df4214012b55c50b78e6587abd44f8d510a15609df9442363c2bbd2f88",
+      "cli-context.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cli-check.stdout": "8699c7531844c203540a6781d9c137379e2056c6408da2339e535ba721c47043",
+      "cli-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wheelSha256": "0999753f22980e0f8d6e617bbf57b194b35542950953eaf257075291a9d42b71",
+    "wheelSourceFileCount": 37,
+    "wheelFilesMatchingInstalledCount": 40,
+    "wheelSourceFileSha256": {
+      "plugins/bitz-core/src/bitz/__init__.py": "22fa8fb0d650c135824f80e2440e9178b5d5cddf742be0c3f7714bd6f248cf6a",
+      "plugins/bitz-core/src/bitz/basecompare.py": "8ad8db23441f26a1c25b30cb9bf89ff060e637e0f3104a5ac8c835892f973bfe",
+      "plugins/bitz-core/src/bitz/check.py": "122513f7b8b94552d90cd87a20b0c5d6d8b09d164bccfa9e7b353c65229fe6f5",
+      "plugins/bitz-core/src/bitz/cli.py": "c781170f92cdc02dbf2ffad014dbb825ecf305ae55c2134253c9e8386816b8ed",
+      "plugins/bitz-core/src/bitz/cliargs.py": "587d76800587097dc3b849a0daa416a3f55c9d0a88b90e53e4e99f7625219247",
+      "plugins/bitz-core/src/bitz/compat.py": "52714177067e15dfc370c8dd3f5f2a2717e963deedddd9439fcdffbe07f41853",
+      "plugins/bitz-core/src/bitz/config.py": "0be9f752542502ce693b817b8cebceabab19bda956dd12ecde3e8dbba6b948b1",
+      "plugins/bitz-core/src/bitz/context.py": "bc8d6a2c60a0c30e9363ecbf17e299fd081a604e3bc0e7da0cf69db704bce5e9",
+      "plugins/bitz-core/src/bitz/contextrender.py": "86d4f625e468b9c5b0629f15506321d3ac4559e034318a314149f25ed420e305",
+      "plugins/bitz-core/src/bitz/digest.py": "4cad49bcc8c9ef47c344f52038c820acc5d4175d469bc7233916debdcf6f3e2d",
+      "plugins/bitz-core/src/bitz/doctor.py": "18d20ca0e2f1552e17e026b6f09f609c23593193181a644ef4fc248a0745a141",
+      "plugins/bitz-core/src/bitz/document.py": "ed1f731ef74bea7f3c750acf6e70bb2130a441f51d03966225011832103b2a52",
+      "plugins/bitz-core/src/bitz/earsai/__init__.py": "8d5d968bd2653b5eea0b22dbc930ab2316eac7249bf14e0af344c8e48665ca3e",
+      "plugins/bitz-core/src/bitz/earsai/ir.py": "d2f14958ad6e672082e32fdb90da35a0657633d45c3406b959918fda8603331c",
+      "plugins/bitz-core/src/bitz/earsai/lexer.py": "9330810cfd5689f1850f5c715aa5123f73e5fbff34b6a8541e456bf98a5d355b",
+      "plugins/bitz-core/src/bitz/earsai/parser.py": "0c01e5a12b5dab80eff0e97c6cd0844e0623a350c1899a4d45c3b8b153a2191e",
+      "plugins/bitz-core/src/bitz/earsai/scanner.py": "f9dba99f4558334b4d045e4124055a5fa2f1f28c53624825ab074b62607d74c9",
+      "plugins/bitz-core/src/bitz/errors.py": "6c3ccec7f4a83003e204aef7828d259e744ec48575400ac5bed6de4af138ccab",
+      "plugins/bitz-core/src/bitz/execfile.py": "2db01f5b4748633934ca826fcfff4d495728f88e797f109cadb0dc069ebef805",
+      "plugins/bitz-core/src/bitz/frontmatter.py": "df05b645ab14aeeeb2721e1d3e15a993888d24560e94ed9bdd3d46f53ba1fec3",
+      "plugins/bitz-core/src/bitz/gitutil.py": "0a8e99f74e5abf298e0320a4562ca95497183174f8e17e590d82c6a039931ff5",
+      "plugins/bitz-core/src/bitz/lex.py": "4c4ff373316636bdae3dbfbdc361164f73a3d2feb1df48419a81b89c56d7f256",
+      "plugins/bitz-core/src/bitz/messages.py": "903ff7ed1dc1bfcaf3b749e1d6376b08f400f186fce1129ffa489c9f869c8f02",
+      "plugins/bitz-core/src/bitz/multirelate.py": "a341276dd97b97001a2e03a8b1bb24469b9d5b6a2bbf21c641a6b9a70cf39998",
+      "plugins/bitz-core/src/bitz/multiws.py": "bb901b5df26a6d5e0ede100ba5966442e9f8b2db819564a5741956fcf606d358",
+      "plugins/bitz-core/src/bitz/notimpl.py": "763be39b081269fbc969f85f19131e5ea6f921aea9960efdb889b4042613f6a2",
+      "plugins/bitz-core/src/bitz/procrun.py": "149405e85c4d2df9289f7efbd01998b3db9a6792320e5c4d744378c38c42e976",
+      "plugins/bitz-core/src/bitz/redact.py": "5024696824bb9f0aeb0cf069d9d84bbeb7e0ec481922e822992ac35869847c66",
+      "plugins/bitz-core/src/bitz/relations.py": "c3b6ab42ba2cc48a0335748292e32cb9226db99a7e56499c555952e5d9eab069",
+      "plugins/bitz-core/src/bitz/reportio.py": "58f40ee8546ace8970a82676122d5ceadfc189fe192ed75a4b17046f7ef54e45",
+      "plugins/bitz-core/src/bitz/resultmodel.py": "e53bb67d3676ddfce0f61623b85aa9c21325efbe4fc546a52b344439a1121282",
+      "plugins/bitz-core/src/bitz/targetexpand.py": "187f1af5a75340ca29f6a0ff4ff8def81c475b9d9324423817411a5cd9859be1",
+      "plugins/bitz-core/src/bitz/textrender.py": "076ac35c367abd8d906d73cff4efc7c9b14b7aca7bb01e62df58f28c93a1881c",
+      "plugins/bitz-core/src/bitz/textutil.py": "61a6a331d8d292068fdde5f40dc45cffde2459d1f344d15b5e8b0a3fc62fff40",
+      "plugins/bitz-core/src/bitz/verify.py": "4979069b816275180dc1b4211c13853011bdc85351ec7e84c6e7ca6bfcff532f",
+      "plugins/bitz-core/src/bitz/workspace.py": "89d0e0caa26c76c12a9e3cf7cb593ab98b01f95f369e45f3a69549b1bdf6b48e",
+      "plugins/bitz-core/src/bitz/yamlsafe.py": "cd1d3d8ae1a91556e1d89882e836cf873d628aa922bc062b6e14971e5803c9c7"
+    },
+    "wheelInstalledFileSha256": {
+      "bitz/__init__.py": "22fa8fb0d650c135824f80e2440e9178b5d5cddf742be0c3f7714bd6f248cf6a",
+      "bitz/basecompare.py": "8ad8db23441f26a1c25b30cb9bf89ff060e637e0f3104a5ac8c835892f973bfe",
+      "bitz/check.py": "122513f7b8b94552d90cd87a20b0c5d6d8b09d164bccfa9e7b353c65229fe6f5",
+      "bitz/cli.py": "c781170f92cdc02dbf2ffad014dbb825ecf305ae55c2134253c9e8386816b8ed",
+      "bitz/cliargs.py": "587d76800587097dc3b849a0daa416a3f55c9d0a88b90e53e4e99f7625219247",
+      "bitz/compat.py": "52714177067e15dfc370c8dd3f5f2a2717e963deedddd9439fcdffbe07f41853",
+      "bitz/config.py": "0be9f752542502ce693b817b8cebceabab19bda956dd12ecde3e8dbba6b948b1",
+      "bitz/context.py": "bc8d6a2c60a0c30e9363ecbf17e299fd081a604e3bc0e7da0cf69db704bce5e9",
+      "bitz/contextrender.py": "86d4f625e468b9c5b0629f15506321d3ac4559e034318a314149f25ed420e305",
+      "bitz/digest.py": "4cad49bcc8c9ef47c344f52038c820acc5d4175d469bc7233916debdcf6f3e2d",
+      "bitz/doctor.py": "18d20ca0e2f1552e17e026b6f09f609c23593193181a644ef4fc248a0745a141",
+      "bitz/document.py": "ed1f731ef74bea7f3c750acf6e70bb2130a441f51d03966225011832103b2a52",
+      "bitz/earsai/__init__.py": "8d5d968bd2653b5eea0b22dbc930ab2316eac7249bf14e0af344c8e48665ca3e",
+      "bitz/earsai/ir.py": "d2f14958ad6e672082e32fdb90da35a0657633d45c3406b959918fda8603331c",
+      "bitz/earsai/lexer.py": "9330810cfd5689f1850f5c715aa5123f73e5fbff34b6a8541e456bf98a5d355b",
+      "bitz/earsai/parser.py": "0c01e5a12b5dab80eff0e97c6cd0844e0623a350c1899a4d45c3b8b153a2191e",
+      "bitz/earsai/scanner.py": "f9dba99f4558334b4d045e4124055a5fa2f1f28c53624825ab074b62607d74c9",
+      "bitz/errors.py": "6c3ccec7f4a83003e204aef7828d259e744ec48575400ac5bed6de4af138ccab",
+      "bitz/execfile.py": "2db01f5b4748633934ca826fcfff4d495728f88e797f109cadb0dc069ebef805",
+      "bitz/frontmatter.py": "df05b645ab14aeeeb2721e1d3e15a993888d24560e94ed9bdd3d46f53ba1fec3",
+      "bitz/gitutil.py": "0a8e99f74e5abf298e0320a4562ca95497183174f8e17e590d82c6a039931ff5",
+      "bitz/lex.py": "4c4ff373316636bdae3dbfbdc361164f73a3d2feb1df48419a81b89c56d7f256",
+      "bitz/messages.py": "903ff7ed1dc1bfcaf3b749e1d6376b08f400f186fce1129ffa489c9f869c8f02",
+      "bitz/multirelate.py": "a341276dd97b97001a2e03a8b1bb24469b9d5b6a2bbf21c641a6b9a70cf39998",
+      "bitz/multiws.py": "bb901b5df26a6d5e0ede100ba5966442e9f8b2db819564a5741956fcf606d358",
+      "bitz/notimpl.py": "763be39b081269fbc969f85f19131e5ea6f921aea9960efdb889b4042613f6a2",
+      "bitz/procrun.py": "149405e85c4d2df9289f7efbd01998b3db9a6792320e5c4d744378c38c42e976",
+      "bitz/redact.py": "5024696824bb9f0aeb0cf069d9d84bbeb7e0ec481922e822992ac35869847c66",
+      "bitz/relations.py": "c3b6ab42ba2cc48a0335748292e32cb9226db99a7e56499c555952e5d9eab069",
+      "bitz/reportio.py": "58f40ee8546ace8970a82676122d5ceadfc189fe192ed75a4b17046f7ef54e45",
+      "bitz/resultmodel.py": "e53bb67d3676ddfce0f61623b85aa9c21325efbe4fc546a52b344439a1121282",
+      "bitz/targetexpand.py": "187f1af5a75340ca29f6a0ff4ff8def81c475b9d9324423817411a5cd9859be1",
+      "bitz/textrender.py": "076ac35c367abd8d906d73cff4efc7c9b14b7aca7bb01e62df58f28c93a1881c",
+      "bitz/textutil.py": "61a6a331d8d292068fdde5f40dc45cffde2459d1f344d15b5e8b0a3fc62fff40",
+      "bitz/verify.py": "4979069b816275180dc1b4211c13853011bdc85351ec7e84c6e7ca6bfcff532f",
+      "bitz/workspace.py": "89d0e0caa26c76c12a9e3cf7cb593ab98b01f95f369e45f3a69549b1bdf6b48e",
+      "bitz/yamlsafe.py": "cd1d3d8ae1a91556e1d89882e836cf873d628aa922bc062b6e14971e5803c9c7",
+      "bitz-1.0.0.dist-info/WHEEL": "0a80d2a3286d0bf78efed971458cec4eb68fbf57cf2515c5c7dd64e8849e02f0",
+      "bitz-1.0.0.dist-info/entry_points.txt": "12deecbd127429cfac876f38d53e857acb35d9db5eae31bb12ba0ec9bb05efbb",
+      "bitz-1.0.0.dist-info/METADATA": "0ffe18fac0f09d2feab4ed6e0c0db8eae736ac04fb952621f26486ff2c78ac2c"
+    },
+    "sourceInputSha256": {
+      "plugins/bitz-core/pyproject.toml": "2afe9d196391e6648722ef9aafe7e40f3aabf3ac690b5ede25723b2a24070b1d",
+      "plugins/bitz-core/uv.lock": "ec886b17057cb735c4b7469a26f952c1f91bf8a6590d5f540667036c49f17af1",
+      "fixtures/conformance/package_check.py": "d51a95e1c2de30de7fbc4e79b5c44b07a653facee361f14abcac9da38d6dcdfa"
+    },
+    "installedMetadataFileSha256": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/lib/python3.12/site-packages/bitz-1.0.0.dist-info/METADATA": "0ffe18fac0f09d2feab4ed6e0c0db8eae736ac04fb952621f26486ff2c78ac2c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/lib/python3.12/site-packages/ruamel_yaml-0.19.1.dist-info/METADATA": "1ecd311518266882ede8804686f758255d6dff89a71a646bb6970a69615e39f6"
+    },
+    "installedMetadata": {
+      "bitzVersion": "1.0.0",
+      "yamlVersion": "0.19.1",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "bitzPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/lib/python3.12/site-packages/bitz/__init__.py"
+    },
+    "consoleWrapper": {
+      "shebang": "#!/bin/sh",
+      "interpreter": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/python",
+      "entryPoint": "bitz.cli:main",
+      "sha256": "531db16677d9b4388f75e16e9e0831174e1b4dd086641c6be12d8233cbd5b7ae"
+    },
+    "packageChecksIndependentlyExecuted": {
+      "metadata": [
+        "accepted",
+        []
+      ],
+      "dependencies": [
+        "accepted",
+        []
+      ]
+    },
+    "originalCliJson": {
+      "doctor": {
+        "status": "passed",
+        "recordedExitCode": 0,
+        "stdoutSha256": "a817ea7deaba79f9c76961160e05156e19f213bac39f4e86bfbaeae1e0cd3a30",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "context": {
+        "status": "passed",
+        "recordedExitCode": 0,
+        "stdoutSha256": "f01717df4214012b55c50b78e6587abd44f8d510a15609df9442363c2bbd2f88",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "check": {
+        "status": "passed",
+        "recordedExitCode": 0,
+        "stdoutSha256": "8699c7531844c203540a6781d9c137379e2056c6408da2339e535ba721c47043",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "workspaceGitCommit": "c770aebda76323cacb6e62af5dcbc355b7f203fe",
+    "originalFailureRuns": [
+      {
+        "run": "01",
+        "name": "install",
+        "exitCode": 1
+      },
+      {
+        "run": "02",
+        "name": "fixture-commit-first",
+        "exitCode": 128
+      }
+    ],
+    "originalFailureSha256": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/steps.json": "6d2520ebd719a1a6fc8d2e0885aa956b314f6b0e03acc708f551bdb9d2e43ccf",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/build.stderr": "f6768193f73c3328742ef47631f9df93ed10d5379c4b328a97fc91fa26f5d78a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/venv.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/venv.stderr": "77a8c214cfdaab935d41217467725df09f01c4abceedc673afbcfd292ac5c050",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/before-import.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/before-import.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/install.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/install.stderr": "4fdc4f8e937cb406f85a1873b9ba80762651e55eef70dd62a04d3ebfba353892",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/steps.json": "99639443c0a91cb12e35ec94743c05868bfa2437797173a54f5e493e91781a52",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/build.stderr": "3314026b0b22ada31d65de4e81922121b958332042e297a524df20933291760b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/venv.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/venv.stderr": "e245776b94cae94eeb34812b3e1f871f57ea26127c08c091ae45cfab4bce893b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/before-import.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/before-import.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/install.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/install.stderr": "0df87fd888f181328d35b9da93d4ac2dde567684d84a962313d5b9212997f32f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/installed-metadata.stdout": "e4d68944a1d232e086abc58cfb3a3e0ec59b9b845b2555e6ade1d7a33cc09d9c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/installed-metadata.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/fixture-commit-first.json": "499ed6080b1965f86e95b75778beb5158fcd13a64bdccfa8897c6ac02a7604e5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/fixture-commit-first.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-02/fixture-commit-first.stderr": "552c38910429d3630fa6d71635a7a3c5c5557c32d493ca70d70c1d03b8a1eb81"
+    },
+    "oldOriginalsUnchanged": true,
+    "newCliOrModelsStarted": 0,
+    "newInstallCommandsExecuted": 0,
+    "sourceOrGitChanges": 0,
+    "cleanAfter": true,
+    "blockingFindings": [],
+    "initialHarnessFailure": {
+      "toolChunk": "744750",
+      "error": "AssertionError at stdin line46: assumed direct Python shebang; actual long-path console wrapper is /bin/sh exec of same venv Python",
+      "productFailure": false
+    },
+    "limitations": [
+      "既存wheel導入03の読み取り照合。導入・installedCLIを再実行していない。",
+      "CLI3件は原stdout JSON passedと記録exit0/hashを照合した範囲。独立CLI再実行結果ではない。",
+      "before-import時点の不在と過去cleanは記録範囲。現在独立で再現せず、wheel全source bytesをGitf331と照合。",
+      "repo内隔離venv/Core wheelのみ。native skills installer/実host更新rollback/配布/macOS/全行動/Skill Gate認定ではない。"
+    ]
+  },
+  "independentEvidenceSha256": {
+    "wheel-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wheel-check.process.json": "5ec39832d8121ab148d617cf8786a3457527f3a548bbe68f143d145828b1d565",
+    "wheel-check.py": "89c685f65d49002aef80914ab79d7d6d51f70e4885e8cb832b14807c7b1efefd",
+    "report.json": "357d619e9e2b364544f4f7fe8fc3126276f021283c8291dcee89cf404dac25fb",
+    "report.md": "d1faca166c7f6b081c19b71fd91ff9447b251ed5ee53e536b3963c49ea79a44d",
+    "wheel-check.stdout": "0f02bd023e268f9acc83df010bae3c7491856b2cfcf433f4a8e7190e25dde2bd",
+    "initial-tool-failure.json": "a7e24d19a919ebf8731da7386d802fb1b5e28bf506c1e4692b3a1335e48611e6",
+    "wheel-check.argv.json": "08869a0d03b679a3c2f6b73c20a0c1ca23e1bfe0571714e15b5fe54a7d1ad5ee"
+  },
+  "parentRehashedEvidenceCount": 8
+}

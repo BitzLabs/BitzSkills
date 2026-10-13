@@ -1,0 +1,47 @@
+{
+  "originalSha256": "089deeca56ce8762f3b875975126e2550d76c979932a449fd434fc6559550ecc",
+  "result": {
+    "status": "current_execution_015_native_gaps_reproduced",
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "sourceSha256": "285aaccbfccbc046c9a7c0f0de206f47fdf6d97699ffc50907d03462b7db1e60",
+    "executionVersion": "quality-execution-0.1.5",
+    "syntheticRecord": {
+      "identity": {
+        "variant": "baseline",
+        "executionVersion": "quality-execution-0.1.5"
+      },
+      "artifacts": {
+        "host.jsonl": "57dff2dfdcf80be90906fd865a37c7ce8c5159fd78be6add722b04d1798c7167",
+        "control.json": "11ba4baf8795387e5555a9dd382bb6a3cad0c304308b3ebca851f7b24c17218c",
+        "response.json": "82db4c26978faa09f90c81f9bca90daa8a18bb68f0d2d72fee22814828cafff7",
+        "trace.jsonl": "a4645e241e168006f2d4404d7c9f17420bd1f9535d5d6f6bed0b7679601cc763"
+      }
+    },
+    "cases": [
+      {
+        "case": "current_execution_015_missing_native_lifecycle",
+        "accepted": true,
+        "errors": {
+          "mechanical": [],
+          "safety": [],
+          "evidence": []
+        }
+      },
+      {
+        "case": "current_execution_015_invalid_usage",
+        "accepted": true,
+        "errors": {
+          "mechanical": [],
+          "safety": [],
+          "evidence": []
+        }
+      }
+    ],
+    "actualPaidRecord": false,
+    "actualCoreHostOriginalsReused": true,
+    "modelsStarted": 0,
+    "reservationsWritten": 0,
+    "sourceEdited": false,
+    "cleanAfter": true
+  }
+}

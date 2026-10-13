@@ -1,0 +1,588 @@
+{
+  "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+  "status": "first_slot_started_after_independent_prelaunch",
+  "parentPrelaunch": {
+    "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+    "status": "parent_normal_prelaunch_checked",
+    "boundContractSha256": "cb92e370dbf1eace90a2121d8e176a4a5a6d7ee110e63ea216fe435b89948623",
+    "sourceGuard": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+      "observedHead": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_canary_capture.py": "93550cce6eecc8677c7d7f072b160b11f7b69c7786481b76c9c99d0fb77beda5",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production-canary-v0.1.json": "c7ea0586f7185ea91003e38ae151ee9ea185ce4a748530c9d9d7260147afa980",
+        "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+        "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+        "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_sdk_probe.py": "236f43a438fe30d63ef81b1705cfe836d0cc4a778a2c02b7b187c2c423673f91",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "tests/skills/test_production_canary_capture.py": "adc6cc0e01d5ac9fad679ea71d70a6b58f15383067ebf9345963137ac32bd960",
+        "evals/skills/routing/production-canary-context-v0.1.json": "d0b72f85991f5273615d9286adea2a2ca27b603cfcfcde213755feda0d2227f4",
+        "evals/skills/routing/production_canary_review.py": "bae70715d965ff938cb8bf822ba1547987fa044ed00e6e6693adac35457320a7",
+        "evals/skills/routing/production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd",
+        "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+        "evals/skills/routing/production_canary_trace.py": "062c0892fccde6e6bf1387a2419fc3279dd2007b914a525ea529d76a47de5af1",
+        "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+        "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "evals/skills/routing/production_canary_evidence.py": "9aaf35f1c055df2debd795937ae961c1a430909baa6d2b85395943e248bd5b4b",
+        "tests/skills/test_production_canary_runtime.py": "c20c45fce3a7a717738df128b15e148bf4a7bb6f0299848039bf781081ff992d",
+        "evals/skills/routing/production_canary_calibration.py": "58f3734c581542d36641ed4599efbe72f89694b7c22127571634565ef1c1a814",
+        "evals/skills/routing/production-canary-calibration-v0.1.json": "15e4520beb03347006f3497afe8ca95d51651b13bddd94517d909f96ca7f3e97",
+        "tests/skills/test_production_canary_calibration.py": "8a337795ec077811b4d27f4e035a37700c1466a5c719782c2946d4b6772d6d29",
+        "evals/skills/routing/production_canary_score.py": "fb54db0f5345d43b4b7301bd2ad2a0dae7cf30e798ea027a8af9a3efeb337f1b",
+        "evals/skills/routing/production-canary-score-v0.1.json": "5ae7cd1e997e2300114bff9c2fa3fa814bae0ffb2b39edb2914f66c839d8b254",
+        "evals/skills/routing/production-canary-score.schema.json": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+        "tests/skills/test_production_canary_score.py": "56a91a763cc9d0beb3164a0a65cc79c85dfb3c50fa9d165f3b5e9128ae569fec",
+        "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+        "evals/skills/routing/production_canary_campaign.py": "84edcd168eaeed6cbc2cec615239a35af2cb60422948db7f183d84b497e50c9c",
+        "tests/skills/test_production_canary_campaign.py": "dadabe7064391e3a2b3dba3e876d9098d5faa002870346b9e74e5dedbbdad497",
+        "tests/skills/test_production_source_integration.py": "a669c87af3b6b8d173d84fdfe2738c83dec53b2447a2894c64987ca4f5d9d599"
+      }
+    },
+    "predecessors": {
+      "status": "four_original_stopped_campaigns_preserved",
+      "predecessors": [
+        {
+          "status": "three_original_stopped_campaigns_preserved",
+          "predecessors": [
+            {
+              "status": "two_original_stopped_campaigns_preserved",
+              "predecessors": [
+                {
+                  "status": "original_stopped_campaign_preserved",
+                  "campaignId": "public-initial-canary",
+                  "primaryReservationsConsumed": 1,
+                  "independentReservationsConsumed": 0,
+                  "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+                  "usage": null,
+                  "automaticRetry": false
+                },
+                {
+                  "campaignId": "public-schema-projection-01",
+                  "primaryReservationsConsumed": 1,
+                  "independentReservationsConsumed": 0,
+                  "primaryReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+                  "accepted": false
+                }
+              ],
+              "primaryReservationsConsumed": 2,
+              "independentReservationsConsumed": 0,
+              "automaticRetry": false
+            },
+            {
+              "campaignId": "public-code-mode-structure-01",
+              "primaryReservationsConsumed": 3,
+              "independentReservationsConsumed": 2,
+              "acceptedPrimary": 2,
+              "stoppedPrimary": 1,
+              "primaryReceiptSha256": "abf3aaf8fee653d4d7a1b5b1db1b0f1f272c24e7c3a9dbe1cade7a56a41dd1de"
+            }
+          ],
+          "primaryReservationsConsumed": 5,
+          "independentReservationsConsumed": 2,
+          "automaticRetry": false
+        },
+        {
+          "campaignId": "public-empty-reasoning-01",
+          "primaryReservationsConsumed": 2,
+          "independentReservationsConsumed": 1,
+          "acceptedPrimary": 1,
+          "stoppedPrimary": 1,
+          "primaryReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763"
+        }
+      ],
+      "primaryReservationsConsumed": 7,
+      "independentReservationsConsumed": 3,
+      "automaticRetry": false
+    },
+    "newLedgerExists": false,
+    "modelsStarted": 0,
+    "ledgerWrites": 0,
+    "budget": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "independentReviewerSol": 4,
+      "primaryModelTrajectories": 4
+    }
+  },
+  "fullTests": {
+    "count": 670,
+    "testSeconds": 72.84,
+    "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+    "exitCode": 0,
+    "seconds": 73.24665631295647,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "5af136c5a75a19237643520bff4128034556f4dab05895f13fde5f17465fe90b"
+  },
+  "independentReview": {
+    "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+    "checkedAtUTC": "2026-10-11T22:39:11.415916+00:00",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "targetFilesGitSha256": {
+      "evals/skills/routing/production-canary-score-v0.1.json": "5ae7cd1e997e2300114bff9c2fa3fa814bae0ffb2b39edb2914f66c839d8b254",
+      "evals/skills/routing/production-canary-v0.1.json": "c7ea0586f7185ea91003e38ae151ee9ea185ce4a748530c9d9d7260147afa980",
+      "evals/skills/routing/production_canary_campaign.py": "84edcd168eaeed6cbc2cec615239a35af2cb60422948db7f183d84b497e50c9c",
+      "evals/skills/routing/production_canary_capture.py": "93550cce6eecc8677c7d7f072b160b11f7b69c7786481b76c9c99d0fb77beda5",
+      "evals/skills/routing/production_canary_score.py": "fb54db0f5345d43b4b7301bd2ad2a0dae7cf30e798ea027a8af9a3efeb337f1b",
+      "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+      "tests/skills/test_production_canary_capture.py": "adc6cc0e01d5ac9fad679ea71d70a6b58f15383067ebf9345963137ac32bd960",
+      "tests/skills/test_production_ledger.py": "47deabf80db37be9936f0186c975ca2aa65f61fcc81c84577710047dcff46ed2"
+    },
+    "blockingFindings": [],
+    "prelaunchConclusion": "第五R03の限定条件でSE-001反復1を1枠開始可。第2～4枠は前枠の親照合・独立意味採点・acceptedが必要。",
+    "verification": {
+      "tests": {
+        "count": 61,
+        "actualOutput": "Ran 61 tests in 1.294s / OK",
+        "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+        "exitCode": 0,
+        "elapsedSeconds": 1.4812070989282802,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "7e1e8c230762d8b2e7e91c80beb1d84e4ababf8d38b9169c5b24c9720c7b20b9",
+        "cleanAfter": true
+      },
+      "normalPrepareAndFixedInputsPassed": true,
+      "primaryAndScorePolicyPassed": true,
+      "actualPrimaryAndScoreSourceGuardPassed": true,
+      "sourceFilesCount": 35,
+      "boundContractSha256": "cb92e370dbf1eace90a2121d8e176a4a5a6d7ee110e63ea216fe435b89948623",
+      "payloadSha256": [
+        "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "ec6435ac7a896255a3f1773f59e7a06f9498749723b3875c1920f24fc333f84d"
+      ],
+      "negativeCount": 65,
+      "negativeResults": {
+        "stoppedPredecessor-campaignId": {
+          "accepted": false,
+          "errorMessage": "stopped predecessor identity"
+        },
+        "stoppedPredecessor-sourceCommit": {
+          "accepted": false,
+          "errorMessage": "original stopped predecessor binding"
+        },
+        "stoppedPredecessor-campaignSha256": {
+          "accepted": false,
+          "errorMessage": "original stopped ledger drift"
+        },
+        "stoppedPredecessor-attemptSha256": {
+          "accepted": false,
+          "errorMessage": "original stopped ledger drift"
+        },
+        "stoppedPredecessor-stopSha256": {
+          "accepted": false,
+          "errorMessage": "original stopped ledger drift"
+        },
+        "stoppedPredecessor-primaryReceiptSha256": {
+          "accepted": false,
+          "errorMessage": "original stopped predecessor binding"
+        },
+        "stoppedPredecessor-missing": {
+          "accepted": false,
+          "errorMessage": "stopped predecessor fields"
+        },
+        "stoppedStructurePredecessor-campaignId": {
+          "accepted": false,
+          "errorMessage": "stopped structure predecessor fields"
+        },
+        "stoppedStructurePredecessor-sourceCommit": {
+          "accepted": false,
+          "errorMessage": "original structure predecessor binding"
+        },
+        "stoppedStructurePredecessor-campaignSha256": {
+          "accepted": false,
+          "errorMessage": "original structure stopped ledger drift"
+        },
+        "stoppedStructurePredecessor-attemptSha256": {
+          "accepted": false,
+          "errorMessage": "original structure stopped ledger drift"
+        },
+        "stoppedStructurePredecessor-stopSha256": {
+          "accepted": false,
+          "errorMessage": "original structure stopped ledger drift"
+        },
+        "stoppedStructurePredecessor-primaryReceiptSha256": {
+          "accepted": false,
+          "errorMessage": "original structure predecessor binding"
+        },
+        "stoppedStructurePredecessor-missing": {
+          "accepted": false,
+          "errorMessage": "stopped structure predecessor fields"
+        },
+        "stoppedReasoningPredecessor-campaignId": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning predecessor fields"
+        },
+        "stoppedReasoningPredecessor-sourceCommit": {
+          "accepted": false,
+          "errorMessage": "original reasoning ordered attempt binding"
+        },
+        "stoppedReasoningPredecessor-ledgerSha256": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning hash inventory"
+        },
+        "stoppedReasoningPredecessor-primaryReceiptSha256": {
+          "accepted": false,
+          "errorMessage": "original reasoning third stop binding"
+        },
+        "stoppedReasoningPredecessor-primaryReservationsConsumed": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning predecessor fields"
+        },
+        "stoppedReasoningPredecessor-independentReservationsConsumed": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning predecessor fields"
+        },
+        "stoppedReasoningPredecessor-pin-attempt-0001.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-campaign.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-independent-0001.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-review-0002.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-attempt-0003.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-stop-0003.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-review-0001.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-independent-0002.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-pin-attempt-0002.json": {
+          "accepted": false,
+          "errorMessage": "original reasoning stopped ledger drift"
+        },
+        "stoppedReasoningPredecessor-missing": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning predecessor fields"
+        },
+        "stoppedReasoningPredecessor-unknown": {
+          "accepted": false,
+          "errorMessage": "stopped reasoning predecessor fields"
+        },
+        "stoppedClockPredecessor-campaignId": {
+          "accepted": false,
+          "errorMessage": "stopped clock predecessor fields"
+        },
+        "stoppedClockPredecessor-sourceCommit": {
+          "accepted": false,
+          "errorMessage": "original clock ordered attempt binding"
+        },
+        "stoppedClockPredecessor-ledgerSha256": {
+          "accepted": false,
+          "errorMessage": "stopped clock hash inventory"
+        },
+        "stoppedClockPredecessor-primaryReceiptSha256": {
+          "accepted": false,
+          "errorMessage": "original clock second stop binding"
+        },
+        "stoppedClockPredecessor-primaryReservationsConsumed": {
+          "accepted": false,
+          "errorMessage": "stopped clock predecessor fields"
+        },
+        "stoppedClockPredecessor-independentReservationsConsumed": {
+          "accepted": false,
+          "errorMessage": "stopped clock predecessor fields"
+        },
+        "stoppedClockPredecessor-pin-attempt-0001.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-pin-campaign.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-pin-independent-0001.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-pin-review-0001.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-pin-attempt-0002.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-pin-stop-0002.json": {
+          "accepted": false,
+          "errorMessage": "original clock stopped ledger drift"
+        },
+        "stoppedClockPredecessor-missing": {
+          "accepted": false,
+          "errorMessage": "stopped clock predecessor fields"
+        },
+        "stoppedClockPredecessor-unknown": {
+          "accepted": false,
+          "errorMessage": "stopped clock predecessor fields"
+        },
+        "rehashed-fourth-review-type": {
+          "accepted": false,
+          "errorMessage": "successful native integrity required"
+        },
+        "rehashed-fourth-review-severity": {
+          "accepted": false,
+          "errorMessage": "independent findings"
+        },
+        "rehashed-fourth-review-status": {
+          "accepted": false,
+          "errorMessage": "original clock preceding review not accepted"
+        },
+        "rehashed-fourth-independent-type": {
+          "accepted": false,
+          "errorMessage": "finite independent reservation"
+        },
+        "rehashed-fourth-independent-unknown": {
+          "accepted": false,
+          "errorMessage": "independent reservation fields"
+        },
+        "rehashed-fourth-stop-status": {
+          "accepted": false,
+          "errorMessage": "primary stop finite scope"
+        },
+        "rehashed-fourth-stop-type": {
+          "accepted": false,
+          "errorMessage": "primary stop finite scope"
+        },
+        "finite-repetitions": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "finite-timeoutSeconds": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "finite-observedModelApiLimit": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "finite-observedCatalogApiLimit": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "finite-maximumHostCalls": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "finite-maximumControlCalls": {
+          "accepted": false,
+          "errorMessage": "fixed finite limits"
+        },
+        "budget-primaryModelTrajectories": {
+          "accepted": false,
+          "errorMessage": "limited certification"
+        },
+        "budget-independentReviewerSol": {
+          "accepted": false,
+          "errorMessage": "limited certification"
+        },
+        "budget-automaticRetries": {
+          "accepted": false,
+          "errorMessage": "limited certification"
+        },
+        "budget-delegations": {
+          "accepted": false,
+          "errorMessage": "limited certification"
+        },
+        "identity-campaignId": {
+          "accepted": false,
+          "errorMessage": "fixed new clock measurement identity"
+        },
+        "identity-outputRelativeRoot": {
+          "accepted": false,
+          "errorMessage": "fixed new clock measurement identity"
+        },
+        "score-output-old": {
+          "accepted": false,
+          "errorMessage": "finite semantic score identity"
+        }
+      }
+    },
+    "preservedState": {
+      "originalStops": 4,
+      "originalAccepted": 3,
+      "primaryConsumed": 7,
+      "semanticIndependentConsumed": 3,
+      "old25PublicRecordSha256": {
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger/campaign.json": "ac776b7116d87c3905e49e7082920aecb06d9f41ed22452a0f6bc90435d501b3",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger/attempt-0001.json": "446aa1a72c4e5680bb8794fa951beeae2faf96cdd1e066551f856b6692a3fc0a",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger/stop-0001.json": "648fd689c53c1b6ecb0f545f3fb8a1b06f5f122d125493276c385f5ee50cc413",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-public-initial/attempt-0001/receipt.json": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-schema-projection-01/campaign.json": "89adc29480db0a296763328368a346c5da30b2d78c3f9190d46798c2c2215ee9",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-schema-projection-01/attempt-0001.json": "3fb57d3133ecaae18057d47749a862423df4b545448f6dee7ac4a582fa5bdaab",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-schema-projection-01/stop-0001.json": "c5c17e1470bcfa51e4bc0dd290c22e058d42b9d85dcef572109cd40ff3653e23",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-schema-projection-01/attempt-0001/receipt.json": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/attempt-0001.json": "1ada30cee3861ddb9d8fcba70d876d2dde1c3117cff559e9c686d9dd61acafe0",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/campaign.json": "551f8665029c17ac7a2e4b799490cd7d192de214a646fecce47c016aa8114db5",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/independent-0001.json": "f29dc88b530e123b3621470599caca3c93652cb64e3feaa9f17928cafdffd142",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/review-0002.json": "8f583ec80c28224e21001c8b17e98eb206505f419b93a2b8091dc595e10da3d4",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/attempt-0003.json": "a315154fc2f8cdf8cf030b8f45f3ff3beed08c85bede86f0c0696684b9369fc2",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/stop-0003.json": "cd602c7ce6b1a23812bf84bfa395cf10779d041007b384ac87b36cdb420a3206",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/review-0001.json": "644fda5007e7b30fc91fa3b238abf6c8eb587b71aa3b50b7c8d013422238ce26",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/independent-0002.json": "fd5f7b8de47ae86b7d1e3ae37e03d4a8f808102d2f3b8f2a4f2433a0903e25df",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-code-mode-structure-01/attempt-0002.json": "d9ac93a808ef81d5457abe9983390e418ff9739d10221455285902d897e8e282",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-code-mode-structure-01/attempt-0003/receipt.json": "abf3aaf8fee653d4d7a1b5b1db1b0f1f272c24e7c3a9dbe1cade7a56a41dd1de",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/attempt-0001.json": "f6477fda149bc4249bdf7701f2c994528acd572c0fc6c4c6165a464989340598",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/campaign.json": "0fe4bcde4ba03ff4d89e35e06dbfbc99e890faa2c65946372d8548708505b903",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/independent-0001.json": "2b4d42bebc610d21b12d6a45d5f49cacb4a5e9a52daf56a5f20bef33318bda35",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/review-0001.json": "6332ed4e120d40160f692fd553538457c5c63ea846260a1431b743ff4348cb6a",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/attempt-0002.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+        "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-empty-reasoning-01/stop-0002.json": "6717780d44623dede2bb83fb06e315cde8d584fb14dfe4f8f9e834321c222be3",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/production-routing-primary-empty-reasoning-01/attempt-0002/receipt.json": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763"
+      },
+      "oldBytesUnchanged": true,
+      "oldPredecessors": {
+        "status": "four_original_stopped_campaigns_preserved",
+        "predecessors": [
+          {
+            "status": "three_original_stopped_campaigns_preserved",
+            "predecessors": [
+              {
+                "status": "two_original_stopped_campaigns_preserved",
+                "predecessors": [
+                  {
+                    "status": "original_stopped_campaign_preserved",
+                    "campaignId": "public-initial-canary",
+                    "primaryReservationsConsumed": 1,
+                    "independentReservationsConsumed": 0,
+                    "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+                    "usage": null,
+                    "automaticRetry": false
+                  },
+                  {
+                    "campaignId": "public-schema-projection-01",
+                    "primaryReservationsConsumed": 1,
+                    "independentReservationsConsumed": 0,
+                    "primaryReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+                    "accepted": false
+                  }
+                ],
+                "primaryReservationsConsumed": 2,
+                "independentReservationsConsumed": 0,
+                "automaticRetry": false
+              },
+              {
+                "campaignId": "public-code-mode-structure-01",
+                "primaryReservationsConsumed": 3,
+                "independentReservationsConsumed": 2,
+                "acceptedPrimary": 2,
+                "stoppedPrimary": 1,
+                "primaryReceiptSha256": "abf3aaf8fee653d4d7a1b5b1db1b0f1f272c24e7c3a9dbe1cade7a56a41dd1de"
+              }
+            ],
+            "primaryReservationsConsumed": 5,
+            "independentReservationsConsumed": 2,
+            "automaticRetry": false
+          },
+          {
+            "campaignId": "public-empty-reasoning-01",
+            "primaryReservationsConsumed": 2,
+            "independentReservationsConsumed": 1,
+            "acceptedPrimary": 1,
+            "stoppedPrimary": 1,
+            "primaryReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763"
+          }
+        ],
+        "primaryReservationsConsumed": 7,
+        "independentReservationsConsumed": 3,
+        "automaticRetry": false
+      },
+      "acceptedThreeNotCombinedIntoNewRef": true
+    },
+    "finiteNewConditions": {
+      "campaignId": "public-rollout-clock-01",
+      "version": "production-canary-0.1.4",
+      "primaryLimit": 4,
+      "semanticIndependentLimit": 4,
+      "cumulativePrimaryMaximum": 11,
+      "timeoutSeconds": 300,
+      "automaticRetries": 0,
+      "firstAttempt": {
+        "attempt": 1,
+        "caseId": "SE-001",
+        "repetition": 1,
+        "modelInputSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "contractSha256": "cb92e370dbf1eace90a2121d8e176a4a5a6d7ee110e63ea216fe435b89948623",
+        "sourceCommit": "ef5b0ca0324aa639fc9cd93215cd83fa66952bf1",
+        "model": "gpt-6.1-sol",
+        "manifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+        "outputRelativePath": ".venv/production-routing-primary-rollout-clock-01/attempt-0001"
+      },
+      "outputs": {
+        "primary": ".venv/production-routing-primary-rollout-clock-01",
+        "independent": ".venv/production-routing-independent-rollout-clock-01",
+        "parent": ".venv/production-routing-parent-rollout-clock-01",
+        "campaign": ".venv/production-routing-campaign-rollout-clock-01"
+      },
+      "newLedgerPath": "/home/hide/BitzLabs/BitzSkills/.venv/production-routing-primary-ledger-rollout-clock-01",
+      "newLedgerAbsentBeforeAndAfter": true,
+      "unknownCampaignCannotResetLedger": true
+    },
+    "scopeLimits": [
+      "旧4停止・受理3は元条件の証拠として保持し、新ref成功分へ合算しない。",
+      "clockrollback/jumpは限定測定profileの停止対象で、producerのwall単調保証ではない。",
+      "実exec-wait cell/MCPtransport/全行動/Skill Gate/Step/Gate/Phase/リリース未認定。",
+      "新モデル/CLI・実共有台帳/source/Git変更0。R08別Python環境の調査は今回範囲外。",
+      "第2～4枠は前枠の親原照合・独立意味採点・台帳acceptedが必要。今回連続起動を認定しない。",
+      "現在の確定ref・date12/cal05/runtime/sourceでの準備検分。変更や時計条件の変化へ転用しない。",
+      "関連61件はledger/capture51＋review-ledger10。全repo再検分・親全件自己申告による認定はしていない。",
+      "公開負例のうち7件は原recordをメモリで改変してpinも再hashし、型/成功状態/独立予約/停止意味を検査。実旧記録を改変していない。"
+    ],
+    "modelsOrClisStarted": 0,
+    "sharedLedgerWrites": 0,
+    "sourceOrGitChanges": 0,
+    "ledgerEntryCalls": {
+      "openLedger": 0,
+      "reserve": 0
+    },
+    "initialHarnessFailures": []
+  },
+  "independentEvidenceSha256": {
+    "prelaunch.process.json": "799b5ae9f6caf0a2f3ce5d3e43b9ab8d676c7fdcd52af5aa396f647cc60bf83d",
+    "prelaunch-check.json": "db91ed4806073496dff6863bb534dfaae36fcd046a982e03ab00de71d842b743",
+    "prelaunch-check.py": "e04e5e5170bcd362f3a4ae221abe010d5a9fa0698217908996ca3eb732771a49",
+    "targeted.process.json": "023371ba31fd3c7b4e69adb86356b4a88c1b025c0e48e775b6c26fe4b08c9ccb",
+    "prelaunch.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "targeted.argv.json": "ddc2da65db2fddd66820194236e1221e40761ee3dcbc7bb775e3fad04c657454",
+    "report.json": "eabecb25cbda1078813a8c7e52d8daa0ddf8e6df3def53cc3cb16158b056cbdf",
+    "targeted.stderr": "7e1e8c230762d8b2e7e91c80beb1d84e4ababf8d38b9169c5b24c9720c7b20b9",
+    "prelaunch.argv.json": "8078b49ab16691c6bbc7b0a4371ac59077071bd2da0c98daa10d375d9a76d610",
+    "prelaunch.stdout": "db91ed4806073496dff6863bb534dfaae36fcd046a982e03ab00de71d842b743",
+    "report.md": "1060f50d49506deeabe41f5772159afc213a4c82089390333f514d23175f0135",
+    "source.json": "b5bda04edf888f30c95f345efce71463a9502c30b5bd00498241a28ae0f067e9",
+    "targeted.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "parentRehashedEvidenceCount": 13,
+  "oldPrimaryConsumed": 7,
+  "oldSemanticIndependentConsumed": 3,
+  "cumulativeMaximumPrimary": 11,
+  "automaticRetries": 0,
+  "certifiesSkillGate": false
+}

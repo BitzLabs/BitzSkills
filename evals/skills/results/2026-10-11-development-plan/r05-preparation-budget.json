@@ -1,0 +1,91 @@
+{
+  "status": "preparation_only_eight_calls_five_static_stops_three_static_passes",
+  "preparationReservations": 8,
+  "actualPreparationInvocations": 8,
+  "primaryInvocations": 0,
+  "automaticRetries": 0,
+  "usageTotals": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 469544,
+    "output_tokens": 6581,
+    "reasoning_output_tokens": 4485
+  },
+  "providerCost": null,
+  "conditionPassRatesCombined": false,
+  "conditions": [
+    {
+      "id": "01",
+      "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "receiptSha256": "538c9fe7ff1ef430a6cf55783b7f19524134128b83a5282801435e434a280890",
+      "status": "static_prelaunch_review_stopped",
+      "preparation": 1,
+      "primary": 0
+    },
+    {
+      "id": "02",
+      "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+      "receiptSha256": "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+      "status": "static_prelaunch_review_stopped",
+      "preparation": 1,
+      "primary": 0
+    },
+    {
+      "id": "03",
+      "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+      "receiptSha256": "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+      "status": "static_prelaunch_review_stopped",
+      "preparation": 1,
+      "primary": 0
+    },
+    {
+      "id": "04",
+      "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+      "receiptSha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91",
+      "status": "static_prelaunch_review_stopped",
+      "preparation": 1,
+      "primary": 0
+    },
+    {
+      "id": "05",
+      "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+      "receiptSha256": "f55adc033f7ed7b87c6298de431b8baa3b262f327f586748d2765f1f1d3ec70a",
+      "status": "static_prelaunch_review_stopped",
+      "preparation": 1,
+      "primary": 0
+    },
+    {
+      "id": "06",
+      "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "receiptSha256": "2656a695029d0bd45ddf0376589c7dde343bb277d6b875e3a4f804fb8d7fa6a5",
+      "status": "static_sdd_prelaunch_review_passed",
+      "preparation": 1,
+      "primary": 0,
+      "semantic": 0
+    },
+    {
+      "id": "07",
+      "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+      "receiptSha256": "324528a12d3417a2039436bc5e2477b4dcddde3a706209a2683dd316c2d957da",
+      "status": "static_sdd_prelaunch_review_passed",
+      "preparation": 1,
+      "primary": 0,
+      "semantic": 0
+    },
+    {
+      "id": "08",
+      "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+      "receiptSha256": "56a21dd35a7eba8b412cb2cd4798ff6e1a95d2af43321759a1ef134390af10d5",
+      "status": "static_sdd_prelaunch_review_passed",
+      "preparation": 1,
+      "primary": 0,
+      "semantic": 0
+    }
+  ],
+  "scope": "Static preparation budgets only. Entry primary/semantic0 means within preparation. Actual old06 primary2/semantic1 and old07 primary17/semantic16 stay stopped; do not combine condition pass rates.",
+  "actualBehaviorConsumptionRecords": [
+    "r05-new06-progress.json",
+    "r05-new07-execution-contract.json",
+    "r05-new08-execution-contract.json"
+  ]
+}

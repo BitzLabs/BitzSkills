@@ -1,0 +1,61 @@
+{
+  "status": "four_premeasurement_p2_independently_reproduced_unresolved",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "path": "evals/skills/quality/evaluate.py",
+  "sourceSha256": "285aaccbfccbc046c9a7c0f0de206f47fdf6d97699ffc50907d03462b7db1e60",
+  "items": [
+    {
+      "id": "R06-01",
+      "area": "JSON入口と原bytes",
+      "locations": [
+        29,
+        119,
+        152,
+        194,
+        205,
+        214,
+        224
+      ],
+      "observed": "標準json.loadsとPath.read_text/read_bytesを使用し、重複キー・非有限値を拒否する共用入口と原bytesの一回照合へ未接続",
+      "next": "SDDと同じstrict JSON/安全原読取/閉じた原集合へ接続し、具体的負例を作る"
+    },
+    {
+      "id": "R06-02",
+      "area": "native lifecycleとusage",
+      "locations": [
+        183,
+        204,
+        430
+      ],
+      "observed": "最終messageとMCP戻り値の照合はあるが単一turn/正常終端/未知native event/厳密usageを同じ検査で保証しない",
+      "next": "固定CLI profileと既存native照合を適用して中断・未知action・不正usage回帰"
+    },
+    {
+      "id": "R06-03",
+      "area": "失敗保存と前件拒否",
+      "locations": [
+        56,
+        57,
+        58,
+        122,
+        350,
+        434
+      ],
+      "observed": "失敗保存中のsnapshot/原artifact読取りが無保護。receipt後のrunを再読取りし、hashと解析bytesの一致および恒久stop閉包が未整備",
+      "next": "元caller保持と欠測理由を保存し、不適合前件の専用有限台帳へ恒久stopを記録"
+    },
+    {
+      "id": "R06-04",
+      "area": "固定原集合",
+      "locations": [
+        166,
+        167
+      ],
+      "observed": "artifacts={}で全hash検査を省略し正常fixtureと同じ全errors空で受理",
+      "next": "新実行版は必須原7と保存済みadviceの既知集合を解析前に検査し、同bytesのhashと解析を結ぶ"
+    }
+  ],
+  "modelsStarted": 0,
+  "caseExpectedValuesChanged": false,
+  "independentReport": "r06-hardening-negative-independent.json"
+}

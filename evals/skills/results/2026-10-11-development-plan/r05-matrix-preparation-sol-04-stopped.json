@@ -1,0 +1,57 @@
+{
+  "status": "new04_preparation_stopped_original_verified",
+  "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+  "receiptSha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91",
+  "preparationIndependentSolConsumed": 1,
+  "primaryConsumed": 0,
+  "automaticRetries": 0,
+  "findings": [
+    {
+      "line": 175,
+      "message": "P2: 深くネストした提出済みJSONによるRecursionErrorが例外捕捉から漏れ、恒久stopを迂回します。receiptのdict検査より前にevaluation.loadがこの例外を投げるため、正常receiptへ復元すると次枠を起動できます。run.jsonも原hash照合前に読み込まれるため、同じ迂回が可能です。",
+      "path": "evals/skills/sdd/batch.py",
+      "priority": "P2",
+      "reproduction": "静的推論（未実行）: fresh合成台帳で一次1枠をcompletedにし、independent-review.jsonへ '[' * 10000 + '0' + ']' * 10000 を保存して次枠を要求する。標準PythonのJSONデコーダがRecursionErrorを投げ、175行のexceptに捕捉されずledger.stopが保存されない。その後、有効なreceiptへ置換して同条件で再要求すると次枠へ進める。run.jsonを同じ深いJSONへ変更した場合も、121行のloadが122行のhash照合より先に例外を投げる。",
+      "suggestion": "前件検査でRecursionErrorも不適合として捕捉し、同じロック内で恒久stopを保存する。run.jsonは原bytesのhashを照合してから解析する。深いreceiptとrun.jsonについて、正常bytesへの復元後も次枠を起動できないfresh台帳の回帰を追加する。"
+    }
+  ],
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 45794,
+    "output_tokens": 778,
+    "reasoning_output_tokens": 362
+  },
+  "elapsedSeconds": 35.392740305978805,
+  "originalReproduction": {
+    "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+    "receiptSha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91",
+    "nativeResponseRechecked": true,
+    "primaryCalls": 0,
+    "syntheticReproductions": [
+      {
+        "path": "independent-review.json",
+        "errorType": "RecursionError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "path": "run.json",
+        "errorType": "RecursionError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      }
+    ]
+  },
+  "certifiesSkillGate": false
+}

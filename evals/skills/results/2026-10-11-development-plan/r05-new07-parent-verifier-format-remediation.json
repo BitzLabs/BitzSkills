@@ -1,0 +1,18 @@
+{
+  "kind": "read_only_parent_verification_failure_tool_output_record",
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    ".venv/r05-new07-parent-verify.py",
+    "1"
+  ],
+  "toolSession": 21266,
+  "exitCode": 1,
+  "errorType": "KeyError",
+  "message": "contractSha256",
+  "driverSha256": "b6ae8cd1be4705b940fbc41620cf7747cc3c048b5506a17515c7cec535c8013c",
+  "correctedDriverSha256": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+  "modelsAdded": 0,
+  "reservationsAdded": 0,
+  "originalPaidArtifactsModified": false
+}

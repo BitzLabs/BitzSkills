@@ -1,0 +1,436 @@
+{
+  "status": "original_deep_json_closure_verified_additional_atomic_read_finding",
+  "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+  "report": {
+    "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+    "state": {
+      "cleanAtActualPreflight": true,
+      "finalHead": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+      "finalStatus": "",
+      "finalCurrentTreeClean": true,
+      "measurementFromFixedGit": true,
+      "parentRemediationAfterOriginalMeasurements": true
+    },
+    "status": "deep_JSON_P2_corrected_additional_symlink_check_open_race_P2_blocks_preparation",
+    "targetedTests": {
+      "count": 99,
+      "seconds": 33.419,
+      "exitCode": 0,
+      "stderrSha256": "182eb5cb038b3468ffde5a19fe3a7a46bfb6bc153a654aae5f78955c94aac9d8"
+    },
+    "parentFullRaw": {
+      "count": 700,
+      "seconds": 77.868,
+      "exitCode": 0,
+      "stderrSha256": "ed5372df29c99a841b456882b9157d64a2c61e00cc6fd66e9fafaebf2db56c79",
+      "independentlyRerun": false,
+      "rawVerified": true
+    },
+    "actualNew05Plan": {
+      "passed": true,
+      "seconds": 10.127685073995963,
+      "slots": 68,
+      "timeout": 240,
+      "retry": 0,
+      "models": 0,
+      "ledgerWrites": 0,
+      "outputAbsent": true
+    },
+    "oldDeepJSONClosure": {
+      "sourceCommit": "0bb5f01d1856d367c4dd103c1e760df538930a12",
+      "oldSourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+      "oldEvalSha256": "3d1a35a25d5067093054935b181695d7038835fbaccd189bb472bdb7c8252ca1",
+      "oldBatchSha256": "090275bde86f1115b5c39140c49b58c94c5e85939c0084e24f7cc5d3b45a5992",
+      "deepRawSha256": "bdac01fae96e38fb30b2955615672752ffb9ddb477ba705aa4e079c50c7021bd",
+      "oldNewDeepComparisons": [
+        {
+          "file": "run.json",
+          "subject": "old",
+          "errorType": "RecursionError",
+          "error": "maximum recursion depth exceeded while decoding a JSON array from a unicode string",
+          "stopSaved": false,
+          "restoredNextStarted": true,
+          "fakeCalls": [
+            "SI-001",
+            "SI-007"
+          ]
+        },
+        {
+          "file": "run.json",
+          "subject": "new",
+          "errorType": "ValueError",
+          "error": "前件の実証拠または必須検査が一致しません",
+          "stopSaved": true,
+          "restoredNextStarted": false,
+          "fakeCalls": [
+            "SI-001"
+          ]
+        },
+        {
+          "file": "independent-review.json",
+          "subject": "old",
+          "errorType": "RecursionError",
+          "error": "maximum recursion depth exceeded while decoding a JSON array from a unicode string",
+          "stopSaved": false,
+          "restoredNextStarted": true,
+          "fakeCalls": [
+            "SI-001",
+            "SI-007"
+          ]
+        },
+        {
+          "file": "independent-review.json",
+          "subject": "new",
+          "errorType": "ValueError",
+          "error": "JSON nesting exceeds decoder capacity",
+          "stopSaved": true,
+          "restoredNextStarted": false,
+          "fakeCalls": [
+            "SI-001"
+          ]
+        }
+      ],
+      "unknownNormalPendingAndStaticSymlink": [
+        {
+          "test": "test_unknown_previous_verifier_exceptions_permanently_stop",
+          "passed": true
+        },
+        {
+          "test": "test_run_and_review_symlink_stop_without_reading_link_target",
+          "passed": true
+        },
+        {
+          "test": "test_unknown_receipt_hash_error_does_not_prevent_permanent_stop",
+          "passed": true
+        },
+        {
+          "test": "test_independent_pass_allows_exact_next_slot_and_exhausts_budget",
+          "passed": true
+        },
+        {
+          "test": "test_missing_receipt_blocks_next_process",
+          "passed": true
+        }
+      ],
+      "hashBeforeParser": {
+        "runShaChangedRejectedBeforeParse": true,
+        "parserCalled": false
+      },
+      "modelsStarted": 0,
+      "sharedLedgerWrites": 0
+    },
+    "unknownInspectAndRunPostExceptionClosure": {
+      "unknownInspectChecks": {
+        "deterministic": {
+          "passed": false,
+          "errors": [
+            "invalid evidence: RuntimeError: public synthetic unexpected inspect error"
+          ]
+        },
+        "safety": {
+          "passed": false,
+          "errors": [
+            "invalid evidence: RuntimeError: public synthetic unexpected inspect error"
+          ]
+        },
+        "workflow": {
+          "passed": false,
+          "errors": [
+            "invalid evidence: RuntimeError: public synthetic unexpected inspect error"
+          ]
+        },
+        "observation": {
+          "passed": false,
+          "errors": [
+            "invalid evidence: RuntimeError: public synthetic unexpected inspect error"
+          ]
+        }
+      },
+      "unknownRunPostProcessingFailure": {
+        "schemaVersion": "1.0",
+        "status": "interrupted",
+        "identity": {
+          "sourceCommit": "synthetic-fixed-ref",
+          "subjectCommit": "synthetic-fixed-ref"
+        },
+        "errorType": "RuntimeError",
+        "exitCode": 0,
+        "errno": null,
+        "wallMs": 16,
+        "invocation": {
+          "argv": [
+            "codex",
+            "exec",
+            "--json",
+            "--ephemeral",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/workspace",
+            "--model",
+            "gpt-6.1-sol",
+            "--output-schema",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/decision.schema.json",
+            "--output-last-message",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/decision.json",
+            "-c",
+            "web_search=\"disabled\"",
+            "-c",
+            "approval_policy=\"never\"",
+            "-c",
+            "apps._default.enabled=false",
+            "-c",
+            "suppress_unstable_features_warning=true",
+            "-c",
+            "log_dir=\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/logs\"",
+            "-c",
+            "sqlite_home=\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/state\"",
+            "-c",
+            "mcp_servers.sdd_eval.command=\"/usr/bin/python3\"",
+            "-c",
+            "mcp_servers.sdd_eval.args=[\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/evaluate.py\", \"serve\", \"--workspace\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/workspace\", \"--control\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/control.json\", \"--log\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/host.jsonl\"]",
+            "-c",
+            "mcp_servers.sdd_eval.required=true",
+            "-c",
+            "mcp_servers.sdd_eval.default_tools_approval_mode=\"approve\"",
+            "-c",
+            "features.shell_tool=false",
+            "-c",
+            "features.unified_exec=false",
+            "-c",
+            "features.shell_snapshot=false",
+            "-c",
+            "features.apply_patch_freeform=false",
+            "-c",
+            "features.apps=false",
+            "-c",
+            "features.enable_mcp_apps=false",
+            "-c",
+            "features.plugins=false",
+            "-c",
+            "features.remote_plugin=false",
+            "-c",
+            "features.tool_suggest=false",
+            "-c",
+            "features.skill_search=false",
+            "-c",
+            "features.skill_mcp_dependency_install=false",
+            "-c",
+            "features.browser_use=false",
+            "-c",
+            "features.browser_use_external=false",
+            "-c",
+            "features.browser_use_full_cdp_access=false",
+            "-c",
+            "features.in_app_browser=false",
+            "-c",
+            "features.in_app_chat=false",
+            "-c",
+            "features.in_app_local_automation=false",
+            "-c",
+            "features.computer_use=false",
+            "-c",
+            "features.image_generation=false",
+            "-c",
+            "features.view_image=false",
+            "-c",
+            "features.code_mode=false",
+            "-c",
+            "features.multi_agent=false",
+            "-c",
+            "features.goals=false",
+            "-c",
+            "features.sleep_tool=false",
+            "-c",
+            "features.tool_call_mcp_elicitation=false",
+            "-c",
+            "features.skip_host_skill_discovery=true",
+            "-c",
+            "features.code_mode_host=true",
+            "-"
+          ],
+          "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/workspace",
+          "timeoutSeconds": 10,
+          "stateDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/state",
+          "logDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-native-regression-_essjhfk/output/skill/repetition-1/SI-010/logs"
+        },
+        "changes": {
+          "before": {
+            "outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+            "tests/test_input.py": "6ffb14e4e0394f85051e9ea5d27fbd2a19ef07089ce2e21865eff9bef3cf73c3",
+            "src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+            ".spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+            ".codex/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+            ".codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+            ".codex/skills/sdd-plan/references/planning.md": "94541c6ec9f1a06300467ee9244f8caeaf5f48a233023eb70f891af8efa7410a",
+            ".codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+            ".codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+            ".codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+            ".codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+            ".codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+            ".spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+            ".spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b"
+          },
+          "after": {
+            "outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+            "tests/test_input.py": "6ffb14e4e0394f85051e9ea5d27fbd2a19ef07089ce2e21865eff9bef3cf73c3",
+            "src/input.py": "664b00b9cce041f2f02250a12d52c21e118dedcd155b53e8ca90c426f7a35472",
+            ".spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+            ".codex/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+            ".codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+            ".codex/skills/sdd-plan/references/planning.md": "94541c6ec9f1a06300467ee9244f8caeaf5f48a233023eb70f891af8efa7410a",
+            ".codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+            ".codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+            ".codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+            ".codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+            ".codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+            ".spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+            ".spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b"
+          },
+          "changedPaths": [
+            "src/input.py"
+          ]
+        },
+        "artifacts": {
+          "trace.jsonl": "a3a3586cc9dfd9bc0ae7183c2ab0ed26d6c4e211f10ba4e6f6dd6ae4bae3f75f",
+          "host.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr.log": "8794de3c2d8ce7c76f9b86ba6f6ab6f72b5ffc2a5c9cf781d3374009fbebbbf9",
+          "control.json": "1600ba721bfe712ec20ddfe97fe49018c3e748c318f5ed995798dd7b70a7aa3b"
+        },
+        "providerUsage": null,
+        "providerCost": null,
+        "nativeOutputsObtained": true,
+        "nativeOutputAvailability": {
+          "stdout": true,
+          "stderr": true
+        },
+        "outputSaveErrors": [],
+        "unsavedOutputs": {},
+        "semantic": "not-measured",
+        "gateDecision": "not-certified"
+      },
+      "syntheticNativeDispatches": 1,
+      "actualModelCalls": 0,
+      "originals": {
+        "failure.json": "a528fe7b0282281bd58caf534487b5cdb97669e1938faec0ee4bfa86b5ae372b",
+        "trace.jsonl": "a3a3586cc9dfd9bc0ae7183c2ab0ed26d6c4e211f10ba4e6f6dd6ae4bae3f75f",
+        "stderr.log": "8794de3c2d8ce7c76f9b86ba6f6ab6f72b5ffc2a5c9cf781d3374009fbebbbf9",
+        "invocation.json": "0c0674b2112396d456a63225ee12df8c99068b885166ec49d6af390eb06b8dd6",
+        "prompt.txt": "0fbf4eb50dd5b18db279e28e1b1ed5fbbc0d4525fad1ba3feb9c967ba0b947af"
+      }
+    },
+    "oldBeforeDoctorRefusals": [
+      {
+        "condition": "01",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "02",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "03",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "04",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      }
+    ],
+    "oldPreparationReceipts": [
+      "538c9fe7ff1ef430a6cf55783b7f19524134128b83a5282801435e434a280890",
+      "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+      "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+      "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91"
+    ],
+    "oldPreparationConsumed": 4,
+    "oldPrimaryConsumed": 0,
+    "newPreparationMaximum": 1,
+    "newPrimaryMaximum": 68,
+    "newSemanticMaximum": 68,
+    "maximumPerPrimary": 1,
+    "retries": 0,
+    "additionalFindings": [
+      {
+        "priority": "P2",
+        "file": "evals/skills/sdd/batch.py",
+        "lines": [
+          122,
+          124,
+          132,
+          136
+        ],
+        "description": "Symlink check and content open are separate; a link switched between the guard and the open is read and accepted.",
+        "minimalFix": "Read known original run/receipt through a common openat/NOFOLLOW read_regular entry and parse that same byte buffer; avoid path follow for hash preservation too.",
+        "lineCorrection": "Original second reported line141 was a receipt property check. The check/open lines are132/136; original record retained unchanged. These lines refer to fixedGit0bb5."
+      }
+    ],
+    "additionalFindingReproduction": [
+      {
+        "file": "run.json",
+        "readMethod": "read_bytes",
+        "symlinkAtRead": true,
+        "passedNext": true,
+        "stopSaved": false,
+        "fakeCalls": [
+          "SI-001",
+          "SI-007"
+        ],
+        "observed": [
+          {
+            "linkWasCreatedAfterGuard": true,
+            "linkTargetPublic": true,
+            "target": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp/bitz-sdd-batch-tests-qbbt8bp5/.venv/output/skill/repetition-1/SI-001/public-original-run.json"
+          }
+        ]
+      },
+      {
+        "file": "independent-review.json",
+        "readMethod": "read_text",
+        "symlinkAtRead": true,
+        "passedNext": true,
+        "stopSaved": false,
+        "fakeCalls": [
+          "SI-001",
+          "SI-007"
+        ],
+        "observed": [
+          {
+            "linkWasCreatedAfterGuard": true,
+            "linkTargetPublic": true,
+            "target": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp/bitz-sdd-batch-tests-qw28mtlm/.venv/output/skill/repetition-1/SI-001/public-original-independent-review.json"
+          }
+        ]
+      }
+    ],
+    "new05PreparationStartAllowed": false,
+    "primaryStartCertified": false,
+    "staticSymlinkTestsPassedButConcurrentSwapNotRejected": true,
+    "modelsStarted": 0,
+    "sharedLedgerWrites": 0,
+    "authFilesRead": 0,
+    "sourceFileHashes": {
+      "evals/skills/sdd/README.md": "05a4eda93043046b35cb9cfbea4176e08e26cb28988b4a61fa845df2075d686a",
+      "evals/skills/sdd/batch.py": "fa05f6483f1d61722fdfe5ce71358910524e36c99a655b0cf60797b39555fc85",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-04.json": "b6ca93af63f94ca72deb2b2fdb56b6539a99ed1c315f4130e9fa89311b582020",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-05.json": "de1dd030484e7cdf2b8141ed6e81fe45d920ca641e28213a610419c732c6826b",
+      "evals/skills/sdd/evaluate.py": "48594b3c36c357b9927343d2ad7a5aa944b054e8aab9e94d491f72db8a6f1a67",
+      "tests/skills/test_sdd_batch.py": "973e88087597c41ba68efe7a4b64c1a738b3edf01d75c3775b53e6a5eeeeaf6d",
+      "tests/skills/test_sdd_native_completion.py": "a9c9f6e6eb63a634cb196d72d4f0a4305d42a238c3b5839c52457cc7c8e5f841"
+    },
+    "scope": "R05 finite corrective/prelaunch read-only review and public synthetic faults only. Fixed0bb5 is blocked by additional check/open link race. Current dirty remediation is not certified here. No model/provider/SkillGate/Phase/release certification; R08 remains candidate8fcd.",
+    "harnessFailuresPreserved": [
+      "Initial depth2000 and v2/v3 depth1100 were below decoder limit; original stderr retained. v4 depth10000 reproduced original oldRecursionError/noStop/restoreNext and new permanentStop.",
+      "Report v1 clean assertion failed after parent edits; state recorded separately."
+    ],
+    "priorIndependentReportKept": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-core-object-independent/report.json"
+  },
+  "reportSha256": "282d7c61ce22a6311aa8d7f3f945f8f7dab1b336e7fbf22878749e3938619c94",
+  "hashinventorySha256": "99a4e9fbd9c4c60a1c12c773e67beba3c3637e0e2a9cd46586de6877403c0dcc",
+  "parentRehashed": 107,
+  "new05PreparationConsumed": 0,
+  "newPrimary": 0,
+  "certifiesSkillGate": false
+}

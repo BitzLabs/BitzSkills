@@ -1,0 +1,23 @@
+{
+  "status": "actual_preparation_independently_verified_p01_ready",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "reportSha256": "db870e5077c5a96dc1f4fd5401eabf51c09c4f2b3d6fab4ca714463ce72219b5",
+  "inventorySha256": "9773594527e5a6f70b35280f0a4e5dca7e789715447a1396f59cdd3e5d570ba1",
+  "parentRehashedCounts": {
+    "originalHashes": 155,
+    "sourceGitHashes": 20,
+    "evidenceHashes": 15
+  },
+  "primaryAtInspection": 0,
+  "preparationConsumed": 1,
+  "primarySlotPermitted": {
+    "ordinal": 1,
+    "caseId": "SI-009",
+    "variant": "skill",
+    "repetition": 1
+  },
+  "nextSlotNeedsIndependentSemanticAndParentOriginals": true,
+  "modelsStartedByInspectors": 0,
+  "certifiesGate": false,
+  "originalReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-preparation-actual-independent/finalization-01/report.json"
+}

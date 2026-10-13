@@ -1,0 +1,649 @@
+{
+  "sourceCommit": "8eb4404fdeb3a139cb4bb3eb21f7fa878579f50f",
+  "status": "limited_time_remediation_independently_verified",
+  "fullTests": {
+    "count": 667,
+    "testSeconds": 72.58,
+    "sourceCommit": "8eb4404fdeb3a139cb4bb3eb21f7fa878579f50f",
+    "exitCode": 0,
+    "seconds": 72.98405245307367,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "15679e944b27553fa4d90959e9a008d727b20e71de1143d1df9ad6db822e9f52"
+  },
+  "diagnostic": {
+    "candidateHashes": {
+      "production_canary_review.py": "bae70715d965ff938cb8bf822ba1547987fa044ed00e6e6693adac35457320a7",
+      "production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd"
+    },
+    "complete": {
+      "artifactBinding": {
+        "artifactSha256": {
+          "config.json": "389a3ed818b83b9d8fbbc38a773e5b616ce014e9a627f02783f097b1d2093cb9",
+          "contract.json": "fdb72605ef4c947d3066ada4a67c46674e48d08ed4ca652c1430b92ea60dae6e",
+          "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+          "host.jsonl": "8e63f880a8e13d5c4a90c6a266434d15b1b4570888de39595590f2d4ca5acec8",
+          "invocation.json": "ede014d1fec49571926704f0f273653dae859f9db79c96fccf68baeb9ec685f5",
+          "isolated-result.json": "3f248af02047b88ff9bcdadb4dd796efd3b8da3f1280de748299cf1741538794",
+          "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+          "namespace.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "namespace.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "reservation.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/manifest.json": "d6f1ec7e218db8eeb1cddcc2a5cbb51af683afe93d1d17ba16fe99ea07c500dd",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/1.json": "1fbf5d5cb63235ae9dc8cafdb1649349d796b2d1a4f4b984a0c76ab6f6e237b3",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/10.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/11.json": "0f9d64623224b506848fe8b59560c8f475be793cf260bb061b995c32b09fd47a",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/12.json": "c1a892aa197f73912585d9aa39a12dc0da644bafa6b247104151e20ef06a358d",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/13.json": "58de024e2f2fc38132cb62fe0377c2fae8a4f601eab70c85044cf7f8eaa1d8d7",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/14.json": "e36c4311420e75e662117cda67919bade86041e492f7b38d4a7c1e68e9f4e457",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/15.json": "ba75885cff2b3db24215c300bfba88c27b474df0eef7e08161ff5fc650378d81",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/16.json": "8533618e7fa957cd2a289feaff84b94d39bf6e32700b07a6f758946b95a70b03",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/17.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/18.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/19.json": "6510e50c16a0f319a4b911114a38d776c5ae00641cc2ec9c06b5a8677604fbd0",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/2.json": "e0a666543ac372254176c9b7cc591780061b0bd40e3e2932f56647b3de26f80f",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/20.json": "88e047e314d5f5d2ad57c9b15cbeb49015660083cd3d89f885dbffc01922464e",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/21.json": "aa79aa3a8f9ae878bf3b65e8b2260f75e27632a8067b3d2e930f6e3ee2fdfb2b",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/22.json": "e6fd95ec772299d521fe8b7e4543470b6ecdb90f7fb8847697a334dacfa06218",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/23.json": "43568e86ce2556ab8da6303a89a2e0359509abc830739979977ac0efe671c432",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/3.json": "7133f20d598c131cb8182971324fd220b9175279a216303fbddd37afee0f2bb7",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/4.json": "6b020577ecf0d2a7e967f3b764de695c5af4a25d880e683def25eab86ab93b54",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/5.json": "612e120d92ebb7eb30103c6cfa9ca3d82e09e540b4904f5ff298ff76a98becae",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/6.json": "00de996884ece0eeeca6df420e07e063928086ae01fb19ecb91a4258827f2341",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/7.json": "5ab8b706ff9799a8c4f9b1ecf32638979fafa8b408ee877a7202aae5ca3cc546",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/8.json": "d97f19df44c4102327a87aceed6f138e48c5df4e246d7716305c22319e9ee0cd",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/9.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+          "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/trace.jsonl": "800dacc3d84ed7f982783ca4088b1ae998648dfaabef5cf2d4fd115b878ee212",
+          "rpc-in.jsonl": "a4b2056e7042e863957553b3817a3608fd0576a2edb869a3068243a32b2f438b",
+          "rpc-out.jsonl": "bc2346226df70cf27eb4481f57224d1cbf92bd0f4cd4c2372efe2ad837dbf45c",
+          "runtime-result.json": "f550326fc45f27e978d0b8c86c4db7d782ccadcba61728c716dccb6afe649146",
+          "runtime-stderr.bin": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+          "trace-safe.jsonl": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+          "version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
+        },
+        "attempt": {
+          "attempt": 2,
+          "caseId": "SE-001",
+          "contractSha256": "fdb72605ef4c947d3066ada4a67c46674e48d08ed4ca652c1430b92ea60dae6e",
+          "manifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+          "model": "gpt-6.1-sol",
+          "modelInputSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+          "outputRelativePath": ".venv/production-routing-primary-empty-reasoning-01/attempt-0002",
+          "repetition": 2,
+          "sourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110"
+        },
+        "captureElapsedSeconds": 10.927914393949322,
+        "diagnosticOnly": true,
+        "eligibleForMeasurement": false,
+        "independentReviewPerformed": false,
+        "ledgerFinalized": false,
+        "receiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763"
+      },
+      "certifiesBehavior": false,
+      "certifiesProviderWireBodies": false,
+      "certifiesSkillGate": false,
+      "eligibleForMeasurement": false,
+      "independentReviewPerformed": false,
+      "ledgerFinalized": false,
+      "native": {
+        "apiRequests": 3,
+        "certifiesBehavior": false,
+        "certifiesProviderWireBodies": false,
+        "certifiesRawPayloads": false,
+        "certifiesSkillGate": false,
+        "childIntegrity": {
+          "candidateManifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+          "certifiesBehavior": false,
+          "certifiesExpectedDecision": false,
+          "certifiesSkillGate": false,
+          "hostCalls": 2,
+          "selectedSkillBodyRead": true,
+          "status": "measurement_integrity_passed"
+        },
+        "completeTargetProjectionVerified": true,
+        "decision": {
+          "events": [
+            "prefer-core-operation",
+            "route-to-core-only",
+            "select-doctor"
+          ],
+          "evidencePresent": false,
+          "outcome": "proceed",
+          "readyClaimed": false,
+          "reason": "bitz doctorのJSON実行と結果説明はbitz-coreの対象であり、本文を確認してdoctorを選択した。今回は発火選択のみで実操作は行っておらず、診断結果や成功は主張しない。",
+          "rejectedEvents": [
+            "invent-core-result",
+            "claim-ready"
+          ],
+          "selectedEntry": "bitz-core",
+          "selectedPath": "operate"
+        },
+        "eligibleForMeasurement": false,
+        "hostCalls": 2,
+        "modelCatalogApiRequests": 2,
+        "modelInputSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "nativeChildIds": [
+          "exec-0371868f-d933-4a60-b2a4-ba21d83eb756",
+          "exec-d32056ed-779d-44ae-8af9-3af238fb7c91"
+        ],
+        "nativeEvidence": {
+          "receivedValueSha256": "d7657abb2eae6d39c6d7a4bb0a787f3b27daa54a9b5de1e8508f144a3c2af3b1",
+          "requestIds": {
+            "525602e2-a624-4b27-ab21-fbc335a7246c": 1,
+            "725ddfcc-0da8-4952-a4ed-af3df1c62893": 3,
+            "79aafcba-de83-41c9-8533-6d8cdae8dcbb": 2
+          },
+          "retainedNotifications": [
+            {
+              "kind": "remoteControl/status/changed",
+              "rawIndex": 1,
+              "sha256": "0ee4deceb59dab643e31b0b0ea0adb3dbf04b08358445d4d33a35ef0a75a00c7"
+            },
+            {
+              "kind": "account/updated",
+              "rawIndex": 2,
+              "sha256": "164b21205e84c6b038ee73defaecd13c049f6dd599a00a31d2ab5198eed4fac7"
+            },
+            {
+              "kind": "mcpServer/startupStatus/updated",
+              "rawIndex": 5,
+              "sha256": "9b9b31b9a6066b27187eac1f70a6d7fd27a529b9b39129751ade00768fc29737"
+            },
+            {
+              "kind": "mcpServer/startupStatus/updated",
+              "rawIndex": 9,
+              "sha256": "9a9060a21be6950c135fce4ae39704e3d083367e573fe49297cb08523873c203"
+            },
+            {
+              "kind": "item/started/userMessage",
+              "rawIndex": 10,
+              "sha256": "00f27ef9d7e9485d80f758662b70e861f4bd89d634cb99466cd97a0f11a10f08"
+            },
+            {
+              "kind": "item/completed/userMessage",
+              "rawIndex": 11,
+              "sha256": "9d39689be6c23c375922bb9eda0ea19be9ba8e04deb739a737e98221ff180de2"
+            },
+            {
+              "kind": "account/rateLimits/updated",
+              "rawIndex": 15,
+              "sha256": "f85108972e0b2f36d5ad9ee3f486b320fa6ec2a90171bc4a2ebb10629f912383"
+            },
+            {
+              "kind": "account/rateLimits/updated",
+              "rawIndex": 19,
+              "sha256": "28004dbea14cf1c085416cb91bc15a3a76a6d5b2625f5b94d4046f3a486fdd66"
+            },
+            {
+              "kind": "account/rateLimits/updated",
+              "rawIndex": 141,
+              "sha256": "ca241968a3c53474a0b95fc9bc86bcee15ad8eda691fb8b6d6923112230b0023"
+            }
+          ],
+          "sentValueSha256": "5e5d9595d14e87f23fdf2c1fa4394c0093c4f50bd1fa477cddd691202d58e8ce"
+        },
+        "parentCallIds": [
+          "call_42c4da35676e47018b7fde36c2836e74",
+          "call_ff6329f9cd1f45f68ae63a9a74b7ea78"
+        ],
+        "parentLinks": {
+          "cellId": "1",
+          "cellIds": [
+            "1",
+            "2"
+          ],
+          "certifiesArbitraryMultipleOrYieldedCells": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "certifiesProviderWireBodies": false,
+          "certifiesTelemetryOutputBodies": false,
+          "childBindings": [
+            {
+              "cellId": "1",
+              "childId": "exec-0371868f-d933-4a60-b2a4-ba21d83eb756",
+              "parentCallId": "call_42c4da35676e47018b7fde36c2836e74",
+              "runtimeToolId": "tool-1"
+            },
+            {
+              "cellId": "2",
+              "childId": "exec-d32056ed-779d-44ae-8af9-3af238fb7c91",
+              "parentCallId": "call_ff6329f9cd1f45f68ae63a9a74b7ea78",
+              "runtimeToolId": "tool-1"
+            }
+          ],
+          "eligibleForMeasurement": false,
+          "nativeChildIds": [
+            "exec-0371868f-d933-4a60-b2a4-ba21d83eb756",
+            "exec-d32056ed-779d-44ae-8af9-3af238fb7c91"
+          ],
+          "parentCallId": "call_42c4da35676e47018b7fde36c2836e74",
+          "parentCallIds": [
+            "call_42c4da35676e47018b7fde36c2836e74",
+            "call_ff6329f9cd1f45f68ae63a9a74b7ea78"
+          ],
+          "parentDurationsNs": {
+            "call_42c4da35676e47018b7fde36c2836e74": 7424335,
+            "call_ff6329f9cd1f45f68ae63a9a74b7ea78": 5863428
+          },
+          "scope": "two-fixed-sequential-exec-two-cells-two-mcp-calls",
+          "status": "scripted_sequential_parent_cells_child_ids_matched",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-0371868f-d933-4a60-b2a4-ba21d83eb756",
+            "call_42c4da35676e47018b7fde36c2836e74",
+            "exec-d32056ed-779d-44ae-8af9-3af238fb7c91",
+            "call_ff6329f9cd1f45f68ae63a9a74b7ea78"
+          ],
+          "traceEventCount": 24,
+          "traceValueSha256": "b648bb734ac5442c6aa72ac1cd19a1ec2d168e4fa642e7456825d9249fc698bb"
+        },
+        "profile": "two-exec",
+        "rawStderrSha256": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+        "sdkInputValueSha256": "a964ae28a69b1929af60685a556ddecec7570784a343b9bd9e5c37c692679e10",
+        "selectedLogSha256": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+        "status": "bounded_sdk_routing_trace_diagnostic_passed",
+        "totalServiceApiRequests": 5,
+        "traceValueSha256": "546dc19ef35106dac16111775ece12d88216802eddc3d690d973dc6a6c673895",
+        "usageTelemetry": {
+          "certifiesProviderWireBodies": false,
+          "count": 3,
+          "nativeUsageMatched": true,
+          "valueSha256": "403f8b62d7cba169300e505584ea48a2445f841bea21af1aa4b2ea6cc77a1fb0"
+        }
+      },
+      "rawNotificationCount": 11,
+      "rawNotificationsValueSha256": "72f6406e1ff6802ed9f51f809c437b0e2bdab2db1203641cc396149afa0b1d08",
+      "rawPayloadCorrelationVerified": true,
+      "rollout": {
+        "captureElapsedMilliseconds": 10928,
+        "certifiesBehavior": false,
+        "certifiesProviderWireBodies": false,
+        "certifiesSkillGate": false,
+        "codeModeOriginals": {
+          "cells": 2,
+          "certifiesMcpTransportEnvelope": false,
+          "originalValuesVerified": true,
+          "tools": 2
+        },
+        "contextProfileValueSha256": "516af7c9ef8e14c99e5d2ca176851d343dfa1e2a68503396cee214ea4b5dac22",
+        "eligibleForMeasurement": false,
+        "inferences": 3,
+        "initialContextVerified": true,
+        "manifestToFirstEventMilliseconds": 1,
+        "modelContextWindow": 475000,
+        "observedRolloutSpanMilliseconds": 9056,
+        "originalRequestValueSha256": [
+          "a5e93748fdbb0c45cd3480aad83a7c5bc9df32b7032845d4eee20095e0844930",
+          "199fd2081b4db62f84372ca63eea2085958ffcda71ec8bd77e321bc93a4917de",
+          "6b2972b6bf95d4028203f4b58f5d7e5a014f0ef43fcf8ec6f6596ecef707cc21"
+        ],
+        "originalResponseValueSha256": [
+          "23d1c6b035cb4bb9fb7372ec56375c32219c2faa6efba12c087fee3ee4fb6caa",
+          "3b2a7d3786f458434d6899369612f553795fb4b3f7b1292a598c3fb44391979b",
+          "32db4db97763c8c77b9794fc611ff887359999ea21220f932fdd86145151633c"
+        ],
+        "parentHostBodiesVerified": true,
+        "parentHostBodyValueSha256": [
+          [
+            "82fe2ce60991bcdcf70cc5a2528309d88ccdb101e7f7f2fee1dd3add5c72f13b"
+          ],
+          [
+            "f1515e7ddc62e0ffb23304522fbba83381c21de1c12b0a5401f4ef7f360c8d7c"
+          ]
+        ],
+        "rawPayloadCorrelationVerified": true,
+        "rolloutEvents": 32,
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "totalTokenUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6016,
+          "inputTokens": 19023,
+          "outputTokens": 223,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19246
+        },
+        "usageCorrelationVerified": true
+      },
+      "status": "primary_original_capture_correlated"
+    },
+    "ledgerWrites": 0,
+    "modelsStarted": 0,
+    "originalReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763",
+    "status": "original42_time_profile_passed_diagnostic_only"
+  },
+  "sourceEvidence": [
+    {
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.160.1/codex-rs/rollout-trace/src/writer.rs",
+      "status": "downloaded",
+      "sha256": "5efa68c044b9f880e3ee1db7d208fecdea806a6e1fbdfa2f9037b74e076c6d4a",
+      "bytes": 9445
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.160.1/codex-rs/rollout-trace/src/raw_event.rs",
+      "status": "downloaded",
+      "sha256": "94768a4fbd6a3c5b4a5bf792b4b57bb01793b7b3fbfb8f3415027d407420165f",
+      "bytes": 11562
+    }
+  ],
+  "oldPrimaryConsumed": 7,
+  "oldSemanticIndependentConsumed": 3,
+  "newPrimaryStarted": 0,
+  "certifiesSkillGate": false,
+  "independentReview": {
+    "sourceCommit": "8eb4404fdeb3a139cb4bb3eb21f7fa878579f50f",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "targetFilesGitSha256": {
+      "evals/skills/routing/production_canary_evidence.py": "9aaf35f1c055df2debd795937ae961c1a430909baa6d2b85395943e248bd5b4b",
+      "evals/skills/routing/production_canary_review.py": "bae70715d965ff938cb8bf822ba1547987fa044ed00e6e6693adac35457320a7",
+      "evals/skills/routing/production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd",
+      "tests/skills/test_production_canary_review.py": "98ff75dcdd894b69cd32056bd3517108b24337a4ac58feee94112535794653b0",
+      "tests/skills/test_production_canary_rollout.py": "bb9c61e717b11ab9094f19d23c51680d77c5183ca9a13c5863bc56cc00459e38"
+    },
+    "blockingFindings": [],
+    "correctedOriginalP2": "開始時刻の別採時計測へ完全一致を要求する互換性誤拒否を、原receipt elapsedへ束縛した有限関係に是正。限定した無課金独立検分範囲で解消確認。",
+    "verification": {
+      "tests": {
+        "count": 109,
+        "actualOutput": "Ran 109 tests in 5.902s / OK",
+        "sourceCommit": "8eb4404fdeb3a139cb4bb3eb21f7fa878579f50f",
+        "exitCode": 0,
+        "elapsedSeconds": 6.125141490949318,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "8c376323674f16ec725a94dcd6de9cc1517d9770a97f5a959de903f8867b9f7f",
+        "cleanAfter": true
+      },
+      "savedFixedInputsSha256": "0d38c6d17c61303d5decdc372c4c1f9f112d1997a135ceb3689a5ac579666a51",
+      "oldFixedInputsGitChecked": true,
+      "oldSourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110",
+      "originalReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763",
+      "originalArtifactCount": 42,
+      "originalArtifactSha256": {
+        "config.json": "389a3ed818b83b9d8fbbc38a773e5b616ce014e9a627f02783f097b1d2093cb9",
+        "contract.json": "fdb72605ef4c947d3066ada4a67c46674e48d08ed4ca652c1430b92ea60dae6e",
+        "invocation.json": "ede014d1fec49571926704f0f273653dae859f9db79c96fccf68baeb9ec685f5",
+        "isolated-result.json": "3f248af02047b88ff9bcdadb4dd796efd3b8da3f1280de748299cf1741538794",
+        "namespace.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "namespace.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "reservation.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+        "rpc-in.jsonl": "a4b2056e7042e863957553b3817a3608fd0576a2edb869a3068243a32b2f438b",
+        "rpc-out.jsonl": "bc2346226df70cf27eb4481f57224d1cbf92bd0f4cd4c2372efe2ad837dbf45c",
+        "runtime-result.json": "f550326fc45f27e978d0b8c86c4db7d782ccadcba61728c716dccb6afe649146",
+        "runtime-stderr.bin": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+        "trace-safe.jsonl": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+        "version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/manifest.json": "d6f1ec7e218db8eeb1cddcc2a5cbb51af683afe93d1d17ba16fe99ea07c500dd",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/trace.jsonl": "800dacc3d84ed7f982783ca4088b1ae998648dfaabef5cf2d4fd115b878ee212",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/12.json": "c1a892aa197f73912585d9aa39a12dc0da644bafa6b247104151e20ef06a358d",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/19.json": "6510e50c16a0f319a4b911114a38d776c5ae00641cc2ec9c06b5a8677604fbd0",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/18.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/3.json": "7133f20d598c131cb8182971324fd220b9175279a216303fbddd37afee0f2bb7",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/23.json": "43568e86ce2556ab8da6303a89a2e0359509abc830739979977ac0efe671c432",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/22.json": "e6fd95ec772299d521fe8b7e4543470b6ecdb90f7fb8847697a334dacfa06218",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/7.json": "5ab8b706ff9799a8c4f9b1ecf32638979fafa8b408ee877a7202aae5ca3cc546",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/13.json": "58de024e2f2fc38132cb62fe0377c2fae8a4f601eab70c85044cf7f8eaa1d8d7",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/11.json": "0f9d64623224b506848fe8b59560c8f475be793cf260bb061b995c32b09fd47a",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/1.json": "1fbf5d5cb63235ae9dc8cafdb1649349d796b2d1a4f4b984a0c76ab6f6e237b3",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/21.json": "aa79aa3a8f9ae878bf3b65e8b2260f75e27632a8067b3d2e930f6e3ee2fdfb2b",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/9.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/5.json": "612e120d92ebb7eb30103c6cfa9ca3d82e09e540b4904f5ff298ff76a98becae",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/10.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/6.json": "00de996884ece0eeeca6df420e07e063928086ae01fb19ecb91a4258827f2341",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/20.json": "88e047e314d5f5d2ad57c9b15cbeb49015660083cd3d89f885dbffc01922464e",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/14.json": "e36c4311420e75e662117cda67919bade86041e492f7b38d4a7c1e68e9f4e457",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/15.json": "ba75885cff2b3db24215c300bfba88c27b474df0eef7e08161ff5fc650378d81",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/8.json": "d97f19df44c4102327a87aceed6f138e48c5df4e246d7716305c22319e9ee0cd",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/2.json": "e0a666543ac372254176c9b7cc591780061b0bd40e3e2932f56647b3de26f80f",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/17.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/16.json": "8533618e7fa957cd2a289feaff84b94d39bf6e32700b07a6f758946b95a70b03",
+        "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/4.json": "6b020577ecf0d2a7e967f3b764de695c5af4a25d880e683def25eab86ab93b54",
+        "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+        "host.jsonl": "8e63f880a8e13d5c4a90c6a266434d15b1b4570888de39595590f2d4ca5acec8"
+      },
+      "oldGitCodeOriginalRejection": "original rollout start timestamp binding",
+      "newGitCodeOriginalDiagnosticPass": true,
+      "original42AndReceiptUnchanged": true,
+      "eligible": false,
+      "manifestToFirstMilliseconds": 1,
+      "wholeSpanMilliseconds": 9056,
+      "originalElapsedCeilMilliseconds": 10928,
+      "mandatoryElapsedParameter": true,
+      "negativeCount": 26,
+      "negativeResults": {
+        "missing-elapsed": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "mismatched-elapsed": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "elapsed-bool": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "elapsed-negative": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "elapsed-null": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "missing-receipt-hash": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt hash drift"
+        },
+        "wrong-receipt-hash": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt hash drift"
+        },
+        "manifest-after-first": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout start timestamp binding"
+        },
+        "manifest-before-window": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout start timestamp binding"
+        },
+        "manifest-bool": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original primary rollout manifest"
+        },
+        "manifest-float": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original primary rollout manifest"
+        },
+        "manifest-negative": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original primary rollout manifest"
+        },
+        "last-after-window": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout exceeds captured elapsed bound"
+        },
+        "wall-backward": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout sequence"
+        },
+        "wall-bool": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout start timestamp binding"
+        },
+        "wall-float": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout start timestamp binding"
+        },
+        "trace-id": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "rollout start"
+        },
+        "root-id": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original primary rollout manifest"
+        },
+        "seq-gap": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout sequence"
+        },
+        "changed-receipt-hash": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt hash drift"
+        },
+        "rehashed-receipt-value-mismatch": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "consumed elapsed receipt value drift"
+        },
+        "receipt-null": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "captured elapsed time type"
+        },
+        "receipt-bool": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "captured elapsed time type"
+        },
+        "receipt-negative": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "captured elapsed time type"
+        },
+        "receipt-span-too-short": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "original rollout exceeds captured elapsed bound"
+        },
+        "exponent-overflow-infinite": {
+          "accepted": false,
+          "errorType": "ValueError",
+          "errorMessage": "Out of range float values are not JSON compliant: inf"
+        }
+      },
+      "positiveSyntheticReceiptResults": {
+        "11": {
+          "captureElapsedMilliseconds": 11000,
+          "overflow": false,
+          "syntheticReceiptOnly": true,
+          "eligible": false
+        },
+        "1e+308": {
+          "captureElapsedMilliseconds": 100000000000000001097906362944045541740492309677311846336810682903157585404911491537163328978494688899061249669721172515611590283743140088328307009198146046031271664502933027185697489699588559043338384466165001178426897626212945177628091195786707458122783970171784415105291802893207873272974885715430223118336000,
+          "overflow": false,
+          "syntheticReceiptOnly": true,
+          "eligible": false
+        }
+      }
+    },
+    "sourceConnection": "evidenceは原receipt elapsedSecondsをresult JSONbytes captureElapsedSecondsへ保持。reviewは原receipt SHA/値一致とfinite非負型を確認、intかfloat.as_integer_ratio整数ceilでmsを作り、correlate mandatory capture_elapsed_msへ渡す。原artifact消費hash/ID/seq/lifecycle/非減少wallを維持。",
+    "preservedState": {
+      "originalStops": 4,
+      "accepted": 3,
+      "primaryConsumed": 7,
+      "semanticIndependentConsumed": 3,
+      "remainingTwoNotStarted": true,
+      "fourthLedgerSha256": {
+        "campaign.json": "0fe4bcde4ba03ff4d89e35e06dbfbc99e890faa2c65946372d8548708505b903",
+        "attempt-0001.json": "f6477fda149bc4249bdf7701f2c994528acd572c0fc6c4c6165a464989340598",
+        "attempt-0002.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+        "independent-0001.json": "2b4d42bebc610d21b12d6a45d5f49cacb4a5e9a52daf56a5f20bef33318bda35",
+        "review-0001.json": "6332ed4e120d40160f692fd553538457c5c63ea846260a1431b743ff4348cb6a",
+        "stop-0002.json": "6717780d44623dede2bb83fb06e315cde8d584fb14dfe4f8f9e834321c222be3"
+      },
+      "predecessor": {
+        "status": "three_original_stopped_campaigns_preserved",
+        "predecessors": [
+          {
+            "status": "two_original_stopped_campaigns_preserved",
+            "predecessors": [
+              {
+                "status": "original_stopped_campaign_preserved",
+                "campaignId": "public-initial-canary",
+                "primaryReservationsConsumed": 1,
+                "independentReservationsConsumed": 0,
+                "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+                "usage": null,
+                "automaticRetry": false
+              },
+              {
+                "campaignId": "public-schema-projection-01",
+                "primaryReservationsConsumed": 1,
+                "independentReservationsConsumed": 0,
+                "primaryReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+                "accepted": false
+              }
+            ],
+            "primaryReservationsConsumed": 2,
+            "independentReservationsConsumed": 0,
+            "automaticRetry": false
+          },
+          {
+            "campaignId": "public-code-mode-structure-01",
+            "primaryReservationsConsumed": 3,
+            "independentReservationsConsumed": 2,
+            "acceptedPrimary": 2,
+            "stoppedPrimary": 1,
+            "primaryReceiptSha256": "abf3aaf8fee653d4d7a1b5b1db1b0f1f272c24e7c3a9dbe1cade7a56a41dd1de"
+          }
+        ],
+        "primaryReservationsConsumed": 5,
+        "independentReservationsConsumed": 2,
+        "automaticRetry": false
+      },
+      "durableReject": "primary stopped before independent review"
+    },
+    "limitations": [
+      "原42は保存bfcc固定入力＋新8eb verifierのdiagnosticOnly。停止をacceptedへ変えず同条件再開しない。",
+      "wall非減少・span boundはclock安定の限定policy。producerがSystemTime単調を保証すると主張しない。",
+      "有限1e308の原receiptは公開メモリ複製だけで型/整数ceilを検査。実receipt/計測時間を改変せず、測定受理へ代用しない。",
+      "受理3件の既存状態/独立予約束縛保持を確認した範囲。全原42・意味採点を今回再実行していない。",
+      "実exec-wait/MCPtransport/全行動/Skill Gate/Step/Gate/Phase/リリース未認定。新第五開始判定なし。",
+      "109関連試験は独立実行。親の全件成功自己申告はこの検分の代わりにしない。",
+      "原elapsed/receipt改変はメモリ公開複製のみ。26拒否とfinite1e308整数ceil確認を実測証拠の改変や受理に使用しない。"
+    ],
+    "modelsOrClisStarted": 0,
+    "sharedLedgerWrites": 0,
+    "sourceOrGitChanges": 0,
+    "initialHarnessFailures": []
+  },
+  "independentEvidenceSha256": {
+    "report.json": "1c3ba5d5c06d3db97b96ba0e1d4f338724439fc05773917aee8d31feaf1997a6",
+    "original-check.json": "1c20957bce982a604812ae4ea8b6ac843912844c359713a50e1dc1bb6d95d565",
+    "original-check.argv.json": "fd1c1caac21c6767d6cbc0209bc3489e6c713d0dd322079fcd085600d179c8c6",
+    "report.md": "bb9baf351af26ed83b8b2343ddb16a1906b8f33030fbc523325ae8a765a7ddd4",
+    "canary.process.json": "fae3afa3bbbd8e6131c435914d0fc0c52eb2126b914aca9c90578479c74b1705",
+    "source.json": "150804a78f006605600233732ce9ae8d4ec409697ccf5e2733d1c6126401ec33",
+    "canary.stderr": "8c376323674f16ec725a94dcd6de9cc1517d9770a97f5a959de903f8867b9f7f",
+    "original-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "old-rejection.traceback": "b58ffc921375cd9902df43385902bf633f077fe5743c1b7c49332246b5ff6492",
+    "original-complete-diagnostic.json": "c0bb34b30f95e807cdcd0655ecda224f563bc32359e9b88f42f2030b3931d750",
+    "original-check.stdout": "1c20957bce982a604812ae4ea8b6ac843912844c359713a50e1dc1bb6d95d565",
+    "original-check.py": "f1f9aa4c603a95aeda7fa99bf980a01e7ad6125d1d3a0a509d302e18028de638",
+    "canary.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-check.process.json": "a8f44b1cab34fcd98da541cc0a96c98f7ea82a14d75a013502cef8c969409013",
+    "canary.argv.json": "1ccd38b38a9b97578d0ddb1e032af236ad00363698ed572b852847a98c659fdc"
+  },
+  "parentRehashedEvidenceCount": 15
+}

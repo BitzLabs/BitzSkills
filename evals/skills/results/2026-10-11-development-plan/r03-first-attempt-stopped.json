@@ -1,0 +1,65 @@
+{
+  "status": "first_public_canary_stopped",
+  "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+  "attempt": {
+    "attempt": 1,
+    "caseId": "SE-001",
+    "repetition": 1,
+    "modelInputSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+    "contractSha256": "cb70a0d9a2ea88f2e870fd125cf3882f7cd55c0e6bb05c17d0cb9bdc63947472",
+    "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+    "model": "gpt-6.1-sol",
+    "manifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+    "outputRelativePath": ".venv/production-routing-primary-public-initial/attempt-0001"
+  },
+  "primaryReservationConsumed": 1,
+  "independentReservationsConsumed": 0,
+  "independentInvocations": 0,
+  "actualObservedApiRequests": [
+    {
+      "endpoint": "/models",
+      "status": 200,
+      "attempt": 0
+    },
+    {
+      "endpoint": "/models",
+      "status": 200,
+      "attempt": 0
+    },
+    {
+      "endpoint": "/responses",
+      "status": 400,
+      "attempt": 0
+    }
+  ],
+  "successfulModelResponses": 0,
+  "usage": null,
+  "cost": null,
+  "automaticRetries": 0,
+  "reason": "invalid_json_schema: events.uniqueItems unsupported by provider",
+  "receiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+  "originalLedgerSha256": {
+    "campaign.json": "ac776b7116d87c3905e49e7082920aecb06d9f41ed22452a0f6bc90435d501b3",
+    "attempt-0001.json": "446aa1a72c4e5680bb8794fa951beeae2faf96cdd1e066551f856b6692a3fc0a",
+    "stop-0001.json": "648fd689c53c1b6ecb0f545f3fb8a1b06f5f122d125493276c385f5ee50cc413"
+  },
+  "stop": {
+    "attempt": 1,
+    "automaticRetry": false,
+    "caseId": "SE-001",
+    "contractSha256": "cb70a0d9a2ea88f2e870fd125cf3882f7cd55c0e6bb05c17d0cb9bdc63947472",
+    "independentInvocations": 0,
+    "manifestSha256": "d9c8f99f7f6e67c71c15f7817ceaa915567d13d14f6ef161a6fe4bef9c5d7b09",
+    "model": "gpt-6.1-sol",
+    "modelInputSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+    "outputRelativePath": ".venv/production-routing-primary-public-initial/attempt-0001",
+    "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+    "reason": "primary-capture-failed",
+    "repetition": 1,
+    "sourceCommit": "5bdfdb230857d7f412028bec828ca0bc77e0ec81",
+    "status": "stopped_before_independent_review"
+  },
+  "remainingAttemptsStarted": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false
+}

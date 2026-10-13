@@ -1,0 +1,300 @@
+{
+  "originalSource": "f634467f913f2a61c352d74853e70c786d4dcce7",
+  "fullTests": 608,
+  "fullExitCode": 0,
+  "fullStderrSha256": "924b328ce5cd5946bb3a8468f91d13dd65818c2c0f2d6fa2d7aeca5d8df5eda0",
+  "originalIndependent": {
+    "ref": "f634467f913f2a61c352d74853e70c786d4dcce7",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 2.122,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "c494c367dcc8c8b1e80237f48d6b522dcd3f57ac97787b1be575614fac1e89ad"
+      },
+      {
+        "check": "ledger",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.644,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "4fbd83dcd7cf9b977b90d9b5175e16a969fe4a5ed2a1b302982c39badf3ae380"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production-canary-context-v0.1.json": "26520e33cd7b7210a492fe367c9d0eab5c3c69b3e4909aa55fae821a2a4399a9",
+      "evals/skills/routing/production-canary-v0.1.json": "25ee037d3fbb334b2b762d306e0bd596add058c64d034dc08542627bb627bd51",
+      "evals/skills/routing/production_canary_capture.py": "4125ea849f5a35020f194756facfdaaf3a08d79490ef5212d400409dc1fef5bb",
+      "evals/skills/routing/production_canary_evidence.py": "f491aa03aef1e095c50c7224cbd898547f43687566447d0703a55c1dd44ef525",
+      "evals/skills/routing/production_canary_review.py": "50ccbfd36c9ccfd5662d763aac8bfbdfdf9e9caf872250df07dbe942c319ea25",
+      "evals/skills/routing/production_canary_rollout.py": "28953e2f09b853bc02d40712570eaceb5fe5d7a9278b26245f9c3e3134cd0683",
+      "tests/skills/test_production_canary_capture.py": "0b1ea4f0a9619d084efd80f5165c8a30e25e29dc0bf4b94c74ad2233acc44622",
+      "tests/skills/test_production_canary_evidence.py": "e4c331703f8edec2784a9181551999ac80dec7f7606f73371e865f21de08de6a",
+      "tests/skills/test_production_canary_review.py": "1cc5ac9a74c35834846d521edef993857ebfcd337beddd92935f6d8d34ce1fad",
+      "tests/skills/test_production_canary_rollout.py": "cc3363e7ba6ace3a4db5a1aa2d0c1face22ab088b4b4736aae85ff002644bd41"
+    }
+  },
+  "originalFindings": {
+    "ref": "f634467f913f2a61c352d74853e70c786d4dcce7",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "modelCalls": 0,
+    "records": [
+      {
+        "name": "unknown_request_key",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "fixed entire client request policy"
+      },
+      {
+        "name": "missing_rollout_end",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "complete rollout and inference inventory"
+      },
+      {
+        "name": "sequence_gap",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "original rollout sequence"
+      },
+      {
+        "name": "history_prefix_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "one complete original tool result after response"
+      },
+      {
+        "name": "tool_context_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "fixed complete primary tool declarations"
+      },
+      {
+        "name": "usage_counter_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "usage arithmetic"
+      },
+      {
+        "name": "parent_id_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "original parent call identity"
+      },
+      {
+        "name": "raw_final_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "original raw item payload binding"
+      },
+      {
+        "name": "native_final_id_change",
+        "rejected": true,
+        "exception": "ValueError",
+        "reason": "raw and native final identity"
+      },
+      {
+        "name": "native_model_context_window",
+        "rejected": false,
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "negative_first_rollout_timestamp",
+        "rejected": false,
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "rehashed_parent_output_without_host_body_change",
+        "rejected": false,
+        "status": "primary_original_capture_correlated",
+        "rawPayloadCorrelationVerified": true,
+        "eligibleForMeasurement": false
+      }
+    ]
+  },
+  "remediationSource": "b7607fa9c2195e3fb90db23c15b120aada31a1c8",
+  "remediationIndependentPending": true,
+  "primaryModelTrajectories": 0,
+  "independentScoringCalls": 0,
+  "R02Complete": false,
+  "intermediateRemediationIndependent": {
+    "ref": "7f81f209d13bd849de6ad7ae861114c810234df0",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 2.129,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "a3eee76b57558f2553ba7cae2300e422139227374cc7f0085a4663f08701a959"
+      },
+      {
+        "check": "ledger",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.562,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "3e9a03cd8fa0522fd02660e27d39e69328457ac708ff096b9faaf010e454a1d5"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production_canary_review.py": "8a17b615b6daf274836465265172639333916faf19efd772d6e30b9a216ae3c9",
+      "evals/skills/routing/production_canary_rollout.py": "bbad036e409b22b6911befc0a4f337026dbecffffc41bf1da5c7505f9f63f16f",
+      "tests/skills/test_production_canary_review.py": "2db96f5e352b4ad4f304458f3618f859f41a2abc0c037ae4ab0bc1f8f37a466d",
+      "tests/skills/test_production_canary_rollout.py": "28e8fc2da9745c85e684e9e4bb6bdeedd7ef2d9ccf7ae062101e989f33175b63"
+    }
+  },
+  "additionalFindings": {
+    "ref": "7f81f209d13bd849de6ad7ae861114c810234df0",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "modelCalls": 0,
+    "hostEventsRequired": true,
+    "records": [
+      {
+        "name": "normal_no-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "parentHostBodiesVerified": true,
+        "modelContextWindow": 1000,
+        "eligibleForMeasurement": false,
+        "inputsPreserved": true
+      },
+      {
+        "name": "normal_single-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "parentHostBodiesVerified": true,
+        "modelContextWindow": 1000,
+        "eligibleForMeasurement": false,
+        "inputsPreserved": true
+      },
+      {
+        "name": "normal_two-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "parentHostBodiesVerified": true,
+        "modelContextWindow": 1000,
+        "eligibleForMeasurement": false,
+        "inputsPreserved": true
+      },
+      {
+        "name": "normal_exec-wait",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "parentHostBodiesVerified": true,
+        "modelContextWindow": 1000,
+        "eligibleForMeasurement": false,
+        "inputsPreserved": true
+      },
+      {
+        "name": "negative_first_rollout_timestamp",
+        "rejected": true,
+        "reason": "original rollout sequence"
+      },
+      {
+        "name": "native_model_context_window",
+        "rejected": true,
+        "reason": "native usage envelope"
+      },
+      {
+        "name": "null_native_model_context_window",
+        "rejected": true,
+        "reason": "native usage envelope"
+      },
+      {
+        "name": "parent_body_replace",
+        "rejected": true,
+        "reason": "original parent output and complete host bodies"
+      },
+      {
+        "name": "parent_body_extra",
+        "rejected": false,
+        "status": "primary_original_capture_correlated",
+        "parentHostBodiesVerified": true,
+        "eligibleForMeasurement": false
+      }
+    ]
+  }
+}

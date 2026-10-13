@@ -1,0 +1,64 @@
+{
+  "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+  "results": [
+    {
+      "protocol": "plan-protocol.json",
+      "exitCode": 0,
+      "seconds": 0.3741353389341384,
+      "stdoutSha256": "eb2cd5d9dab44c681e29cca334af111c69d398021f274f9c330066e7e1829cfd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "shared-format-protocol.json",
+      "exitCode": 0,
+      "seconds": 0.4150896560167894,
+      "stdoutSha256": "90e2fab99c488718bd322f0ffd12b1ce279cfd8e7beebc58968aa05ad6f51ed7",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "expansion-cases.json",
+      "exitCode": 0,
+      "seconds": 0.7153773010941222,
+      "stdoutSha256": "3eb5831405039599857e544153d8db89c1a2313b016f17b8972697842974ac43",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "normal-cases.json",
+      "exitCode": 0,
+      "seconds": 0.715013614972122,
+      "stdoutSha256": "9549d87765cbd3edb583457fc61a7655fdec1cbd943cc77b16a6fad6f898df04",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "attack-cases.json",
+      "exitCode": 0,
+      "seconds": 0.41191201307810843,
+      "stdoutSha256": "8e62ec3fd6a429554c85b779ae95b75f4bb3a57247f31a5f93b608618f564ec4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "newModelsStarted": 0,
+  "cleanAfter": true,
+  "certifiesSkillGate": false,
+  "status": "public_seven_cases_preflight_passed_independent_pending",
+  "filesSha256": {
+    "expansion-cases-command.json": "b76e00a0b33979aae1982b78a62d54840714b01f5ef8e042aa998438e0b51d92",
+    "normal-cases-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "plan-protocol-command.json": "067419d0cffd8c660449bfb7301d7827864d0ae56b6d9f9a5aaba48e60ad36f4",
+    "shared-format-protocol-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-cases-stdout": "9549d87765cbd3edb583457fc61a7655fdec1cbd943cc77b16a6fad6f898df04",
+    "shared-format-protocol-stdout": "90e2fab99c488718bd322f0ffd12b1ce279cfd8e7beebc58968aa05ad6f51ed7",
+    "attack-cases-stdout": "8e62ec3fd6a429554c85b779ae95b75f4bb3a57247f31a5f93b608618f564ec4",
+    "plan-protocol-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "plan-protocol-stdout": "eb2cd5d9dab44c681e29cca334af111c69d398021f274f9c330066e7e1829cfd",
+    "summary.json": "1385142845c366a8d41cc5c0e7eb70703b74b170e0d056e4f35c5d354abae8b0",
+    "attack-cases-command.json": "16a35dbdd26ee16dd53899efc4f675e4ca6d567475b061cd8148eed566062e83",
+    "attack-cases-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "expansion-cases-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-cases-command.json": "c652c0ede548f0c12f286bf5f5f3cb745f3b436eb2fd05f078c7dc4e68617887",
+    "shared-format-protocol-command.json": "5d960450363400ba7fbdc15592992cbeb83d887bb21f0d54a4db73c9c95c7840",
+    "expansion-cases-stdout": "3eb5831405039599857e544153d8db89c1a2313b016f17b8972697842974ac43"
+  },
+  "originalRelativeRoot": ".venv/development-review-20261011/.venv/r06-public-preparation-a697",
+  "caseCount": 7
+}

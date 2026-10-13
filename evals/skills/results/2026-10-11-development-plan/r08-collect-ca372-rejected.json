@@ -1,0 +1,35 @@
+{
+  "status": "candidate_collect_rejected_minimum_environment_id",
+  "sourceCommit": "ca372f676c414ef56af6fdae57c68be03b665bc0",
+  "formalReport": {
+    "commit": "ca372f676c414ef56af6fdae57c68be03b665bc0",
+    "errors": [
+      "`environmentId`が環境のロールの規定値と一致しません"
+    ],
+    "gateC": "Failed",
+    "gateCFoundation": "Failed",
+    "gateCPerformance": "Failed",
+    "gateCPriorityClosure": "Failed",
+    "schemaVersion": 1
+  },
+  "filesSha256": {
+    "command-2-stdout": "053979ed245e2e13ef8634723d0d7a5f9b019ce54bfdd00131f54c8e0a5ae417",
+    "command-1-stderr": "beb99be1ca54c11984687ac7e46b35ad467340e5f1160abde8c2493b19456bb5",
+    "runner.py": "6faedabdfa7792bf807e51a48db1b2a43bc274059d9d0af29838d73e00881902",
+    "command-1-stdout": "9aa3630337bd57d9312c4646e76ad76551b70cf0ddd2307537454da4bfa180d3",
+    "command-2-stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command-1.json": "187eb31d452d92a55779c50c566dc284907ce9ca4e21eb29ff7210fbaac94d4c",
+    "command-2.json": "dd43fe9f3802efef48e9e9c86e04f80ddb5437ccbe4912753330d2d7ff3b5684",
+    "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary.json": "d4b9206bc3995c4404858c4b8e8eacec267543463862f3b3ae7554de955602c5",
+    "gate-c.json": "6a4875c5a8295906459098071ba058621a362e4bada3bb7e7a0815725f6c5733",
+    "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command.json": "f29a72722a719a9c2be58b2dfdb556c930b04d467db62876502b201cc4f24201"
+  },
+  "performanceAuditPassed": true,
+  "priorityClosureAuditPassed": true,
+  "originalRowsPreserved": true,
+  "correctMinimumEnvironmentId": "minimum-cpython-3-12",
+  "rerunSourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+  "certifiesGateC": false
+}

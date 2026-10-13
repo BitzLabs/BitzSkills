@@ -1,0 +1,17 @@
+{
+  "status": "old_source_local_plan_passed_then_source_change_rejected_preserved",
+  "sourceCommit": "6cf15b8dee715e392bf4590534305032102f1207",
+  "reportSha256": "68cf9194065696d86dcf1c6c232eca82f350ff3f92f1ed2a533c8ac628a5ff3c",
+  "inventorySha256": "1d4f9115fdef791c8d360550f66297671d6c7c6cdf158906c1dbfc2405e01f38",
+  "parentRehashedCounts": {
+    "originalHashes": 16,
+    "sourceGitHashes": 6,
+    "evidenceHashes": 31
+  },
+  "oldLocalPlanSeconds": 9.849,
+  "remainingBindingProbe": "HEAD change from6cf to ea rejected before capture/synthetic construction",
+  "newSourceStartCertified": false,
+  "models": 0,
+  "reservations": 0,
+  "originalReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-local-prelaunch-independent/report.json"
+}

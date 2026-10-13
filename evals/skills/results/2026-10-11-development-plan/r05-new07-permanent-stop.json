@@ -1,0 +1,25 @@
+{
+  "certifiesSkillGate": false,
+  "ledgerAfterSha256": "151ce979fb089d66c1f42a9f2ce941de02d6380e699996149a2ea1632da3b46a",
+  "ledgerBeforeSha256": "039dca975cd0607e5687917ce89288e0769f6c4b5f728cc53f9891dc78b528e0",
+  "modelsStartedByStopProof": 0,
+  "newReservationsByStopProof": 0,
+  "parentVerified": 16,
+  "primaryConsumed": 17,
+  "rejection": "失敗・中断済み測定を自動再開しません",
+  "seconds": 9.639324430958368,
+  "semanticConsumed": 16,
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "status": "permanent_stop_saved_before_next_reservation_or_model",
+  "stop": {
+    "errorType": "ValueError",
+    "independentReceiptSha256": null,
+    "reason": "previous-evidence-or-review-rejected",
+    "runSha256": "a4e5c7dd6654f4278931dc21a93ccaa5cc9fbf67ed17b0638e4da69cfe7dfeeb",
+    "slot": {
+      "caseId": "SI-009",
+      "repetition": 1,
+      "variant": "skill"
+    }
+  }
+}
