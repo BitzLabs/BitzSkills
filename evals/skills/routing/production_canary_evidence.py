@@ -56,15 +56,24 @@ def artifact_name(name):
 
 def artifact_inventory(base, declared, *, additional_artifacts=frozenset()):
     """全パスを検査してから内容を読む。opaqueディレクトリには降りない。"""
+    require(isinstance(additional_artifacts,frozenset) and all(isinstance(name,str) and
+        re.fullmatch(r'[a-z][a-z0-9-]*\.json',name) for name in additional_artifacts), 'fixed additional original names')
+    require(isinstance(declared, dict) and FIXED_ARTIFACTS | additional_artifacts <= set(declared), 'required original artifacts')
+    for name, digest in declared.items():
+        if name not in additional_artifacts:artifact_name(name)
+        ledger.pin(digest)
+    actual = artifact_names(base, additional_artifacts=additional_artifacts)
+    require(set(actual) == set(declared), 'original artifact inventory drift')
+    return actual
+
+
+def artifact_names(base, *, additional_artifacts=frozenset()):
+    """取得後の有限な公開原名をFDから発見する。内容は読まずopaqueには降りない。"""
     # callerがコードで固定した追加の公開原名だけを許可する。receiptから許可集合を作らない。
     require(isinstance(additional_artifacts,frozenset) and all(isinstance(name,str) and
         re.fullmatch(r'[a-z][a-z0-9-]*\.json',name) for name in additional_artifacts), 'fixed additional original names')
     def allowed(name):
         if name not in additional_artifacts:artifact_name(name)
-    require(isinstance(declared, dict) and FIXED_ARTIFACTS | additional_artifacts <= set(declared), 'required original artifacts')
-    for name, digest in declared.items():
-        allowed(name)
-        ledger.pin(digest)
     def metadata(fd,name):
         value=os.stat(name,dir_fd=fd,follow_symlinks=False)
         require(not stat.S_ISLNK(value.st_mode),'original artifact symlink')
@@ -110,7 +119,7 @@ def artifact_inventory(base, declared, *, additional_artifacts=frozenset()):
                     require({prefix+'manifest.json',prefix+'trace.jsonl'}<=actual and
                         any(n.startswith(prefix+'payloads/') for n in actual),'incomplete original rollout')
             else:allowed(child);regular(value);actual.add(child)
-    require(actual == set(declared), 'original artifact inventory drift')
+    require(FIXED_ARTIFACTS | additional_artifacts <= actual, 'required original artifacts')
     return sorted(actual)
 
 
