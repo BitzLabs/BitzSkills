@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-035-02",
+  "description": "ルートの`doctor --workspace web`が、メンバーを診断して`workspace.path`を`apps/web`にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--workspace",
+      "web",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

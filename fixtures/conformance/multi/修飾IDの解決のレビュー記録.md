@@ -505,3 +505,85 @@ Coreの出力文言の意味の食い違い（同じ条件IDの診断の文型�
 
 - 対象: `MULTI-027-01`、`MULTI-027-02`
 - 訂正の内容: `CTX-RELATION-TYPE-001`の`summary`を「TECHから状態proposedのADRへの関係型requiresは許可されません」にした（承認されていないADRへの`requires`にだけ、参照先のADRの状態を添える）。
+
+## 2026-10-13追記: `MULTI-034-01`〜`05`（複合ワークスペースの中の`verify`が作業ワークスペースを決める）
+
+### 追加の理由（実装の確認事項C24）
+
+複合ワークスペース仕様 §3は、作業ワークスペースを修飾IDの所有者、`--workspace`、最寄りの設定の順で決めると定める。`check`と`context`は`MULTI-029-01`〜`03`、`MULTI-031-01`〜`02`で固定したが、
+`verify`は修飾した位置引数（`MULTI-002-02`、`MULTI-025-02`、`MULTI-028`）と`--all-workspaces`（`MULTI-012`〜`016`）しか固定しておらず、
+**修飾IDのない位置引数、`--workspace`、引数なし**の`verify`は、どのfixtureも押さえていなかった。この3つが単一ワークスペースの経路に落ちると、
+修飾した関係を統合索引で解決できず検証対象が遮断され、引数なしでは他のワークスペースの文書まで対象になる。そこで、5件を加える。
+
+### 根拠の規範文
+
+- 複合ワークスペース仕様 §3: 最寄りの`.spec/bitz.yaml`のワークスペースが作業ワークスペースになる（2・3）。`--workspace <id>`は、ルートまたはメンバーのIDで作業ワークスペースを置き換える（5）。
+  修飾IDを起点にする場合はその所有ワークスペースを選択する。
+- 複合ワークスペース仕様 §4: 複合ワークスペース内で実行した操作の`targets`、`statements`、`covers`は、メンバーの単独操作を含めて修飾形式で返す。非修飾IDを別のワークスペースから探索しない。
+  同じローカルIDを別のワークスペースが持つことは許可する。
+- `verify` §2: 複合ワークスペースでは、作業ワークスペースまたは`--workspace`で選択したワークスペースの非修飾IDを受け付ける。明示対象は`scope: selected`、引数なしは`scope: all`。
+- `verify` §3・§4・§7: 規範文のないTECHは文書単位の`tests`を使う。REQは所有する規範文と具体化文書を対象にする。引数なしの対象は、`approved`のREQ、規範文を持つ`approved`のTECH、
+  規範文を持たず`tests`を宣言する`approved`のTECHである。対象ごとに目的`verify`のコンテキストを解決し、通過した対象のテスト割当てを実行する。
+- `verify` §8: 単独結果の`workspace`は実際のワークスペースIDとリポジトリのルートからの相対パス。`commands[]`はテスト割当てを所有するワークスペースの`workspaceId`と`bindingId: <workspace-id>::<command-name>`を持つ。
+- コンテキストのハッシュ値の正規化仕様 §3: 材料は、起点ワークスペース、閉包の文書、到達ワークスペースの設定とコマンドの射影である。
+
+### 入力と起動
+
+5件は同じ入力を共有する。カタログの形は`MULTI-029-01`と同じ（ルート`platform`、メンバー`web`（`apps/web`）、`api`（`services/api`））で、変更集合はない。
+
+| 文書 | 内容 |
+|---|---|
+| `platform`のREQ-001 | `approved`。規範文`AC-01`（`MUST`）1件。関係なし |
+| `web`のTECH-010 | `approved`。規範文なし。`platform::REQ-001:AC-01`を`refines`し、コマンド`frontend`でテスト`tests/auth/test_login.py`が`platform::REQ-001:AC-01`をカバーする |
+| `api`のTECH-010 | `approved`。`web`と同じローカルID。規範文なし。関係なし。コマンド`backend`でテスト`tests/test_audit.py`が`TECH-010`をカバーする（文書単位のテスト対応） |
+
+3つのワークスペースは、どれも引数なしの`verify`の対象を1件ずつ持つ（ルートはREQ-001、`web`と`api`はTECH-010）。コマンドは`/bin/true {tests}`で、すべて成功する。
+
+| fixture | 実行ディレクトリ | 引数 | 作業ワークスペース |
+|---|---|---|---|
+| `MULTI-034-01` | `apps/web` | `verify TECH-010` | 最寄りの設定の`web` |
+| `MULTI-034-02` | `.` | `verify TECH-010 --workspace web` | `--workspace`の`web`（最寄りの設定のルートを置き換える） |
+| `MULTI-034-03` | `.` | `verify --workspace web` | `web` |
+| `MULTI-034-04` | `.` | `verify` | 最寄りの設定のルート`platform` |
+| `MULTI-034-05` | `apps/web` | `verify` | 最寄りの設定の`web` |
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+1. 作業ワークスペース: `MULTI-034-01`と`05`は最寄りの設定の`web`、`02`と`03`は`--workspace web`が実行ディレクトリ（ルート）の最寄りの設定を置き換えて`web`、`04`は最寄りの設定の`platform`（§3）。
+   結果の`workspace`は`web`が`{id: web, path: apps/web}`、`platform`が`{id: platform, path: .}`。
+2. `scope`: 明示対象（`TECH-010`）は`selected`（`01`、`02`）、引数なし（`03`、`04`、`05`）は`all`（`verify` §2）。
+3. 検証対象: `01`と`02`は非修飾の`TECH-010`を作業ワークスペース`web`で解決して`web::TECH-010`（`api::TECH-010`ではない）。`03`と`05`の既定の対象は`web`の対象で、`web::TECH-010`の1件。
+   `04`の既定の対象はルートの`approved`のREQで、`platform::REQ-001`の1件。他のワークスペースの文書（`04`なら`web::TECH-010`と`api::TECH-010`）は対象に加えない（§7）。
+4. `web::TECH-010`（`01`、`02`、`03`、`05`）: 規範文を持たないので`statements: []`、自身の`tests`の宣言（`covers`は`platform::REQ-001:AC-01`）から`bindingRefs`は`["web::frontend"]`、
+   `platform::REQ-001`は強い関係の閉包（`refines`）で到達する。状態は`passed`（コンテキストは完全に解決し、コマンドは終了コード0）。
+5. `platform::REQ-001`（`04`）: 規範文`platform::REQ-001:AC-01`（`MUST`）を`web::TECH-010`のテスト対応が直接カバーするので、未テストの`MUST`はなく、`bindingRefs`は`["web::frontend"]`、状態は`passed`。
+   修飾した関係（`web::TECH-010`から`platform::REQ-001:AC-01`への`refines`）は統合索引で解決する。
+6. `commands[]`: 5件とも`web::frontend`の1件（所有ワークスペース`web`）。`tests`は`tests/auth/test_login.py`（`web`のルート相対）、`covers`は`["platform::REQ-001:AC-01"]`、`argv`は`["/bin/true", "tests/auth/test_login.py"]`、
+   `cwd`は`.`（`verify` §5・§8）。`api`のテスト割当て`api::backend`は実行しない。
+7. 状態は`passed`、終了コード0、診断は0件、`revision.dirty`は`false`。
+8. `contextDigest`は、独立に書いた2系統の参照計算で同じバイト列になることを要求する。A（`multi_verify_fixtures.reviewed_digest_input`。`MULTI-013`のレビュー済みの材料）は材料をリテラルで書き、
+   B（`multi_crosscheck.build`）は入力の木構造から導く。`web::TECH-010`の材料は起点ワークスペース`web`、閉包の文書`platform::REQ-001`と`web::TECH-010`、到達ワークスペース`web`と`platform`、`web`のコマンド`frontend`である。
+   `platform::REQ-001`の材料は起点ワークスペース`platform`である。`api`の設定と文書は材料へ入らない（正規化仕様 §3）。
+
+監査は、`multi_active_workspace_fixtures.reference_verify`が入力の木構造（カタログ、設定、文書）から、作業ワークスペース（`select_workspace`）、検証対象（明示対象の修飾、または`default_targets`）、規範文、
+`bindingRefs`、`commands[]`（`tests`の重複排除と`{tests}`の展開を含む）、ハッシュ値、状態を導き、リテラルの期待値と照合する。原因の構成（3つのワークスペースが既定の対象を1件ずつ持つ、
+`web`と`api`が同じローカルID `TECH-010`を持つ、すべて`approved`、`api`の文書とルートのREQ-001が関係を宣言しない、作業ワークスペースを取り違えると検証対象が変わる）は、
+`check_conditions`が入力の木構造から確かめる。
+
+### 監査の検査と回帰試験
+
+`test_conformance_audit.py`の回帰試験は、`workspace`の改変（ID、パス、別のメンバー）、`scope`の取り違え、状態・`revision.dirty`・診断の改変、検証対象の取り違え（非修飾、`api::TECH-010`、`platform::REQ-001`）と
+追加（**他のワークスペースの文書の既定の対象への混入**）、`statements`・`bindingRefs`・`contextDigest`の改変、`commands[]`の欠落・追加・`bindingId`・`tests`・`covers`・`argv`の改変、
+マニフェストの改変（`--workspace`の削除と値の変更、位置引数の削除と変更、実行ディレクトリの変更、状態・終了コードの変更、準備手順の追加）、入力の改変（状態の変更、`tests`の削除、関係の追加、ローカルIDの不一致、文書・テスト・設定の欠落、余分なファイル）を拒否する。
+参照計算が、ルートで`--workspace`も修飾もない`TECH-010`を拒否することと、既定の対象が作業ワークスペースの文書だけであることも、入力の木構造から確かめる。
+
+### 固定しない範囲
+
+- 修飾した位置引数（`verify web::TECH-010`）と、`--workspace`と修飾IDの組合せ（一致する場合と食い違う場合）は扱わない（修飾した位置引数は`MULTI-002-02`、`MULTI-025-02`、`MULTI-028`が固定する）。
+- 位置引数がパスの場合、複数の位置引数、`--workspace`がルートの場合の`verify`（`--workspace platform`）は扱わない。未知の`--workspace`の終了コード4は`MULTI-005`が固定する。
+- 状態が`passed`以外の結果（未テストの`MUST`、コマンドの失敗、依存の遮断、対象0件）は扱わない。`MULTI-012`〜`016`が`--all-workspaces`で固定する。この群は、修飾IDのない`verify`が遮断されず、通ることだけを固定する。
+- `api`のTECH-010が`approved`の既定の対象になることは入力で保証するが、`api`を作業ワークスペースにする場合（`--workspace api`など）は結果に固定しない。
+- `contextDigest`の値の根拠は、正規化仕様 §3と、参照計算A・Bの一致である。`durationMs`と`stdoutExcerpt`などの時間と出力は、`MULTI-013`と同じ値（0、空）に正規化される。
+- 修正前のCore（コミット`0cf697eb`の`plugins/bitz-core`を作業ツリーの外へ取り出した写し）は、5件とも失敗する（陰性対照）。`MULTI-034-01`と`05`は`workspace.path`が`.`、`target`が非修飾の`TECH-010`、
+  `contextDigest`が`null`、状態`failed`／終了コード1、`MULTI-034-04`は状態`blocked`／終了コード2、`MULTI-034-02`と`03`は`--workspace`を解釈できず標準出力がJSONではない。
+  修正後のCoreは5件とも通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。

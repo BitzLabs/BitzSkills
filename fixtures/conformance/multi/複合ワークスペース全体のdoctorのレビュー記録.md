@@ -128,3 +128,47 @@ Gitでコミット済み（`baseCommit`は全体）で、リポジトリのル�
 
 修正前のCore（コミット`f5de9a43`）のコピーでは、診断が`SPEC-EARS-VERSION-001`（`suggestedAction`なし）で失敗する（検証の結果は報告に記す）。
 カタログの検査項目を置く修正の直前のCore（コミット`bff2f546`の`multiws.py`）のコピーでは、`$/checks: 期待=length=3 実際=length=2`で失敗する。
+
+## 2026-10-13追記: 複合ワークスペース内の`doctor --workspace`と`workspace.path`（`MULTI-035-01`〜`03`）
+
+### 追加の理由（実装の確認事項C38）
+
+複合ワークスペース仕様 §3の5.は、`--workspace <id>`がカタログ内のルートまたはメンバーのIDで作業ワークスペースを置き換えると定める。結果・診断・終了コード §2は、複合ワークスペース内のワークスペース単独操作が
+実際のワークスペースIDとリポジトリのルートからの相対パスを返すと定める。既存の`doctor`のfixtureは、全体操作（`--all-workspaces`、`MULTI-019`、`MULTI-026-01`〜`02`、`MULTI-032`、`MULTI-033`）と、
+単一ワークスペース（`SINGLE-*`）だけで、複合ワークスペース内の単独の`doctor`（`--workspace`の有無にかかわらず）を押さえていなかった。そこで、次の3件を加える。
+
+| fixture | 実行ディレクトリ | 引数 | `workspace` |
+|---|---|---|---|
+| `MULTI-035-01` | `apps/web` | `doctor --workspace platform` | `platform`、パスは`.`（メンバーの中からルートへ切り替える） |
+| `MULTI-035-02` | `.` | `doctor --workspace web` | `web`、パスは`apps/web` |
+| `MULTI-035-03` | `apps/web` | `doctor` | `web`、パスは`apps/web`（`--workspace`なしは最寄りの設定のメンバー） |
+
+### 根拠の規範文
+
+- 複合ワークスペース仕様 §3: 最寄りの設定のワークスペースが作業ワークスペースになる（2・3）。`--workspace <id>`は作業ワークスペースを置き換える（5）。
+- `doctor` §2・§3: `--workspace`は指定したワークスペースを診断する。検査順序の表は、検査6を「複合ワークスペースのカタログ、メンバー、パスの所有」とする。
+  複合ワークスペースの中の単独の`doctor`は、全体事前検査が成功したときに、`config`の後、`schema`の前に検査項目`catalog`を置く（ユーザーの決定D4。単一ワークスペースの`doctor`は置かない）。
+- `doctor` §7: 単独結果の`workspace`は`id`と`path`を持つ。結果・診断・終了コード §2: 複合ワークスペース内のワークスペース単独操作は、実際のワークスペースIDとリポジトリのルートからの相対パスを返す。
+  ルートワークスペースのパスは`.`。
+
+### 入力と期待値の導き方（Coreの出力を根拠にしない）
+
+入力は3件で共通である。ルート`platform`のカタログ（メンバー`web`（`apps/web`）、`api`（`services/api`））と、メンバー2件の設定の3ファイルだけで、仕様文書とコマンドは置かない。Gitでコミット済み（`baseCommit`は全体）。
+
+1. `workspace`: `01`は`--workspace platform`が最寄りの設定の`web`を置き換えて`{id: platform, path: .}`、`02`は`--workspace web`がルートの最寄りの設定を置き換えて`{id: web, path: apps/web}`、
+   `03`は`--workspace`なしの最寄りの設定の`web`で`{id: web, path: apps/web}`。`path`はカタログのパス（リポジトリのルートからの相対）で、実行ディレクトリの相対パスや`.`ではない。
+2. 検査項目: すべて通る構成（Python 3.12以上、設定が存在して適合、カタログとメンバーのパスが正しい、スキーマとEARS-AIのメジャーバージョンが1、Gitが利用でき、コマンドがない）なので、
+   `core`、`workspace`、`config`、`catalog`、`schema`、`ears`、`git`、`command`は`passed`、影響候補の件数の`impact`は`info`（`doctor` §3）。順序は`doctor` §3の検査順序の表の順（9項目）。
+   単一ワークスペースの`SINGLE-001`は`catalog`を置かない8項目である。診断は0件、状態は`passed`、終了コード0。
+3. `core`は`version: 1.0.0`、`apiVersion: 1.0`、5つの対応機能（`doctor` §4、`SINGLE-001`と同じ）。
+
+`multi_active_workspace_fixtures.reference_doctor`は、入力の木構造から作業ワークスペース（`select_workspace`）、そのパス、検査項目の状態（設定のメジャーバージョン、コマンドの実行ファイルの解決）を導き、
+リテラルの期待値と照合する。`--workspace`が最寄りの設定と異なる（`01`、`02`）ことは`check_conditions`が確かめる。
+
+### 固定しない範囲
+
+- コマンドの実行ファイルまたは`cwd`の不在（`SPEC-DOCTOR-COMMAND-001`）、設定やバージョンの不適合は扱わない。診断を返さない構成だけで、作業ワークスペースの同一性（`id`と`path`）を固定する。
+- 全体事前検査が失敗する複合ワークスペースでの単独の`doctor`（実装の確認事項C27）、`--workspace`が未知のIDの場合（`MULTI-005`の終了コード4）、`--workspace`と`--all-workspaces`の併用は扱わない。
+- ルートの中から`--workspace platform`（最寄りの設定と同じ）と、メンバーからメンバー（`web`から`api`）の指定は扱わない。
+- 修正前のCore（コミット`0cf697eb`の`plugins/bitz-core`を作業ツリーの外へ取り出した写し）は、`MULTI-035-01`と`02`は`--workspace`を受け付けず標準出力がJSONではなく、`MULTI-035-03`は`workspace.path`が`.`で失敗する（陰性対照）。
+  修正後のCoreは3件とも通る。Coreの出力は期待値を決めた後に、一致を確かめるためだけに使った。
