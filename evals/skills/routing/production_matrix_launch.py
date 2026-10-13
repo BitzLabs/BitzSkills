@@ -7,6 +7,7 @@ import production_matrix_preflight as preflight
 io = preflight.io
 require = preflight.require
 PROBE_VERSION = 'public-matrix-local-isolation-0.1.0'
+CALIBRATION_VERSION = 'public-matrix-local-calibration-0.1.0'
 
 
 def probe_layout(source_repository, output_relative_root):
@@ -27,7 +28,8 @@ def launch_settings(execution_raw, deployment_raw):
     return raw
 
 
-def local_namespace_command(source_repository, base, execution_raw, deployment_raw):
+def local_namespace_command(source_repository, base, execution_raw, deployment_raw, *, calibration_only=False):
+    require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
     d = preflight.deployment_for_execution(execution_raw, deployment_raw)
     require(source_repository.is_absolute() and base.is_absolute() and '..' not in source_repository.parts
             and '..' not in base.parts, 'matrix absolute namespace paths')
@@ -44,13 +46,17 @@ def local_namespace_command(source_repository, base, execution_raw, deployment_r
         *(source_repository/name for name in preflight.SOURCE_FILES if name.endswith('.py'))]
     for path in paths:
         args += ['--ro-bind', str(path), str(path)]
-    return args + ['--bind', str(base), str(base), '--chdir', str(base/'work'), '--', '/usr/bin/python3', '-B',
+    return (args + ['--bind', str(base), str(base), '--chdir', str(base/'work'), '--', '/usr/bin/python3', '-B',
         str(source_repository/'evals/skills/routing/production_matrix_context_probe.py'), '--isolated', str(base)]
+        + (['--calibration'] if calibration_only else []))
 
 
-def local_environment(base, deployment):
-    return dict(PATH=str(Path(deployment['codexPath']).parents[1]/'bin')+':/usr/bin:/bin',
+def local_environment(base, deployment, *, calibration_only=False):
+    require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
+    result = dict(PATH=str(Path(deployment['codexPath']).parents[1]/'bin')+':/usr/bin:/bin',
         LANG='C.UTF-8', HOME='/home/hide', CODEX_HOME=str(base/'codex-home'), PYTHONDONTWRITEBYTECODE='1',
         TMPDIR=str(base/'tmp'), LOG_FORMAT='json',
         RUST_LOG='codex_otel.trace_safe=info,codex_code_mode::timing=info',
         CODEX_ROLLOUT_TRACE_ROOT=str(base/'rollout-traces'))
+    if calibration_only:result['TZ']='Asia/Tokyo'
+    return result

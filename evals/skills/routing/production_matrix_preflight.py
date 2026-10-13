@@ -171,6 +171,15 @@ def public_resource_names(repository, source):
 
 
 def verify_resources(repository, bound, deployment_raw, sdk_manifest_raw):
+    return _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, calibration_only=False)
+
+
+def verify_calibration_resources(repository, bound, deployment_raw, sdk_manifest_raw):
+    """過去profileを参照する局所校正専用。通常実測の当日条件を緩めない。"""
+    return _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, calibration_only=True)
+
+
+def _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, *, calibration_only):
     require(isinstance(repository, Path) and repository.is_absolute() and '..' not in repository.parts,
             'matrix absolute repository required')
     io.safe_tree(repository)
@@ -189,8 +198,11 @@ def verify_resources(repository, bound, deployment_raw, sdk_manifest_raw):
     require(io.sha(schema_raw) == bound.contract['pins']['decisionSchema'], 'matrix canonical Schema pin')
     context_raw = originals[inventory.CONTEXT]
     context = capture.context_profile(context_raw, d)
-    require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
-            'matrix calibrated context date differs')
+    today = datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat()
+    if calibration_only:
+        require(context['date'] <= today, 'matrix reference context date is in future')
+    else:
+        require(context['date'] == today, 'matrix calibrated context date differs')
     runtime_raw = originals[capture.fixed_runtime.MANIFEST]
     specification = capture.fixed_runtime.specification(runtime_raw, d)
     require(specification['files'][capture.fixed_runtime.VENDOR+'bin/codex'] == bound.contract['pins']['cli'],
@@ -214,7 +226,7 @@ def verify_resources(repository, bound, deployment_raw, sdk_manifest_raw):
     require({name: io.sha(raw) for name, raw in dependencies.items()} == sdk_files, 'matrix SDK bytes drift')
     runtime = capture.fixed_runtime.verify(runtime_raw, d)
     calibration = capture.calibration.verify(repository, originals[capture.calibration.MANIFEST], context, d)
-    return dict(status='matrix_deployment_resources_verified_launch_not_enabled', sourceCommit=source,
+    result = dict(status='matrix_deployment_resources_verified_launch_not_enabled', sourceCommit=source,
         executionSha256=io.sha(bound.execution_raw), deploymentSha256=io.sha(deployment_raw),
         sourceSha256={name: io.sha(raw) for name, raw in originals.items()},
         sdkManifestSha256=io.sha(sdk_manifest_raw), sdkTreeSha256=d['sdkTreeSha256'], sdkFileCount=len(sdk_files),
@@ -224,3 +236,7 @@ def verify_resources(repository, bound, deployment_raw, sdk_manifest_raw):
         oldCanaryBudgetReused=False, physicalMatrixIsolationAndArgvTested=False,
         independentPrelaunchReviewPerformed=False, primaryModelTrajectories=0, realReservations=0,
         launchEnabled=False, eligibleForMeasurement=False, certifiesSkillGate=False, certifiesRelease=False)
+    if calibration_only:
+        result.update(status='matrix_local_calibration_resources_verified_launch_not_enabled',
+            calibrationOnly=True, referenceContextDate=context['date'], calibrationDate=today)
+    return result

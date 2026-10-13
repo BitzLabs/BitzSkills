@@ -1,5 +1,6 @@
 """局所隔離argvとSDK原の差替えを合成で検査。外部モデル・実予約0。"""
 import copy
+from datetime import date, timedelta
 import json
 from pathlib import Path
 import sys
@@ -71,6 +72,81 @@ class MatrixContextProbeTests(unittest.TestCase):
         result=self.verify();self.assertEqual(result['localHttpRequests'],1);self.assertEqual(result['rawNotificationCount'],5)
         self.assertEqual(result['realReservations'],0);self.assertEqual(result['paidModelCalls'],0)
         self.assertFalse(result['launchEnabled']);self.assertFalse(result['eligibleForMeasurement'])
+
+    def calibrate(self, *, update_request=True):
+        reference=json.loads(self.context_raw)['date'];self.calibration_date=(date.fromisoformat(reference)+timedelta(days=1)).isoformat()
+        self.resource_proof_raw=probe.io.encoded(dict(status='matrix_local_calibration_resources_verified_launch_not_enabled',
+            calibrationOnly=True,calibrationDate=self.calibration_date,referenceContextDate=reference,
+            contextProfileSha256=probe.io.sha(self.context_raw),launchEnabled=False,eligibleForMeasurement=False))
+        self.originals['resource-preflight.json']=self.resource_proof_raw
+        invocation=json.loads(self.originals['invocation.json'])
+        invocation.update(version=probe.launch.CALIBRATION_VERSION,calibrationDate=self.calibration_date,
+            argv=probe.launch.local_namespace_command(self.repository,self.base,self.bound.execution_raw,self.deployment_raw,calibration_only=True),
+            environment=probe.launch.local_environment(self.base,self.resource.deployment,calibration_only=True))
+        self.originals['invocation.json']=probe.io.encoded(invocation)
+        if update_request:
+            request=json.loads(self.originals['request-1.json'])
+            request['input'][3]['content'][0]['text']=probe.sdk_trace._diagnostic_environment(str(self.base/'work'),self.calibration_date,{self.calibration_date})
+            self.originals['request-1.json']=probe.io.encoded(request)
+            frames=probe.primary.json_lines(self.originals['rpc-out.jsonl'])
+            raw=[f for f in frames if f.get('method') in probe.sdk_trace.RAW_METHODS]
+            raw[1]['params']['item']=copy.deepcopy(request['input'][3])
+            self.originals['rpc-out.jsonl']=b''.join(probe.io.encoded(f)+b'\n' for f in frames)
+
+    def verify_calibration(self):
+        return probe.verify_originals(self.originals,execution_raw=self.bound.execution_raw,deployment_raw=self.deployment_raw,
+            slot=self.slot,cwd=str(self.base/'work'),source_repository=self.repository,context_raw=self.context_raw,
+            resource_proof_raw=self.resource_proof_raw,calibration_only=True,calibration_date=self.calibration_date)
+
+    def test_local_calibration_verifies_new_sdk_date_without_rewriting_reference_profile(self):
+        original=self.context_raw;self.calibrate();result=self.verify_calibration()
+        self.assertEqual(self.originals['context-profile.json'],original)
+        self.assertEqual(result['calibrationDate'],self.calibration_date)
+        self.assertEqual(result['referenceContextDate'],json.loads(original)['date'])
+        self.assertTrue(result['calibrationOnly']);self.assertFalse(result['launchEnabled']);self.assertFalse(result['eligibleForMeasurement'])
+        self.assertEqual(result['paidModelCalls'],0)
+        with self.assertRaisesRegex(ValueError,'invocation drift'):self.verify()
+
+    def test_calibration_requires_actual_new_sdk_context_and_explicit_mode_date_and_timezone(self):
+        self.calibrate(update_request=False)
+        with self.assertRaises(ValueError):self.verify_calibration()
+        self.calibrate();before=copy.deepcopy(self.originals)
+        for key,value in [('version',probe.launch.PROBE_VERSION),('calibrationDate','1999-01-01'),('environment',{})]:
+            self.originals=copy.deepcopy(before);v=json.loads(self.originals['invocation.json']);v[key]=value
+            self.originals['invocation.json']=probe.io.encoded(v)
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'invocation drift'):self.verify_calibration()
+        self.originals=before;self.calibration_date='not-a-date'
+        with self.assertRaises(ValueError):self.verify_calibration()
+
+    def test_calibration_resource_scope_drift_and_normal_date_override_are_rejected(self):
+        with self.assertRaisesRegex(ValueError,'cannot override'):
+            probe.verify_originals(self.originals,execution_raw=self.bound.execution_raw,deployment_raw=self.deployment_raw,
+                slot=self.slot,cwd=str(self.base/'work'),source_repository=self.repository,context_raw=self.context_raw,
+                resource_proof_raw=self.resource_proof_raw,calibration_date='2026-10-14')
+        self.calibrate();proof=json.loads(self.resource_proof_raw)
+        for key,value in [('calibrationOnly',False),('calibrationDate','1999-01-01'),('referenceContextDate','1999-01-01'),
+                          ('contextProfileSha256','e'*64),('launchEnabled',True),('eligibleForMeasurement',True)]:
+            changed=dict(proof,**{key:value});self.resource_proof_raw=probe.io.encoded(changed)
+            self.originals['resource-preflight.json']=self.resource_proof_raw
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'scope drift'):self.verify_calibration()
+
+    def test_calibration_date_change_before_invocation_retains_inputs_and_prevents_process_start(self):
+        self.calibrate();proof=json.loads(self.resource_proof_raw);next_day=dict(proof,calibrationDate='2099-01-01')
+        common=self.repository/'.venv/ignored-ledger'
+        with patch.object(probe.launch.io,'common_ledger_path',return_value=common),\
+             patch.object(probe.preflight.guard,'git',side_effect=self.resource.git),\
+             patch.object(probe.preflight,'verify_resources',side_effect=AssertionError('normal preflight used')),\
+             patch.object(probe.preflight,'verify_calibration_resources',side_effect=[proof,next_day]) as check,\
+             patch.object(probe.subprocess,'Popen',side_effect=AssertionError('process started')) as process:
+            with self.assertRaisesRegex(ValueError,'pre-invocation drift'):
+                probe.run_calibration_probe(self.repository,self.bound,self.deployment_raw,self.resource.sdk_manifest_raw,
+                    '.venv/matrix-local-isolation-calibration-synthetic')
+        self.assertEqual(check.call_count,2);process.assert_not_called()
+        retained=self.repository/'.venv/matrix-local-isolation-calibration-synthetic'
+        self.assertEqual((retained/'context-profile.json').read_bytes(),self.resource.originals[probe.preflight.inventory.CONTEXT])
+        invocation=json.loads((retained/'invocation.json').read_bytes())
+        self.assertEqual(invocation['calibrationDate'],proof['calibrationDate']);self.assertIn('--calibration',invocation['argv'])
+        self.assertEqual(invocation['environment']['TZ'],'Asia/Tokyo')
 
     def test_namespace_has_network_isolation_and_only_explicit_public_mounts(self):
         value=json.loads(self.originals['invocation.json']);argv=value['argv'];self.assertIn('--unshare-net',argv)

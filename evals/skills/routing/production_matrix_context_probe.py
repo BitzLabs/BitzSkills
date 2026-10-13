@@ -29,7 +29,8 @@ FIXED_FILES = {'contract.json', 'deployment.json', 'sdk-manifest.json', 'reserva
     'isolated-result.json', 'request-1.json', 'namespace.stdout', 'namespace.stderr'}
 
 
-def isolated(base):
+def isolated(base, *, calibration_only=False):
+    require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
     execution_raw = io.read_regular(base/'contract.json')
     c = preflight.matrix.execution_contract(execution_raw)
     deployment_raw = io.read_regular(base/'deployment.json')
@@ -39,6 +40,8 @@ def isolated(base):
     require(not any((ROOT/p).exists() for p in ['.git', '.spec', 'docs', 'tests', 'evals/skills/results']),
             'matrix evaluation tree visible')
     invocation = trace.strict_json(io.read_regular(base/'invocation.json'))
+    require(invocation.get('version') == (launch.CALIBRATION_VERSION if calibration_only else launch.PROBE_VERSION),
+            'matrix child calibration mode drift')
     network_namespace = os.readlink('/proc/self/ns/net')
     require(network_namespace != invocation['parentNetworkNamespace'], 'matrix network namespace not isolated')
     sdk_raw = io.read_regular(base/'sdk-manifest.json');sdk_files = preflight.sdk_manifest(sdk_raw, d)
@@ -100,7 +103,10 @@ def isolated(base):
         paidModelCalls=0,networkNamespace=network_namespace,networkNamespaceIsolated=True,credentialsMounted=False)))
 
 
-def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, source_repository, context_raw, resource_proof_raw):
+def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, source_repository, context_raw, resource_proof_raw,
+                     calibration_only=False, calibration_date=None):
+    require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
+    require(calibration_only or calibration_date is None, 'matrix normal probe cannot override context date')
     require(isinstance(originals, dict) and set(originals) == FIXED_FILES
             and all(isinstance(raw,bytes) for raw in originals.values()), 'matrix local original inventory')
     require(isinstance(resource_proof_raw,bytes) and originals['resource-preflight.json'] == resource_proof_raw,
@@ -125,11 +131,28 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
         'matrix local child incomplete')
     invocation = trace.strict_json(originals['invocation.json'])
     base=Path(cwd).parent
-    require(trace.json_equal(invocation,dict(version=launch.PROBE_VERSION,
-        argv=launch.local_namespace_command(source_repository,base,execution_raw,deployment_raw),
-        environment=launch.local_environment(base,d),sourceCommit=c['sourceCommit'],executionSha256=io.sha(execution_raw),
+    expected_invocation=dict(version=launch.CALIBRATION_VERSION if calibration_only else launch.PROBE_VERSION,
+        argv=launch.local_namespace_command(source_repository,base,execution_raw,deployment_raw,calibration_only=calibration_only),
+        environment=launch.local_environment(base,d,calibration_only=calibration_only),sourceCommit=c['sourceCommit'],executionSha256=io.sha(execution_raw),
         slot=slot,maximumLocalRequests=1,maximumLogicalTurns=1,timeoutSeconds=60,paidModelCalls=0,
-        parentNetworkNamespace=invocation.get('parentNetworkNamespace'))), 'matrix local invocation drift')
+        parentNetworkNamespace=invocation.get('parentNetworkNamespace'))
+    expected_context=trace.strict_json(context_raw)
+    if calibration_only:
+        require(isinstance(calibration_date,str), 'matrix calibration date required')
+        from datetime import date
+        require(date.fromisoformat(calibration_date).isoformat()==calibration_date
+                and expected_context['date']<=calibration_date, 'matrix calibration date shape or reference drift')
+        proof=trace.strict_json(resource_proof_raw)
+        require(proof.get('status')=='matrix_local_calibration_resources_verified_launch_not_enabled'
+            and proof.get('calibrationOnly') is True and proof.get('calibrationDate')==calibration_date
+            and proof.get('referenceContextDate')==expected_context['date']
+            and proof.get('contextProfileSha256')==io.sha(context_raw)
+            and proof.get('launchEnabled') is False and proof.get('eligibleForMeasurement') is False,
+            'matrix calibration resource date or scope drift')
+        expected_invocation['calibrationDate']=calibration_date
+        # 原profileは変更しない。新SDK原のDateだけを独立した当日条件へ照合する。
+        expected_context=dict(expected_context,date=calibration_date)
+    require(trace.json_equal(invocation,expected_invocation), 'matrix local invocation drift')
     require(isinstance(child['networkNamespace'],str) and re_network(child['networkNamespace'])
         and isinstance(invocation['parentNetworkNamespace'],str) and re_network(invocation['parentNetworkNamespace'])
         and child['networkNamespace'] != invocation['parentNetworkNamespace'], 'matrix local network original drift')
@@ -155,7 +178,7 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     turns=[f['params']['turn']['id'] for f in received if f.get('method')=='turn/started'];require(len(turns)==1,'matrix local one turn')
     request=trace.strict_json(originals['request-1.json'])
     rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0],profile='local-calibration')
-    rollout.initial_context(request,sent,trace.strict_json(context_raw),turn=turns[0])
+    rollout.initial_context(request,sent,expected_context,turn=turns[0])
     require([f['method'] for f in raw] == [sdk_trace.RAW_METHODS[0]]*4+[sdk_trace.RAW_METHODS[1]],
             'matrix local complete raw notification inventory')
     for frame,item in zip(raw[:3],request['input'][2:]):
@@ -166,9 +189,13 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
         content=[dict(type='output_text',text=finals[0]['text'])])) and raw[4]['params']['usage'] is None
         and raw[4]['params']['usageMetadata'] is None and raw[4]['params']['responseId']=='matrix-local-response',
         'matrix local original raw final/response')
-    return dict(status='matrix_local_sdk_context_verified',rawNotificationCount=len(raw),primaryModelTrajectories=0,
+    result = dict(status='matrix_local_sdk_context_verified',rawNotificationCount=len(raw),primaryModelTrajectories=0,
         paidModelCalls=0,realReservations=0,localHttpRequests=1,launchEnabled=False,eligibleForMeasurement=False,
         certifiesSkillGate=False,certifiesRelease=False)
+    if calibration_only:
+        result.update(status='matrix_local_sdk_calibration_verified',calibrationOnly=True,
+            calibrationDate=calibration_date,referenceContextDate=trace.strict_json(context_raw)['date'])
+    return result
 
 
 def re_network(value):
@@ -188,7 +215,17 @@ def read_probe_files(base):
 
 
 def run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_relative_root):
-    before=preflight.verify_resources(source_repository,bound,deployment_raw,sdk_manifest_raw)
+    return _run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_relative_root,calibration_only=False)
+
+
+def run_calibration_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_relative_root):
+    """過去固定profileを入力に当日のSDK原を新規取得。実測・予約へ昇格しない。"""
+    return _run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_relative_root,calibration_only=True)
+
+
+def _run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_relative_root,*,calibration_only):
+    check=preflight.verify_calibration_resources if calibration_only else preflight.verify_resources
+    before=check(source_repository,bound,deployment_raw,sdk_manifest_raw)
     d=preflight.deployment(bound,deployment_raw);source=bound.contract['sourceCommit'];slot=bound.slot(1)
     artifact_repository,base=launch.probe_layout(source_repository,output_relative_root)
     io.safe_tree(base);base.mkdir(mode=0o700)
@@ -199,12 +236,15 @@ def run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_rel
         ('reservation.json',io.encoded(slot)),('resource-preflight.json',io.encoded(before)),('model-input.json',bound.matrix.payloads[0]),
         ('decision-schema.json',schema_raw),('context-profile.json',context_raw),('launch-settings.json',launch.launch_settings(bound.execution_raw,deployment_raw))]:
         io.exclusive(base/name,raw)
-    command=launch.local_namespace_command(source_repository,base,bound.execution_raw,deployment_raw)
-    environment=launch.local_environment(base,d)
-    io.exclusive(base/'invocation.json',io.encoded(dict(version=launch.PROBE_VERSION,argv=command,environment=environment,
+    command=launch.local_namespace_command(source_repository,base,bound.execution_raw,deployment_raw,calibration_only=calibration_only)
+    environment=launch.local_environment(base,d,calibration_only=calibration_only)
+    version=launch.CALIBRATION_VERSION if calibration_only else launch.PROBE_VERSION
+    invocation=dict(version=version,argv=command,environment=environment,
         sourceCommit=source,executionSha256=io.sha(bound.execution_raw),slot=slot,maximumLocalRequests=1,maximumLogicalTurns=1,
-        timeoutSeconds=60,paidModelCalls=0,parentNetworkNamespace=os.readlink('/proc/self/ns/net'))))
-    invoke=preflight.verify_resources(source_repository,bound,deployment_raw,sdk_manifest_raw)
+        timeoutSeconds=60,paidModelCalls=0,parentNetworkNamespace=os.readlink('/proc/self/ns/net'))
+    if calibration_only:invocation['calibrationDate']=before['calibrationDate']
+    io.exclusive(base/'invocation.json',io.encoded(invocation))
+    invoke=check(source_repository,bound,deployment_raw,sdk_manifest_raw)
     require(invoke==before,'matrix local pre-invocation drift; output retained')
     start=time.monotonic();process=subprocess.Popen(command,env=environment,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
     timed_out=False
@@ -217,26 +257,31 @@ def run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_rel
     originals,original_errors=read_probe_files(base)
     after=None;verification=None;error=None
     try:
-        after=preflight.verify_resources(source_repository,bound,deployment_raw,sdk_manifest_raw)
+        after=check(source_repository,bound,deployment_raw,sdk_manifest_raw)
         require(before==after and process.returncode==0 and not timed_out,'matrix local process or resource drift')
         require(not original_errors,'matrix local missing or rejected original')
         verification=verify_originals(originals,execution_raw=bound.execution_raw,deployment_raw=deployment_raw,slot=slot,
-            cwd=str(base/'work'),source_repository=source_repository,context_raw=context_raw,resource_proof_raw=io.encoded(before))
+            cwd=str(base/'work'),source_repository=source_repository,context_raw=context_raw,resource_proof_raw=io.encoded(before),
+            calibration_only=calibration_only,calibration_date=before.get('calibrationDate') if calibration_only else None)
     except Exception as exc:error=dict(errorType=type(exc).__name__,message=str(exc))
-    receipt=dict(version=launch.PROBE_VERSION,status='local_isolation_verified' if verification is not None else 'local_isolation_stopped',
+    receipt=dict(version=version,status=('local_calibration_verified' if calibration_only else 'local_isolation_verified')
+        if verification is not None else ('local_calibration_stopped' if calibration_only else 'local_isolation_stopped'),
         sourceCommit=source,executionSha256=io.sha(bound.execution_raw),sourceRepository=str(source_repository),artifactRepository=str(artifact_repository),
         resourceGuards=dict(before=before,invoke=invoke,after=after),namespaceExitCode=process.returncode,timedOut=timed_out,
         elapsedSeconds=time.monotonic()-start,artifactSha256={name:io.sha(raw) for name,raw in originals.items()},originalReadErrors=original_errors,
         verification=verification,error=error,primaryModelTrajectories=0,paidModelCalls=0,realReservations=0,
         automaticRetries=0,launchEnabled=False,eligibleForMeasurement=False,certifiesSkillGate=False,certifiesRelease=False)
+    if calibration_only:receipt.update(calibrationOnly=True,calibrationDate=before['calibrationDate'],referenceContextDate=before['referenceContextDate'])
     io.exclusive(base/'receipt.json',io.encoded(receipt))
     return receipt
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--isolated',type=Path);parser.add_argument('--proxy',type=Path);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--isolated',type=Path);parser.add_argument('--proxy',type=Path)
+    parser.add_argument('--calibration',action='store_true');args=parser.parse_args()
+    if args.calibration and (not args.isolated or args.proxy):parser.error('--calibration requires local --isolated')
     if args.proxy:
         preflight.capture.sdk.proxy(args.proxy,reject_questions=True,reject_actions=True,
             launch_contract_raw=io.read_regular(args.proxy/'launch-settings.json'))
-    elif args.isolated:isolated(args.isolated)
+    elif args.isolated:isolated(args.isolated,calibration_only=args.calibration)
     else:parser.error('local --isolated or --proxy required; no provider launch entry')

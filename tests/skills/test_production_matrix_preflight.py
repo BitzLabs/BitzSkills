@@ -203,6 +203,35 @@ class MatrixPreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'CLI executable pin'):self.verify()
         self.calibration_mock.assert_not_called()
 
+    def test_historical_reference_is_accepted_only_by_separate_local_calibration_entry(self):
+        tomorrow=preflight.datetime.now(preflight.ZoneInfo('Asia/Tokyo'))+timedelta(days=1)
+        reference=preflight.trace.strict_json(self.originals[preflight.inventory.CONTEXT])['date']
+        with patch.object(preflight,'datetime') as clock:
+            clock.now.return_value=tomorrow
+            with self.assertRaisesRegex(ValueError,'date differs'):self.verify()
+            result=preflight.verify_calibration_resources(self.repository,self.bound,preflight.io.encoded(self.deployment),self.sdk_manifest_raw)
+        self.assertEqual(result['referenceContextDate'],reference)
+        self.assertEqual(result['calibrationDate'],tomorrow.date().isoformat())
+        self.assertEqual(result['contextProfileSha256'],preflight.io.sha(self.originals[preflight.inventory.CONTEXT]))
+        self.assertTrue(result['calibrationOnly']);self.assertFalse(result['launchEnabled']);self.assertFalse(result['eligibleForMeasurement'])
+        self.assertEqual(result['realReservations'],0);self.calibration_mock.assert_called_once()
+
+    def test_local_calibration_cannot_skip_resource_drift_or_original_calibration_failure(self):
+        def calibrate():return preflight.verify_calibration_resources(self.repository,self.bound,preflight.io.encoded(self.deployment),self.sdk_manifest_raw)
+        path=self.sdk/'openai_codex/__init__.py';original=path.read_bytes();path.write_bytes(b'changed public sdk')
+        with self.assertRaisesRegex(ValueError,'SDK bytes drift'):calibrate()
+        self.calibration_mock.assert_not_called();path.write_bytes(original)
+        self.calibration_mock.side_effect=ValueError('original calibration rejected')
+        with self.assertRaisesRegex(ValueError,'original calibration rejected'):calibrate()
+
+    def test_future_reference_profile_is_not_accepted_for_local_calibration(self):
+        yesterday=preflight.datetime.now(preflight.ZoneInfo('Asia/Tokyo'))-timedelta(days=1)
+        with patch.object(preflight,'datetime') as clock:
+            clock.now.return_value=yesterday
+            with self.assertRaisesRegex(ValueError,'in future'):
+                preflight.verify_calibration_resources(self.repository,self.bound,preflight.io.encoded(self.deployment),self.sdk_manifest_raw)
+        self.calibration_mock.assert_not_called()
+
     def test_sdk_manifest_unknown_name_or_tree_rehash_cannot_bypass_execution_pin(self):
         original=copy.deepcopy(self.sdk_manifest)
         for name in ['openai_codex/auth.json','openai_codex/../outside.py','other/__init__.py']:
