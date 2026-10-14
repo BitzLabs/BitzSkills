@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T11:55:58.202221+09:00",
+    "updatedAt": "2026-10-14T12:28:33.923417+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "new03_public_completed_prefix_6_correct_5_incorrect_1_missing_86_old_stops_preserved_full_matrix_gate_pending",
+    "r04": "new03_permanent_stop15_unknown_parent_wrapper_primary15_completed14_independent14_parent14_correct9_incorrect5_missing78_new04_condition_remediation_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -579,19 +579,24 @@
       "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
       "campaignId": "public-matrix-routing-20261014-03",
       "conditionSha256": "ec29ab45e3957e76a1022d52aaddee684b86530bc72a642caa6bd5295edaff41",
-      "actualPrimaryReserved": 6,
-      "primaryCompleted": 6,
-      "independentReserved": 6,
-      "parentVerified": 6,
+      "actualPrimaryReserved": 15,
+      "primaryCompleted": 14,
+      "independentReserved": 14,
+      "parentVerified": 14,
       "predecessorStopsPreserved": true,
       "eligibleForMeasurement": false,
       "certifiesSkillGate": false,
-      "progressRecord": "r04-operational-new03-progress-0006-20261014.json",
-      "measuredCorrect": 5,
-      "measuredIncorrect": 1,
-      "missingMeasurements": 86,
+      "progressRecord": "r04-operational-new03-stop15-independent-20261014.json",
+      "measuredCorrect": 9,
+      "measuredIncorrect": 5,
+      "missingMeasurements": 78,
       "firstOrdinalIndependentVerified": true,
-      "fullMatrixGateVerified": false
+      "fullMatrixGateVerified": false,
+      "status": "permanently_stopped",
+      "stopSha256": "b0f03caa933ead8b64dc9b0004bebe2d9164cb5b977508f72609f78d53847aa6",
+      "completed14IndependentVerified": true,
+      "rootCauseClassificationIncomplete": true,
+      "new04Measurements": 0
     }
   }
 }
