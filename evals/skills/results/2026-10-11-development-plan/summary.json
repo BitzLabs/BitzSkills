@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T17:51:00.214732+09:00",
+    "updatedAt": "2026-10-14T18:13:17.207632+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
     "verificationRef": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "new04_completed_8_correct_8_incorrect_0_missing_84_additional_agent_prefix_audit_pending",
+    "r04": "new04_permanent_stop12_independent_cli_http429_primary12_independent_reserved12_parent11_correct10_incorrect1_missing81",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -603,20 +603,24 @@
       "sourceCommit": "25fe8dcd92336dc6268dcb69107c9800739e728e",
       "campaignId": "public-matrix-routing-20261014-04",
       "conditionSha256": "67185143385fea89876febe36152441c27d1f6161f50e6ded31b9017b1a5434a",
-      "actualPrimaryReserved": 8,
-      "primaryCompleted": 8,
-      "independentReserved": 8,
-      "parentVerified": 8,
+      "actualPrimaryReserved": 12,
+      "primaryCompleted": 12,
+      "independentReserved": 12,
+      "parentVerified": 11,
       "predecessorStopsPreserved": true,
       "eligibleForMeasurement": false,
       "certifiesSkillGate": false,
-      "progressRecord": "r04-operational-new04-progress-0008-20261014.json",
-      "measuredCorrect": 8,
-      "measuredIncorrect": 0,
-      "missingMeasurements": 84,
+      "progressRecord": "r04-operational-new04-stop12-independent-20261014.json",
+      "measuredCorrect": 10,
+      "measuredIncorrect": 1,
+      "missingMeasurements": 81,
       "perSlotIndependentCliScoringCompleted": true,
-      "additionalAgentPrefixAuditCompleted": false,
-      "fullMatrixGateVerified": false
+      "additionalAgentPrefixAuditCompleted": true,
+      "fullMatrixGateVerified": false,
+      "status": "permanently_stopped",
+      "completed11IndependentVerified": true,
+      "stopSha256": "81969e35c0b2d7dd3bbd91fd3db684d59db61d261de017d5157aa50dfe042b2c",
+      "new05Models": 0
     }
   }
 }
