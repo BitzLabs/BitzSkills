@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T18:28:09.168850+09:00",
+    "updatedAt": "2026-10-14T18:58:33.217602+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
     "verificationRef": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
@@ -642,6 +642,22 @@
       "http429RecoveryVerified": false,
       "modelBehaviorImprovementVerified": false,
       "certifiesSkillGate": false
+    },
+    "r04Stop12CauseInvestigation": {
+      "record": "r04-stop12-cause-investigation-20261014.json",
+      "note": "r04-stop12-cause-investigation-20261014.md",
+      "investigationHead": "8778af55d1acb804bfde24fc597cf9a2f215e77c",
+      "directCause": "independent_cli_reported_http429",
+      "permanentStopCodePathVerified": true,
+      "specificExternalLimitCauseKnown": false,
+      "currentCliMetadataObservedAt": "2026-10-14T18:41:53.602377+09:00",
+      "authenticationType": "chatgpt",
+      "primaryUsedPercent": 53,
+      "secondaryUsedPercent": 86,
+      "modelGenerations": 0,
+      "stoppedCampaignRetried": false,
+      "http429RecoveryVerified": false,
+      "independentReviewParentHashesCompared": true
     }
   }
 }
