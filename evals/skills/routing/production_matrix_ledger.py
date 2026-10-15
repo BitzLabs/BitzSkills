@@ -17,6 +17,7 @@ from production_trace import require, strict_json, json_equal
 
 
 VERSION = 'public-production-matrix-ledger-0.1.1'
+SURVEY_VERSION = 'public-production-matrix-survey-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli',
         'contextProfile', 'decisionSchema'}
 STAGES = ('attempt', 'started', 'primary', 'independent', 'review')
@@ -47,10 +48,13 @@ def execution_contract(execution_raw):
     """子process向けの有限実行policy。全入力のGit一致・起動許可は別検査。"""
     require(isinstance(execution_raw, bytes), 'matrix execution bytes required')
     c = strict_json(execution_raw)
+    survey = isinstance(c, dict) and c.get('version') == SURVEY_VERSION
+    extra = {'surveyPolicySha256'} if survey else set()
     require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
             'inputContractSha256', 'outputRelativeRoot', 'pins', 'budget', 'timeoutSeconds',
-            'cliVersion', 'certifiesSkillGate'}, 'matrix execution inventory')
-    require(c['version'] == VERSION and isinstance(c['campaignId'], str)
+            'cliVersion', 'certifiesSkillGate'} | extra, 'matrix execution inventory')
+    if survey:io.pin(c['surveyPolicySha256'])
+    require(c['version'] in {VERSION, SURVEY_VERSION} and isinstance(c['campaignId'], str)
             and re.fullmatch(r'public-matrix-[a-z0-9]+(?:-[a-z0-9]+)*', c['campaignId']) is not None,
             'matrix campaign identity')
     require(isinstance(c['sourceCommit'], str) and re.fullmatch(r'[0-9a-f]{40}', c['sourceCommit']) is not None
@@ -338,3 +342,12 @@ class MatrixLedger:
                 primaryCompleted=counts['primary'], independentReserved=counts['independent'],
                 parentVerified=counts['review'], measuredCorrect=correct, measuredIncorrect=incorrect,
                 missingMeasurements=92-counts['review'], certifiesSkillGate=False)
+
+
+def open_ledger(storage, repository, bound):
+    """明示的に束縛されたsurveyだけ失敗継続台帳を使う。旧版は従来どおり。"""
+    if bound.contract['version'] == VERSION:
+        return MatrixLedger(storage, repository, bound)
+    from production_matrix_survey import SurveyLedger
+    policy_path = repository/'.venv/production-matrix-launch-controls'/bound.contract['campaignId']/'survey-policy.json'
+    return SurveyLedger(storage, repository, bound, io.read_regular(policy_path))

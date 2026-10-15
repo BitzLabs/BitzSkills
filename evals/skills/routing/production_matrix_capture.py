@@ -165,7 +165,7 @@ def run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,revie
             else:io.exclusive(saved,raw)
         storage=p.matrix.shared_storage(source_repository,bound)
         io.safe_tree(storage.parent);storage.parent.mkdir(mode=0o700,exist_ok=True)
-        instance=p.matrix.MatrixLedger(storage,artifact_repository,bound)
+        instance=p.matrix.open_ledger(storage,artifact_repository,bound)
         instance.reserve(ordinal)
         return _reserved_capture(source_repository,artifact_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,
             ordinal,slot,before,control,instance)

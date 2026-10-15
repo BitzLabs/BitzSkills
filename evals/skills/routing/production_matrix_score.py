@@ -1,4 +1,4 @@
-"""公開92枠の単回独立採点と親原照合。一次原を置換せず、失敗は恒久停止する。"""
+"""公開92枠の単回独立採点と親原照合。一次原を置換せず、既定は恒久停止、明示surveyは局所失敗を分離する。"""
 import math
 import os
 from pathlib import Path
@@ -100,7 +100,7 @@ def load_primary(source_repository,bound,ordinal,manifest_raw,schema_raw,context
     approved=capture.prelaunch_review(bound,context.originals['deployment.json'],review_raw,report_raw)
     require(approved['scope']==SCOPE and trace.strict_json(report_raw)['status']=='matrix_pipeline_prelaunch_code_verified',
         'matrix independent prelaunch scope required')
-    instance=matrix.MatrixLedger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
+    instance=matrix.open_ledger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
     primary=instance.read('primary',ordinal);instance.primary_valid(primary,ordinal)
     require(primary['receipt']['sha256']==io.sha(context.receipt_raw)
         and primary['trace']['sha256']==io.sha(context.originals['rpc-out.jsonl']),'matrix score primary record drift')
@@ -120,7 +120,7 @@ def control_root(artifact_repository,bound):
 def run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw):
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
     with capture.locked_control(control_root(artifact_repository,bound)):
-        instance=matrix.MatrixLedger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
+        instance=matrix.open_ledger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
         with instance.locked():
             instance.initialize();instance.latest_pending(ordinal)
             require(not matrix.present(instance.path('independent',ordinal)),'matrix independent already reserved')
@@ -224,7 +224,7 @@ def finalize(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw
     """親が取得原・採点原・現物・全argv・共有予約を再構成してから次枠を許可する。"""
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
     with capture.locked_control(control_root(artifact_repository,bound)):
-        instance=matrix.MatrixLedger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
+        instance=matrix.open_ledger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
         with instance.locked():instance.initialize();instance.latest_pending(ordinal)
         prepared=None
         try:

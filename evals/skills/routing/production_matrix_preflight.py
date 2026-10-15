@@ -26,7 +26,7 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     catalog='evals/skills/event-catalog.json', instructions='evals/skills/routing/production-matrix-instructions-v0.1.txt',
     caseSchema='evals/skills/schemas/case.schema.json')
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
-    'production_matrix_preflight', 'production_matrix_inputs', 'production_matrix_ledger',
+    'production_matrix_preflight', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
     'production_canary_host', 'production_canary_review', 'production_canary_evidence',
     'production_canary_trace', 'production_canary_rollout', 'production_canary_runtime',
