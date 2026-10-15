@@ -147,10 +147,10 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-15T20:57:42.427178+09:00",
+    "updatedAt": "2026-10-16T00:56:51.936075+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "cc76d2597796a13a5cc3613f22a308732c6c457b",
-    "verificationRef": "cc76d2597796a13a5cc3613f22a308732c6c457b",
+    "implementationHead": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "verificationRef": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
@@ -160,7 +160,7 @@
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 902,
+    "fullSkillTestCount": 911,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "complete_survey20_attempted16_correct2_incorrect2_failed72_public24_heldout_remaining_quota_wait",
+    "r04": "survey_mode_verified_remaining72_ready_product_changes_deferred",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -700,12 +700,12 @@
       "nextPublicOrdinal": 21,
       "productRemediationAfterCompleteEvaluation": true,
       "sameSlotRetries": 0,
-      "status": "quota_headroom_and_next_day_preparation_pending",
-      "record": "r04-survey-prelaunch-20261015.json",
-      "sourceCommit": "cc76d2597796a13a5cc3613f22a308732c6c457b",
-      "conditionSha256": "7781c2f4772bc1f4ac2f1ab2e613b0f8de85c6cf48a42a6dc8d265c1add03ab4",
-      "fullRegression": 902,
-      "independentRegression": 131,
+      "status": "day16_independently_verified_ready",
+      "record": "r04-survey-prelaunch-20261016.json",
+      "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+      "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+      "fullRegression": 911,
+      "independentRegression": 140,
       "oldResultsAndFailurePreserved": true,
       "newActualModels": 0,
       "newActualReservations": 0,
@@ -743,7 +743,12 @@
         ],
         "heldoutRunnerStillSeparatePending": true,
         "certifiesSkillGate": false
-      }
+      },
+      "carryForwardThroughOrdinal": 20,
+      "quotaWait": false,
+      "currentQuota5hPercent": 24,
+      "currentQuotaWeeklyPercent": 20,
+      "productRemediationDeferredUntilAllEvaluation": true
     }
   }
 }
