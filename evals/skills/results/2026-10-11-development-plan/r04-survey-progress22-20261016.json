@@ -1,0 +1,195 @@
+{
+  "recordedAt": "2026-10-16T01:01:45.226290+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 22,
+    "evaluationFailed": 2,
+    "independentReserved": 20,
+    "maximumPrimary": 92,
+    "measuredCorrect": 18,
+    "measuredIncorrect": 2,
+    "missingMeasurements": 72,
+    "parentVerified": 20,
+    "pendingSlots": 0,
+    "primaryCompleted": 20,
+    "primaryLaunchMarked": 22,
+    "primaryReserved": 22,
+    "status": "in_progress",
+    "unattemptedSlots": 70
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 22,
+      "evaluationFailed": 2,
+      "independentReserved": 20,
+      "maximumPrimary": 92,
+      "measuredCorrect": 18,
+      "measuredIncorrect": 2,
+      "missingMeasurements": 72,
+      "parentVerified": 20,
+      "pendingSlots": 0,
+      "primaryCompleted": 20,
+      "primaryLaunchMarked": 22,
+      "primaryReserved": 22,
+      "status": "in_progress",
+      "unattemptedSlots": 70
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 5.171777944997302,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "bb0a19bc0c49b2663480740413b95e464b499d96d368a37fcfc48d7481672e21",
+    "later23Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage22 with direct new21..22 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 177,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_22_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "3abc1c19e1bb0a119c9d5458b233602b62a5ea651b28fde1184821094091e25e",
+    "inventorySha256": "bb0a19bc0c49b2663480740413b95e464b499d96d368a37fcfc48d7481672e21",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 177
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 31,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 21,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.5911453990011069,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T01:01:21.169712+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 31,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 21,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-progress22-20261016.tar.gz",
+    "sha256": "8449c1abb3c5a99b2f23a74d710b0c012001a55b2fbd89fb68bd102b828515ab",
+    "bytes": 17280,
+    "regularMembers": 8,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
