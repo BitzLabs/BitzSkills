@@ -147,10 +147,10 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-15T19:28:08.048924+09:00",
+    "updatedAt": "2026-10-15T19:37:26.243447+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
-    "verificationRef": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
+    "verificationRef": "a97f0af9653c185ed0529ae3c328848db2c5744a",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "new05_day14_prelaunch_preserved_day15_calibration_review_pending_no_model_started",
+    "r04": "day15_concrete_prelaunch_verified_first_recovery_observation_pending",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -676,6 +676,17 @@
       "certifiesSkillGate": false,
       "prelaunchValidForDate": "2026-10-14",
       "currentDateLaunchRequiresNewReview": true
+    },
+    "r04OperationalNew05Day15": {
+      "record": "r04-day15-calibration-prelaunch-20261015.json",
+      "sourceCommit": "a97f0af9653c185ed0529ae3c328848db2c5744a",
+      "campaignId": "public-matrix-routing-20261015-05",
+      "primaryReserved": 0,
+      "primaryCompleted": 0,
+      "independentReserved": 0,
+      "parentVerified": 0,
+      "missingMeasurements": 92,
+      "certifiesSkillGate": false
     }
   }
 }
