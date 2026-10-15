@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-15T19:37:26.243447+09:00",
+    "updatedAt": "2026-10-15T20:22:13.357637+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
     "verificationRef": "a97f0af9653c185ed0529ae3c328848db2c5744a",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "day15_concrete_prelaunch_verified_first_recovery_observation_pending",
+    "r04": "survey_mode_implementation_pending_preserved17_measurements_and_failure18",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -678,15 +678,29 @@
       "currentDateLaunchRequiresNewReview": true
     },
     "r04OperationalNew05Day15": {
-      "record": "r04-day15-calibration-prelaunch-20261015.json",
+      "record": "r04-new05-day15-stop18-20261015.json",
       "sourceCommit": "a97f0af9653c185ed0529ae3c328848db2c5744a",
       "campaignId": "public-matrix-routing-20261015-05",
-      "primaryReserved": 0,
-      "primaryCompleted": 0,
-      "independentReserved": 0,
-      "parentVerified": 0,
-      "missingMeasurements": 92,
-      "certifiesSkillGate": false
+      "primaryReserved": 18,
+      "primaryCompleted": 17,
+      "independentReserved": 17,
+      "parentVerified": 17,
+      "missingMeasurements": 75,
+      "certifiesSkillGate": false,
+      "measuredCorrect": 15,
+      "measuredIncorrect": 2,
+      "failedSlots": 1,
+      "unattemptedSlots": 74,
+      "status": "stopped"
+    },
+    "r04CompleteSurveyPlan": {
+      "publicSlots": 92,
+      "heldoutSlots": 24,
+      "carryForwardThrough": 18,
+      "nextPublicOrdinal": 19,
+      "productRemediationAfterCompleteEvaluation": true,
+      "sameSlotRetries": 0,
+      "status": "harness_update_pending"
     }
   }
 }
