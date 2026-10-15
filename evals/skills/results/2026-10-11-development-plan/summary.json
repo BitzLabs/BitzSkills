@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-14T18:58:33.217602+09:00",
+    "updatedAt": "2026-10-15T19:28:08.048924+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
     "verificationRef": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "new04_permanent_http429_stop_preserved_core_result_operation_clarified_code_regression_verified_new05_diagnostic_resources_only",
+    "r04": "new05_day14_prelaunch_preserved_day15_calibration_review_pending_no_model_started",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -658,6 +658,24 @@
       "stoppedCampaignRetried": false,
       "http429RecoveryVerified": false,
       "independentReviewParentHashesCompared": true
+    },
+    "r04OperationalNew05": {
+      "record": "r04-operational-new05-prelaunch-independent-20261014.json",
+      "sourceCommit": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
+      "campaignId": "public-matrix-routing-20261014-05",
+      "conditionSha256": "a6ce552e049e4e43e0abfd55aca40abdb1ea6da8d791c9d0bf38d42a731cdaf1",
+      "minimumLogicalLaunchStartGapSeconds": 60,
+      "actualPrimaryReserved": 0,
+      "primaryCompleted": 0,
+      "independentReserved": 0,
+      "parentVerified": 0,
+      "measuredCorrect": 0,
+      "measuredIncorrect": 0,
+      "missingMeasurements": 92,
+      "firstRecoveryObservationCompleted": false,
+      "certifiesSkillGate": false,
+      "prelaunchValidForDate": "2026-10-14",
+      "currentDateLaunchRequiresNewReview": true
     }
   }
 }
