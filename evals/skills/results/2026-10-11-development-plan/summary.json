@@ -147,10 +147,10 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-15T20:22:13.357637+09:00",
+    "updatedAt": "2026-10-15T20:49:08.502005+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
-    "implementationHead": "4e4b84647d9c7f9fcd26a67619293c7d6db04504",
-    "verificationRef": "a97f0af9653c185ed0529ae3c328848db2c5744a",
+    "implementationHead": "cc76d2597796a13a5cc3613f22a308732c6c457b",
+    "verificationRef": "cc76d2597796a13a5cc3613f22a308732c6c457b",
     "r02": "actual_telemetry_and_code_cell_remediation_local_passed_independent_review_running",
     "r03": "limited_four_slot_canary_complete",
     "r08": "candidate_8fcd_gate_c_independently_verified_final_ref_pending",
@@ -160,7 +160,7 @@
     "oldCampaignConsumedIndependent": 0,
     "newCampaignConsumedPrimary": 4,
     "newCampaignConsumedIndependent": 4,
-    "fullSkillTestCount": 861,
+    "fullSkillTestCount": 902,
     "coreUnitTestCount": 647,
     "gateC": false,
     "skillGates": false,
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "survey_mode_implementation_pending_preserved17_measurements_and_failure18",
+    "r04": "survey_mode_verified_remaining74_ready_product_changes_deferred",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -700,7 +700,15 @@
       "nextPublicOrdinal": 19,
       "productRemediationAfterCompleteEvaluation": true,
       "sameSlotRetries": 0,
-      "status": "harness_update_pending"
+      "status": "independently_verified_ready",
+      "record": "r04-survey-prelaunch-20261015.json",
+      "sourceCommit": "cc76d2597796a13a5cc3613f22a308732c6c457b",
+      "conditionSha256": "7781c2f4772bc1f4ac2f1ab2e613b0f8de85c6cf48a42a6dc8d265c1add03ab4",
+      "fullRegression": 902,
+      "independentRegression": 131,
+      "oldResultsAndFailurePreserved": true,
+      "newActualModels": 0,
+      "newActualReservations": 0
     }
   }
 }
