@@ -219,4 +219,87 @@ class SurveyTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.instance.record_failure(1,'primary',ref)
         self.assertTrue((self.f.storage/'stop.json').exists())
 
+    def nested_setup(self, *, failed=False):
+        import production_matrix_capture as capture
+        self.test_prior_coverage_no_reexecution()
+        inherited_raw=self.policy_raw
+        inherited_ref=self.ref(self.repository/'.venv/cohort/inherited-policy.json',inherited_raw)
+        input_raw=self.f.input_raw
+        input_ref=self.ref(self.repository/'.venv/cohort/input.json',input_raw)
+        manifest_raw=io.encoded(dict(sourceCommit=self.bound.contract['sourceCommit'],resources=self.policy['productResources']))
+        manifest_ref=self.ref(self.repository/'.venv/cohort/manifest.json',manifest_raw)
+        old_contract=dict(self.bound.contract);old_contract['pins']=dict(old_contract['pins'],snapshotManifest=io.sha(manifest_raw))
+        old_raw=io.encoded(old_contract);old_bound=matrix.bind(old_raw,input_raw,**self.f.raws)
+        old_ref=self.ref(self.repository/'.venv/cohort/execution.json',old_raw)
+        deployment=matrix.strict_json(self.instance.reference(self.policy['baselineDeployment']))
+        deployment.update(sourceCommit=old_contract['sourceCommit'],executionSha256=io.sha(old_raw),manifestSha256=io.sha(manifest_raw))
+        d_raw=io.encoded(deployment);d_ref=self.ref(self.repository/'.venv/cohort/deployment.json',d_raw)
+        condition=capture.condition_sha256(old_bound,d_raw)
+        status='evaluation_failed' if failed else 'measured_correct'
+        driver=dict(sourceCommit=old_contract['sourceCommit'],campaignId=old_contract['campaignId'],conditionSha256=condition,
+            ordinal=2,caseId='SE-001',repetition=2,status=status,globalErrorType=None,
+            failurePhase='primary' if failed else None,parent=None if failed else dict(ledgerFinalized=True,proposedLedgerStatus=status),
+            primary=dict(status='primary_capture_stopped' if failed else 'primary_capture_awaits_independent_review',actualNamespaceInvocations=1),
+            independent=None if failed else dict(independentInvocations=1))
+        driver_ref=self.ref(self.repository/'.venv/cohort/actual-slot-0002.json',io.encoded(driver))
+        baseline=dict(sourceCommit=old_contract['sourceCommit'],campaignId=old_contract['campaignId'],
+            ledgerSummary=dict(primaryReserved=2,measuredCorrect=0 if failed else 1,measuredIncorrect=0,
+                evaluationFailed=2 if failed else 1,pendingSlots=0))
+        report_ref=self.ref(self.repository/'.venv/cohort/report.json',io.encoded(baseline))
+        self.policy=dict(self.policy,sourceCommit='f'*40,campaignId='public-matrix-followup',startOrdinal=3,
+            baselineSourceCommit=old_contract['sourceCommit'],baselineCampaignId=old_contract['campaignId'],
+            baselineReport=report_ref,baselineExecution=old_ref,baselineInputContract=input_ref,
+            baselineDeployment=d_ref,baselineSnapshotManifest=manifest_ref,baselineSurveyPolicy=inherited_ref,
+            priorSlots=self.policy['priorSlots']+[dict(ordinal=2,status=status,reference=driver_ref)])
+        self.f.storage=self.repository/'.venv/followup-ledger'
+        new_input=matrix.strict_json(input_raw);new_input['sourceCommit']='f'*40;self.f.input_raw=io.encoded(new_input)
+        self.f.contract.update(sourceCommit='f'*40,campaignId=self.policy['campaignId'],
+            inputContractSha256=io.sha(self.f.input_raw),outputRelativeRoot='.venv/matrix-followup')
+        self.configure()
+
+    def test_mixed_survey_and_legacy_coverage_preserved(self):
+        self.nested_setup();result=self.instance.summary()
+        self.assertEqual((result['carriedSlots'],result['measuredCorrect'],result['evaluationFailed']), (2,1,1))
+        self.instance.reserve(3)
+        self.assertFalse(self.instance.path('attempt',1).exists())
+        self.assertFalse(self.instance.path('attempt',2).exists())
+
+    def test_survey_failed_driver_without_legacy_error_type_preserved(self):
+        self.nested_setup(failed=True)
+        self.assertEqual(self.instance.summary()['evaluationFailed'],2)
+        self.instance.reserve(3)
+
+    def test_missing_inherited_policy_rejected(self):
+        self.nested_setup();del self.policy['baselineSurveyPolicy']
+        with self.assertRaises(ValueError):self.configure()
+
+    def test_inherited_policy_original_drift_rejected(self):
+        self.nested_setup();path=self.repository/self.policy['baselineSurveyPolicy']['relativePath'];path.write_bytes(b'{}')
+        with self.assertRaises(ValueError):self.configure()
+
+    def test_inherited_prefix_cannot_be_replaced(self):
+        self.nested_setup();self.policy['priorSlots'][0]=dict(self.policy['priorSlots'][0],status='measured_correct')
+        with self.assertRaisesRegex(ValueError,'inherited prefix'):self.configure()
+
+    def test_no_progress_inherited_cohort_rejected(self):
+        self.nested_setup();self.policy.update(startOrdinal=2,priorSlots=self.policy['priorSlots'][:1])
+        with self.assertRaisesRegex(ValueError,'must advance'):self.configure()
+
+    def test_pending_cohort_cannot_be_carried(self):
+        self.nested_setup();ref=self.policy['baselineReport'];path=self.repository/ref['relativePath']
+        report=matrix.strict_json(path.read_bytes());report['ledgerSummary']['pendingSlots']=1
+        self.policy['baselineReport']=self.ref(path,io.encoded(report))
+        with self.assertRaisesRegex(ValueError,'coverage binding'):self.configure()
+
+    def test_global_failure_cannot_be_carried_as_slot_failure(self):
+        self.nested_setup(failed=True);ref=self.policy['priorSlots'][1]['reference'];path=self.repository/ref['relativePath']
+        driver=matrix.strict_json(path.read_bytes());driver.update(status='globally_stopped',globalErrorType='ValueError')
+        self.policy['priorSlots'][1]['reference']=self.ref(path,io.encoded(driver))
+        with self.assertRaisesRegex(ValueError,'terminal outcome'):self.configure()
+
+    def test_lineage_depth_rejects_bool_and_unbounded_value(self):
+        for depth in [True,-1,92]:
+            with self.subTest(depth=depth), self.assertRaises(ValueError):
+                self.instance.validate_policy(self.bound,self.policy_raw,depth)
+
 if __name__=='__main__':unittest.main()

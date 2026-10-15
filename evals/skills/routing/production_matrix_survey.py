@@ -20,81 +20,117 @@ class SurveyLedger(matrix.MatrixLedger):
         try:
             require(bound.contract['version'] == matrix.SURVEY_VERSION
                 and io.sha(policy_raw) == bound.contract['surveyPolicySha256'], 'survey policy pin')
-            policy = matrix.strict_json(policy_raw)
-            require(isinstance(policy, dict) and set(policy) == {'version', 'sourceCommit', 'campaignId',
-                'startOrdinal', 'baselineSourceCommit', 'baselineCampaignId', 'baselineReport',
-                'priorSlots', 'productResources', 'baselineExecution', 'baselineInputContract',
-                'baselineDeployment', 'baselineSnapshotManifest'}, 'survey policy inventory')
-            require(policy['version'] == VERSION and policy['sourceCommit'] == bound.contract['sourceCommit']
-                and policy['campaignId'] == bound.contract['campaignId']
-                and type(policy['startOrdinal']) is int and 1 <= policy['startOrdinal'] <= 92,
-                'survey policy identity')
-            self.policy, self.policy_raw = policy, policy_raw
-            self.first = policy['startOrdinal']
-            resources = policy['productResources']
-            require(isinstance(resources, dict) and resources and all(isinstance(n, str)
-                and n.startswith('resources/') and '..' not in Path(n).parts for n in resources),
-                'survey product resource names')
-            for digest in resources.values():io.pin(digest)
-            require(isinstance(policy['priorSlots'], list) and len(policy['priorSlots']) == self.first-1,
-                'survey prior coverage inventory')
-            self.prior = []
-            baseline_condition = None
-            if policy['priorSlots']:
-                old_execution = self.reference(policy['baselineExecution'])
-                old_input = self.reference(policy['baselineInputContract'])
-                old_bound = matrix.bind(old_execution, old_input,
-                    **dict(zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs)))
-                require(old_bound.contract['sourceCommit'] == policy['baselineSourceCommit']
-                    and old_bound.contract['campaignId'] == policy['baselineCampaignId'], 'survey baseline execution identity')
-                from production_matrix_capture import condition_sha256
-                old_deployment = self.reference(policy['baselineDeployment'])
-                baseline_condition = condition_sha256(old_bound, old_deployment)
-                old_manifest_raw = self.reference(policy['baselineSnapshotManifest'])
-                old_manifest = matrix.strict_json(old_manifest_raw)
-                require(io.sha(old_manifest_raw) == old_bound.contract['pins']['snapshotManifest']
-                    and old_manifest.get('sourceCommit') == policy['baselineSourceCommit']
-                    and old_manifest.get('resources') == resources
-                    and len(resources) == matrix.strict_json(old_deployment)['snapshotResourceCount'],
-                    'survey baseline product resources changed')
-                require(all(old_bound.slot(n)['payloadSha256'] == bound.slot(n)['payloadSha256']
-                    for n in range(1, 93)), 'survey baseline payloads changed')
-            for ordinal, item in enumerate(policy['priorSlots'], 1):
-                require(isinstance(item, dict) and set(item) == {'ordinal', 'status', 'reference'}
-                    and type(item['ordinal']) is int and item['ordinal'] == ordinal
-                    and item['status'] in STATUSES, 'survey prior slot identity')
-                value = matrix.strict_json(self.reference(item['reference']))
-                require(value['sourceCommit'] == policy['baselineSourceCommit']
-                    and value['campaignId'] == policy['baselineCampaignId']
-                    and value['conditionSha256'] == baseline_condition
-                    and type(value['ordinal']) is int and value['ordinal'] == ordinal
-                    and value['caseId'] == bound.slot(ordinal)['caseId']
-                    and value['repetition'] == bound.slot(ordinal)['repetition'], 'survey prior original identity')
-                parent = value.get('parent') or {}
-                if item['status'] == 'evaluation_failed':
-                    require(value.get('errorType') is not None and parent.get('ledgerFinalized') is not True,
-                        'survey prior failed result')
-                else:
-                    require(value.get('errorType') is None and parent.get('ledgerFinalized') is True
-                        and parent.get('proposedLedgerStatus') == item['status'], 'survey prior measured result')
-                self.prior.append(value)
-            if self.prior:
-                baseline = matrix.strict_json(self.reference(policy['baselineReport']))
-                require(baseline['sourceCommit'] == policy['baselineSourceCommit']
-                    and baseline['campaignId'] == policy['baselineCampaignId']
-                    and baseline['primaryReserved'] == self.first-1
-                    and baseline['measuredCorrect'] == sum(x['status'] == 'measured_correct' for x in policy['priorSlots'])
-                    and baseline['measuredIncorrect'] == sum(x['status'] == 'measured_incorrect' for x in policy['priorSlots'])
-                    and baseline['failedSlots'] == sum(x['status'] == 'evaluation_failed' for x in policy['priorSlots']),
-                    'survey baseline coverage binding')
-            else:
-                require(policy['baselineReport'] is None and policy['baselineSourceCommit'] is None
-                    and policy['baselineCampaignId'] is None and all(policy[n] is None for n in
-                        ['baselineExecution', 'baselineInputContract', 'baselineDeployment', 'baselineSnapshotManifest']),
-                    'survey empty baseline')
+            self.policy, self.prior = self.validate_policy(bound, policy_raw)
+            self.policy_raw = policy_raw
+            self.first = self.policy['startOrdinal']
         except Exception as exc:
             self.abort(None, 'survey-policy-rejected', type(exc).__name__)
             raise
+
+    def validate_policy(self, bound, policy_raw, depth=0):
+        """過去のsurvey policyを原hashへ再帰束縛し、先頭結果の差替えを拒否する。"""
+        require(type(depth) is int and 0 <= depth < 92, 'survey baseline lineage depth')
+        require(bound.contract['version'] == matrix.SURVEY_VERSION
+            and io.sha(policy_raw) == bound.contract['surveyPolicySha256'], 'survey inherited policy pin')
+        policy = matrix.strict_json(policy_raw)
+        extra = {'baselineSurveyPolicy'} if isinstance(policy, dict) and 'baselineSurveyPolicy' in policy else set()
+        require(isinstance(policy, dict) and set(policy) == {'version', 'sourceCommit', 'campaignId',
+            'startOrdinal', 'baselineSourceCommit', 'baselineCampaignId', 'baselineReport',
+            'priorSlots', 'productResources', 'baselineExecution', 'baselineInputContract',
+            'baselineDeployment', 'baselineSnapshotManifest'} | extra, 'survey policy inventory')
+        require(policy['version'] == VERSION and policy['sourceCommit'] == bound.contract['sourceCommit']
+            and policy['campaignId'] == bound.contract['campaignId']
+            and type(policy['startOrdinal']) is int and 1 <= policy['startOrdinal'] <= 92,
+            'survey policy identity')
+        first = policy['startOrdinal']
+        resources = policy['productResources']
+        require(isinstance(resources, dict) and resources and all(isinstance(n, str)
+            and n.startswith('resources/') and '..' not in Path(n).parts for n in resources),
+            'survey product resource names')
+        for digest in resources.values():io.pin(digest)
+        require(isinstance(policy['priorSlots'], list) and len(policy['priorSlots']) == first-1,
+            'survey prior coverage inventory')
+        prior = []
+        baseline_condition = None
+        inherited_policy = None
+        inherited_values = []
+        if policy['priorSlots']:
+            old_execution = self.reference(policy['baselineExecution'])
+            old_input = self.reference(policy['baselineInputContract'])
+            old_bound = matrix.bind(old_execution, old_input,
+                **dict(zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs)))
+            require(old_bound.contract['sourceCommit'] == policy['baselineSourceCommit']
+                and old_bound.contract['campaignId'] == policy['baselineCampaignId'], 'survey baseline execution identity')
+            from production_matrix_capture import condition_sha256
+            old_deployment = self.reference(policy['baselineDeployment'])
+            baseline_condition = condition_sha256(old_bound, old_deployment)
+            old_manifest_raw = self.reference(policy['baselineSnapshotManifest'])
+            old_manifest = matrix.strict_json(old_manifest_raw)
+            require(io.sha(old_manifest_raw) == old_bound.contract['pins']['snapshotManifest']
+                and old_manifest.get('sourceCommit') == policy['baselineSourceCommit']
+                and old_manifest.get('resources') == resources
+                and len(resources) == matrix.strict_json(old_deployment)['snapshotResourceCount'],
+                'survey baseline product resources changed')
+            require(all(old_bound.slot(n)['payloadSha256'] == bound.slot(n)['payloadSha256']
+                for n in range(1, 93)), 'survey baseline payloads changed')
+            if old_bound.contract['version'] == matrix.SURVEY_VERSION:
+                inherited_raw = self.reference(policy.get('baselineSurveyPolicy'))
+                inherited_policy, inherited_values = self.validate_policy(old_bound, inherited_raw, depth+1)
+                require(inherited_policy['productResources'] == resources, 'survey inherited product resources changed')
+                require(first > inherited_policy['startOrdinal'], 'survey inherited cohort must advance coverage')
+                require(policy['priorSlots'][:len(inherited_values)] == inherited_policy['priorSlots'],
+                    'survey inherited prefix changed')
+            else:
+                require(policy.get('baselineSurveyPolicy') is None, 'survey unexpected inherited policy')
+        for ordinal, item in enumerate(policy['priorSlots'], 1):
+            require(isinstance(item, dict) and set(item) == {'ordinal', 'status', 'reference'}
+                and type(item['ordinal']) is int and item['ordinal'] == ordinal
+                and item['status'] in STATUSES, 'survey prior slot identity')
+            if ordinal <= len(inherited_values):
+                prior.append(inherited_values[ordinal-1])
+                continue
+            value = matrix.strict_json(self.reference(item['reference']))
+            require(value['sourceCommit'] == policy['baselineSourceCommit']
+                and value['campaignId'] == policy['baselineCampaignId']
+                and value['conditionSha256'] == baseline_condition
+                and type(value['ordinal']) is int and value['ordinal'] == ordinal
+                and value['caseId'] == bound.slot(ordinal)['caseId']
+                and value['repetition'] == bound.slot(ordinal)['repetition'], 'survey prior original identity')
+            parent = value.get('parent') or {}
+            survey_driver = old_bound.contract['version'] == matrix.SURVEY_VERSION
+            if survey_driver:
+                require(value.get('status') == item['status'] and 'globalErrorType' in value
+                    and value['globalErrorType'] is None, 'survey inherited driver terminal outcome')
+            if item['status'] == 'evaluation_failed':
+                require(((survey_driver and value.get('failurePhase') in FAILURE_PHASES)
+                    or (not survey_driver and isinstance(value.get('errorType'), str) and value['errorType']))
+                    and parent.get('ledgerFinalized') is not True,
+                    'survey prior failed result')
+            else:
+                require(value.get('errorType') is None and parent.get('ledgerFinalized') is True
+                    and parent.get('proposedLedgerStatus') == item['status'], 'survey prior measured result')
+            prior.append(value)
+        if prior:
+            baseline = matrix.strict_json(self.reference(policy['baselineReport']))
+            counts = baseline.get('ledgerSummary', baseline)
+            failed = counts.get('evaluationFailed', counts.get('failedSlots'))
+            require(baseline['sourceCommit'] == policy['baselineSourceCommit']
+                and baseline['campaignId'] == policy['baselineCampaignId']
+                and type(counts['primaryReserved']) is int and counts['primaryReserved'] == first-1
+                and type(counts['measuredCorrect']) is int
+                and counts['measuredCorrect'] == sum(x['status'] == 'measured_correct' for x in policy['priorSlots'])
+                and type(counts['measuredIncorrect']) is int
+                and counts['measuredIncorrect'] == sum(x['status'] == 'measured_incorrect' for x in policy['priorSlots'])
+                and type(failed) is int and failed == sum(x['status'] == 'evaluation_failed' for x in policy['priorSlots'])
+                and type(counts.get('pendingSlots', 0)) is int and counts.get('pendingSlots', 0) == 0,
+                'survey baseline coverage binding')
+        else:
+            require(policy['baselineReport'] is None and policy['baselineSourceCommit'] is None
+                and policy['baselineCampaignId'] is None and policy.get('baselineSurveyPolicy') is None
+                and all(policy[n] is None for n in
+                    ['baselineExecution', 'baselineInputContract', 'baselineDeployment', 'baselineSnapshotManifest']),
+                'survey empty baseline')
+        return policy, prior
 
     def reference(self, value, *, expected_path=None):
         require(isinstance(value, dict) and set(value) == {'relativePath', 'sha256'}, 'survey original reference')
