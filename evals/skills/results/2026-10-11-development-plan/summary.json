@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-16T01:28:48.374038+09:00",
+    "updatedAt": "2026-10-16T01:33:31.058137+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
     "verificationRef": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
@@ -202,7 +202,7 @@
       "status": "local_independently_verified",
       "certifiesDistribution": false
     },
-    "r04": "complete_survey34_attempted_remaining58_public24_heldout",
+    "r04": "complete_survey36_attempted_remaining56_public24_heldout",
     "rolloutClockCanary": {
       "record": "r03-rollout-clock-progress.json",
       "oldPrimary": 7,
@@ -697,11 +697,11 @@
       "publicSlots": 92,
       "heldoutSlots": 24,
       "carryForwardThrough": 18,
-      "nextPublicOrdinal": 35,
+      "nextPublicOrdinal": 37,
       "productRemediationAfterCompleteEvaluation": true,
       "sameSlotRetries": 0,
       "status": "in_progress",
-      "record": "r04-survey-progress34-20261016.json",
+      "record": "r04-survey-progress36-20261016.json",
       "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
       "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
       "fullRegression": 911,
@@ -710,16 +710,16 @@
       "newActualModels": 0,
       "newActualReservations": 0,
       "progressRecord": "r04-survey-progress20-20261015.json",
-      "publicEvaluated": 34,
+      "publicEvaluated": 36,
       "measuredCorrect": 16,
       "measuredIncorrect": 2,
       "evaluationFailed": 2,
-      "remainingPublic": 58,
+      "remainingPublic": 56,
       "remainingHeldout": 24,
-      "newPrimaryReserved": 14,
+      "newPrimaryReserved": 16,
       "newPrimaryCompleted": 1,
-      "newIndependentReserved": 14,
-      "newParentVerified": 14,
+      "newIndependentReserved": 16,
+      "newParentVerified": 16,
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
@@ -746,12 +746,12 @@
       },
       "carryForwardThroughOrdinal": 20,
       "quotaWait": false,
-      "currentQuota5hPercent": 72,
-      "currentQuotaWeeklyPercent": 27,
+      "currentQuota5hPercent": 78,
+      "currentQuotaWeeklyPercent": 28,
       "productRemediationDeferredUntilAllEvaluation": true,
-      "correct": 30,
+      "correct": 32,
       "incorrect": 2,
-      "newCompleted": 14
+      "newCompleted": 16
     }
   }
 }
