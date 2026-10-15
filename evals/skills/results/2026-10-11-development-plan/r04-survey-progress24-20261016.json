@@ -1,0 +1,239 @@
+{
+  "recordedAt": "2026-10-16T01:06:07.735655+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 24,
+    "evaluationFailed": 2,
+    "independentReserved": 22,
+    "maximumPrimary": 92,
+    "measuredCorrect": 20,
+    "measuredIncorrect": 2,
+    "missingMeasurements": 70,
+    "parentVerified": 22,
+    "pendingSlots": 0,
+    "primaryCompleted": 22,
+    "primaryLaunchMarked": 24,
+    "primaryReserved": 24,
+    "status": "in_progress",
+    "unattemptedSlots": 68
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 24,
+      "evaluationFailed": 2,
+      "independentReserved": 22,
+      "maximumPrimary": 92,
+      "measuredCorrect": 20,
+      "measuredIncorrect": 2,
+      "missingMeasurements": 70,
+      "parentVerified": 22,
+      "pendingSlots": 0,
+      "primaryCompleted": 22,
+      "primaryLaunchMarked": 24,
+      "primaryReserved": 24,
+      "status": "in_progress",
+      "unattemptedSlots": 68
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 10.465496164000797,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "08942c02f5918a1f4f86739fc387e21e3c9022a79a6a815777d3fd14b19e98e5",
+    "later25Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage24 with direct new21..24 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25509,
+          "output_tokens": 629,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 23,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18924
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25589,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 24,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 382,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 321,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786,
+      78.76884007400076,
+      60.00115757800086,
+      60.00058168000032,
+      60.0001286839979
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_24_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "c6ef4f3ae776d5eb8a864f73c5d4b1dab640e6b02b628c2e2cfddf7798ca3a61",
+    "inventorySha256": "08942c02f5918a1f4f86739fc387e21e3c9022a79a6a815777d3fd14b19e98e5",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 321
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 37,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 22,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.3416984739997133,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T01:05:39.438087+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 37,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 22,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-progress24-20261016.tar.gz",
+    "sha256": "54b2b4f4dbbb4bab91f27a2cc12f38028faa243ce91ba86226c7261edc831b4a",
+    "bytes": 27622,
+    "regularMembers": 10,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
