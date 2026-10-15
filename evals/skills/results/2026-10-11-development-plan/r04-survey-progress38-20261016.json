@@ -1,0 +1,547 @@
+{
+  "recordedAt": "2026-10-16T01:38:21.100283+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 38,
+    "evaluationFailed": 2,
+    "independentReserved": 36,
+    "maximumPrimary": 92,
+    "measuredCorrect": 34,
+    "measuredIncorrect": 2,
+    "missingMeasurements": 56,
+    "parentVerified": 36,
+    "pendingSlots": 0,
+    "primaryCompleted": 36,
+    "primaryLaunchMarked": 38,
+    "primaryReserved": 38,
+    "status": "in_progress",
+    "unattemptedSlots": 54
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 38,
+      "evaluationFailed": 2,
+      "independentReserved": 36,
+      "maximumPrimary": 92,
+      "measuredCorrect": 34,
+      "measuredIncorrect": 2,
+      "missingMeasurements": 56,
+      "parentVerified": 36,
+      "pendingSlots": 0,
+      "primaryCompleted": 36,
+      "primaryLaunchMarked": 38,
+      "primaryReserved": 38,
+      "status": "in_progress",
+      "unattemptedSlots": 54
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 46.197448725997674,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "37726aada7b1e8038e11798b96b9876e98293426e84b9b196190cfc14a39e4c7",
+    "later39Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage38 with direct new21..38 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25509,
+          "output_tokens": 629,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 23,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18924
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25589,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 24,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 382,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26644,
+          "output_tokens": 542,
+          "reasoning_output_tokens": 43
+        },
+        "ordinal": 25,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19233,
+          "outputTokens": 368,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19601
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26902,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 26,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6144,
+          "inputTokens": 19233,
+          "outputTokens": 401,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19634
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25728,
+          "output_tokens": 695,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 27,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18679,
+          "outputTokens": 399,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19078
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25736,
+          "output_tokens": 608,
+          "reasoning_output_tokens": 33
+        },
+        "ordinal": 28,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 12416,
+          "inputTokens": 18679,
+          "outputTokens": 425,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19104
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27343,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 31
+        },
+        "ordinal": 29,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 19670,
+          "outputTokens": 289,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19959
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27329,
+          "output_tokens": 511,
+          "reasoning_output_tokens": 20
+        },
+        "ordinal": 30,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19670,
+          "outputTokens": 295,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19965
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13465,
+          "output_tokens": 588,
+          "reasoning_output_tokens": 16
+        },
+        "ordinal": 31,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3988,
+          "outputTokens": 158,
+          "reasoningOutputTokens": 31,
+          "totalTokens": 4146
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13378,
+          "output_tokens": 502,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 32,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3988,
+          "outputTokens": 154,
+          "reasoningOutputTokens": 30,
+          "totalTokens": 4142
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19636,
+          "output_tokens": 708,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 33,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 10308,
+          "outputTokens": 176,
+          "reasoningOutputTokens": 13,
+          "totalTokens": 10484
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19591,
+          "output_tokens": 574,
+          "reasoning_output_tokens": 20
+        },
+        "ordinal": 34,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 10310,
+          "outputTokens": 176,
+          "reasoningOutputTokens": 29,
+          "totalTokens": 10486
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13337,
+          "output_tokens": 514,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 35,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 139,
+          "reasoningOutputTokens": 36,
+          "totalTokens": 4116
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13401,
+          "output_tokens": 532,
+          "reasoning_output_tokens": 22
+        },
+        "ordinal": 36,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 2432,
+          "inputTokens": 3977,
+          "outputTokens": 170,
+          "reasoningOutputTokens": 43,
+          "totalTokens": 4147
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13406,
+          "output_tokens": 508,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 37,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 149,
+          "reasoningOutputTokens": 33,
+          "totalTokens": 4126
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13428,
+          "output_tokens": 507,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 38,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 134,
+          "reasoningOutputTokens": 32,
+          "totalTokens": 4111
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 1217,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786,
+      78.76884007400076,
+      60.00115757800086,
+      60.00058168000032,
+      60.0001286839979,
+      82.28957645600167,
+      60.00063617699925,
+      60.00009891300215,
+      60.000376017000235,
+      84.31695708999905,
+      60.00078728099834,
+      60.00011558800179,
+      60.00308058899827,
+      94.00773988999936,
+      60.00045046500236,
+      60.00009599999976,
+      60.000437751998106,
+      91.40707238300092,
+      60.01311420500133,
+      60.00035132099947,
+      60.00477365400002,
+      91.23203001100046,
+      60.000131229000544,
+      60.00012303599942,
+      60.00003231099981,
+      100.13638594299846,
+      60.00009751399921,
+      60.000094350001746,
+      60.000490918999276,
+      104.00086837799972,
+      60.000087160002295,
+      60.00012122800035,
+      60.000109054999484
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_38_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "ad5020bfe7411e97c59a8abb915f8c69a100472564380b131e9cd7b309239ada",
+    "inventorySha256": "37726aada7b1e8038e11798b96b9876e98293426e84b9b196190cfc14a39e4c7",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 1217
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792096411,
+        "usedPercent": 85,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 29,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.287582058001135,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T01:37:21.037227+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792096411,
+        "usedPercent": 85,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 29,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-progress38-20261016.tar.gz",
+    "sha256": "3e76c6378d5d454df8683df054a57c834216e64b653e48e7060250e29bb727d7",
+    "bytes": 94512,
+    "regularMembers": 24,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
