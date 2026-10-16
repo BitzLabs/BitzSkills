@@ -1,0 +1,141 @@
+{
+  "recordedAt": "2026-10-16T12:19:29.603267+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "status": "same_day_resume61_verified",
+  "nextPublicOrdinal": 61,
+  "publicEvaluated": 60,
+  "remainingPublic": 32,
+  "remainingHeldout": 24,
+  "quota": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792137310,
+        "usedPercent": 2,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 47,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.633517693997419,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T12:18:14.281112+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792137310,
+        "usedPercent": 2,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 47,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 60,
+      "evaluationFailed": 5,
+      "independentReserved": 55,
+      "maximumPrimary": 92,
+      "measuredCorrect": 52,
+      "measuredIncorrect": 3,
+      "missingMeasurements": 37,
+      "parentVerified": 55,
+      "pendingSlots": 0,
+      "primaryCompleted": 55,
+      "primaryLaunchMarked": 60,
+      "primaryReserved": 60,
+      "status": "in_progress",
+      "unattemptedSlots": 32
+    },
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "contextDate": "2026-10-16",
+    "credentialReads": 0,
+    "elapsedSeconds": 2.551173480998841,
+    "existingResourceProofSha256": "c4e25f5ce82e174b1784c41e9c1ef159eb629b8b7e4a485f9bbc24d4452f1e66",
+    "findings": [],
+    "freshResourceProofEqualsExistingControl": true,
+    "independentContext": true,
+    "inventorySha256": "4053f059d97eb12d53166e7f74d25b1ad02a53d58cb662f221657b61e4796c5c",
+    "lastLaunchGapSeconds": 19863.566395411,
+    "lastLaunchMonotonicNotAhead": true,
+    "lastLaunchRole": "primary",
+    "lastTerminalOrdinal": 60,
+    "lastTerminalStatus": "evaluation_failed",
+    "limitations": [
+      "Same-day fixed-source next61 continuation only; existing60 outcomes immutable with no retries.",
+      "Quota2/47% metadata does not prove permanent provider recovery.",
+      "At most2slots per natural batch with quota/evidence checks before next.",
+      "No full92, heldout, Skill Gate or release certification."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "oldStop18Unchanged": true,
+    "ordinals61Through92UnreservedAndUnexecuted": true,
+    "originalCount": 2608,
+    "prefix60OriginalsRehashed": 2602,
+    "productResources": 72,
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "runtimeFiles": 50,
+    "sdkFiles": 207,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "sourceFiles": 43,
+    "status": "same_day_survey_resume60_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "84b3726fa8cadd0c7da1bee16757cbc9baa61e718d7e4351715ddc6e4bf2604a",
+    "inventorySha256": "4053f059d97eb12d53166e7f74d25b1ad02a53d58cb662f221657b61e4796c5c",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 2608
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-resume60-20261016.tar.gz",
+    "sha256": "8c045aeae81fdbe00e5d2f7b7798138c81589cce58e4688bbae055cf8fe666c3",
+    "regularMembers": 5,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true
+  },
+  "models": 0,
+  "newReservations": 0,
+  "certifiesSkillGate": false
+}
