@@ -99,3 +99,36 @@ proofは実行条件・配備・入力契約へ束縛し、そのhashを専用�
 preflightは公開製品固定source `b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3` から
 全72資源の一覧・原blobを直接取得し、新refとsnapshotの原bytesの両方へ照合する。
 同数の製品へ変更してhashを取り直しても拒否する。この検査は製品の意味判定や保持内容からの最適化を行わない。
+
+
+## 一次worker・原照合・局所隔離（親operatorは未接続）
+
+`production_heldout_launch.py` は固定された単一stageだけを書込み可にするargvを組み立てる。
+/home・/root・/tmp・/runを隠し、公開コード/SDK/runtime/snapshotだけを読取り専用で戻す。
+コーパス・期待値・Git・評価結果をmountしない。標準CLI認証は不透明な読取り専用委譲だけとし、
+agentが内容の読取り/コピー/hashをしない。processのumaskは077を要求する。
+一次identityからcaseIdを除き、モデルには共通指示/catalogとprompt/contextだけを渡す。
+
+`production_heldout_capture.py` はnamespace内部だけのSDK workerである。
+現物/入力/hash・source/campaign・24上限、実argv、SDK/runtime/72資源、canonical schemaと
+具体的開始前独立検分の原report/隔離proofを検査してからSDKへ進む。
+通常ホストからの直接起動はGit/評価コーパス可視性を拒否する。
+未知SDK要求は拒否し、原SDK proxy/Host/controlの観測上限を既存のまま使う。
+private値を含む例外本文をstdout/stderrへ展開しない。
+
+`production_heldout_evidence.py` は保持専用のimmutableな原bytesを束縛する。
+同一slotの入力・identity・実argv/config・runtime/SDK・開始前検分・三時点資源proof・最終終端を検査し、
+中立のnative/Host/control/rollout検証器で実内容を相関する。
+public matrixのBoundExecution/receipt/92分母への変換はしない。
+戻り値には私的判断やusageが含まれるため、公開側は別に件数/hash/集計へ投影する。
+
+`production_heldout_originals.py` は固定private stageの既知原一覧だけを読む。
+全原名/型/linkを内容消費前に検査し、owner-only 0700/0600、NOFOLLOW、同一fdの前後状態、
+原hashと型付き条件を照合する。opaqueなcodex-home/logs/state等の内容には入らない。
+原は最大512file、各64MiB/計256MiBまでとし、上限超過を正常測定へ変換しない。
+
+`production_heldout_isolation.py` は公開の合成要求1件だけを保存する別局所probeである。
+実構成から標準認証mountを除き、network namespaceを分離し、SDK/model/台帳予約0で
+private corpusと認証の不可視性・公開資源の実bytes・argvを確認する。
+この一次限定proofは、一次と独立の全pipeline開始許可には使えない。
+親の有料operator、独立採点・親確定・具体的開始前検分は未接続である。

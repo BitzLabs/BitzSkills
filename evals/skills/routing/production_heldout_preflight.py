@@ -9,10 +9,20 @@ inputs, public = execution.inputs, execution.public
 io, require, trace = inputs.io, inputs.require, inputs.trace
 # 公開92枠の最終製品を固定する。新refの同数資源への再hashだけでは差替えを認めない。
 BASELINE_PRODUCT_SOURCE = 'b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3'
+PROOF_KEYS = {'status', 'sourceCommit', 'executionSha256', 'deploymentSha256', 'inputContractSha256',
+    'sourceSha256', 'casesSha256', 'snapshotManifestSha256', 'baselineProductSource', 'productResourcesSha256',
+    'snapshotResourceCount', 'sdkManifestSha256', 'sdkFileCount', 'sdkTreeSha256', 'decisionSchemaSha256',
+    'contextProfileSha256', 'contextDate', 'runtime', 'originalCalibration', 'models', 'reservations',
+    'launchEnabled', 'certifiesSkillGate', 'certifiesRelease'}
 SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_ledger.py',
     'evals/skills/routing/production_heldout_execution.py',
-    'evals/skills/routing/production_heldout_preflight.py']))
+    'evals/skills/routing/production_heldout_preflight.py',
+    'evals/skills/routing/production_heldout_launch.py',
+    'evals/skills/routing/production_heldout_capture.py',
+    'evals/skills/routing/production_heldout_evidence.py',
+    'evals/skills/routing/production_heldout_originals.py',
+    'evals/skills/routing/production_heldout_isolation.py']))
 
 
 def verify_resources(repository, bound, sdk_manifest_raw):

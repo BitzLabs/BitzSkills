@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_execution_resources_reviewed_capture_adapters_pending",
+        "status": "heldout_primary_core_review_and_local_isolation_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -1042,6 +1042,26 @@
           "status": "heldout_resource_preparation_verified_not_launchable"
         },
         "frozenProductBaselineFixIndependentlyConfirmed": true
+      },
+      "primaryCaptureCore": {
+        "status": "implemented_independent_review_pending",
+        "relatedTests": 85,
+        "seconds": 6.45,
+        "exitCode": 0,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "parentPaidOperatorConnected": false,
+        "independentScoringConnected": false,
+        "localIsolationExecutionPending": true,
+        "initialFixtureFailurePreserved": {
+          "tests": 19,
+          "errors": 1,
+          "seconds": 3.455,
+          "cause": "legacy canary fixture response schema differed from heldout six-skill canonical Git schema",
+          "resolvedBy": "project only synthetic fixture schema across its SDK and rollout packets; no actual measurement changed"
+        },
+        "certifiesHeldoutLaunch": false
       }
     }
   }
