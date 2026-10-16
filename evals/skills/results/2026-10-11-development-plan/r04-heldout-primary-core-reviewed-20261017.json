@@ -1,0 +1,68 @@
+{
+  "status": "primary_core_component_independent_review_passed",
+  "scope": "heldout_primary_core_components_only",
+  "sourceCommit": "027e5a185691a31db46476f9dfd43972d02f9934",
+  "relatedTests": {
+    "count": 86,
+    "seconds": 9.295,
+    "exitCode": 0
+  },
+  "originalAdversarialTests": {
+    "count": 10,
+    "seconds": 2.006,
+    "exitCode": 0
+  },
+  "extraAdversarialTests": {
+    "count": 3,
+    "seconds": 0.873,
+    "exitCode": 0
+  },
+  "fullRegression": {
+    "count": 974,
+    "exitCode": 0,
+    "seconds": 140.66601690399693,
+    "cleanAfter": true
+  },
+  "remediation": {
+    "originalP2": 1,
+    "resolvedP2": 1,
+    "newBlocking": 0,
+    "all53FixedGitBlobsDirectlyChecked": true,
+    "prior194OriginalHashesUnchanged": true
+  },
+  "parentOriginals": {
+    "status": "parent_originals_consumed",
+    "sourceCommit": "027e5a185691a31db46476f9dfd43972d02f9934",
+    "independentReportSha256": "c18d9ac213563c59a41c91f73b857c958feb2f4ca1ed12d816f8fde072ef99b5",
+    "inventorySha256": "86c293bfd385ce1420c8d91b98d014dbf0b2c7346042b9d5fdd3664d600a149a",
+    "originalCount": 193,
+    "allOriginalHashesMatched": true,
+    "fullRegression": {
+      "count": 974,
+      "exitCode": 0,
+      "seconds": 140.66601690399693,
+      "cleanAfter": true
+    },
+    "models": 0,
+    "reservations": 0
+  },
+  "localIsolation": {
+    "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b",
+    "status": "heldout_primary_local_isolation_verified",
+    "scope": "prior_ref_local_primary_probe_only",
+    "certifiesHeldoutLaunch": false
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-primary-core-reviewed-20261017.tar.gz",
+    "sha256": "6d186993d91da7b804ae60d24919bb81877d69fdd4cda5b50ab71265609ec198",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

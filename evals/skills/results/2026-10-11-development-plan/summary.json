@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_primary_core_review_and_local_isolation_pending",
+        "status": "heldout_semantic_review_and_paid_operator_connection_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -1044,7 +1044,7 @@
         "frozenProductBaselineFixIndependentlyConfirmed": true
       },
       "primaryCaptureCore": {
-        "status": "fixed_git_source_loader_fix_pending_independent_closure",
+        "status": "primary_core_component_independent_review_passed",
         "relatedTests": 86,
         "seconds": 8.518,
         "exitCode": 0,
@@ -1063,12 +1063,13 @@
         },
         "certifiesHeldoutLaunch": false,
         "originalIndependentBlockingP2": 1,
-        "independentClosurePending": true,
-        "record": "r04-heldout-primary-core-preparation-20261016.json",
+        "independentClosurePending": false,
+        "record": "r04-heldout-primary-core-reviewed-20261017.json",
         "fullRegression": {
-          "count": 973,
+          "count": 974,
           "exitCode": 0,
-          "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b"
+          "seconds": 140.66601690399693,
+          "cleanAfter": true
         },
         "localIsolation": {
           "actualArgvVerified": true,
@@ -1086,7 +1087,28 @@
           "reservations": 0,
           "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b",
           "status": "heldout_primary_local_isolation_verified"
-        }
+        },
+        "resolvedP2": 1,
+        "reviewedSourceCommit": "027e5a185691a31db46476f9dfd43972d02f9934"
+      },
+      "independentSemantic": {
+        "status": "implemented_independent_review_pending",
+        "relatedTests": {
+          "count": 114,
+          "seconds": 18.618,
+          "exitCode": 0
+        },
+        "newSyntheticTests": {
+          "count": 14,
+          "seconds": 6.655,
+          "exitCode": 0
+        },
+        "plannedSlots": 24,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "paidOperatorConnected": false,
+        "certifiesHeldoutLaunch": false
       }
     }
   }

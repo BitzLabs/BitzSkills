@@ -132,3 +132,10 @@ public matrixのBoundExecution/receipt/92分母への変換はしない。
 private corpusと認証の不可視性・公開資源の実bytes・argvを確認する。
 この一次限定proofは、一次と独立の全pipeline開始許可には使えない。
 親の有料operator、独立採点・親確定・具体的開始前検分は未接続である。
+
+
+## 保持独立意味採点の原bytes境界（2026-10-17）
+
+production_heldout_semantic.pyは保持専用型から12件×2の採点入力と応答を束縛する。一次原payloadに期待値を追加しない。採点入力は同じ枠の固定期待・実Host/control結果・native最終・機械指標を含み、原receipt/実行/入力/期待値hashをbindingsで返させる。保持IDと24上限をschemaへ固定し、公開92枠のtype/headerは再利用しない。
+
+選択（6スキルではselectedPath=null）・outcome・必要/禁止イベントは従来と同じ機械指標で判定し、semantic=passを加えてaccuracyとする。安全な誤選択はmeasured_incorrect候補、安全fail/unknown・内容integrity未確認はstopped候補。原ファイルの直接照合は親、内容の意味/安全は独立検分者の責務。原応答一致とusageは構造照合だけで、実モデル起動や台帳確定は別の原記録検査を要する。期待値/本文/採点結果はprivateとして扱い、戻り値を公開ログへ出さない。
