@@ -1,0 +1,41 @@
+{
+  "status": "ledger_directory_drift_remediation_pending_independent_review",
+  "originalSourceCommit": "d98ad943042d6cea1a3f1965cf9cffe2dfd71c6e",
+  "scope": "private_durable_ledger_component_only",
+  "originalIndependentReview": {
+    "blockingP2": 1,
+    "relatedTests": 31,
+    "adversarialTests": 9,
+    "adversarialFailures": 1,
+    "reportSha256": "f391cfbe3ea5c9c372ba4601f820fdec98184e4cce5fea210d62d519c781caef",
+    "inventorySha256": "7b61808474b444792dc4ea9b3081076b5c2c475187b3f9ecfdbbcf410280decf",
+    "parentOriginalHashesMatched": 34
+  },
+  "originalFullRegression": {
+    "count": 935,
+    "seconds": 133.912,
+    "exitCode": 0,
+    "cleanBeforeAfter": true,
+    "stderrSha256": "ef9b831b6370a27a819b48f16b167d4e5a7a4c9d3f85b3809060b8f4a2aa009e"
+  },
+  "remediation": {
+    "change": "revalidate locked directory owner/mode before and after each record read/write",
+    "relatedTests": 32,
+    "seconds": 0.854,
+    "exitCode": 0,
+    "independentClosurePending": true
+  },
+  "realPrivateStorageWrites": 0,
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-ledger-initial-review-20261016.tar.gz",
+    "sha256": "01c5bb82e7ad8c12b1d52e6e3b677864f58cdd82a72efb812f7c1d2699869c49",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

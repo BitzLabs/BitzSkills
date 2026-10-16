@@ -83,6 +83,7 @@ class HeldoutLedger:
 
     def _read(self, name):
         # パスの再解決を避け、ロックしたdirectory fdの下だけを読む。
+        self._check_directory()
         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=self.directory)
         try:
             before = os.fstat(fd)
@@ -97,11 +98,13 @@ class HeldoutLedger:
                 (after.st_dev, after.st_ino, after.st_mode, after.st_uid, after.st_nlink,
                  after.st_size, after.st_mtime_ns, after.st_ctime_ns)
                 and len(raw) == before.st_size, 'heldout ledger read drift')
+            self._check_directory()
             return raw
         finally:
             os.close(fd)
 
     def _write(self, name, raw):
+        self._check_directory()
         fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
             0o600, dir_fd=self.directory)
         try:
@@ -113,6 +116,13 @@ class HeldoutLedger:
         finally:
             os.close(fd)
         os.fsync(self.directory)
+        self._check_directory()
+
+    def _check_directory(self):
+        require(self.directory is not None, 'heldout ledger lock required')
+        value = os.fstat(self.directory)
+        require(stat.S_ISDIR(value.st_mode) and stat.S_IMODE(value.st_mode) == 0o700
+            and value.st_uid == os.getuid() and value.st_nlink >= 2, 'heldout ledger directory drift')
 
     @contextmanager
     def locked(self):

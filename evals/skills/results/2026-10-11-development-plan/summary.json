@@ -889,17 +889,27 @@
       "inputComponentIndependentlyReviewed": true,
       "sourceDependencyFixIndependentlyConfirmed": true,
       "ledgerComponent": {
-        "status": "implemented_independent_review_pending",
+        "status": "ledger_directory_drift_remediation_pending_independent_review",
         "module": "evals/skills/routing/production_heldout_ledger.py",
-        "relatedTests": 31,
-        "seconds": 0.853,
+        "relatedTests": 32,
+        "seconds": 0.854,
         "exitCode": 0,
         "actualPrivateStorageWrites": 0,
         "models": 0,
         "reservations": 0,
         "usesSyntheticIsolatedLedgersOnly": true,
         "productionAdaptersConnected": false,
-        "certifiesHeldoutLaunch": false
+        "certifiesHeldoutLaunch": false,
+        "record": "r04-heldout-ledger-preparation-20261016.json",
+        "originalIndependentBlockingP2": 1,
+        "originalFullRegression": {
+          "count": 935,
+          "seconds": 133.912,
+          "exitCode": 0,
+          "cleanBeforeAfter": true,
+          "stderrSha256": "ef9b831b6370a27a819b48f16b167d4e5a7a4c9d3f85b3809060b8f4a2aa009e"
+        },
+        "directoryDriftFixImplemented": true
       }
     }
   }

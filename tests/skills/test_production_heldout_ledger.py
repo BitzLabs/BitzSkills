@@ -123,6 +123,18 @@ class HeldoutLedgerTests(unittest.TestCase):
             (self.root/'contract.json').write_bytes(b'{}')
             with self.assertRaises(ValueError): self.stage(instance, 1, 'primary_reserved')
 
+    def test_directory_permission_and_owner_drift_rejected_before_new_event(self):
+        with self.instance().locked() as instance:
+            self.stage(instance, 1, 'primary_reserved')
+            self.root.chmod(0o755)
+            with self.assertRaises(ValueError): self.stage(instance, 1, 'primary_started')
+            self.assertFalse((self.root/'event-0002.json').exists())
+            with self.assertRaises(ValueError): instance.summary()
+            self.root.chmod(0o700)
+            with patch.object(ledger.os, 'getuid', return_value=os.getuid()+1):
+                with self.assertRaises(ValueError): self.stage(instance, 1, 'primary_started')
+            self.assertFalse((self.root/'event-0002.json').exists())
+
     def test_symlinks_hardlinks_and_group_readable_records_are_rejected(self):
         with self.instance().locked() as instance: self.stage(instance, 1, 'primary_reserved')
         path=self.root/'event-0001.json';path.chmod(0o640)
