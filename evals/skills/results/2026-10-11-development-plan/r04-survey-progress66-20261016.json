@@ -1,0 +1,1050 @@
+{
+  "recordedAt": "2026-10-16T12:31:28.195533+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 66,
+    "evaluationFailed": 11,
+    "independentReserved": 55,
+    "maximumPrimary": 92,
+    "measuredCorrect": 52,
+    "measuredIncorrect": 3,
+    "missingMeasurements": 37,
+    "parentVerified": 55,
+    "pendingSlots": 0,
+    "primaryCompleted": 55,
+    "primaryLaunchMarked": 66,
+    "primaryReserved": 66,
+    "status": "in_progress",
+    "unattemptedSlots": 26
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 66,
+      "evaluationFailed": 11,
+      "independentReserved": 55,
+      "maximumPrimary": 92,
+      "measuredCorrect": 52,
+      "measuredIncorrect": 3,
+      "missingMeasurements": 37,
+      "parentVerified": 55,
+      "pendingSlots": 0,
+      "primaryCompleted": 55,
+      "primaryLaunchMarked": 66,
+      "primaryReserved": 66,
+      "status": "in_progress",
+      "unattemptedSlots": 26
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 115.43359372899431,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "d8cd34ebc40bf6456254852bfca46976b63d04cd06be1ea206ae40478424a6de",
+    "later67Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage66 with direct new21..66 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25509,
+          "output_tokens": 629,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 23,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18924
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25589,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 24,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 382,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26644,
+          "output_tokens": 542,
+          "reasoning_output_tokens": 43
+        },
+        "ordinal": 25,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19233,
+          "outputTokens": 368,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19601
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26902,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 26,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6144,
+          "inputTokens": 19233,
+          "outputTokens": 401,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19634
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25728,
+          "output_tokens": 695,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 27,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18679,
+          "outputTokens": 399,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19078
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25736,
+          "output_tokens": 608,
+          "reasoning_output_tokens": 33
+        },
+        "ordinal": 28,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 12416,
+          "inputTokens": 18679,
+          "outputTokens": 425,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19104
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27343,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 31
+        },
+        "ordinal": 29,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 19670,
+          "outputTokens": 289,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19959
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27329,
+          "output_tokens": 511,
+          "reasoning_output_tokens": 20
+        },
+        "ordinal": 30,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19670,
+          "outputTokens": 295,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19965
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13465,
+          "output_tokens": 588,
+          "reasoning_output_tokens": 16
+        },
+        "ordinal": 31,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3988,
+          "outputTokens": 158,
+          "reasoningOutputTokens": 31,
+          "totalTokens": 4146
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13378,
+          "output_tokens": 502,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 32,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3988,
+          "outputTokens": 154,
+          "reasoningOutputTokens": 30,
+          "totalTokens": 4142
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19636,
+          "output_tokens": 708,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 33,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 10308,
+          "outputTokens": 176,
+          "reasoningOutputTokens": 13,
+          "totalTokens": 10484
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19591,
+          "output_tokens": 574,
+          "reasoning_output_tokens": 20
+        },
+        "ordinal": 34,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 10310,
+          "outputTokens": 176,
+          "reasoningOutputTokens": 29,
+          "totalTokens": 10486
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13337,
+          "output_tokens": 514,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 35,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 139,
+          "reasoningOutputTokens": 36,
+          "totalTokens": 4116
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13401,
+          "output_tokens": 532,
+          "reasoning_output_tokens": 22
+        },
+        "ordinal": 36,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 2432,
+          "inputTokens": 3977,
+          "outputTokens": 170,
+          "reasoningOutputTokens": 43,
+          "totalTokens": 4147
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13406,
+          "output_tokens": 508,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 37,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 149,
+          "reasoningOutputTokens": 33,
+          "totalTokens": 4126
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13428,
+          "output_tokens": 507,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 38,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3977,
+          "outputTokens": 134,
+          "reasoningOutputTokens": 32,
+          "totalTokens": 4111
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13352,
+          "output_tokens": 551,
+          "reasoning_output_tokens": 32
+        },
+        "ordinal": 39,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3975,
+          "outputTokens": 135,
+          "reasoningOutputTokens": 45,
+          "totalTokens": 4110
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13348,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 40,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3975,
+          "outputTokens": 120,
+          "reasoningOutputTokens": 15,
+          "totalTokens": 4095
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13324,
+          "output_tokens": 493,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 41,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3972,
+          "outputTokens": 132,
+          "reasoningOutputTokens": 28,
+          "totalTokens": 4104
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13282,
+          "output_tokens": 518,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 42,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3972,
+          "outputTokens": 146,
+          "reasoningOutputTokens": 38,
+          "totalTokens": 4118
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13455,
+          "output_tokens": 504,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 43,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3979,
+          "outputTokens": 162,
+          "reasoningOutputTokens": 43,
+          "totalTokens": 4141
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13445,
+          "output_tokens": 552,
+          "reasoning_output_tokens": 18
+        },
+        "ordinal": 44,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3979,
+          "outputTokens": 177,
+          "reasoningOutputTokens": 43,
+          "totalTokens": 4156
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19742,
+          "output_tokens": 607,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 45,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 10304,
+          "outputTokens": 232,
+          "reasoningOutputTokens": 48,
+          "totalTokens": 10536
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25954,
+          "output_tokens": 736,
+          "reasoning_output_tokens": 50
+        },
+        "ordinal": 46,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18935,
+          "outputTokens": 398,
+          "reasoningOutputTokens": 60,
+          "totalTokens": 19333
+        },
+        "provenanceMatched": true,
+        "status": "measured_incorrect"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13308,
+          "output_tokens": 507,
+          "reasoning_output_tokens": 0
+        },
+        "ordinal": 47,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3972,
+          "outputTokens": 144,
+          "reasoningOutputTokens": 45,
+          "totalTokens": 4116
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 13379,
+          "output_tokens": 597,
+          "reasoning_output_tokens": 28
+        },
+        "ordinal": 48,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 0,
+          "inputTokens": 3972,
+          "outputTokens": 135,
+          "reasoningOutputTokens": 33,
+          "totalTokens": 4107
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19804,
+          "output_tokens": 539,
+          "reasoning_output_tokens": 20
+        },
+        "ordinal": 49,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 10310,
+          "outputTokens": 189,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 10499
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 19732,
+          "output_tokens": 516,
+          "reasoning_output_tokens": 22
+        },
+        "ordinal": 50,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6272,
+          "inputTokens": 10310,
+          "outputTokens": 192,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 10502
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26674,
+          "output_tokens": 517,
+          "reasoning_output_tokens": 25
+        },
+        "ordinal": 51,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 19250,
+          "outputTokens": 372,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19622
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26763,
+          "output_tokens": 635,
+          "reasoning_output_tokens": 24
+        },
+        "ordinal": 52,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 19257,
+          "outputTokens": 364,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19621
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25842,
+          "output_tokens": 545,
+          "reasoning_output_tokens": 25
+        },
+        "ordinal": 53,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18820,
+          "outputTokens": 343,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19163
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25887,
+          "output_tokens": 645,
+          "reasoning_output_tokens": 53
+        },
+        "ordinal": 54,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18820,
+          "outputTokens": 364,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19184
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27259,
+          "output_tokens": 582,
+          "reasoning_output_tokens": 42
+        },
+        "ordinal": 55,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6144,
+          "inputTokens": 19625,
+          "outputTokens": 310,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19935
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 27394,
+          "output_tokens": 518,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 56,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19625,
+          "outputTokens": 311,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25762,
+          "output_tokens": 563,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 57,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18688,
+          "outputTokens": 384,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19072
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 58,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 59,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 60,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 61,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 62,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 63,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 64,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 65,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      },
+      {
+        "allReceiptOriginalHashesMatched": true,
+        "eligibleForMeasurement": false,
+        "ordinal": 66,
+        "phase": "primary",
+        "resourceProofReverified": true,
+        "status": "evaluation_failed"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 2938,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786,
+      78.76884007400076,
+      60.00115757800086,
+      60.00058168000032,
+      60.0001286839979,
+      82.28957645600167,
+      60.00063617699925,
+      60.00009891300215,
+      60.000376017000235,
+      84.31695708999905,
+      60.00078728099834,
+      60.00011558800179,
+      60.00308058899827,
+      94.00773988999936,
+      60.00045046500236,
+      60.00009599999976,
+      60.000437751998106,
+      91.40707238300092,
+      60.01311420500133,
+      60.00035132099947,
+      60.00477365400002,
+      91.23203001100046,
+      60.000131229000544,
+      60.00012303599942,
+      60.00003231099981,
+      100.13638594299846,
+      60.00009751399921,
+      60.000094350001746,
+      60.000490918999276,
+      104.00086837799972,
+      60.000087160002295,
+      60.00012122800035,
+      60.000109054999484,
+      108.63467195499834,
+      60.00011732400162,
+      60.00009243999739,
+      60.000091519003036,
+      15442.799058005996,
+      60.000107713000034,
+      60.00010513500456,
+      60.000103344995296,
+      120.27068667799904,
+      60.0052452700038,
+      60.001780473998224,
+      60.000091729001724,
+      123.43896485900041,
+      60.000487808996695,
+      60.00019388600049,
+      60.00230643500254,
+      144.29519197999616,
+      60.00244628700602,
+      60.00317270300002,
+      60.00020615999529,
+      135.5650795840047,
+      60.00010447599925,
+      60.00012009999773,
+      60.000094294999144,
+      133.24179570800334,
+      60.000105720995634,
+      60.00008602999878,
+      60.000073242001235,
+      139.5185306610001,
+      60.00034300300467,
+      60.00379258199973,
+      60.0004365700006,
+      145.24581329799548,
+      60.002053094001894,
+      60.00759998000285,
+      60.000116076997074,
+      153.82680435499788,
+      60.000100861005194,
+      60.00013972099987,
+      220.64363002199389,
+      60.00188660400454,
+      19910.193327859,
+      60.005755723999755,
+      177.01412669699494,
+      60.000698941003066,
+      179.94830204299797,
+      60.00010766000196
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_66_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "29ed94c41946c85d7160bc75415a1415a51c9011034a3cf0bed46a81570a51f7",
+    "inventorySha256": "d8cd34ebc40bf6456254852bfca46976b63d04cd06be1ea206ae40478424a6de",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 2938
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792137310,
+        "usedPercent": 28,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 51,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.2738516089957557,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T12:29:19.336484+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792137310,
+        "usedPercent": 28,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 51,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "quotaWait": false,
+  "nextPublicOrdinal": 67,
+  "automaticWakeupScheduled": false,
+  "resumePlan": "Recheck current quota and all fixed resources; if date, runtime, context and pacing clock still match use same day16 bundle from next ordinal; otherwise create independently reviewed carry-forward cohort. Complete public92 then heldout24 before product remediation.",
+  "archive": {
+    "path": "evidence-r04-survey-progress66-20261016.tar.gz",
+    "sha256": "5a694aa6f728b0fffd2147ca4f3bec487854661db35ab74cc7e9c768c1e25ad2",
+    "bytes": 223453,
+    "regularMembers": 52,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
