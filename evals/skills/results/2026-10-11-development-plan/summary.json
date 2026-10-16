@@ -887,7 +887,20 @@
         "status": "public_evaluation_resources_unchanged"
       },
       "inputComponentIndependentlyReviewed": true,
-      "sourceDependencyFixIndependentlyConfirmed": true
+      "sourceDependencyFixIndependentlyConfirmed": true,
+      "ledgerComponent": {
+        "status": "implemented_independent_review_pending",
+        "module": "evals/skills/routing/production_heldout_ledger.py",
+        "relatedTests": 31,
+        "seconds": 0.853,
+        "exitCode": 0,
+        "actualPrivateStorageWrites": 0,
+        "models": 0,
+        "reservations": 0,
+        "usesSyntheticIsolatedLedgersOnly": true,
+        "productionAdaptersConnected": false,
+        "certifiesHeldoutLaunch": false
+      }
     }
   }
 }

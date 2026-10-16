@@ -53,3 +53,22 @@ python -B evals/skills/routing/production_heldout_inputs.py --source <確定40�
 失敗対策とコンテキスト削減は別変更・同条件比較とし、正しい動作・安全性・完了性を保つ。
 今回誤った動作や評価失敗を再現することを合格条件にしない。
 初期入力だけでなく追加取得を含む総入力・cache・取得回数・時間・正解/不正解/評価失敗を比較する。
+
+
+## 専用台帳の部品（実行器は未接続）
+
+`production_heldout_ledger.py` は非公開collection-05内の固定共有namespaceへ、
+契約とhash鎖付きjournalを新規追記する。既存の契約・eventを上書きしない。
+`open_shared` の保存先にworktree/ref/output引数はなく、別条件で既存契約を再初期化しない。
+クラスの任意root引数は隔離試験用で、本番接続は固定factoryを用いる。
+
+一次予約→起動marker→一次取得→独立予約→独立marker→独立取得→親照合の順序を固定する。
+前枠が未了の間は次を拒否し、予約・起動markerを実provider呼出し数と同一視しない。
+親照合は正解と不正解を別に記録する。個別失敗は起動markerの後だけ封印でき、
+契約に一致する現物資源proofと失敗原証拠のhashを必須にする。正常測定へは変換しない。
+全体停止は別eventで記録し、再開・追加eventを拒否する。
+
+全操作は所有者限定のdirectoryとfile、NOFOLLOW/単一link、排他lock、
+契約/順序/分母/前event hashの再検査を経る。途中保存の破損・不明file・journal欠番を拒否する。
+台帳が受け取る原hashの意味・安全性は後続の取得/採点/親adapterで検査しなければならない。
+この台帳の合成試験通過だけで、本番起動や非公開送信を許可しない。
