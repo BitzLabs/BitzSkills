@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_semantic_review_and_paid_operator_connection_pending",
+        "status": "heldout_primary_operator_review_and_independent_stage_connection_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -1092,7 +1092,7 @@
         "reviewedSourceCommit": "027e5a185691a31db46476f9dfd43972d02f9934"
       },
       "independentSemantic": {
-        "status": "implemented_independent_review_pending",
+        "status": "heldout_semantic_component_review_passed",
         "relatedTests": {
           "count": 114,
           "seconds": 18.618,
@@ -1108,6 +1108,34 @@
         "actualHeldoutReservations": 0,
         "realPrivateStorageWrites": 0,
         "paidOperatorConnected": false,
+        "certifiesHeldoutLaunch": false,
+        "reviewedSourceCommit": "f6b314b7a4dd36fb36923d441448f3f7e6e02517",
+        "record": "r04-heldout-semantic-reviewed-20261017.json",
+        "fullRegression": {
+          "count": 988,
+          "exitCode": 0,
+          "seconds": 146.89343017899955,
+          "cleanAfter": true
+        }
+      },
+      "primaryOperator": {
+        "status": "implemented_independent_review_pending",
+        "relatedTests": {
+          "count": 129,
+          "seconds": 22.936,
+          "exitCode": 0
+        },
+        "newSyntheticTests": 15,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "independentStageConnected": false,
+        "parentFinalizationConnected": false,
+        "pacing": {
+          "minimumLogicalGapSeconds": 60,
+          "receiptAndJournalAnchored": true,
+          "providerHttpIntervalCertified": false
+        },
         "certifiesHeldoutLaunch": false
       }
     }

@@ -13,7 +13,7 @@ io, require, trace = x.io, x.require, x.trace
 VERSION = 'heldout-primary-original-binding-0.1.0'
 ADDITIONAL = frozenset({'deployment.json', 'sdk-manifest.json', 'runtime-manifest.json',
     'launch-settings.json', 'resource-guards.json', 'prelaunch-review.json', 'prelaunch-report.json',
-    'local-isolation-proof.json'})
+    'local-isolation-proof.json', 'logical-pacing.json'})
 RECEIPT_KEYS = {'version', 'sourceCommit', 'slot', 'cwd', 'artifactSha256', 'elapsedSeconds',
     'namespaceExitCode', 'timedOut', 'primaryModelTrajectories', 'independentReviewPerformed',
     'automaticRetries', 'phaseComplete', 'certifiesSkillGate'}
@@ -133,6 +133,8 @@ def verify_complete(context):
     expected = bind_originals(context.bound, context.ordinal, context.originals, context.receipt_raw,
         context.manifest_raw, context.schema_raw, context.context_raw, source_repository=context.source_repository)
     require(expected == context, 'heldout immutable original drift')
+    launch.pacing(context.bound.execution_raw, launch.primary_identity(context.bound, context.ordinal),
+        context.originals['logical-pacing.json'])
     receipt = x.inputs.parse(context.receipt_raw)
     catalog = dict(zip(x.inputs.INPUT_NAMES, context.bound.raw_inputs))['catalog']
     native = primary.native(context.originals, context.manifest_raw, catalog, context.schema_raw,

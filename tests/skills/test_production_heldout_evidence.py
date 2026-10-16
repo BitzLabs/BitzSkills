@@ -122,7 +122,11 @@ class HeldoutEvidenceTests(unittest.TestCase):
             'sdk-manifest.json':sdk,'runtime-manifest.json':runtime,
             'launch-settings.json':evidence.launch.launch_settings(self.bound.execution_raw,self.bound.deployment_raw),
             'resource-guards.json':io.encoded(dict.fromkeys(['before','invoke','after'],self.proof)),
-            'prelaunch-review.json':review,'prelaunch-report.json':report,'local-isolation-proof.json':isolation})
+            'prelaunch-review.json':review,'prelaunch-report.json':report,'local-isolation-proof.json':isolation,
+            'logical-pacing.json':io.encoded(dict(version=evidence.launch.PACING_VERSION,sourceCommit='b'*40,
+                executionSha256=io.sha(self.bound.execution_raw),ordinal=1,role='primary',monotonicSeconds=100.0,
+                wallSeconds=1000.0,waitedSeconds=0.0,previousSha256=None,declaresProviderInvoked=False,
+                minimumGapSeconds=60))})
         self.receipt=dict(version=evidence.VERSION,sourceCommit='b'*40,slot=self.bound.slot(1),
             cwd=str(self.bound.stage_root(1,'primary')/'work'),artifactSha256={},elapsedSeconds=2.5,
             namespaceExitCode=0,timedOut=False,primaryModelTrajectories=1,independentReviewPerformed=False,

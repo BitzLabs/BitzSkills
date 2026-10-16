@@ -139,3 +139,12 @@ private corpusと認証の不可視性・公開資源の実bytes・argvを確認
 production_heldout_semantic.pyは保持専用型から12件×2の採点入力と応答を束縛する。一次原payloadに期待値を追加しない。採点入力は同じ枠の固定期待・実Host/control結果・native最終・機械指標を含み、原receipt/実行/入力/期待値hashをbindingsで返させる。保持IDと24上限をschemaへ固定し、公開92枠のtype/headerは再利用しない。
 
 選択（6スキルではselectedPath=null）・outcome・必要/禁止イベントは従来と同じ機械指標で判定し、semantic=passを加えてaccuracyとする。安全な誤選択はmeasured_incorrect候補、安全fail/unknown・内容integrity未確認はstopped候補。原ファイルの直接照合は親、内容の意味/安全は独立検分者の責務。原応答一致とusageは構造照合だけで、実モデル起動や台帳確定は別の原記録検査を要する。期待値/本文/採点結果はprivateとして扱い、戻り値を公開ログへ出さない。
+
+
+## 一次親operatorと起動原記録（2026-10-17）
+
+production_heldout_operator.run_primaryは具体的な全pipeline開始前独立検分と現物資源proofを先に要求する。共通private台帳のlockを保持して予約し、固定stageをEXCLで新規作成する。正常一次は三時点proof/原loader/SDK native/rollout照合後にのみprimary_capturedとなる。一次正常をparent_verifiedへ置換しない。独立起動と親確定のadapterは別工程。
+
+logical-pacing.jsonはreceiptの原inventoryに含める。次の論理起動は直前のstarted markerとcaptured/failed journalのreceipt hashから原pacing/control hashを再照合し、単調時計60秒以上を確認する。時計逆行・原改変は停止する。provider内部のHTTP間隔/実行回数を示す証明ではない。
+
+失敗原も既知固定名と有限rollout pathを先に列挙し、owner-only/NOFOLLOWで読む。認証opaqueはmetadataだけ。正常/失敗とも上書き・再起動・予約返却はなく、同一三時点proofの単回取得失敗だけprimary_failedへ封印する。stop marker/未知file・directory/原不正/資源drift/保存失敗はglobal_stopとなる。失敗を正解や不正解の分母へ足さない。

@@ -1,5 +1,6 @@
 """単一保持payloadの隔離argvと開始前検分を束縛する。processは起動しない。"""
 from pathlib import Path
+import math
 
 import production_heldout_preflight as preflight
 
@@ -8,6 +9,7 @@ io, require, trace = x.io, x.require, x.trace
 ROOT = Path(__file__).resolve().parents[3]
 AUTH = Path('/home/hide/.codex/auth.json')
 VERSION = 'heldout-primary-launch-0.1.0'
+PACING_VERSION = 'heldout-logical-launch-pacing-0.1.0'
 REVIEW_VERSION = 'heldout-pipeline-prelaunch-review-0.1.0'
 IDENTITY_KEYS = {'ordinal', 'repetition', 'payloadSha256', 'contractSha256', 'sourceCommit',
     'campaignId', 'executionSha256'}
@@ -118,3 +120,20 @@ def launch_settings(execution_raw, deployment_raw):
     raw = io.encoded(dict(codexPath=d['codexPath'], diagnosticTracing=preflight.public.capture.sdk.DIAGNOSTIC_TRACING))
     preflight.public.capture.sdk.launch_settings(raw)
     return raw
+
+
+def pacing(execution_raw, identity, raw):
+    ordinal = checked_identity(execution_raw, identity)
+    value = x.inputs.parse(raw)
+    require(isinstance(value, dict) and set(value) == {'version', 'sourceCommit', 'executionSha256',
+        'ordinal', 'role', 'monotonicSeconds', 'wallSeconds', 'waitedSeconds', 'previousSha256',
+        'declaresProviderInvoked', 'minimumGapSeconds'} and value['version'] == PACING_VERSION
+        and value['sourceCommit'] == identity['sourceCommit'] and value['executionSha256'] == io.sha(execution_raw)
+        and type(value['ordinal']) is int and value['ordinal'] == ordinal and value['role'] == 'primary'
+        and value['declaresProviderInvoked'] is False and type(value['minimumGapSeconds']) is int
+        and value['minimumGapSeconds'] == 60, 'heldout pacing original identity')
+    require(all(type(value[key]) in {int, float} and math.isfinite(value[key]) and value[key] >= 0
+        for key in ['monotonicSeconds', 'wallSeconds', 'waitedSeconds']) and value['waitedSeconds'] <= 60,
+        'heldout pacing original finite clocks')
+    if value['previousSha256'] is not None:io.pin(value['previousSha256'])
+    return value
