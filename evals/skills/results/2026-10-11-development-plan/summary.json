@@ -722,11 +722,11 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_preparation_read_approval_pending",
+        "status": "heldout_input_preparation_implemented_review_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
-        "heldoutReadApprovalPending": true,
+        "heldoutReadApprovalPending": false,
         "heldoutExecutionContractPending": true,
         "productRemediationDeferred": true,
         "contextReductionDeferred": true,
@@ -736,11 +736,11 @@
         "automaticWakeupScheduled": false,
         "quotaHeadroomRecheckBeforeFurtherModels": true,
         "certifiesSkillGate": false,
-        "quotaWait": true,
-        "heldoutReadApprovalRequest": "Pending user reply to the async request for held-out-storage-plan.md, held-out-collection-v0.2.json and related README; no protected read or heldout model run executed."
+        "quotaWait": false,
+        "heldoutReadApprovalRequest": "User explicitly approved necessary reading on 2026-10-16 (許可します and structured approval reply)."
       },
       "carryForwardThroughOrdinal": 20,
-      "quotaWait": true,
+      "quotaWait": false,
       "currentQuota5hPercent": 97,
       "currentQuotaWeeklyPercent": 76,
       "productRemediationDeferredUntilAllEvaluation": true,
@@ -780,6 +780,60 @@
         "caseAndSkillLevelCorrectIncorrectFailedCoverage"
       ],
       "reductionTargetToSetAfterCompleteEvaluation": true,
+      "certifiesSkillGate": false,
+      "certifiesRelease": false
+    },
+    "r04HeldoutPreparation": {
+      "status": "input_component_implemented_independent_review_pending",
+      "readAuthorization": {
+        "approvedBy": "user",
+        "approvedOn": "2026-10-16",
+        "scope": "necessary storage plan, collection configuration and related README reading; no bulk private-case display",
+        "requestResolved": true
+      },
+      "acceptedSetVersion": "production-routing-held-out-0.5.0",
+      "acceptedCasesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+      "caseCount": 12,
+      "repetitions": 2,
+      "plannedPrimary": 24,
+      "plannedIndependent": 24,
+      "relatedTests": {
+        "count": 19,
+        "exitCode": 0,
+        "seconds": 0.113,
+        "privateCasesRead": false,
+        "modelInvocations": 0
+      },
+      "actualHeldoutModels": 0,
+      "actualHeldoutReservations": 0,
+      "inputComponentLaunchesModels": false,
+      "executionContractPending": true,
+      "privatePrimaryAndIndependentRunnerPending": true,
+      "productAndCurrentEvaluationInputsChanged": false,
+      "cliMetadata": {
+        "observedAt": "2026-10-16T22:26:08.575587+09:00",
+        "accountReadOk": false,
+        "rateLimitReadOk": false,
+        "rpcErrorCode": -32603,
+        "http401Observed": false,
+        "http429Observed": false,
+        "credentialContentsRead": false,
+        "rawMessagesSaved": false
+      },
+      "appQuotaObservation": {
+        "observedOn": "2026-10-16",
+        "fiveHourUsedPercent": 5,
+        "weeklyUsedPercent": 77,
+        "ordinaryUsageAllowed": true,
+        "provesEvaluationCliAuthenticated": false
+      },
+      "remainingSteps": [
+        "independent input-component review and fixed-source private input preparation",
+        "private durable ledger and isolated capture/scoring/parent adapters",
+        "fixed finite contract and concrete independent prelaunch review",
+        "24 heldout slots with failures retained",
+        "all-results failure and context-reduction plans"
+      ],
       "certifiesSkillGate": false,
       "certifiesRelease": false
     }
