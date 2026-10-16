@@ -141,5 +141,6 @@ def verify_complete(context):
         context.receipt_raw, io.sha(context.receipt_raw), receipt['elapsedSeconds'])
     return dict(status='heldout_original_bytes_and_native_correlated', slot=context.bound.slot(context.ordinal),
         receiptSha256=io.sha(context.receipt_raw), artifactSha256=receipt['artifactSha256'], **native, rollout=rollout,
-        originalInputMatched=True, rawPayloadCorrelationVerified=True, independentReviewPerformed=False,
+        originalInputMatched=True, rawPayloadCorrelationVerified=True, sourceRuntimeOnDiskVerified=False,
+        independentReviewPerformed=False,
         ledgerFinalized=False, eligibleForMeasurement=False, certifiesSkillGate=False)

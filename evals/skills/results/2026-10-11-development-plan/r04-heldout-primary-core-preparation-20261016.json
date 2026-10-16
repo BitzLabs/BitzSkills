@@ -1,0 +1,89 @@
+{
+  "status": "fixed_git_source_loader_fix_pending_independent_closure",
+  "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b",
+  "scope": "heldout_primary_core_only",
+  "originalIndependentReview": {
+    "blockingP2": 1,
+    "relatedTests": 85,
+    "adversarialTests": 10,
+    "adversarialFailed": 1,
+    "parentOriginalHashesMatched": 194,
+    "reportSha256": "9583177533d36dab05cf65fd890af829d2b7aec596c57b89db744ca3fdc44006",
+    "inventorySha256": "a37e81258e6e5e7ca026cd40e9690b0582a5ef5894445f509820029f2d03c613"
+  },
+  "originalFullRegression": {
+    "count": 973,
+    "seconds": 138.193,
+    "exitCode": 0,
+    "cleanBeforeAfter": true,
+    "stderrSha256": "48b0210ddf0d89502166205e44b863505acbc3f794efee4e1e337525234ed9a8"
+  },
+  "originalRealResourcePreparation": {
+    "caseCount": 12,
+    "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+    "certifiesHeldoutLaunch": false,
+    "contextDate": "2026-10-16",
+    "deploymentSha256": "ade167cb44f834da405e08e31fa1c807ee6c3679237cf0375b872e342e8c1d3e",
+    "executionSha256": "5e5a6eb980cf02fef5ba664e32f0afb1d25746179c8d1e3b91f7de42a80d5e46",
+    "inputContractSha256": "adaa44099f3bcc5a09626d8986e6344f1fdebc3f28ffc384f1422c1e69bd1ef6",
+    "ledgerContractSha256": "f7a54b07812e48c293a49c54076b739beb1a463ca4a443b8d1efebb236d465f6",
+    "models": 0,
+    "plannedIndependent": 24,
+    "plannedPrimary": 24,
+    "privateCaseContentsDisplayed": false,
+    "privateCaseContentsSaved": false,
+    "realPrivateStorageWrites": 0,
+    "repetitions": 2,
+    "reservations": 0,
+    "resourceProofSha256": "aec8f38df1a5bc4e154104def02188fbff4a85cba2bb32486851fe4eda6fff12",
+    "sdkFileCount": 207,
+    "snapshotResourceCount": 72,
+    "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b",
+    "sourceFileCount": 53,
+    "status": "heldout_resource_preparation_verified_not_launchable"
+  },
+  "originalLocalIsolation": {
+    "actualArgvVerified": true,
+    "actualExitCode": 0,
+    "certifiesHeldoutLaunch": false,
+    "conditionSha256": "7cc2194de2ce9ac057a386b0443b114a570e4abce55f00fd783ecbea5a25d957",
+    "credentialsHidden": true,
+    "elapsedSeconds": 0.40583935800532345,
+    "errorType": null,
+    "models": 0,
+    "networkNamespaceIsolated": true,
+    "primaryPayloadProjectionVerified": true,
+    "privateCaseContentsRead": false,
+    "privateCorpusHidden": true,
+    "reservations": 0,
+    "sourceCommit": "d53a1aaf28accd69a69b3d969e023ce500d95e5b",
+    "status": "heldout_primary_local_isolation_verified"
+  },
+  "initialSandboxProbeFailure": {
+    "status": "heldout_primary_local_isolation_failed",
+    "exitCode": 1,
+    "reason": "NETLINK_ROUTE socket denied by sandbox",
+    "preserved": true
+  },
+  "remediation": {
+    "change": "private original loader compares all53 source digest values with direct fixed Git blob hashes; pure byte verifier explicitly does not claim on-disk source/runtime verification",
+    "relatedTests": 86,
+    "seconds": 8.518,
+    "exitCode": 0,
+    "independentClosurePending": true
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "privateContentsPublished": false,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-primary-core-initial-review-20261016.tar.gz",
+    "sha256": "7340c83d93df00b2890cdb7f5ff217e448c9445479205531b4f6e21b0dcef51d",
+    "members": 4,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

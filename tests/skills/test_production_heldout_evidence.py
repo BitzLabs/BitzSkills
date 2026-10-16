@@ -96,13 +96,15 @@ class HeldoutEvidenceTests(unittest.TestCase):
         for name,raw in self.originals.items():
             if name.endswith(('.json','.jsonl')):self.originals[name]=raw.replace(before,after)
         review,report,isolation=launch_fixture.review_bytes(self.bound)
+        for name in evidence.preflight.SOURCE_FILES:
+            self.capture.git_raws.setdefault(name, (ROOT/name).read_bytes())
         self.proof=dict(status='heldout_resources_verified_not_launchable',sourceCommit='b'*40,
             executionSha256=io.sha(self.bound.execution_raw),deploymentSha256=io.sha(self.bound.deployment_raw),
             inputContractSha256=io.sha(self.input_raw),casesSha256=io.sha(self.raws['cases']),
             snapshotManifestSha256=io.sha(self.manifest),snapshotResourceCount=72,
             baselineProductSource=evidence.preflight.BASELINE_PRODUCT_SOURCE,
             productResourcesSha256=io.sha(io.encoded(evidence.trace.strict_json(self.manifest)['resources'])),
-            sourceSha256={name:'4'*64 for name in evidence.preflight.SOURCE_FILES},
+            sourceSha256={name:io.sha(self.capture.git_raws[name]) for name in evidence.preflight.SOURCE_FILES},
             contextProfileSha256=io.sha(self.profile),contextDate=evidence.trace.strict_json(self.profile)['date'],
             sdkManifestSha256=io.sha(sdk),sdkFileCount=2,sdkTreeSha256=self.deployment['sdkTreeSha256'],
             decisionSchemaSha256=io.sha(self.schema),models=0,reservations=0,launchEnabled=False,

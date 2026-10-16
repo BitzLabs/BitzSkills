@@ -101,6 +101,12 @@ def load(bound, ordinal, *, source_repository):
         originals[name] = raw
     d = x.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
     p = evidence.preflight.public
+    fixed_sources = {name: io.sha(p.guard.git(source_repository, 'show',
+        bound.contract['sourceCommit']+':'+name)) for name in evidence.preflight.SOURCE_FILES}
+    guards = x.inputs.parse(originals['resource-guards.json'])
+    require(isinstance(guards, dict) and set(guards) == {'before', 'invoke', 'after'}
+        and all(isinstance(value, dict) and value.get('sourceSha256') == fixed_sources
+            for value in guards.values()), 'heldout original fixed Git source mismatch')
     schema_raw = p.decision_schema(p.guard.git(source_repository, 'show',
         bound.contract['sourceCommit']+':'+p.inventory.SCHEMA))
     context_raw = p.guard.git(source_repository, 'show', bound.contract['sourceCommit']+':'+p.inventory.CONTEXT)

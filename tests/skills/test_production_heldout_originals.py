@@ -1,5 +1,6 @@
 """合成private rootのみで原inventoryとowner-only読取り、opaque非読取りを検査。"""
 import os
+import copy
 from pathlib import Path
 import sys
 import unittest
@@ -45,6 +46,17 @@ class HeldoutOriginalTests(unittest.TestCase):
     def test_unknown_secret_member_rejected_before_its_contents_are_read(self):
         (self.base/'.env').write_bytes(b'SYNTHETIC_SECRET_DO_NOT_READ')
         with self.assertRaises(ValueError):self.load()
+
+    def test_rehashed_three_source_proofs_must_match_every_fixed_git_blob(self):
+        proof=copy.deepcopy(self.fixture.proof)
+        for name in originals.evidence.preflight.SOURCE_FILES:
+            with self.subTest(source=name):
+                changed=copy.deepcopy(proof);changed['sourceSha256'][name]='f'*64
+                raw=originals.io.encoded(dict.fromkeys(['before','invoke','after'],changed))
+                self.fixture.originals['resource-guards.json']=raw;self.fixture.rehash()
+                (self.base/'resource-guards.json').write_bytes(raw)
+                (self.base/'receipt.json').write_bytes(originals.io.encoded(self.fixture.receipt))
+                with self.assertRaisesRegex(ValueError,'fixed Git source mismatch'):self.load()
 
     def test_group_readable_hardlinked_and_symlinked_originals_are_rejected(self):
         path=self.base/'rpc-in.jsonl';path.chmod(0o640)
