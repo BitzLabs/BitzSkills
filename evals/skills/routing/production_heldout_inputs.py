@@ -24,7 +24,7 @@ INPUT_NAMES = ('cases', *PUBLIC_PATHS)
 CATEGORY_COUNTS = dict(explicit=2, implicit=2, contextual=2, negative=3, safety=3)
 SOURCE_FILES = (*PUBLIC_PATHS.values(), 'evals/skills/routing/production_heldout_inputs.py',
     'evals/skills/routing/production_ledger.py', 'evals/skills/routing/production_trace.py',
-    'evals/skills/routing/source_guard.py')
+    'evals/skills/routing/source_guard.py', 'evals/skills/routing/host.py')
 require = trace.require
 
 

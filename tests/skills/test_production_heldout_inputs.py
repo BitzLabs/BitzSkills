@@ -161,6 +161,23 @@ class HeldoutInputTests(unittest.TestCase):
             with self.assertRaises(ValueError): held.prepare(ROOT, 'a'*40)
             reader.assert_not_called()
 
+    def test_host_dependency_drift_rejected_before_private_read_with_real_git(self):
+        source = held.guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip()
+        gitdir = held.guard.git(ROOT, 'rev-parse', '--absolute-git-dir').decode().strip()
+        with tempfile.TemporaryDirectory() as tmp:
+            mirror = Path(tmp)
+            (mirror/'.git').write_text('gitdir: '+gitdir+'\n')
+            for name in held.SOURCE_FILES:
+                path = mirror/name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(held.guard.git(ROOT, 'show', source+':'+name))
+            host = mirror/'evals/skills/routing/host.py'
+            host.write_bytes(host.read_bytes()+b'\n# synthetic drift\n')
+            # Git読取りは実処理。private readerだけ合成境界へ置換する。
+            with patch.object(held, 'private_bytes', side_effect=ValueError('synthetic boundary')) as reader:
+                with self.assertRaises(ValueError): held.prepare(mirror, source)
+                reader.assert_not_called()
+
     def test_json_diagnostic_hides_raw_values(self):
         for raw in [b'{"SYNTHETIC_SECRET":"broken}', b'{"x":1,"x":2}', b'{"x":NaN}']:
             with self.assertRaises(ValueError) as error: held.parse(raw)

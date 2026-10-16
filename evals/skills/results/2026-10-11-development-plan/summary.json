@@ -784,7 +784,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "input_component_implemented_independent_review_pending",
+      "status": "input_source_dependency_remediation_pending_independent_review",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -798,11 +798,11 @@
       "plannedPrimary": 24,
       "plannedIndependent": 24,
       "relatedTests": {
-        "count": 19,
+        "change": "include directly imported host.py in fixed source inventory and verify drift before private read using real Git",
+        "relatedTests": 20,
+        "seconds": 0.179,
         "exitCode": 0,
-        "seconds": 0.113,
-        "privateCasesRead": false,
-        "modelInvocations": 0
+        "independentClosurePending": true
       },
       "actualHeldoutModels": 0,
       "actualHeldoutReservations": 0,
@@ -835,7 +835,19 @@
         "all-results failure and context-reduction plans"
       ],
       "certifiesSkillGate": false,
-      "certifiesRelease": false
+      "certifiesRelease": false,
+      "record": "r04-heldout-input-preparation-20261016.json",
+      "inputSource": "d7d0105121828f29a3443688a0ff57e5e7c7816b",
+      "realInputPreparation": {
+        "exitCode": 0,
+        "cases": 12,
+        "repetitions": 2,
+        "models": 0,
+        "reservations": 0,
+        "privateContentsPublished": false
+      },
+      "originalIndependentBlockingP2": 1,
+      "sourceDependencyFixImplemented": true
     }
   }
 }

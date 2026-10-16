@@ -1,0 +1,65 @@
+{
+  "status": "input_source_dependency_remediation_pending_independent_review",
+  "originalSourceCommit": "d7d0105121828f29a3443688a0ff57e5e7c7816b",
+  "setVersion": "production-routing-held-out-0.5.0",
+  "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+  "preparedInputContractSha256": "25877114fe985eaba7b373d6a022cd782436fc883e36b7aa5b951e9b253e7013",
+  "realInputPreparation": {
+    "exitCode": 0,
+    "cases": 12,
+    "repetitions": 2,
+    "models": 0,
+    "reservations": 0,
+    "privateContentsPublished": false
+  },
+  "parentOperatorErrorsPreserved": [
+    {
+      "phase": "initial source argument",
+      "status": "rejected_before_private_read",
+      "cause": "incorrect full source hash supplied; corrected using git rev-parse without modifying the original failure"
+    },
+    {
+      "phase": "first full-suite invocation",
+      "exitCode": 1,
+      "testsStarted": 0,
+      "cause": "tests/skills absent from module search path"
+    },
+    {
+      "phase": "second full-suite invocation",
+      "exitCode": 1,
+      "tests": 923,
+      "failures": 29,
+      "seconds": 114.871,
+      "cause": "Core source was not first on PYTHONPATH; fixed-source guard rejected evaluation fixture operations",
+      "implementationFailureClaimed": false
+    }
+  ],
+  "independentReview": {
+    "status": "blocked",
+    "blockingP2": 1,
+    "relatedTests": 19,
+    "adversarialTests": 5,
+    "adversarialFailures": 1,
+    "parentOriginalHashesMatched": 34,
+    "reportSha256": "719124c8e9bcbc14ddd50ddbf2c689fc6bb9fc28e22884d77b219522e3c83463",
+    "inventorySha256": "29b22d9a8a1a484dbc953458ac4de12209e58a16f845b1ce8a0dcf4bb531d1d0"
+  },
+  "remediation": {
+    "change": "include directly imported host.py in fixed source inventory and verify drift before private read using real Git",
+    "relatedTests": 20,
+    "seconds": 0.179,
+    "exitCode": 0,
+    "independentClosurePending": true
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "certifiesSkillGate": false,
+  "certifiesFullR04": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-input-initial-review-20261016.tar.gz",
+    "sha256": "db0f780451797dc7c212c1817954cdd28d870e9b312fccd0e101b40cb8d434cf",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}
