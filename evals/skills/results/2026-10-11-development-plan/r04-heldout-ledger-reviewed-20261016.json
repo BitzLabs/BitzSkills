@@ -1,0 +1,60 @@
+{
+  "status": "ledger_component_reviewed_not_launchable",
+  "scope": "private_durable_ledger_component_only",
+  "sourceCommit": "5249577842875c48f200bc1d60a40b89ea67b7ee",
+  "inputComponentSourceCommit": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
+  "independentReview": {
+    "blockingFindings": 0,
+    "relatedTests": 32,
+    "adversarialTests": 9,
+    "reportSha256": "c209ae5a636c311b1f9b854f78d0ccfcae87ca53df0bdf8798e9e02a84a4e426",
+    "inventorySha256": "1c9329a4f28322a4e082f49a7cd40629e4193eca5cea211c7ec15a5fadb3aeff",
+    "parentOriginalHashesMatched": 35,
+    "originalP2Preserved": true,
+    "directoryDriftFixIndependentlyConfirmed": true
+  },
+  "fullRegression": {
+    "count": 936,
+    "seconds": 133.698,
+    "exitCode": 0,
+    "cleanBeforeAfter": true,
+    "sourceCommit": "5249577842875c48f200bc1d60a40b89ea67b7ee",
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "2d6de30697613fd74c559b705afba509dfaa71995bcd5826f824344eed3fb1fe",
+    "invocationSha256": "4b0f7eb7210d4e8a5a8639866ca299c170b40ecbc5fd8e97fff2daf4f82e3ddc",
+    "resultSha256": "475524b284d65f6b01638290526e93fd7dc4318ab583af3bda291fea2a6c7c15"
+  },
+  "privateStorageNamespaceFixed": true,
+  "ledgerWritesAreAppendOnly": true,
+  "ledgerDoesNotIndependentlyVerifyProviderEvidence": true,
+  "realPrivateStorageWrites": 0,
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "publicEvaluation": {
+    "attempted": 92,
+    "correct": 52,
+    "incorrect": 3,
+    "evaluationFailed": 37
+  },
+  "remainingHeldout": 24,
+  "nextSteps": [
+    "new typed execution/deployment and complete source/resource/private-input binding",
+    "isolated primary capture with only single prompt/context mounted",
+    "full raw provider/host/native structural verifier and original inventory in private storage",
+    "independent semantic scoring and parent re-verification",
+    "fixed finite execution contract, concrete independent prelaunch review, current calibration/quota and transmission authorization check",
+    "24 heldout slots with failures retained",
+    "failure countermeasures and total-context-reduction plan after all116"
+  ],
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-ledger-reviewed-20261016.tar.gz",
+    "sha256": "64315e6d231a273c0183f81954437f5c463f9179a20fa9ffdd912183d71e305a",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}
