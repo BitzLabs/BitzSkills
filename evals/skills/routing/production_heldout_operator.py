@@ -244,7 +244,54 @@ def collect_partial(base):
         raw = originals.read_original(base,name);total += len(raw)
         require(total <= originals.MAX_TOTAL_BYTES, 'heldout partial original bytes')
         values[name] = raw
+    audit_partial(values)
     return values
+
+
+def audit_partial(values):
+    """途中JSONLの末尾欠落は未完のまま保持し、認識可能な禁止操作は失敗封印しない。"""
+    counts = {'control':0, '/models':0, '/responses':0}
+    for name in ['rpc-out.jsonl','trace-safe.jsonl']:
+        raw = values.get(name,b'')
+        lines = raw.splitlines()
+        for index,line in enumerate(lines):
+            try:value = x.inputs.parse(line)
+            except ValueError:
+                require(index == len(lines)-1 and not raw.endswith(b'\n'), 'heldout partial malformed complete JSONL')
+                continue
+            require(isinstance(value,dict), 'heldout partial JSONL object')
+            if name == 'rpc-out.jsonl':
+                require(not ('id' in value and 'method' in value), 'heldout partial server request')
+                if 'method' in value:
+                    require(isinstance(value['method'],str) and isinstance(value.get('params'),dict),
+                        'heldout partial notification shape')
+                if value.get('method') in {'item/started','item/completed'}:
+                    item = value['params'].get('item')
+                    require(isinstance(item,dict) and item.get('type') in
+                        {'userMessage','agentMessage','reasoning','mcpToolCall'}, 'heldout partial unknown action')
+                    if item['type'] == 'mcpToolCall':
+                        require(item.get('server') == 'production-routing' and item.get('tool') in
+                            {'list_resources','read_resource'}, 'heldout partial unknown host tool')
+            else:
+                fields = value.get('fields',{})
+                require(isinstance(fields,dict), 'heldout partial telemetry fields')
+                if fields.get('event.name') == 'codex.tool_call_received':
+                    source = fields.get('tool_source')
+                    if source == 'direct':
+                        counts['control'] += 1
+                        require(fields.get('tool_name') in {'exec','wait'} and counts['control'] <= 2,
+                            'heldout partial control policy')
+                    else:
+                        require(source == 'code_mode' and fields.get('tool_namespace') == 'mcp__production_routing'
+                            and fields.get('tool_name') in {'list_resources','read_resource'},
+                            'heldout partial unknown child source or tool')
+                elif fields.get('event.name') == 'codex.api_request':
+                    endpoint = fields.get('endpoint')
+                    require(endpoint in {'/models','/responses'} and type(fields.get('attempt')) is int
+                        and fields['attempt'] == 0 and fields.get('auth.retry_after_unauthorized',False) is False,
+                        'heldout partial unknown API or retry')
+                    counts[endpoint] += 1
+                    require(counts[endpoint] <= (2 if endpoint == '/models' else 3), 'heldout partial API limit')
 
 
 def receipt(bound, ordinal, values, elapsed, exit_code, timed_out):
@@ -285,9 +332,9 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     for name in ['work', 'tmp', 'codex-home', 'logs', 'state', 'rollout-traces']:create_directory(base/name)
     create_directory(control)
     for name,raw in inputs_for_primary(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_raw).items():save(base,name,raw)
+    pace(bound,ordinal,'primary',ledger)
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(before,invoke), 'heldout resources changed before primary launch')
-    pace(bound,ordinal,'primary',ledger)
     ledger.append(ordinal,'primary_started')
     plan = launch.invocation(repository,bound.execution_raw,bound.deployment_raw,launch.primary_identity(bound,ordinal))
     begin = time.monotonic()

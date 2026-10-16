@@ -103,6 +103,50 @@ class HeldoutOperatorTests(unittest.TestCase):
         ledger=self.ledger()
         with ledger.locked():self.assertEqual(ledger.summary()['status'],'stopped')
 
+    def test_forbidden_complete_action_in_failed_partial_rpc_forces_global_stop_without_marker(self):
+        def forbidden(plan):
+            raw=op.io.encoded(dict(method='item/started',params=dict(item=dict(type='commandExecution'))))+b'\n'
+            op.save(self.bound.stage_root(1,'primary'),'rpc-out.jsonl',raw)
+            return 1,False,b'',b''
+        with patch.object(op,'run_process',side_effect=forbidden),self.assertRaisesRegex(ValueError,'unknown action'):
+            self.run_primary()
+        ledger=self.ledger()
+        with ledger.locked():
+            self.assertEqual(ledger.summary()['status'],'stopped');self.assertEqual(ledger.summary()['evaluationFailed'],0)
+
+    def test_truncated_last_rpc_line_remains_evaluation_failure_without_normal_or_safety_claim(self):
+        def truncated(plan):
+            op.save(self.bound.stage_root(1,'primary'),'rpc-out.jsonl',b'{"method":"item/star')
+            return 1,False,b'',b''
+        with patch.object(op,'run_process',side_effect=truncated):result=self.run_primary()
+        self.assertEqual(result['status'],'evaluation_failed')
+        self.assertFalse(result['eligibleForMeasurement'])
+
+    def test_partial_telemetry_unknown_tool_source_and_retry_are_rejected(self):
+        faults=[dict(event='ignored',**{'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'write'}),
+            {'event.name':'codex.tool_call_received','tool_source':'unknown','tool_name':'read_resource'},
+            {'event.name':'codex.api_request','endpoint':'/responses','attempt':1}]
+        for fields in faults:
+            with self.subTest(fields=fields),self.assertRaises(ValueError):
+                op.audit_partial({'trace-safe.jsonl':op.io.encoded(dict(fields=fields))+b'\n'})
+
+    def test_resource_proof_is_rechecked_after_logical_pacing_before_process(self):
+        drift=False
+        def pacing(*args):
+            nonlocal drift
+            drift=True
+        def resources(*args):
+            if drift:raise ValueError('SYNTHETIC_DRIFT_DURING_WAIT')
+            return self.fixture.proof
+        self.resources.side_effect=resources
+        with (patch.object(op,'pace',side_effect=pacing),
+                patch.object(op,'run_process',side_effect=AssertionError('process invoked after drift')),
+                self.assertRaisesRegex(ValueError,'DRIFT_DURING_WAIT')):self.run_primary()
+        ledger=self.ledger()
+        with ledger.locked():
+            self.assertEqual(ledger.summary()['primaryLaunchMarked'],0)
+            self.assertEqual(ledger.summary()['status'],'stopped')
+
     def test_prelaunch_rejection_precedes_private_storage_and_reservation(self):
         self.review=op.io.encoded(dict(version='wrong'))
         with (patch.object(op.x.ledger,'open_shared',side_effect=AssertionError('private ledger opened')),

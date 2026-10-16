@@ -1119,10 +1119,10 @@
         }
       },
       "primaryOperator": {
-        "status": "implemented_independent_review_pending",
+        "status": "two_p2_fixes_pending_independent_closure",
         "relatedTests": {
-          "count": 129,
-          "seconds": 22.936,
+          "count": 133,
+          "seconds": 24.102,
           "exitCode": 0
         },
         "newSyntheticTests": 15,
@@ -1136,7 +1136,10 @@
           "receiptAndJournalAnchored": true,
           "providerHttpIntervalCertified": false
         },
-        "certifiesHeldoutLaunch": false
+        "certifiesHeldoutLaunch": false,
+        "originalBlockingP2": 2,
+        "independentClosurePending": true,
+        "record": "r04-heldout-primary-operator-preparation-20261017.json"
       }
     }
   }

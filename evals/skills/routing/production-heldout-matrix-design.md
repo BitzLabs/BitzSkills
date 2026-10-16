@@ -148,3 +148,8 @@ production_heldout_operator.run_primaryは具体的な全pipeline開始前独立
 logical-pacing.jsonはreceiptの原inventoryに含める。次の論理起動は直前のstarted markerとcaptured/failed journalのreceipt hashから原pacing/control hashを再照合し、単調時計60秒以上を確認する。時計逆行・原改変は停止する。provider内部のHTTP間隔/実行回数を示す証明ではない。
 
 失敗原も既知固定名と有限rollout pathを先に列挙し、owner-only/NOFOLLOWで読む。認証opaqueはmetadataだけ。正常/失敗とも上書き・再起動・予約返却はなく、同一三時点proofの単回取得失敗だけprimary_failedへ封印する。stop marker/未知file・directory/原不正/資源drift/保存失敗はglobal_stopとなる。失敗を正解や不正解の分母へ足さない。
+
+
+### 待機後の現物検査と途中原の分類
+
+invoke proofは論理起動間隔の待機後、durable started marker/processの直前に実測する。途中原は末尾の切断を含むため正常RPC終端を要求しないが、完全行に認識可能な禁止操作/未知Host/tool-source/retry/観測API超過があれば全体停止する。途中SDK/RPC欠落を評価失敗へ記録することは、内容の意味/安全/成功を認定することではない。未知path/metadata/stop marker/正常原の検査不正は従来どおり全体停止する。
