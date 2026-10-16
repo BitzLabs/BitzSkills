@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-10-16T17:57:28.904201+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "parent_checkpoint_additional_independent_meta_audit_pending",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 90,
+    "evaluationFailed": 35,
+    "independentReserved": 55,
+    "maximumPrimary": 92,
+    "measuredCorrect": 52,
+    "measuredIncorrect": 3,
+    "missingMeasurements": 37,
+    "parentVerified": 55,
+    "pendingSlots": 0,
+    "primaryCompleted": 55,
+    "primaryLaunchMarked": 90,
+    "primaryReserved": 90,
+    "status": "in_progress",
+    "unattemptedSlots": 2
+  },
+  "observationSha256": "f8303d3865034fdb4e7bba219663f4a369b4eb7e0ffac3b81c820c917bb88401",
+  "previousVerifiedCheckpoint": {
+    "path": "r04-survey-progress88-20261016.json",
+    "sha256": "3e838e2928f99c1b688c4eb942dd3741f50290772ae8805387d8f637812fbf0b",
+    "throughOrdinal": 88
+  },
+  "independentMetaAuditThrough": 88,
+  "pendingIndependentMetaAuditOrdinals": [
+    89,
+    90
+  ],
+  "nextPublicOrdinal": 91,
+  "remainingHeldout": 24,
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792157058,
+        "usedPercent": 84,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 74,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.0964413460023934,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T17:57:25.184999+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792157058,
+        "usedPercent": 84,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 74,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "contextReductionDeferredUntilAllEvaluation": true,
+  "rawSdkNativeOpaqueExcluded": true,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
