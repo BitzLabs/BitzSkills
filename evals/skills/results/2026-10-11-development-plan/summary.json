@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_input_preparation_implemented_review_pending",
+        "status": "heldout_input_reviewed_private_runner_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -731,8 +731,7 @@
         "productRemediationDeferred": true,
         "contextReductionDeferred": true,
         "sameSlotRetries": 0,
-        "quotaUsedPercent": 97,
-        "quotaResetJst": "2026-10-16T22:24:18+09:00",
+        "quotaUsedPercent": 18,
         "automaticWakeupScheduled": false,
         "quotaHeadroomRecheckBeforeFurtherModels": true,
         "certifiesSkillGate": false,
@@ -784,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "input_source_dependency_remediation_pending_independent_review",
+      "status": "input_component_reviewed_not_launchable",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -798,11 +797,8 @@
       "plannedPrimary": 24,
       "plannedIndependent": 24,
       "relatedTests": {
-        "change": "include directly imported host.py in fixed source inventory and verify drift before private read using real Git",
-        "relatedTests": 20,
-        "seconds": 0.179,
-        "exitCode": 0,
-        "independentClosurePending": true
+        "count": 20,
+        "exitCode": 0
       },
       "actualHeldoutModels": 0,
       "actualHeldoutReservations": 0,
@@ -811,14 +807,17 @@
       "privatePrimaryAndIndependentRunnerPending": true,
       "productAndCurrentEvaluationInputsChanged": false,
       "cliMetadata": {
-        "observedAt": "2026-10-16T22:26:08.575587+09:00",
-        "accountReadOk": false,
-        "rateLimitReadOk": false,
-        "rpcErrorCode": -32603,
-        "http401Observed": false,
-        "http429Observed": false,
-        "credentialContentsRead": false,
-        "rawMessagesSaved": false
+        "observedAt": "2026-10-16T22:39:14.060157+09:00",
+        "accountReadOk": true,
+        "rateLimitReadOk": true,
+        "fiveHourUsedPercent": 18,
+        "weeklyUsedPercent": 79,
+        "reached": null,
+        "sameFixedCliAndOpaqueAuthMount": true,
+        "requiresUnsandboxedMetadataProcess": true,
+        "agentCredentialContentsRead": false,
+        "priorSandboxedRpcFailuresPreserved": true,
+        "claimsAllPriorFailuresCausedBySandbox": false
       },
       "appQuotaObservation": {
         "observedOn": "2026-10-16",
@@ -828,26 +827,67 @@
         "provesEvaluationCliAuthenticated": false
       },
       "remainingSteps": [
-        "independent input-component review and fixed-source private input preparation",
-        "private durable ledger and isolated capture/scoring/parent adapters",
-        "fixed finite contract and concrete independent prelaunch review",
-        "24 heldout slots with failures retained",
-        "all-results failure and context-reduction plans"
+        "private durable ledger",
+        "isolated primary capture, independent semantic scoring and parent evidence verification",
+        "fixed finite execution contract and independent concrete prelaunch review",
+        "24 heldout attempts with original failures retained",
+        "failure countermeasures and total-context reduction after all evaluations"
       ],
       "certifiesSkillGate": false,
       "certifiesRelease": false,
-      "record": "r04-heldout-input-preparation-20261016.json",
-      "inputSource": "d7d0105121828f29a3443688a0ff57e5e7c7816b",
+      "record": "r04-heldout-input-reviewed-20261016.json",
+      "inputSource": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
       "realInputPreparation": {
-        "exitCode": 0,
-        "cases": 12,
+        "caseCount": 12,
+        "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+        "certifiesRelease": false,
+        "certifiesSkillGate": false,
+        "contractSha256": "2e4bdbccf8a48674ee398781584587988e7ee0a858d8a59bb0d8d70fd3bf6945",
+        "modelInvocations": 0,
+        "plannedIndependent": 24,
+        "plannedPrimary": 24,
+        "privateContentsPublished": false,
         "repetitions": 2,
-        "models": 0,
         "reservations": 0,
-        "privateContentsPublished": false
+        "setVersion": "production-routing-held-out-0.5.0",
+        "sourceCommit": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
+        "status": "heldout_inputs_prepared_not_launchable",
+        "version": "heldout-production-matrix-inputs-0.1.0"
       },
       "originalIndependentBlockingP2": 1,
-      "sourceDependencyFixImplemented": true
+      "sourceDependencyFixImplemented": true,
+      "independentReview": {
+        "blockingFindings": 0,
+        "relatedTests": 20,
+        "adversarialTests": 5,
+        "reportSha256": "1aabc1ab652e1415345ea300799cab0c1d31bf9a40340d9d14e4f831a5b7a2ed",
+        "inventorySha256": "338db49e28a6cda42516933bd144fb379708b3938147e3280e4693d0bc7ba917",
+        "parentOriginalHashesMatched": 31,
+        "originalP2Preserved": true,
+        "originalP2IndependentlyResolved": true
+      },
+      "fullRegression": {
+        "cleanBeforeAfter": true,
+        "count": 924,
+        "exitCode": 0,
+        "seconds": 133.174,
+        "stderrSha256": "77ffa2e8fde83a642e9f56401200fb81183a6c67ef32ab611e26f293e39a1d04",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "resourceAssessment": {
+        "baselineSourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+        "certifiesHeldoutLaunch": false,
+        "models": 0,
+        "observedSourceCommit": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
+        "privateCaseReads": 0,
+        "productResourcesGitMatched": 72,
+        "reservations": 0,
+        "resourceProofSha256": "c4e25f5ce82e174b1784c41e9c1ef159eb629b8b7e4a485f9bbc24d4452f1e66",
+        "sameAsFinalPublicProof": true,
+        "status": "public_evaluation_resources_unchanged"
+      },
+      "inputComponentIndependentlyReviewed": true,
+      "sourceDependencyFixIndependentlyConfirmed": true
     }
   }
 }
