@@ -147,7 +147,7 @@
     "conditionCountsKeptSeparate": true
   },
   "developmentProgress": {
-    "updatedAt": "2026-10-16T06:50:39.134475+09:00",
+    "updatedAt": "2026-10-16T11:56:16.069570+09:00",
     "implementationBranch": "codex/core-sdd-quality-integration",
     "implementationHead": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
     "verificationRef": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
@@ -756,6 +756,35 @@
       "currentCohortPrimaryNamespaces": 40,
       "currentCohortIndependentNamespaces": 37,
       "resumeRecord": "r04-survey-resume40-20261016.json"
+    },
+    "postEvaluationContextReduction": {
+      "status": "deferred_until_public92_and_heldout24_evaluation_complete",
+      "plan": "docs/04.提案資料/31_スキル統合残件の開発計画と進捗.md",
+      "implementationStarted": false,
+      "currentEvaluationConditionsUnchanged": true,
+      "principles": [
+        "Compute deterministic checks and aggregations locally",
+        "Provide only information required for the current decision",
+        "Provide detailed evidence, skill bodies and related resources on demand",
+        "Keep applicable scope, permissions and safety constraints",
+        "Do not transmit irrelevant or duplicate data"
+      ],
+      "acceptancePolicy": "Preserve case-level correct routing, required and forbidden behavior, safety, judgment quality and completion rate on the same evaluation while reducing total sent context; improve existing incorrect and failed cases rather than requiring their reproduction.",
+      "compareTextVerbatim": false,
+      "baselineToFreezeAfterCompleteEvaluation": true,
+      "keepIncorrectAndFailedResults": true,
+      "heldoutIndependentAndNotOptimizationInput": true,
+      "metrics": [
+        "initialInputTokens",
+        "totalInputTokensIncludingOnDemandRetrieval",
+        "cachedInputTokens",
+        "additionalRetrievalCount",
+        "latency",
+        "caseAndSkillLevelCorrectIncorrectFailedCoverage"
+      ],
+      "reductionTargetToSetAfterCompleteEvaluation": true,
+      "certifiesSkillGate": false,
+      "certifiesRelease": false
     }
   }
 }
