@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_execution_resource_binding_review_pending",
+        "status": "heldout_execution_resources_reviewed_capture_adapters_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "input_and_ledger_components_reviewed_capture_adapters_pending",
+      "status": "inputs_ledger_execution_resources_reviewed_capture_adapters_pending",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -827,12 +827,11 @@
         "provesEvaluationCliAuthenticated": false
       },
       "remainingSteps": [
-        "new typed execution/deployment and complete source/resource/private-input binding",
-        "isolated primary capture with only single prompt/context mounted",
-        "full raw provider/host/native structural verifier and original inventory in private storage",
-        "independent semantic scoring and parent re-verification",
-        "fixed finite execution contract, concrete independent prelaunch review, current calibration/quota and transmission authorization check",
-        "24 heldout slots with failures retained",
+        "isolated primary SDK capture with only one prompt/context and no case metadata or expectations visible",
+        "complete private inventory and provider/control/Host/native original verifier",
+        "independent semantic schema/scoring and parent re-verification connected to the durable ledger",
+        "fixed finite contract and concrete independent prelaunch review, current calibration/quota and private transmission authorization scope check",
+        "24 heldout attempts including sealed failures without retries",
         "failure countermeasures and total-context-reduction plan after all116"
       ],
       "certifiesSkillGate": false,
@@ -937,18 +936,18 @@
         "directoryDriftFixIndependentlyConfirmed": true
       },
       "latestComponentRegression": {
-        "count": 936,
-        "seconds": 133.698,
+        "count": 949,
+        "seconds": 134.336,
         "exitCode": 0,
+        "sourceCommit": "34993c513cbf97ed76e93e3fd0a9a4bbf66dab74",
         "cleanBeforeAfter": true,
-        "sourceCommit": "5249577842875c48f200bc1d60a40b89ea67b7ee",
         "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "stderrSha256": "2d6de30697613fd74c559b705afba509dfaa71995bcd5826f824344eed3fb1fe",
-        "invocationSha256": "4b0f7eb7210d4e8a5a8639866ca299c170b40ecbc5fd8e97fff2daf4f82e3ddc",
-        "resultSha256": "475524b284d65f6b01638290526e93fd7dc4318ab583af3bda291fea2a6c7c15"
+        "stderrSha256": "1c668117a4d77afb86a5729ae146d40d32414dd0d03e4bf68d5a7f503a880839",
+        "invocationSha256": "8b0196e29d3767143a0cee002ee921eb71a6a0dc679371053269a956052123df",
+        "resultSha256": "abc8cf31ddb75ce339e17f16b44043d8f3c23984d09e673a7c24d8782289c282"
       },
       "executionResourcesComponent": {
-        "status": "frozen_product_baseline_fix_pending_independent_review",
+        "status": "typed_execution_and_resource_binding_reviewed_not_launchable",
         "modules": [
           "evals/skills/routing/production_heldout_execution.py",
           "evals/skills/routing/production_heldout_preflight.py"
@@ -962,7 +961,7 @@
         "privateStorageWrites": 0,
         "captureScoringParentAdaptersConnected": false,
         "certifiesHeldoutLaunch": false,
-        "record": "r04-heldout-execution-preparation-20261016.json",
+        "record": "r04-heldout-execution-reviewed-20261016.json",
         "originalIndependentBlockingP2": 1,
         "originalFullRegression": {
           "count": 948,
@@ -995,7 +994,54 @@
           "sourceFileCount": 48,
           "status": "heldout_resource_preparation_verified_not_launchable"
         },
-        "baselineFixImplemented": true
+        "baselineFixImplemented": true,
+        "sourceCommit": "34993c513cbf97ed76e93e3fd0a9a4bbf66dab74",
+        "independentReview": {
+          "blockingFindings": 0,
+          "relatedTests": 61,
+          "adversarialTests": 13,
+          "reportSha256": "68417d50d137eee2ba26092d25d281718c152408b34922ceec196a3d2a4dc5c0",
+          "inventorySha256": "ef009c1db8a9e487c3a8b4af7fa5cc508b5c84abca7a3d030489c854c71fed6c",
+          "parentOriginalHashesMatched": 75,
+          "originalP2Preserved": true,
+          "frozenProductBaselineFixIndependentlyConfirmed": true
+        },
+        "fullRegression": {
+          "count": 949,
+          "seconds": 134.336,
+          "exitCode": 0,
+          "sourceCommit": "34993c513cbf97ed76e93e3fd0a9a4bbf66dab74",
+          "cleanBeforeAfter": true,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "1c668117a4d77afb86a5729ae146d40d32414dd0d03e4bf68d5a7f503a880839",
+          "invocationSha256": "8b0196e29d3767143a0cee002ee921eb71a6a0dc679371053269a956052123df",
+          "resultSha256": "abc8cf31ddb75ce339e17f16b44043d8f3c23984d09e673a7c24d8782289c282"
+        },
+        "realResourcePreparation": {
+          "caseCount": 12,
+          "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+          "certifiesHeldoutLaunch": false,
+          "contextDate": "2026-10-16",
+          "deploymentSha256": "b8c7e3050d584a83e3cd8bb7b1aef94327360e817d8733fce04a4a670dec6100",
+          "executionSha256": "b71186ed009d9b77e286892e558b633d2ce596d51508b2e8732e00072d8fe87f",
+          "inputContractSha256": "6b193d8f5e10b005481d0e95de0c61d486816b59817fe6a0db778e22be4906f8",
+          "ledgerContractSha256": "48f68bc4f0e92c48c36e99e62e8647aac4c844917c95e30e8558d55771e189ef",
+          "models": 0,
+          "plannedIndependent": 24,
+          "plannedPrimary": 24,
+          "privateCaseContentsDisplayed": false,
+          "privateCaseContentsSaved": false,
+          "realPrivateStorageWrites": 0,
+          "repetitions": 2,
+          "reservations": 0,
+          "resourceProofSha256": "950691d629ead4398f030956016f4c741954fd3399ee9f65397feed8a02d4408",
+          "sdkFileCount": 207,
+          "snapshotResourceCount": 72,
+          "sourceCommit": "34993c513cbf97ed76e93e3fd0a9a4bbf66dab74",
+          "sourceFileCount": 48,
+          "status": "heldout_resource_preparation_verified_not_launchable"
+        },
+        "frozenProductBaselineFixIndependentlyConfirmed": true
       }
     }
   }
