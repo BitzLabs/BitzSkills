@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_inputs_and_ledger_reviewed_capture_adapters_pending",
+        "status": "heldout_execution_resource_binding_review_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -946,6 +946,22 @@
         "stderrSha256": "2d6de30697613fd74c559b705afba509dfaa71995bcd5826f824344eed3fb1fe",
         "invocationSha256": "4b0f7eb7210d4e8a5a8639866ca299c170b40ecbc5fd8e97fff2daf4f82e3ddc",
         "resultSha256": "475524b284d65f6b01638290526e93fd7dc4318ab583af3bda291fea2a6c7c15"
+      },
+      "executionResourcesComponent": {
+        "status": "implemented_independent_review_pending",
+        "modules": [
+          "evals/skills/routing/production_heldout_execution.py",
+          "evals/skills/routing/production_heldout_preflight.py"
+        ],
+        "relatedTests": 60,
+        "seconds": 2.6,
+        "exitCode": 0,
+        "syntheticInputsOnly": true,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "privateStorageWrites": 0,
+        "captureScoringParentAdaptersConnected": false,
+        "certifiesHeldoutLaunch": false
       }
     }
   }

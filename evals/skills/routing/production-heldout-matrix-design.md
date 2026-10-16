@@ -72,3 +72,24 @@ python -B evals/skills/routing/production_heldout_inputs.py --source <確定40�
 契約/順序/分母/前event hashの再検査を経る。途中保存の破損・不明file・journal欠番を拒否する。
 台帳が受け取る原hashの意味・安全性は後続の取得/採点/親adapterで検査しなければならない。
 この台帳の合成試験通過だけで、本番起動や非公開送信を許可しない。
+
+
+## 実行条件と開始前資源検査の部品（モデル入口は未接続）
+
+`production_heldout_execution.py` は保持専用version、24一次/24独立、
+固定source、入力契約/配備原bytes/hash、CLI0.160.1、有限timeout、retry0/delegation0を束縛する。
+公開の92枠versionやpublic campaign、公開.venv保存先を受理しない。
+保存先は承認済みcollection-05の `measurements/<campaign>/primary|independent/attempt-NNNN` に限定する。
+配備snapshotは確定refから新規に準備し、評価中に固定した製品72資源を全件含める。
+
+`production_heldout_preflight.py` は入力部品・台帳・この実行/配備検査を含む
+公開sourceのGit blob/現物一致を先に検査する。一次payloadの共通部分もGitに束縛する。
+snapshotの全資源・Git一覧・原bytes、SDKの全宣言fileと閉じた一覧、
+固定Node/CLI、当日contextと原校正を既存の中立な検証器で再照合する。
+全公開資源/校正が成立した後だけ、採用済み非公開集合の原bytesを内部再照合する。
+proofは実行条件・配備・入力契約へ束縛し、そのhashを専用台帳の条件へ接続する。
+
+これらの部品はnamespace起動・台帳予約・証拠保存を行わない。
+`ledger_contract` は渡されたproofの識別子を束縛するだけで、proofの現物成立を自己認定しない。
+本番adapterは起動前/直前/後に `verify_resources` を再実行し、
+開始前の独立検分と原軌跡の全照合を別に要求する。
