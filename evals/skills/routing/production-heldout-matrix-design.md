@@ -93,3 +93,9 @@ proofは実行条件・配備・入力契約へ束縛し、そのhashを専用�
 `ledger_contract` は渡されたproofの識別子を束縛するだけで、proofの現物成立を自己認定しない。
 本番adapterは起動前/直前/後に `verify_resources` を再実行し、
 開始前の独立検分と原軌跡の全照合を別に要求する。
+
+
+公開92枠から継続する現評価では、保持用の新refのGitと一致するだけでは不十分である。
+preflightは公開製品固定source `b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3` から
+全72資源の一覧・原blobを直接取得し、新refとsnapshotの原bytesの両方へ照合する。
+同数の製品へ変更してhashを取り直しても拒否する。この検査は製品の意味判定や保持内容からの最適化を行わない。

@@ -7,6 +7,8 @@ import production_heldout_execution as execution
 
 inputs, public = execution.inputs, execution.public
 io, require, trace = inputs.io, inputs.require, inputs.trace
+# 公開92枠の最終製品を固定する。新refの同数資源への再hashだけでは差替えを認めない。
+BASELINE_PRODUCT_SOURCE = 'b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3'
 SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_ledger.py',
     'evals/skills/routing/production_heldout_execution.py',
@@ -46,12 +48,16 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     require(manifest['sourceCommit'] == source and len(manifest['resources']) == 72
         and set(manifest['resources']) == public.public_resource_names(repository, source),
         'heldout product source and complete inventory')
+    require(set(manifest['resources']) == public.public_resource_names(repository, BASELINE_PRODUCT_SOURCE),
+        'heldout frozen public product inventory')
     expected = dict(manifest['resources'], **{'manifest.json': d['manifestSha256']})
     for name, raw in public.exact_tree(snapshot, expected).items():
         require(io.sha(raw) == expected[name], 'heldout snapshot byte drift')
         if name != 'manifest.json':
             path = 'plugins/'+Path(name).relative_to('resources').as_posix()
             require(raw == public.guard.git(repository, 'show', source+':'+path), 'heldout snapshot Git drift')
+            require(raw == public.guard.git(repository, 'show', BASELINE_PRODUCT_SOURCE+':'+path),
+                'heldout frozen public product byte drift')
     sdk_files = public.sdk_manifest(sdk_manifest_raw, d)
     require({name: io.sha(raw) for name, raw in public.exact_tree(repository/d['sdkRelativePath'], sdk_files).items()}
         == sdk_files, 'heldout SDK byte drift')
@@ -65,6 +71,8 @@ def verify_resources(repository, bound, sdk_manifest_raw):
         inputContractSha256=io.sha(bound.input_contract_raw),
         sourceSha256={name: io.sha(raw) for name, raw in originals.items()},
         casesSha256=io.sha(raw_inputs['cases']), snapshotManifestSha256=io.sha(manifest_raw),
+        baselineProductSource=BASELINE_PRODUCT_SOURCE,
+        productResourcesSha256=io.sha(io.encoded(manifest['resources'])),
         snapshotResourceCount=72, sdkManifestSha256=io.sha(sdk_manifest_raw), sdkFileCount=len(sdk_files),
         sdkTreeSha256=d['sdkTreeSha256'], decisionSchemaSha256=io.sha(schema_raw),
         contextProfileSha256=io.sha(context_raw), contextDate=context['date'], runtime=runtime,

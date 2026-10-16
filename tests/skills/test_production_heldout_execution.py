@@ -51,6 +51,17 @@ class HeldoutExecutionTests(unittest.TestCase):
             manifest['resources'][name] = io.sha(raw)
         manifest_raw = io.encoded(manifest)
         (self.snapshot/'manifest.json').write_bytes(manifest_raw)
+        self.manifest = manifest
+        self.baseline = {name:raw for name,raw in self.old.originals.items() if name.startswith('plugins/')}
+        old_git = self.old.git
+        def git(repository, *args):
+            if args[0] == 'show' and args[1].startswith(preflight.BASELINE_PRODUCT_SOURCE+':'):
+                return self.baseline[args[1].split(':',1)[1]]
+            if args == ('ls-tree','-r','-z',preflight.BASELINE_PRODUCT_SOURCE,'--',
+                        'plugins/bitz-core','plugins/bitz-sdd','plugins/bitz-quality'):
+                return b''.join(('100644 blob '+'0'*40+'\t'+name+'\0').encode() for name in self.baseline)
+            return old_git(repository,*args)
+        self.old.git_mock.side_effect = git
         self.deployment = copy.deepcopy(self.old.deployment)
         self.deployment.pop('executionSha256')
         self.deployment.update(version=x.DEPLOYMENT_VERSION, snapshotRelativePath=self.snapshot_relative,
@@ -189,3 +200,17 @@ class HeldoutExecutionTests(unittest.TestCase):
             changed[key] = value
             with self.subTest(key=key),self.assertRaises(ValueError):
                 self.bind().ledger_contract(io.encoded(changed))
+
+    def test_rehashed_new_source_product_must_still_match_frozen_public_bytes(self):
+        name = next(iter(self.manifest['resources']))
+        raw = (self.snapshot/name).read_bytes()+b'\nchanged product bytes'
+        (self.snapshot/name).write_bytes(raw)
+        self.old.originals['plugins/'+name.removeprefix('resources/')] = raw
+        self.manifest['resources'][name] = io.sha(raw)
+        manifest_raw = io.encoded(self.manifest)
+        (self.snapshot/'manifest.json').write_bytes(manifest_raw)
+        self.deployment['manifestSha256'] = io.sha(manifest_raw)
+        self.execution['pins']['snapshotManifest'] = io.sha(manifest_raw)
+        self.repin_deployment()
+        with self.assertRaisesRegex(ValueError,'frozen public product byte drift'):self.verify()
+        self.reader.assert_not_called()
