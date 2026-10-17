@@ -2,23 +2,23 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "1e59d19ae177f9d6ebba792de171e8b2705ac265aa03f7cbe02c28bc5521754e",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "35935dbb715178906ec36488eab9414900509698ebdbf4f7cee93dacfb513364",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "014fc288ab4528c0766f589ff3e8504c319d43208ee0ce1fd2d9a48586fb4fec",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "9a4a265aaf0186465fdcc3bb53416632a0bac0e95f3d7b640d5fa77824b16283",
     "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "09d27a660ae9799b61b062bd74f6f785792be52a4a50552c88bbf5fbe234501c",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "c6c8e17acca8abbb1101c5521a5ee0864a1060e79dc78b50d1072297319bfd5a",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "38bf62721f23b85f3f61f6e737f81c8c452061f07219cce7d295caa2bdfbce1e",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "94b57cab985927eb62b4f62e9218c6407ed815ea16ea58af2154592e75da71ea",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "54e3e988328d81c26086d368e23a32d94e08abaff7494774945acf4bbf1d93cb",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "d5c3f9f09436a998899ae03a1ea799b298afd982040551752168db5aa038c4eb",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5cc7d00f5a77728c706340392e1d1e0282277f9a0fee8eb1c98c798cf8598d4a",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "77a7ab1f0de4d5db1dd38e66a441db6995925ead915b5f749a93063ccb5fea19",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "533ecc9715d007a106038b6bd623b0b61c6b7d0da3afa020066a28f649aeb3d2",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "ef5eaeae004073bce9418262bcea69053ee3a7adde94cb3a1208f029fe403be0",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "5aa573f5c6fbd1a0597dab586d29e80d16fabfa4736369e4b2982293214b690b",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
     "docs/03.詳細設計/01_EARS-AI/03_EARS-AI例・アンチパターン.md": "7564d43883f734d37f402226b1ab234c00e56fad81c3498ea28d8773cc64fed7",
-    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "a32b88b5ea66c87576263da6b1d5df128221c409ff67c56a7b5ea75c53f17aef"
+    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "8332c289cb7e07ee2dd5a805561e320c88b8cefa7611c4ec717e96024692c8f4"
   },
   "groups": [
     {
