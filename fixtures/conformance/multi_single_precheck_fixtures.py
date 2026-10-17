@@ -453,8 +453,10 @@ def check_against_reference(identifier, result, reference):
             if (result["diagnostics"][0]["summary"] != summary or source["workspaceId"] is not None
                     or [source["path"]] != reference["unregistered"]):
                 raise ValueError("未登録の診断の文言、発生元が入力からの参照計算と異なります")
-        # 停止した結果の`revision`は、Gitの境界を確定できずに停止した場合（`SPEC-MULTI-GIT-001`）だけ`null`である。`doctor`は`revision`を持たない。
-        if case["op"] != "doctor" and (result["revision"] is None) != (reference["cause"] == "git"):
+        # 停止した結果の`revision`は、Gitを利用できない、またはGitの境界を確定できない状態の停止と、コミットのないリポジトリで`null`である
+        # （結果・診断・終了コード §2）。この群のGitのあるfixtureは、準備で必ずコミットを作る。`doctor`は`revision`を持たない。
+        revision_null = reference["cause"] == "git" or not case["git"]
+        if case["op"] != "doctor" and (result["revision"] is None) != revision_null:
             raise ValueError("`revision`の有無が停止の原因と異なります")
         if case["op"] == "doctor":
             expected = ["core", "git"] if reference["cause"] == "git" else ["core", "git", "catalog"]
