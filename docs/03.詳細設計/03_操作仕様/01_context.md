@@ -139,7 +139,7 @@ ADRを起点にできるのは、目的が`interpret`のときだけである。
 | `documents[].workspaceId` | 文字列 | ○ | 所有ワークスペースのID。文書の`id`は修飾ID |
 | `resolution.workspaces` | オブジェクトの配列 | ○ | 到達ワークスペース。1件以上。起点ワークスペースを先頭に置き、以降はIDの辞書順 |
 | `resolution.workspaces[].id` | 文字列 | ○ | 重複しないワークスペースID |
-| `resolution.workspaces[].path` | 文字列 | ○ | リポジトリのルートからの相対パス。ルートワークスペースは`.` |
+| `resolution.workspaces[].path` | 文字列 | ○ | 複合ワークスペースのルートからの相対パス。ルートワークスペースは`.` |
 | `resolution.crossWorkspaceEdges` | オブジェクトの配列 | ○ | ワークスペースをまたぐエッジ。0件でも空配列 |
 | `crossWorkspaceEdges[].relation` | 列挙値 | ○ | `requires`、`refines`、`addresses`、`supersedes`、`related` |
 | `crossWorkspaceEdges[].source` | 文字列 | ○ | 修飾した文書ID |
@@ -200,7 +200,7 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 - `implements`、テスト対応、コマンド名、引数列テンプレート、作業ディレクトリ、
   設定したタイムアウト、TASKの`changes`
 - コンテキストに影響する実効設定
-- 到達ワークスペースのID、リポジトリのルートからの相対パス、修飾したエッジ
+- 到達ワークスペースのID、複合ワークスペースのルートからの相対パス、修飾したエッジ
 
 「コンテキストに影響する実効設定」は、到達ワークスペースの設定全体ではなく、次の許可リストとする。
 
