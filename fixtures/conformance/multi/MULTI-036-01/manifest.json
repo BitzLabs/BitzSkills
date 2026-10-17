@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-036-01",
+  "description": "カタログにない設定の中の引数なしの`check`が、選択した設定の未登録で停止する",
+  "setup": {
+    "git": true,
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "tools/x",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

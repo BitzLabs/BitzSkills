@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-036-10",
+  "description": "`HEAD`にだけ未登録の設定がある単独の`doctor`が、Gitが認識する設定の比較で停止する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "delete",
+        "path": "tools/x/.spec/bitz.yaml"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

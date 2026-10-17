@@ -73,7 +73,7 @@ from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_r
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
-from conformance import multi_active_workspace_fixtures
+from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures
 from conformance import doctor_plugin_fixtures
 
 
@@ -2428,6 +2428,249 @@ class AuditTests(unittest.TestCase):
                     else:
                         (fixture / name).unlink()
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_single_precheck_fixtures(self):
+        """`MULTI-036-01`〜`13`: 複合ワークスペースの単独操作が全体事前検査で停止すること、停止しない境界を固定する（実装の確認事項C27、ADR-063）。"""
+        module = multi_single_precheck_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-036-{number:02d}" for number in range(1, 14)])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def single_precheck_repository(self, temporary, identifier, name="work"):
+        root = self.copy_multi_fixture(temporary, identifier)
+        fixture = root / "multi" / identifier
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        return root, fixture, manifest, fixture_setup(fixture, manifest, Path(temporary) / name / "repo")
+
+    def test_multi_single_precheck_reference_follows_the_inputs(self):
+        """参照計算は、停止の原因と停止結果の`workspace`を、入力の木構造とGitの状態から導く。入力を変えると原因が変わる（陰性対照）。"""
+        module = multi_single_precheck_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                _, _, _, repository = self.single_precheck_repository(temporary, identifier)
+                reference = module.reference_decision(repository, case["op"], case["cwd"], case["git"])
+                self.assertEqual((reference["cause"], reference["workspace"]), (case["cause"], module.WORKSPACES[identifier]))
+        with tempfile.TemporaryDirectory() as temporary:
+            # 最も近い設定をカタログに登録するか、登録済みのディレクトリへ移ると、止まらない。
+            _, _, manifest, repository = self.single_precheck_repository(temporary, "MULTI-036-01")
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web", True)["cause"], None)
+            root_config = repository / ".spec/bitz.yaml"
+            root_config.write_text(root_config.read_text() + "    - id: x\n      path: tools/x\n")
+            self.assertEqual(module.reference_decision(repository, "check", "tools/x", True),
+                             {"mode": "multi", "cause": None, "workspace": {"id": "x", "path": "tools/x"}, "unregistered": [], "config": True})
+        with tempfile.TemporaryDirectory() as temporary:
+            # 単独の`check`は、Gitが認識する設定を列挙しない。`HEAD`にだけある未登録の設定は、`doctor`だけが拾う。
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-10")
+            self.assertEqual(module.reference_decision(repository, "doctor", ".", True)["cause"], "unregistered-git")
+            self.assertEqual(module.reference_decision(repository, "check", ".", True)["cause"], None)
+            self.assertEqual(module.git_unregistered(repository), ["tools/x/.spec/bitz.yaml"])
+            (repository / "tools/x/.spec").mkdir(parents=True, exist_ok=True)
+            (repository / "tools/x/.spec/bitz.yaml").write_text(module.tools_config())
+            # 作業ツリーに戻しても、Gitが認識する設定の集合は変わらず、選択した設定の照合が別に働く。
+            with self.assertRaises(ValueError):
+                module.reference_decision(repository, "doctor", "tools/x", True)
+        with tempfile.TemporaryDirectory() as temporary:
+            # 無視された未追跡の設定は、ルートの`doctor`では止まらず、選択した設定になる`tools/x`の`doctor`だけが止まる。
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-13")
+            self.assertEqual(module.git_unregistered(repository), [])
+            self.assertEqual(module.reference_decision(repository, "doctor", ".", True)["cause"], None)
+            self.assertEqual(module.reference_decision(repository, "doctor", "tools/x", True)["cause"], "unregistered-selected")
+        with tempfile.TemporaryDirectory() as temporary:
+            # Git不在: 最も近い設定が`multiWorkspace`を宣言するかどうかで、複合か単一かが決まる（ルートの宣言は、メンバーの中の判定に使わない）。
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-06")
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web", False)["mode"], "single")
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web/tests", False)["mode"], "single")
+            self.assertEqual(module.reference_decision(repository, "check", ".", False)["cause"], "git")
+            # メンバーの設定が`multiWorkspace`を宣言すると、最も近い設定が複合を宣言するので止まる。
+            web_config = repository / "apps/web/.spec/bitz.yaml"
+            web_config.write_text(web_config.read_text() + "multiWorkspace:\n  members:\n    - id: z\n      path: z\n")
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web", False)["cause"], "git")
+        with tempfile.TemporaryDirectory() as temporary:
+            # 読めないルートの設定は複合と判定しない。読める設定へ戻すと複合になる。
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-08")
+            self.assertEqual(module.reference_decision(repository, "check", ".", True)["mode"], "single")
+            root_config = repository / ".spec/bitz.yaml"
+            root_config.write_text(root_config.read_text().replace("&label ", ""))
+            self.assertEqual(module.reference_decision(repository, "check", ".", True)["mode"], "multi")
+        with tempfile.TemporaryDirectory() as temporary:
+            # メンバーの設定を足すと、メンバーの不在では止まらない。非対応のメジャーバージョンを戻すと、バージョンでは止まらない。
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-03")
+            self.assertEqual(module.reference_decision(repository, "verify", "apps/web", True)["cause"], "member")
+            (repository / "services/api/.spec").mkdir()
+            (repository / "services/api/.spec/bitz.yaml").write_text(module.multi_reference.plain_config("api"))
+            self.assertIsNone(module.reference_decision(repository, "verify", "apps/web", True)["cause"])
+        with tempfile.TemporaryDirectory() as temporary:
+            _, _, _, repository = self.single_precheck_repository(temporary, "MULTI-036-07")
+            self.assertEqual(module.reference_decision(repository, "context", ".", True)["cause"], "version")
+            root_config = repository / ".spec/bitz.yaml"
+            root_config.write_text(root_config.read_text().replace('earsAi: "2.0"', 'earsAi: "1.0"'))
+            self.assertIsNone(module.reference_decision(repository, "context", ".", True)["cause"])
+            root_config.write_text(root_config.read_text().replace('schemaVersion: "1.0"', 'schemaVersion: "2.0"'))
+            self.assertEqual(module.reference_decision(repository, "context", ".", True)["cause"], "version")
+
+    def test_multi_single_precheck_audit_rejects_changed_expectations(self):
+        """`workspace`、状態、診断のコードと文言、`revision`の有無、`scope`、検査項目、複合固有のフィールド、起動条件の改変を拒否する。"""
+        module = multi_single_precheck_fixtures
+        stop_changes = [
+            lambda v: v.update(status="passed" if v["status"] != "passed" else "blocked"),
+            lambda v: v.update(status="failed" if v["status"] != "failed" else "blocked"),
+            lambda v: v["workspace"].update(id="web" if v["workspace"]["id"] != "web" else "platform"),
+            lambda v: v["workspace"].update(id=None if v["workspace"]["id"] is not None else "x"),
+            lambda v: v["workspace"].update(path="apps/web" if v["workspace"]["path"] != "apps/web" else "."),
+            lambda v: v["diagnostics"].clear(),
+            lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-GIT-001" if v["diagnostics"][0]["code"] != "SPEC-MULTI-GIT-001" else "SPEC-MULTI-UNREGISTERED-001"),
+            lambda v: v["diagnostics"][0].update(resultStatus="failed" if v["diagnostics"][0]["resultStatus"] != "failed" else "blocked"),
+            lambda v: v["diagnostics"][0].update(severity="info" if v["diagnostics"][0]["severity"] == "warning" else "warning"),
+            lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            lambda v: v["diagnostics"][0].update(
+                summary=module.UNREGISTERED_GIT if v["diagnostics"][0]["summary"] == module.UNREGISTERED_SELECTED else module.UNREGISTERED_SELECTED),
+            lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            lambda v: v["diagnostics"][0]["source"].update(path="apps/web/.spec/bitz.yaml"),
+            lambda v: v.update(multiWorkspace={"id": "platform", "path": "."}),
+            lambda v: v.update(workspaces=[]),
+        ]
+        by_operation = {
+            "check": [
+                lambda v: v.update(revision=None if v["revision"] is not None else {"base": module.COMMIT, "commit": module.COMMIT, "dirty": False}),
+                lambda v: v.update(scope="changed" if v["scope"] != "changed" else "full"),
+                lambda v: v.update(scope="selected"),
+                lambda v: v.update(checkedDocumentCount=v["checkedDocumentCount"] + 1) if "checkedDocumentCount" in v else v.update(selection={
+                    "changedPathCount": 1, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0}),
+                lambda v: v.update(checkedStatementCount=v["checkedStatementCount"] + 1) if "checkedStatementCount" in v else v.pop("selection"),
+            ],
+            "context": [
+                lambda v: v.update(revision=None),
+                lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+                lambda v: v["resolution"].update(complete=True),
+                lambda v: v["resolution"].update(workspaces=[{"id": "web", "path": "apps/web"}], crossWorkspaceEdges=[]),
+                lambda v: v["resolution"].update(documentCount=1),
+                lambda v: v.update(roots=["REQ-010"]),
+                lambda v: v["documents"].append({}),
+            ],
+            "verify": [
+                lambda v: v.update(revision=None),
+                lambda v: v.update(scope="selected"),
+                lambda v: v.update(targetResults=[{"target": "web::TECH-010"}]),
+                lambda v: v["commands"].append({"bindingId": "web::frontend"}),
+            ],
+            "doctor": [
+                lambda v: v["checks"].pop(),
+                lambda v: v["checks"].append({"name": "catalog", "status": "blocked"}),
+                lambda v: v["checks"].append({"name": "config", "status": "passed"}),
+                lambda v: v["checks"].insert(1, {"name": "workspace", "status": "passed"}),
+                lambda v: v["checks"].reverse(),
+                lambda v: v["checks"][1].update(status="passed" if v["checks"][1]["status"] != "passed" else "blocked"),
+                lambda v: v.update(revision={"commit": module.COMMIT, "dirty": False}),
+            ],
+        }
+        mutations = []
+        for identifier, case in module.CASES.items():
+            relative = module.RESULT_FILES[case["op"]]
+            if case["cause"] is not None or identifier in {"MULTI-036-06", "MULTI-036-08"}:
+                for change in stop_changes + by_operation[case["op"]]:
+                    mutations.append((identifier, relative, change))
+            else:
+                # 止まらない`verify`: 状態、作業ワークスペース、診断の追加、停止結果の形への改変を拒否する。
+                for change in stop_changes[:5] + by_operation["verify"] + [
+                        lambda v: v["diagnostics"].append({"code": "SPEC-MULTI-UNREGISTERED-001"}),
+                        lambda v: v["targetResults"].clear()]:
+                    mutations.append((identifier, relative, change))
+            argv = case["argv"]
+            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0) if v["expect"]["status"] != "passed"
+                              else v["expect"].update(status="blocked", exitCode=2)))
+            mutations.append((identifier, "manifest.json", lambda v: v["expect"].update(exitCode=4)))
+            for value in (".", "apps/web", "tools/x", "docs"):
+                if value != case["cwd"]:
+                    mutations.append((identifier, "manifest.json", lambda v, value=value: v["invocation"].update(cwd=value)))
+            mutations.append((identifier, "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces")))
+            if "--workspace" in argv:
+                mutations.append((identifier, "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(
+                    v["invocation"]["argv"].index("--workspace") + 1, "api")))
+                mutations.append((identifier, "manifest.json", lambda v: (v["invocation"]["argv"].pop(v["invocation"]["argv"].index("--workspace") + 1),
+                                                                         v["invocation"]["argv"].remove("--workspace"))))
+            else:
+                mutations.append((identifier, "manifest.json", lambda v: v["invocation"]["argv"].insert(1, "--workspace") or v["invocation"]["argv"].insert(2, "web")))
+            if case["git"]:
+                mutations.append((identifier, "manifest.json", lambda v: v["setup"].update(git=False) or v["setup"].pop("baseCommit")))
+                mutations.append((identifier, "manifest.json", lambda v: v["invocation"].update(env={"PATH": "/dev/null"})))
+            else:
+                mutations.append((identifier, "manifest.json", lambda v: v["invocation"].update(env={})))
+                mutations.append((identifier, "manifest.json", lambda v: v["setup"].update(
+                    git=True, baseCommit={"message": "base", "paths": ["."]})))
+            mutations.append((identifier, "side-effects.json", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                mutate(value)
+                self.assertNotEqual(json.dumps(value, sort_keys=True), before)
+                path.write_text(json.dumps(value))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_single_precheck_audit_rejects_changed_corpus(self):
+        """原因の構成は入力が決める。設定の削除、余分なファイル、カタログへの登録、`.gitignore`の削除、メンバーの設定の追加を拒否する。"""
+        module = multi_single_precheck_fixtures
+        edits = {
+            # 未登録の設定が登録される、またはルートの設定が変わると、原因が消える。
+            "MULTI-036-01": [("repo/.spec/bitz.yaml", "      path: services/api\n", "      path: services/api\n    - id: x\n      path: tools/x\n")],
+            "MULTI-036-02": [("repo/.spec/bitz.yaml", "      path: services/api\n", "      path: services/api\n    - id: x\n      path: tools/x\n")],
+            "MULTI-036-07": [("repo/.spec/bitz.yaml", 'earsAi: "2.0"', 'earsAi: "1.0"')],
+            "MULTI-036-08": [("repo/.spec/bitz.yaml", "&label ", "")],
+            "MULTI-036-10": [("repo/.spec/bitz.yaml", "      path: services/api\n", "      path: services/api\n    - id: x\n      path: tools/x\n")],
+            "MULTI-036-13": [("repo/.gitignore", "tools/x/.spec/", "other/"),
+                             ("changes/x-bitz.yaml", "id: x", "id: web")],
+            "MULTI-036-06": [("repo/apps/web/.spec/bitz.yaml", "id: web\n", "id: web\nmultiWorkspace:\n  members:\n    - id: z\n      path: z\n")],
+            "MULTI-036-12": [("repo/tools/x/.spec/bitz.yaml", "id: x", "id: y")],
+        }
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    path = root / "multi" / identifier / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 設定、仕様文書、余分なファイルの欠落と追加も、入力のバイト列の検査が拒否する。
+        for identifier, case in module.CASES.items():
+            names = ["repo/.spec/bitz.yaml", "repo/apps/web/.spec/bitz.yaml", "repo/services/api/.spec/bitz.yaml", "extra"]
+            if identifier == "MULTI-036-13":
+                names += ["repo/.gitignore", "changes/x-bitz.yaml"]
+            if identifier in {"MULTI-036-01", "MULTI-036-02", "MULTI-036-10", "MULTI-036-12"}:
+                names.append("repo/tools/x/.spec/bitz.yaml")
+            for name in names:
+                if name == "repo/services/api/.spec/bitz.yaml" and identifier in {"MULTI-036-03", "MULTI-036-09", "MULTI-036-12"}:
+                    continue
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # メンバー`api`の設定を足すと、`MULTI-036-03`と`MULTI-036-09`の原因が消える。
+        for identifier in ("MULTI-036-03", "MULTI-036-09"):
+            with self.subTest(identifier=identifier, file="api"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / "repo/services/api/.spec/bitz.yaml"
+                path.parent.mkdir(parents=True)
+                path.write_text(module.multi_reference.plain_config("api"))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                fixture = root / "multi" / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
+                with self.assertRaises(ValueError):
+                    module.check_conditions(identifier, repository)
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

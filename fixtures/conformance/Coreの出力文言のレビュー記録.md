@@ -374,3 +374,26 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
   （`tests/bitz-core/test_doctor_suggested_action.py`）で押さえる（`SPEC-DOCTOR-EARS-001`の全体事前検査の経路は、2026-10-12に追加した`MULTI-033`が固定する）。
 - `SPEC-DOCTOR-CORE-002`と`SPEC-MULTI-DEPENDENCY-001`に`suggestedAction`を付けないこと（`SPEC-DOCTOR-CORE-002`はCoreが返す経路を持たない。`SPEC-MULTI-DEPENDENCY-001`は根本の原因が別の検査項目の診断にある）。
 - 診断の`summary`と`suggestedAction`の文字列を規範文で1つに定めること（ADR-062 Decision 4）。
+
+## 2026-10-18: 単独操作の全体事前検査の文言の追加（ADR-063）
+
+### 追加の理由
+
+- 実装の確認事項C27の修正で、複合ワークスペースの単独の`context`、`check`、`verify`は、Gitが認識する設定を列挙せず、
+  選択した最も近い設定だけをカタログと照合するようになった（ADR-063 決定2）。この照合で未登録と判定したときの
+  `SPEC-MULTI-UNREGISTERED-001`（`MULTI-UNREGISTERED`）の`summary`が新たに要る。
+- 既存の行#117「Gitが認識する設定ファイルがカタログに登録されていません」は、Gitが認識する設定の比較の文言であり、
+  選択した設定の照合には当てはまらない。
+
+### 管理者の承認
+
+- 2026-10-18、人間の管理者（ユーザー）が、次の文言を承認した（ADR-062 Decision 2、ADR-063 決定7）。既存の行#117と同じ文型であり、
+  既存のfixtureの期待値は変えない。
+- **この文字列は、規範文から一意に導いた値ではなく、表記規則 §3.5に合わせて管理者が承認した値である。**
+
+| 種類 | 診断（条件） | Coreの位置 | 文言 | 固定しているfixture |
+|---|---|---|---|---|
+| summary | `SPEC-MULTI-UNREGISTERED-001`（`MULTI-UNREGISTERED`、選択した設定の照合） | `messages.py`の`MULTI_UNREGISTERED_SELECTED` | `選択した設定ファイルがカタログに登録されていません` | `MULTI-036-01`、`MULTI-036-02`、`MULTI-036-13`；生成器・監査`multi_single_precheck_fixtures.py` |
+
+- 単独の`doctor`で、Gitが認識する設定の比較と選択した設定の照合が同じパスを見つけた場合は、1つの元の原因から同義の診断を複数生成しない
+  （診断レジストリ §2）ため、Gitが認識する設定の比較の文言の1件だけを返す。この組合せは単体試験（`tests/bitz-core/test_multi_single_precheck_stop.py`）で押さえる。

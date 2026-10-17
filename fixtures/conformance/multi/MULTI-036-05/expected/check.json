@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "blocked",
+  "scope": "full",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "revision": null,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-GIT-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "Gitのリポジトリの境界を確定できません",
+      "source": {
+        "kind": "environment",
+        "component": "git"
+      }
+    }
+  ],
+  "checkedDocumentCount": 0,
+  "checkedStatementCount": 0
+}

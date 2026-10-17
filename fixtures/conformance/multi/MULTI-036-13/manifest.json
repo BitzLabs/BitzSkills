@@ -1,0 +1,37 @@
+{
+  "fixtureId": "MULTI-036-13",
+  "description": "Gitが無視する未登録の設定も、選択した設定として照合して`doctor`が停止する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "create",
+        "path": "tools/x/.spec/bitz.yaml",
+        "source": "changes/x-bitz.yaml"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "tools/x",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

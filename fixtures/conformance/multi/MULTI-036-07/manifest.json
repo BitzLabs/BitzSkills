@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-036-07",
+  "description": "ルートのEARS-AIのメジャーバージョンが非対応でも、`multiWorkspace`の宣言があれば複合と判定して停止する",
+  "setup": {
+    "git": true,
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "platform::REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}
