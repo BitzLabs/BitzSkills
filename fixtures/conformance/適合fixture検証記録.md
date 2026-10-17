@@ -1581,3 +1581,23 @@ commit `1107ae558c70a3a712054e395e639aa209ed5d81`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureとCoreを変えていないため、Gate Bは判定し直さない。
+
+## 2026-10-17: `MULTI-034`と`MULTI-035`を追加した後のGate Aの再認定
+
+複合ワークスペースの単独の操作で作業ワークスペースを選ぶ処理を1か所にまとめ（`activews.py`）、`verify`が修飾IDのない対象や引数なしのときに単一ワークスペースとして
+動いていた欠陥（実装の確認事項C24）と、`doctor --workspace`が作業ワークスペースを置き換えず、`workspace.path`が常に`.`だった欠陥（C38）を直した。
+あわせて、複合ワークスペース内の単独の`doctor`が全体事前検査に成功したときは、検査項目`catalog`を`passed`で置くことを`doctor`仕様 §3に明記し、
+単独の操作が作業ワークスペースの文書だけを対象にし、対象の`target`を修飾IDで返すことを`verify`仕様 §7に明記した（ユーザーの決定）。
+これを固定する`MULTI-034-01`〜`MULTI-034-06`（`verify`）と`MULTI-035-01`〜`MULTI-035-03`（`doctor`）を追加した（ADR-051の追加、群`multi_active_workspace_fixtures`）。
+matrix、Step 5の割当て、実装計画の完了条件、網羅表が固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `6f4f33755e97d9a405c8d21b685390938e60aa24`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`467786dce60364b57c16d1b81420530d08234e630c097ee8194d16e8833ff6a7`。前回から変わったのは次の値だけである: 9件の追加によるmatrixと網羅の件数（370件→379件）、Step 5の件数（74件→83件）、群`multi_active_workspace_fixtures`の追加、実行ビットを確かめたファイル数（1961件→2018件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
