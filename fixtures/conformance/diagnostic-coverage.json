@@ -2,14 +2,14 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "35935dbb715178906ec36488eab9414900509698ebdbf4f7cee93dacfb513364",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "1221b2cfd90e14d0adfc7e35d7ca4742ed1a0e3ad780e870aa3658afafeb9323",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "014fc288ab4528c0766f589ff3e8504c319d43208ee0ce1fd2d9a48586fb4fec",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "9a4a265aaf0186465fdcc3bb53416632a0bac0e95f3d7b640d5fa77824b16283",
-    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "09d27a660ae9799b61b062bd74f6f785792be52a4a50552c88bbf5fbe234501c",
+    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "c5cc21ddde93ad58f97991f6a4b78127a807f863a662091e3da378d1c854f5fc",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "c6c8e17acca8abbb1101c5521a5ee0864a1060e79dc78b50d1072297319bfd5a",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "38bf62721f23b85f3f61f6e737f81c8c452061f07219cce7d295caa2bdfbce1e",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "94b57cab985927eb62b4f62e9218c6407ed815ea16ea58af2154592e75da71ea",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "5e711084cdd334bb6f4e9315bc6448c4ea8286498391d935da2e1a0778539c7c",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "6985b0401a0544fd035a732fa48cb9a7bfd5f036bdc62fa26ced6c3779bbf45d",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5cc7d00f5a77728c706340392e1d1e0282277f9a0fee8eb1c98c798cf8598d4a",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "77a7ab1f0de4d5db1dd38e66a441db6995925ead915b5f749a93063ccb5fea19",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "533ecc9715d007a106038b6bd623b0b61c6b7d0da3afa020066a28f649aeb3d2",
@@ -18,7 +18,7 @@
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
     "docs/03.詳細設計/01_EARS-AI/03_EARS-AI例・アンチパターン.md": "7564d43883f734d37f402226b1ab234c00e56fad81c3498ea28d8773cc64fed7",
-    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "f70b5e6e54b3983859d4d504e80c5bd680fa74ff245cc968bf44cab3f5c5a0b2"
+    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "4c48950d8edebf9fe4c2d9f64ba2d2fed10e6ed89471630d5368eb0deb62f8af"
   },
   "groups": [
     {
