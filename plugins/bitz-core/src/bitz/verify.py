@@ -96,7 +96,11 @@ def _resolve_target(
 
 
 def _is_id_target(raw: str) -> bool:
-    """``raw``が文書IDまたは規範文IDの字句であれば真（パスの入力は含まない）。複合ワークスペースでは存在しない対象も修飾IDで返すために使う。"""
+    """``raw``が文書IDまたは規範文IDの字句であれば真（パスの入力は含まない）。複合ワークスペースでは存在しない対象も修飾IDで返すために使う。
+
+    CLIの解析（``cliargs``の``lex.is_valid_target``）を通った入力は、文書ID、規範文ID、``.spec/``配下の``.md``のパスに限られるため、
+    この文字列の判定はIDの字句規則と同じ結果になる。
+    """
 
     return "/" not in raw and not raw.endswith(".md")
 
