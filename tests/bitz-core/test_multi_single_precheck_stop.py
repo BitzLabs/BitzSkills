@@ -621,6 +621,15 @@ class OmittedWorkspaceIdTests(_Base):
             self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
             self.assertEqual(result["workspace"], {"id": None, "path": "."})
 
+    def test_member_config_with_id_differing_from_the_catalog_has_null_id(self):
+        # カタログのIDと食い違うIDでは同一性を構成できない（結果・診断・終了コード §2）。
+        _write(self.root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: webx\n")
+        for runner, extra in ((self.check, ("--full",)), (self.verify, ()), (self.context, ("REQ-050",)), (self.doctor, ())):
+            result, code = runner(self.web, *extra)
+            self.assertEqual(code, 1, result["diagnostics"])
+            self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-MEMBER-001"])
+            self.assertEqual(result["workspace"], {"id": None, "path": "apps/web"})
+
     def test_explicit_id_named_root_is_kept(self):
         _write(self.root, ".spec/bitz.yaml", ROOT_YAML.replace("id: platform", "id: root") + self.GHOST)
         result, _ = self.check(self.root, "--full")

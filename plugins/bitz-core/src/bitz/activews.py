@@ -73,11 +73,14 @@ def _stopped_selection(pre: multiws.PrecheckResult, loc: WorkspaceLocation, ears
         selected = config_mod.read_config(loc.config_path, ears_version_code=ears_version_code)
         if selected.stop_stage != "config":
             # 複合ワークスペースでは`workspace.id`を必須とする（複合ワークスペース仕様 §2）ため、省略時の既定値`root`は
-            # 有効なIDではない。設定が有効な`workspace.id`を明示しているときだけ、そのIDを返す。
+            # 有効なIDではない。設定が有効な`workspace.id`を明示し、メンバーではカタログのIDとも一致するときだけ、そのIDを返す
+            # （カタログと食い違うIDでは同一性を構成できない。結果・診断・終了コード §2）。
             raw = selected.config if selected.config is not None else selected.parsed
             workspace_block = raw.get("workspace") if isinstance(raw, dict) else None
             explicit = workspace_block.get("id") if isinstance(workspace_block, dict) else None
-            if isinstance(explicit, str) and lex.WORKSPACE_ID_RE.match(explicit):
+            if isinstance(explicit, str) and lex.WORKSPACE_ID_RE.match(explicit) and (
+                rel_path == "." or explicit == multiws.catalog_member_id(pre, rel_path)
+            ):
                 workspace_id = explicit
     return StoppedSelection(
         diagnostics=[d.to_dict() for d in pre.diagnostics],
