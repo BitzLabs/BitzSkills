@@ -86,6 +86,11 @@ class PrecheckResult:
     catalog_status: str | None = None  # `doctor`の`checks[]`用（Noneならカタログの検査項目を出力しない）
     members: list[MemberRecord] = field(default_factory=list)
     repo_root: str | None = None
+    #: Gitでリポジトリの境界を確定できたか（``False``なら``SPEC-MULTI-GIT-001``か、それより前のルートの設定の停止）。
+    git_confirmed: bool = False
+    #: ルートの設定をYAMLとして読めた値（版の非対応で停止したときも含む）。読めなければ``None``。
+    #: 単独操作の停止結果が、選択した設定のカタログへの登録を判定する（:func:`selected_is_registered`）ために使う。
+    root_config: dict | None = None
 
 
 def _diag(code: str, status: str, summary: str, source: dict, evidence: object = None) -> Diagnostic:
@@ -99,11 +104,16 @@ def _root_source(root_id: str | None, key: str | None = None) -> dict:
     return src
 
 
-def _locate_root(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> tuple[str | None, str | None, bool]:
+def _locate_root(
+    cwd: str, git: gitutil.GitInfo, env: dict[str, str], nearest_config_path: str | None = None
+) -> tuple[str | None, str | None, bool]:
     """複合ワークスペースの全体操作の候補のルート（絶対パス）と`.spec/bitz.yaml`を発見する（複合ワークスペース仕様 §8）。
 
     戻り値は``(repo_root, config_path, git_boundary_confirmed)``。候補を発見できなければ
     ``(None, None, False)``（呼び出し側は引数不正・終了コード4）。
+
+    ``nearest_config_path``は、Gitでリポジトリのルートを確定できないときだけ使う候補で、単独操作が通常の探索
+    （:func:`bitz.workspace.locate_workspace`）で見つけた最も近い設定の絶対パス。``None``（全体操作）なら現在のディレクトリ自身だけを見る。
     """
 
     if git.available and git.executable:
@@ -118,7 +128,11 @@ def _locate_root(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> tuple[s
     # Gitがない、またはGitの最上位のディレクトリを解決できない場合のフォールバック: 現在のディレクトリ自身を候補にする
     # （メンバー配下からの広域の探索はGitに依存するため提供できないが、現在のディレクトリ自身に候補があれば
     # `SPEC-MULTI-GIT-001`／`blocked`として境界を確定できないことを報告できる。複合ワークスペース仕様 §10）。
-    root = os.path.abspath(cwd)
+    # 単独操作は、最も近い設定のディレクトリを候補にする（ルートの下のサブディレクトリからでも止まる。複合ワークスペース仕様 §3）。
+    if nearest_config_path is not None:
+        root = os.path.dirname(os.path.dirname(os.path.abspath(nearest_config_path)))
+    else:
+        root = os.path.abspath(cwd)
     cfg = os.path.join(root, ".spec", "bitz.yaml")
     if os.path.isfile(cfg) and not os.path.islink(os.path.join(root, ".spec")):
         return root, cfg, False
@@ -337,6 +351,8 @@ def _validate_catalog(
     extra_config_revs: list[str],
     *,
     skip_limit_dimensions: frozenset[str] = frozenset(),
+    compare_git_configs: bool = True,
+    selected_dir: str | None = None,
 ) -> tuple[list[Diagnostic], list[MemberRecord] | None]:
     """カタログ・ID・パス・バージョン・未登録の設定を検証する（優先順位900〜960。`GIT`は呼び出し側で解決済み）。
 
@@ -344,6 +360,10 @@ def _validate_catalog(
     複数の条件が成立する場合や、2つのメンバーの間の同一の元の原因（重複ID・重複／入れ子のパス）は1件に絞る。
     カタログ自体が構成できない場合（`multiWorkspace`の形状不正）だけ、単独の打ち切りとして
     1件の診断を返す。問題がなければ ``([], member_records)`` を返す。
+
+    未登録の設定の照合（UNREGISTERED段階）は、``compare_git_configs``が真ならGitが認識する設定の列挙と比較し
+    （全体操作と単独の`doctor`）、``selected_dir``があれば単独操作が選んだ最も近い設定のディレクトリがルートか
+    カタログのメンバーのルートかを照合する（複合ワークスペース仕様 §3の4・§7）。両方が同じパスを見つけたときはGit側の1件にする。
     """
 
     shape_diag, members_raw = _validate_multiworkspace_shape(root_config, root_id)
@@ -437,7 +457,14 @@ def _validate_catalog(
     # スナップショットが現在版と異なるメンバー構成（例: メンバーのパスのリネーム）を持つ場合、基準版の
     # スナップショットの既知の設定は基準版自身のカタログへ照合し、現在版側の既知の設定は現在版のカタログへ照合する
     # （どちらか一方の集合だけで比較すると、IDを保ったメンバーの移動を誤って未登録にする）。
-    if git.available and git.executable:
+    unregistered: dict[str, str] = {}  # パス -> summary
+    if selected_dir is not None:
+        selected_real = os.path.realpath(selected_dir)
+        registered_real = {os.path.realpath(root)} | {os.path.realpath(rec.root) for rec in members}
+        if selected_real not in registered_real:
+            rel_dir = os.path.relpath(selected_real, os.path.realpath(root)).replace(os.sep, "/")
+            unregistered[f"{rel_dir}/.spec/bitz.yaml"] = messages.MULTI_UNREGISTERED_SELECTED
+    if compare_git_configs and git.available and git.executable:
         catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
         extra_set: set[str] = set()
         for rev in extra_config_revs:
@@ -453,15 +480,16 @@ def _validate_catalog(
             extra_set |= rev_known - rev_catalog_paths
         current_known = set(gitutil.list_working_config_paths(git.executable, cwd, env))
         extra_set |= current_known - catalog_paths
-        extra = sorted(extra_set)
-        if extra:
-            return [
-                _diag(
-                    "SPEC-MULTI-UNREGISTERED-001", "blocked", messages.MULTI_UNREGISTERED,
-                    {"kind": "file", "workspaceId": None, "path": p},
-                )
-                for p in extra
-            ], None
+        for p in extra_set:
+            unregistered[p] = messages.MULTI_UNREGISTERED
+    if unregistered:
+        return [
+            _diag(
+                "SPEC-MULTI-UNREGISTERED-001", "blocked", unregistered[p],
+                {"kind": "file", "workspaceId": None, "path": p},
+            )
+            for p in sorted(unregistered)
+        ], None
 
     # --- LIMIT段階（970） -------------------------------------------------------
     # 上限の超過は複合ワークスペース全体を停止する単一の元の原因であり、複合ワークスペース仕様 §10のとおり
@@ -633,19 +661,57 @@ def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
     return out
 
 
-def is_declared(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> bool:
-    """リポジトリのルートの有効な設定が複合ワークスペースを宣言しているかを返す。
+def _declares_multiworkspace(outcome: config_mod.ConfigOutcome) -> bool:
+    """設定の読込みの結果が複合ワークスペース（`multiWorkspace`キー）を宣言しているかを返す。
+
+    設定が読めれば`multiWorkspace`の有無で判定する。スキーマまたはEARS-AIのメジャーバージョンが非対応で
+    停止したときは、YAMLとして読めた値の`multiWorkspace`の有無で判定する。構文、型、必須フィールド、I/O、上限による
+    停止（``stop_stage``が``"config"``）では複合ワークスペースと判定しない（複合ワークスペース仕様 §3、ADR-063）。
+    """
+
+    if outcome.config is not None:
+        return "multiWorkspace" in outcome.config
+    if outcome.stop_stage in ("schema-major", "ears-major") and outcome.parsed is not None:
+        return "multiWorkspace" in outcome.parsed
+    return False
+
+
+def is_declared(
+    cwd: str, git: gitutil.GitInfo, env: dict[str, str], nearest_config_path: str | None = None
+) -> bool:
+    """単独操作が複合ワークスペースを宣言しているリポジトリで動いているかを返す。
+
+    Gitでリポジトリのルートを確定できるときは、ルートの`.spec/bitz.yaml`で判定する。確定できないとき
+    （Gitがない、Gitのリポジトリでない）は、通常の探索で見つけた最も近い設定（``nearest_config_path``）で判定する。
+    判定の規則は :func:`_declares_multiworkspace` のとおり。
 
     単独操作が非修飾の対象を受けた場合でも、メンバーを含むカタログを使う必要がある。
     一方、単一ワークスペースで :func:`precheck` を実行すると``multiWorkspace``の不在を設定不適合として
     扱うため、呼び出し側はこの軽量な判定を先に使う。
     """
 
-    _root, config_path, _git_confirmed = _locate_root(cwd, git, env)
+    _root, config_path, _git_confirmed = _locate_root(cwd, git, env, nearest_config_path)
     if config_path is None:
         return False
-    outcome = config_mod.read_config(config_path)
-    return outcome.config is not None and "multiWorkspace" in outcome.config
+    return _declares_multiworkspace(config_mod.read_config(config_path))
+
+
+def selected_is_registered(pre: "PrecheckResult", selected_rel: str) -> bool:
+    """単独操作が選んだ最も近い設定が、カタログに登録されているかを返す（複合ワークスペース仕様 §3、ADR-063）。
+
+    ``selected_rel``は選択した設定のディレクトリのリポジトリのルートからの相対パス（ルートは``.``）。
+    ルート、またはルートの設定の`multiWorkspace.members`に載るメンバーのパスは登録済みとする。
+    カタログの形が不正で構成できないとき（:func:`_validate_multiworkspace_shape`が診断を返すとき）は、ルートだけを登録済みとみなす。
+    """
+
+    if selected_rel == ".":
+        return True
+    if pre.root_config is None:
+        return False
+    shape_diag, members_raw = _validate_multiworkspace_shape(pre.root_config, None)
+    if shape_diag is not None or members_raw is None:
+        return False
+    return any(path == selected_rel for _mid, path in members_raw)
 
 
 def base_workspace_map(
@@ -716,6 +782,9 @@ def precheck(
     extra_config_revs: list[str] | None = None,
     skip_limit_dimensions: frozenset[str] = frozenset(),
     ears_version_code: str = "SPEC-EARS-VERSION-001",
+    nearest_config_path: str | None = None,
+    selected_dir: str | None = None,
+    compare_git_configs: bool = True,
 ) -> PrecheckResult:
     """`--all-workspaces`の全体事前検査（複合ワークスペース仕様 §8）。
 
@@ -733,9 +802,14 @@ def precheck(
 
     ``ears_version_code``は、ルートの設定のEARS-AIのメジャーバージョンが非互換のときの診断コードである。`doctor`は
     `SPEC-DOCTOR-EARS-001`を渡す（診断レジストリの`DOCTOR-EARS-VERSION`。ほかの操作は`EARS-SCHEMA-MAJOR`の`SPEC-EARS-VERSION-001`）。
+
+    次の3つは単独操作（`context`・`check`・`verify`・`doctor`）の全体事前検査だけが渡す（複合ワークスペース仕様 §3・§7、ADR-063）。
+    ``nearest_config_path``は、Gitでリポジトリのルートを確定できないときのルートの候補（通常の探索で見つけた最も近い設定）、
+    ``selected_dir``は選択した最も近い設定のディレクトリ（カタログに登録されていなければ`SPEC-MULTI-UNREGISTERED-001`）、
+    ``compare_git_configs``はGitが認識する設定の列挙と比較するか（単独の`context`・`check`・`verify`は偽）。
     """
 
-    root, cfg_path, git_confirmed = _locate_root(cwd, git, env)
+    root, cfg_path, git_confirmed = _locate_root(cwd, git, env, nearest_config_path)
     if root is None:
         return PrecheckResult(discovery_failed=True)
 
@@ -751,6 +825,8 @@ def precheck(
             # 同じく、カタログの検査項目を`blocked`で置く（`04_doctor.md` §3。ユーザーの決定）。そのほかの停止では置かない。
             catalog_status="blocked" if outcome.stop_stage in ("schema-major", "ears-major") else None,
             repo_root=root,
+            git_confirmed=git_confirmed,
+            root_config=outcome.parsed,
         )
 
     root_id = outcome.workspace_id
@@ -762,12 +838,14 @@ def precheck(
             {"kind": "environment", "component": "git"},
         )
         return PrecheckResult(
-            ok=False, root_id=root_id, diagnostics=[diag], git_status="blocked", catalog_status=None, repo_root=root
+            ok=False, root_id=root_id, diagnostics=[diag], git_status="blocked", catalog_status=None, repo_root=root,
+            git_confirmed=False, root_config=outcome.config,
         )
 
     revs = list(extra_config_revs or [])
     catalog_diags, members = _validate_catalog(
-        root, root_id, outcome.config, git, cwd, env, revs, skip_limit_dimensions=skip_limit_dimensions
+        root, root_id, outcome.config, git, cwd, env, revs, skip_limit_dimensions=skip_limit_dimensions,
+        compare_git_configs=compare_git_configs, selected_dir=selected_dir,
     )
     if catalog_diags:
         status = worst_status([d.resultStatus for d in catalog_diags])
@@ -778,6 +856,8 @@ def precheck(
             git_status="passed",
             catalog_status=status,
             repo_root=root,
+            git_confirmed=True,
+            root_config=outcome.config,
         )
 
     assert members is not None
@@ -789,4 +869,6 @@ def precheck(
         catalog_status="passed",
         members=members,
         repo_root=root,
+        git_confirmed=True,
+        root_config=outcome.config,
     )

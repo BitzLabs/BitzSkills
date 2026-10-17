@@ -275,7 +275,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # 事前検査は`--all-workspaces`と同じ条件（`HEAD`のスナップショットのGitが認識する設定も比べる。EARS-AIの版の診断コードは`doctor`のもの）で行う。
     sel = activews.select_active(
         "doctor", [], requested_workspace, cwd, git, env, loc,
-        extra_config_revs=["HEAD"], ears_version_code="SPEC-DOCTOR-EARS-001",
+        extra_config_revs=["HEAD"], compare_git_configs=True, ears_version_code="SPEC-DOCTOR-EARS-001",
     )
     loc = sel.loc
     workspace_path = sel.rel_path
@@ -284,7 +284,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if loc.config_path is not None:
         outcome = config_mod.read_config(loc.config_path, ears_version_code="SPEC-DOCTOR-EARS-001")
 
-    if requested_workspace is not None:
+    # 全体事前検査が停止したときは、未知の`--workspace`でも終了コード4にせず、停止結果を返す（複合ワークスペース仕様 §3の5）。
+    if requested_workspace is not None and sel.stop is None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
             raise CliArgError("doctor", f"指定したワークスペースが見つかりません: {requested_workspace}")
@@ -311,6 +312,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             }
         )
         result = _build_result(None, checks, diagnostics, started)
+        return result, _exit_code(result["status"])
+
+    if sel.stop is not None:
+        # 全体事前検査が非成功なら、ワークスペース固有の検査項目（config、schema、ears、command、impact）を置かず、
+        # `--all-workspaces`の停止結果と同じ最上位の検査項目（core、plugin、capability、git、catalog）を同じ順と状態で置く。
+        assert sel.pre is not None
+        checks.append({"name": "git", "status": sel.pre.git_status})
+        if sel.pre.catalog_status is not None:
+            checks.append({"name": "catalog", "status": sel.pre.catalog_status})
+        diagnostics.extend(sel.stop.diagnostics)
+        result = _build_result(sel.stop.workspace_id, checks, diagnostics, started)
+        result["workspace"]["path"] = sel.stop.rel_path
         return result, _exit_code(result["status"])
 
     result, exit_code = _diagnose_workspace(

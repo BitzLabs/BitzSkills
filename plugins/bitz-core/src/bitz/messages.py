@@ -368,6 +368,8 @@ MULTI_VERSION_SCHEMA_MAJOR = "メンバーの設定キーschemaVersionのメジ�
 MULTI_VERSION_EARS_MAJOR = "メンバーの設定キーearsAiのメジャーバージョンが未対応です"
 
 MULTI_UNREGISTERED = "Gitが認識する設定ファイルがカタログに登録されていません"
+# 単独操作が選んだ最も近い設定の照合（複合ワークスペース仕様 §3の4・§7、ADR-063）。
+MULTI_UNREGISTERED_SELECTED = "選択した設定ファイルがカタログに登録されていません"
 
 
 MULTI_VERIFY_TARGETS_EMPTY = "検証対象がありません"

@@ -650,6 +650,41 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     return result, EXIT_CODE_BY_STATUS[status]
 
 
+def _stopped_result(
+    stop: activews.StoppedSelection, scope: str, revision: dict | None, want_report: bool, started: int
+) -> tuple[dict, int]:
+    """複合ワークスペースの単独の`check`が全体事前検査で停止した結果（複合ワークスペース仕様 §7、ADR-063）。
+
+    作業ワークスペースの処理を始めていないため、件数はすべて0にする。Gitの境界を確定できずに停止したときは
+    `revision`を`null`にし、`scope: changed`は基準版を必要とするため`full`にする（結果・診断・終了コード §2）。
+    """
+
+    if stop.git_boundary_unknown:
+        revision = None
+        if scope == "changed":
+            scope = "full"
+    diagnostics = sort_diagnostics(stop.diagnostics)
+    status = status_from_diagnostics(diagnostics)
+    result: dict = {
+        "schemaVersion": "1.0",
+        "operation": "check",
+        "status": status,
+        "scope": scope,
+        "workspace": {"id": stop.workspace_id, "path": stop.rel_path},
+        "revision": revision,
+    }
+    if scope == "changed":
+        result["selection"] = {"changedPathCount": 0, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0}
+    else:
+        result["checkedDocumentCount"] = 0
+        result["checkedStatementCount"] = 0
+    result["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+    result["diagnostics"] = diagnostics
+    if want_report:
+        activews.save_stop_report(stop, "check", result)
+    return result, EXIT_CODE_BY_STATUS[result["status"]]
+
+
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if "--all-workspaces" in parsed.flags:
         return _run_all_workspaces(parsed, cwd, env)
@@ -710,10 +745,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # 最寄りの設定のワークスペース、の順で決める（`activews.select_active`。(a)と(b)が食い違えば引数不正＝終了コード4）。
     # 単一ワークスペースは軽量な従来の経路のまま、事前検査を行わない。`--all-workspaces`は別の経路
     # （`_run_all_workspaces`）が処理するためここには来ない。
-    sel = activews.select_active(
-        "check", parsed.positionals, requested_workspace, cwd, git, env, loc,
-        extra_config_revs=[base_commit] if base_commit is not None else [],
-    )
+    sel = activews.select_active("check", parsed.positionals, requested_workspace, cwd, git, env, loc)
+    if sel.stop is not None:
+        return _stopped_result(sel.stop, scope, revision, want_report, started)
     multi_pre = sel.pre
     loc = sel.loc
     workspace_rel_path = sel.rel_path
