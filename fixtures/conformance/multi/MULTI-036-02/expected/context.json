@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "blocked",
+  "purpose": "interpret",
+  "workspace": {
+    "id": null,
+    "path": "tools/x"
+  },
+  "roots": [
+    "web::REQ-010"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-UNREGISTERED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "選択した設定ファイルがカタログに登録されていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": "tools/x/.spec/bitz.yaml"
+      }
+    }
+  ]
+}

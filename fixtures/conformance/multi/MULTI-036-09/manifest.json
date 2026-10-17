@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-036-09",
+  "description": "カタログにない`--workspace`でも、全体事前検査が非成功なら終了コード4にせず結果を返す",
+  "setup": {
+    "git": true,
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "check",
+      "--full",
+      "--workspace",
+      "nope",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

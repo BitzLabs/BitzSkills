@@ -1,0 +1,31 @@
+{
+  "fixtureId": "MULTI-036-03",
+  "description": "メンバー`api`の設定がないとき、メンバーの中の引数なしの`verify`が停止する",
+  "setup": {
+    "git": true,
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

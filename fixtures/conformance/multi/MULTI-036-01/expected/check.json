@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "blocked",
+  "scope": "changed",
+  "workspace": {
+    "id": null,
+    "path": "tools/x"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-UNREGISTERED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "選択した設定ファイルがカタログに登録されていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": "tools/x/.spec/bitz.yaml"
+      }
+    }
+  ],
+  "selection": {
+    "changedPathCount": 0,
+    "targetDocumentCount": 0,
+    "excludedCodeTestPathCount": 0
+  }
+}
