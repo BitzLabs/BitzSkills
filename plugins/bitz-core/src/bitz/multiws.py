@@ -714,6 +714,17 @@ def selected_is_registered(pre: "PrecheckResult", selected_rel: str) -> bool:
     return any(path == selected_rel for _mid, path in members_raw)
 
 
+def catalog_member_id(pre: "PrecheckResult", selected_rel: str) -> str | None:
+    """``selected_rel``のメンバーのカタログのIDを返す。ルート、未登録、カタログの形が不正なときは``None``。"""
+
+    if selected_rel == "." or pre.root_config is None:
+        return None
+    shape_diag, members_raw = _validate_multiworkspace_shape(pre.root_config, None)
+    if shape_diag is not None or members_raw is None:
+        return None
+    return next((mid for mid, path in members_raw if path == selected_rel), None)
+
+
 def base_workspace_map(
     git: gitutil.GitInfo,
     cwd: str,
