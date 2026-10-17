@@ -228,7 +228,7 @@ class DoctorCatalogCheckTests(_Base):
 
     def test_unregistered_config_only_in_head_snapshot_blocks_the_catalog_check(self):
         # `doctor --all-workspaces`と同じ条件で比べる: HEADのスナップショットにだけ未登録の設定がある。
-        # 事前検査は非成功になり、この段階では従来の単一の経路へ進む（catalogを置かない）。
+        # 事前検査は非成功になり、単独のdoctorも`--all-workspaces`と同じ最上位の検査項目を置いて止まる（ADR-063）。
         _write(self.root, "tools/x/.spec/bitz.yaml", CONFIG + "workspace:\n  id: x\n")
         _git(self.root, "add", ".")
         _git(self.root, "commit", "-q", "-m", "unregistered")
@@ -242,7 +242,9 @@ class DoctorCatalogCheckTests(_Base):
         for cwd in (self.web, self.root):
             with self.subTest(cwd=str(cwd)):
                 result, _ = self.doctor(cwd)
-                self.assertNotIn("catalog", self.names(result))
+                self.assertEqual(self.names(result), ["core", "git", "catalog"])
+                self.assertEqual(result["checks"][-1]["status"], "blocked")
+                self.assertEqual(result["diagnostics"], all_result["diagnostics"])
 
     def test_all_workspaces_top_level_catalog_is_unchanged(self):
         result, _ = doctor_mod.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), dict(os.environ))

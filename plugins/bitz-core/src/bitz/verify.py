@@ -825,6 +825,25 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     sel = activews.select_active(
         "verify", parsed.positionals, requested_workspace, cwd, git, env, loc, subject="対象"
     )
+    if sel.stop is not None:
+        # 全体事前検査が非成功なら、作業ワークスペースの処理もテストコマンドの実行も始めない（複合ワークスペース仕様 §7）。
+        stop_diagnostics = sort_diagnostics(sel.stop.diagnostics)
+        stop_status = status_from_diagnostics(stop_diagnostics)
+        stop_result: dict = {
+            "schemaVersion": "1.0",
+            "operation": "verify",
+            "status": stop_status,
+            "scope": scope,
+            "workspace": {"id": sel.stop.workspace_id, "path": sel.stop.rel_path},
+            "targetResults": [],
+            "revision": activews.current_revision(git, cwd, env, sel.stop),
+            "commands": [],
+            "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
+            "diagnostics": stop_diagnostics,
+        }
+        if want_report:
+            activews.save_stop_report(sel.stop, "verify", stop_result)
+        return stop_result, EXIT_CODE_BY_STATUS[stop_result["status"]]
     multi_pre = sel.pre
     loc = sel.loc
     workspace_path = sel.rel_path

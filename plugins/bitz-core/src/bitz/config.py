@@ -111,6 +111,10 @@ class ConfigOutcome:
     stop_stage: str | None = None
     workspace_id: str | None = None
     config: dict | None = None
+    #: メジャーバージョンの非対応（``stop_stage``が``"schema-major"``／``"ears-major"``）で停止したときの、
+    #: YAMLとして読めた値。``config``は停止時に``None``のため、複合ワークスペースの宣言
+    #: （``multiWorkspace``キー）の有無だけを判定する呼び出し側（:mod:`bitz.multiws`）が使う。それ以外は``None``。
+    parsed: dict | None = None
 
 
 def _add_type_error(diags: list[Diagnostic], key: str, expected_type: str) -> None:
@@ -365,11 +369,13 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
         diagnostics: list[Diagnostic],
         workspace_id: str | None,
         extra_warnings: list[Diagnostic] | None = None,
+        parsed: dict | None = None,
     ) -> ConfigOutcome:
         outcome.diagnostics.extend(diagnostics)
         outcome.stop = True
         outcome.stop_stage = stage
         outcome.workspace_id = workspace_id
+        outcome.parsed = parsed
         pending = ([bom_warning] if bom_warning is not None else []) + list(extra_warnings or [])
         for w in pending:
             w.source["workspaceId"] = workspace_id
@@ -475,6 +481,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                 )
             ],
             tentative_workspace_id,
+            parsed=value,
         )
 
     # ここまででメジャーバージョンは対応済み。他のすべてのフィールドの型・必須・未知のキーを検査する。
@@ -512,6 +519,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
             ],
             workspace_id,
             extra_warnings=soft_warnings,
+            parsed=value,
         )
 
     return _finish_success(workspace_id, value, soft_warnings)

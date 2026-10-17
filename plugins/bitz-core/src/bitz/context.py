@@ -418,6 +418,15 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う（`activews.select_active`）。
     # 単一ワークスペースは従来の軽量な経路のままとする。
     sel = activews.select_active("context", roots_raw, requested_workspace, cwd, git, env, loc)
+    if sel.stop is not None:
+        # 全体事前検査が非成功なら、到達ワークスペースを確定せず、単独の形（複合ワークスペース固有のフィールドなし）で返す。
+        diags = sort_diagnostics(sel.stop.diagnostics)
+        bundle = _empty_bundle(purpose, detail, sel.stop.workspace_id, sel.stop.rel_path, roots_raw)
+        bundle["status"] = status_from_diagnostics(diags)
+        bundle["revision"] = activews.current_revision(git, cwd, env, sel.stop)
+        bundle["diagnostics"] = diags
+        bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+        return bundle, EXIT_CODE_BY_STATUS[bundle["status"]]
     multi_pre = sel.pre
     loc = sel.loc
     workspace_path = sel.rel_path
