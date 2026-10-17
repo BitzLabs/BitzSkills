@@ -1119,10 +1119,10 @@
         }
       },
       "primaryOperator": {
-        "status": "two_p2_fixes_pending_independent_closure",
+        "status": "raw_stderr_p2_fix_pending_independent_closure",
         "relatedTests": {
-          "count": 133,
-          "seconds": 24.102,
+          "count": 135,
+          "seconds": 24.896,
           "exitCode": 0
         },
         "newSyntheticTests": 15,
@@ -1139,7 +1139,21 @@
         "certifiesHeldoutLaunch": false,
         "originalBlockingP2": 2,
         "independentClosurePending": true,
-        "record": "r04-heldout-primary-operator-preparation-20261017.json"
+        "record": "r04-heldout-primary-operator-followup-20261017.json",
+        "originalP2Resolved": 2,
+        "newBlockingP2": 1
+      },
+      "day17LocalCalibration": {
+        "status": "local_capture_verified_parent_consumption_pending",
+        "sourceCommit": "ff07246da4d9efb55011813c22965ba19fab9940",
+        "calibrationDate": "2026-10-17",
+        "referenceDate": "2026-10-16",
+        "namespaceExitCode": 0,
+        "receiptSha256": "ec80401dbfcb7f355d4142845ee05490a240f3daca753b924e8b81b63c7a2c6e",
+        "canonicalProfileUpdated": false,
+        "models": 0,
+        "reservations": 0,
+        "initialSandboxFailurePreserved": true
       }
     }
   }

@@ -1,0 +1,45 @@
+{
+  "status": "raw_stderr_p2_fix_pending_independent_closure",
+  "sourceCommit": "ff07246da4d9efb55011813c22965ba19fab9940",
+  "scope": "heldout_primary_operator_only",
+  "originalIndependentReview": {
+    "originalP2Resolved": 2,
+    "newBlockingP2": 1,
+    "relatedTests": 133,
+    "originalAdversarialTests": 9,
+    "extraTests": 3,
+    "extraFailed": 1,
+    "reportSha256": "5014895e90910e496aece6aca58483d606ea57e85db5e2168e47aa3fff4a409b",
+    "inventorySha256": "1454f2e12f9d1fe0cf516b81582f8e17e5bb05e8ac2d2e6f03aeb6b5dac065cb",
+    "parentOriginalHashesMatched": 198
+  },
+  "originalFullRegression": {
+    "count": 1007,
+    "exitCode": 0,
+    "seconds": 153.30889048300742,
+    "cleanAfter": true
+  },
+  "remediation": {
+    "change": "audit recognizable forbidden JSON telemetry independently in raw runtime and namespace stderr, preserving ordinary diagnostics as failed evidence without normal/safety claims",
+    "newSyntheticRegressions": 2,
+    "independentClosurePending": true,
+    "relatedTests": {
+      "count": 135,
+      "seconds": 24.896,
+      "exitCode": 0
+    }
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-primary-operator-followup-review-20261017.tar.gz",
+    "sha256": "c638edf21f1a1eb6d15df40360b654692a81b6c1bd7b3fd537969cc7e03a481b",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

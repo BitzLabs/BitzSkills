@@ -153,3 +153,5 @@ logical-pacing.jsonはreceiptの原inventoryに含める。次の論理起動は
 ### 待機後の現物検査と途中原の分類
 
 invoke proofは論理起動間隔の待機後、durable started marker/processの直前に実測する。途中原は末尾の切断を含むため正常RPC終端を要求しないが、完全行に認識可能な禁止操作/未知Host/tool-source/retry/観測API超過があれば全体停止する。途中SDK/RPC欠落を評価失敗へ記録することは、内容の意味/安全/成功を認定することではない。未知path/metadata/stop marker/正常原の検査不正は従来どおり全体停止する。
+
+- 途中失敗の禁止操作検査は選択logだけに依存せず、raw runtime/namespace stderrの認識可能なJSON telemetryも別々に監査する。重複原を合算してAPI/control上限を誤検出しない。非JSON診断と切断末尾は未完の失敗原として扱い、成功/安全適合を認定しない。

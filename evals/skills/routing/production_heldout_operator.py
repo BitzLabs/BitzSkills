@@ -250,15 +250,19 @@ def collect_partial(base):
 
 def audit_partial(values):
     """途中JSONLの末尾欠落は未完のまま保持し、認識可能な禁止操作は失敗封印しない。"""
-    counts = {'control':0, '/models':0, '/responses':0}
-    for name in ['rpc-out.jsonl','trace-safe.jsonl']:
+    for name in ['rpc-out.jsonl','trace-safe.jsonl','runtime-stderr.bin','namespace.stderr']:
+        # 選択logとその原stderrは同じeventを含むため、各原を独立に検査する。
+        counts = {'control':0, '/models':0, '/responses':0}
+        diagnostic = name in {'runtime-stderr.bin','namespace.stderr'}
         raw = values.get(name,b'')
         lines = raw.splitlines()
         for index,line in enumerate(lines):
             try:value = x.inputs.parse(line)
             except ValueError:
+                if diagnostic:continue
                 require(index == len(lines)-1 and not raw.endswith(b'\n'), 'heldout partial malformed complete JSONL')
                 continue
+            if diagnostic and not isinstance(value,dict):continue
             require(isinstance(value,dict), 'heldout partial JSONL object')
             if name == 'rpc-out.jsonl':
                 require(not ('id' in value and 'method' in value), 'heldout partial server request')

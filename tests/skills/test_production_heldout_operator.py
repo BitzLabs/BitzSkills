@@ -122,6 +122,24 @@ class HeldoutOperatorTests(unittest.TestCase):
         self.assertEqual(result['status'],'evaluation_failed')
         self.assertFalse(result['eligibleForMeasurement'])
 
+    def test_forbidden_tool_in_raw_stderr_without_selected_log_forces_global_stop(self):
+        def forbidden(plan):
+            raw=op.io.encoded(dict(fields={'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'write'}))+b'\n'
+            op.save(self.bound.stage_root(1,'primary'),'runtime-stderr.bin',raw)
+            return 1,False,b'',b''
+        with patch.object(op,'run_process',side_effect=forbidden),self.assertRaisesRegex(ValueError,'control policy'):
+            self.run_primary()
+        ledger=self.ledger()
+        with ledger.locked():
+            self.assertEqual(ledger.summary()['status'],'stopped');self.assertEqual(ledger.summary()['evaluationFailed'],0)
+
+    def test_partial_raw_diagnostics_are_not_normal_native_claims_and_duplicate_sources_do_not_double_count(self):
+        raw=b''.join(op.io.encoded(dict(fields={'event.name':'codex.tool_call_received','tool_source':'direct',
+            'tool_name':tool}))+b'\n' for tool in ['exec','wait'])
+        op.audit_partial({'trace-safe.jsonl':raw,'runtime-stderr.bin':b'SYNTHETIC_DIAGNOSTIC\n'+raw+b'{"incomplete'})
+        forbidden=op.io.encoded(dict(fields={'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'write'}))+b'\n'
+        with self.assertRaisesRegex(ValueError,'control policy'):op.audit_partial({'namespace.stderr':forbidden})
+
     def test_partial_telemetry_unknown_tool_source_and_retry_are_rejected(self):
         faults=[dict(event='ignored',**{'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'write'}),
             {'event.name':'codex.tool_call_received','tool_source':'unknown','tool_name':'read_resource'},
