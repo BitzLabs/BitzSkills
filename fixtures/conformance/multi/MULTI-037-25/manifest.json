@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-037-25",
+  "description": "配列でない`members`は設定不適合で、除外を決めない。除外した範囲の中の単独の`check`も外側の全体事前検査で停止する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "cases/single",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

@@ -424,3 +424,5 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 - `suggestedAction`は付けない。複合ワークスペースの診断は`doctor`仕様 §8の表の診断ではないので、`doctor`でも`suggestedAction`を付けない（`doctor`仕様 §8）。
 - 既存のfixtureの期待値は変えない。
+- 同日、`multiWorkspace`が設定不適合なら除外を信用しない規則を固定する`MULTI-037-24`〜`27`は、2026-10-12の対応表の承認済みの文言（行#86「設定キーmultiWorkspace.membersは1件以上指定してください」、
+  行#87「…membersは配列で指定してください」、行#89「設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください」）を期待値に使う。新しい文言の承認ではない。
