@@ -631,6 +631,85 @@ class OuterExcludeUntrustedTests(_Base):
         self.assertEqual(result["diagnostics"][0]["summary"], UNREGISTERED_SELECTED)
 
 
+class OuterMultiWorkspaceInvalidTests(_Base):
+    """外側の`multiWorkspace`が設定不適合（`SPEC-MULTI-CONFIG-001`）なら、除外を信用せず決めない（ADR-064の3、§2.1）。"""
+
+    def write_outer_mw(self, mw_body: str) -> None:
+        _write(self.root, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + mw_body)
+        _write(self.root, "cases/s/.spec/bitz.yaml", _member_yaml("cs"))
+        _write_docs(self.root, "cases/s", 90)
+
+    def assert_stops_on_outer(self, message: str, key: str | None = None):
+        for name, argv in (("check", ("--full",)), ("doctor", ()), ("verify", ()), ("context", ("REQ-090",))):
+            with self.subTest(operation=name):
+                result, code = getattr(self, name)(self.path("cases/s"), *argv)
+                self.assertEqual((result["status"], code), ("failed", 1), result["diagnostics"])
+                self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-CONFIG-001"])
+                self.assertEqual(result["diagnostics"][0]["summary"], message)
+                if key is not None:
+                    self.assertEqual(result["diagnostics"][0]["source"].get("key"), key)
+
+    def test_members_absent_with_only_exclude(self):
+        self.write_outer_mw("  exclude:\n    - cases\n")
+        self.assert_stops_on_outer("設定キーmultiWorkspace.membersは1件以上指定してください", "multiWorkspace.members")
+
+    def test_members_not_an_array(self):
+        self.write_outer_mw("  members: 3\n  exclude:\n    - cases\n")
+        self.assert_stops_on_outer("設定キーmultiWorkspace.membersは配列で指定してください", "multiWorkspace.members")
+
+    def test_members_empty(self):
+        self.write_outer_mw("  members: []\n  exclude:\n    - cases\n")
+        self.assert_stops_on_outer("設定キーmultiWorkspace.membersは1件以上指定してください")
+
+    def test_members_entry_not_a_map(self):
+        self.write_outer_mw("  members:\n    - 3\n  exclude:\n    - cases\n")
+        self.assert_stops_on_outer("設定キーmultiWorkspace.membersの要素はマッピングで指定してください")
+
+    def test_max_members_out_of_range(self):
+        for value in ("0", "101", "x"):
+            with self.subTest(maxMembers=value):
+                self.write_outer_mw(
+                    f"  maxMembers: {value}\n  members:\n    - id: web\n      path: apps/web\n  exclude:\n    - cases\n"
+                )
+                self.assert_stops_on_outer("設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください")
+
+    def test_multi_workspace_not_a_map(self):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: platform\nmultiWorkspace: 3\n")
+        _write(self.root, "cases/s/.spec/bitz.yaml", _member_yaml("cs"))
+        _write_docs(self.root, "cases/s", 90)
+        self.assert_stops_on_outer("設定キーmultiWorkspaceはマッピングで指定してください")
+
+    def test_path_defect_of_a_member_is_another_defect_and_exclude_is_trusted(self):
+        # メンバーのパスの字句の不正（`SPEC-MULTI-PATH-001`）は「ほかの不備」。除外は信用し、除外の中は単一ワークスペースとして動く。
+        self.write_outer_mw("  members:\n    - id: web\n      path: ../web\n  exclude:\n    - cases\n")
+        result, code = self.check(self.path("cases/s"), "--full")
+        self.assert_passed(result, code)
+        self.assertEqual(result["workspace"], {"id": "cs", "path": "."})
+        result, code = self.check(self.root, "--full")
+        self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-PATH-001"])
+
+    def test_base_snapshot_with_a_defective_multi_workspace_excludes_nothing(self):
+        # 基準版・`HEAD`のスナップショットも同じ条件。除外が妥当に見えても、`multiWorkspace`に設定不適合があれば何も除外しない。
+        _write(
+            self.root, ".spec/bitz.yaml",
+            CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - 3\n"
+            "  exclude:\n    - fixtures\n    - apps/web/vectors\n",
+        )
+        _git(self.root, "add", ".")
+        _git(self.root, "commit", "-q", "-m", "members defect")
+        defective = _git(self.root, "rev-parse", "HEAD")
+        git = gitutil.detect_git(str(self.root), self.env)
+        root = str(self.root)
+        self.assertEqual(multiws.base_exclude_parts(git, root, self.env, defective, root), [])
+        # 条件を満たす基準版は、除外を信用する。
+        self.rewrite_outer(["fixtures", "apps/web/vectors"])
+        _git(self.root, "add", ".")
+        _git(self.root, "commit", "-q", "-m", "fix")
+        self.assertEqual(
+            multiws.base_exclude_parts(git, root, self.env, "HEAD", root), [("fixtures",), ("apps", "web", "vectors")]
+        )
+
+
 class NestedMultiWorkspaceTests(_Base):
     """除外した範囲の中の`multiWorkspace`を宣言した設定は、入れ子の複合ワークスペースのルートになる（§2.1の1.）。"""
 

@@ -168,9 +168,11 @@ def _diff_name_status_z(
     return _parse_name_status_z(proc.stdout)
 
 
-def _ls_files_others_z(executable: str, cwd: str, env: dict[str, str]) -> list[ChangedPath]:
+def _ls_files_others_z(
+    executable: str, cwd: str, env: dict[str, str], toplevel: str | None = None
+) -> list[ChangedPath]:
     # `git ls-files`は現在のディレクトリの配下しか列挙しないため、リポジトリのルートで実行する。
-    cwd = _toplevel_or_cwd(executable, cwd, env)
+    cwd = _toplevel_or_cwd(executable, cwd, env, toplevel)
     try:
         proc = _run(
             [
@@ -193,17 +195,21 @@ def _ls_files_others_z(executable: str, cwd: str, env: dict[str, str]) -> list[C
     return [ChangedPath(status="A", path=p) for p in tokens if p]
 
 
-def _toplevel_or_cwd(executable: str, cwd: str, env: dict[str, str]) -> str:
-    """リポジトリのルートを返す。解決できなければ``cwd``を返す。
+def _toplevel_or_cwd(executable: str, cwd: str, env: dict[str, str], toplevel: str | None = None) -> str:
+    """リポジトリのルートを返す。解決できなければ``cwd``を返す。``toplevel``が渡されていれば、Gitを呼ばずにそれを返す。
 
     `git ls-files`は現在のディレクトリの配下だけを列挙するため、リポジトリ全体を対象にする呼び出しはこのディレクトリで実行する。
     """
 
+    if toplevel:
+        return toplevel
     toplevel = show_toplevel(executable, cwd, env)
     return toplevel if toplevel else cwd
 
 
-def _repo_root_relative_offset(executable: str, cwd: str, env: dict[str, str], workspace_root: str) -> str | None:
+def _repo_root_relative_offset(
+    executable: str, cwd: str, env: dict[str, str], workspace_root: str, toplevel: str | None = None
+) -> str | None:
     """リポジトリのルートから見た``workspace_root``の相対パス（``.``＝一致）を返す。
 
     リポジトリのルートを解決できなければ``None``を返し、呼び出し側はリポジトリのルートからの相対の
@@ -211,7 +217,8 @@ def _repo_root_relative_offset(executable: str, cwd: str, env: dict[str, str], w
     大半はワークスペースのルート＝リポジトリのルートであるため、この場合は実害がない）。
     """
 
-    toplevel = show_toplevel(executable, cwd, env)
+    if toplevel is None:
+        toplevel = show_toplevel(executable, cwd, env)
     if toplevel is None:
         return None
     toplevel_abs = os.path.abspath(toplevel)
@@ -347,14 +354,16 @@ def show_base_file(
     base_rev: str,
     workspace_root: str,
     workspace_rel_path: str,
+    toplevel: str | None = None,
 ) -> bytes | None:
     """``base_rev``の時点の``workspace_rel_path``の内容をバイト列で返す（存在しなければ``None``）。
 
     ``git show``の出力をバイト列のまま受け取り、エンコーディングの復号は呼び出し側（`document.py`）へ委ねる
     （`SPEC-INPUT-READ-001`のUTF-8検査と同じ経路を再利用するため）。
+    ``toplevel``はすでに求めたリポジトリのルート。渡すと、ルートを求めるGitの呼び出しを省く。
     """
 
-    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel)
     if offset in (None, ".", ""):
         repo_path = workspace_rel_path
     else:
@@ -410,7 +419,8 @@ def _map_to_scope(paths: list[str], offset: str | None) -> list[str]:
 
 
 def list_tree_config_paths(
-    executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str | None = None
+    executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str | None = None,
+    toplevel: str | None = None,
 ) -> list[str]:
     """``rev``の時点でGitが認識する``.spec/bitz.yaml``の、複合ワークスペースのルートからの相対パスを返す（`複合ワークスペース仕様 §8`）。
 
@@ -445,11 +455,12 @@ def list_tree_config_paths(
             out.append(path)
     if workspace_root is None:
         return out
-    return _map_to_scope(out, _repo_root_relative_offset(executable, cwd, env, workspace_root))
+    return _map_to_scope(out, _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel))
 
 
 def list_working_config_paths(
-    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None
+    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None,
+    toplevel: str | None = None,
 ) -> list[str]:
     """現在のスナップショット（作業ツリー）でGitが認識する``.spec/bitz.yaml``の、複合ワークスペースのルートからの相対パスを返す。
 
@@ -462,7 +473,7 @@ def list_working_config_paths(
     ファイル移動後の旧パスがインデックス上に残っていても、作業ツリー上は既に存在しないため対象にしない）。
     """
 
-    root = os.path.abspath(_toplevel_or_cwd(executable, cwd, env))
+    root = os.path.abspath(_toplevel_or_cwd(executable, cwd, env, toplevel))
 
     paths: set[str] = set()
     try:
@@ -476,7 +487,7 @@ def list_working_config_paths(
         for p in tokens:
             if p:
                 paths.add(p)
-    for c in _ls_files_others_z(executable, cwd, env):
+    for c in _ls_files_others_z(executable, cwd, env, toplevel):
         paths.add(c.path)
     found = sorted(
         p
@@ -487,11 +498,12 @@ def list_working_config_paths(
     )
     if workspace_root is None:
         return found
-    return _map_to_scope(found, _repo_root_relative_offset(executable, cwd, env, workspace_root))
+    return _map_to_scope(found, _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel))
 
 
 def list_submodule_paths(
-    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None
+    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None,
+    toplevel: str | None = None,
 ) -> set[str]:
     """作業ツリーのインデックスに`gitlink`（モード ``160000``）として記録された、複合ワークスペースのルートからの相対パスを返す。
 
@@ -501,7 +513,7 @@ def list_submodule_paths(
     try:
         proc = _run(
             [executable, "--no-optional-locks", "ls-files", "-z", "--full-name", "--stage"],
-            _toplevel_or_cwd(executable, cwd, env),
+            _toplevel_or_cwd(executable, cwd, env, toplevel),
             env,
         )
     except (OSError, subprocess.SubprocessError):
@@ -519,7 +531,7 @@ def list_submodule_paths(
             out.add(path)
     if workspace_root is None:
         return out
-    return set(_map_to_scope(sorted(out), _repo_root_relative_offset(executable, cwd, env, workspace_root)))
+    return set(_map_to_scope(sorted(out), _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel)))
 
 
 def list_worktree_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:

@@ -186,11 +186,12 @@ def resolve_scope(top: str, start: str) -> ScopeDecision:
 
 def _locate_root(
     cwd: str, git: gitutil.GitInfo, env: dict[str, str], nearest_config_path: str | None = None
-) -> tuple[str | None, str | None, bool]:
+) -> tuple[str | None, str | None, bool, str | None]:
     """複合ワークスペースの全体操作の候補のルート（絶対パス）と`.spec/bitz.yaml`を発見する（複合ワークスペース仕様 §8）。
 
-    戻り値は``(repo_root, config_path, git_boundary_confirmed)``。候補を発見できなければ
-    ``(None, None, False)``（呼び出し側は引数不正・終了コード4）。
+    戻り値は``(repo_root, config_path, git_boundary_confirmed, git_top)``。候補を発見できなければ
+    ``(None, None, False, None)``（呼び出し側は引数不正・終了コード4）。``git_top``はGitのリポジトリのルート（絶対パス）で、
+    Gitの境界を確定できたときだけ返す。以降のGitの列挙で、ルートを求める呼び出しを繰り返さないために使う。
 
     ``nearest_config_path``は、Gitでリポジトリのルートを確定できないときだけ使う候補で、単独操作が通常の探索
     （:func:`bitz.workspace.locate_workspace`）で見つけた最も近い設定の絶対パス。``None``（全体操作）なら現在のディレクトリ自身だけを見る。
@@ -205,12 +206,12 @@ def _locate_root(
                 scope = resolve_scope(root, cwd)
                 if scope.kind == "single":
                     # 除外した範囲の中の単一ワークスペース: 複合ワークスペースを発見できない（§2.1の2.）。
-                    return None, None, False
+                    return None, None, False, None
                 if scope.kind == "nested":
                     assert scope.root is not None
-                    return scope.root, os.path.join(scope.root, ".spec", "bitz.yaml"), True
-                return root, cfg, True
-            return None, None, False
+                    return scope.root, os.path.join(scope.root, ".spec", "bitz.yaml"), True, root
+                return root, cfg, True, root
+            return None, None, False, None
 
     # Gitがない、またはGitの最上位のディレクトリを解決できない場合のフォールバック: 現在のディレクトリ自身を候補にする
     # （メンバー配下からの広域の探索はGitに依存するため提供できないが、現在のディレクトリ自身に候補があれば
@@ -222,8 +223,8 @@ def _locate_root(
         root = os.path.abspath(cwd)
     cfg = os.path.join(root, ".spec", "bitz.yaml")
     if os.path.isfile(cfg) and not os.path.islink(os.path.join(root, ".spec")):
-        return root, cfg, False
-    return None, None, False
+        return root, cfg, False, None
+    return None, None, False, None
 
 
 def _path_lexically_valid(path: str) -> bool:
@@ -343,17 +344,20 @@ def _member_paths_overlapping(members_raw: object, exclude_parts: list[tuple[str
 
 
 def valid_exclude_parts(root_config: dict) -> list[tuple[str, ...]] | None:
-    """ルートの設定の``multiWorkspace.exclude``が妥当なら、そのNFCのセグメントの一覧を返す。妥当でなければ``None``。
+    """ルートの設定の``multiWorkspace.exclude``を信用できるなら、そのNFCのセグメントの一覧を返す。信用できなければ``None``。
 
-    妥当とは、型・件数・字句・重複・入れ子・`.spec`を含まない・メンバーのパスと重ならない、のすべてを満たすこと
-    （複合ワークスペース仕様 §2・§2.1、ADR-064の3）。メンバーの形などほかの不備には依存しない
-    （メンバーの欄が配列でなければ、重なりは判定せず、その要素は読まない）。除外がなければ空の一覧を返す。
+    信用できるのは、``multiWorkspace``が設定不適合（``SPEC-MULTI-CONFIG-001``。members の不在・型・件数、maxMembers、
+    exclude の型・件数・字句・重複・入れ子・`.spec`を含む）を持たず、メンバーのパスと重ならないときだけである
+    （複合ワークスペース仕様 §2・§2.1、ADR-064の3）。members が不在または配列でなければ、重なりを判定できないため信用しない。
+    メンバーのパスの字句の不正など``SPEC-MULTI-PATH-001``は、ほかの不備として除外の信用に影響しない。
+    除外がなければ空の一覧を返す。
     """
 
     mw = root_config.get("multiWorkspace")
     if not isinstance(mw, dict) or "exclude" not in mw:
         return []
-    if _exclude_shape_diag(mw, None) is not None:
+    shape_diag, _members = _validate_multiworkspace_shape(root_config, None)
+    if shape_diag is not None:
         return None
     diags, parts = _evaluate_excludes(None, mw["exclude"])
     if diags or _member_paths_overlapping(mw.get("members"), parts):
@@ -565,6 +569,7 @@ def _validate_catalog(
     skip_limit_dimensions: frozenset[str] = frozenset(),
     compare_git_configs: bool = True,
     selected_dir: str | None = None,
+    git_top: str | None = None,
 ) -> tuple[list[Diagnostic], list[MemberRecord] | None]:
     """カタログ・ID・パス・バージョン・未登録の設定を検証する（優先順位900〜960。`GIT`は呼び出し側で解決済み）。
 
@@ -642,7 +647,7 @@ def _validate_catalog(
     members: list[MemberRecord] = []
     remaining = [i for i in clean_indices if i not in consumed]
     if git.available and git.executable:
-        submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env, root)
+        submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env, root, git_top)
         worktree_paths = gitutil.list_worktree_paths(git.executable, cwd, env)
         for i in remaining:
             rec = locals_[i]
@@ -685,7 +690,9 @@ def _validate_catalog(
         catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
         extra_set: set[str] = set()
         for rev in extra_config_revs:
-            rev_map = base_workspace_map(git, cwd, env, rev, root)
+            # 基準版のルートの設定は1回だけ読み、カタログの対応表と除外の両方を求める。
+            rev_config = _read_base_root_config(git, cwd, env, rev, root, git_top)
+            rev_map = _workspace_map(rev_config) if rev_config is not None else {}
             if not rev_map:
                 # このリビジョンは`multiWorkspace`を宣言していない（単一ワークスペースから複合ワークスペース化する前の
                 # スナップショット）。リポジトリ全体の不存在保証をさかのぼって適用しない（複合ワークスペース仕様 §8）。
@@ -694,14 +701,14 @@ def _validate_catalog(
                 ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
             }
             # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
-            rev_exclude = base_exclude_parts(git, cwd, env, rev, root)
+            rev_exclude = (valid_exclude_parts(rev_config) if rev_config is not None else None) or []
             rev_known = {
-                p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root)
+                p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root, git_top)
                 if not _config_in_excluded_area(p, rev_exclude)
             }
             extra_set |= rev_known - rev_catalog_paths
         current_known = {
-            p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root)
+            p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root, git_top)
             if not _config_in_excluded_area(p, exclude_parts)
         }
         extra_set |= current_known - catalog_paths
@@ -922,7 +929,7 @@ def is_declared(
     扱うため、呼び出し側はこの軽量な判定を先に使う。
     """
 
-    _root, config_path, _git_confirmed = _locate_root(cwd, git, env, nearest_config_path)
+    _root, config_path, _git_confirmed, _top = _locate_root(cwd, git, env, nearest_config_path)
     if config_path is None:
         return False
     return _declares_multiworkspace(config_mod.read_config(config_path))
@@ -958,7 +965,8 @@ def catalog_member_id(pre: "PrecheckResult", selected_rel: str) -> str | None:
 
 
 def _read_base_root_config(
-    git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str
+    git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str,
+    git_top: str | None = None,
 ) -> dict | None:
     """``base_rev``の時点の複合ワークスペースのルート（``repo_root``。入れ子では入れ子のルート）の``.spec/bitz.yaml``をYAMLとして読む。
 
@@ -968,7 +976,7 @@ def _read_base_root_config(
 
     if base_rev is None or not git.available or git.executable is None:
         return None
-    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH)
+    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH, git_top)
     if raw is None:
         return None
     try:
@@ -1014,6 +1022,12 @@ def base_workspace_map(
     value = _read_base_root_config(git, cwd, env, base_rev, repo_root)
     if value is None:
         return {}
+    return _workspace_map(value, current_root_id)
+
+
+def _workspace_map(value: dict, current_root_id: str | None = None) -> dict[str, str]:
+    """基準版のルートの設定（YAMLとして読めた値）から :func:`base_workspace_map` の対応表を求める。"""
+
     mw = value.get("multiWorkspace")
     if not isinstance(mw, dict):
         if current_root_id is not None:
@@ -1073,7 +1087,7 @@ def precheck(
     ``compare_git_configs``はGitが認識する設定の列挙と比較するか（単独の`context`・`check`・`verify`は偽）。
     """
 
-    root, cfg_path, git_confirmed = _locate_root(cwd, git, env, nearest_config_path)
+    root, cfg_path, git_confirmed, git_top = _locate_root(cwd, git, env, nearest_config_path)
     if root is None:
         return PrecheckResult(discovery_failed=True)
 
@@ -1109,7 +1123,7 @@ def precheck(
     revs = list(extra_config_revs or [])
     catalog_diags, members = _validate_catalog(
         root, root_id, outcome.config, git, cwd, env, revs, skip_limit_dimensions=skip_limit_dimensions,
-        compare_git_configs=compare_git_configs, selected_dir=selected_dir,
+        compare_git_configs=compare_git_configs, selected_dir=selected_dir, git_top=git_top,
     )
     if catalog_diags:
         status = worst_status([d.resultStatus for d in catalog_diags])
