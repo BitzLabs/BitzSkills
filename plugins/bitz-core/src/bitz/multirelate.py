@@ -8,9 +8,9 @@
 本モジュールは``(workspace_id, localId)``を索引のキーとする横断の解決を独立に実装し、`check.py`の
 `--all-workspaces`（メンバー単位の全体検査）と、修飾IDで明示した対象を持つ単独操作の`check`の両方から使う。
 
-循環検査（`CTX-CYCLE-001`）はワークスペース内のエッジだけを対象とする簡略化を採る
-（横断する`requires`／`refines`のエッジをまたぐ循環の検出はStep 5Bのfixtureが要求しないため、既知の
-未対応として扱う。`relations.py`のワークスペース内の索引と非公開のヘルパーをそのまま再利用する）。
+循環検査（`CTX-CYCLE-001`）は、修飾IDをキーとする全体のグラフで、ワークスペースをまたぐ`requires`／`refines`の
+エッジも含めて行い（:func:`global_cycle_diagnostics`）、診断はエッジを宣言したワークスペースへ帰属させる。
+`context`と`verify`は、その結果を対象の閉包の文書へ絞って使う。
 """
 
 from __future__ import annotations
@@ -101,11 +101,16 @@ def _qualified_relations_view(entry: DocEntry, owner_ws_id: str) -> DocEntry:
         return entry
 
     new_fm = dict(fm)
+    declared_requires = entry.declared_requires
     if new_relations is not None:
         new_fm["relations"] = new_relations
+        # 診断の`evidence`は宣言どおりの綴りで返す（結果・診断・終了コード §4）。修飾した後の参照からは、宣言が非修飾だったのか
+        # 自ワークスペースの修飾だったのかを区別できないため、修飾する前の`requires`をビューに保持する。
+        if isinstance(relations_raw.get("requires"), list):
+            declared_requires = list(relations_raw["requires"])
     if new_tests is not None:
         new_fm["tests"] = new_tests
-    return replace(entry, frontmatter=new_fm)
+    return replace(entry, frontmatter=new_fm, declared_requires=declared_requires)
 
 
 def _mk(code, severity, status, summary, path, workspace_id, *, key=None, evidence=None) -> Diagnostic:

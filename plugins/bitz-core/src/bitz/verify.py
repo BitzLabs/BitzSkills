@@ -231,6 +231,27 @@ def _make_covering_tests(context_documents, id_index: dict[str, DocEntry], works
     return _covering_tests
 
 
+def _cycle_diagnostics_provider(entries_by_ws: dict[str, list[DocEntry]]):
+    """複合ワークスペース全体の循環の診断を1度だけ計算し、ワークスペースID別に返す関数を返す。
+
+    循環は横断するエッジも含めたグラフ全体で判定する（関係・トレースモデル §4）。グラフは検証対象に依らないため、
+    検証対象ごとに計算し直さず、最初に必要になったときに1度だけ計算する（`--all-workspaces`の全対象で共有する）。
+    戻り値の関数は``workspace_id``が宣言した辺の循環の診断を返す。
+    """
+
+    by_ws: dict[str, list] | None = None
+
+    def for_workspace(workspace_id: str) -> list:
+        nonlocal by_ws
+        if by_ws is None:
+            by_ws = {}
+            for d in multirelate.global_cycle_diagnostics(entries_by_ws):
+                by_ws.setdefault(d.source.get("workspaceId"), []).append(d)
+        return by_ws.get(workspace_id, [])
+
+    return for_workspace
+
+
 def _relation_check_diagnostics(
     context_documents,
     workspace_id: str,
@@ -239,10 +260,14 @@ def _relation_check_diagnostics(
     local_stmt_indices: dict[str, dict[str, dict]],
     known_ws_ids: set[str],
     multi_active: bool,
+    cycle_diagnostics_for=None,
 ):
     """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
 
     コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
+    複合ワークスペースでは、閉包の文書（``context_documents``のうち起点ワークスペース自身が所有するもの）が宣言する辺の
+    循環も返す（`cycle_diagnostics_for`は``workspace_id``が宣言した辺の循環の診断を返す関数。単一ワークスペースの
+    `check_relations(source_ids=...)`と同じく、閉包の外の循環は返さない）。
     """
 
     if multi_active:
@@ -252,6 +277,9 @@ def _relation_check_diagnostics(
             diags.extend(
                 multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
             )
+        if cycle_diagnostics_for is not None:
+            scoped_paths = {e.path for e in scoped_entries}
+            diags.extend(d for d in cycle_diagnostics_for(workspace_id) if d.source.get("path") in scoped_paths)
         return diags
     id_index = local_id_indices[workspace_id]
     statement_index = local_stmt_indices[workspace_id]
@@ -440,6 +468,7 @@ def _process_single_target(
     invalid_by_ws: dict[str, set[str]] | None,
     digest_fn,
     resolved_commands_for,
+    cycle_diagnostics_for=None,
 ) -> tuple[dict, list[tuple[str, str, str, str]]]:
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
@@ -482,7 +511,8 @@ def _process_single_target(
         return [
             d.to_dict()
             for d in _relation_check_diagnostics(
-                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
+                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active,
+                cycle_diagnostics_for,
             )
             if d.severity == "error"
         ]
@@ -1000,6 +1030,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     top_diagnostics: list[dict] = list(config_warning_diags)
     target_entries: list[dict] = []
     needs: dict[tuple[str, str], dict] = {}
+    cycle_diagnostics_for = (
+        _cycle_diagnostics_provider({wid: list(idx.values()) for wid, idx in local_id_indices.items()})
+        if multi_active
+        else None
+    )
 
     for key, root_id, raw in pending:
         def digest_fn(exp, _root_id=root_id):
@@ -1016,6 +1051,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
             multi_active=multi_active, invalid_by_ws=None,
             digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+            cycle_diagnostics_for=cycle_diagnostics_for,
         )
         target_entries.append(entry_out)
         for ws_id, name, path, cover in needed_pairs:
@@ -1148,6 +1184,7 @@ def _run_all_workspaces_members(
     needs: dict[tuple[str, str], dict] = {}
     any_targets = False
     limit_diag: dict | None = None
+    cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
 
     for wid, root, _rel in workspaces:
         id_index, statement_index, local_id_indices, local_stmt_indices, known_ws_ids = multirelate.merge_indices(
@@ -1188,6 +1225,7 @@ def _run_all_workspaces_members(
                 local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
                 multi_active=True, invalid_by_ws=invalid_by_ws,
                 digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+                cycle_diagnostics_for=cycle_diagnostics_for,
             )
             per_ws_target_entries[wid].append(entry_out)
             for cws, name, path, cover in needed_pairs:

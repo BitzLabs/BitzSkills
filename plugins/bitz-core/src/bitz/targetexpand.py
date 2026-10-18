@@ -58,6 +58,22 @@ def _is_applicable(entry: DocEntry) -> bool:
     return entry.status in APPLICABLE_STATUS.get(entry.kind, set())
 
 
+def _canonical_items(id_index: dict[str, DocEntry]):
+    """``id_index``の``(キー, DocEntry)``のうち、別名のキーを除いたものを索引の順に返す。
+
+    複合ワークスペースの統合索引は、作業ワークスペースの文書を修飾のないID（正規）と`<作業ワークスペース>::<ID>`（別名）の
+    2つのキーで同じDocEntryへ登録する。全文書を走査する処理（逆参照、`supersedes`の後継）が別名のキーも数えると、
+    同じ文書を2回数え、閉包へ2つのIDで収録する（関係・トレースモデル §7「同一の文書が複数の経路から到達しても
+    1回だけ収録し」）。修飾のないキーが同じDocEntryを指す修飾キーを別名として除く。他のワークスペースの文書
+    （修飾のないキーが無いか、別のDocEntry）は除かない。単一ワークスペースは修飾キーを持たず、挙動を変えない。
+    """
+
+    for key, entry in id_index.items():
+        if "::" in key and id_index.get(key.partition("::")[2]) is entry:
+            continue
+        yield key, entry
+
+
 def _refines_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
     if entry.kind not in ("REQ", "TECH"):
         return []
@@ -117,7 +133,12 @@ def _requires_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_
 
 
 def _addresses_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
-    """TASKの`relations.addresses`の参照（規範文ID、または規範文のないTECHの文書ID）を返す。"""
+    """TASKの`relations.addresses`の参照（規範文ID、または規範文のないTECHの文書ID）を、解決済みの正規の表現で返す。
+
+    ``_refines_target_statements``と同じく、宣言側の綴りではなく索引で解決した正規の表現を返す。作業ワークスペース自身を
+    修飾した別名（`<作業ワークスペース>::<ID>`）で書いた参照も修飾のない表現にそろい、対象規範文（`target_set`）や
+    起点の規範文との比較が一致する（同じ実体を2つの表現で扱わない）。別名でない参照は``ref``のまま＝挙動を変えない。
+    """
 
     if entry.kind != "TASK":
         return []
@@ -125,11 +146,13 @@ def _addresses_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement
     refs = (entry.frontmatter.get("relations") or {}).get("addresses") or []
     out: list[str] = []
     for ref in refs:
-        target_entry, _target_doc_id = _resolve_ref(ref, id_index, statement_index)
+        target_entry, target_doc_id = _resolve_ref(ref, id_index, statement_index)
         if target_entry is None or target_entry.kind not in allowed:
             continue
-        if ref not in out:
-            out.append(ref)
+        stmt = statement_index.get(ref)
+        canonical_id = stmt["id"] if stmt is not None else target_doc_id
+        if canonical_id not in out:
+            out.append(canonical_id)
     return out
 
 
@@ -168,7 +191,7 @@ def _draft_refinements(
     """
 
     advisory: list[str] = []
-    for cand_id, cand_entry in id_index.items():
+    for cand_id, cand_entry in _canonical_items(id_index):
         if cand_id in context_ids:
             continue
         if cand_entry.kind not in ("REQ", "TECH") or cand_entry.status != "draft":
@@ -265,7 +288,7 @@ def _interpret_closure(
     while frontier4:
         target = frontier4.pop(0)
         target_dist = distance.get(target, 0)
-        for cand_id, cand_entry in id_index.items():
+        for cand_id, cand_entry in _canonical_items(id_index):
             if cand_id == owning_id:
                 continue
             if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
@@ -324,6 +347,28 @@ def target_expansion(
     def _owner(ref: str) -> str | None:
         return _resolve_ref(ref, id_index, statement_index)[1]
 
+    def _adr_type_errors(context_ids: list[str], extra_ids: set[str]) -> list[dict]:
+        """呼び出し側の関係の検査が見ない文書の`requires`のうち、状態が`accepted`でないADRを指すものを返す（全目的で共通）。
+
+        呼び出し側の関係の検査は、コンテキストの文書のうち起点ワークスペースが所有するもの（修飾のないID）が宣言する関係を
+        対象にする。その検査が見ない文書（複合ワークスペースの他のメンバーの文書。目的`verify`でTASKを起点にした場合のコンテキストへ
+        含めない起点の`requires`の閉包は``extra_ids``で渡す）については、閉包を構成する`requires`の辺の型制約だけをここで検査する。
+        状態が`accepted`でないADRへの`requires`は、関係・トレースモデル §4の状態を含む型制約である（同 §6.3、ユーザー決定）。
+        目的`interpret`でも同じ辺を同じ診断にする（単一ワークスペースの`interpret`は関係の検査が同じ辺を検出する）。
+        """
+
+        # 複合ワークスペースの統合索引は、起点ワークスペースの文書にも修飾形の別名（`<起点>::<ID>`）を登録するため、同じ文書が
+        # 2つのIDで閉包へ入り得る。同じ辺の診断を2件返さないよう、文書の実体で判定する（診断レジストリ: 同じ原因から同義の診断を複数生成しない）。
+        covered = {id(id_index[d]) for d in context_ids if "::" not in d and d in id_index}
+        found: list[dict] = []
+        for doc_id in sorted(extra_ids):
+            entry = id_index.get(doc_id)
+            if entry is None or id(entry) in covered:
+                continue
+            covered.add(id(entry))
+            found.extend(_adr_requires_type_errors(doc_id, id_index, statement_index))
+        return found
+
     result = TargetExpansionResult(
         root_documents=[owning_id],
         context_documents=sorted(context_order),
@@ -349,6 +394,7 @@ def target_expansion(
                         "doc_id": owning_id,
                     }
                 ]
+                result.errors += _adr_type_errors(context_order, set(context_order))
                 return result
             if len(successors) == 1:
                 successor_id = successors[0]
@@ -365,6 +411,7 @@ def target_expansion(
                 result.context_documents = sorted(set(context_order))
                 result.document_edges = edges
                 result.document_distance = distance
+        result.errors = _adr_type_errors(context_order, set(context_order))
         return result
 
     # --- implement／verify: 対象規範文の決定と、TASKを起点にした場合／状態検査の追加の規則。 -------
@@ -579,7 +626,7 @@ def target_expansion(
         while frontier:
             target = frontier.pop(0)
             candidates: list[tuple[str, DocEntry]] = []
-            for cand_id, cand_entry in id_index.items():
+            for cand_id, cand_entry in _canonical_items(id_index):
                 if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                     continue
                 if target in _refines_target_statements(cand_entry, id_index, statement_index):
@@ -655,7 +702,7 @@ def target_expansion(
                         edges[target_doc_id].append(pair)
         else:
             addressing_tasks: list[str] = []
-            for cand_id, cand_entry in id_index.items():
+            for cand_id, cand_entry in _canonical_items(id_index):
                 if cand_entry.kind != "TASK" or cand_entry.status != "open":
                     continue
                 refs = _addresses_targets(cand_entry, id_index, statement_index)
@@ -680,23 +727,12 @@ def target_expansion(
     result.document_edges = edges
     result.document_distance = _shortest_distances(owning_id, preds, distance)
     result.draft_advisory = draft_advisory
-    # 呼び出し側の関係の検査は、コンテキストの文書のうち起点ワークスペースが所有するもの（修飾のないID）が宣言する関係を対象にする。
+    # 呼び出し側の関係の検査が見ない文書の`requires`の型制約は、`_adr_type_errors`が検査する。
     result.relation_scope = sorted(set(context_order))
-    # その検査が見ない文書（複合ワークスペースの他のメンバーの文書と、目的`verify`でTASKを起点にした場合のコンテキストへ含めない
-    # 起点の`requires`の閉包）については、閉包を構成する`requires`の辺の型制約だけをここで検査する。状態が`accepted`でないADRへの
-    # `requires`は、関係・トレースモデル §4の状態を含む型制約である（同 §6.3、ユーザー決定）。
     extra = set(context_order)
     if purpose == "verify" and root_entry.kind == "TASK":
         extra |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
-    # 複合ワークスペースの統合索引は、起点ワークスペースの文書にも修飾形の別名（`<起点>::<ID>`）を登録するため、同じ文書が
-    # 2つのIDで閉包へ入り得る。同じ辺の診断を2件返さないよう、文書の実体で判定する（診断レジストリ: 同じ原因から同義の診断を複数生成しない）。
-    covered = {id(id_index[d]) for d in context_order if "::" not in d and d in id_index}
-    for doc_id in sorted(extra):
-        entry = id_index.get(doc_id)
-        if entry is None or id(entry) in covered:
-            continue
-        covered.add(id(entry))
-        errors.extend(_adr_requires_type_errors(doc_id, id_index, statement_index))
+    errors.extend(_adr_type_errors(context_order, extra))
     result.errors = errors
     return result
 
@@ -705,21 +741,23 @@ def _adr_requires_type_errors(doc_id: str, id_index: dict[str, DocEntry], statem
     """``doc_id``の`requires`のうち、状態が`accepted`でないADRを指すものを`CTX-RELATION-TYPE-001`の候補として返す。
 
     診断の形は関係の検査（`relations.check_relations`）と同じにする。発生元は関係を宣言した文書の`relations.requires`、
-    ``evidence``は宣言した参照先（複合ワークスペースの他のメンバーの文書では、そのメンバーの中で書いた修飾のない形）。
+    ``evidence``は宣言どおりの参照先（結果・診断・終了コード §4）。複合ワークスペースの他のメンバーの文書は、解決のために
+    参照先を修飾したビューを索引へ置くため、修飾する前の宣言（``declared_requires``）の綴りを返す
+    （そのメンバー自身のワークスペースを修飾して書いた参照も、非修飾で書いた参照も、書いたとおりになる）。
     """
 
     entry = id_index.get(doc_id)
     if entry is None:
         return []
-    owner = doc_id.partition("::")[0] if "::" in doc_id else None
+    refs = (entry.frontmatter.get("relations") or {}).get("requires") or []
+    declared = entry.declared_requires if entry.declared_requires is not None else refs
     out: list[dict] = []
-    for ref in (entry.frontmatter.get("relations") or {}).get("requires") or []:
+    for ref, evidence in zip(refs, declared):
         if not isinstance(ref, str):
             continue
         target_entry, _target_doc_id = _resolve_ref(ref, id_index, statement_index)
         if target_entry is None or target_entry.kind != "ADR" or target_entry.status == "accepted":
             continue
-        evidence = ref[len(owner) + 2 :] if owner is not None and ref.startswith(f"{owner}::") else ref
         out.append(
             {
                 "code": "CTX-RELATION-TYPE-001",
@@ -740,7 +778,7 @@ def _successors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dic
     entry = id_index[doc_id]
     kind = entry.kind
     out: set[str] = set()
-    for cand_id, cand_entry in id_index.items():
+    for cand_id, cand_entry in _canonical_items(id_index):
         if cand_entry.kind != kind:
             continue
         refs = (cand_entry.frontmatter.get("relations") or {}).get("supersedes") or []
