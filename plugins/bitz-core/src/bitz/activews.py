@@ -10,6 +10,11 @@
 
 1.と2.が食い違えば引数不正（終了コード4）。単一ワークスペースは従来の軽量な経路のままで、事前検査を行わない。
 
+探索の開始位置が除外した範囲（``multiWorkspace.exclude``）にあるときは、複合ワークスペース仕様 §2.1に従う
+（:func:`bitz.multiws.resolve_scope`）。経路の上に``multiWorkspace``を宣言した設定があれば、そのディレクトリを入れ子の
+複合ワークスペースのルートとして、上の規則をそのルートについて適用する（:func:`bitz.multiws.precheck`の``repo_root``が入れ子のルート）。
+宣言した設定がなければ単一ワークスペースの経路（``pre``は``None``）で、外側の全体事前検査は行わない。
+
 全体事前検査が非成功のときは、作業ワークスペースを置き換えず、``stop``（:class:`StoppedSelection`）を持つ
 :class:`ActiveSelection` を返す。呼び出し側は作業ワークスペースの処理、コンテキストの解決、テストコマンドの実行を始めず、
 全体事前検査の診断を最上位の``diagnostics``に置いた単独結果を返す（複合ワークスペース仕様 §7、ADR-063）。
@@ -40,7 +45,7 @@ class StoppedSelection:
     diagnostics: list[dict]
     #: 選択した最も近い設定がカタログに登録されていて、その設定自身が有効なIDを持つときだけ、そのID。それ以外は``None``。
     workspace_id: str | None
-    #: 選択した設定のディレクトリのリポジトリのルートからの相対パス（ルートは``.``）。
+    #: 選択した設定のディレクトリの複合ワークスペースのルートからの相対パス（ルートは``.``）。
     rel_path: str
     #: 選択した設定のディレクトリ（絶対パス）。停止結果のレポートの保存先（``.spec/reports/``）の基準。
     workspace_root: str
@@ -51,7 +56,7 @@ class StoppedSelection:
 @dataclass
 class ActiveSelection:
     loc: WorkspaceLocation
-    #: 作業ワークスペースのリポジトリのルートからの相対パス（ルートワークスペースと単一ワークスペースは``.``）。
+    #: 作業ワークスペースの複合ワークスペースのルートからの相対パス（ルートワークスペースと単一ワークスペースは``.``）。
     rel_path: str
     #: 複合ワークスペースを宣言していれば全体事前検査の結果（失敗していることもある）。宣言していなければ``None``。
     pre: multiws.PrecheckResult | None

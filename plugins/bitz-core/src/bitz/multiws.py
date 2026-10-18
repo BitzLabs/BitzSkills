@@ -3,6 +3,8 @@
 Step 5Aの範囲: §2（カタログ）、§3（ワークスペースの決定・`--workspace`の終了コード4）、§5.1（メンバーのパスの
 正規の判定のうち、セグメントの境界・シンボリックリンク・サブモジュール・別のワークツリー／リポジトリ）、§8（全体操作の発見と
 Gitの既知の設定の事前検査）、§10（スナップショット全体のリソースの上限と早期停止）を実装する。
+あわせて、除外（`multiWorkspace.exclude`）の検証と、除外した範囲の中の単一ワークスペース・入れ子の複合ワークスペースの決定
+（§2・§2.1、ADR-064）を実装する。入れ子の複合ワークスペースでは、`PrecheckResult.repo_root`が入れ子のルートになる。
 
 事前検査が非成功なら :func:`precheck` は ``ok=False`` を返し、呼び出し側（`check.py`／`doctor.py`）は
 メンバーの処理（横断する関係の解決、メンバー単位の`check`/`verify`/`context`）を一切開始せず、`workspaces: []`の
@@ -14,6 +16,7 @@ Gitの既知の設定の事前検査）、§10（スナップショット全体�
 from __future__ import annotations
 
 import os
+import unicodedata
 from dataclasses import dataclass, field
 
 from . import config as config_mod
@@ -71,7 +74,7 @@ _LIMIT_DIMENSION_ORDER = (
 @dataclass
 class MemberRecord:
     id: str
-    path: str  # リポジトリのルートからの相対パス（"/"区切り、正規化済み）
+    path: str  # 複合ワークスペースのルートからの相対パス（"/"区切り、正規化済み）
     root: str  # 絶対パス
     config: dict
 
@@ -85,6 +88,7 @@ class PrecheckResult:
     git_status: str = "blocked"  # `doctor`の`checks[]`用（"passed"／"blocked"）
     catalog_status: str | None = None  # `doctor`の`checks[]`用（Noneならカタログの検査項目を出力しない）
     members: list[MemberRecord] = field(default_factory=list)
+    #: 複合ワークスペースのルート（絶対パス）。Gitのリポジトリのルート、または入れ子の複合ワークスペースのルート（§2.1）。
     repo_root: str | None = None
     #: Gitでリポジトリの境界を確定できたか（``False``なら``SPEC-MULTI-GIT-001``か、それより前のルートの設定の停止）。
     git_confirmed: bool = False
@@ -102,6 +106,82 @@ def _root_source(root_id: str | None, key: str | None = None) -> dict:
     if key:
         src["key"] = key
     return src
+
+
+@dataclass
+class ScopeDecision:
+    """探索の開始位置から決まる複合ワークスペースの範囲（複合ワークスペース仕様 §2.1）。"""
+
+    #: ``outer``＝Gitのリポジトリのルート（除外した範囲の外、または除外を決めない）、
+    #: ``nested``＝除外した範囲の中の入れ子の複合ワークスペース、``single``＝除外した範囲の中の単一ワークスペース。
+    kind: str
+    #: ``nested``のときだけ、入れ子の複合ワークスペースのルート（絶対パス）。
+    root: str | None = None
+
+
+def _config_file_in(directory: str) -> str | None:
+    """``directory``の``.spec/bitz.yaml``のパス。なければ（``.spec``がシンボリックリンクのときも）``None``。"""
+
+    candidate = os.path.join(directory, ".spec", "bitz.yaml")
+    if os.path.isfile(candidate) and not os.path.islink(os.path.join(directory, ".spec")):
+        return candidate
+    return None
+
+
+def resolve_scope(top: str, start: str) -> ScopeDecision:
+    """探索の開始位置``start``が除外した範囲にあるとき、入れ子の複合ワークスペースか単一ワークスペースかを決める（§2.1、ADR-064の3・4）。
+
+    ``top``はGitのリポジトリのルート（絶対パス）で、その``.spec/bitz.yaml``が存在する前提。除外を決めるのは、
+    設定が読めて``multiWorkspace``を宣言し、除外が妥当なときだけである（読めない設定は単一の探索、版の非対応や
+    除外の不正は外側の規則で停止するため、``outer``を返す）。入れ子の複合ワークスペースの中の除外にも同じ規則を再帰的に適用する。
+    """
+
+    top_real = os.path.realpath(top)
+    start_real = os.path.realpath(start)
+    rel = os.path.relpath(start_real, top_real)
+    if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+        return ScopeDecision("outer")
+    segments = [] if rel == "." else rel.split(os.sep)
+    nfc_segments = tuple(unicodedata.normalize("NFC", seg) for seg in segments)
+
+    root = os.path.abspath(top)
+    depth = 0  # ``root``の、``segments``の中での深さ（外側のルートは0）
+    nested = False
+    while True:
+        cfg = _config_file_in(root)
+        if cfg is None:
+            break
+        outcome = config_mod.read_config(cfg)
+        if outcome.config is None or "multiWorkspace" not in outcome.config:
+            break
+        excludes = valid_exclude_parts(outcome.config)
+        if not excludes:
+            break
+        relative = nfc_segments[depth:]
+        matched = next((e for e in excludes if _is_prefix_or_equal(e, relative)), None)
+        if matched is None:
+            break
+        # 除外のディレクトリ自身から開始位置までの経路の上の設定を、浅い方から見る。
+        path_dirs = [
+            (depth + k, os.path.join(root, *segments[depth : depth + k]))
+            for k in range(len(matched), len(relative) + 1)
+        ]
+        with_config = [(d, dirpath) for d, dirpath in path_dirs if _config_file_in(dirpath) is not None]
+        if not with_config:
+            break  # 経路の上に設定がなければ、外側の規則のまま（3.）
+        declaring = next(
+            (
+                (d, dirpath)
+                for d, dirpath in with_config
+                if _declares_multiworkspace(config_mod.read_config(_config_file_in(dirpath)))  # type: ignore[arg-type]
+            ),
+            None,
+        )
+        if declaring is None:
+            return ScopeDecision("single")  # 開始位置に最も近い設定を単一ワークスペースとして使う（2.）
+        depth, root = declaring
+        nested = True
+    return ScopeDecision("nested", root) if nested else ScopeDecision("outer")
 
 
 def _locate_root(
@@ -122,6 +202,13 @@ def _locate_root(
             root = os.path.abspath(top)
             cfg = os.path.join(root, ".spec", "bitz.yaml")
             if os.path.isfile(cfg) and not os.path.islink(os.path.join(root, ".spec")):
+                scope = resolve_scope(root, cwd)
+                if scope.kind == "single":
+                    # 除外した範囲の中の単一ワークスペース: 複合ワークスペースを発見できない（§2.1の2.）。
+                    return None, None, False
+                if scope.kind == "nested":
+                    assert scope.root is not None
+                    return scope.root, os.path.join(scope.root, ".spec", "bitz.yaml"), True
                 return root, cfg, True
             return None, None, False
 
@@ -157,6 +244,121 @@ def _path_lexically_valid(path: str) -> bool:
 
 def _is_ancestor(a: tuple[str, ...], b: tuple[str, ...]) -> bool:
     return len(a) < len(b) and b[: len(a)] == a
+
+
+# --- 除外（`multiWorkspace.exclude`。ADR-064、複合ワークスペース仕様 §2・§2.1） ---------------------------------
+
+#: 除外の最大件数（ワークスペース・設定仕様 §5）。
+EXCLUDE_LIMIT = 100
+
+
+def _nfc_parts(path: str) -> tuple[str, ...]:
+    """パスをUnicode NFCへ正規化し、セグメントへ分ける（大文字と小文字は区別する。複合ワークスペース仕様 §2.1）。"""
+
+    return tuple(unicodedata.normalize("NFC", seg) for seg in path.split("/"))
+
+
+def _is_prefix_or_equal(prefix: tuple[str, ...], parts: tuple[str, ...]) -> bool:
+    """``prefix``が``parts``と同じ、またはその祖先か（ディレクトリの単位の前方一致）。"""
+
+    return parts[: len(prefix)] == prefix
+
+
+def _in_excluded_area(parts: tuple[str, ...], exclude_parts: list[tuple[str, ...]]) -> bool:
+    """``parts``のディレクトリが、いずれかの除外のディレクトリと同じかその配下にあるか。"""
+
+    return any(_is_prefix_or_equal(e, parts) for e in exclude_parts)
+
+
+def _exclude_shape_diag(mw: dict, root_id: str | None) -> Diagnostic | None:
+    """``exclude``の型（文字列の配列）と件数（0〜100）を検査する。キーがなければ``None``（既定は空）。"""
+
+    if "exclude" not in mw:
+        return None
+    raw = mw["exclude"]
+    if not isinstance(raw, list) or any(not isinstance(item, str) for item in raw):
+        return _diag(
+            "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_EXCLUDE_TYPE,
+            _root_source(root_id, "multiWorkspace.exclude"),
+        )
+    if len(raw) > EXCLUDE_LIMIT:
+        return _diag(
+            "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_EXCLUDE_COUNT,
+            _root_source(root_id, "multiWorkspace.exclude"),
+        )
+    return None
+
+
+def _evaluate_excludes(root_id: str | None, raw: list[str]) -> tuple[list[Diagnostic], list[tuple[str, ...]]]:
+    """型と件数が妥当な``exclude``の要素を検査する。``(診断, 字句が妥当な除外のNFCのセグメント)``を返す。
+
+    要素ごとの原因（形式の不正、`.spec`を含む）は要素につき1件、2つの要素の間の原因（重複、入れ子）は組につき1件にする
+    （メンバーのパスの検査と同じ作り方。診断レジストリ §2）。
+    """
+
+    source = _root_source(root_id, "multiWorkspace.exclude")
+    diags: list[Diagnostic] = []
+    clean: list[tuple[int, tuple[str, ...]]] = []
+    valid_parts: list[tuple[str, ...]] = []
+    for index, path in enumerate(raw):
+        if not _path_lexically_valid(path):
+            diags.append(_diag("SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_EXCLUDE_INVALID, source))
+            continue
+        parts = _nfc_parts(path)
+        valid_parts.append(parts)
+        if ".spec" in parts:
+            diags.append(_diag("SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_EXCLUDE_SPEC, source))
+            continue
+        clean.append((index, parts))
+
+    consumed: set[int] = set()
+    for pos_i, (i, a) in enumerate(clean):
+        if i in consumed:
+            continue
+        for j, b in clean[pos_i + 1 :]:
+            if j in consumed:
+                continue
+            if a == b:
+                message = messages.MULTI_EXCLUDE_DUPLICATE
+            elif _is_ancestor(a, b) or _is_ancestor(b, a):
+                message = messages.MULTI_EXCLUDE_NESTED
+            else:
+                continue
+            diags.append(_diag("SPEC-MULTI-CONFIG-001", "failed", message, source))
+            consumed.update((i, j))
+            break
+    return diags, valid_parts
+
+
+def _member_paths_overlapping(members_raw: object, exclude_parts: list[tuple[str, ...]]) -> bool:
+    """字句が妥当なメンバーのパスのうち、除外と同じまたは除外の配下にあるものがあるか（メンバーの配下の除外は重ならない）。"""
+
+    if not isinstance(members_raw, list):
+        return False
+    for raw in members_raw:
+        path = raw.get("path") if isinstance(raw, dict) else None
+        if isinstance(path, str) and _path_lexically_valid(path) and _in_excluded_area(_nfc_parts(path), exclude_parts):
+            return True
+    return False
+
+
+def valid_exclude_parts(root_config: dict) -> list[tuple[str, ...]] | None:
+    """ルートの設定の``multiWorkspace.exclude``が妥当なら、そのNFCのセグメントの一覧を返す。妥当でなければ``None``。
+
+    妥当とは、型・件数・字句・重複・入れ子・`.spec`を含まない・メンバーのパスと重ならない、のすべてを満たすこと
+    （複合ワークスペース仕様 §2・§2.1、ADR-064の3）。メンバーの形などほかの不備には依存しない
+    （メンバーの欄が配列でなければ、重なりは判定せず、その要素は読まない）。除外がなければ空の一覧を返す。
+    """
+
+    mw = root_config.get("multiWorkspace")
+    if not isinstance(mw, dict) or "exclude" not in mw:
+        return []
+    if _exclude_shape_diag(mw, None) is not None:
+        return None
+    diags, parts = _evaluate_excludes(None, mw["exclude"])
+    if diags or _member_paths_overlapping(mw.get("members"), parts):
+        return None
+    return parts
 
 
 def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tuple[Diagnostic | None, list[tuple[str, str]] | None]:
@@ -200,6 +402,10 @@ def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tu
                 _root_source(root_id, "multiWorkspace.members"),
             ), None
         members.append((raw["id"], raw["path"]))
+
+    shape_diag = _exclude_shape_diag(mw, root_id)
+    if shape_diag is not None:
+        return shape_diag, None
     return None, members
 
 
@@ -260,7 +466,7 @@ class _LocalMember:
 
 
 def _evaluate_member_local(
-    root: str, root_id: str, mid: str, mpath: str
+    root: str, root_id: str, mid: str, mpath: str, exclude_parts: list[tuple[str, ...]] | None = None
 ) -> tuple[Diagnostic | None, _LocalMember | None]:
     """1つのメンバーについて、他のメンバーとの比較を伴わない候補を集め、最小の`priority`の1件を選ぶ。
 
@@ -288,6 +494,12 @@ def _evaluate_member_local(
     if not path_valid:
         candidates.append(_diag(
             "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_INVALID,
+            _root_source(root_id, "multiWorkspace.members"),
+        ))
+
+    if path_valid and exclude_parts and _in_excluded_area(_nfc_parts(mpath), exclude_parts):
+        candidates.append(_diag(
+            "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_EXCLUDED,
             _root_source(root_id, "multiWorkspace.members"),
         ))
 
@@ -372,10 +584,13 @@ def _validate_catalog(
     assert members_raw is not None
 
     # --- PASS A: メンバーごとの独立検証（IDの構文・パスの字句・メンバーの設定） -----------------
+    mw = root_config.get("multiWorkspace") or {}
+    exclude_diags, exclude_parts = _evaluate_excludes(root_id, mw.get("exclude", []))
+
     local_diags: list[Diagnostic] = []
     locals_: list[_LocalMember | None] = []
     for mid, mpath in members_raw:
-        d, rec = _evaluate_member_local(root, root_id, mid, mpath)
+        d, rec = _evaluate_member_local(root, root_id, mid, mpath, exclude_parts)
         if d is not None:
             local_diags.append(d)
         locals_.append(rec)
@@ -427,7 +642,7 @@ def _validate_catalog(
     members: list[MemberRecord] = []
     remaining = [i for i in clean_indices if i not in consumed]
     if git.available and git.executable:
-        submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env)
+        submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env, root)
         worktree_paths = gitutil.list_worktree_paths(git.executable, cwd, env)
         for i in remaining:
             rec = locals_[i]
@@ -447,7 +662,7 @@ def _validate_catalog(
                 id=rec.id, path=rec.path, root=os.path.join(root, *rec.parts), config=rec.config
             ))
 
-    all_diags = local_diags + pairwise_diags + deep_diags
+    all_diags = local_diags + exclude_diags + pairwise_diags + deep_diags
     if all_diags:
         return all_diags, None
 
@@ -463,7 +678,9 @@ def _validate_catalog(
         registered_real = {os.path.realpath(root)} | {os.path.realpath(rec.root) for rec in members}
         if selected_real not in registered_real:
             rel_dir = os.path.relpath(selected_real, os.path.realpath(root)).replace(os.sep, "/")
-            unregistered[f"{rel_dir}/.spec/bitz.yaml"] = messages.MULTI_UNREGISTERED_SELECTED
+            # 除外した範囲の中の設定は照合の対象にしない（§2.1。通常は除外した範囲の操作はここへ来ない）。
+            if not _in_excluded_area(_nfc_parts(rel_dir), exclude_parts):
+                unregistered[f"{rel_dir}/.spec/bitz.yaml"] = messages.MULTI_UNREGISTERED_SELECTED
     if compare_git_configs and git.available and git.executable:
         catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
         extra_set: set[str] = set()
@@ -476,9 +693,17 @@ def _validate_catalog(
             rev_catalog_paths = {
                 ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
             }
-            rev_known = set(gitutil.list_tree_config_paths(git.executable, cwd, env, rev))
+            # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
+            rev_exclude = base_exclude_parts(git, cwd, env, rev, root)
+            rev_known = {
+                p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root)
+                if not _config_in_excluded_area(p, rev_exclude)
+            }
             extra_set |= rev_known - rev_catalog_paths
-        current_known = set(gitutil.list_working_config_paths(git.executable, cwd, env))
+        current_known = {
+            p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root)
+            if not _config_in_excluded_area(p, exclude_parts)
+        }
         extra_set |= current_known - catalog_paths
         for p in extra_set:
             unregistered[p] = messages.MULTI_UNREGISTERED
@@ -499,6 +724,13 @@ def _validate_catalog(
         return [limit_diag], None
 
     return [], members
+
+
+def _config_in_excluded_area(config_path: str, exclude_parts: list[tuple[str, ...]]) -> bool:
+    """``<dir>/.spec/bitz.yaml``の``<dir>``が除外した範囲にあるか。``config_path``は複合ワークスペースのルートからの相対。"""
+
+    parts = _nfc_parts(config_path)[:-2]
+    return bool(parts) and _in_excluded_area(parts, exclude_parts)
 
 
 def _iter_spec_md_files(workspace_root: str):
@@ -653,7 +885,7 @@ def _check_resource_limits(
 
 
 def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
-    """``(workspace_id, root_abs, リポジトリのルートからの相対パス)``をルートを先頭に、以降はIDの辞書順で返す(§8)。"""
+    """``(workspace_id, root_abs, 複合ワークスペースのルートからの相対パス)``をルートを先頭に、以降はIDの辞書順で返す(§8)。"""
 
     out: list[tuple[str, str, str]] = [(pre.root_id, pre.repo_root, ".")]
     for m in sorted(pre.members, key=lambda r: r.id):
@@ -725,6 +957,39 @@ def catalog_member_id(pre: "PrecheckResult", selected_rel: str) -> str | None:
     return next((mid for mid, path in members_raw if path == selected_rel), None)
 
 
+def _read_base_root_config(
+    git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str
+) -> dict | None:
+    """``base_rev``の時点の複合ワークスペースのルート（``repo_root``。入れ子では入れ子のルート）の``.spec/bitz.yaml``をYAMLとして読む。
+
+    読めなければ``None``。``ROOT_CONFIG_PATH``は``repo_root``からの相対で、入れ子の複合ワークスペースでは
+    基準版でも同じディレクトリの設定を読む（§2.1）。
+    """
+
+    if base_rev is None or not git.available or git.executable is None:
+        return None
+    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH)
+    if raw is None:
+        return None
+    try:
+        text = raw.decode("utf-8")
+        value = parse_yaml_subset(text)
+    except (UnicodeDecodeError, YamlSyntaxError, YamlForbiddenError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def base_exclude_parts(
+    git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str
+) -> list[tuple[str, ...]]:
+    """``base_rev``のスナップショット自身のルートの設定の除外を返す。読めない、または妥当でない除外は何も除外しない（空）。"""
+
+    value = _read_base_root_config(git, cwd, env, base_rev, repo_root)
+    if value is None:
+        return []
+    return valid_exclude_parts(value) or []
+
+
 def base_workspace_map(
     git: gitutil.GitInfo,
     cwd: str,
@@ -746,20 +1011,8 @@ def base_workspace_map(
     リポジトリ全体の不存在保証をさかのぼって適用しない」）では、この写像を行わず、引き続き空の``dict``を返す。
     """
 
-    if base_rev is None or not git.available or git.executable is None:
-        return {}
-    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH)
-    if raw is None:
-        return {}
-    try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        return {}
-    try:
-        value = parse_yaml_subset(text)
-    except (YamlSyntaxError, YamlForbiddenError):
-        return {}
-    if not isinstance(value, dict):
+    value = _read_base_root_config(git, cwd, env, base_rev, repo_root)
+    if value is None:
         return {}
     mw = value.get("multiWorkspace")
     if not isinstance(mw, dict):
