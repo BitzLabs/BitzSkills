@@ -3,7 +3,7 @@
 ADR-064は、ルートワークスペースの設定の`multiWorkspace.exclude`に書いたディレクトリとその配下を、その複合ワークスペースの外とみなす。
 効果は、Gitが認識する設定の比較（複合ワークスペース仕様 §8）、単独操作の選択した設定の照合（§3の手順4）、作業ワークスペースの決定（§2.1）だけに及ぶ。
 除外した範囲の中で探索を始めると、除外のディレクトリから開始位置までの経路の上の設定で、入れ子の複合ワークスペース、単一ワークスペース、
-除外の外の規則のどれかを決める（§2.1）。この群は、その決定、除外の不正、除外を信用できない条件、入れ子の複合ワークスペースの範囲を、23件で固定する（ADR-051の追加）。
+除外の外の規則のどれかを決める（§2.1）。この群は、その決定、除外の不正、除外を信用できない条件、入れ子の複合ワークスペースの範囲を、27件で固定する（ADR-051の追加）。
 
 基本のリポジトリは、ルート`platform`（`.`）、メンバー`web`（`apps/web`）と`api`（`services/api`）、`exclude: [cases, apps/web/tests/data]`である。
 `cases/single`は単一の設定、`cases/nested`は`multiWorkspace`を宣言する入れ子のルート（メンバー`m`は`cases/nested/apps/m`）、
@@ -27,6 +27,7 @@ ADR-064は、ルートワークスペースの設定の`multiWorkspace.exclude`�
 | `MULTI-037-21` | `check --full`、`cases/nested` | 外側のルートの設定が読めないなら、除外も入れ子も決めず、最も近い設定を単一ワークスペースとして使う |
 | `MULTI-037-22` | `doctor --all-workspaces`、`cases/nested` | 入れ子の中の未登録の設定は、入れ子のルート相対のパスで`blocked` |
 | `MULTI-037-23` | `check --base HEAD`、`cases/nested` | 入れ子のルートの外の変更は、変更集合に入らない |
+| `MULTI-037-24`〜`27` | `check`、`cases/single` | ルートの`multiWorkspace`が設定不適合（`members`の不在・非配列・0件、`maxMembers`の範囲外）なら、妥当な`exclude`も信用せず、外側の全体事前検査で停止する |
 
 期待値の根拠は規範文（複合ワークスペース仕様 §2・§2.1・§3・§7・§8、ADR-064、ADR-063、結果・診断・終了コード §2、`check` §6・§9、`doctor` §3・§7）と、
 このモジュールの参照計算だけである。参照計算`reference_scope`は、入力の木構造とGitの状態から、除外した範囲、探索の開始位置の場所（外側／入れ子／単一）、
@@ -71,6 +72,9 @@ NESTED_CODE_PATH = "cases/nested/src/extra.py"
 OUTSIDE_NEW_PATH = "tools/outside.py"
 
 # 承認済みの診断の文言（ADR-064 決定8。`Coreの出力文言のレビュー記録.md`）と、既存の文言。
+MEMBERS_REQUIRED = "設定キーmultiWorkspace.membersは1件以上指定してください"
+MEMBERS_TYPE = "設定キーmultiWorkspace.membersは配列で指定してください"
+MAX_MEMBERS_RANGE = "設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください"
 EXCLUDE_TYPE = "設定キーmultiWorkspace.excludeは文字列の配列で指定してください"
 EXCLUDE_COUNT = "設定キーmultiWorkspace.excludeは100件以下で指定してください"
 EXCLUDE_FORMAT = "除外のパスの形式が不正です"
@@ -86,6 +90,9 @@ MEMBER_MISSING = "メンバーの.spec/bitz.yamlがありません"
 CAUSES = {
     "exclude-type": ("SPEC-MULTI-CONFIG-001", "failed", EXCLUDE_TYPE, "multiWorkspace.exclude"),
     "exclude-count": ("SPEC-MULTI-CONFIG-001", "failed", EXCLUDE_COUNT, "multiWorkspace.exclude"),
+    "members-required": ("SPEC-MULTI-CONFIG-001", "failed", MEMBERS_REQUIRED, "multiWorkspace.members"),
+    "members-type": ("SPEC-MULTI-CONFIG-001", "failed", MEMBERS_TYPE, "multiWorkspace.members"),
+    "max-members": ("SPEC-MULTI-CONFIG-001", "failed", MAX_MEMBERS_RANGE, "multiWorkspace.maxMembers"),
     "exclude-format": ("SPEC-MULTI-CONFIG-001", "failed", EXCLUDE_FORMAT, "multiWorkspace.exclude"),
     "exclude-duplicate": ("SPEC-MULTI-CONFIG-001", "failed", EXCLUDE_DUPLICATE, "multiWorkspace.exclude"),
     "exclude-nested": ("SPEC-MULTI-CONFIG-001", "failed", EXCLUDE_NESTED, "multiWorkspace.exclude"),
@@ -101,6 +108,13 @@ CAUSES = {
 def case(op, cwd, argv, tree, exclude=EXCLUDE, operations=(), status="passed", exit_code=0, cause=None, description="", **expected):
     return dict(op=op, cwd=cwd, argv=list(argv), tree=tree, exclude=exclude, operations=list(operations),
                 status=status, exit=exit_code, cause=cause, description=description, expected=expected)
+
+
+def _untrusted(tree, cause, description):
+    """ルートの`multiWorkspace`が設定不適合（`exclude: [cases]`は妥当）。`cases/single`の単独の`check`が、除外を決めず外側の全体事前検査で停止する。"""
+    return case("check", SINGLE_DIRECTORY, ["check", "--base", "HEAD"], tree, exclude=["cases"], status="failed", exit_code=1, cause=cause,
+                description=f"{description}。除外した範囲の中の単独の`check`も外側の全体事前検査で停止する",
+                workspace={"id": None, "path": SINGLE_DIRECTORY}, dirty=False)
 
 
 def _invalid(identifier_exclude, cause, description):
@@ -182,6 +196,20 @@ CASES = {
                              {"op": "create", "path": OUTSIDE_NEW_PATH, "source": "changes/outside.py"}],
                          description="入れ子の複合ワークスペースの単独の`check`が、入れ子のルートの外の変更を変更集合に入れない",
                          workspace=NESTED_WORKSPACE, selection=(2, 1, 1), dirty=True),
+    "MULTI-037-24": _untrusted("members-absent", "members-required", "`members`のない`multiWorkspace`は設定不適合で、除外を決めない"),
+    "MULTI-037-25": _untrusted("members-scalar", "members-type", "配列でない`members`は設定不適合で、除外を決めない"),
+    "MULTI-037-26": _untrusted("members-empty", "members-required", "0件の`members`は設定不適合で、除外を決めない"),
+    "MULTI-037-27": _untrusted("max-members", "max-members", "範囲外の`maxMembers`は設定不適合で、除外を決めない"),
+}
+ROOT_HEADER = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: platform\n'
+_EXCLUDE_CASES = "  exclude:\n    - cases\n"
+_MEMBERS = "  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n"
+# ルートの`multiWorkspace`の設定不適合（`exclude: [cases]`は妥当）。
+UNTRUSTED_ROOT = {
+    "members-absent": _EXCLUDE_CASES,
+    "members-scalar": "  members: web\n" + _EXCLUDE_CASES,
+    "members-empty": "  members: []\n" + _EXCLUDE_CASES,
+    "max-members": "  maxMembers: 0\n" + _MEMBERS + _EXCLUDE_CASES,
 }
 RESULT_FILES = {"check": "expected/check.json", "verify": "expected/verify.json", "doctor": "expected/doctor.json"}
 
@@ -247,9 +275,11 @@ def reviewed_inputs(identifier):
     case_ = CASES[identifier]
     tree, changes = case_["tree"], {}
     repo = base_files(case_["exclude"])
-    if tree in {"full", "api-missing", "anchor", "nested-unregistered", "nested-changes"}:
+    if tree in {"full", "api-missing", "anchor", "nested-unregistered", "nested-changes", *UNTRUSTED_ROOT}:
         repo.update(cases_files())
         repo.update(x_files())
+    if tree in UNTRUSTED_ROOT:
+        repo[multi_reference.ROOT_CONFIG_PATH] = ROOT_HEADER + "multiWorkspace:\n" + UNTRUSTED_ROOT[tree]
     if tree == "api-missing":
         # メンバー`api`のディレクトリは実在するが、設定を持たない（外側のほかの不備）。
         del repo[multi_reference.API_CONFIG_PATH]
@@ -266,7 +296,7 @@ def reviewed_inputs(identifier):
         changes["REQ-001.md"] = requirement("REQ-001", "認証の基準", "REQ-001:AC-01", "秘密情報を出力せず記録もしない")
         changes["session.py"] = "def open_session():\n    return False\n"
         changes["outside.py"] = "def outside():\n    return True\n"
-    elif tree not in {"base", "full"}:
+    elif tree not in {"base", "full", *UNTRUSTED_ROOT}:
         raise ValueError(f"未知の入力の種類です: {tree}")
     return ({name: data.encode() for name, data in repo.items()}, {name: data.encode() for name, data in changes.items()})
 
@@ -395,7 +425,7 @@ def parse_config(text):
         if indent == 0:
             config[key], top, second = (scalar(value) if value.strip() else {}), key, None
         elif indent == 2 and top is not None:
-            config[top][key] = scalar(value) if value.strip() else []
+            config[top][key] = ([] if value.strip() == "[]" else scalar(value)) if value.strip() else []
             second = key
         elif body.startswith("- ") and top == "multiWorkspace" and second is not None:
             item = body[2:]
@@ -435,8 +465,20 @@ def lexical_problem(path):
 
 
 def exclude_problem(config):
-    """複合ワークスペース仕様 §2の除外の規則。違反の原因（`CAUSES`のキー）を、検査の順に1件返す。なければ`None`。"""
+    """`multiWorkspace`の設定不適合と除外の規則（複合ワークスペース仕様 §2・§2.1、ADR-064 決定1・3）。違反の原因（`CAUSES`のキー）を、検査の順に1件返す。なければ`None`。
+
+    `members`の不在、型、0件、`maxMembers`の範囲は設定不適合で、`exclude`のメンバーのパスとの重なりを判定できないので、除外を信用しない。
+    """
     multi = config["multiWorkspace"]
+    if "maxMembers" in multi:
+        value = multi["maxMembers"]
+        if not (isinstance(value, str) and value.isdigit() and 1 <= int(value) <= 100):
+            return "max-members"
+    members = multi.get("members")
+    if members is None or members == []:
+        return "members-required"
+    if not isinstance(members, list):
+        return "members-type"
     raw = multi.get("exclude", [])
     if not isinstance(raw, list) or not all(isinstance(item, str) for item in raw):
         return "exclude-type"
@@ -451,8 +493,8 @@ def exclude_problem(config):
         return "exclude-duplicate"
     if any(a != b and b[:len(a)] == a for a in parts for b in parts):
         return "exclude-nested"
-    members = [tuple(member["path"].split("/")) for member in multi.get("members", [])]
-    if any(member[:len(excluded)] == excluded for member in members for excluded in parts):
+    member_paths = [tuple(member["path"].split("/")) for member in members]
+    if any(member[:len(excluded)] == excluded for member in member_paths for excluded in parts):
         return "member-excluded"
     return None
 
@@ -508,7 +550,9 @@ def recognized_configs(repository):
 
 
 def outer_scope(repository, base, config, cwd, problem, excluded):
-    members = {join(base, member["path"]): member["id"] for member in config["multiWorkspace"].get("members", [])}
+    declared = config["multiWorkspace"].get("members")
+    # 型の不正や不在のカタログは作れない。ルートワークスペースだけを置く（停止の原因は`problem`が持つ）。
+    members = ({join(base, member["path"]): member["id"] for member in declared} if isinstance(declared, list) else {})
     catalog = {base: config["workspace"]["id"], **members}
     nearest = nearest_config_directory(repository, cwd, base)
     state, near_config = read_config(repository, nearest) if nearest else ("missing", None)
@@ -737,6 +781,16 @@ def check_conditions(identifier, repository):
     if identifier in {f"MULTI-037-{number:02d}" for number in range(9, 18)}:
         if scope["via"] != "outer" or scope["problem"] != case_["cause"]:
             raise ValueError("除外の不正の原因が入力からの参照計算と異なります")
+    if identifier in {f"MULTI-037-{number}" for number in range(24, 28)}:
+        # `multiWorkspace`が設定不適合なら、妥当な`exclude: [cases]`も信用しない。信用すれば`cases/single`は除外の中の単一ワークスペースになる（陰性対照）。
+        if scope["kind"] != "multi":
+            raise ValueError("`multiWorkspace`が設定不適合で、除外を決めない必要があります")
+        raw = scope["config"]["multiWorkspace"].get("exclude")
+        if scope["via"] != "outer" or scope["problem"] != case_["cause"] or raw != ["cases"] or scope["excluded"]:
+            raise ValueError("`multiWorkspace`の設定不適合で除外を決めず、外側の規則で`cases/single`を扱う必要があります")
+        if reference["workspace"] != {"id": None, "path": SINGLE_DIRECTORY} or exclude_problem({"multiWorkspace": {**scope["config"]["multiWorkspace"],
+                "members": [{"id": "web", "path": "apps/web"}], "maxMembers": "20"}}) is not None:
+            raise ValueError("`exclude`だけは妥当である必要があります")
     if identifier == "MULTI-037-18":
         # 除外が信用できれば`cases/single`は除外の中の単一ワークスペースになる（陰性対照）。
         if scope["via"] != "outer" or "cases" not in case_["exclude"] or reference["workspace"] != {"id": None, "path": SINGLE_DIRECTORY}:
