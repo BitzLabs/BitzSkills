@@ -2722,6 +2722,10 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(problem(["apps/web"]), "member-excluded")
         self.assertIsNone(problem(["apps/web/tests"]))
         self.assertIsNone(problem(["apps/webx"]))
+        # 字句が不正なメンバーのパスは`SPEC-MULTI-PATH-001`（ほかの不備）であり、重なりの判定に使わない（§2.1）。
+        self.assertIsNone(problem(["cases"], [{"id": "web", "path": "cases/x/"}]))
+        self.assertIsNone(problem(["cases"], [{"id": "web", "path": "../cases"}]))
+        self.assertEqual(problem(["cases"], [{"id": "web", "path": "cases/x"}]), "member-excluded")
         # 字句、型、件数、`.spec`、重複、入れ子、メンバーの重なりの順に検査する。
         self.assertEqual(problem(["a/", "a", "a"]), "exclude-format")
         self.assertEqual(problem(["a/.spec", "a"]), "exclude-spec")

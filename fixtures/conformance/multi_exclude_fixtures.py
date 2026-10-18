@@ -493,7 +493,8 @@ def exclude_problem(config):
         return "exclude-duplicate"
     if any(a != b and b[:len(a)] == a for a in parts for b in parts):
         return "exclude-nested"
-    member_paths = [tuple(member["path"].split("/")) for member in members]
+    # 字句が不正なメンバーのパスは`SPEC-MULTI-PATH-001`（ほかの不備）であり、重なりの判定に使わない（複合ワークスペース仕様 §2.1）。
+    member_paths = [tuple(member["path"].split("/")) for member in members if not lexical_problem(member.get("path"))]
     if any(member[:len(excluded)] == excluded for member in member_paths for excluded in parts):
         return "member-excluded"
     return None
