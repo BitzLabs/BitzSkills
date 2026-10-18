@@ -74,6 +74,7 @@ from conformance import multi_verify_fixtures, multi_report_fixtures, multi_comp
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
 from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures, multi_exclude_fixtures
+from conformance import multi_closure_alias_fixtures
 from conformance import doctor_plugin_fixtures
 
 
@@ -3103,6 +3104,192 @@ class AuditTests(unittest.TestCase):
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
                     self.assertNotRegex(outcome["errors"][0], r": '[A-Za-z_]+'$")
+
+    def test_multi_closure_alias_fixtures(self):
+        """`MULTI-038-01`〜`18`: 閉包の循環・別名の二重収録・`evidence`の修飾・`interpret`のADRを固定する（確認事項C18・C21・C19・D7）。"""
+        module = multi_closure_alias_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-038-{number:02d}" for number in range(1, 19)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_closure_alias_reference_rules(self):
+        """循環に参加するエッジ、閉包、別名の表記の参照計算（関係・トレースモデル §4・§6・§7）。"""
+        module = multi_closure_alias_fixtures
+
+        def document(workspace, identifier, kind="technical", status="approved", **relations):
+            return {"workspaceId": workspace, "kind": kind, "body": "", "path": f"{identifier}.md",
+                    "frontmatter": {"id": identifier, "title": "t", "status": status,
+                                    "relations": {key: value for key, value in relations.items()}}}
+
+        # 2文書の循環と、循環へ入るだけのエッジ。入るだけのエッジ（`a→b`の`a`）は循環に参加しない。
+        documents = {"w::a": document("w", "a", requires=["b"]), "w::b": document("w", "b", requires=["c"]),
+                     "w::c": document("w", "c", requires=["b"])}
+        self.assertEqual(module.cyclic_edges(documents), {("w::b", "requires"), ("w::c", "requires")})
+        # 自己参照は長さ1の循環。`related`は循環に数えない。
+        self.assertEqual(module.cyclic_edges({"w::a": document("w", "a", requires=["a"])}), {("w::a", "requires")})
+        self.assertEqual(module.cyclic_edges({"w::a": document("w", "a", related=["a"])}), set())
+        # `requires`と`refines`を合わせた循環。
+        mixed = {"w::a": document("w", "a", requires=["b"]), "w::b": document("w", "b", refines=["a"])}
+        self.assertEqual(module.cyclic_edges(mixed), {("w::a", "requires"), ("w::b", "refines")})
+        # 閉包は到達できる文書だけ。表記が違っても1件にまとめ、到達したエッジを両方保つ。
+        documents = {"w::r": document("w", "r", requires=["t", "u"]), "w::t": document("w", "t"),
+                     "w::u": document("w", "u", requires=["x::v"]), "x::v": document("x", "v", requires=["w::t"]),
+                     "w::z": document("w", "z", requires=["z"])}
+        order, edges, distance = module.interpret_closure(documents, "w::r")
+        self.assertEqual(order, ["w::r", "w::t", "w::u", "x::v"])
+        self.assertEqual(edges["w::t"], {("requires", "w::r"), ("requires", "x::v")})
+        self.assertEqual(distance, {"w::r": 0, "w::t": 1, "w::u": 1, "x::v": 2})
+        self.assertEqual(module.spellings(documents, "w::t"), {"t", "w::t"})
+        # 診断は閉包の文書だけ。閉包の外の循環（`w::z`）は返さない。
+        self.assertEqual(module.reference_diagnostics(documents, order), [])
+        self.assertEqual([item["source"]["path"] for item in module.reference_diagnostics(documents, [*order, "w::z"])], [".spec/technical/z.md"])
+        # 起点を（修飾した宣言で）`refines`する文書は具体化文書として含め、置換済みの起点は後継を距離1で含める。
+        documents = {"w::r": document("w", "r", kind="requirement"), "x::t": document("x", "t", refines=["w::r"]),
+                     "w::s": document("w", "s", kind="requirement", supersedes=["r"])}
+        order, edges, distance = module.interpret_closure(documents, "w::r")
+        self.assertEqual(order, ["w::r", "x::t", "w::s"])
+        self.assertEqual((distance["x::t"], distance["w::s"]), (1, 1))
+        self.assertEqual([module.role_of(documents, "w::r", name, edges) for name in order], ["advisory", "refinement", "replacement"])
+
+    def test_multi_closure_alias_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_closure_alias_fixtures
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "failed"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append({"code": "CTX-CYCLE-001"}),
+            "summary": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            "evidence": lambda v: v["diagnostics"][0].update(evidence=v["diagnostics"][0]["evidence"].rpartition("::")[2]),
+            "evidence-qualify": lambda v: v["diagnostics"][0].update(evidence="api::" + v["diagnostics"][0]["evidence"]),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="relations.refines"),
+            "digest": lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+            "digest-null": lambda v: v.update(contextDigest=None),
+            "unresolved": lambda v: v["resolution"].update(unresolvedStrongRelations=v["resolution"]["unresolvedStrongRelations"] + 1),
+            "document-count": lambda v: v["resolution"].update(documentCount=v["resolution"]["documentCount"] + 1),
+            "document-duplicate": lambda v: v["documents"].append(copy.deepcopy(v["documents"][-1])),
+            "document-drop": lambda v: v["documents"].pop(),
+            "document-reverse": lambda v: v["documents"].reverse(),
+            "document-role": lambda v: v["documents"][-1].update(role="root"),
+            "reached-by": lambda v: v["documents"][-1]["reachedBy"].append("requires:web::REQ-009"),
+            "workspaces": lambda v: v["resolution"]["workspaces"].reverse(),
+            "cross-edges": lambda v: v["resolution"]["crossWorkspaceEdges"].pop(),
+            "coverage": lambda v: v["coverage"]["must"].update(addressed=[]),
+            "ledger": lambda v: v["constraintLedger"]["statements"].clear(),
+            "workspace": lambda v: v["workspace"].update(path="."),
+            "revision": lambda v: v.update(revision=None if v["revision"] else {"commit": "0" * 40, "dirty": False}),
+            "target-status": lambda v: v["targetResults"][0].update(status="passed"),
+            "target-diagnostics": lambda v: v["targetResults"][0]["diagnostics"].pop(),
+            "target-digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            "target-evidence": lambda v: v["targetResults"][0]["diagnostics"][0].update(evidence="ADR-001"),
+            "commands": lambda v: v["commands"].append({}),
+            "ws-order": lambda v: v["workspaces"].reverse(),
+            "ws-status": lambda v: v["workspaces"][2].update(status="passed"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed" if v["expect"]["status"] == "passed" else "passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=3),
+            "cwd": lambda v: v["invocation"].update(cwd="." if v["invocation"]["cwd"] != "." else "apps/web"),
+            "purpose": lambda v: v["invocation"]["argv"].__setitem__(
+                v["invocation"]["argv"].index("--purpose") + 1, "implement" if "interpret" in v["invocation"]["argv"] else "interpret"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier, case in module.CASES.items():
+            relative = module.RESULT_FILES[case["op"]]
+            mutations += [(identifier, relative, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 250)
+
+    def test_multi_closure_alias_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_closure_alias_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を作る書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        edits = {
+            # 循環を閉包の中へ入れる（`MULTI-038-01`の陰性対照）、循環を壊す（`MULTI-038-02`）。
+            "MULTI-038-01": [("apps/web/.spec/requirements/REQ-001.md", "status: approved\n", "status: approved\nrelations:\n  requires: [TECH-020]\n")],
+            "MULTI-038-02": [("apps/web/.spec/technical/TECH-011.md", "requires: [TECH-010]", "requires: []")],
+            "MULTI-038-05": [(".spec/requirements/REQ-001.md", "status: approved\n", "status: approved\nrelations:\n  requires: [TECH-020]\n")],
+            # 別名だけで到達する参照切れを、非修飾の宣言へ変える（`MULTI-038-08`の条件を消す）。
+            "MULTI-038-08": [("services/api/.spec/technical/TECH-020.md", "web::TECH-010", "api::TECH-021")],
+            "MULTI-038-10": [("apps/web/.spec/technical/TECH-010.md", "TECH-999", "TECH-011")],
+            # 二重収録の条件（非修飾と修飾の両方の表記）を消す。
+            "MULTI-038-07": [("services/api/.spec/technical/TECH-020.md", "web::TECH-010", "api::TECH-020")],
+            "MULTI-038-15": [("services/api/.spec/technical/TECH-030.md", "web::REQ-001", "web::REQ-009")],
+            "MULTI-038-16": [("apps/web/.spec/technical/TECH-001.md", "refines: [REQ-001]", "refines: [REQ-009]")],
+            "MULTI-038-17": [("apps/web/.spec/requirements/REQ-002.md", "supersedes: [REQ-001]", "supersedes: [REQ-009]")],
+            "MULTI-038-18": [("apps/web/.spec/tasks/TASK-001.md", "status: open", "status: done")],
+            # `evidence`の表記を、宣言どおりの原因を消す形へ変える。
+            "MULTI-038-12": [("services/api/.spec/technical/TECH-020.md", "api::ADR-001", "ADR-001")],
+            "MULTI-038-11": [("services/api/.spec/technical/TECH-020.md", "ADR-001", "api::ADR-001")],
+            "MULTI-038-14": [(".spec/decisions/ADR-001.md", "status: proposed", "status: accepted")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe(repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

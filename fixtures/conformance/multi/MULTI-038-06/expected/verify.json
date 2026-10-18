@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-CYCLE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "関係型requiresに禁止された循環があります",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-010.md",
+            "key": "relations.requires"
+          }
+        },
+        {
+          "code": "CTX-CYCLE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "関係型requiresに禁止された循環があります",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-011.md",
+            "key": "relations.requires"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

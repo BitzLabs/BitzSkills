@@ -77,6 +77,7 @@ from conformance.multi_workspace_option_fixtures import validate as validate_mul
 from conformance.multi_active_workspace_fixtures import validate as validate_multi_active_workspace_fixtures
 from conformance.multi_single_precheck_fixtures import validate as validate_multi_single_precheck_fixtures
 from conformance.multi_exclude_fixtures import validate as validate_multi_exclude_fixtures
+from conformance.multi_closure_alias_fixtures import validate as validate_multi_closure_alias_fixtures
 from conformance.doctor_plugin_fixtures import validate as validate_doctor_plugin_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -359,6 +360,7 @@ def main():
     checks["multi_active_workspace_fixtures"] = validate_multi_active_workspace_fixtures()
     checks["multi_single_precheck_fixtures"] = validate_multi_single_precheck_fixtures()
     checks["multi_exclude_fixtures"] = validate_multi_exclude_fixtures()
+    checks["multi_closure_alias_fixtures"] = validate_multi_closure_alias_fixtures()
     checks["doctor_plugin_fixtures"] = validate_doctor_plugin_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)

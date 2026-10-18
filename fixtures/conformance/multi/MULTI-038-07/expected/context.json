@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": "sha256:e4402c092b440a3abe8055154bcf707a5338b4ddbeb68b5a7531a04f89cd92fe",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 4,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "requires",
+        "source": "api::TECH-020",
+        "target": "web::TECH-010"
+      },
+      {
+        "relation": "requires",
+        "source": "web::TECH-011",
+        "target": "api::TECH-020"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:api::TECH-020",
+        "requires:web::REQ-001"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::TECH-011",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-011.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:web::REQ-001"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-020",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-020.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:web::TECH-011"
+      ],
+      "workspaceId": "api",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
