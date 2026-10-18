@@ -73,7 +73,7 @@ from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_r
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
-from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures
+from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures, multi_exclude_fixtures
 from conformance import doctor_plugin_fixtures
 
 
@@ -2671,6 +2671,367 @@ class AuditTests(unittest.TestCase):
                 repository = fixture_setup(fixture, manifest, Path(temporary) / "work" / "repo")
                 with self.assertRaises(ValueError):
                     module.check_conditions(identifier, repository)
+
+    def exclude_repository(self, temporary, identifier, name="work"):
+        root = self.copy_multi_fixture(temporary, identifier)
+        fixture = root / "multi" / identifier
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        return root, fixture, manifest, fixture_setup(fixture, manifest, Path(temporary) / name / "repo")
+
+    def test_multi_exclude_fixtures(self):
+        """`MULTI-037-01`〜`23`: 複合ワークスペースの除外の指定と入れ子の複合ワークスペースを固定する（ADR-064）。"""
+        module = multi_exclude_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-037-{number:02d}" for number in range(1, 24)])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_exclude_rules_follow_the_normative_text(self):
+        """除外の字句と不正の原因の順（複合ワークスペース仕様 §2、ADR-064 決定1）。"""
+        module = multi_exclude_fixtures
+
+        def problem(exclude, members=None):
+            members = members if members is not None else [{"id": "web", "path": "apps/web"}]
+            return module.exclude_problem({"multiWorkspace": {"members": members, "exclude": exclude}})
+
+        self.assertIsNone(problem([]))
+        self.assertIsNone(problem(["cases", "apps/web/tests/data", "generated", "apps/web2"]))
+        for value in ("/abs", "", ".", "..", "a/../b", "a//b", "a/", "a/./b", "a/*", "a?b", "a/[b]", "a/{b}"):
+            with self.subTest(value=value):
+                self.assertEqual(problem([value]), "exclude-format")
+        self.assertEqual(problem("cases"), "exclude-type")
+        self.assertEqual(problem(["a", 1]), "exclude-type")
+        self.assertEqual(problem({"a": {}}), "exclude-type")
+        self.assertEqual(problem([f"ex{number:03d}" for number in range(100)]), None)
+        self.assertEqual(problem([f"ex{number:03d}" for number in range(101)]), "exclude-count")
+        self.assertEqual(problem([".spec"]), "exclude-spec")
+        self.assertEqual(problem(["a/.spec/b"]), "exclude-spec")
+        self.assertIsNone(problem([".specs"]))
+        self.assertEqual(problem(["a", "a"]), "exclude-duplicate")
+        self.assertEqual(problem(["a", "a/b"]), "exclude-nested")
+        self.assertEqual(problem(["a/b", "a"]), "exclude-nested")
+        self.assertIsNone(problem(["a", "ab"]))
+        # メンバーのパスが除外のパスと同じ、またはその配下: メンバーの配下のディレクトリは除外に書ける。
+        self.assertEqual(problem(["apps"]), "member-excluded")
+        self.assertEqual(problem(["apps/web"]), "member-excluded")
+        self.assertIsNone(problem(["apps/web/tests"]))
+        self.assertIsNone(problem(["apps/webx"]))
+        # 字句、型、件数、`.spec`、重複、入れ子、メンバーの重なりの順に検査する。
+        self.assertEqual(problem(["a/", "a", "a"]), "exclude-format")
+        self.assertEqual(problem(["a/.spec", "a"]), "exclude-spec")
+        self.assertEqual(problem(["apps", "apps"]), "exclude-duplicate")
+        self.assertEqual(module.within("a/b/c", "a/b"), True)
+        self.assertEqual(module.within("a/bc", "a/b"), False)
+        self.assertEqual(module.within("a/b", "a/b"), True)
+
+    def test_multi_exclude_reference_follows_the_inputs(self):
+        """参照計算は、探索の開始位置の場所を、入力の木構造から導く。入力を変えると場所が変わる（陰性対照）。"""
+        module = multi_exclude_fixtures
+
+        def rewrite(repository, path, old, new):
+            target = repository / path
+            self.assertIn(old, target.read_text())
+            target.write_text(target.read_text().replace(old, new))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-01")
+            scope = lambda cwd: module.reference_scope(repository, cwd)
+            self.assertEqual(scope(".")["via"], "outer")
+            self.assertEqual(scope("apps/web")["via"], "outer")
+            self.assertEqual(scope("apps/web")["workspace"], {"id": "web", "path": "apps/web"})
+            # 除外した範囲の中: 経路の上に設定がなければ外側の規則、`multiWorkspace`を宣言した設定があれば入れ子、なければ単一ワークスペース。
+            self.assertEqual(scope("cases")["via"], "outer")
+            self.assertEqual(scope("apps/web/tests/data")["via"], "outer")
+            self.assertEqual((scope("cases/single")["kind"], scope("cases/single")["directory"]), ("single", "cases/single"))
+            self.assertEqual((scope(module.X_DIRECTORY)["kind"], scope(module.X_DIRECTORY)["directory"]), ("single", module.X_DIRECTORY))
+            for cwd in ("cases/nested", "cases/nested/apps", "cases/nested/apps/m", "cases/nested/apps/m/src"):
+                with self.subTest(cwd=cwd):
+                    nested = scope(cwd)
+                    self.assertEqual((nested["kind"], nested["via"], nested["base"]), ("multi", "nested", "cases/nested"))
+            self.assertEqual(scope("cases/nested/apps/m")["workspace"], {"id": "m", "path": "apps/m"})
+            self.assertEqual(scope("cases/nested")["workspace"], {"id": "nested", "path": "."})
+            decision = lambda cwd, argv: module.reference_decision(repository, argv[0], cwd, argv)
+            self.assertTrue(decision("cases/single", ["check", "--all-workspaces"])["argument_error"])
+            self.assertFalse(decision("cases/nested/apps/m", ["check", "--all-workspaces"])["argument_error"])
+            self.assertFalse(decision(".", ["check", "--all-workspaces"])["argument_error"])
+            self.assertIsNone(decision(".", ["check", "--all-workspaces"])["cause"])
+            # 除外がなければ、除外した範囲の中の4件の設定が未登録になる。
+            self.assertEqual(len(module.outer_scope(repository, ".", scope(".")["config"], ".", None, [])["unregistered_git"]), 4)
+            self.assertEqual(scope(".")["unregistered_git"], [])
+            self.assertEqual(module.expected_workspaces(repository, scope(".")),
+                             [("platform", ".", 1, 1), ("api", "services/api", 0, 0), ("web", "apps/web", 0, 0)])
+            self.assertEqual(module.expected_workspaces(repository, scope("cases/nested")), [("nested", ".", 1, 1), ("m", "apps/m", 1, 1)])
+        with tempfile.TemporaryDirectory() as temporary:
+            # `cases`を除外から外すと、`cases/single`は未登録の最も近い設定になる。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-01")
+            rewrite(repository, ".spec/bitz.yaml", "    - cases\n", "")
+            self.assertEqual(module.reference_scope(repository, "cases/single")["via"], "outer")
+            self.assertEqual(module.reference_decision(repository, "check", "cases/single", ["check"])["cause"], "unregistered-selected")
+            self.assertEqual(module.reference_decision(repository, "check", ".", ["check", "--all-workspaces"])["cause"], "unregistered-git")
+        with tempfile.TemporaryDirectory() as temporary:
+            # 除外が不正なら除外を決めない。入れ子のルートの宣言も使わない。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-01")
+            rewrite(repository, ".spec/bitz.yaml", "    - cases\n", "    - cases\n    - cases\n")
+            self.assertEqual(module.reference_scope(repository, "cases/single")["via"], "outer")
+            self.assertEqual(module.reference_decision(repository, "check", "cases/single", ["check"])["cause"], "exclude-duplicate")
+            self.assertEqual(module.reference_decision(repository, "check", "cases/nested/apps/m", ["check", "--all-workspaces"])["cause"],
+                             "exclude-duplicate")
+        with tempfile.TemporaryDirectory() as temporary:
+            # ルートの設定が読めないなら、複合ワークスペースと判定せず、最も近い設定を単一ワークスペースとして使う。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-21")
+            for cwd, directory in (("cases/nested", "cases/nested"), ("cases/single", "cases/single"), ("apps/web", "apps/web")):
+                with self.subTest(cwd=cwd):
+                    scope = module.reference_scope(repository, cwd)
+                    self.assertEqual((scope["kind"], scope["via"], scope["directory"]), ("single", "plain", directory))
+            rewrite(repository, ".spec/bitz.yaml", "&label ", "")
+            self.assertEqual(module.reference_scope(repository, "cases/nested")["via"], "nested")
+        with tempfile.TemporaryDirectory() as temporary:
+            # スキーマまたはEARS-AIのメジャーバージョンが非対応なら、除外を決めない。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-01")
+            rewrite(repository, ".spec/bitz.yaml", 'earsAi: "1.0"', 'earsAi: "2.0"')
+            scope = module.reference_scope(repository, "cases/single")
+            self.assertEqual((scope["via"], scope["problem"], scope["excluded"]), ("outer", None, []))
+        with tempfile.TemporaryDirectory() as temporary:
+            # 入れ子のルートは、除外のディレクトリに最も近い`multiWorkspace`を宣言した設定である。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-06")
+            (repository / "cases/.spec").mkdir()
+            (repository / "cases/.spec/bitz.yaml").write_text(module.multi_reference.root_config([("n", "nested")], "outer-case"))
+            self.assertEqual(module.reference_scope(repository, "cases/nested/apps/m")["base"], "cases")
+            (repository / "cases/.spec/bitz.yaml").write_text(module.multi_reference.plain_config("plain-case"))
+            self.assertEqual(module.reference_scope(repository, "cases/nested/apps/m")["base"], "cases/nested")
+            # メンバー`m`が宣言しても、最寄りの設定ではなく、除外のディレクトリに最も近い宣言が入れ子のルートである。
+            (repository / "cases/nested/apps/m/.spec/bitz.yaml").write_text(module.multi_reference.root_config([("q", "q")], "m"))
+            self.assertEqual(module.reference_scope(repository, "cases/nested/apps/m")["base"], "cases/nested")
+            # 入れ子のルートが宣言しなければ、開始位置に最も近い設定が単一ワークスペースになる。
+            rewrite(repository, "cases/nested/.spec/bitz.yaml", "multiWorkspace:\n  members:\n    - id: m\n      path: apps/m\n", "")
+            # 入れ子のルートの宣言がなければ、経路の上の次の宣言（メンバー`m`）が入れ子のルートになる。
+            scope = module.reference_scope(repository, "cases/nested/apps/m")
+            self.assertEqual((scope["kind"], scope["base"]), ("multi", "cases/nested/apps/m"))
+            (repository / "cases/nested/apps/m/.spec/bitz.yaml").write_text(module.multi_reference.plain_config("m"))
+            scope = module.reference_scope(repository, "cases/nested/apps/m")
+            self.assertEqual((scope["kind"], scope["directory"]), ("single", "cases/nested/apps/m"))
+            self.assertTrue(module.reference_decision(repository, "check", "cases/nested/apps/m", ["check", "--all-workspaces"])["argument_error"])
+        with tempfile.TemporaryDirectory() as temporary:
+            # 読めない設定は`multiWorkspace`を宣言しないものとみなす。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-06")
+            rewrite(repository, "cases/nested/.spec/bitz.yaml", "language: ja\n", "language: &label ja\n")
+            self.assertFalse(module.declares(repository, "cases/nested"))
+            scope = module.reference_scope(repository, "cases/nested/apps/m")
+            self.assertEqual((scope["kind"], scope["directory"]), ("single", "cases/nested/apps/m"))
+        with tempfile.TemporaryDirectory() as temporary:
+            # 外側のほかの不備（メンバーの設定の不在）は、除外の中の操作を止めない。ルートからの操作は止める。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-19")
+            self.assertEqual(module.reference_decision(repository, "check", "cases/single", ["check", "--full"])["cause"], None)
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web", ["check", "--full"])["cause"], "member-missing")
+            (repository / "services/api/.spec").mkdir()
+            (repository / "services/api/.spec/bitz.yaml").write_text(module.multi_reference.plain_config("api"))
+            self.assertEqual(module.reference_decision(repository, "check", "apps/web", ["check", "--full"])["cause"], None)
+        with tempfile.TemporaryDirectory() as temporary:
+            # 入れ子のルートの外の変更は、変更集合に入らない。リポジトリのルートを基準にすると5件になる。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-23")
+            self.assertEqual(len(module.changed_paths(repository)), 5)
+            self.assertEqual(module.selection_counts(repository, "cases/nested"), (2, 1, 1))
+            self.assertNotEqual(module.selection_counts(repository, "."), (2, 1, 1))
+        with tempfile.TemporaryDirectory() as temporary:
+            # 入れ子の中の未登録の設定だけが、入れ子のルート相対で報告される。登録すると止まらない。
+            _, _, _, repository = self.exclude_repository(temporary, "MULTI-037-22")
+            scope = module.reference_scope(repository, "cases/nested")
+            self.assertEqual(scope["unregistered_git"], ["tools/z/.spec/bitz.yaml"])
+            rewrite(repository, "cases/nested/.spec/bitz.yaml", "      path: apps/m\n", "      path: apps/m\n    - id: z\n      path: tools/z\n")
+            self.assertEqual(module.reference_scope(repository, "cases/nested")["unregistered_git"], [])
+
+    def test_multi_exclude_reference_rejects_inconsistent_expectations(self):
+        """レビュー済みの期待値（`CASES`）を入力と食い違うように変えると、参照計算との照合が拒否する。"""
+        module = multi_exclude_fixtures
+
+        def with_expected(identifier, **changes):
+            def mutate(cases):
+                cases[identifier]["expected"].update(changes)
+            return mutate
+
+        def with_case(identifier, **changes):
+            def mutate(cases):
+                cases[identifier].update(changes)
+            return mutate
+
+        mutations = [
+            ("MULTI-037-01", with_expected("MULTI-037-01", workspaces=[("platform", ".", 1, 1), ("api", "services/api", 0, 0)])),
+            ("MULTI-037-01", with_expected("MULTI-037-01", workspaces=[("platform", ".", 1, 1), ("web", "apps/web", 0, 0), ("api", "services/api", 0, 0)])),
+            ("MULTI-037-01", with_expected("MULTI-037-01", workspaces=[("platform", ".", 2, 1), ("api", "services/api", 0, 0), ("web", "apps/web", 0, 0)])),
+            ("MULTI-037-01", with_expected("MULTI-037-01", workspaces=[("platform", ".", 1, 1), ("api", "services/api", 0, 0), ("web", "apps/web", 0, 0),
+                                                                       ("single", "cases/single", 1, 1)])),
+            ("MULTI-037-01", with_expected("MULTI-037-01", dirty=True)),
+            ("MULTI-037-01", with_expected("MULTI-037-01", root="nested")),
+            ("MULTI-037-02", with_expected("MULTI-037-02", workspace={"id": "web", "path": "apps/web"})),
+            ("MULTI-037-03", with_expected("MULTI-037-03", workspace={"id": "root", "path": "."})),
+            ("MULTI-037-03", with_expected("MULTI-037-03", workspace={"id": "single", "path": "cases/single"})),
+            ("MULTI-037-03", with_expected("MULTI-037-03", counts=(2, 1))),
+            ("MULTI-037-03", with_expected("MULTI-037-03", counts=(0, 0))),
+            ("MULTI-037-05", with_expected("MULTI-037-05", workspace={"id": "platform", "path": "."})),
+            ("MULTI-037-05", with_expected("MULTI-037-05", counts=(2, 1))),
+            ("MULTI-037-06", with_expected("MULTI-037-06", workspaces=[("nested", ".", 1, 1)])),
+            ("MULTI-037-06", with_expected("MULTI-037-06", workspaces=[("platform", ".", 1, 1), ("api", "services/api", 0, 0), ("web", "apps/web", 0, 0)],
+                                           root="platform")),
+            ("MULTI-037-06", with_expected("MULTI-037-06", workspaces=[("nested", ".", 1, 1), ("m", "cases/nested/apps/m", 1, 1)])),
+            ("MULTI-037-06", with_expected("MULTI-037-06", root="platform")),
+            ("MULTI-037-07", with_expected("MULTI-037-07", workspaces=[("m", "apps/m", 1, 1), ("nested", ".", 1, 1)])),
+            ("MULTI-037-07", with_expected("MULTI-037-07", root="platform")),
+            ("MULTI-037-08", with_expected("MULTI-037-08", workspace={"id": "x", "path": "."})),
+            ("MULTI-037-08", with_expected("MULTI-037-08", dirty=True)),
+            ("MULTI-037-09", with_case("MULTI-037-09", cause="exclude-spec")),
+            ("MULTI-037-11", with_case("MULTI-037-11", cause="exclude-nested")),
+            ("MULTI-037-12", with_case("MULTI-037-12", cause="exclude-duplicate")),
+            ("MULTI-037-14", with_case("MULTI-037-14", cause="exclude-format")),
+            ("MULTI-037-15", with_case("MULTI-037-15", cause="exclude-type")),
+            ("MULTI-037-16", with_case("MULTI-037-16", cause="exclude-format")),
+            ("MULTI-037-16", with_case("MULTI-037-16", status="blocked", exit=2)),
+            ("MULTI-037-17", with_case("MULTI-037-17", cause=None, status="passed", exit=0)),
+            ("MULTI-037-18", with_expected("MULTI-037-18", workspace={"id": "single", "path": "cases/single"})),
+            ("MULTI-037-18", with_expected("MULTI-037-18", workspace={"id": None, "path": "."})),
+            ("MULTI-037-18", with_case("MULTI-037-18", cause="exclude-nested")),
+            ("MULTI-037-18", with_case("MULTI-037-18", cause=None, status="passed", exit=0)),
+            ("MULTI-037-19", with_case("MULTI-037-19", cause="member-missing", status="failed", exit=1)),
+            ("MULTI-037-19", with_expected("MULTI-037-19", workspace={"id": None, "path": "cases/single"})),
+            ("MULTI-037-20", with_expected("MULTI-037-20", workspaces=[("platform", ".", 1, 1), ("api", "services/api", 0, 0)])),
+            ("MULTI-037-21", with_expected("MULTI-037-21", workspace={"id": "root", "path": "."})),
+            ("MULTI-037-21", with_case("MULTI-037-21", cause="exclude-format", status="failed", exit=1)),
+            ("MULTI-037-22", with_expected("MULTI-037-22", unregistered=["cases/nested/tools/z/.spec/bitz.yaml"])),
+            ("MULTI-037-22", with_expected("MULTI-037-22", unregistered=["tools/z/.spec/bitz.yaml", "apps/web/.spec/bitz.yaml"])),
+            ("MULTI-037-22", with_case("MULTI-037-22", cause=None, status="passed", exit=0)),
+            ("MULTI-037-23", with_expected("MULTI-037-23", selection=(5, 2, 3))),
+            ("MULTI-037-23", with_expected("MULTI-037-23", selection=(2, 1, 0))),
+            ("MULTI-037-23", with_expected("MULTI-037-23", dirty=False)),
+        ]
+        for index, (identifier, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                cases = copy.deepcopy(module.CASES)
+                mutate(cases)
+                self.assertNotEqual(cases[identifier], module.CASES[identifier])
+                with patch.object(module, "CASES", cases):
+                    # 入力は変えずに、期待値だけを変えた結果を書き、監査が参照計算で拒否することを確かめる。
+                    fixture = root / "multi" / identifier
+                    if module.has_result(identifier):
+                        (fixture / module.RESULT_FILES[module.operation(identifier)]).write_text(
+                            json.dumps(module.reviewed_result(identifier), ensure_ascii=False, indent=2) + "\n")
+                    (fixture / "manifest.json").write_text(json.dumps(module.reviewed_manifest(identifier), ensure_ascii=False, indent=2) + "\n")
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_exclude_audit_rejects_changed_files(self):
+        """期待結果、起動条件、副作用の改変を拒否する。"""
+        module = multi_exclude_fixtures
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "blocked"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append({"code": "SPEC-MULTI-GIT-001"}),
+            "summary": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="multiWorkspace.members"),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId=None),
+            "workspace": lambda v: v["workspace"].update(path="apps/web"),
+            "multi": lambda v: v["multiWorkspace"].update(id="web"),
+            "workspaces-reverse": lambda v: v["workspaces"].reverse(),
+            "workspaces-count": lambda v: v["workspaces"][0].update(checkedDocumentCount=v["workspaces"][0].get("checkedDocumentCount", 0) + 1),
+            "revision": lambda v: v.update(revision=None),
+            "revision-dirty": lambda v: v["revision"].update(dirty=not v["revision"]["dirty"]),
+            "selection": lambda v: v["selection"].update(changedPathCount=v["selection"]["changedPathCount"] + 1),
+            "counts": lambda v: v.update(checkedStatementCount=v["checkedStatementCount"] + 1),
+            "checks-pop": lambda v: v["checks"].pop(),
+            "digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"].get("status") != "passed" else "blocked"),
+            "exit-code": lambda v: v["expect"].update(exitCode=3),
+            "cwd": lambda v: v["invocation"].update(cwd="." if v["invocation"]["cwd"] != "." else "cases/single"),
+            "argv-all": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-workspace": lambda v: v["invocation"]["argv"].insert(1, "--workspace") or v["invocation"]["argv"].insert(2, "web"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False) or v["setup"].pop("baseCommit"),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        cli_outputs = {
+            "exit": lambda v: v.update(exitCode=3),
+            "stdout": lambda v: v.update(stdout="x"),
+            "prefix": lambda v: v.update(stderrPrefix="bitz: verify: "),
+            "lines": lambda v: v.update(stderrLineCount=2),
+            "reason": lambda v: v.update(stderrReasonRequired=False),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            case = module.CASES[identifier]
+            relative = module.RESULT_FILES[case["op"]]
+            if module.has_result(identifier):
+                for name, change in results.items():
+                    mutations.append((identifier, relative, name, change))
+            for name, change in manifests.items():
+                mutations.append((identifier, "manifest.json", name, change))
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            if not module.has_result(identifier):
+                for name, change in cli_outputs.items():
+                    mutations.append((identifier, "cli-output.json", name, change))
+        applied = skipped = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError):
+                    skipped += 1
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    skipped += 1
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと: 結果を持つ22件のそれぞれに、状態と診断の改変が少なくとも1件は適用される。
+        self.assertGreater(applied, 250)
+
+    def test_multi_exclude_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加を拒否する。設定を1件ずつ除くと、各fixtureの原因が消える。"""
+        module = multi_exclude_fixtures
+        for identifier in module.CASES:
+            repo, changes = module.reviewed_inputs(identifier)
+            names = sorted(f"repo/{name}" for name in repo if name.endswith("/bitz.yaml") or name.endswith("bitz.yaml"))
+            names += [f"changes/{name}" for name in changes]
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を作る設定の書換え。入力のバイト列だけでなく、原因の構成の検査も拒否する（陰性対照）。
+        edits = {
+            "MULTI-037-01": [(".spec/bitz.yaml", "    - cases\n", "")],
+            "MULTI-037-06": [("cases/nested/.spec/bitz.yaml", "multiWorkspace:", "other:")],
+            "MULTI-037-09": [(".spec/bitz.yaml", "../x", "x")],
+            "MULTI-037-15": [(".spec/bitz.yaml", "    - ex101\n", "")],
+            "MULTI-037-16": [(".spec/bitz.yaml", "    - apps\n", "    - appz\n")],
+            "MULTI-037-18": [(".spec/bitz.yaml", "    - cases\n    - cases\n", "    - cases\n")],
+            "MULTI-037-21": [(".spec/bitz.yaml", "&label ", "")],
+            "MULTI-037-22": [("cases/nested/tools/z/.spec/bitz.yaml", "id: z", "id: m")],
+        }
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    path = root / "multi" / identifier / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

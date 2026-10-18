@@ -397,3 +397,30 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 - 単独の`doctor`で、Gitが認識する設定の比較と選択した設定の照合が同じパスを見つけた場合は、1つの元の原因から同義の診断を複数生成しない
   （診断レジストリ §2）ため、Gitが認識する設定の比較の文言の1件だけを返す。この組合せは単体試験（`tests/bitz-core/test_multi_single_precheck_stop.py`）で押さえる。
+
+## 2026-10-18: 複合ワークスペースの除外の文言の追加（ADR-064）
+
+### 追加の理由
+
+- ルートワークスペースの設定に`multiWorkspace.exclude`を置けるようにした（ADR-064）。除外のパスの不正と、メンバーのパスが除外した範囲にあることを
+  診断にするため、`SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`）と`SPEC-MULTI-PATH-001`（`MULTI-PATH`）の`summary`が新たに要る。
+- 既存の`SPEC-MULTI-PATH-001`の文言（「メンバーのパスが別のメンバーの配下にあります」）は、メンバーどうしの入れ子の文言であり、除外には当てはまらない。
+  `SPEC-MULTI-CONFIG-001`は、これまでfixtureに現れない。
+
+### 管理者の承認
+
+- 2026-10-18、人間の管理者（ユーザー）が、次の7件の文言を承認した（ADR-062 Decision 2、ADR-064 決定8）。
+- **この文字列は、規範文から一意に導いた値ではなく、表記規則 §3.5に合わせて管理者が承認した値である。**
+
+| 種類 | 診断（条件） | Coreの位置 | 文言 | 固定しているfixture |
+|---|---|---|---|---|
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、`exclude`が文字列の配列でない） | `messages.py`の`MULTI_CONFIG_EXCLUDE_TYPE` | `設定キーmultiWorkspace.excludeは文字列の配列で指定してください` | `MULTI-037-14`；生成器・監査`multi_exclude_fixtures.py` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、`exclude`が100件を超える） | `messages.py`の`MULTI_CONFIG_EXCLUDE_COUNT` | `設定キーmultiWorkspace.excludeは100件以下で指定してください` | `MULTI-037-15` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、除外のパスの字句の不正。`..`、末尾の`/`など） | `messages.py`の`MULTI_EXCLUDE_INVALID` | `除外のパスの形式が不正です` | `MULTI-037-09`、`MULTI-037-10` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、除外のパスの重複） | `messages.py`の`MULTI_EXCLUDE_DUPLICATE` | `除外のパスが重複しています` | `MULTI-037-11`、`MULTI-037-18` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、除外のパスが別の除外のパスの配下） | `messages.py`の`MULTI_EXCLUDE_NESTED` | `除外のパスが別の除外のパスの配下にあります` | `MULTI-037-12` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、名前が`.spec`のセグメントを含む除外） | `messages.py`の`MULTI_EXCLUDE_SPEC` | `除外のパスに.specが含まれています` | `MULTI-037-13` |
+| summary | `SPEC-MULTI-PATH-001`（`MULTI-PATH`、メンバーのパスが除外のパスと同じ、またはその配下） | `messages.py`の`MULTI_PATH_EXCLUDED` | `メンバーのパスが除外した範囲にあります` | `MULTI-037-16`、`MULTI-037-17` |
+
+- `suggestedAction`は付けない。複合ワークスペースの診断は`doctor`仕様 §8の表の診断ではないので、`doctor`でも`suggestedAction`を付けない（`doctor`仕様 §8）。
+- 既存のfixtureの期待値は変えない。
