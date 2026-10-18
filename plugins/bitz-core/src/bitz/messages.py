@@ -346,6 +346,13 @@ MULTI_CONFIG_MEMBERS_REQUIRED = "設定キーmultiWorkspace.membersは1件以上
 MULTI_CONFIG_MEMBERS_TYPE = "設定キーmultiWorkspace.membersは配列で指定してください"
 MULTI_CONFIG_MEMBER_ENTRY_TYPE = "設定キーmultiWorkspace.membersの要素はマッピングで指定してください"
 MULTI_CONFIG_MAX_MEMBERS_RANGE = "設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください"
+# 除外の指定（ADR-064の8。管理者が承認した7件の一つ。一字も変えない）。
+MULTI_CONFIG_EXCLUDE_TYPE = "設定キーmultiWorkspace.excludeは文字列の配列で指定してください"
+MULTI_CONFIG_EXCLUDE_COUNT = "設定キーmultiWorkspace.excludeは100件以下で指定してください"
+MULTI_EXCLUDE_INVALID = "除外のパスの形式が不正です"
+MULTI_EXCLUDE_DUPLICATE = "除外のパスが重複しています"
+MULTI_EXCLUDE_NESTED = "除外のパスが別の除外のパスの配下にあります"
+MULTI_EXCLUDE_SPEC = "除外のパスに.specが含まれています"
 
 MEMBER_CONFIG_MISSING = "メンバーの.spec/bitz.yamlがありません"
 MEMBER_ID_MISMATCH = "メンバーの設定キーworkspace.idがカタログのIDと一致しません"
@@ -361,6 +368,7 @@ MULTI_PATH_SYMLINK = "メンバーのパスの経路にシンボリックリン�
 MULTI_PATH_SUBMODULE = "メンバーのパスがGitのサブモジュールです"
 MULTI_PATH_WORKTREE = "メンバーのパスが別のワークツリーです"
 MULTI_PATH_SEPARATE_REPO = "メンバーのパスが別のGitのリポジトリです"
+MULTI_PATH_EXCLUDED = "メンバーのパスが除外した範囲にあります"
 
 MULTI_GIT_BOUNDARY_UNKNOWN = "Gitのリポジトリの境界を確定できません"
 

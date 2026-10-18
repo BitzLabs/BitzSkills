@@ -401,9 +401,21 @@ def base_tree_entry_mode(
     return parts[0] if parts and parts[0] else None
 
 
-def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: str) -> list[str]:
-    """``rev``の時点でGitが認識する``.spec/bitz.yaml``の、リポジトリのルートからの相対パスを返す（`複合ワークスペース仕様 §8`）。
+def _map_to_scope(paths: list[str], offset: str | None) -> list[str]:
+    """リポジトリのルートからの相対パスを、複合ワークスペースのルートからの相対へ写す。ルートの外のパスは除く（ADR-064の6）。"""
 
+    if offset in (None, ".", ""):
+        return paths
+    return [mapped for p in paths if (mapped := _to_workspace_relative(p, offset)) is not None]
+
+
+def list_tree_config_paths(
+    executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str | None = None
+) -> list[str]:
+    """``rev``の時点でGitが認識する``.spec/bitz.yaml``の、複合ワークスペースのルートからの相対パスを返す（`複合ワークスペース仕様 §8`）。
+
+    ``workspace_root``は複合ワークスペースのルート（絶対パス）。省略時はリポジトリのルート。入れ子の複合ワークスペースでは
+    リポジトリのルートからの相対パスを入れ子のルートからの相対へ写し、ルートの外のパスは返さない（§2.1）。
     シンボリックリンク（モード ``120000``）とGitのサブモジュールの`gitlink`（モード ``160000``）は対象にしない。
     """
 
@@ -431,11 +443,17 @@ def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: 
             continue
         if path == ".spec/bitz.yaml" or path.endswith("/.spec/bitz.yaml"):
             out.append(path)
-    return out
+    if workspace_root is None:
+        return out
+    return _map_to_scope(out, _repo_root_relative_offset(executable, cwd, env, workspace_root))
 
 
-def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) -> list[str]:
-    """現在のスナップショット（作業ツリー）でGitが認識する``.spec/bitz.yaml``の、リポジトリのルートからの相対パスを返す。
+def list_working_config_paths(
+    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None
+) -> list[str]:
+    """現在のスナップショット（作業ツリー）でGitが認識する``.spec/bitz.yaml``の、複合ワークスペースのルートからの相対パスを返す。
+
+    ``workspace_root``の扱いは :func:`list_tree_config_paths` と同じ（入れ子の複合ワークスペースのルートからの相対へ写す）。
 
     追跡対象／ステージ済みのパス（``git ls-files``）と、未追跡で、Gitが無視しないパス（``ls-files --others``）の
     和集合を対象にする（`複合ワークスペース仕様 §8`）。``git ls-files``はインデックス上の追跡対象のパスを
@@ -460,17 +478,25 @@ def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) ->
                 paths.add(p)
     for c in _ls_files_others_z(executable, cwd, env):
         paths.add(c.path)
-    return sorted(
+    found = sorted(
         p
         for p in paths
         if (p == ".spec/bitz.yaml" or p.endswith("/.spec/bitz.yaml"))
         and os.path.isfile(os.path.join(root, *p.split("/")))
         and not os.path.islink(os.path.join(root, *p.split("/")))
     )
+    if workspace_root is None:
+        return found
+    return _map_to_scope(found, _repo_root_relative_offset(executable, cwd, env, workspace_root))
 
 
-def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
-    """作業ツリーのインデックスに`gitlink`（モード ``160000``）として記録された、リポジトリのルートからの相対パスを返す。"""
+def list_submodule_paths(
+    executable: str, cwd: str, env: dict[str, str], workspace_root: str | None = None
+) -> set[str]:
+    """作業ツリーのインデックスに`gitlink`（モード ``160000``）として記録された、複合ワークスペースのルートからの相対パスを返す。
+
+    ``workspace_root``の扱いは :func:`list_tree_config_paths` と同じ（入れ子の複合ワークスペースのルートからの相対へ写す）。
+    """
 
     try:
         proc = _run(
@@ -491,7 +517,9 @@ def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[
         parts = meta.split(" ")
         if parts and parts[0] == "160000":
             out.add(path)
-    return out
+    if workspace_root is None:
+        return out
+    return set(_map_to_scope(sorted(out), _repo_root_relative_offset(executable, cwd, env, workspace_root)))
 
 
 def list_worktree_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
