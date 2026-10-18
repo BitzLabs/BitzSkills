@@ -103,6 +103,12 @@ def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[
     修飾エイリアスを経由して解決した他のワークスペースの文書では、それをコンテキストの追跡のキーに使うと、
     同じ修飾のないローカルIDを持つ別のワークスペースの文書と衝突する。単一ワークスペース／作業ワークスペース
     自身の非修飾の``ref``では``entry.doc_id``のまま＝挙動を変えない）。
+
+    ただし、``ref``の修飾が作業ワークスペース自身を指す別名（`<作業ワークスペース>::<ID>`。統合索引は同じ
+    DocEntryを修飾のないキーにも登録する）のときは、修飾のないキーで引いた実体と同じなので、修飾のない
+    ``entry.doc_id``を返す（関係・トレースモデル §7「同一の文書が複数の経路から到達しても1回だけ収録し」。同じ文書を
+    修飾のあるIDとないIDの2つで追跡しない）。別のワークスペースの文書は、修飾のないキーに別のDocEntryが
+    あっても（または無くても）実体が異なるため、修飾したままにする。
     """
 
     if "::" in ref:
@@ -119,7 +125,9 @@ def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[
     entry = id_index.get(ref)
     if entry is None:
         return None, None
-    return entry, (ref if "::" in ref else entry.doc_id)
+    if "::" in ref and id_index.get(ref.partition("::")[2]) is not entry:
+        return entry, ref
+    return entry, entry.doc_id
 
 
 def type_mismatch_summary(entry: DocEntry, relation: str, target_entry: DocEntry) -> str:

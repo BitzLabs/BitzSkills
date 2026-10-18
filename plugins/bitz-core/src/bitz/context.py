@@ -590,11 +590,15 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 raw.extend(
                     multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                 )
+            # 循環は横断するエッジも含めたグラフ全体で判定し（関係・トレースモデル §4）、返す診断は閉包の文書
+            # （``scoped_entries``）が宣言する辺に絞る（単一ワークスペースの`check_relations(source_ids=...)`と同じ。
+            # `context` §3「対象展開で完全解決する文書について検査する」。閉包の外の循環でコンテキストを失敗させない）。
             cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
+            scoped_paths = {e.path for e in scoped_entries}
             raw.extend(
                 d
                 for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-                if d.source.get("workspaceId") == workspace_id
+                if d.source.get("workspaceId") == workspace_id and d.source.get("path") in scoped_paths
             )
         else:
             raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
