@@ -2702,7 +2702,7 @@ class AuditTests(unittest.TestCase):
 
         self.assertIsNone(problem([]))
         self.assertIsNone(problem(["cases", "apps/web/tests/data", "generated", "apps/web2"]))
-        for value in ("/abs", "", ".", "..", "a/../b", "a//b", "a/", "a/./b", "a/*", "a?b", "a/[b]", "a/{b}"):
+        for value in ("/abs", "", ".", "..", "a/../b", "a//b", "a/", "a/./b", "a/*", "a?b", "a/[b]", "a/b]"):
             with self.subTest(value=value):
                 self.assertEqual(problem([value]), "exclude-format")
         self.assertEqual(problem("cases"), "exclude-type")
