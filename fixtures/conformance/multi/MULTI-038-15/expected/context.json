@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": "sha256:35ca2fbf22460dcc4435ea5a147f3dac7af7d92177954a5ba2ea2f8e7be63e25",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "refines",
+        "source": "api::TECH-030",
+        "target": "web::REQ-001"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "statementRefs": [
+        "web::REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "web::REQ-001",
+        "title": "認証の基準",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 認証の基準\n\n## Intent\n\n認証の基準の規範を定める。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\nwebのtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-030",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-030.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:api::TECH-030"
+      ],
+      "workspaceId": "api",
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "api::TECH-030",
+        "title": "API側の具体化",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "web::REQ-001"
+          ]
+        }
+      },
+      "bodyText": "# TECH-030 API側の具体化\n\n## Context\n\nAPI側の具体化を定める。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

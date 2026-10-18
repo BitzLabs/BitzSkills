@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": "sha256:fe33624882935ef8aba66288c9757c9967fecd7c5e6ac26158ccd0f2c13c33c9",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "advisory",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::REQ-002",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "replacement",
+      "path": ".spec/requirements/REQ-002.md",
+      "projection": "reference",
+      "reachedBy": [
+        "supersedes:web::REQ-002"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
