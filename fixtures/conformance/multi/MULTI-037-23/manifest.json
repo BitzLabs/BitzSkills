@@ -1,0 +1,59 @@
+{
+  "fixtureId": "MULTI-037-23",
+  "description": "入れ子の複合ワークスペースの単独の`check`が、入れ子のルートの外の変更を変更集合に入れない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "cases/nested/.spec/technical/TECH-021.md",
+        "source": "changes/TECH-021.md"
+      },
+      {
+        "op": "create",
+        "path": "cases/nested/src/extra.py",
+        "source": "changes/extra.py"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/REQ-001.md"
+      },
+      {
+        "op": "update",
+        "path": "services/api/src/session.py",
+        "source": "changes/session.py"
+      },
+      {
+        "op": "create",
+        "path": "tools/outside.py",
+        "source": "changes/outside.py"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "cases/nested",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
