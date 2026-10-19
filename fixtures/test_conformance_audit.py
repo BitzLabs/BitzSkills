@@ -3106,11 +3106,11 @@ class AuditTests(unittest.TestCase):
                     self.assertNotRegex(outcome["errors"][0], r": '[A-Za-z_]+'$")
 
     def test_multi_closure_alias_fixtures(self):
-        """`MULTI-038-01`〜`18`: 閉包の循環・別名の二重収録・`evidence`の修飾・`interpret`のADRを固定する（確認事項C18・C21・C19・D7）。"""
+        """`MULTI-038-01`〜`22`: 閉包の循環・別名の二重収録・`evidence`の修飾・`interpret`のADRを固定する（確認事項C18・C21・C19・D7）。"""
         module = multi_closure_alias_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-038-{number:02d}" for number in range(1, 19)])
+        self.assertEqual(result["prepared"], [f"MULTI-038-{number:02d}" for number in range(1, 23)])
         self.assertEqual(result["references"], 2)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -3157,6 +3157,19 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(order, ["w::r", "x::t", "w::s"])
         self.assertEqual((distance["x::t"], distance["w::s"]), (1, 1))
         self.assertEqual([module.role_of(documents, "w::r", name, edges) for name in order], ["advisory", "refinement", "replacement"])
+        # 他のメンバーの文書が起点を置換するときも後継に数え、状態`draft`の具体化文書は役割`advisory`で含めてその`requires`を辿らない。
+        documents = {"w::r": document("w", "r", kind="requirement"), "x::s": document("x", "s", kind="requirement", supersedes=["w::r"]),
+                     "x::d": document("x", "d", status="draft", refines=["w::r"], requires=["x::e"]), "x::e": document("x", "e")}
+        order, edges, _ = module.interpret_closure(documents, "w::r")
+        self.assertEqual(module.successors_of(documents, "w::r"), ["x::s"])
+        self.assertEqual(order, ["w::r", "x::d", "x::s"])
+        self.assertEqual([module.role_of(documents, "w::r", name, edges) for name in order], ["advisory", "advisory", "replacement"])
+        self.assertEqual(module.reference_state_diagnostics(documents, "w::r")[0]["code"], "CTX-STATE-SUPERSEDED-001")
+        # 目的`implement`: 他のメンバーの状態`open`のTASKが起点の規範文を`addresses`すると、距離1で含める。
+        documents = {"w::r": dict(document("w", "r", kind="requirement"), body="- [r:AC-01] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n"),
+                     "x::t": document("x", "t", kind="task", status="open", addresses=["w::r:AC-01"])}
+        order, edges, distance = module.interpret_closure(documents, "w::r", "implement")
+        self.assertEqual((order, distance["x::t"], module.role_of(documents, "w::r", "x::t", edges)), (["w::r", "x::t"], 1, "work"))
 
     def test_multi_closure_alias_audit_rejects_changed_expectations(self):
         """期待結果・起動条件・副作用の改変を拒否する。"""
@@ -3261,6 +3274,11 @@ class AuditTests(unittest.TestCase):
             "MULTI-038-16": [("apps/web/.spec/technical/TECH-001.md", "refines: [REQ-001]", "refines: [REQ-009]")],
             "MULTI-038-17": [("apps/web/.spec/requirements/REQ-002.md", "supersedes: [REQ-001]", "supersedes: [REQ-009]")],
             "MULTI-038-18": [("apps/web/.spec/tasks/TASK-001.md", "status: open", "status: done")],
+            # 他のメンバーの文書が起点を指す宣言を、起点を指さない宣言へ変える（置換・状態`draft`の具体化・`addresses`の条件を消す）。
+            "MULTI-038-19": [("services/api/.spec/requirements/REQ-009.md", "supersedes: [web::REQ-001]", "supersedes: [web::REQ-009]")],
+            "MULTI-038-20": [("services/api/.spec/requirements/REQ-009.md", "supersedes: [web::REQ-001]", "supersedes: [web::REQ-009]")],
+            "MULTI-038-21": [("services/api/.spec/technical/TECH-040.md", "status: draft", "status: approved")],
+            "MULTI-038-22": [("services/api/.spec/tasks/TASK-009.md", "status: open", "status: done")],
             # `evidence`の表記を、宣言どおりの原因を消す形へ変える。
             "MULTI-038-12": [("services/api/.spec/technical/TECH-020.md", "api::ADR-001", "ADR-001")],
             "MULTI-038-11": [("services/api/.spec/technical/TECH-020.md", "ADR-001", "api::ADR-001")],

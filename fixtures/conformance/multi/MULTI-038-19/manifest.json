@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-038-19",
+  "description": "他のメンバーの文書が起点をsupersedesするとき、起点をadvisory、後継をreplacementとして示す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "web::REQ-001",
+      "--purpose",
+      "interpret",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

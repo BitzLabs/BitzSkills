@@ -1,7 +1,7 @@
 """複合ワークスペースの閉包と統合索引の別名に関する欠陥を固定する（Coreの公開操作は実行しない）。
 
 実装の確認事項C18・C21・C19とユーザーの決定D7・D8に対応する（ADR-051の追加）。複合ワークスペースの`context`と`verify`が、
-単一ワークスペースと同じ規則で、閉包の文書の強い関係を検査し、起点ワークスペースの文書を別名で二重に収録しないことを、18件で固定する。
+単一ワークスペースと同じ規則で、閉包の文書の強い関係を検査し、起点ワークスペースの文書を別名で二重に収録しないことを、22件で固定する。
 
 | fixture | 操作と実行ディレクトリ | 原因と期待 |
 |---|---|---|
@@ -23,6 +23,10 @@
 | `MULTI-038-16` | `context web::REQ-001 --detail compact`、`.` | 起点と同じワークスペースの文書が、非修飾で起点を`refines`する。具体化する文書を1件だけ収録する |
 | `MULTI-038-17` | `context web::REQ-001 --detail compact`、`.` | 同じワークスペースの`REQ-002`が`REQ-001`を`supersedes`する（有効な後継は1つ）。後継を二重に数えず、起点を`advisory`、後継を`replacement`で示す |
 | `MULTI-038-18` | `context web::REQ-001 --purpose implement`、`.` | 状態`open`のTASKが、自ワークスペースを修飾した規範文ID（`web::REQ-001:AC-01`）を`addresses`する。TASKを閉包に含めて対応済みにする（警告なし。含めるとハッシュ値が変わる。D8） |
+| `MULTI-038-19` | `context web::REQ-001 --detail compact`、`.` | 他のメンバー`api`の`REQ-009`が`supersedes: [web::REQ-001]`（有効な後継は1つ）。起点を`advisory`、後継を`replacement`で示す（含めるとハッシュ値が変わる） |
+| `MULTI-038-20` | `verify web::REQ-001`、`.` | 同じ入力。置換済みの起点の`verify`は`CTX-STATE-SUPERSEDED-001`で`blocked`（修正前は`passed`） |
+| `MULTI-038-21` | `context web::REQ-001`、`.` | 状態`draft`の`api`の`TECH-040`が`refines: [web::REQ-001]`。`advisory`として含める（含めるとハッシュ値が変わる） |
+| `MULTI-038-22` | `context web::REQ-001 --purpose implement`、`.` | 状態`open`の`api`の`TASK-009`が`addresses: [web::REQ-001:AC-01]`。閉包に含めて対応済みにする（含めるとハッシュ値が変わる） |
 
 基本のリポジトリは、ルート`platform`（`.`、文書なし）、メンバー`web`（`apps/web`）と`api`（`services/api`）である。
 単一ワークスペースの対照は、ルートの設定が`multiWorkspace`を持たない（ワークスペースIDは`root`）。
@@ -131,6 +135,18 @@ CASES = {
     "MULTI-038-18": dict(op="context", cwd=".", argv=["context", "web::REQ-001", "--purpose", "implement"],
                          corpus="task-addresses", single=False, root="web::REQ-001", outcome="passed",
                          description="自ワークスペースを修飾した規範文をaddressesする状態openのTASKを、implementの閉包に含めて対応済みにする"),
+    "MULTI-038-19": dict(op="context", cwd=".", argv=["context", "web::REQ-001", "--purpose", "interpret", "--detail", "compact"],
+                         corpus="other-supersede", single=False, root="web::REQ-001", outcome="passed",
+                         description="他のメンバーの文書が起点をsupersedesするとき、起点をadvisory、後継をreplacementとして示す"),
+    "MULTI-038-20": dict(op="verify", cwd=".", argv=["verify", "web::REQ-001"], corpus="other-supersede",
+                         single=False, root="web::REQ-001", outcome="blocked",
+                         description="他のメンバーの文書が起点をsupersedesするとき、verifyはCTX-STATE-SUPERSEDED-001でblockedにする"),
+    "MULTI-038-21": dict(op="context", cwd=".", argv=["context", "web::REQ-001", "--purpose", "interpret"],
+                         corpus="other-draft-refines", single=False, root="web::REQ-001", outcome="passed",
+                         description="状態draftの他のメンバーの文書が起点を修飾してrefinesするとき、advisoryとして含める"),
+    "MULTI-038-22": dict(op="context", cwd=".", argv=["context", "web::REQ-001", "--purpose", "implement"],
+                         corpus="other-task", single=False, root="web::REQ-001", outcome="passed",
+                         description="他のメンバーの状態openのTASKが起点の規範文をaddressesするとき、implementの閉包に含めて対応済みにする"),
 }
 RESULT_FILES = {"context": "expected/context.json", "verify": "expected/verify.json"}
 EMPTY_BUCKET = {key: [] for key in ("total", "addressed", "tested", "unaddressed", "untested")}
@@ -163,9 +179,9 @@ def requirement(identifier, title, requires=(), tests=False, supersedes=()):
     return head + "---\n\n" + body, body
 
 
-def technical(identifier, title, requires=(), refines=()):
-    """`approved`の規範文を持たないTECH。(ファイルの全文, 正規化した本文)を返す。"""
-    head = f"---\nid: {identifier}\ntitle: {title}\nstatus: approved\n"
+def technical(identifier, title, requires=(), refines=(), status="approved"):
+    """規範文を持たないTECH（既定は`approved`）。(ファイルの全文, 正規化した本文)を返す。"""
+    head = f"---\nid: {identifier}\ntitle: {title}\nstatus: {status}\n"
     if requires or refines:
         head += "relations:\n"
         if requires:
@@ -250,6 +266,21 @@ def corpus_files(corpus, single):
         docs = {f"{req_dir}/REQ-001.md": requirement("REQ-001", REQ_TITLE, tests="web")[0],
                 ".spec/tasks/TASK-001.md": task("TASK-001", "認証の実装", ["web::REQ-001:AC-01"], ["src/login.py"])[0]}
         return _tree(False, docs, tests=True)
+    if corpus == "other-supersede":
+        # `api::REQ-009`が、起点の`web::REQ-001`を修飾して`supersedes`する（有効な後継は他のメンバーの文書1つ）。起点はテスト対応を持つ。
+        docs = {f"{req_dir}/REQ-001.md": requirement("REQ-001", REQ_TITLE, tests=True)[0]}
+        return _tree(False, docs, tests=True,
+                     api_documents={f"{req_dir}/REQ-009.md": requirement("REQ-009", "後継の基準", supersedes=["web::REQ-001"])[0]})
+    if corpus == "other-draft-refines":
+        # 状態`draft`の`api::TECH-040`が、起点の`web::REQ-001`を修飾して`refines`する。
+        docs = {f"{req_dir}/REQ-001.md": requirement("REQ-001", REQ_TITLE)[0]}
+        return _tree(False, docs, api_documents={
+            f"{tech_dir}/TECH-040.md": technical("TECH-040", "検討中の具体化", refines=["web::REQ-001"], status="draft")[0]})
+    if corpus == "other-task":
+        # 状態`open`の`api::TASK-009`が、起点の規範文を`web::REQ-001:AC-01`で`addresses`する。起点はテスト対応を持つ。
+        docs = {f"{req_dir}/REQ-001.md": requirement("REQ-001", REQ_TITLE, tests="web")[0]}
+        return _tree(False, docs, tests=True, api_documents={
+            ".spec/tasks/TASK-009.md": task("TASK-009", "APIの実装", ["web::REQ-001:AC-01"], ["src/login.py"])[0]})
     if corpus == "direct-error":
         docs = {f"{req_dir}/REQ-001.md": requirement("REQ-001", REQ_TITLE, ["TECH-010"])[0],
                 f"{tech_dir}/TECH-010.md": technical("TECH-010", "起点側の前提", ["TECH-999"])[0]}
@@ -274,7 +305,7 @@ def reviewed_inputs(identifier):
 
 def reviewed_manifest(identifier):
     case = CASES[identifier]
-    status, exit_code = (("failed", 1) if case["outcome"] == "failed" else ("passed", 0))
+    status, exit_code = {"failed": ("failed", 1), "blocked": ("blocked", 2), "passed": ("passed", 0)}[case["outcome"]]
     return {
         "fixtureId": identifier,
         "description": case["description"],
@@ -322,6 +353,11 @@ def reviewed_diagnostics(identifier):
         return [type_diagnostic("api", "TECH-020", "api::ADR-001")]
     if corpus == "adr-single":
         return [type_diagnostic("root", "TECH-020", "ADR-001")]
+    if corpus == "other-supersede":
+        # 置換済みの起点の状態の診断。IDは複合ワークスペースの正規形式（修飾ID）で書く（規範が定めていない点。報告に記す）。
+        return [{"code": "CTX-STATE-SUPERSEDED-001", "severity": "error", "resultStatus": "blocked",
+                 "summary": "起点web::REQ-001はapi::REQ-009に置換されています",
+                 "source": {"kind": "file", "workspaceId": "web", "path": ".spec/requirements/REQ-001.md"}}]
     raise ValueError("この入力に失敗の診断はありません")
 
 
@@ -370,9 +406,9 @@ def failed_verify_selected_result(identifier):
     """診断は検証対象の`diagnostics`に置き、ハッシュ値、規範文、テスト割当てを持たず、テストを開始しない（`MULTI-027-02`、`SINGLE-149`と同じ形）。"""
     case = CASES[identifier]
     return {
-        "schemaVersion": "1.0", "operation": "verify", "status": "failed", "scope": "selected",
+        "schemaVersion": "1.0", "operation": "verify", "status": case["outcome"], "scope": "selected",
         "workspace": workspace_of(identifier),
-        "targetResults": [{"target": case["root"], "status": "failed", "contextDigest": None, "statements": [],
+        "targetResults": [{"target": case["root"], "status": case["outcome"], "contextDigest": None, "statements": [],
                            "bindingRefs": [], "diagnostics": reviewed_diagnostics(identifier)}],
         "revision": revision(identifier), "commands": [], "durationMs": 0, "diagnostics": [],
     }
@@ -501,6 +537,54 @@ def passed_context_result(identifier, context_digest):
         total = ["web::REQ-001:AC-01"]
         coverage = {"must": {"total": total, "addressed": total, "tested": total, "unaddressed": [], "untested": []},
                     "should": dict(EMPTY_BUCKET), "may": dict(EMPTY_BUCKET), "adjacent": []}
+    elif case["corpus"] == "other-supersede":
+        documents = [
+            bundle_document("web::REQ-001", "web", "requirement", "advisory", ".spec/requirements/REQ-001.md", ["root"], "reference"),
+            bundle_document("api::REQ-009", "api", "requirement", "replacement", ".spec/requirements/REQ-009.md",
+                            ["supersedes:api::REQ-009"], "reference"),
+        ]
+        resolution = {"complete": True, "documentCount": 2, "unresolvedStrongRelations": 0,
+                      "workspaces": [{"id": "web", "path": "apps/web"}, {"id": "api", "path": "services/api"}],
+                      "crossWorkspaceEdges": [{"relation": "supersedes", "source": "api::REQ-009", "target": "web::REQ-001"}]}
+        detail = "compact"
+    elif case["corpus"] == "other-draft-refines":
+        title = "検討中の具体化"
+        documents = [
+            bundle_document("web::REQ-001", "web", "requirement", "root", ".spec/requirements/REQ-001.md", ["root"], "full",
+                            frontmatter={"id": "web::REQ-001", "title": REQ_TITLE, "status": "approved"},
+                            body=requirement("REQ-001", REQ_TITLE)[1], statement_refs=["web::REQ-001:AC-01"]),
+            # 状態`draft`の文書は規範として適用しないので、役割`advisory`・提示形式`reference`で示す（関係・トレースモデル §6.1の6.）。
+            bundle_document("api::TECH-040", "api", "technical", "advisory", ".spec/technical/TECH-040.md",
+                            ["refines:api::TECH-040"], "reference"),
+        ]
+        document_status["api::TECH-040"] = "draft"
+        resolution = {"complete": True, "documentCount": 2, "unresolvedStrongRelations": 0,
+                      "workspaces": [{"id": "web", "path": "apps/web"}, {"id": "api", "path": "services/api"}],
+                      "crossWorkspaceEdges": [{"relation": "refines", "source": "api::TECH-040", "target": "web::REQ-001"}]}
+        detail = "standard"
+    elif case["corpus"] == "other-task":
+        task_body = task("TASK-009", "APIの実装", ["web::REQ-001:AC-01"], ["src/login.py"])[1]
+        documents = [
+            bundle_document("web::REQ-001", "web", "requirement", "root", ".spec/requirements/REQ-001.md", ["root"], "full",
+                            frontmatter={"id": "web::REQ-001", "title": REQ_TITLE, "status": "approved",
+                                         "tests": [{"path": "tests/test_login.py", "covers": ["web::REQ-001:AC-01"], "command": "frontend"}]},
+                            body=requirement("REQ-001", REQ_TITLE, tests="web")[1], statement_refs=["web::REQ-001:AC-01"]),
+            bundle_document("api::TASK-009", "api", "task", "work", ".spec/tasks/TASK-009.md", ["addresses:api::TASK-009"], "full",
+                            frontmatter={"id": "api::TASK-009", "title": "APIの実装", "status": "open",
+                                         "relations": {"addresses": ["web::REQ-001:AC-01"]}, "changes": ["src/login.py"]},
+                            body=task_body, statement_refs=[]),
+        ]
+        document_status["api::TASK-009"] = "open"
+        resolution = {"complete": True, "documentCount": 2, "unresolvedStrongRelations": 0,
+                      "workspaces": [{"id": "web", "path": "apps/web"}, {"id": "api", "path": "services/api"}],
+                      "crossWorkspaceEdges": [{"relation": "addresses", "source": "api::TASK-009", "target": "web::REQ-001:AC-01"}]}
+        detail = "standard"
+        ledger = [{"id": "web::REQ-001:AC-01", "documentId": "web::REQ-001", "documentRole": "root", "modality": "MUST",
+                   "reason": None, "actor": "TargetSystem", "activation": {"kind": "ALWAYS"},
+                   "operation": {"kind": "CONSTRAINT", "text": REQ_TEXT}}]
+        total = ["web::REQ-001:AC-01"]
+        coverage = {"must": {"total": total, "addressed": total, "tested": total, "unaddressed": [], "untested": []},
+                    "should": dict(EMPTY_BUCKET), "may": dict(EMPTY_BUCKET), "adjacent": []}
     else:
         raise ValueError("この入力に成功のコンテキストはありません")
     for document in documents:
@@ -596,6 +680,40 @@ def reviewed_digest_input(identifier):
         work["status"] = work["frontmatter"]["status"] = "open"
         work["frontmatter"]["changes"] = ["src/login.py"]
         return _material_request(False, [("web", "apps/web")], [request, work], [], "web::REQ-001", purpose="implement")
+    if case["corpus"] == "other-supersede":
+        old = technical_document(None, "web::REQ-001", "web", "requirement", REQ_TITLE, requirement("REQ-001", REQ_TITLE, tests=True)[1],
+                                 tests=[("tests/test_login.py", "web::REQ-001:AC-01", "frontend")],
+                                 statements=[verify_fixtures.statement_material("web::REQ-001:AC-01", REQ_TEXT)])
+        new = technical_document(None, "api::REQ-009", "api", "requirement", "後継の基準",
+                                 requirement("REQ-009", "後継の基準", supersedes=["web::REQ-001"])[1],
+                                 relations={"supersedes": ["web::REQ-001"]},
+                                 statements=[verify_fixtures.statement_material("api::REQ-009:AC-01", REQ_TEXT)])
+        old["applicability"], new["applicability"] = "advisory", "replacement"
+        edges = [{"relation": "supersedes", "source": "api::REQ-009", "target": "web::REQ-001"}]
+        return _material_request(False, [("web", "apps/web"), ("api", "services/api")], [old, new], edges, "web::REQ-001")
+    if case["corpus"] == "other-draft-refines":
+        request = technical_document(None, "web::REQ-001", "web", "requirement", REQ_TITLE, requirement("REQ-001", REQ_TITLE)[1],
+                                     statements=[verify_fixtures.statement_material("web::REQ-001:AC-01", REQ_TEXT)])
+        draft = technical_document(None, "api::TECH-040", "api", "technical", "検討中の具体化",
+                                   technical("TECH-040", "検討中の具体化", refines=["web::REQ-001"], status="draft")[1],
+                                   relations={"refines": ["web::REQ-001"]})
+        draft["status"] = draft["frontmatter"]["status"] = "draft"
+        draft["applicability"] = "advisory"
+        edges = [{"relation": "refines", "source": "api::TECH-040", "target": "web::REQ-001"}]
+        return _material_request(False, [("web", "apps/web"), ("api", "services/api")], [request, draft], edges, "web::REQ-001")
+    if case["corpus"] == "other-task":
+        request = technical_document(None, "web::REQ-001", "web", "requirement", REQ_TITLE,
+                                     requirement("REQ-001", REQ_TITLE, tests="web")[1],
+                                     tests=[("tests/test_login.py", "web::REQ-001:AC-01", "frontend")],
+                                     statements=[verify_fixtures.statement_material("web::REQ-001:AC-01", REQ_TEXT)])
+        work = technical_document(None, "api::TASK-009", "api", "task", "APIの実装",
+                                  task("TASK-009", "APIの実装", ["web::REQ-001:AC-01"], ["src/login.py"])[1],
+                                  relations={"addresses": ["web::REQ-001:AC-01"]})
+        work["status"] = work["frontmatter"]["status"] = "open"
+        work["frontmatter"]["changes"] = ["src/login.py"]
+        edges = [{"relation": "addresses", "source": "api::TASK-009", "target": "web::REQ-001:AC-01"}]
+        return _material_request(False, [("web", "apps/web"), ("api", "services/api")], [request, work], edges, "web::REQ-001",
+                                 purpose="implement")
     raise ValueError("この入力にハッシュ値の材料はありません")
 
 
@@ -604,7 +722,7 @@ def reference_digest(identifier, repository):
     case = CASES[identifier]
     literal = digest_reference.canonical_bytes(reviewed_digest_input(identifier))
     purpose = case["argv"][case["argv"].index("--purpose") + 1]
-    if case["corpus"] in {"same-refines", "supersede", "task-addresses"}:
+    if case["corpus"] in {"same-refines", "supersede", "task-addresses", "other-supersede", "other-draft-refines", "other-task"}:
         derived = multi_crosscheck.canonical_bytes(derived_material(repository, case["root"], purpose))
     elif case["single"]:
         derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository, case["root"], "interpret", workspace_id="root"))
@@ -783,6 +901,20 @@ def interpret_closure(documents, root, purpose="interpret"):
     for refiner in refiners:
         follow_requires(refiner)
     if purpose == "interpret":
+        # 閉包内の文書（またはその規範文）を`refines`する状態`draft`の文書は役割`advisory`として含め、その`requires`と具体化する文書は辿らない（§6.1の6.）。
+        context = list(order)
+        for name in context:
+            mine = {name, *statement_ids(documents, name)}
+            for candidate in sorted(documents):
+                document = documents[candidate]
+                if candidate in distance or document["kind"] not in {"requirement", "technical"} or document["frontmatter"]["status"] != "draft":
+                    continue
+                declared = {multi_crosscheck.qualify(document["workspaceId"], text)
+                            for text in document["frontmatter"].get("relations", {}).get("refines", [])}
+                if declared & mine:
+                    edges.setdefault(candidate, set()).add(("refines", candidate))
+                    distance[candidate] = distance[name] + 1
+                    order.append(candidate)
         successor = successors_of(documents, root)
         if len(successor) > 1:
             raise ValueError("このcorpusは有効な後継が複数の入力を扱いません")
@@ -849,6 +981,8 @@ def role_of(documents, root, identifier, edges):
     kinds = {relation for relation, _ in edges[identifier]}
     if identifier == root:
         return "advisory" if successors_of(documents, root) else "root"
+    if documents[identifier]["frontmatter"]["status"] == "draft":
+        return "advisory"
     if "supersedes" in kinds:
         return "replacement"
     if documents[identifier]["kind"] == "task":
@@ -856,6 +990,18 @@ def role_of(documents, root, identifier, edges):
     if "refines" in kinds:
         return "refinement"
     return "requirement" if documents[identifier]["kind"] == "requirement" else "constraint"
+
+
+def reference_state_diagnostics(documents, root):
+    """目的`verify`の起点が置換済み（有効な後継が1つ）なら`CTX-STATE-SUPERSEDED-001`（`blocked`。関係・トレースモデル §10、診断レジストリ）。"""
+    successors = successors_of(documents, root)
+    if len(successors) != 1:
+        return []
+    document = documents[root]
+    return [{"code": "CTX-STATE-SUPERSEDED-001", "severity": "error", "resultStatus": "blocked",
+             "summary": f"起点{root}は{successors[0]}に置換されています",
+             "source": {"kind": "file", "workspaceId": document["workspaceId"],
+                        "path": f".spec/{DIRECTORY_BY_KIND[document['kind']]}/{document['frontmatter']['id']}.md"}}]
 
 
 def reference_context(documents, workspaces, request, root, purpose="interpret"):
@@ -910,6 +1056,12 @@ def check_against_reference(identifier, repository, result):
         actual = result["targetResults"][0]["diagnostics"]
     else:
         actual = result["diagnostics"]
+    if case["outcome"] == "blocked":
+        if actual != reference_state_diagnostics(documents, root) or diagnostics or not actual:
+            raise ValueError("状態の診断が入力からの参照計算と異なります")
+        if result["targetResults"][0]["status"] != "blocked" or result["status"] != "blocked":
+            raise ValueError("状態が置換済みの起点の`blocked`と異なります")
+        return
     if case["outcome"] == "failed":
         if actual != diagnostics:
             raise ValueError("診断が入力からの参照計算と異なります")
@@ -936,7 +1088,7 @@ def check_against_reference(identifier, repository, result):
                      "reachedBy": [ref.replace(f"{root_id}::", "") for ref in wanted["reachedBy"]] if single else wanted["reachedBy"]}
         if not single:
             view["workspaceId"], reference["workspaceId"] = shown["workspaceId"], wanted["workspaceId"]
-        if not compact:
+        if not compact and shown["projection"] != "reference":
             view["statementRefs"] = shown["statementRefs"]
             reference["statementRefs"] = [unqualified(ref) for ref in wanted["statementRefs"]] if single else wanted["statementRefs"]
         if view != reference:
@@ -1019,6 +1171,25 @@ def check_conditions(identifier, repository):
         work = documents["web::TASK-001"]["frontmatter"]
         if work["relations"]["addresses"] != ["web::REQ-001:AC-01"] or work["status"] != "open" or set(order) != {"web::REQ-001", "web::TASK-001"}:
             raise ValueError("`web::TASK-001`は修飾した規範文IDで起点を`addresses`する状態`open`のTASKである必要があります")
+        if (repository / WEB_TEST_PATH).read_bytes() != TEST_BYTES:
+            raise ValueError("起点はテスト対応が通る入力である必要があります")
+    elif corpus == "other-supersede":
+        # 有効な後継は他のメンバーの`api::REQ-009`の1つだけ。起点は置換済み。
+        if successors_of(documents, root) != ["api::REQ-009"] or set(order) != {"web::REQ-001", "api::REQ-009"}:
+            raise ValueError("有効な後継は他のメンバーの`api::REQ-009`の1つだけである必要があります")
+        if documents["api::REQ-009"]["frontmatter"]["relations"]["supersedes"] != ["web::REQ-001"]:
+            raise ValueError("後継は起点を修飾して`supersedes`する必要があります")
+    elif corpus == "other-draft-refines":
+        # 他のメンバーの状態`draft`の文書が起点を修飾して`refines`する。適用可能ではないので具体化文書にならず、`advisory`だけ。
+        draft = documents["api::TECH-040"]
+        if draft["frontmatter"]["status"] != "draft" or draft["frontmatter"]["relations"]["refines"] != ["web::REQ-001"]:
+            raise ValueError("`api::TECH-040`は状態`draft`で起点を修飾して`refines`する必要があります")
+        if set(order) != {"web::REQ-001", "api::TECH-040"} or role_of(documents, root, "api::TECH-040", edges) != "advisory":
+            raise ValueError("`api::TECH-040`は役割`advisory`で閉包に入る必要があります")
+    elif corpus == "other-task":
+        work = documents["api::TASK-009"]["frontmatter"]
+        if work["relations"]["addresses"] != ["web::REQ-001:AC-01"] or work["status"] != "open" or set(order) != {"web::REQ-001", "api::TASK-009"}:
+            raise ValueError("`api::TASK-009`は修飾した規範文IDで起点を`addresses`する状態`open`のTASKである必要があります")
         if (repository / WEB_TEST_PATH).read_bytes() != TEST_BYTES:
             raise ValueError("起点はテスト対応が通る入力である必要があります")
     elif corpus == "alias-error":
