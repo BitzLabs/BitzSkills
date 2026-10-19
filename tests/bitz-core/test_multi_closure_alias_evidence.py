@@ -439,6 +439,127 @@ class AliasSingleWorkspaceControlTests(_Base):
         self.assertEqual(sorted(self.doc_ids(result)), ["REQ-001", "TASK-002", "TECH-001"])
 
 
+class SupersededSummaryQualifiedTests(_Base):
+    """複合ワークスペースの`CTX-STATE-SUPERSEDED-*`の`summary`は、差し込む文書IDを正規形式（修飾ID）にする。
+
+    複合ワークスペース仕様 §4（複合ワークスペース内の出力は正規形式）。起点と依存先も、後継と同じく修飾する。
+    文型は変えない。
+    ```
+    platform(作業)  REQ-001(置換される)  REQ-010 requires REQ-001  REQ-003 supersedes REQ-001（同じワークスペースの後継、``same_ws``のとき）
+    api             REQ-009 supersedes platform::REQ-001（他のメンバーの後継、``other_ws``のとき）
+    ```
+    """
+
+    same_ws = False
+    other_ws = True
+
+    def build(self) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", _root_yaml("platform", [("api", "apps/api")]))
+        _member_tree(r, "api", "apps/api")
+        _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(r, ".spec/requirements/REQ-010.md", _req("REQ-010", requires=["REQ-001"]))
+        if self.same_ws:
+            _write(r, ".spec/requirements/REQ-003.md", _req("REQ-003", supersedes=["REQ-001"]))
+        if self.other_ws:
+            _write(r, "apps/api/.spec/requirements/REQ-009.md", _req("REQ-009", supersedes=["platform::REQ-001"]))
+
+    def summaries(self, diagnostics: list[dict]) -> list[tuple[str, str]]:
+        return [(d["code"], d["summary"]) for d in diagnostics if d["code"].startswith("CTX-STATE-SUPERSEDED")]
+
+    @property
+    def successor(self) -> str:
+        return "platform::REQ-003" if self.same_ws else "api::REQ-009"
+
+    def test_origin_summary_is_qualified_for_context_and_verify(self):
+        expected = [("CTX-STATE-SUPERSEDED-001", f"起点platform::REQ-001は{self.successor}に置換されています")]
+        for purpose in ("implement", "verify"):
+            with self.subTest(purpose=purpose):
+                result, code = self.context("REQ-001", "--purpose", purpose)
+                self.assertEqual((result["status"], code), ("blocked", 2))
+                self.assertEqual(self.summaries(result["diagnostics"]), expected)
+        result, code = self.verify("REQ-001")
+        self.assertEqual((result["status"], code), ("blocked", 2))
+        self.assertEqual(self.summaries(result["targetResults"][0]["diagnostics"]), expected)
+
+    def test_dependency_summary_is_qualified_for_context_and_verify(self):
+        expected = [("CTX-STATE-SUPERSEDED-001", f"依存先platform::REQ-001は{self.successor}に置換されています")]
+        result, code = self.context("REQ-010", "--purpose", "implement")
+        self.assertEqual((result["status"], code), ("blocked", 2))
+        self.assertEqual(self.summaries(result["diagnostics"]), expected)
+        result, code = self.verify("REQ-010")
+        self.assertEqual(self.summaries(result["targetResults"][0]["diagnostics"]), expected)
+
+    def test_output_is_independent_of_hash_seed(self):
+        outputs = {seed: _run_cli(self.root, seed, "verify", "REQ-001") for seed in ("0", "1", "12345")}
+        self.assertEqual(len(set(outputs.values())), 1, outputs)
+
+
+class SupersededSummaryQualifiedSameWorkspaceTests(SupersededSummaryQualifiedTests):
+    """同じワークスペースの後継だけ（後継も起点も修飾する）。"""
+
+    same_ws = True
+    other_ws = False
+
+
+class SupersededMultipleSummaryQualifiedTests(SupersededSummaryQualifiedTests):
+    """有効な後継が複数（同じワークスペースと他のメンバー）のとき、`CTX-STATE-SUPERSEDED-002`の文書IDも修飾する。"""
+
+    same_ws = True
+    other_ws = True
+
+    def test_origin_summary_is_qualified_for_context_and_verify(self):
+        expected = [("CTX-STATE-SUPERSEDED-002", "platform::REQ-001の有効な後継が複数存在します")]
+        for purpose in ("interpret", "implement", "verify"):
+            with self.subTest(purpose=purpose):
+                result, code = self.context("REQ-001", "--purpose", purpose)
+                self.assertEqual((result["status"], code), ("failed", 1))
+                self.assertEqual(self.summaries(result["diagnostics"]), expected)
+        result, code = self.verify("REQ-001")
+        self.assertEqual((result["status"], code), ("failed", 1))
+        self.assertEqual(self.summaries(result["targetResults"][0]["diagnostics"]), expected)
+
+    def test_dependency_summary_is_qualified_for_context_and_verify(self):
+        expected = [("CTX-STATE-SUPERSEDED-002", "platform::REQ-001の有効な後継が複数存在します")]
+        result, code = self.context("REQ-010", "--purpose", "implement")
+        self.assertEqual((result["status"], code), ("failed", 1))
+        self.assertEqual(self.summaries(result["diagnostics"]), expected)
+
+
+class SupersededSummarySingleWorkspaceControlTests(_Base):
+    """対照: 単一ワークスペースの`summary`は修飾しない（承認済みの文型のまま）。"""
+
+    def build(self) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", _single_yaml("solo"))
+        _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(r, ".spec/requirements/REQ-010.md", _req("REQ-010", requires=["REQ-001"]))
+        _write(r, ".spec/requirements/REQ-003.md", _req("REQ-003", supersedes=["REQ-001"]))
+
+    def test_summaries_are_unqualified(self):
+        result, code = self.context("REQ-001", "--purpose", "implement")
+        self.assertEqual((result["status"], code), ("blocked", 2))
+        self.assertEqual(
+            [(d["code"], d["summary"]) for d in result["diagnostics"]],
+            [("CTX-STATE-SUPERSEDED-001", "起点REQ-001はREQ-003に置換されています")],
+        )
+        result, _code = self.context("REQ-010", "--purpose", "implement")
+        self.assertEqual(
+            [(d["code"], d["summary"]) for d in result["diagnostics"]],
+            [("CTX-STATE-SUPERSEDED-001", "依存先REQ-001はREQ-003に置換されています")],
+        )
+        _write(self.root, ".spec/requirements/REQ-004.md", _req("REQ-004", supersedes=["REQ-001"]))
+        result, _code = self.context("REQ-001", "--purpose", "interpret")
+        self.assertEqual(
+            [(d["code"], d["summary"]) for d in result["diagnostics"]],
+            [("CTX-STATE-SUPERSEDED-002", "REQ-001の有効な後継が複数存在します")],
+        )
+        result, _code = self.verify("REQ-001")
+        self.assertEqual(
+            [d["summary"] for d in result["targetResults"][0]["diagnostics"]], ["REQ-001の有効な後継が複数存在します"]
+        )
+
+
 class DeclaredEvidenceTests(_Base):
     """C19: 他のメンバーの文書の`requires`の`CTX-RELATION-TYPE-001`の`evidence`は宣言どおりの綴りで返す。
 

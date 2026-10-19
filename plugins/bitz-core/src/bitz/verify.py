@@ -497,7 +497,9 @@ def _process_single_target(
         entry_out["status"] = "failed"
         return entry_out, needed_pairs
 
-    expansion = targetexpand.target_expansion(root_id, "verify", id_index, statement_index)
+    expansion = targetexpand.target_expansion(
+        root_id, "verify", id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+    )
     if expansion is None:
         entry_out["diagnostics"] = [_invocation_diag("CTX-ROOT-MISSING-001", "error", "failed", messages.root_missing_explicit(raw), raw)]
         entry_out["status"] = "failed"
