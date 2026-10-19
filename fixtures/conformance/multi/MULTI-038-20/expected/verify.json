@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-001",
+      "status": "blocked",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-STATE-SUPERSEDED-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "起点web::REQ-001はapi::REQ-009に置換されています",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/requirements/REQ-001.md"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

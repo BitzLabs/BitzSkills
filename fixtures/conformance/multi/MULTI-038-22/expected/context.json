@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "implement",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": "sha256:d120a5a7a7c104c21f183cdb2196353b055539963a8406a105f1a7e23cd264d9",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "addresses",
+        "source": "api::TASK-009",
+        "target": "web::REQ-001:AC-01"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "statementRefs": [
+        "web::REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "web::REQ-001",
+        "title": "認証の基準",
+        "status": "approved",
+        "tests": [
+          {
+            "path": "tests/test_login.py",
+            "covers": [
+              "web::REQ-001:AC-01"
+            ],
+            "command": "frontend"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 認証の基準\n\n## Intent\n\n認証の基準の規範を定める。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\nwebのtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "api::TASK-009",
+      "kind": "task",
+      "status": "open",
+      "role": "work",
+      "path": ".spec/tasks/TASK-009.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:api::TASK-009"
+      ],
+      "workspaceId": "api",
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "api::TASK-009",
+        "title": "APIの実装",
+        "status": "open",
+        "relations": {
+          "addresses": [
+            "web::REQ-001:AC-01"
+          ]
+        },
+        "changes": [
+          "src/login.py"
+        ]
+      },
+      "bodyText": "# TASK-009 APIの実装\n\n## Objective\n\nAPIの実装を実装する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "web::REQ-001:AC-01",
+        "documentId": "web::REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "秘密情報を出力しない"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "web::REQ-001:AC-01"
+      ],
+      "addressed": [
+        "web::REQ-001:AC-01"
+      ],
+      "tested": [
+        "web::REQ-001:AC-01"
+      ],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
