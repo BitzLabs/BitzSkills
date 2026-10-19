@@ -554,7 +554,9 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     all_errors: list[dict] = []
     for r in roots_raw:
         key = _lookup_key(r)
-        exp = targetexpand.target_expansion(key, purpose, id_index, statement_index)
+        exp = targetexpand.target_expansion(
+            key, purpose, id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+        )
         if exp is None:
             # `missing`で存在確認済みのため通常到達しないが、念のため同じ診断コードで扱う。
             all_errors.append(

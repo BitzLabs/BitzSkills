@@ -58,20 +58,24 @@ def _is_applicable(entry: DocEntry) -> bool:
     return entry.status in APPLICABLE_STATUS.get(entry.kind, set())
 
 
-def _canonical_items(id_index: dict[str, DocEntry]):
-    """``id_index``の``(キー, DocEntry)``のうち、別名のキーを除いたものを索引の順に返す。
+def _canonical_items(id_index: dict[str, DocEntry]) -> list[tuple[str, DocEntry]]:
+    """``id_index``の``(キー, DocEntry)``のうち、別名のキーを除いたものを索引の順に``list``で返す。
 
     複合ワークスペースの統合索引は、作業ワークスペースの文書を修飾のないID（正規）と`<作業ワークスペース>::<ID>`（別名）の
     2つのキーで同じDocEntryへ登録する。全文書を走査する処理（逆参照、`supersedes`の後継）が別名のキーも数えると、
     同じ文書を2回数え、閉包へ2つのIDで収録する（関係・トレースモデル §7「同一の文書が複数の経路から到達しても
     1回だけ収録し」）。修飾のないキーが同じDocEntryを指す修飾キーを別名として除く。他のワークスペースの文書
     （修飾のないキーが無いか、別のDocEntry）は除かない。単一ワークスペースは修飾キーを持たず、挙動を変えない。
+
+    索引の全キーを絞り込むため、全文書の走査のたびに呼ぶと閉包の文書数に比例して重くなる。`target_expansion`が冒頭で
+    1回だけ計算し、各走査へ渡す（索引は`target_expansion`の実行中に変わらない）。
     """
 
-    for key, entry in id_index.items():
-        if "::" in key and id_index.get(key.partition("::")[2]) is entry:
-            continue
-        yield key, entry
+    return [
+        (key, entry)
+        for key, entry in id_index.items()
+        if not ("::" in key and id_index.get(key.partition("::")[2]) is entry)
+    ]
 
 
 def _refines_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
@@ -182,7 +186,10 @@ def _requires_closure(
 
 
 def _draft_refinements(
-    context_ids: set[str], id_index: dict[str, DocEntry], statement_index: dict[str, dict]
+    context_ids: set[str],
+    id_index: dict[str, DocEntry],
+    statement_index: dict[str, dict],
+    canonical: list[tuple[str, DocEntry]],
 ) -> list[str]:
     """§6.1「6.」: 閉包内の適用可能な文書またはその規範文を`refines`する、状態`draft`の文書を、役割`advisory`として含める。
 
@@ -191,7 +198,7 @@ def _draft_refinements(
     """
 
     advisory: list[str] = []
-    for cand_id, cand_entry in _canonical_items(id_index):
+    for cand_id, cand_entry in canonical:
         if cand_id in context_ids:
             continue
         if cand_entry.kind not in ("REQ", "TECH") or cand_entry.status != "draft":
@@ -236,11 +243,13 @@ def _interpret_closure(
     owning_id: str,
     id_index: dict[str, DocEntry],
     statement_index: dict[str, dict],
+    canonical: list[tuple[str, DocEntry]],
     *,
     include_draft: bool = True,
 ) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str], dict[str, set[str]]]:
     """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。閉包と到達したエッジの挙動は変更しない）。
 
+    ``canonical``は別名を除いた索引の``(キー, DocEntry)``（:func:`_canonical_items`）。逆参照の走査に使う。
     ``include_draft``が偽のときは§6.1の6.（`refines`する状態`draft`の文書）を適用しない。目的`implement`と`verify`は
     `draft`の文書を閉包へ含めない（§6.1の末尾）。
 
@@ -288,7 +297,7 @@ def _interpret_closure(
     while frontier4:
         target = frontier4.pop(0)
         target_dist = distance.get(target, 0)
-        for cand_id, cand_entry in _canonical_items(id_index):
+        for cand_id, cand_entry in canonical:
             if cand_id == owning_id:
                 continue
             if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
@@ -309,7 +318,7 @@ def _interpret_closure(
     # 6. 閉包内の文書を`refines`する、状態`draft`の文書を役割`advisory`として含める（`requires`・逆方向の`refines`は辿らない）。
     draft_advisory: set[str] = set()
     closure_docs = set(context_set)
-    for doc_id in (_draft_refinements(context_set, id_index, statement_index) if include_draft else []):
+    for doc_id in (_draft_refinements(context_set, id_index, statement_index, canonical) if include_draft else []):
         entry = id_index[doc_id]
         targets = _refines_targets(entry, id_index, statement_index)
         for target_id in targets:
@@ -332,16 +341,29 @@ def target_expansion(
     purpose: str,
     id_index: dict[str, DocEntry],
     statement_index: dict[str, dict],
+    *,
+    active_ws_id: str | None = None,
 ) -> TargetExpansionResult | None:
-    """単一の起点への`TargetExpansion(root, purpose)`。起点を解決できなければ``None``を返す。"""
+    """単一の起点への`TargetExpansion(root, purpose)`。起点を解決できなければ``None``を返す。
+
+    ``active_ws_id``は複合ワークスペースの作業ワークスペースのID（単一ワークスペースでは``None``）。渡すと、`CTX-STATE-SUPERSEDED-*`の
+    `summary`に差し込む文書IDを複合ワークスペースの正規形式（`ws::local`）にする（複合ワークスペース仕様 §4。索引の
+    作業ワークスペースの文書は修飾のないID、他のワークスペースの文書は修飾済み）。``None``なら今までどおり修飾しない。
+    """
 
     owning_id = _owning_document_id(root, id_index, statement_index)
     if owning_id is None:
         return None
     root_entry = id_index[owning_id]
+    canonical = _canonical_items(id_index)
+
+    def _display_id(doc_id: str) -> str:
+        """診断の`summary`に差し込む文書ID。複合ワークスペースでは修飾のないIDを作業ワークスペースで修飾する。"""
+
+        return doc_id if active_ws_id is None or "::" in doc_id else f"{active_ws_id}::{doc_id}"
 
     context_order, edges, distance, draft_advisory, preds = _interpret_closure(
-        owning_id, id_index, statement_index, include_draft=purpose == "interpret"
+        owning_id, id_index, statement_index, canonical, include_draft=purpose == "interpret"
     )
 
     def _owner(ref: str) -> str | None:
@@ -383,14 +405,14 @@ def target_expansion(
         # §6.1「5.」: 置換済みの起点は旧文書を役割`advisory`、後継を役割`replacement`として示す
         # （後継へ暗黙に起点を差し替えない）。有効な後継が複数なら`CTX-STATE-SUPERSEDED-002`。
         if root_entry.kind in ("REQ", "TECH"):
-            successors = _successors(owning_id, id_index, statement_index)
+            successors = _successors(owning_id, id_index, statement_index, canonical)
             if len(successors) > 1:
                 result.errors = [
                     {
                         "code": "CTX-STATE-SUPERSEDED-002",
                         "severity": "error",
                         "resultStatus": "failed",
-                        "summary": messages.state_superseded_multiple(owning_id),
+                        "summary": messages.state_superseded_multiple(_display_id(owning_id)),
                         "doc_id": owning_id,
                     }
                 ]
@@ -421,23 +443,23 @@ def target_expansion(
     def _check_state(doc_id: str, *, is_root: bool) -> None:
         entry = id_index[doc_id]
         if entry.kind in ("REQ", "TECH"):
-            successors = _successors(doc_id, id_index, statement_index)
+            successors = _successors(doc_id, id_index, statement_index, canonical)
             if len(successors) > 1:
                 errors.append(
                     {
                         "code": "CTX-STATE-SUPERSEDED-002",
                         "severity": "error",
                         "resultStatus": "failed",
-                        "summary": messages.state_superseded_multiple(doc_id),
+                        "summary": messages.state_superseded_multiple(_display_id(doc_id)),
                         "doc_id": doc_id,
                     }
                 )
                 return
             if len(successors) == 1:
                 summary = (
-                    messages.state_superseded_origin(doc_id, successors[0])
+                    messages.state_superseded_origin(_display_id(doc_id), _display_id(successors[0]))
                     if is_root
-                    else messages.state_superseded_dependency(doc_id, successors[0])
+                    else messages.state_superseded_dependency(_display_id(doc_id), _display_id(successors[0]))
                 )
                 errors.append(
                     {
@@ -512,7 +534,7 @@ def target_expansion(
             dep_ids |= addressed_owning
             for target_doc_id in addressed_owning:
                 sub_order, _e, _d, _da, _p = _interpret_closure(
-                    target_doc_id, id_index, statement_index, include_draft=False
+                    target_doc_id, id_index, statement_index, canonical, include_draft=False
                 )
                 dep_ids |= set(sub_order)
             # ADRは除く。状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）で扱う（関係の検査）。
@@ -568,7 +590,7 @@ def target_expansion(
 
         for target_doc_id in addressed_owning_ids:
             sub_order, sub_edges, sub_distance, sub_draft, sub_preds = _interpret_closure(
-                target_doc_id, id_index, statement_index, include_draft=False
+                target_doc_id, id_index, statement_index, canonical, include_draft=False
             )
             for doc_id, sources in sub_preds.items():
                 merged_preds.setdefault(doc_id, set()).update(sources)
@@ -626,7 +648,7 @@ def target_expansion(
         while frontier:
             target = frontier.pop(0)
             candidates: list[tuple[str, DocEntry]] = []
-            for cand_id, cand_entry in _canonical_items(id_index):
+            for cand_id, cand_entry in canonical:
                 if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                     continue
                 if target in _refines_target_statements(cand_entry, id_index, statement_index):
@@ -702,7 +724,7 @@ def target_expansion(
                         edges[target_doc_id].append(pair)
         else:
             addressing_tasks: list[str] = []
-            for cand_id, cand_entry in _canonical_items(id_index):
+            for cand_id, cand_entry in canonical:
                 if cand_entry.kind != "TASK" or cand_entry.status != "open":
                     continue
                 refs = _addresses_targets(cand_entry, id_index, statement_index)
@@ -772,13 +794,15 @@ def _adr_requires_type_errors(doc_id: str, id_index: dict[str, DocEntry], statem
     return out
 
 
-def _successors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
+def _successors(
+    doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict], canonical: list[tuple[str, DocEntry]]
+) -> list[str]:
     """``doc_id``を`supersedes`する有効な（適用可能な）後継のID一覧を辞書順で返す。"""
 
     entry = id_index[doc_id]
     kind = entry.kind
     out: set[str] = set()
-    for cand_id, cand_entry in _canonical_items(id_index):
+    for cand_id, cand_entry in canonical:
         if cand_entry.kind != kind:
             continue
         refs = (cand_entry.frontmatter.get("relations") or {}).get("supersedes") or []
