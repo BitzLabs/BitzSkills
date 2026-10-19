@@ -1,5 +1,6 @@
 """固定private stageの既知原だけをowner-only/NOFOLLOWで読み、メモリ内で照合する。"""
 import os
+import re
 from pathlib import Path
 import stat
 
@@ -32,9 +33,16 @@ def _open_root(root):
         raise
 
 
-def read_original(root, name):
+def additional_names(values):
+    require(isinstance(values,frozenset) and not values & {'auth.json','.env','.credentials.json'}
+        and all(isinstance(name,str) and re.fullmatch(r'[a-z][a-z0-9-]*\.(json|jsonl|txt|bin)',name) is not None
+            for name in values), 'heldout fixed additional names')
+
+
+def read_original(root, name, *, additional_artifacts=frozenset()):
+    additional_names(additional_artifacts)
     require(isinstance(name, str), 'heldout original name')
-    if name not in evidence.ADDITIONAL | {'receipt.json'}:
+    if name not in evidence.ADDITIONAL | {'receipt.json'} | additional_artifacts:
         evidence.inventory.artifact_name(name)
     fd = _open_root(root)
     root_info = os.fstat(fd)

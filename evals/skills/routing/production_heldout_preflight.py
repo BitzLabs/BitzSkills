@@ -24,7 +24,8 @@ SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_originals.py',
     'evals/skills/routing/production_heldout_isolation.py',
     'evals/skills/routing/production_heldout_semantic.py',
-    'evals/skills/routing/production_heldout_operator.py']))
+    'evals/skills/routing/production_heldout_operator.py',
+    'evals/skills/routing/production_heldout_score.py']))
 
 
 def verify_resources(repository, bound, sdk_manifest_raw):

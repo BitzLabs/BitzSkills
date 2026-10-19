@@ -14,7 +14,7 @@ x, evidence = originals.x, originals.evidence
 launch, preflight = evidence.launch, evidence.preflight
 io, require, trace = x.io, x.require, x.trace
 VERSION = 'heldout-primary-operator-0.1.0'
-CONTROL_FILES = {'pacing.json', 'primary-result.json', 'failure.json', 'global-stop.json'}
+CONTROL_FILES = {'pacing.json', 'primary-result.json', 'failure.json', 'global-stop.json', 'independent-pacing.json'}
 
 
 def check_directory(base, fd):
@@ -55,10 +55,11 @@ def create_directory(path):
         os.close(parent)
 
 
-def save(base, name, raw):
+def save(base, name, raw, *, additional_artifacts=frozenset()):
     """固定basenameだけをlock中のprivate rootへEXCL/NOFOLLOWで新規保存する。"""
+    originals.additional_names(additional_artifacts)
     require(name in evidence.inventory.FIXED_ARTIFACTS | evidence.ADDITIONAL
-        | {'receipt.json', *CONTROL_FILES}, 'heldout write fixed name')
+        | {'receipt.json', *CONTROL_FILES} | additional_artifacts, 'heldout write fixed name')
     require(isinstance(raw, bytes) and len(raw) <= originals.MAX_FILE_BYTES, 'heldout finite saved bytes')
     fd = originals._open_root(base)
     try:
@@ -114,46 +115,44 @@ def read_control(base, name):
 
 
 def pace(bound, ordinal, role, ledger):
-    """lock中の直前起動markerへ束縛する60秒の論理起動間隔。HTTP間隔の認定ではない。"""
-    require(role == 'primary', 'heldout primary pacing role')
-    rows, _ = ledger._history()
-    started = [row for row in rows if row['stage'].endswith('_started')]
-    previous_sha, previous = None, None
+    """lock中の直前journal/receiptへ束縛する60秒の論理起動間隔。HTTP間隔は認定しない。"""
+    require(role in {'primary','independent'}, 'heldout pacing role')
+    rows,_=ledger._history();started=[row for row in rows if row['stage'].endswith('_started')]
+    previous_sha,previous=None,None
     if started:
-        last = started[-1]
-        # 独立処理の接続前は一次のみを許可する。後続adapterが独立markerを別途接続する。
-        require(last['stage'] == 'primary_started', 'heldout independent pacing adapter not connected')
-        raw = read_control(control_root(bound, last['ordinal']), 'pacing.json')
-        previous_sha = io.sha(raw);previous = x.inputs.parse(raw)
-        launch.pacing(bound.execution_raw,launch.primary_identity(bound,last['ordinal']),raw)
-        anchors=[row for row in rows if row['ordinal'] == last['ordinal']
-            and row['stage'] in {'primary_captured','primary_failed'}]
-        require(len(anchors) == 1, 'heldout previous primary launch has no sealed original')
-        receipt_raw=originals.read_original(bound.stage_root(last['ordinal'],'primary'),'receipt.json')
-        require(io.sha(receipt_raw) == anchors[0]['artifactSha256'], 'heldout prior receipt journal binding')
+        last=started[-1];previous_role=last['stage'].removesuffix('_started')
+        require(previous_role in {'primary','independent'}, 'heldout prior launch role')
+        require((role=='independent' and previous_role=='primary' and last['ordinal']==ordinal)
+            or (role=='primary' and last['ordinal']==ordinal-1), 'heldout previous pacing stage order')
+        name='pacing.json' if previous_role=='primary' else 'independent-pacing.json'
+        raw=read_control(control_root(bound,last['ordinal']),name);previous_sha=io.sha(raw)
+        previous=launch.pacing(bound.execution_raw,launch.primary_identity(bound,last['ordinal']),raw,role=previous_role)
+        anchors=[row for row in rows if row['ordinal']==last['ordinal']
+            and row['stage'] in {previous_role+'_captured',previous_role+'_failed'}]
+        require(len(anchors)==1, 'heldout previous launch has no sealed original')
+        previous_base=bound.stage_root(last['ordinal'],previous_role)
+        receipt_name='receipt.json' if previous_role=='primary' else 'independent-receipt.json'
+        receipt_raw=originals.read_original(previous_base,receipt_name,
+            additional_artifacts=frozenset({'independent-receipt.json'}))
+        require(io.sha(receipt_raw)==anchors[0]['artifactSha256'], 'heldout prior receipt journal binding')
         receipt_value=x.inputs.parse(receipt_raw)
-        require(receipt_value.get('artifactSha256',{}).get('logical-pacing.json') == previous_sha
-            and originals.read_original(bound.stage_root(last['ordinal'],'primary'),'logical-pacing.json') == raw,
-            'heldout prior pacing receipt binding')
-    now, wall = time.monotonic(), time.time()
-    delay = 0.0
+        require(receipt_value.get('artifactSha256',{}).get('logical-pacing.json')==previous_sha
+            and originals.read_original(previous_base,'logical-pacing.json')==raw, 'heldout prior pacing receipt binding')
+    else:require(role=='primary' and ordinal==1, 'heldout first logical launch')
+    now,wall=time.monotonic(),time.time();delay=0.0
     if previous is not None:
-        elapsed = now-previous['monotonicSeconds']
-        require(elapsed >= 0 and wall >= previous['wallSeconds'], 'heldout pacing clock drift')
-        delay = max(0.0, 60-elapsed)
+        elapsed=now-previous['monotonicSeconds']
+        require(elapsed>=0 and wall>=previous['wallSeconds'], 'heldout pacing clock drift')
+        delay=max(0.0,60-elapsed)
         if delay:time.sleep(delay)
-        require(time.monotonic()-previous['monotonicSeconds'] >= 60,
-            'heldout minimum logical launch interval')
-        require(io.sha(read_control(control_root(bound, last['ordinal']), 'pacing.json')) == previous_sha,
-            'heldout previous pacing drift')
-    value = dict(version=launch.PACING_VERSION, sourceCommit=bound.contract['sourceCommit'], executionSha256=io.sha(bound.execution_raw),
-        ordinal=ordinal, role=role, monotonicSeconds=time.monotonic(), wallSeconds=time.time(),
-        waitedSeconds=delay, previousSha256=previous_sha, declaresProviderInvoked=False, minimumGapSeconds=60)
-    require(all(type(value[key]) in {int, float} and math.isfinite(value[key]) and value[key] >= 0
-        for key in ['monotonicSeconds', 'wallSeconds', 'waitedSeconds']), 'heldout current pacing finite')
-    launch.pacing(bound.execution_raw,launch.primary_identity(bound,ordinal),io.encoded(value))
-    save(control_root(bound, ordinal), 'pacing.json', io.encoded(value))
-    save(bound.stage_root(ordinal,'primary'),'logical-pacing.json',io.encoded(value))
+        require(time.monotonic()-previous['monotonicSeconds']>=60, 'heldout minimum logical launch interval')
+        require(io.sha(read_control(control_root(bound,last['ordinal']),name))==previous_sha, 'heldout previous pacing drift')
+    value=dict(version=launch.PACING_VERSION,sourceCommit=bound.contract['sourceCommit'],executionSha256=io.sha(bound.execution_raw),
+        ordinal=ordinal,role=role,monotonicSeconds=time.monotonic(),wallSeconds=time.time(),waitedSeconds=delay,
+        previousSha256=previous_sha,declaresProviderInvoked=False,minimumGapSeconds=60)
+    raw=io.encoded(value);launch.pacing(bound.execution_raw,launch.primary_identity(bound,ordinal),raw,role=role)
+    save(control_root(bound,ordinal),'pacing.json' if role=='primary' else 'independent-pacing.json',raw)
+    save(bound.stage_root(ordinal,role),'logical-pacing.json',raw)
 
 
 def run_process(plan):

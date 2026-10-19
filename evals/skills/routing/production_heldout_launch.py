@@ -122,14 +122,15 @@ def launch_settings(execution_raw, deployment_raw):
     return raw
 
 
-def pacing(execution_raw, identity, raw):
+def pacing(execution_raw, identity, raw, *, role='primary'):
+    require(role in {'primary','independent'}, 'heldout pacing role')
     ordinal = checked_identity(execution_raw, identity)
     value = x.inputs.parse(raw)
     require(isinstance(value, dict) and set(value) == {'version', 'sourceCommit', 'executionSha256',
         'ordinal', 'role', 'monotonicSeconds', 'wallSeconds', 'waitedSeconds', 'previousSha256',
         'declaresProviderInvoked', 'minimumGapSeconds'} and value['version'] == PACING_VERSION
         and value['sourceCommit'] == identity['sourceCommit'] and value['executionSha256'] == io.sha(execution_raw)
-        and type(value['ordinal']) is int and value['ordinal'] == ordinal and value['role'] == 'primary'
+        and type(value['ordinal']) is int and value['ordinal'] == ordinal and value['role'] == role
         and value['declaresProviderInvoked'] is False and type(value['minimumGapSeconds']) is int
         and value['minimumGapSeconds'] == 60, 'heldout pacing original identity')
     require(all(type(value[key]) in {int, float} and math.isfinite(value[key]) and value[key] >= 0

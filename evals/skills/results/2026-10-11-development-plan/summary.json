@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_primary_operator_review_and_independent_stage_connection_pending",
+        "status": "heldout_independent_operator_review_and_day19_concrete_prelaunch_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -1119,7 +1119,7 @@
         }
       },
       "primaryOperator": {
-        "status": "raw_stderr_p2_fix_pending_independent_closure",
+        "status": "primary_operator_component_independent_review_passed",
         "relatedTests": {
           "count": 135,
           "seconds": 24.896,
@@ -1138,13 +1138,22 @@
         },
         "certifiesHeldoutLaunch": false,
         "originalBlockingP2": 2,
-        "independentClosurePending": true,
-        "record": "r04-heldout-primary-operator-followup-20261017.json",
+        "independentClosurePending": false,
+        "record": "r04-heldout-primary-operator-reviewed-20261019.json",
         "originalP2Resolved": 2,
-        "newBlockingP2": 1
+        "newBlockingP2": 0,
+        "reviewedSourceCommit": "e6b76cff30b6e1d13ee70fdef5e17be65122f372",
+        "fullRegression": {
+          "count": 1009,
+          "exitCode": 0,
+          "seconds": 158.94487339200032,
+          "cleanAfter": true
+        },
+        "additionalP2Resolved": 1,
+        "resolvedP2Total": 3
       },
       "day17LocalCalibration": {
-        "status": "local_capture_verified_parent_consumption_pending",
+        "status": "parent_verified_candidate_expired_before_canonical_adoption",
         "sourceCommit": "ff07246da4d9efb55011813c22965ba19fab9940",
         "calibrationDate": "2026-10-17",
         "referenceDate": "2026-10-16",
@@ -1153,7 +1162,26 @@
         "canonicalProfileUpdated": false,
         "models": 0,
         "reservations": 0,
-        "initialSandboxFailurePreserved": true
+        "initialSandboxFailurePreserved": true,
+        "parentOriginalHashesCompared": 22,
+        "fullCandidateValidationPassed": true,
+        "independentReviewCompleted": false,
+        "currentDateRequires": "2026-10-19"
+      },
+      "independentOperator": {
+        "status": "implemented_independent_review_pending",
+        "relatedTests": {
+          "count": 150,
+          "seconds": 48.463,
+          "exitCode": 0
+        },
+        "newSyntheticTests": 15,
+        "plannedSlots": 24,
+        "parentFinalizationConnected": true,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "certifiesHeldoutLaunch": false
       }
     }
   }

@@ -155,3 +155,12 @@ logical-pacing.jsonはreceiptの原inventoryに含める。次の論理起動は
 invoke proofは論理起動間隔の待機後、durable started marker/processの直前に実測する。途中原は末尾の切断を含むため正常RPC終端を要求しないが、完全行に認識可能な禁止操作/未知Host/tool-source/retry/観測API超過があれば全体停止する。途中SDK/RPC欠落を評価失敗へ記録することは、内容の意味/安全/成功を認定することではない。未知path/metadata/stop marker/正常原の検査不正は従来どおり全体停止する。
 
 - 途中失敗の禁止操作検査は選択logだけに依存せず、raw runtime/namespace stderrの認識可能なJSON telemetryも別々に監査する。重複原を合算してAPI/control上限を誤検出しない。非JSON診断と切断末尾は未完の失敗原として扱い、成功/安全適合を認定しない。
+
+
+## 独立隔離採点と親確定の接続（2026-10-19）
+
+production_heldout_scoreは同一枠のprimary_captured receiptをjournalへ照合してから独立予約する。no-tools/readonly/never/retry0の固定CLIを、独立stageとNodeだけを戻したnamespaceで一度実行する。一次stage/コーパス/期待値集合/他ケースはmountしない。stdinの採点入力だけに同一枠の固定期待と一次原を含める。
+
+独立採点の原receiptは全入力/argv/config/原stdout・応答/三時点proof/論理pacingをhashへ束縛し、正常取得をindependent_capturedへ記録する。親は全原を再openし、固定原・raw応答・bindings・三時点proof・一次/独立receiptのjournal hashを直接照合した後だけparent_verifiedとする。単なる独立応答の自己申告や再hashだけでは確定しない。
+
+論理pacingはprimary→independent→次primaryのroleごとの原を同じhash鎖へ結び、最大60秒の待機後にinvoke proofを再実測する。上書き・自動retry・予約返却は行わない。内容unknownは評価失敗、認識可能な禁止操作・安全fail・資源や原の不整合は恒久停止する。これらの部品だけでは保持開始/Step/Gate/releaseを認定しない。
