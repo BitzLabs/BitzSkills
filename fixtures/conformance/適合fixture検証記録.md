@@ -1639,3 +1639,23 @@ commit `a6dbed8d2ed7bf5be2964dbc0adb86c6354806f8`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-19: `MULTI-038`を追加した後のGate Aの再認定
+
+複合ワークスペースの`context`と`verify`で、強い関係の循環を閉包で絞り、`verify`でも閉包の中の循環を検出するようにした（実装の確認事項C18）。
+統合索引で起点ワークスペースの文書を別名で二重に収録し、別名で到達した文書の関係を検査しない欠陥と、同じ原因の取りこぼし（他のメンバーの後継、`draft`の具体化文書、
+他のメンバーのTASKの`addresses`）を直した（C21。ユーザーの決定D8とその拡大）。`evidence`を宣言どおりにし（C19）、目的`interpret`でも承認されていないADRへの`requires`を
+検出するようにした（D7）。複合ワークスペースの置換の診断の`summary`の文書IDも修飾した。同じワークスペースを自身のIDで修飾した参照を許すことを複合ワークスペース仕様 §4に
+明記した（ユーザーの決定）。これを固定する`MULTI-038-01`〜`MULTI-038-22`を追加した（ADR-051の追加、群`multi_closure_alias_fixtures`）。matrix、Step 5の割当て、
+実装計画の完了条件、網羅表が固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `291ea55ab603df07fd4f42f35a20939757b730c6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`f02921a76631aafca2522152c712867d7a457ac382e0caae7915f465715465c2`。前回から変わったのは次の値だけである: 22件の追加によるmatrixと網羅の件数（419件→441件）、Step 5の件数（123件→145件）、群`multi_closure_alias_fixtures`の追加、実行ビットを確かめたファイル数（2426件→2557件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

@@ -646,3 +646,23 @@ Core固有の単体試験は807件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は881件がすべて成功した。
+
+## 2026-10-19: 複合ワークスペースの閉包の循環、別名の二重収録、evidenceの修飾、interpretのADRの検出を直した後のStep 1〜5の再判定
+
+`context.py`、`verify.py`、`relations.py`、`targetexpand.py`、`multirelate.py`、`document.py`を直した（実装の確認事項C18・C21・C19・D7）。
+これを固定する`MULTI-038-01`〜`MULTI-038-22`（Step 5）を追加した。修正前のCore（コミット`ccaa660b`の版）では、追加した22件のうち17件が非成功（`failed` 17件）となり、
+対照の`MULTI-038-02`、`-05`、`-06`、`-10`、`-14`は通過し、既存の419件はすべて通過することを確かめた。修正後のCoreでは441件すべてが`passed`となる。
+修正の途中で`verify --all-workspaces`が約40%遅くなったが、正規の文書の一覧を対象展開ごとに1回だけ作るように直し、修正前と同じ所要時間に戻したことを独立レビューで測った。
+
+コミット`291ea55ab603df07fd4f42f35a20939757b730c6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 441件（`MULTI-038-01`〜`MULTI-038-22`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`bb4fd6f37b262bc466300d2985e050cff91b93ca28b39ea8330d4cccdb4edfbe` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は916件がすべて成功した。
