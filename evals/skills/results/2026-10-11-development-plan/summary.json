@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_pair_isolation_and_finite_entry_preparation",
+        "status": "heldout_concrete_prelaunch_review_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "independent_operator_reviewed_pair_isolation_and_finite_entry_preparation",
+      "status": "pipeline_entry_and_pair_reviewed_concrete_prelaunch_pending",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1221,7 +1221,7 @@
         }
       },
       "pipelineEntry": {
-        "status": "implemented_pending_fixed_ref_regression_independent_review_and_actual_pair_probe",
+        "status": "independently_verified_actual_pair_verified_concrete_prelaunch_pending",
         "maximumSlotsPerBatch": 2,
         "resumeCapturedWithoutRetry": true,
         "ambiguousLaunchPermanentlyStops": true,
@@ -1239,7 +1239,20 @@
           "seconds": 2.241,
           "exitCode": 0
         },
-        "certifiesHeldoutLaunch": false
+        "certifiesHeldoutLaunch": false,
+        "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+        "record": "r04-heldout-pipeline-entry-reviewed-20261020.json",
+        "fullRegression": {
+          "count": 1048,
+          "exitCode": 0,
+          "seconds": 192.80675152197364,
+          "cleanBefore": true,
+          "cleanAfter": true
+        },
+        "parentOriginalHashesCompared": 1039,
+        "parentGitBlobsCompared": 689,
+        "actualLocalPairVerified": true,
+        "concretePrelaunchPending": true
       }
     }
   }

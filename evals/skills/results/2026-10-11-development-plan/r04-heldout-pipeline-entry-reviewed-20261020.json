@@ -1,0 +1,76 @@
+{
+  "status": "pipeline_entry_and_actual_local_pair_independently_verified_concrete_prelaunch_pending",
+  "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+  "conditionSha256": "af2aa663eeaf1ac19df6a8d65e96cb1a36ced79f9916926328af37ce4d934af8",
+  "independentReview": {
+    "reportSha256": "d1544f6d176de99cc5ec24261d2cc4533624f06d200bf853286b2a00d9b415e4",
+    "inventorySha256": "ba0732a2c050a843a290efb488cfd74b4d49163d8fb8c47a02bc149acdc89a2e",
+    "blockingFindings": 0,
+    "relatedTests": 174,
+    "relatedSeconds": 64.146,
+    "adversarialTests": 11,
+    "adversarialSeconds": 1.523,
+    "allExitCode": 0,
+    "previous219OriginalsUnchanged": true,
+    "parentFileOriginalsCompared": 1039,
+    "parentGitBlobsCompared": 689
+  },
+  "fullRegression": {
+    "count": 1048,
+    "exitCode": 0,
+    "seconds": 192.80675152197364,
+    "cleanBefore": true,
+    "cleanAfter": true
+  },
+  "actualLocalPair": {
+    "status": "heldout_local_isolation_verified",
+    "pairProofSha256": "fae6e51bcf8d6631640c5ede3b76be0e34d77eb0180fb37391bb98345142310e",
+    "primaryProofSha256": "ce9049aff1d4789b17ccf920189a4f30b63a02562df6c53860f7f8e79e5fa22e",
+    "independentProofSha256": "e9cf8bd249802a3291107f3d864298d8b9fafda57bb31acbe751684cc45814af",
+    "sourceFiles": 57,
+    "productResources": 72,
+    "sdkFiles": 207,
+    "runtimeFiles": 50,
+    "networkIsolated": true,
+    "authMounted": false,
+    "privateCaseContentsRead": false,
+    "models": 0,
+    "reservations": 0
+  },
+  "preparation": {
+    "heldoutSlots": 24,
+    "plannedPrimary": 24,
+    "plannedIndependent": 24,
+    "maximumSlotsPerBatch": 2,
+    "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+    "contextDate": "2026-10-20",
+    "sharedLedgerPresent": false,
+    "campaignStoragePresent": false,
+    "concretePrelaunchReportPending": true
+  },
+  "currentCliMetadata": {
+    "observedAt": "2026-10-20T16:35:24.247742+09:00",
+    "accountPresent": true,
+    "rateLimitReadOk": true,
+    "codexPrimaryUsedPercent": 4,
+    "codexWeeklyUsedPercent": 1,
+    "rateLimitReachedType": null,
+    "spendControlReached": false,
+    "models": 0,
+    "credentialContentsRead": false,
+    "rawResponsesSavedOrDisplayed": false
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-pipeline-entry-reviewed-20261020.tar.gz",
+    "sha256": "f0ca688c67c7c5800a53792b5246bf4cdc11134246d2edd130e6f7b173877744",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}
