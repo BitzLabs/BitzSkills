@@ -74,7 +74,7 @@ from conformance import multi_verify_fixtures, multi_report_fixtures, multi_comp
 from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures, multi_check_fixtures
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
 from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures, multi_exclude_fixtures
-from conformance import multi_closure_alias_fixtures
+from conformance import multi_closure_alias_fixtures, multi_binding_missing_fixtures
 from conformance import doctor_plugin_fixtures
 
 
@@ -3288,6 +3288,195 @@ class AuditTests(unittest.TestCase):
         for identifier, changes in edits.items():
             for relative, old, new in changes:
                 with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe(repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_binding_missing_fixtures(self):
+        """`MULTI-039-01`〜`04`: テスト割当ての欠落の診断を所有ワークスペースごとに返すことを固定する（確認事項C23）。"""
+        module = multi_binding_missing_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-039-{number:02d}" for number in range(1, 5)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_binding_missing_reference_rules(self):
+        """テスト割当ての欠落の元の原因の参照計算（診断レジストリ §2、関係・トレースモデル §6.4）。"""
+        module = multi_binding_missing_fixtures
+        statements = "".join(f"- [r:AC-0{number}] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n" for number in (1, 2))
+
+        def document(workspace, identifier, kind, refines=(), tests=(), verify=None, body=""):
+            frontmatter = {"id": identifier, "title": "t", "status": "approved", "relations": {"refines": list(refines)}, "tests": list(tests)}
+            if verify:
+                frontmatter["verify"] = verify
+            return {"workspaceId": workspace, "kind": kind, "body": body, "path": f".spec/{kind}/{identifier}.md", "frontmatter": frontmatter}
+
+        def entry(covers, command):
+            return {"path": "tests/t.py", "covers": covers, "command": command}
+
+        workspaces = {name: {"path": name, "config": {"verify": {"commands": {"ok": {"argv": ["/bin/true"]}}}}} for name in ("w", "x")}
+        documents = {
+            "w::r": document("w", "r", "requirement", body=statements),
+            "w::t": document("w", "t", "technical", refines=["r:AC-01"], tests=[entry(["r:AC-01", "r:AC-02"], "bad")]),
+            "x::t": document("x", "t", "technical", refines=["w::r"], tests=[entry(["w::r:AC-01"], "bad"), entry(["w::r:AC-02"], "ok")]),
+        }
+        # 同じ相対パスでも所有ワークスペースが異なれば別の原因（2件）。同じエントリを規範文2件が指しても1件（`w`の`tests[0]`）。
+        found = module.reference_diagnostics(documents, workspaces, "w::r")
+        self.assertEqual([(item["source"]["workspaceId"], item["source"]["key"]) for item in found],
+                         [("w", "tests[0].command"), ("x", "tests[0].command")])
+        self.assertEqual({item["source"]["path"] for item in found}, {".spec/technical/t.md"})
+        self.assertEqual({item["summary"] for item in found}, {"コマンド名badが設定に定義されていません"})
+        # コマンド名が定義されたエントリ（`x`の`tests[1]`）は原因にならない。文書の`verify`はコマンド名が省略されたときの既定。
+        documents["x::t"]["frontmatter"]["tests"][0]["command"] = "ok"
+        self.assertEqual([item["source"]["workspaceId"] for item in module.reference_diagnostics(documents, workspaces, "w::r")], ["w"])
+        # 規範文のないTECHが起点なら、起点自身のテスト対応だけが対象（閉包の別の文書の欠落は返さない）。
+        self.assertEqual(module.verify_closure(documents, "w::t")[0], ["w::t", "w::r"])
+        self.assertEqual([item["source"]["workspaceId"] for item in module.reference_diagnostics(documents, workspaces, "w::t")], ["w"])
+        # 起点を`refines`する文書は閉包へ含め（推移的）、起点の`refines`の参照先は含めるが、参照先を`refines`する別の文書は辿らない。
+        order, refiners = module.verify_closure(documents, "w::r")
+        self.assertEqual((order, refiners), (["w::r", "w::t", "x::t"], ["w::t", "x::t"]))
+        self.assertEqual(module.verify_closure(documents, "x::t")[0], ["x::t", "w::r"])
+        # コマンド名を持たないテスト対応は、このcorpusが扱わない形として拒否する。
+        documents["w::t"]["frontmatter"]["tests"][0]["command"] = None
+        with self.assertRaises(ValueError):
+            module.reference_diagnostics(documents, workspaces, "w::r")
+
+    def test_multi_binding_missing_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_binding_missing_fixtures
+
+        def first(value):
+            """検証対象`web::REQ-001`（`verify <ID>`は`targetResults[0]`、全体は`web`のワークスペースの先頭）。"""
+            return value["targetResults"][0] if "targetResults" in value else value["workspaces"][2]["targetResults"][0]
+
+        results = {
+            "status": lambda v: v.update(status="failed"),
+            "diagnostics-add": lambda v: v["diagnostics"].append({"code": "SPEC-VERIFY-BLOCKED-001"}),
+            "target-status": lambda v: first(v).update(status="failed"),
+            "target-digest": lambda v: first(v).update(contextDigest="sha256:" + "0" * 64),
+            "target-digest-null": lambda v: first(v).update(contextDigest=None),
+            "target-statements": lambda v: first(v)["statements"].pop(),
+            "target-bindings": lambda v: first(v).update(bindingRefs=["web::frontend"]),
+            "diag-drop": lambda v: first(v)["diagnostics"].pop(),
+            "diag-drop-first": lambda v: first(v)["diagnostics"].pop(0),
+            "diag-duplicate": lambda v: first(v)["diagnostics"].append(copy.deepcopy(first(v)["diagnostics"][0])),
+            "diag-reverse": lambda v: first(v)["diagnostics"].reverse(),
+            "diag-owner": lambda v: first(v)["diagnostics"][0]["source"].update(workspaceId="web"),
+            "diag-owner-second": lambda v: first(v)["diagnostics"][1]["source"].update(workspaceId="api"),
+            "diag-path": lambda v: first(v)["diagnostics"][0]["source"].update(path=".spec/technical/TECH-002.md"),
+            "diag-key": lambda v: first(v)["diagnostics"][0]["source"].update(key="tests[1].command"),
+            "diag-key-drop": lambda v: first(v)["diagnostics"][0]["source"].pop("key"),
+            "diag-summary": lambda v: first(v)["diagnostics"][0].update(summary=first(v)["diagnostics"][0]["summary"] + "。"),
+            "diag-summary-name": lambda v: first(v)["diagnostics"][0].update(summary="コマンド名missingが設定に定義されていません"),
+            "diag-code": lambda v: first(v)["diagnostics"][0].update(code="SPEC-VERIFY-BLOCKED-002"),
+            "diag-effect": lambda v: first(v)["diagnostics"][0].update(resultStatus="failed"),
+            "diag-severity": lambda v: first(v)["diagnostics"][0].update(severity="warning"),
+            "diag-evidence": lambda v: first(v)["diagnostics"][0].update(evidence="missing"),
+            "commands": lambda v: (v["commands"] if "commands" in v else v["workspaces"][2]["commands"]).append({}),
+            "workspace": lambda v: v["workspace"].update(path=".") if "workspace" in v else v["multiWorkspace"].update(path="apps/web"),
+            "revision": lambda v: v.update(revision=None),
+            "ws-order": lambda v: v["workspaces"].reverse(),
+            "ws-status": lambda v: v["workspaces"][2].update(status="passed"),
+            "ws-target-drop": lambda v: v["workspaces"][2]["targetResults"].pop(),
+            "ws-target-add": lambda v: v["workspaces"][1]["targetResults"].append(copy.deepcopy(first(v))),
+            "ws-api-diag": lambda v: v["workspaces"][1]["targetResults"][0]["diagnostics"].clear(),
+            "ws-web-tech-diag": lambda v: v["workspaces"][2]["targetResults"][1]["diagnostics"].append(
+                copy.deepcopy(v["workspaces"][2]["targetResults"][0]["diagnostics"][0])),
+            "ws-platform-warning": lambda v: v["workspaces"][0]["diagnostics"].clear(),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=1),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "argv-target": lambda v: v["invocation"]["argv"].__setitem__(1, "web::TECH-001"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            mutations += [(identifier, "expected/verify.json", name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 130)
+
+    def test_multi_binding_missing_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_binding_missing_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        edits = {
+            # `api`のコマンド名を設定に定義された名前にする（`api`の欠落が消え、診断が1件になる）。
+            "MULTI-039-01": [("services/api/.spec/technical/TECH-001.md", "command: absent", "command: backend"),
+                             # `api`のTECH-001が起点を指さなくなる（閉包の外になる）。
+                             ("services/api/.spec/technical/TECH-001.md", "refines: [web::REQ-001:AC-01]", "refines: [web::REQ-009:AC-01]"),
+                             # `web`のコマンド名を設定に定義された名前にする。
+                             ("apps/web/.spec/technical/TECH-001.md", "command: missing", "command: frontend")],
+            "MULTI-039-02": [("apps/web/.spec/technical/TECH-001.md", "command: missing", "command: frontend")],
+            # エントリが指す規範文を1件にする（同じエントリを複数の規範文が指す条件を消す）。
+            "MULTI-039-03": [("apps/web/.spec/technical/TECH-001.md", "covers: [REQ-001:AC-01, REQ-001:AC-02]", "covers: [REQ-001:AC-01]"),
+                             ("services/api/.spec/technical/TECH-001.md", "command: absent", "command: backend")],
+            "MULTI-039-04": [(".spec/technical/TECH-001.md", "command: missing", "command: frontend"),
+                             (".spec/technical/TECH-001.md", "covers: [REQ-001:AC-01, REQ-001:AC-02]", "covers: [REQ-001:AC-01]")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, edit=old), tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     fixture = root / "multi" / identifier
                     path = fixture / "repo" / relative
