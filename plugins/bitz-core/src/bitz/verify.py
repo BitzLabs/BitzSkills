@@ -889,6 +889,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if effective_id != requested_workspace:
             raise CliArgError("verify", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
+    # 単一ワークスペースの`revision`は、Git不在とコミットのないリポジトリだけ`null`とする（結果・診断・終了コード §2）。
+    # 早期に返す結果（設定がない、設定の停止、対象が0件）も同じ規則に従うため、最初に求める。
+    revision = None
+    if git.available and git.executable:
+        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
+        if head_commit is not None:
+            revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
+
     def _empty(workspace_id, status: str, diagnostics: list[dict]) -> tuple[dict, int]:
         result = {
             "schemaVersion": "1.0",
@@ -897,12 +905,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             "scope": scope,
             "workspace": {"id": workspace_id, "path": workspace_path},
             "targetResults": [],
-            "revision": None,
+            "revision": revision,
             "commands": [],
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": sort_diagnostics(diagnostics),
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if want_report:
+            # `--report`は状態にかかわらず保存する（結果・診断・終了コード §8）。`check`と同じく、設定がなければ現在のディレクトリへ試みる。
+            failure = reportio.write_report(loc.root if loc.root is not None else cwd, workspace_id, "verify", result)
+            if failure is not None:
+                result["diagnostics"] = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
+                result["status"] = worst_status([status, failure.resultStatus])
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     if loc.config_path is None:
         return _empty(
@@ -927,12 +941,6 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     config_raw = outcome.config
     assert loc.root is not None
     workspace_root = loc.root
-
-    revision = None
-    if git.available and git.executable:
-        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
-        if head_commit is not None:
-            revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
     multi_active = multi_pre is not None and multi_pre.ok
 
