@@ -1086,7 +1086,7 @@ def precheck(
     ``nearest_config_path``は、Gitでリポジトリのルートを確定できないときのルートの候補（通常の探索で見つけた最も近い設定）、
     ``selected_dir``は選択した最も近い設定のディレクトリ（カタログに登録されていなければ`SPEC-MULTI-UNREGISTERED-001`）、
     ``compare_git_configs``はGitが認識する設定の列挙と比較するか（単独の`context`・`check`・`verify`は偽）。
-    
+
     ``report_git_with_config_stop``が真なら、ルートの設定で停止したときも、Gitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加える
     （`doctor`だけが真を渡す。`04_doctor.md` §3）。
     """
