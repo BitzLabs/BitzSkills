@@ -1677,3 +1677,22 @@ commit `ada931f306445f3fcc9f2089b57b44a55872f61b`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-20: `MULTI-040`を追加した後のGate Aの再認定
+
+`doctor`で、Gitを利用できず、かつリポジトリのルートの設定で全体事前検査が止まると、設定の診断だけを返して`SPEC-MULTI-GIT-001`を返さなかった欠陥を直した
+（実装の確認事項C33、ユーザーの決定D5、ADR-065。ADR-063のDecision 5を`doctor`について部分改訂）。`doctor`仕様 §3、複合ワークスペース仕様 §3に明記し、
+結果・診断・終了コード §7にワークスペースIDを持たない発生元の診断の並び（`workspaceId: null`の発生元の後、文字列のIDの前）を書いた（ユーザーの決定）。
+これを固定する`MULTI-040-01`〜`MULTI-040-10`を追加した（ADR-051の追加、群`multi_doctor_git_fixtures`）。matrix、Step 5の割当て、実装計画の完了条件、
+網羅表が固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `5a8913a84d4112d73aeaf3d864c0501aa7918b08`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`f204c09ea60229683ea7a2230c4300d63373525f34b8452fbdcd81682e7bf1d1`。前回から変わったのは次の値だけである: 10件の追加によるmatrixと網羅の件数（445件→455件）、Step 5の件数（149件→159件）、群`multi_doctor_git_fixtures`の追加、実行ビットを確かめたファイル数（2585件→2617件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
