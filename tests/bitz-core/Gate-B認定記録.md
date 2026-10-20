@@ -685,3 +685,22 @@ Core固有の単体試験は916件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は926件がすべて成功した。
+
+## 2026-10-20: doctorでGitの不在と設定の停止を独立した原因として返すようにした後のStep 1〜5の再判定
+
+`multiws.precheck`に、ルートの設定で停止したときもGitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加える引数を足し、`doctor`（`--all-workspaces`と単独の
+`doctor`）だけが使うようにした（実装の確認事項C33、ADR-065）。これを固定する`MULTI-040-01`〜`MULTI-040-10`（Step 5）を追加した。修正前のCore（コミット`c0cdcc4e`の版）では、
+追加した10件のうち5件が非成功（`failed` 5件）となり、ほかの操作とGitがある場合の対照の5件と既存の445件はすべて通過することを確かめた。修正後のCoreでは455件すべてが`passed`となる。
+
+コミット`5a8913a84d4112d73aeaf3d864c0501aa7918b08`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 455件（`MULTI-040-01`〜`MULTI-040-10`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`c51a86243b02af22eb7879b17d2b0dabaefe9d71fbb26bacaa06c4553fd7b10f` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は937件がすべて成功した。
