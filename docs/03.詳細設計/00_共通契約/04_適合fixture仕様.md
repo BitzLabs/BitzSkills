@@ -486,7 +486,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-165-04` | `SINGLE-165-03`と同じ入力（`--report`なし） | verify | blocked／2 | 対照: `SPEC-VERIFY-BLOCKED-002`の1件。`revision`は`{commit, dirty: false}`で、`null`にしない。`--report`がないので、新しいファイルを作らず、既存のレポートを変えない（同 §8） |
 | `SINGLE-165-05` | `SINGLE-165-01`と同じ入力。ただし基準版のコミットには`.spec/`だけを含め、作業ツリーに未追跡のファイル`docs/notes.md`がある（`--report`なし） | verify | blocked／2 | 対照: `SPEC-CONFIG-SCHEMA-001`（`blocked`）の1件。`revision`は`{commit, dirty: true}`。`dirty`は実行時の作業ツリーの状態を表す。`--report`がないので、新しいファイルを作らない |
 | `SINGLE-165-06` | `SINGLE-165-01`と同じ入力。ただしコミットのないGitのリポジトリ（入力はステージだけで、コミットしない） | verify --report | blocked／2 | 対照: `SPEC-CONFIG-SCHEMA-001`（`blocked`）の1件。コミットのないリポジトリなので`revision: null`（同 §2）。`revision`が`null`でも、`--report`のレポートは1件でき、内容は標準出力の結果と一致する |
-| `SINGLE-165-07` | `SINGLE-165-03`と同じ入力。Gitの実行ファイルを見つけられない環境（`PATH=/dev/null`）で実行 | verify --report | blocked／2 | 対照: `SPEC-VERIFY-BLOCKED-002`の1件。Git不在なので`revision: null`（同 §2）。`--report`のレポートは1件でき、内容は標準出力の結果と一致する |
+| `SINGLE-165-07` | `SINGLE-165-03`と同じ仕様文書と設定。Gitのリポジトリにせず（`setup.git: false`）、`PATH=/dev/null`で実行（`.git`はあるがGitの実行ファイルがない場合は単体試験が押さえる） | verify --report | blocked／2 | 対照: `SPEC-VERIFY-BLOCKED-002`の1件。Git不在なので`revision: null`（同 §2）。`--report`のレポートは1件でき、内容は標準出力の結果と一致する |
 
 ### 6.7 出力とレポート
 
