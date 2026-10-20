@@ -1,0 +1,28 @@
+{
+  "fixtureId": "MULTI-040-08",
+  "description": "Git不在でもcontextは、ルートのEARS-AIのメジャーバージョンの非対応の診断だけを返す",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}
