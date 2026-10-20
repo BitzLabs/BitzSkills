@@ -1,0 +1,55 @@
+{
+  "status": "concrete_prelaunch_independently_verified_parent_consumed_ready_for_finite_first_batch",
+  "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+  "conditionSha256": "af2aa663eeaf1ac19df6a8d65e96cb1a36ced79f9916926328af37ce4d934af8",
+  "reportSha256": "4b8c7b4caaa374a21796e238f2d281c5722863c52c1b9ec6d5d100260157997c",
+  "reviewSha256": "dfde15c70c101884b280c57c72b6759d9f1a44f96f5b4448bcc9960a68d7d09a",
+  "inventorySha256": "c742be88ecfc51f144c8a930ee16d720fc4d112851cc6a2617c0404639d1f398",
+  "orchestrationEntrypointSha256": "de864fc6190a7b1b1520a6100e21e9e806e441ed039bbeecc51ef802dfd474ba",
+  "parentFileOriginalsCompared": 1045,
+  "parentGitBlobsCompared": 692,
+  "independentRelatedTests": {
+    "count": 50,
+    "seconds": 36.306,
+    "exitCode": 0
+  },
+  "pureReviewAcceptanceAndTamperTests": {
+    "count": 6,
+    "seconds": 0.004,
+    "exitCode": 0
+  },
+  "independentConcreteOriginalsSeconds": 4.030051,
+  "cleanBefore": true,
+  "cleanAfter": true,
+  "preflightOnly": {
+    "resourceProofSha256": "414883ec0b3c0e205c87607f14abbd4957b41b935dedb5d9c782ee235efa459d",
+    "privateLedgerOpened": false,
+    "remainingReservationsVerified": false,
+    "modelLaunches": 0,
+    "reservations": 0
+  },
+  "planned": {
+    "slots": 24,
+    "primary": 24,
+    "independent": 24,
+    "automaticRetries": 0,
+    "delegations": 0,
+    "maximumSlotsPerBatch": 2,
+    "minimumLogicalGapSeconds": 60,
+    "privateNewFilesOnly": true,
+    "privateBodiesPublished": false
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutExecutionSuccess": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-concrete-prelaunch-reviewed-20261020.tar.gz",
+    "sha256": "bfaef3ceafe06b57f4ec59fe58ee2a30f814f0d82de92bd1e4bf8e023e7664c8",
+    "members": 4,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

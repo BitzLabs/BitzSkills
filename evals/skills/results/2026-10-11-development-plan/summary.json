@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_concrete_prelaunch_review_pending",
+        "status": "heldout_first_maximum2_slots_ready",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "pipeline_entry_and_pair_reviewed_concrete_prelaunch_pending",
+      "status": "concrete_prelaunch_verified_ready_for_finite_first_batch",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1252,7 +1252,22 @@
         "parentOriginalHashesCompared": 1039,
         "parentGitBlobsCompared": 689,
         "actualLocalPairVerified": true,
-        "concretePrelaunchPending": true
+        "concretePrelaunchPending": false
+      },
+      "concretePrelaunch": {
+        "status": "independently_verified_parent_all_originals_consumed",
+        "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+        "conditionSha256": "af2aa663eeaf1ac19df6a8d65e96cb1a36ced79f9916926328af37ce4d934af8",
+        "record": "r04-heldout-concrete-prelaunch-reviewed-20261020.json",
+        "parentFileOriginalsCompared": 1045,
+        "parentGitBlobsCompared": 692,
+        "plannedSlots": 24,
+        "plannedPrimary": 24,
+        "plannedIndependent": 24,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "certifiesSkillGate": false
       }
     }
   }
