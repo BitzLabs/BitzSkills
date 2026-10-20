@@ -617,12 +617,12 @@ def _process_single_target(
 
     # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
     # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
-    # 複数の規範文が指しても、同じ元の原因（同じ`path`／`key`）へは1件に畳む）。
+    # 複数の規範文が指しても、同じ元の原因（同じ所有ワークスペースの`path`／`key`）へは1件に畳む）。
     binding_missing_diags: list[dict] = []
-    seen_missing_keys: set[tuple[str, str]] = set()
+    seen_missing_keys: set[tuple[str, str, str]] = set()
 
     def _add_binding_missing(owner: str, path: str, idx: int, name: str | None) -> None:
-        seen_key = (path, f"tests[{idx}].command")
+        seen_key = (owner, path, f"tests[{idx}].command")
         if seen_key in seen_missing_keys:
             return
         seen_missing_keys.add(seen_key)
