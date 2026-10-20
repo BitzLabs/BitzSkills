@@ -250,7 +250,13 @@ class CompositeSamePathTests(_Base):
 
 
 class CompositeRequiresTests(_Base):
-    """同じ構成を`requires`で結ぶ。起点のREQが`web`のTECH-001と`api::TECH-001`を`requires`し、どちらもREQの規範文を`covers`する。"""
+    """同じ構成を`requires`で結ぶ。起点のREQが`web`のTECH-001と`api::TECH-001`を`requires`し、どちらもREQの規範文を`covers`する。
+
+    `requires`で到達した文書の`tests[].covers`も、起点の規範文のテスト対応（テスト済み）に数える（確認事項C48、ユーザーの決定）。
+    根拠は関係・トレースモデル §8のテスト済みの定義（対象規範文のうち、閉包に含まれる文書の`tests[].covers`のどれかがその規範文IDを含むもの）と、
+    `requires`で到達した文書が閉包（§6.1の2.）に含まれることである。§8が禁じるのは`requires`の閉包の規範文を対象規範文（義務）へ昇格することで、
+    閉包の文書のテスト対応を数えることではない。
+    """
 
     def build(self) -> None:
         r = self.root
@@ -272,6 +278,41 @@ class CompositeRequiresTests(_Base):
                     [(w, p) for w, p, *_ in self.blocked(self.target(result, "web::REQ-001"))],
                     [("api", TECH_PATH), ("web", TECH_PATH)],
                 )
+
+
+class CompositeTaskDocumentUnitTests(_Base):
+    """TASKを起点にした文書単位のテスト割当て: `web::TASK-001`が、規範文のない同じ相対パスのTECH（`web`のTECH-001と`api::TECH-001`）を`addresses`する。
+
+    どちらのTECHもテスト対応のコマンド名が定義されていない。文書単位のテスト割当ては、所有ワークスペースごとに別の原因である。
+    """
+
+    def build(self) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", _root_yaml("platform", [("web", "apps/web"), ("api", "apps/api")]))
+        _member_tree(r, "web", "apps/web")
+        _member_tree(r, "api", "apps/api")
+        _write(r, f"apps/web/{TECH_PATH}", _tech("TECH-001", refines=None, covers=["TECH-001"], command="missing"))
+        _write(r, f"apps/api/{TECH_PATH}", _tech("TECH-001", refines=None, covers=["TECH-001"], command="absent"))
+        _write(
+            r, "apps/web/.spec/tasks/TASK-001.md",
+            "---\nid: TASK-001\ntitle: TASK\nstatus: open\nrelations:\n  addresses: [TECH-001, api::TECH-001]\n---\n\n"
+            "# TASK-001 TASK\n\n## Objective\n\n目的。\n",
+        )
+
+    def test_verify_returns_one_diagnostic_per_owning_workspace(self):
+        result, code = self.verify("web::TASK-001")
+        self.assertEqual((result["status"], code), ("blocked", 2))
+        target = self.target(result, "web::TASK-001")
+        self.assertEqual(target["status"], "blocked")
+        self.assertEqual(target["bindingRefs"], [])
+        self.assertEqual(
+            self.blocked(target),
+            [
+                ("api", TECH_PATH, "tests[0].command", "コマンド名absentが設定に定義されていません", "blocked"),
+                ("web", TECH_PATH, "tests[0].command", "コマンド名missingが設定に定義されていません", "blocked"),
+            ],
+        )
+        self.assertEqual(len(target["diagnostics"]), 2)
 
 
 class CompositeFoldTests(_Base):
