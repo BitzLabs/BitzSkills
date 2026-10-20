@@ -233,6 +233,12 @@ def completed_items(frames: list) -> list:
             require(set(params) == {'threadId', 'status'}, 'native thread status fields')
             check_thread_status(params['status'], turn=turn, finished=finished)
             continue
+        if method == 'turn/moderationMetadata':
+            # 固定SDK0.160.1ではmetadataはAny。私的原として保持し、意味/安全判定には使わない。
+            # 項目や操作ではなく、進行中の同一turnに束縛された通知だけを受け取る。
+            require(turn is not None and not finished and set(params) == {'threadId','turnId','metadata'},
+                    'native moderation metadata fields or lifecycle')
+            continue
         if method in NEUTRAL:
             if 'turnId' in params:
                 require(turn is not None and params['turnId'] == turn, 'neutral turn mismatch')

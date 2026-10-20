@@ -67,6 +67,17 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_sdk_preserves_moderation_originals_in_received_hash_and_does_not_certify_payload(self):
+        event={'method':'turn/moderationMetadata','params':{'threadId':'t','turnId':'u','metadata':{'synthetic':True}}}
+        received=self.frames[:-3]+[event]+self.frames[-3:]
+        before=copy.deepcopy(received)
+        result=self.run_diagnostic(received=received)
+        self.assertEqual(received,before)
+        evidence=result['nativeEvidence']
+        self.assertEqual(evidence['receivedValueSha256'],sdk.digest(received))
+        self.assertNotEqual(evidence['receivedValueSha256'],sdk.digest(self.frames))
+        self.assertFalse(result['eligibleForMeasurement']);self.assertFalse(result['certifiesBehavior'])
+
     def test_sdk_thread_start_hidden_history_is_rejected_in_each_path(self):
         hidden = [{'id': 'extra-turn', 'status': 'failed', 'error': {'message': 'failure'},
                    'items': [{'type': 'commandExecution', 'id': 'hidden-command'}]}]

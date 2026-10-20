@@ -94,6 +94,34 @@ class ProductionTraceTests(unittest.TestCase):
         frames = self.frames[:-3] + self.reasoning_events() + self.frames[-3:]
         self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
 
+    def test_moderation_metadata_is_opaque_but_bound_to_the_active_turn(self):
+        original=self.run_audit()
+        for value in [None,False,12,'SYNTHETIC_METADATA',[],{'opaque':['synthetic']}]:
+            event={'method':'turn/moderationMetadata','params':{'threadId':'t','turnId':'u','metadata':value}}
+            frames=self.frames[:-3]+[event,event]+self.frames[-3:]
+            with self.subTest(value=value):
+                self.assertEqual(self.run_audit(frames=frames),original)
+
+    def test_moderation_metadata_wrong_identity_unknown_fields_and_late_events_are_rejected(self):
+        event={'method':'turn/moderationMetadata','params':{'threadId':'t','turnId':'u','metadata':{}}}
+        variants=[]
+        for key,value in [('threadId','other'),('turnId','other'),('turnId',None),('unknown',None)]:
+            bad=copy.deepcopy(event);bad['params'][key]=value;variants.append(bad)
+        for key in ['metadata','threadId','turnId']:
+            bad=copy.deepcopy(event);bad['params'].pop(key);variants.append(bad)
+        for bad in variants:
+            with self.subTest(keys=bad['params'].keys()),self.assertRaises(ValueError):
+                self.run_audit(frames=self.frames[:-3]+[bad]+self.frames[-3:])
+        with self.assertRaises(ValueError):self.run_audit(frames=self.frames[:3]+[event]+self.frames[3:])
+        with self.assertRaises(ValueError):self.run_audit(frames=self.frames+[event])
+
+    def test_moderation_metadata_never_authorizes_a_tool_or_unknown_native_notification(self):
+        event={'method':'turn/moderationMetadata','params':{'threadId':'t','turnId':'u','metadata':{'approved':True}}}
+        for bad in [{'method':'turn/unknown','params':{'threadId':'t','turnId':'u'}},
+            {'method':'item/started','params':{'threadId':'t','turnId':'u','item':{'id':'forbidden','type':'commandExecution'}}}]:
+            with self.subTest(method=bad['method']),self.assertRaises(ValueError):
+                self.run_audit(frames=self.frames[:-3]+[event,bad]+self.frames[-3:])
+
     @staticmethod
     def prefixed_reasoning_events():
         def frame(method, **params):
