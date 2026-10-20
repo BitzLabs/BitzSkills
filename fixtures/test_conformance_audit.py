@@ -76,6 +76,7 @@ from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_op
 from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures, multi_exclude_fixtures
 from conformance import multi_closure_alias_fixtures, multi_binding_missing_fixtures, multi_doctor_git_fixtures
 from conformance import doctor_plugin_fixtures
+from conformance import verify_stop_revision_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -3692,6 +3693,234 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def copy_single_fixture(self, temporary, identifier):
+        root = Path(temporary)
+        shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier, symlinks=True)
+        for name in ("manifest", "result", "side-effects", "frontmatter"):
+            shutil.copy2(schema_path(audit.FIXTURES, name), root)
+        return root
+
+    def test_verify_stop_revision_fixtures(self):
+        """`SINGLE-165-01`〜`07`: `verify`の早期に返す結果の`revision`と`--report`を固定する（確認事項C41）。"""
+        module = verify_stop_revision_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"SINGLE-165-{number:02d}" for number in range(1, 8)])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_verify_stop_revision_fixtures_cover_both_early_returns_and_every_revision_state(self):
+        """早期に返す2つの原因、`revision`の状態、`--report`の有無を、少なくとも1件ずつ固定する。"""
+        module = verify_stop_revision_fixtures
+        cases = module.CASES.values()
+        self.assertEqual({case["stop"] for case in cases}, {"schema", "anchor", None})
+        self.assertEqual({case["git"] for case in cases}, {"committed", "staged", "absent"})
+        self.assertEqual({case["report"] for case in cases}, {True, False})
+        results = {identifier: json.loads((audit.FIXTURES / "single" / identifier / module.RESULT_FILE).read_text())
+                   for identifier in module.CASES}
+        revisions = [result["revision"] for result in results.values()]
+        self.assertIn({"commit": "0" * 40, "dirty": False}, revisions)
+        self.assertIn({"commit": "0" * 40, "dirty": True}, revisions)
+        self.assertIn(None, revisions)
+        # コミットありだけ`revision`を返し、`--report`のレポートは状態にかかわらず1件。
+        for identifier, case in module.CASES.items():
+            manifest = json.loads((audit.FIXTURES / "single" / identifier / "manifest.json").read_text())
+            self.assertEqual(manifest["expect"]["reportFileCount"], 1 if case["report"] else 0, identifier)
+            self.assertEqual("--report" in manifest["invocation"]["argv"], case["report"], identifier)
+            self.assertEqual(results[identifier]["revision"] is None, case["git"] != "committed", identifier)
+            self.assertNotEqual(results[identifier]["status"], "passed", identifier)
+
+    def test_verify_stop_revision_reference_rules(self):
+        """参照計算（結果・診断・終了コード §2・§3・§8、`verify` §3）。"""
+        module = verify_stop_revision_fixtures
+        schema, anchor, valid = (module.stopped_config(stop) for stop in ("schema", "anchor", None))
+        draft = module.draft_requirement()
+        approved = draft.replace("status: draft", "status: approved")
+        self.assertEqual(module.default_targets([draft]), 0)
+        self.assertEqual(module.default_targets([draft, approved]), 1)
+        stopped = module.reference_expected(schema, [draft], (True, False), True)
+        self.assertEqual((stopped["status"], stopped["exit"], stopped["code"], stopped["reports"], stopped["workspaceId"]),
+                         ("blocked", 2, "SPEC-CONFIG-SCHEMA-001", 1, "root"))
+        self.assertEqual(stopped["revision"], {"dirty": False})
+        # `dirty`は作業ツリーの状態から導く。コミットなしとGit不在は`revision`なし。`--report`がなければレポートなし。
+        self.assertEqual(module.reference_expected(schema, [draft], (True, True), True)["revision"], {"dirty": True})
+        self.assertIsNone(module.reference_expected(schema, [draft], (False, False), True)["revision"])
+        self.assertIsNone(module.reference_expected(schema, [draft], None, True)["revision"])
+        self.assertEqual(module.reference_expected(schema, [draft], (True, False), False)["reports"], 0)
+        # 構文の不正は`error`／3で、同一性を構成できないので`workspace.id`は`null`。
+        broken = module.reference_expected(anchor, [draft], (True, False), True)
+        self.assertEqual((broken["status"], broken["exit"], broken["workspaceId"]), ("error", 3, None))
+        # 設定が止まらず対象が0件なら`SPEC-VERIFY-BLOCKED-002`。対象があるなら、この群の対象外。
+        empty = module.reference_expected(valid, [draft], (True, False), True)
+        self.assertEqual((empty["code"], empty["status"], empty["stop"]), ("SPEC-VERIFY-BLOCKED-002", "blocked", None))
+        with self.assertRaises(ValueError):
+            module.reference_expected(valid, [approved], (True, False), True)
+
+    def test_verify_stop_revision_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の期待値の改変を拒否する。"""
+        module = verify_stop_revision_fixtures
+
+        def entry(value):
+            return value["diagnostics"][0]
+
+        results = {
+            "status": lambda v: v.update(status="failed"),
+            "status-error": lambda v: v.update(status="error" if v["status"] != "error" else "blocked"),
+            "diag-drop": lambda v: v["diagnostics"].pop(),
+            "diag-duplicate": lambda v: v["diagnostics"].append(copy.deepcopy(entry(v))),
+            "diag-code": lambda v: entry(v).update(code="SPEC-VERIFY-BLOCKED-001"),
+            "diag-effect": lambda v: entry(v).update(resultStatus="failed"),
+            "diag-summary": lambda v: entry(v).update(summary=entry(v)["summary"] + "。"),
+            "diag-source": lambda v: entry(v).update(source={"kind": "invocation"}),
+            "diag-source-id": lambda v: entry(v)["source"].update(workspaceId="web"),
+            "diag-report-write": lambda v: v["diagnostics"].append(
+                {"code": "SPEC-REPORT-WRITE-001", "severity": "error", "resultStatus": "error",
+                 "summary": "レポートの保存先へ排他的に作成できません",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/reports"}}),
+            "revision-null": lambda v: v.update(revision=None),
+            "revision-dirty": lambda v: v.update(revision={"commit": "0" * 40, "dirty": not (v["revision"] or {"dirty": False})["dirty"]}),
+            "revision-base": lambda v: v.update(revision={"base": "0" * 40, "commit": "0" * 40, "dirty": False}),
+            "revision-missing": lambda v: v.pop("revision"),
+            "workspace-id": lambda v: v["workspace"].update(id="web" if v["workspace"]["id"] != "web" else "root"),
+            "workspace-path": lambda v: v["workspace"].update(path="docs"),
+            "scope": lambda v: v.update(scope="selected"),
+            "targets": lambda v: v.update(targetResults=[{"target": "REQ-001", "status": "blocked", "contextDigest": None,
+                                                           "statements": [], "bindingRefs": [], "diagnostics": []}]),
+            "commands": lambda v: v.update(commands=[{"bindingId": "root::default"}]),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=1),
+            "report-count": lambda v: v["expect"].update(reportFileCount=1 - v["expect"]["reportFileCount"]),
+            "report-flag": lambda v: (v["invocation"]["argv"].remove("--report") if "--report" in v["invocation"]["argv"]
+                                      else v["invocation"]["argv"].append("--report")),
+            "argv-target": lambda v: v["invocation"]["argv"].insert(1, "REQ-001"),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "check"),
+            "cwd": lambda v: v["invocation"].update(cwd="docs"),
+            "env": lambda v: v["invocation"].update(env={} if v["invocation"]["env"] else {"PATH": "/dev/null"}),
+            "git": lambda v: v["setup"].update(git=not v["setup"]["git"]),
+            "base-commit": lambda v: (v["setup"].pop("baseCommit") if "baseCommit" in v["setup"]
+                                      else v["setup"].update(baseCommit={"message": "base", "paths": ["."]})),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        effects = {
+            "policy": lambda v: v.update(policy="read-only" if v["policy"] != "read-only" else "explicit-report"),
+            "created-count": lambda v: v["report"].update(createdCount=2),
+            "report-drop": lambda v: v.pop("report"),
+            "name-pattern": lambda v: v["report"].update(namePattern="^.*$"),
+            "temporary": lambda v: v["report"].update(temporaryFilesRemaining=1),
+            "existing-report": lambda v: v["before"]["repository"].pop(module.EXISTING_REPORT),
+            "extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+            "after-changed": lambda v: v["after"]["repository"].pop(module.EXISTING_REPORT),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            mutations += [(identifier, module.RESULT_FILE, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations += [(identifier, "side-effects.json", name, change) for name, change in effects.items()]
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 190)
+
+    def test_verify_stop_revision_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因を消す・変える入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = verify_stop_revision_fixtures
+        for identifier in module.CASES:
+            for name in [*sorted(f"repo/{path}" for path in module.reviewed_inputs(identifier)), "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    fixture = root / "single" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        config, requirement = module.CONFIG_PATH, module.REQ_PATH
+        edits = {
+            # 設定の原因を消す（停止しなくなる）、別の種類に変える。
+            "SINGLE-165-01": [(config, 'schemaVersion: "2.0"', 'schemaVersion: "1.0"'),
+                              (config, 'schemaVersion: "2.0"', 'schemaVersion: "2.0"\nx: &a 1')],
+            "SINGLE-165-02": [(config, "language: &label ja", "language: ja")],
+            # 対象が0件でなくなる（`approved`のREQ）、設定が止まる。
+            "SINGLE-165-03": [(requirement, "status: draft", "status: approved"),
+                              (config, 'schemaVersion: "1.0"', 'schemaVersion: "2.0"')],
+            "SINGLE-165-04": [(requirement, "status: draft", "status: approved")],
+            "SINGLE-165-05": [(config, 'schemaVersion: "2.0"', 'schemaVersion: "1.0"')],
+            "SINGLE-165-06": [(config, 'schemaVersion: "2.0"', 'schemaVersion: "1.0"')],
+            "SINGLE-165-07": [(requirement, "status: draft", "status: approved")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, edit=old), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    fixture = root / "single" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps(module.reviewed_effects(identifier, state)))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_verify_stop_revision_audit_rejects_a_changed_git_state(self):
+        """コミットの有無と作業ツリーの変更の有無は、準備手順の後のGitの状態から確かめる。準備手順だけを変えると拒否する。"""
+        module = verify_stop_revision_fixtures
+
+        def staged(manifest):
+            manifest["setup"].pop("baseCommit")
+            manifest["setup"]["operations"] = [{"op": "stage", "paths": ["."]}]
+
+        changes = {
+            # コミットなしの入力をコミットする、コミットありの入力をステージだけにする、未追跡のファイルの有無を変える。
+            "SINGLE-165-06": lambda m: m["setup"].update(operations=[], baseCommit={"message": "base", "paths": ["."]}),
+            "SINGLE-165-01": staged,
+            "SINGLE-165-05": lambda m: m["setup"]["baseCommit"].update(paths=["."]),
+            "SINGLE-165-04": lambda m: m["setup"]["baseCommit"].update(paths=[".spec/bitz.yaml"]),
+        }
+        for identifier, change in changes.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                change(manifest)
+                # 起動条件の照合で先に拒否される空振りを避け、準備手順の後のGitの状態の検査だけを直接確かめる。
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                with self.assertRaises(ValueError):
+                    module.check_conditions(identifier, repository, manifest)
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
