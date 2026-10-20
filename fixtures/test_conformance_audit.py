@@ -3540,7 +3540,7 @@ class AuditTests(unittest.TestCase):
         expected = module.reference_expected(anchor, False, "doctor", "all")
         self.assertEqual((expected["checks"], expected["status"], expected["exit"], expected["subjectId"]),
                          ([("core", "passed"), ("git", "blocked")], "error", 3, None))
-        # 並び: `null`のIDは文字列のIDより前、IDを持たない環境の発生元は文字列のIDより前（`workspaceId: null`のファイルとの相対順は暫定の仮定）。
+        # 並び: `null`のIDは文字列のIDより前、IDを持たない環境の発生元は文字列のIDより前（`workspaceId: null`のファイルの後。結果・診断・終了コード §7）。
         self.assertEqual(module.reference_expected(anchor, False, "doctor", "all")["diagnostics"], ["config", "git"])
         with patch.object(module, "ENVIRONMENT_AFTER_NULL_FILE", False):
             self.assertEqual(module.reference_expected(anchor, False, "doctor", "all")["diagnostics"], ["git", "config"])

@@ -247,7 +247,7 @@ def classify_root_config(text):
 
 def reference_order(entries):
     """結果・診断・終了コード §7: 発生元のワークスペースID、`path`...の辞書順で、`null`のIDは文字列のIDより前。
-    環境の発生元はIDを持たない。`null`のファイルの発生元との相対順は`ENVIRONMENT_AFTER_NULL_FILE`の仮定による。"""
+    環境の発生元はIDを持たない。`null`のファイルの発生元の後、文字列のIDの前に置く（§7。`ENVIRONMENT_AFTER_NULL_FILE`）。"""
     def key(entry):
         kind, workspace_id = entry["kind"], entry.get("workspaceId")
         if kind == "environment":
