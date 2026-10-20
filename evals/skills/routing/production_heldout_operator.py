@@ -114,6 +114,19 @@ def read_control(base, name):
         os.close(fd)
 
 
+def verify_pacing(bound, ordinal, role, *, expected_sha256=None):
+    """子へmountしない外側controlと、子stageの原bytesを直接照合する。"""
+    require(role in {'primary','independent'}, 'heldout pacing role')
+    name = 'pacing.json' if role == 'primary' else 'independent-pacing.json'
+    control = read_control(control_root(bound,ordinal),name)
+    raw = originals.read_original(bound.stage_root(ordinal,role),'logical-pacing.json')
+    require(raw == control, 'heldout pacing differs from outside control')
+    if expected_sha256 is not None:
+        require(io.sha(raw) == io.pin(expected_sha256), 'heldout pacing differs from prelaunch original')
+    launch.pacing(bound.execution_raw,launch.primary_identity(bound,ordinal),raw,role=role)
+    return raw
+
+
 def pace(bound, ordinal, role, ledger):
     """lock中の直前journal/receiptへ束縛する60秒の論理起動間隔。HTTP間隔は認定しない。"""
     require(role in {'primary','independent'}, 'heldout pacing role')
@@ -336,6 +349,7 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     create_directory(control)
     for name,raw in inputs_for_primary(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_raw).items():save(base,name,raw)
     pace(bound,ordinal,'primary',ledger)
+    pacing_sha = io.sha(verify_pacing(bound,ordinal,'primary'))
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(before,invoke), 'heldout resources changed before primary launch')
     ledger.append(ordinal,'primary_started')
@@ -348,6 +362,7 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     guards = dict(before=before,invoke=invoke,after=after)
     save(base,'resource-guards.json',io.encoded(guards))
     require(trace.json_equal(before,after), 'heldout resources changed after primary launch')
+    verify_pacing(bound,ordinal,'primary',expected_sha256=pacing_sha)
     # 途中原でも未知名/stop markerを先に拒否し、通常終端を自己申告だけで扱わない。
     partial = collect_partial(base)
     sdk_terminal = x.inputs.parse(partial['isolated-result.json']) if 'isolated-result.json' in partial else None

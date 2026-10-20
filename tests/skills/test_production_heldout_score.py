@@ -119,7 +119,10 @@ class HeldoutScoreTests(unittest.TestCase):
         self.assertEqual(self.summary()['independentReserved'],0)
 
     def test_resource_change_during_independent_pacing_prevents_process(self):
-        def wait(*args):self.fixture.resources.side_effect=ValueError('SYNTHETIC_INDEPENDENT_DRIFT')
+        original_pace=score.operator.pace
+        def wait(*args):
+            original_pace(*args)
+            self.fixture.resources.side_effect=ValueError('SYNTHETIC_INDEPENDENT_DRIFT')
         with (patch.object(score.operator,'pace',side_effect=wait),
                 patch.object(score,'run_process',side_effect=AssertionError('process')),
                 self.assertRaisesRegex(ValueError,'INDEPENDENT_DRIFT')):score.run_independent(*self.args())
@@ -161,6 +164,26 @@ class HeldoutScoreTests(unittest.TestCase):
             score.run_independent(*self.args())
         self.assertEqual(self.summary()['status'],'stopped')
         self.assertEqual(self.summary()['evaluationFailed'],0)
+
+    def test_forbidden_stderr_without_stdout_action_forces_global_stop(self):
+        raw=score.io.encoded(dict(fields={'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'write'}))+b'\n'
+        with patch.object(score,'run_process',return_value=(1,False,b'',raw)),self.assertRaisesRegex(ValueError,'control policy'):
+            score.run_independent(*self.args())
+        self.assertEqual(self.summary()['status'],'stopped')
+        self.assertEqual(self.summary()['evaluationFailed'],0)
+
+    def test_child_rewrite_of_valid_independent_pacing_is_rejected_before_capture(self):
+        answer=self.answer()
+        def changed(plan,prompt):
+            base=self.bound.stage_root(1,'independent')
+            path=base/'logical-pacing.json';value=score.x.inputs.parse(path.read_bytes())
+            value.update(previousSha256='f'*64,monotonicSeconds=value['monotonicSeconds']+7)
+            path.write_bytes(score.io.encoded(value))
+            score.save(base,'response.json',score.io.encoded(answer));self.fixture.clock+=3
+            return 0,False,b''.join(score.io.encoded(event)+b'\n' for event in self.events(answer)),b''
+        with patch.object(score,'run_process',side_effect=changed),self.assertRaisesRegex(ValueError,'outside control'):
+            score.run_independent(*self.args())
+        self.assertEqual(self.summary()['status'],'stopped');self.assertEqual(self.summary()['parentVerified'],0)
 
     def test_post_process_resource_drift_stops_without_sealing_independent_failure(self):
         changed=copy.deepcopy(self.fixture.fixture.proof);changed['contextDate']='1900-01-01'

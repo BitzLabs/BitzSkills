@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_independent_operator_review_and_day19_concrete_prelaunch_pending",
+        "status": "heldout_independent_operator_p2_closure_and_pipeline_isolation_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "inputs_ledger_execution_resources_reviewed_capture_adapters_pending",
+      "status": "independent_operator_two_p2_fixes_and_day20_prelaunch_preparation",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1169,10 +1169,10 @@
         "currentDateRequires": "2026-10-19"
       },
       "independentOperator": {
-        "status": "implemented_independent_review_pending",
+        "status": "two_p2_fixes_pending_independent_closure",
         "relatedTests": {
-          "count": 150,
-          "seconds": 48.463,
+          "count": 153,
+          "seconds": 51.571,
           "exitCode": 0
         },
         "newSyntheticTests": 15,
@@ -1181,7 +1181,28 @@
         "actualHeldoutModels": 0,
         "actualHeldoutReservations": 0,
         "realPrivateStorageWrites": 0,
-        "certifiesHeldoutLaunch": false
+        "certifiesHeldoutLaunch": false,
+        "originalBlockingP2": 2,
+        "independentClosurePending": true,
+        "record": "r04-heldout-independent-operator-preparation-20261020.json"
+      },
+      "day20LocalCalibration": {
+        "status": "independently_verified_and_canonical_adopted",
+        "sourceCommit": "6f29d01969ddb07d699fec842bbfd211d4637043",
+        "date": "2026-10-20",
+        "profileSha256": "e498ddb7602a86b4c54be1c0e7f3f28f52e3bc6b34c26e94ba596af540d206aa",
+        "manifestSha256": "dc06c8b53c17abc467a2fb8816535670fa527f0c87d4ccbaa9f9fc791a6ec435",
+        "parentOriginalHashesCompared": 754,
+        "parentGitBlobsCompared": 488,
+        "canonicalProfileUpdated": true,
+        "models": 0,
+        "reservations": 0,
+        "record": "r04-day20-calibration-reviewed-20261020.json",
+        "calibrationRegression": {
+          "count": 40,
+          "seconds": 2.702,
+          "exitCode": 0
+        }
       }
     }
   }

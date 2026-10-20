@@ -110,6 +110,12 @@ def audit_partial(raw):
                 'heldout score forbidden partial action')
 
 
+def audit_originals(values):
+    audit_partial(values.get('trace.jsonl',b''))
+    # 同じ中立stderr policyを原bytesへ適用する。保存名/原hashは変更しない。
+    operator.audit_partial({'namespace.stderr':values.get('stderr.bin',b'')})
+
+
 def run_process(plan,prompt):
     process=None
     try:
@@ -143,6 +149,8 @@ def primary(prepared_repository,bound,ordinal,ledger):
         'heldout independent requires pending primary')
     context=operator.originals.load(bound,ordinal,source_repository=prepared_repository)
     require(io.sha(context.receipt_raw)==rows[-1]['artifactSha256'], 'heldout primary journal receipt drift')
+    operator.verify_pacing(bound,ordinal,'primary',expected_sha256=
+        x.inputs.parse(context.receipt_raw)['artifactSha256']['logical-pacing.json'])
     return semantic.prepare(context)
 
 
@@ -185,6 +193,7 @@ def _reserved(prepared,sdk_raw,before,ledger):
     for name,raw in input_originals(prepared).items():save(base,name,raw)
     plan=invocation(prepared);prompt_raw=semantic.prompt(prepared)
     operator.pace(bound,ordinal,'independent',ledger)
+    pacing_sha=io.sha(operator.verify_pacing(bound,ordinal,'independent'))
     invoke=preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(invoke,before),'heldout independent pre-invocation resource drift')
     ledger.append(ordinal,'independent_started');begin=time.monotonic()
@@ -194,8 +203,9 @@ def _reserved(prepared,sdk_raw,before,ledger):
     after=preflight.verify_resources(repository,bound,sdk_raw)
     save(base,'resource-guards.json',io.encoded(dict(before=before,invoke=invoke,after=after)))
     require(trace.json_equal(after,before),'heldout independent after resource drift')
+    operator.verify_pacing(bound,ordinal,'independent',expected_sha256=pacing_sha)
     values=collect(base,complete=exit_code==0 and not timed_out)
-    audit_partial(values.get('trace.jsonl',b''))
+    audit_originals(values)
     result=None
     if exit_code==0 and not timed_out:
         result=semantic.response(prepared,values['trace.jsonl'],values['response.json'])
@@ -225,7 +235,8 @@ def verify_originals(prepared,current):
         'heldout independent fixed original input or argv mismatch')
     require(values['resource-guards.json']==io.encoded(dict.fromkeys(['before','invoke','after'],current)),
         'heldout independent original resource mismatch')
-    launch.pacing(bound.execution_raw,launch.primary_identity(bound,ordinal),values['logical-pacing.json'],role='independent')
+    audit_originals(values)
+    operator.verify_pacing(bound,ordinal,'independent',expected_sha256=saved['artifactSha256']['logical-pacing.json'])
     result=semantic.response(prepared,values['trace.jsonl'],values['response.json'])
     return raw,result
 
@@ -244,6 +255,8 @@ def finalize(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_ra
             anchors=[row for row in rows if row['ordinal']==ordinal and row['stage']=='primary_captured']
             require(len(anchors)==1 and io.sha(context.receipt_raw)==anchors[0]['artifactSha256'],
                 'heldout parent primary receipt journal mismatch')
+            operator.verify_pacing(bound,ordinal,'primary',expected_sha256=
+                x.inputs.parse(context.receipt_raw)['artifactSha256']['logical-pacing.json'])
             prepared=semantic.prepare(context);raw,result=verify_originals(prepared,current)
             require(io.sha(raw)==rows[-1]['artifactSha256'],'heldout parent independent receipt journal mismatch')
             status=result['proposedLedgerStatus']

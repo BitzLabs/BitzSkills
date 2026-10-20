@@ -150,8 +150,10 @@ class HeldoutOperatorTests(unittest.TestCase):
 
     def test_resource_proof_is_rechecked_after_logical_pacing_before_process(self):
         drift=False
+        original_pace=op.pace
         def pacing(*args):
             nonlocal drift
+            original_pace(*args)
             drift=True
         def resources(*args):
             if drift:raise ValueError('SYNTHETIC_DRIFT_DURING_WAIT')
@@ -164,6 +166,19 @@ class HeldoutOperatorTests(unittest.TestCase):
         with ledger.locked():
             self.assertEqual(ledger.summary()['primaryLaunchMarked'],0)
             self.assertEqual(ledger.summary()['status'],'stopped')
+
+    def test_child_cannot_change_primary_pacing_before_receipt_is_sealed(self):
+        def changed(plan):
+            result=self.fill_originals(plan)
+            path=self.bound.stage_root(1,'primary')/'logical-pacing.json'
+            value=op.x.inputs.parse(path.read_bytes());value['wallSeconds']+=1
+            path.write_bytes(op.io.encoded(value))
+            return result
+        with patch.object(op,'run_process',side_effect=changed),self.assertRaisesRegex(ValueError,'outside control'):
+            self.run_primary()
+        ledger=self.ledger()
+        with ledger.locked():
+            self.assertEqual(ledger.summary()['status'],'stopped');self.assertEqual(ledger.summary()['evaluationFailed'],0)
 
     def test_prelaunch_rejection_precedes_private_storage_and_reservation(self):
         self.review=op.io.encoded(dict(version='wrong'))

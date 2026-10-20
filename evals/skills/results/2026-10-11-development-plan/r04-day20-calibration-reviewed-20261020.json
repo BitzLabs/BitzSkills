@@ -1,0 +1,39 @@
+{
+  "status": "day20_local_calibration_independently_verified_and_adopted",
+  "scope": "local_client_context_only",
+  "sourceCommit": "6f29d01969ddb07d699fec842bbfd211d4637043",
+  "calibrationDate": "2026-10-20",
+  "referenceDate": "2026-10-16",
+  "receiptSha256": "af4780bd372aaf532f8bab37044e14d34b6d44a46756323de530112397c51768",
+  "requestSha256": "11f687a27c11d69a8efa2ea2e52196701089460e48ac93f3e9d106ba236a356d",
+  "profileSha256": "e498ddb7602a86b4c54be1c0e7f3f28f52e3bc6b34c26e94ba596af540d206aa",
+  "manifestSha256": "dc06c8b53c17abc467a2fb8816535670fa527f0c87d4ccbaa9f9fc791a6ec435",
+  "parentVerification": {
+    "status": "parent_calibration_originals_consumed",
+    "sourceCommit": "6f29d01969ddb07d699fec842bbfd211d4637043",
+    "independentReportSha256": "0f582ea2832fb5b1080afca3646fa1421464d629e95fe859dfc1705be0282f48",
+    "inventorySha256": "49fbeb7548aeb76cae14d40e3f2d9e36005e435dc979aa90bf8478683939789f",
+    "originalFiles": 754,
+    "gitBlobs": 488,
+    "allHashesCompared": true,
+    "profileSha256": "e498ddb7602a86b4c54be1c0e7f3f28f52e3bc6b34c26e94ba596af540d206aa",
+    "manifestSha256": "dc06c8b53c17abc467a2fb8816535670fa527f0c87d4ccbaa9f9fc791a6ec435",
+    "models": 0,
+    "reservations": 0
+  },
+  "canonicalProfileUpdated": true,
+  "models": 0,
+  "reservations": 0,
+  "privateCaseContentsRead": false,
+  "certifiesProviderWireBodies": false,
+  "certifiesHeldoutLaunch": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-day20-calibration-reviewed-20261020.tar.gz",
+    "sha256": "ae4d7f8ec78006aa6b883a4f989f95116bd9348328f561dac69c90a3ed4a1c43",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "rawSdkOrNativeIncluded": false,
+    "privateContentsIncluded": false
+  }
+}

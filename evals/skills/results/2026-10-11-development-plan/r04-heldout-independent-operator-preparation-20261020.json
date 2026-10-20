@@ -1,0 +1,52 @@
+{
+  "status": "independent_operator_two_p2_fixes_pending_independent_closure",
+  "sourceCommit": "6f29d01969ddb07d699fec842bbfd211d4637043",
+  "scope": "heldout_independent_operator_and_parent_finalization_only",
+  "originalIndependentReview": {
+    "blockingP2": 2,
+    "relatedTests": 150,
+    "adversarialTests": 9,
+    "adversarialFailed": 2,
+    "reportSha256": "7b2e7597ecc96f99e1f327da30228d9d21be5f9636b8f51dc858548f7035d9a3",
+    "inventorySha256": "dccd8a5dbba844b4a5feeabd2a53f3510a8c1d304d48f3e156b73986c00172ea",
+    "parentOriginalHashesMatched": 197
+  },
+  "originalFullRegression": {
+    "count": 1024,
+    "exitCode": 0,
+    "seconds": 173.45043150999118,
+    "cleanAfter": true
+  },
+  "remediation": {
+    "changes": [
+      "audit recognizable forbidden stderr both before seal and parent verification",
+      "compare primary/independent stage pacing raw against outside control and the prelaunch original hash before seal; recheck both at parent"
+    ],
+    "newSyntheticRegressions": 3,
+    "independentClosurePending": true,
+    "relatedTests": {
+      "count": 153,
+      "seconds": 51.571,
+      "exitCode": 0,
+      "scope": "precommit_checks_pending_fixed_ref_regression"
+    },
+    "focusedTests": {
+      "count": 39,
+      "seconds": 32.855,
+      "exitCode": 0
+    }
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-independent-operator-initial-review-20261020.tar.gz",
+    "sha256": "2ae39a90ae6bca2728966cd0ec2e7ec4e525a32dca22e3bedf73792d095b6c52",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}
