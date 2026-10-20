@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-165-07",
+  "description": "Git不在で対象が0件のverifyは、revisionがnullでも--reportのレポートを保存する",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--format",
+      "json",
+      "--report"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 1
+  }
+}

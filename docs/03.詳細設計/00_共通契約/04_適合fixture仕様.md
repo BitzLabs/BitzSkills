@@ -480,6 +480,13 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-157` | `SINGLE-156`の入力に、テスト対応を持つREQ-001を加え、TASK-001がREQ-001:AC-01とTECH-001を`addresses`する（2つのテスト対応は同じコマンド名`default`） | verify | passed／0 | `statements`はREQ-001:AC-01だけ、`bindingRefs`は`root::default`の1件、`commands`の`tests`と`covers`はREQ-001とTECH-001の両方 |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
+| `SINGLE-165-01` | コミット済みのクリーンなGitのリポジトリ。ワークスペースの設定の`schemaVersion`が`2.0`（Coreが対応するメジャーバージョンは1）、ほかは`SINGLE-062`と同じ。既存のレポート`.spec/reports/existing.json`あり | verify --report | blocked／2 | `SPEC-CONFIG-SCHEMA-001`（`blocked`、キー`schemaVersion`、`workspaceId`は`root`）の1件だけ。設定が停止して検証対象の解決に進まない結果でも、コミットがあるので`revision`は`null`にせず、`{commit, dirty: false}`（結果・診断・終了コード §2）。`--report`は状態にかかわらず保存するので（同 §8）、`.spec/reports/`に新しいレポートが1件でき、内容は標準出力の結果と一致する。`dirty`はレポートの保存より前の作業ツリーの状態で、保存したレポートによって`true`にならない |
+| `SINGLE-165-02` | `SINGLE-165-01`と同じ入力から、`schemaVersion`は`1.0`に戻し、設定の`language`の値にYAMLのアンカー（`&label`）を置く（構文の不正） | verify --report | error／3 | `SPEC-CONFIG-SCHEMA-001`（`error`、キー`language`、`workspaceId`は`null`）の1件だけ。ワークスペースの同一性を構成する前の停止なので`workspace.id`は`null`、`path`は`.`（同 §2）。`revision`は`{commit, dirty: false}`で、レポートが1件でき、内容は標準出力の結果と一致する |
+| `SINGLE-165-03` | `SINGLE-165-01`と同じ入力から、設定は停止しない値（`schemaVersion`は`1.0`）に戻す。`approved`のREQがない（REQ-001は`draft`）ので、引数なしの検証対象は0件 | verify --report | blocked／2 | `SPEC-VERIFY-BLOCKED-002`の1件だけ（`SINGLE-062`と同じ診断）。コミットがあるので`revision`は`{commit, dirty: false}`。対象が0件の結果でも`--report`のレポートが1件でき、内容は標準出力の結果と一致する |
+| `SINGLE-165-04` | `SINGLE-165-03`と同じ入力（`--report`なし） | verify | blocked／2 | 対照: `SPEC-VERIFY-BLOCKED-002`の1件。`revision`は`{commit, dirty: false}`で、`null`にしない。`--report`がないので、新しいファイルを作らず、既存のレポートを変えない（同 §8） |
+| `SINGLE-165-05` | `SINGLE-165-01`と同じ入力。ただし基準版のコミットには`.spec/`だけを含め、作業ツリーに未追跡のファイル`docs/notes.md`がある（`--report`なし） | verify | blocked／2 | 対照: `SPEC-CONFIG-SCHEMA-001`（`blocked`）の1件。`revision`は`{commit, dirty: true}`。`dirty`は実行時の作業ツリーの状態を表す。`--report`がないので、新しいファイルを作らない |
+| `SINGLE-165-06` | `SINGLE-165-01`と同じ入力。ただしコミットのないGitのリポジトリ（入力はステージだけで、コミットしない） | verify --report | blocked／2 | 対照: `SPEC-CONFIG-SCHEMA-001`（`blocked`）の1件。コミットのないリポジトリなので`revision: null`（同 §2）。`revision`が`null`でも、`--report`のレポートは1件でき、内容は標準出力の結果と一致する |
+| `SINGLE-165-07` | `SINGLE-165-03`と同じ入力。Gitの実行ファイルを見つけられない環境（`PATH=/dev/null`）で実行 | verify --report | blocked／2 | 対照: `SPEC-VERIFY-BLOCKED-002`の1件。Git不在なので`revision: null`（同 §2）。`--report`のレポートは1件でき、内容は標準出力の結果と一致する |
 
 ### 6.7 出力とレポート
 
