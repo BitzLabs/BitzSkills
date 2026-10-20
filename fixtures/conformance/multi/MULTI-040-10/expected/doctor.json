@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "error",
+  "multiWorkspace": {
+    "id": null,
+    "path": "."
+  },
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    }
+  ],
+  "workspaces": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "設定YAMLのアンカーは禁止です",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "language"
+      }
+    }
+  ]
+}
