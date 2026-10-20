@@ -3,6 +3,7 @@ from pathlib import Path
 import math
 
 import production_heldout_preflight as preflight
+import production_heldout_model_catalog as model_catalog
 
 x = preflight.execution
 io, require, trace = x.io, x.require, x.trace

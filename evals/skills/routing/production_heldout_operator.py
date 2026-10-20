@@ -194,7 +194,8 @@ def run_process(plan):
 def inputs_for_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, isolation_raw):
     c = bound.contract;d = x.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
     plan = launch.invocation(repository, bound.execution_raw, bound.deployment_raw, launch.primary_identity(bound, ordinal))
-    return {'contract.json':bound.execution_raw, 'deployment.json':bound.deployment_raw,
+    return {launch.model_catalog.FILE:launch.model_catalog.fixed_catalog(),
+        'contract.json':bound.execution_raw, 'deployment.json':bound.deployment_raw,
         'sdk-manifest.json':sdk_raw, 'reservation.json':io.encoded(launch.primary_identity(bound, ordinal)),
         'model-input.json':bound.matrix.payloads[(ordinal-1)//2],
         'decision-schema.json':preflight.public.decision_schema(preflight.public.guard.git(repository, 'show',
@@ -352,6 +353,7 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     pacing_sha = io.sha(verify_pacing(bound,ordinal,'primary'))
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(before,invoke), 'heldout resources changed before primary launch')
+    launch.model_catalog.verify(originals.read_original(base, launch.model_catalog.FILE))
     ledger.append(ordinal,'primary_started')
     plan = launch.invocation(repository,bound.execution_raw,bound.deployment_raw,launch.primary_identity(bound,ordinal))
     begin = time.monotonic()

@@ -15,7 +15,7 @@ VERSION = 'heldout-independent-operator-0.1.0'
 SCOPE = 'heldout12-times2-independent-and-parent-only'
 ARTIFACTS = frozenset({'contract.json','review-input.json','bindings.json','prompt.txt','schema.json',
     'execution-schema.json','reservation.json','config.json','invocation.json','resource-guards.json',
-    'trace.jsonl','stderr.bin','response.json','logical-pacing.json'})
+    'trace.jsonl','stderr.bin','response.json','logical-pacing.json',launch.model_catalog.FILE})
 SAVED = ARTIFACTS | {'independent-receipt.json','parent-verification.json','stop.json'}
 OPAQUE = frozenset({'work','tmp','codex-home','logs','state'})
 RECEIPT_KEYS = {'version','status','slot','model','scope','consumedReservations','independentLaunchMarked',
@@ -24,7 +24,7 @@ RECEIPT_KEYS = {'version','status','slot','model','scope','consumedReservations'
 
 
 def config_for(base):
-    return semantic.legacy_terminal.config_for(base)
+    return launch.model_catalog.configuration(base, semantic.legacy_terminal.config_for(base))
 
 
 def namespace_command(bound,ordinal):
@@ -61,7 +61,8 @@ def invocation(prepared):
 
 def input_originals(prepared):
     inv=invocation(prepared);bound=prepared.context.bound;ordinal=prepared.context.ordinal
-    return {'contract.json':prepared.contract_raw,'review-input.json':prepared.input_raw,
+    return {launch.model_catalog.FILE:launch.model_catalog.fixed_catalog(),
+        'contract.json':prepared.contract_raw,'review-input.json':prepared.input_raw,
         'bindings.json':prepared.binding_raw,'prompt.txt':semantic.prompt(prepared),'schema.json':prepared.schema_raw,
         'execution-schema.json':io.encoded(preflight.public.capture.execution_schema(trace.strict_json(prepared.schema_raw))),
         'reservation.json':io.encoded(dict(slot=bound.slot(ordinal),reviewInputSha256=io.sha(prepared.input_raw))),
@@ -209,6 +210,7 @@ def _reserved(prepared,sdk_raw,before,ledger):
     pacing_sha=io.sha(operator.verify_pacing(bound,ordinal,'independent'))
     invoke=preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(invoke,before),'heldout independent pre-invocation resource drift')
+    launch.model_catalog.verify(read(base,launch.model_catalog.FILE))
     ledger.append(ordinal,'independent_started');begin=time.monotonic()
     exit_code,timed_out,stdout,stderr=run_process(plan,prompt_raw)
     elapsed=time.monotonic()-begin

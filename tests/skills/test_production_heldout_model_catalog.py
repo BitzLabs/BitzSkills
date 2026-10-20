@@ -20,6 +20,7 @@ class HeldoutModelCatalogTests(unittest.TestCase):
         raw = catalog.io.encoded(value)
         with patch.multiple(catalog, LENGTH=len(raw), SEGMENT_SHA256=catalog.io.sha(raw),
             SELECTED_SHA256=selected_hash or catalog.io.sha(catalog.io.encoded(dict(models=[self.target]))),
+            SELECTED_BYTES=len(catalog.io.encoded(dict(models=[self.target]))),
             DEFAULT_TEMPLATE_SHA256=template_hash or catalog.io.sha(b'PUBLIC_SYNTHETIC_TEMPLATE')):
             return catalog.select(raw)
 
@@ -60,6 +61,18 @@ class HeldoutModelCatalogTests(unittest.TestCase):
                 patch.object(catalog.os, 'close') as close, self.assertRaises(ValueError):
                 catalog.fixed_catalog()
             close.assert_called_once_with(9)
+
+    def test_configuration_is_copied_and_rejects_override_or_relative_root(self):
+        config={'public':True};result=catalog.configuration(Path('/public-stage'),config)
+        self.assertEqual(config,{'public':True})
+        self.assertEqual(result['model_catalog_json'],'/public-stage/public-model-catalog.json')
+        for root,value in [(Path('relative'),config),(Path('/public/../other'),config),
+            (Path('/public-stage'),{'model_catalog_json':'/untrusted'})]:
+            with self.subTest(root=root),self.assertRaises(ValueError):catalog.configuration(root,value)
+
+    def test_selected_bytes_are_pinned_even_without_the_binary(self):
+        for raw in [b'{}',b'',None,'PUBLIC']:
+            with self.subTest(kind=type(raw).__name__),self.assertRaises(ValueError):catalog.verify(raw)
 
 
 if __name__ == '__main__':

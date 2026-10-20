@@ -105,7 +105,12 @@ class HeldoutLaunchTests(unittest.TestCase):
         (base/'work').mkdir(mode=0o700)
         review,report,isolation=review_bytes(self.bound)
         identity=launch.primary_identity(self.bound,1)
-        originals={'contract.json':self.bound.execution_raw,'deployment.json':self.bound.deployment_raw,
+        catalog_raw=launch.io.encoded(dict(models=[dict(slug='PUBLIC_SYNTHETIC_MODEL')]))
+        for name,value in [('SELECTED_SHA256',launch.io.sha(catalog_raw)),('SELECTED_BYTES',len(catalog_raw)),
+            ('fixed_catalog',lambda:catalog_raw)]:
+            item=patch.object(launch.model_catalog,name,value);item.start();self.addCleanup(item.stop)
+        originals={launch.model_catalog.FILE:catalog_raw,
+            'contract.json':self.bound.execution_raw,'deployment.json':self.bound.deployment_raw,
             'reservation.json':launch.io.encoded(identity),'prelaunch-review.json':review,'prelaunch-report.json':report,
             'local-isolation-proof.json':isolation,'model-input.json':self.bound.matrix.payloads[0],
             'invocation.json':launch.io.encoded(launch.invocation(root,self.bound.execution_raw,self.bound.deployment_raw,identity)),
@@ -149,6 +154,8 @@ class HeldoutLaunchTests(unittest.TestCase):
         with patch.dict(sys.modules,{'openai_codex':sdk,'openai_codex.client':client}), \
              patch.object(child.subprocess,'run',return_value=version),patch.object(child.os,'umask'):
             child.isolated(base)
+        saved=launch.x.inputs.parse((base/'config.json').read_bytes())
+        self.assertEqual(saved['model_catalog_json'],str(base/launch.model_catalog.FILE))
         self.assertEqual(calls['text'].encode(),self.bound.matrix.payloads[0])
         self.assertEqual(set(launch.x.inputs.parse(calls['text'])['case']),{'prompt','context'})
         self.assertTrue(calls['closed'])

@@ -1,8 +1,9 @@
 """固定CLI内蔵の公開モデル情報だけを抽出する。起動・認証・私的入力の読取りなし。
 
-保持評価の新条件へ接続するための部品。既存のcapture/config/台帳にはまだ接続しない。
+保持専用の新条件で使い、旧Canary/publicの設定や校正原を変更しない。
 """
 import os
+from pathlib import Path
 import stat
 
 import production_canary_runtime as runtime
@@ -15,6 +16,8 @@ LENGTH = 472511
 BINARY_BYTES = 289166920
 SEGMENT_SHA256 = '719c75b77ed02c783263f8fe62532ecd0abc1d1ccf2c34b12e5d221d509995a1'
 SELECTED_SHA256 = '529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9'
+SELECTED_BYTES = 65209
+FILE = 'public-model-catalog.json'
 DEFAULT_TEMPLATE_SHA256 = 'c1ed5ce0a3a49ba35b9eeba9774e0bd8ebd10eddec13b2dac564e7170513356c'
 require = trace.require
 
@@ -34,8 +37,20 @@ def select(segment):
         and io.sha(modes['default'].encode()) == DEFAULT_TEMPLATE_SHA256,
         'heldout fixed public mode template drift')
     raw = io.encoded(dict(models=selected))
-    require(io.sha(raw) == SELECTED_SHA256, 'heldout selected public catalog drift')
+    return verify(raw)
+
+
+def verify(raw):
+    require(isinstance(raw, bytes) and len(raw) == SELECTED_BYTES
+        and io.sha(raw) == SELECTED_SHA256, 'heldout selected public catalog drift')
     return raw
+
+
+def configuration(base, config):
+    require(isinstance(base, Path) and base.is_absolute() and '..' not in base.parts
+        and isinstance(config, dict) and 'model_catalog_json' not in config,
+        'heldout public catalog configuration')
+    return dict(config, model_catalog_json=str(base/FILE))
 
 
 def fixed_catalog():

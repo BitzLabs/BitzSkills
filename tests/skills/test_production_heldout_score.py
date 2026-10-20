@@ -226,4 +226,16 @@ class HeldoutScoreTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     score.operator.originals.read_original(self.bound.stage_root(1,'independent'),'auth.json',additional_artifacts=names)
 
+    def test_independent_config_and_catalog_are_bound_before_process(self):
+        base=self.bound.stage_root(1,'independent')
+        self.assertEqual(score.config_for(base)['model_catalog_json'],str(base/score.launch.model_catalog.FILE))
+        original=score.operator.pace
+        def tamper(*args):
+            original(*args);(base/score.launch.model_catalog.FILE).write_bytes(b'{}')
+        with patch.object(score.operator,'pace',side_effect=tamper),patch.object(score,'run_process') as process:
+            with self.assertRaisesRegex(ValueError,'catalog drift'):score.run_independent(*self.args())
+        process.assert_not_called()
+        self.assertEqual(self.summary()['independentLaunchMarked'],0)
+        self.assertEqual(self.summary()['status'],'stopped')
+
 if __name__=='__main__':unittest.main()

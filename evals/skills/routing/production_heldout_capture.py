@@ -37,6 +37,9 @@ def child_inputs(base):
     require({name: io.sha(raw) for name, raw in p.exact_tree(ROOT/d['sdkRelativePath'], sdk).items()} == sdk,
         'heldout child SDK drift')
     p.capture.fixed_runtime.verify(io.read_regular(base/'runtime-manifest.json'), d)
+    launch.model_catalog.verify(io.read_regular(base/launch.model_catalog.FILE))
+    require(io.read_regular(base/launch.model_catalog.FILE) == launch.model_catalog.fixed_catalog(),
+        'heldout child public catalog outside fixed runtime')
     schema_raw = io.read_regular(base/'decision-schema.json')
     require(io.sha(schema_raw) == c['pins']['decisionSchema'], 'heldout child schema drift')
     snapshot = ROOT/d['snapshotRelativePath']
@@ -65,7 +68,7 @@ def isolated(base):
     io.exclusive(base/'version.stderr', version.stderr)
     require(version.returncode == 0 and version.stdout == (d['codexVersion']+'\n').encode() and not version.stderr,
         'heldout child CLI version')
-    io.exclusive(base/'config.json', io.encoded(p.capture.config_for(base, d, repository=ROOT)))
+    io.exclusive(base/'config.json', io.encoded(launch.model_catalog.configuration(base, p.capture.config_for(base, d, repository=ROOT))))
     def deny(*_):
         raise ValueError('unexpected heldout SDK request')
     client = CodexClient(CodexConfig(launch_args_override=(sys.executable, '-B', str(Path(__file__)), '--proxy', str(base)),

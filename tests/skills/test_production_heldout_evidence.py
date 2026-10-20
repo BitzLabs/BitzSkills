@@ -32,6 +32,12 @@ class HeldoutEvidenceTests(unittest.TestCase):
                 test.manifest['resources'][name]=io.sha(raw)
             test.persist_manifest()
         item=patch.object(host_fixture.RoutingHostTests,'setUp',setup_host);item.start();self.addCleanup(item.stop)
+        # 実CLIを要求しない合成原。固定catalog pinのみ合成値へ束縛する。
+        self.catalog_raw=io.encoded(dict(models=[dict(slug='PUBLIC_SYNTHETIC_MODEL')]))
+        for name,value in [('SELECTED_SHA256',io.sha(self.catalog_raw)),('SELECTED_BYTES',len(self.catalog_raw))]:
+            item=patch.object(evidence.launch.model_catalog,name,value);item.start();self.addCleanup(item.stop)
+        item=patch.object(evidence.launch.model_catalog,'fixed_catalog',return_value=self.catalog_raw)
+        item.start();self.addCleanup(item.stop)
         self.input=input_fixture.HeldoutInputTests(methodName='runTest');self.input.setUp()
         self.input.contract['sourceCommit']='b'*40
         self.raws=self.input.raws
@@ -117,8 +123,10 @@ class HeldoutEvidenceTests(unittest.TestCase):
             'reservation.json':io.encoded(evidence.launch.primary_identity(self.bound,1)),
             'invocation.json':io.encoded(evidence.launch.invocation(self.capture.repository,self.bound.execution_raw,
                 self.bound.deployment_raw,evidence.launch.primary_identity(self.bound,1))),
-            'config.json':io.encoded(evidence.preflight.public.capture.config_for(self.bound.stage_root(1,'primary'),
-                self.deployment,repository=self.capture.repository)),
+            evidence.launch.model_catalog.FILE:self.catalog_raw,
+            'config.json':io.encoded(evidence.launch.model_catalog.configuration(self.bound.stage_root(1,'primary'),
+                evidence.preflight.public.capture.config_for(self.bound.stage_root(1,'primary'),
+                self.deployment,repository=self.capture.repository))),
             'sdk-manifest.json':sdk,'runtime-manifest.json':runtime,
             'launch-settings.json':evidence.launch.launch_settings(self.bound.execution_raw,self.bound.deployment_raw),
             'resource-guards.json':io.encoded(dict.fromkeys(['before','invoke','after'],self.proof)),
@@ -193,3 +201,13 @@ class HeldoutEvidenceTests(unittest.TestCase):
             self.originals['resource-guards.json']=io.encoded(dict.fromkeys(['before','invoke','after'],changed))
             self.rehash()
             with self.subTest(key=key),self.assertRaises(ValueError):self.bind()
+
+    def test_catalog_rehash_and_omitted_config_pin_cannot_change_the_condition(self):
+        before=dict(self.originals)
+        for catalog_raw in [b'{}', self.catalog_raw+b'\n']:
+            self.originals=dict(before);self.originals[evidence.launch.model_catalog.FILE]=catalog_raw;self.rehash()
+            with self.assertRaisesRegex(ValueError,'catalog drift'):self.bind()
+        self.originals=dict(before)
+        config=evidence.x.inputs.parse(self.originals['config.json']);config.pop('model_catalog_json')
+        self.originals['config.json']=io.encoded(config);self.rehash()
+        with self.assertRaisesRegex(ValueError,'configuration drift'):self.bind()

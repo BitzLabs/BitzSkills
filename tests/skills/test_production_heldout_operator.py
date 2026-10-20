@@ -272,4 +272,17 @@ class HeldoutOperatorTests(unittest.TestCase):
             result=op.run_process(plan)
         self.assertTrue(result[1]);self.assertEqual(start.call_count,1);self.assertEqual(kill.call_count,2)
 
+    def test_catalog_change_before_process_stops_without_marking_launch(self):
+        original=op.pace
+        def tamper(*args):
+            original(*args)
+            (self.bound.stage_root(1,'primary')/op.launch.model_catalog.FILE).write_bytes(b'{}')
+        with patch.object(op,'pace',side_effect=tamper),patch.object(op,'run_process') as process:
+            with self.assertRaisesRegex(ValueError,'catalog drift'):self.run_primary()
+        process.assert_not_called()
+        ledger=self.ledger()
+        with ledger.locked():
+            self.assertEqual(ledger.summary()['primaryLaunchMarked'],0)
+            self.assertEqual(ledger.summary()['status'],'stopped')
+
 if __name__=='__main__':unittest.main()

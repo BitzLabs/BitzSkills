@@ -13,7 +13,7 @@ io, require, trace = x.io, x.require, x.trace
 VERSION = 'heldout-primary-original-binding-0.1.0'
 ADDITIONAL = frozenset({'deployment.json', 'sdk-manifest.json', 'runtime-manifest.json',
     'launch-settings.json', 'resource-guards.json', 'prelaunch-review.json', 'prelaunch-report.json',
-    'local-isolation-proof.json', 'logical-pacing.json'})
+    'local-isolation-proof.json', 'logical-pacing.json', launch.model_catalog.FILE})
 RECEIPT_KEYS = {'version', 'sourceCommit', 'slot', 'cwd', 'artifactSha256', 'elapsedSeconds',
     'namespaceExitCode', 'timedOut', 'primaryModelTrajectories', 'independentReviewPerformed',
     'automaticRetries', 'phaseComplete', 'certifiesSkillGate'}
@@ -84,8 +84,10 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
         'heldout launch settings drift')
     sdk_files = preflight.public.sdk_manifest(originals['sdk-manifest.json'], d)
     runtime_spec = preflight.public.capture.fixed_runtime.specification(originals['runtime-manifest.json'], d)
-    require(trace.json_equal(x.inputs.parse(originals['config.json']), preflight.public.capture.config_for(
-        bound.stage_root(ordinal, 'primary'), d, repository=source_repository)), 'heldout actual configuration drift')
+    launch.model_catalog.verify(originals[launch.model_catalog.FILE])
+    base = bound.stage_root(ordinal, 'primary')
+    require(trace.json_equal(x.inputs.parse(originals['config.json']), launch.model_catalog.configuration(base,
+        preflight.public.capture.config_for(base, d, repository=source_repository))), 'heldout actual configuration drift')
     launch.prelaunch_review(bound.execution_raw, bound.deployment_raw, originals['prelaunch-review.json'],
         originals['prelaunch-report.json'], originals['local-isolation-proof.json'])
     guards = x.inputs.parse(originals['resource-guards.json'])
