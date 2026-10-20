@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_first_maximum2_slots_ready",
+        "status": "sdk_supplement_no_model_classification_before_remaining23_continuation",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "concrete_prelaunch_verified_ready_for_finite_first_batch",
+      "status": "first_global_stop_verified_sdk_notification_and_supplement_classification_pending",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1268,6 +1268,37 @@
         "actualHeldoutReservations": 0,
         "realPrivateStorageWrites": 0,
         "certifiesSkillGate": false
+      }
+    },
+    "r04HeldoutExecution": {
+      "status": "stopped",
+      "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+      "plannedSlots": 24,
+      "certifiesSkillGate": false,
+      "correct": 0,
+      "evaluationFailed": 0,
+      "incorrect": 0,
+      "independentLaunchMarked": 0,
+      "independentReserved": 0,
+      "parentVerified": 0,
+      "pending": 1,
+      "primaryLaunchMarked": 1,
+      "primaryReserved": 1,
+      "terminalSlots": 0,
+      "unattempted": 23,
+      "automaticRetries": 0,
+      "record": "r04-heldout-first-launch-stop-20261020.json",
+      "independentStopReviewPending": false,
+      "remaining23ContinuationDesignOnly": true,
+      "firstStopIndependentlyReproduced": true,
+      "followOnSupplementHashMismatch": true,
+      "observedAggregateUsage": {
+        "inputTokens": 20228,
+        "outputTokens": 338,
+        "totalTokens": 20566,
+        "cachedInputTokens": 10240,
+        "costUsd": null,
+        "costStatus": "unknown_not_zero"
       }
     }
   }
