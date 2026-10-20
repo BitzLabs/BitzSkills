@@ -441,6 +441,7 @@ class GitBoundaryNotConfirmedTests(unittest.TestCase):
 
     def test_unsupported_major_root_without_git_returns_the_config_stop(self):
         # 設定の読み込みは全体事前検査の前なので、版の非対応の診断を返し、`SPEC-MULTI-GIT-001`は返さない（§3、ADR-063の5）。
+        # `doctor`だけは、設定の不適合とGitの不在を独立した原因として両方を返す（ADR-065）。
         # Gitを利用できない状態の停止なので`revision`は`null`（結果・診断・終了コード §2）。
         _write(self.root, ".spec/bitz.yaml", ROOT_YAML.replace('schemaVersion: "1.0"', 'schemaVersion: "2.0"'))
         for env in (self.no_git_env, self.not_a_repo_env):
@@ -450,7 +451,8 @@ class GitBoundaryNotConfirmedTests(unittest.TestCase):
                     for name, (result, code) in out.items():
                         self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
                         self.assertEqual(result["workspace"], {"id": "platform", "path": "."})
-                        self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-CONFIG-SCHEMA-001"])
+                        expected = ["SPEC-MULTI-GIT-001", "SPEC-CONFIG-SCHEMA-001"] if name == "doctor" else ["SPEC-CONFIG-SCHEMA-001"]
+                        self.assertEqual([d["code"] for d in result["diagnostics"]], expected)
                         if name != "doctor":
                             self.assertIsNone(result["revision"])
             result, code = check_mod.run(
