@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_independent_operator_p2_closure_and_pipeline_isolation_pending",
+        "status": "heldout_independent_no_tools_closure_and_pipeline_isolation_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "independent_operator_two_p2_fixes_and_day20_prelaunch_preparation",
+      "status": "independent_no_tools_policy_fix_pending_fixed_ref_review",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1169,7 +1169,7 @@
         "currentDateRequires": "2026-10-19"
       },
       "independentOperator": {
-        "status": "two_p2_fixes_pending_independent_closure",
+        "status": "independent_no_tools_policy_fix_pending_fixed_ref_review",
         "relatedTests": {
           "count": 153,
           "seconds": 51.571,
@@ -1184,7 +1184,14 @@
         "certifiesHeldoutLaunch": false,
         "originalBlockingP2": 2,
         "independentClosurePending": true,
-        "record": "r04-heldout-independent-operator-preparation-20261020.json"
+        "record": "r04-heldout-independent-policy-followup-20261020.json",
+        "additionalBlockingP2": 1,
+        "previousFullRegression": {
+          "count": 1027,
+          "exitCode": 0,
+          "seconds": 181.81576849499834,
+          "cleanAfter": true
+        }
       },
       "day20LocalCalibration": {
         "status": "independently_verified_and_canonical_adopted",

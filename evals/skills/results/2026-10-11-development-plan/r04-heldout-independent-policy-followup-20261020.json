@@ -1,0 +1,47 @@
+{
+  "status": "independent_no_tools_policy_fix_pending_fixed_ref_review",
+  "sourceCommit": "63b307b623b1c5ae12784c6a5c64469f58f379d8",
+  "scope": "heldout_independent_stderr_role_policy_only",
+  "review": {
+    "reportSha256": "050362ccc93fb49fe75d0352e994ced11a8ad72088a62e719a9f2a9e11590578",
+    "inventorySha256": "e29b805bb61cb5f3d2dd95e18f325429b5602400ae1892bed05bb3780b1296e6",
+    "parentOriginalHashesMatched": 214,
+    "blockingP2": 1,
+    "relatedTests": 153,
+    "originalAdversarialTests": 9,
+    "additionalBoundaryTests": 7,
+    "failedPolicyTests": 3,
+    "originalPacingRewriteResolved": true
+  },
+  "fullRegression": {
+    "count": 1027,
+    "exitCode": 0,
+    "seconds": 181.81576849499834,
+    "cleanAfter": true
+  },
+  "remediation": {
+    "independentRoleRejectsAllToolTelemetry": true,
+    "primaryAllowlistChanged": false,
+    "newSyntheticRegressions": 3,
+    "independentClosurePending": true,
+    "focusedTests": {
+      "count": 42,
+      "seconds": 37.396,
+      "exitCode": 0,
+      "scope": "precommit_primary_and_independent_operator_checks"
+    }
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-independent-policy-followup-20261020.tar.gz",
+    "sha256": "f12a8caf5aa85609f142894bef67c1f6749e5c73bd00aff8a7c6228fbba862d3",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

@@ -112,8 +112,17 @@ def audit_partial(raw):
 
 def audit_originals(values):
     audit_partial(values.get('trace.jsonl',b''))
-    # 同じ中立stderr policyを原bytesへ適用する。保存名/原hashは変更しない。
-    operator.audit_partial({'namespace.stderr':values.get('stderr.bin',b'')})
+    stderr=values.get('stderr.bin',b'')
+    # 独立採点には一次のexec/wait/Host許可を引き継がない。原stderrも全ツール禁止。
+    for line in stderr.splitlines():
+        try:value=x.inputs.parse(line)
+        except ValueError:continue
+        if not isinstance(value,dict):continue
+        fields=value.get('fields',{})
+        require(isinstance(fields,dict),'heldout score telemetry fields')
+        require(fields.get('event.name')!='codex.tool_call_received','heldout score no-tools control policy')
+    # 共通のAPI回数・再試行禁止も、保存名や原bytesを変えず適用する。
+    operator.audit_partial({'namespace.stderr':stderr})
 
 
 def run_process(plan,prompt):

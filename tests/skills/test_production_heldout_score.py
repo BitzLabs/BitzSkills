@@ -185,6 +185,33 @@ class HeldoutScoreTests(unittest.TestCase):
             score.run_independent(*self.args())
         self.assertEqual(self.summary()['status'],'stopped');self.assertEqual(self.summary()['parentVerified'],0)
 
+    def assert_successful_response_with_tool_telemetry_stops(self,fields):
+        answer=self.answer();stderr=score.io.encoded(dict(fields=fields))+b'\n'
+        def process(plan,prompt):
+            score.save(self.bound.stage_root(1,'independent'),'response.json',score.io.encoded(answer))
+            return 0,False,b''.join(score.io.encoded(event)+b'\n' for event in self.events(answer)),stderr
+        with patch.object(score,'run_process',side_effect=process),self.assertRaisesRegex(ValueError,'no-tools'):
+            score.run_independent(*self.args())
+        state=self.summary()
+        self.assertEqual(state['status'],'stopped');self.assertEqual(state['parentVerified'],0)
+        self.assertEqual(state['evaluationFailed'],0)
+        with self.assertRaises(ValueError):score.finalize(*self.args())
+        # 親の再照合にも同じ監査を適用し、正常終了/失敗終了に依存しない。
+        with self.assertRaisesRegex(ValueError,'no-tools'):score.audit_originals({'stderr.bin':stderr})
+
+    def test_independent_exec_telemetry_cannot_finalize_successful_response(self):
+        self.assert_successful_response_with_tool_telemetry_stops(
+            {'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'exec'})
+
+    def test_independent_wait_telemetry_cannot_finalize_successful_response(self):
+        self.assert_successful_response_with_tool_telemetry_stops(
+            {'event.name':'codex.tool_call_received','tool_source':'direct','tool_name':'wait'})
+
+    def test_independent_host_read_telemetry_cannot_finalize_successful_response(self):
+        self.assert_successful_response_with_tool_telemetry_stops(
+            {'event.name':'codex.tool_call_received','tool_source':'code_mode',
+                'tool_namespace':'mcp__production_routing','tool_name':'read_resource'})
+
     def test_post_process_resource_drift_stops_without_sealing_independent_failure(self):
         changed=copy.deepcopy(self.fixture.fixture.proof);changed['contextDate']='1900-01-01'
         self.fixture.resources.side_effect=[self.fixture.fixture.proof,self.fixture.fixture.proof,changed]
