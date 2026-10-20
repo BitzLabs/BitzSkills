@@ -135,11 +135,13 @@ def select_active(
     extra_config_revs: list[str] | None = None,
     compare_git_configs: bool = False,
     ears_version_code: str = "SPEC-EARS-VERSION-001",
+    report_git_with_config_stop: bool = False,
 ) -> ActiveSelection:
     """作業ワークスペースを決める。``subject``は引数不正のメッセージの「起点」「対象」の呼び方。
 
     ``compare_git_configs``は、全体事前検査でGitが認識する設定の列挙と比較するか（単独の`doctor`だけ真。
     単独の`context`・`check`・`verify`は、選択した最も近い設定だけをカタログと照合する。複合ワークスペース仕様 §7）。
+    ``report_git_with_config_stop``は、ルートの設定で停止したときもGitの不在を診断に加えるか（単独の`doctor`だけ真。`04_doctor.md` §3）。
     """
 
     qualified_prefixes = {q[0] for t in positionals if (q := multirelate.parse_qualified(t)) is not None}
@@ -162,6 +164,7 @@ def select_active(
         nearest_config_path=loc.config_path,
         selected_dir=loc.root,
         compare_git_configs=compare_git_configs,
+        report_git_with_config_stop=report_git_with_config_stop,
     )
     if pre.discovery_failed:
         return ActiveSelection(loc, ".", None)
