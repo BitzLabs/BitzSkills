@@ -17,9 +17,16 @@ import test_production_heldout_execution as fixture
 def review_bytes(bound):
     io = launch.io
     condition = launch.condition_sha256(bound.execution_raw,bound.deployment_raw)
-    isolation = io.encoded(dict(status='heldout_local_isolation_verified',sourceCommit=bound.contract['sourceCommit'],
+    proofs={}
+    for role in ['primary','independent']:
+        proof=dict(status='heldout_'+role+'_local_isolation_verified',sourceCommit=bound.contract['sourceCommit'],
+            conditionSha256=condition,networkNamespaceIsolated=True,credentialsHidden=True,privateCorpusHidden=True,
+            actualArgvVerified=True,actualExitCode=0,privateCaseContentsRead=False,certifiesHeldoutLaunch=False,models=0,reservations=0)
+        proof[role+'PayloadProjectionVerified']=True
+        proofs[role+'Proof']=proof;proofs[role+'ProofSha256']=io.sha(io.encoded(proof))
+    isolation = io.encoded(dict(version=launch.ISOLATION_VERSION,status='heldout_local_isolation_verified',sourceCommit=bound.contract['sourceCommit'],
         conditionSha256=condition,networkNamespaceIsolated=True,credentialsHidden=True,privateCorpusHidden=True,
-        primaryPayloadProjectionVerified=True,actualArgvVerified=True,models=0,reservations=0))
+        primaryPayloadProjectionVerified=True,independentPayloadProjectionVerified=True,actualArgvVerified=True,models=0,reservations=0,**proofs))
     report = io.encoded(dict(status='heldout_pipeline_concrete_prelaunch_verified',sourceCommit=bound.contract['sourceCommit'],
         conditionSha256=condition,independentContext=True,findings=[],blockingFindings=[],cleanBefore='',cleanAfter='',
         tests=dict(count=1,exitCode=0),localIsolationProofSha256=io.sha(isolation)))

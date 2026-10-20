@@ -11,6 +11,7 @@ AUTH = Path('/home/hide/.codex/auth.json')
 VERSION = 'heldout-primary-launch-0.1.0'
 PACING_VERSION = 'heldout-logical-launch-pacing-0.1.0'
 REVIEW_VERSION = 'heldout-pipeline-prelaunch-review-0.1.0'
+ISOLATION_VERSION = 'heldout-local-pair-0.1.0'
 IDENTITY_KEYS = {'ordinal', 'repetition', 'payloadSha256', 'contractSha256', 'sourceCommit',
     'campaignId', 'executionSha256'}
 
@@ -40,14 +41,32 @@ def prelaunch_review(execution_raw, deployment_raw, review_raw, report_raw, isol
     tests = report.get('tests')
     require(isinstance(tests, dict) and type(tests.get('count')) is int and tests['count'] > 0
         and type(tests.get('exitCode')) is int and tests['exitCode'] == 0, 'heldout prelaunch tests')
-    require(isinstance(isolation, dict) and isolation.get('status') == 'heldout_local_isolation_verified'
+    local_pair_proof(execution_raw,deployment_raw,isolation)
+    return review
+
+
+def local_pair_proof(execution_raw,deployment_raw,isolation):
+    c=x.execution_contract(execution_raw)
+    condition=condition_sha256(execution_raw,deployment_raw)
+    require(isinstance(isolation, dict) and isolation.get('version') == ISOLATION_VERSION
+        and isolation.get('status') == 'heldout_local_isolation_verified'
         and isolation.get('sourceCommit') == c['sourceCommit'] and isolation.get('conditionSha256') == condition
         and all(isolation.get(key) is True for key in ['networkNamespaceIsolated', 'credentialsHidden',
-            'privateCorpusHidden', 'primaryPayloadProjectionVerified', 'actualArgvVerified'])
+            'privateCorpusHidden', 'primaryPayloadProjectionVerified', 'independentPayloadProjectionVerified', 'actualArgvVerified'])
         and type(isolation.get('models')) is int and isolation['models'] == 0
         and type(isolation.get('reservations')) is int and isolation['reservations'] == 0,
         'heldout original local isolation proof')
-    return review
+    for role in ['primary','independent']:
+        proof=isolation.get(role+'Proof')
+        require(isinstance(proof,dict) and proof.get('status')=='heldout_'+role+'_local_isolation_verified'
+            and proof.get('sourceCommit')==c['sourceCommit'] and proof.get('conditionSha256')==condition
+            and type(proof.get('actualExitCode')) is int and proof['actualExitCode']==0
+            and all(proof.get(key) is True for key in ['networkNamespaceIsolated','credentialsHidden',
+                'privateCorpusHidden',role+'PayloadProjectionVerified','actualArgvVerified'])
+            and proof.get('privateCaseContentsRead') is False and proof.get('certifiesHeldoutLaunch') is False
+            and all(type(proof.get(key)) is int and proof[key]==0 for key in ['models','reservations'])
+            and isolation.get(role+'ProofSha256')==io.sha(io.encoded(proof)), 'heldout both role original isolation proofs')
+    return isolation
 
 
 def primary_identity(bound, ordinal):

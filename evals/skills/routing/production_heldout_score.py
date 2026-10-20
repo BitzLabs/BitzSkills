@@ -28,8 +28,12 @@ def config_for(base):
 
 
 def namespace_command(bound,ordinal):
-    d=x.deployment_for_execution(bound.execution_raw,bound.deployment_raw)
-    base=bound.stage_root(ordinal,'independent')
+    return namespace_for_execution(bound.execution_raw,bound.deployment_raw,ordinal)
+
+
+def namespace_for_execution(execution_raw,deployment_raw,ordinal):
+    d=x.deployment_for_execution(execution_raw,deployment_raw)
+    base=launch.stage_root(execution_raw,ordinal,'independent')
     argv=[d['codexPath'],'exec','--json','--ephemeral','--ignore-user-config','--ignore-rules',
         '--skip-git-repo-check','--sandbox','read-only','--cd',str(base/'work'),'--model','gpt-6.1-sol',
         '--output-schema',str(base/'execution-schema.json'),'--output-last-message',str(base/'response.json')]

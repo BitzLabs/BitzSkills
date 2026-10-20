@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "heldout_independent_no_tools_closure_and_pipeline_isolation_pending",
+        "status": "heldout_pair_isolation_and_finite_entry_preparation",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "independent_no_tools_policy_fix_pending_fixed_ref_review",
+      "status": "independent_operator_reviewed_pair_isolation_and_finite_entry_preparation",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1169,10 +1169,10 @@
         "currentDateRequires": "2026-10-19"
       },
       "independentOperator": {
-        "status": "independent_no_tools_policy_fix_pending_fixed_ref_review",
+        "status": "original_two_and_additional_one_p2_verified_resolved",
         "relatedTests": {
-          "count": 153,
-          "seconds": 51.571,
+          "count": 156,
+          "seconds": 61.518,
           "exitCode": 0
         },
         "newSyntheticTests": 15,
@@ -1183,13 +1183,22 @@
         "realPrivateStorageWrites": 0,
         "certifiesHeldoutLaunch": false,
         "originalBlockingP2": 2,
-        "independentClosurePending": true,
-        "record": "r04-heldout-independent-policy-followup-20261020.json",
+        "independentClosurePending": false,
+        "record": "r04-heldout-independent-operator-reviewed-20261020.json",
         "additionalBlockingP2": 1,
         "previousFullRegression": {
           "count": 1027,
           "exitCode": 0,
           "seconds": 181.81576849499834,
+          "cleanAfter": true
+        },
+        "sourceCommit": "c58a562330aec64010f7cd86c57c02472fd1a569",
+        "resolvedP2Total": 3,
+        "fullRegression": {
+          "count": 1030,
+          "exitCode": 0,
+          "seconds": 187.40988317297888,
+          "cleanBefore": true,
           "cleanAfter": true
         }
       },
@@ -1210,6 +1219,27 @@
           "seconds": 2.702,
           "exitCode": 0
         }
+      },
+      "pipelineEntry": {
+        "status": "implemented_pending_fixed_ref_regression_independent_review_and_actual_pair_probe",
+        "maximumSlotsPerBatch": 2,
+        "resumeCapturedWithoutRetry": true,
+        "ambiguousLaunchPermanentlyStops": true,
+        "bothRoleProofsRequired": true,
+        "actualHeldoutModels": 0,
+        "actualHeldoutReservations": 0,
+        "realPrivateStorageWrites": 0,
+        "precommitRelatedTests": {
+          "count": 173,
+          "seconds": 57.21,
+          "exitCode": 0
+        },
+        "precommitEntryAndIsolationTests": {
+          "count": 23,
+          "seconds": 2.241,
+          "exitCode": 0
+        },
+        "certifiesHeldoutLaunch": false
       }
     }
   }

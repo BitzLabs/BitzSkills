@@ -1,0 +1,40 @@
+{
+  "status": "independent_operator_original_and_additional_p2_verified_resolved",
+  "sourceCommit": "c58a562330aec64010f7cd86c57c02472fd1a569",
+  "scope": "heldout_independent_operator_parent_pacing_and_no_tools_stderr_only",
+  "independentReview": {
+    "reportSha256": "daabb789a470deba836c343752e73d3044b5518a5a40c7dad71d7bb37d529a09",
+    "inventorySha256": "914aa1529221b1925365e4d669c4ef54ba8fb9f177fb045f4c51c558bd48b249",
+    "parentOriginalHashesMatched": 219,
+    "blockingFindings": 0,
+    "relatedTests": 156,
+    "originalAdversarialTests": 9,
+    "additionalBoundaryTests": 7,
+    "previousPolicyRegressions": 3,
+    "newRoleBoundaries": 6,
+    "allExitCode": 0,
+    "previous214OriginalsUnchanged": true
+  },
+  "fullRegression": {
+    "count": 1030,
+    "exitCode": 0,
+    "seconds": 187.40988317297888,
+    "cleanBefore": true,
+    "cleanAfter": true
+  },
+  "originalP2Resolved": 2,
+  "additionalP2Resolved": 1,
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-independent-operator-reviewed-20261020.tar.gz",
+    "sha256": "feeabd34158588147bd1c999585ebf0f30783ab065cb2439e3803850a198ba09",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}
