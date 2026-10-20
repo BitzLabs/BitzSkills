@@ -704,3 +704,23 @@ Core固有の単体試験は926件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は937件がすべて成功した。
+
+## 2026-10-21: verifyの早期に返す結果のrevisionと--reportを直した後のStep 1〜5の再判定
+
+`verify.py`で、`revision`の算出を早期に返す処理より前へ移し、`--report`が指定されていれば状態にかかわらずレポートを保存するようにした（実装の確認事項C41）。
+これを固定する`SINGLE-165-01`〜`SINGLE-165-07`（Step 4）を追加した。修正前のCore（コミット`e04b03cb`の版）では、追加した7件がすべて非成功（`failed` 7件）となり、
+既存の455件はすべて通過することを確かめた。修正後のCoreでは462件すべてが`passed`となる。`.spec/`のないリポジトリの`verify --report`は、`check --report`と同じく
+`SPEC-REPORT-WRITE-001`が加わり、`blocked`／2から`error`／3に変わる。
+
+コミット`30c340e6fbd05b7c489f226cc967e120bb52319c`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 462件（`SINGLE-165-01`〜`SINGLE-165-07`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0b3690cd1013bf193eaae4563bd85c7a1c4242d82438b04e81f348c207547db8` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は959件がすべて成功した。
