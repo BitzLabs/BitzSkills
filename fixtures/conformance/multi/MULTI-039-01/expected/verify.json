@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:a0f0fa23dfdb334bef7dc0566332632c439b70bb9d12862f2e9b367589ea92b3",
+      "statements": [
+        "web::REQ-001:AC-01"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "コマンド名absentが設定に定義されていません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[0].command"
+          }
+        },
+        {
+          "code": "SPEC-VERIFY-BLOCKED-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "コマンド名missingが設定に定義されていません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[0].command"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}
