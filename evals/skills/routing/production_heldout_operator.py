@@ -195,6 +195,8 @@ def inputs_for_primary(repository, bound, ordinal, sdk_raw, review_raw, report_r
     c = bound.contract;d = x.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
     plan = launch.invocation(repository, bound.execution_raw, bound.deployment_raw, launch.primary_identity(bound, ordinal))
     return {launch.model_catalog.FILE:launch.model_catalog.fixed_catalog(),
+        'config.json':io.encoded(launch.model_catalog.configuration(bound.stage_root(ordinal,'primary'),
+            preflight.public.capture.config_for(bound.stage_root(ordinal,'primary'),d,repository=repository))),
         'contract.json':bound.execution_raw, 'deployment.json':bound.deployment_raw,
         'sdk-manifest.json':sdk_raw, 'reservation.json':io.encoded(launch.primary_identity(bound, ordinal)),
         'model-input.json':bound.matrix.payloads[(ordinal-1)//2],
@@ -348,12 +350,15 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     finally:os.close(fd)
     for name in ['work', 'tmp', 'codex-home', 'logs', 'state', 'rollout-traces']:create_directory(base/name)
     create_directory(control)
-    for name,raw in inputs_for_primary(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_raw).items():save(base,name,raw)
+    expected_inputs = inputs_for_primary(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_raw)
+    for name,raw in expected_inputs.items():save(base,name,raw)
     pace(bound,ordinal,'primary',ledger)
     pacing_sha = io.sha(verify_pacing(bound,ordinal,'primary'))
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(before,invoke), 'heldout resources changed before primary launch')
     launch.model_catalog.verify(originals.read_original(base, launch.model_catalog.FILE))
+    require(all(originals.read_original(base,name) == raw for name,raw in expected_inputs.items()),
+        'heldout primary input changed before launch')
     ledger.append(ordinal,'primary_started')
     plan = launch.invocation(repository,bound.execution_raw,bound.deployment_raw,launch.primary_identity(bound,ordinal))
     begin = time.monotonic()
@@ -367,6 +372,9 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     verify_pacing(bound,ordinal,'primary',expected_sha256=pacing_sha)
     # 途中原でも未知名/stop markerを先に拒否し、通常終端を自己申告だけで扱わない。
     partial = collect_partial(base)
+    launch.model_catalog.verify(partial.get(launch.model_catalog.FILE))
+    require(all(partial.get(name) == raw for name,raw in expected_inputs.items()),
+        'heldout primary input changed during process')
     sdk_terminal = x.inputs.parse(partial['isolated-result.json']) if 'isolated-result.json' in partial else None
     if sdk_terminal is not None:
         require(isinstance(sdk_terminal,dict) and set(sdk_terminal) == {'sdkErrorType'} and

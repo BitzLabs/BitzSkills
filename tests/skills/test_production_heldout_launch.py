@@ -110,6 +110,8 @@ class HeldoutLaunchTests(unittest.TestCase):
             ('fixed_catalog',lambda:catalog_raw)]:
             item=patch.object(launch.model_catalog,name,value);item.start();self.addCleanup(item.stop)
         originals={launch.model_catalog.FILE:catalog_raw,
+            'config.json':launch.io.encoded(launch.model_catalog.configuration(base,
+                launch.preflight.public.capture.config_for(base,d,repository=root))),
             'contract.json':self.bound.execution_raw,'deployment.json':self.bound.deployment_raw,
             'reservation.json':launch.io.encoded(identity),'prelaunch-review.json':review,'prelaunch-report.json':report,
             'local-isolation-proof.json':isolation,'model-input.json':self.bound.matrix.payloads[0],
@@ -161,3 +163,12 @@ class HeldoutLaunchTests(unittest.TestCase):
         self.assertTrue(calls['closed'])
         with self.assertRaises(ValueError):calls['deny']('unexpected')
         self.assertEqual(launch.x.inputs.parse((base/'isolated-result.json').read_bytes()),{'sdkErrorType':None})
+
+    def test_proxy_rejects_rehashed_catalog_path_override_before_calling_sdk_proxy(self):
+        _,base,originals=self.child_fixture()
+        config=launch.x.inputs.parse(originals['config.json']);config['model_catalog_json']='/PUBLIC_UNTRUSTED_CATALOG.json'
+        (base/'config.json').write_bytes(launch.io.encoded(config))
+        with patch.object(sys,'argv',['PUBLIC_TEST','--proxy',str(base)]),patch.object(child.os,'umask'), \
+            patch.object(child.p.capture.sdk,'proxy') as proxy:
+            self.assertEqual(child.main(),1)
+        proxy.assert_not_called()

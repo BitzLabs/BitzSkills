@@ -238,4 +238,20 @@ class HeldoutScoreTests(unittest.TestCase):
         self.assertEqual(self.summary()['independentLaunchMarked'],0)
         self.assertEqual(self.summary()['status'],'stopped')
 
+    def assert_postprocess_input_drift_stops(self,name,raw,reason):
+        def process(plan,prompt):
+            (self.bound.stage_root(1,'independent')/name).write_bytes(raw)
+            return 1,False,b'',b'PUBLIC_SYNTHETIC_FAILURE'
+        with patch.object(score,'run_process',side_effect=process),self.assertRaisesRegex(ValueError,reason):
+            score.run_independent(*self.args())
+        result=self.summary()
+        self.assertEqual(result['status'],'stopped');self.assertEqual(result['evaluationFailed'],0)
+        self.assertEqual(result['independentLaunchMarked'],1)
+
+    def test_catalog_change_during_failed_independent_process_is_a_global_stop(self):
+        self.assert_postprocess_input_drift_stops(score.launch.model_catalog.FILE,b'{}','catalog drift')
+
+    def test_config_change_during_failed_independent_process_is_a_global_stop(self):
+        self.assert_postprocess_input_drift_stops('config.json',b'{}','input changed during process')
+
 if __name__=='__main__':unittest.main()

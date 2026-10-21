@@ -204,13 +204,16 @@ def _reserved(prepared,sdk_raw,before,ledger):
     try:os.mkdir(base.name,mode=0o700,dir_fd=fd);os.fsync(fd)
     finally:os.close(fd)
     for name in OPAQUE:operator.create_directory(base/name)
-    for name,raw in input_originals(prepared).items():save(base,name,raw)
+    expected_inputs=input_originals(prepared)
+    for name,raw in expected_inputs.items():save(base,name,raw)
     plan=invocation(prepared);prompt_raw=semantic.prompt(prepared)
     operator.pace(bound,ordinal,'independent',ledger)
     pacing_sha=io.sha(operator.verify_pacing(bound,ordinal,'independent'))
     invoke=preflight.verify_resources(repository,bound,sdk_raw)
     require(trace.json_equal(invoke,before),'heldout independent pre-invocation resource drift')
     launch.model_catalog.verify(read(base,launch.model_catalog.FILE))
+    require(all(read(base,name) == raw for name,raw in expected_inputs.items()),
+        'heldout independent input changed before launch')
     ledger.append(ordinal,'independent_started');begin=time.monotonic()
     exit_code,timed_out,stdout,stderr=run_process(plan,prompt_raw)
     elapsed=time.monotonic()-begin
@@ -220,6 +223,9 @@ def _reserved(prepared,sdk_raw,before,ledger):
     require(trace.json_equal(after,before),'heldout independent after resource drift')
     operator.verify_pacing(bound,ordinal,'independent',expected_sha256=pacing_sha)
     values=collect(base,complete=exit_code==0 and not timed_out)
+    launch.model_catalog.verify(values.get(launch.model_catalog.FILE))
+    require(all(values.get(name) == raw for name,raw in expected_inputs.items()),
+        'heldout independent input changed during process')
     audit_originals(values)
     result=None
     if exit_code==0 and not timed_out:

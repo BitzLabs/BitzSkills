@@ -285,4 +285,22 @@ class HeldoutOperatorTests(unittest.TestCase):
             self.assertEqual(ledger.summary()['primaryLaunchMarked'],0)
             self.assertEqual(ledger.summary()['status'],'stopped')
 
+    def assert_postprocess_input_drift_stops(self,name,raw,reason):
+        def process(plan):
+            (self.bound.stage_root(1,'primary')/name).write_bytes(raw)
+            return 1,False,b'',b'PUBLIC_SYNTHETIC_FAILURE'
+        with patch.object(op,'run_process',side_effect=process),self.assertRaisesRegex(ValueError,reason):
+            self.run_primary()
+        ledger=self.ledger()
+        with ledger.locked():
+            result=ledger.summary()
+            self.assertEqual(result['status'],'stopped');self.assertEqual(result['evaluationFailed'],0)
+            self.assertEqual(result['primaryLaunchMarked'],1)
+
+    def test_catalog_change_during_failed_process_is_a_global_stop(self):
+        self.assert_postprocess_input_drift_stops(op.launch.model_catalog.FILE,b'{}','catalog drift')
+
+    def test_config_change_during_failed_process_is_a_global_stop(self):
+        self.assert_postprocess_input_drift_stops('config.json',b'{}','input changed during process')
+
 if __name__=='__main__':unittest.main()
