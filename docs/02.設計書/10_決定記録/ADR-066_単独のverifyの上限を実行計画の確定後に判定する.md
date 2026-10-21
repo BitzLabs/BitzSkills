@@ -26,13 +26,17 @@ relations:
    両方が超過していれば`verifyBindingCount`、`commandDefinitionCount`だけが超過していればそれを、診断`SPEC-MULTI-LIMIT-001`（`blocked`）で報告する（ユーザーの決定）。
    `verifyBindingCount`は1回の実行計画にあるテスト割当ての数、`commandDefinitionCount`は全ワークスペースのコマンド定義数とする（§10の表）。
 3. **優先の範囲**。§10の「複数の次元が同時に超過する場合は、`verify`実行計画の次元を優先して報告する」は、`commandDefinitionCount`と`verifyBindingCount`の
-   組に当てる。ほかの次元は、今どおり全体事前検査で判定する。
+   組に当てる。ほかの次元は、今どおり全体事前検査で判定する（司令塔の判断をユーザーに伝えた。§10に明記）。
 
 ## Consequences
 
 - 単独の`verify`と`verify --all-workspaces`で、上限の判定の時期と優先がそろう。
 - `commandDefinitionCount`だけが超過し、`--workspace`のIDがカタログにない場合は、全体事前検査が成功するため、引数不正（終了コード4）になる
   （以前は全体事前検査の停止で`blocked`／2）。ADR-063の決定3（全体事前検査が非成功なら終了コード4より診断を優先する）は、全体事前検査が成功した場合には当てはまらない。
+- 実行計画の確定後の停止は全体事前検査の停止ではないため、`--workspace`または修飾IDで別のワークスペースを作業ワークスペースにした場合、停止結果の`workspace`と
+  `--report`の保存先は作業ワークスペースのものになる（以前は全体事前検査の停止として、現在のディレクトリから選んだ設定のもの）。
+- `commandDefinitionCount`の`evidence`の`observedAtLeast`は、全ワークスペースのコマンド定義数の総数になる（以前は全体事前検査の早期停止の累計。
+  §10の「早期に停止したときの`observedAtLeast`」の範囲内で、`--all-workspaces`と同じ値）。
 - この扱いを固定する適合fixtureを追加する（ADR-051の追加）。既存のfixtureの入力と期待値は変えない。
 
 ## Alternatives
@@ -49,3 +53,4 @@ relations:
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-10-22 | 単独の`verify`の`commandDefinitionCount`を実行計画の確定後に判定することを起案・採用し、ADR-063のDecision 8を部分改訂 | 実装の確認事項C40 |
+| 2026-10-22 | 独立レビューの指摘で、停止結果の`workspace`と`observedAtLeast`の変化をConsequencesに書き、優先の範囲を§10に明記（判断は変えない） | 実装の確認事項C40 |
