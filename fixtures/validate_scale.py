@@ -22,6 +22,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "fixtures"))
 
 from conformance import multi_crosscheck, multi_generator, multi_limit_fixtures  # noqa: E402
+from conformance import multi_single_verify_limit_fixtures as single_verify  # noqa: E402
 from conformance.harness import setup, tree_digest_bytes, write_generated  # noqa: E402
 from conformance.initial_fixtures import observe  # noqa: E402
 
@@ -105,6 +106,67 @@ def validate_fixture(identifier):
             "treeDigest": digest, "errors": errors}
 
 
+def validate_single_verify_fixture(identifier):
+    """単独の`verify`の上限の群（`MULTI-041-*`）の1件を実寸で照合する。データセットのマニフェストの生成計画から木構造を作る。"""
+    case = single_verify.CASES[identifier]
+    fixture = FIXTURES / identifier
+    manifest = json.loads((fixture / "manifest.json").read_text())
+    dataset = json.loads((fixture / "dataset.json").read_text())
+    effects = json.loads((fixture / "side-effects.json").read_text())
+    errors = []
+    entries = multi_generator.emit(multi_generator.dataset_profile(dataset))
+    totals = multi_generator.count(entries)
+    if totals != dataset["dimensions"]:
+        errors.append("生成物の次元がデータセットのマニフェストと一致しません")
+    if totals["verifyBindingCount"] != case["bindings"] or totals["commandDefinitionCount"] != case["commands"]:
+        errors.append("テスト割当て数またはコマンド定義数がレビュー済みのケースと一致しません")
+    digest = tree_digest_bytes(entries)
+    if digest != manifest["setup"]["generate"]["treeDigest"]:
+        errors.append("`treeDigest`がマニフェストと一致しません")
+    if tree_digest_bytes(multi_generator.emit(multi_generator.dataset_profile(dataset))) != digest:
+        errors.append("2回の生成が一致しません")
+    with tempfile.TemporaryDirectory(prefix="bitz-scale-") as temporary:
+        sandbox = Path(temporary)
+        if case["outcome"] == "argument":
+            if "resultDigest" in manifest["expect"] or manifest["expect"]["exitCode"] != 4:
+                errors.append("引数不正は結果を持たず、終了コード4です")
+        else:
+            repository = sandbox / "context"
+            repository.mkdir()
+            write_generated(entries, repository)
+            result = single_verify.expected_body(identifier, entries, repository)
+            if multi_limit_fixtures.canonical_digest(result) != manifest["expect"]["resultDigest"]:
+                errors.append("期待結果のハッシュ値がマニフェストと一致しません")
+            if case["outcome"] == "blocked":
+                if result["status"] != "blocked" or result["targetResults"] or result["commands"]:
+                    errors.append("上限超過は部分結果を返しません")
+            else:
+                single_verify.check_passed_result(result, dataset)
+        states = []
+        for run in range(2):
+            run_sandbox = sandbox / f"run{run}"
+            run_sandbox.mkdir()
+            states.append(observed_state(fixture, manifest, entries, run_sandbox))
+        if states[0] != states[1]:
+            errors.append("隔離した準備手順の結果が2回で一致しません")
+        if multi_limit_fixtures.canonical_digest(states[0]) != effects["stateDigest"]:
+            errors.append("副作用の`stateDigest`が期待値と一致しません")
+    return {"fixtureId": identifier, "dimension": case["dimension"], "value": dataset["value"],
+            "files": len(entries), "inputBytes": totals["inputBytes"],
+            "treeDigest": digest, "errors": errors}
+
+
+def checked_single_verify_fixture(identifier):
+    """`checked_fixture`と同じく、照合を完了できなかった場合も失敗の理由として結果に残す。"""
+    try:
+        return validate_single_verify_fixture(identifier)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        message = str(error).split("\n")[0]
+        case = single_verify.CASES[identifier]
+        return {"fixtureId": identifier, "dimension": case["dimension"], "value": single_verify.dataset_value(identifier),
+                "errors": [f"照合を完了できません（{type(error).__name__}: {message}）"]}
+
+
 def checked_fixture(identifier):
     """1件を照合する。照合を完了できなかった場合も、失敗の理由として結果に残し、JSONのレポートを出さずに終わらない。
 
@@ -123,6 +185,7 @@ def checked_fixture(identifier):
 def main():
     start = time.monotonic()
     results = [checked_fixture(identifier) for identifier in multi_limit_fixtures.CASES]
+    results += [checked_single_verify_fixture(identifier) for identifier in single_verify.CASES]
     errors = [f"{entry['fixtureId']}: {message}" for entry in results for message in entry["errors"]]
     report = {
         "status": "Passed" if not errors else "Failed",

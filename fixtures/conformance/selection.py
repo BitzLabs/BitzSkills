@@ -31,6 +31,16 @@ SCALE_SECONDS = {
     (True, "commandDefinitionCount"): 2.64,
     (True, "memberCount"): 0.70,
 }
+# 単独の`verify`の上限の群（`MULTI-041-*`）。入力を生成するので`scale`に含める。CIの実測がまだないため暫定値とし、
+# 修正前のCoreを局所で実行した所要時間（041-01: 4.35秒、041-02: 3.98秒、041-03: 23.04秒、041-04: 1.07秒）を、同じ局所実行の
+# 類似fixture（`MULTI-021-08`: 6.57秒、`MULTI-020-16`: 24.01秒）に対するCI実測（14.43秒、34.90秒）の比で換算した。
+# CIの実測を得たら`MODEL_SOURCE`とともに置き換える。
+SINGLE_VERIFY_LIMIT_SECONDS = {
+    "MULTI-041-01": 9.55,
+    "MULTI-041-02": 8.74,
+    "MULTI-041-03": 33.49,
+    "MULTI-041-04": 2.35,
+}
 STANDARD_SECONDS = {
     "SINGLE-126-12": 6.12,
     "SINGLE-126-13": 3.13,
@@ -55,11 +65,13 @@ def step_ids(step):
 
 
 def is_scale(identifier):
-    return identifier.startswith(("MULTI-020-", "MULTI-021-"))
+    return identifier.startswith(("MULTI-020-", "MULTI-021-", "MULTI-041-"))
 
 
 def estimated_seconds(identifier):
     """直近のCI実測からfixtureの所要時間を予測する。性能SLOや合否には使わない。"""
+    if identifier in SINGLE_VERIFY_LIMIT_SECONDS:
+        return SINGLE_VERIFY_LIMIT_SECONDS[identifier]
     if is_scale(identifier):
         path = ROOT / "multi" / identifier / "dataset.json"
         if not path.is_file():

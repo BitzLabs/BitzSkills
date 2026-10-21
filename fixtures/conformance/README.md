@@ -218,7 +218,7 @@ uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5 --shards 4 
   --progress --output <result.json> --timings <timings.json>
 ```
 
-`standard`は上限境界の、入力を生成するfixture以外、`scale`は`MULTI-020-*`と`MULTI-021-*`である。
+`standard`は上限境界の、入力を生成するfixture以外、`scale`は`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`である。
 両者は互いに重複せず、全件を構成する。分割は選択した集合へ適用し、各分割の中は従来の順序を維持する。
 部分的な実行の成功は、全件の認定を意味しない。
 
