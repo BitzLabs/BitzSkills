@@ -130,12 +130,19 @@ class _Base(unittest.TestCase):
         self.results: list[dict] = []
         self.addCleanup(lambda: _validate_against_schema(self.results) if self.results else None)
 
-    def build(self, *, two_bindings: bool = False, draft_only: bool = False, same_command: bool = False) -> str:
+    def build(self, *, two_bindings: bool = False, draft_only: bool = False, same_command: bool = False,
+              api_commands: bool = False) -> str:
         r = self.root
         _write(r, ".spec/bitz.yaml", ROOT_YAML)
         _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001", "draft" if draft_only else "approved"))
         _write(r, "apps/web/.spec/bitz.yaml", WEB_YAML)
-        _write(r, "apps/api/.spec/bitz.yaml", API_YAML)
+        # `api_commands`: `api`にもコマンドを2件置き、全体の定義数（5）を`web`までの累計（3）と区別できるようにする。
+        api_yaml = API_YAML + (
+            'verify:\n  commands:\n    a1:\n      argv: ["/bin/true"]\n      cwd: .\n'
+            '    a2:\n      argv: ["/bin/true"]\n      cwd: .\n'
+            if api_commands else ""
+        )
+        _write(r, "apps/api/.spec/bitz.yaml", api_yaml)
         if not draft_only:
             _write(
                 r, "apps/web/.spec/technical/TECH-010.md",
@@ -237,6 +244,31 @@ class PlanPriorityTests(_Base):
         self.assertEqual(result["workspace"], {"id": "web", "path": "apps/web"})
         self.assertEqual(result["diagnostics"][0]["evidence"]["dimension"], "commandDefinitionCount")
         self.assertFalse(self.marker.exists())
+
+    def test_member_workspace_selected_from_root_uses_member_as_working_workspace(self):
+        # ルートのcwdから`--workspace web`または`web::<ID>`で`web`を選ぶとき、実行計画の確定後の停止は全体事前検査の停止ではないので、
+        # 作業ワークスペース（`web`）の規則に従う: `workspace`は`web`、`--report`の保存先は`apps/web/.spec/reports/`。
+        # `observedAtLeast`は全ワークスペースの定義数の総数（5）で、全体事前検査の早期停止の累計（`web`までの3）ではない。
+        self.build(api_commands=True)
+        variants = {"workspace-flag": ("--workspace", "web"), "qualified-id": ("web::TECH-010",)}
+        for name, argv in variants.items():
+            with self.subTest(variant=name):
+                web_reports = self.root / "apps" / "web" / ".spec" / "reports"
+                shutil.rmtree(web_reports, ignore_errors=True)
+                with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+                    result, code = self.verify(*argv, "--report")
+                self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
+                self.assertEqual(result["workspace"], {"id": "web", "path": "apps/web"})
+                self.assertEqual((result["targetResults"], result["commands"]), ([], []))
+                self.assertEqual(len(result["diagnostics"]), 1)
+                diag = result["diagnostics"][0]
+                self.assertEqual(diag["code"], LIMIT)
+                self.assertEqual(diag["evidence"], {"dimension": "commandDefinitionCount", "limit": 2, "observedAtLeast": 5})
+                self.assertFalse(self.marker.exists())
+                saved = sorted(web_reports.glob("*-verify*.json"))
+                self.assertEqual(len(saved), 1, saved)
+                self.assertEqual(json.loads(saved[0].read_text(encoding="utf-8")), result)
+                self.assertFalse((self.root / ".spec" / "reports").exists(), "ルートへは保存しない")
 
     def test_within_limits_runs_normally(self):
         self.build()
