@@ -1,0 +1,178 @@
+{
+  "version": "heldout-catalog-connection-progress-1",
+  "recordedDate": "2026-10-21",
+  "status": "two_integrity_findings_remediated_independent_reinspection_pending",
+  "sourceCommit": "b474d2d1f30ce9b2c42aba65d07df272e1ce95d7",
+  "notification": {
+    "sourceCommit": "8b3c718eb85a286056b53186f004e444cbc4dfe5",
+    "independentRelatedTests": 144,
+    "independentAdversarialTests": 11,
+    "blockingFindings": 0,
+    "parentOriginalsCompared": 211,
+    "parentGitBlobsCompared": 189,
+    "fullRegression": {
+      "sourceCommit": "ecc88bc1574ab77778a2542b489ca476c1ffed66",
+      "tests": 1052,
+      "exitCode": 0,
+      "elapsedSeconds": 187.77951937098987,
+      "cleanBeforeAndAfter": true
+    }
+  },
+  "catalog": {
+    "componentSource": "23f6155343b3347c3cb720296171a3328fee108b",
+    "connectionSource": "c062f9b35217de0c9282d591ff98fb7e6a0847a2",
+    "selectedSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+    "selectedBytes": 65209,
+    "sourceGuardFiles": 58,
+    "independentComponentTests": 6,
+    "independentAdversarialTests": 13,
+    "independentPublicExperimentTests": 12,
+    "publicTemplateInsertionReproducesStoppedSupplementHash": true,
+    "historicalRemoteSelectionPathCertified": false,
+    "targetOnlySynthetic": {
+      "sourceCommit": "23f6155343b3347c3cb720296171a3328fee108b",
+      "namespaceExitCode": 0,
+      "sdkError": null,
+      "localRequests": 1,
+      "supplementBytes": [
+        341,
+        920
+      ],
+      "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d",
+      "resultSha256": "0c2f2669527b42811bf038653cc7a11ed271b8af66c940f96375bc6433b207d6",
+      "integratedPhysicalProof": false
+    }
+  },
+  "initialConnectionReview": {
+    "sourceCommit": "c062f9b35217de0c9282d591ff98fb7e6a0847a2",
+    "status": "blocked_preserved",
+    "findings": [
+      {
+        "id": "P2-1",
+        "issue": "proxy did not verify consumed config bytes"
+      },
+      {
+        "id": "P2-2",
+        "issue": "catalog drift on failed primary or independent process was classified as ordinary evaluation failure"
+      }
+    ],
+    "relatedTests": 109,
+    "additionalPassingBoundaryTests": 9,
+    "failingReproductions": 3
+  },
+  "remediation": {
+    "sourceCommit": "b474d2d1f30ce9b2c42aba65d07df272e1ce95d7",
+    "relatedTests": 56,
+    "elapsedSeconds": 44.09,
+    "exitCode": 0,
+    "primaryConfigPreparedByParent": true,
+    "proxyChecksExactConfig": true,
+    "allInitialInputsCheckedBeforeAndAfterBothRoles": true,
+    "failedProcessDriftGloballyStops": true,
+    "independentReinspectionPending": true,
+    "fullRegressionPending": true
+  },
+  "reviews": [
+    {
+      "status": "public_remediation_originals_parent_rehashed",
+      "component": "moderation",
+      "sourceCommit": "8b3c718eb85a286056b53186f004e444cbc4dfe5",
+      "reportSha256": "44cb3745ac18afa8ec9ee433d1be6066eacd7dcbe8c9c6213f7fd8a92ddbfe08",
+      "inventorySha256": "cc23f435bd26576d0e4aff15bbf4179ef90d227b245b57495888fbfefb7d1d4b",
+      "savedOriginalsCompared": 211,
+      "directPublicOriginalsCompared": 0,
+      "syntheticSymlinksComparedByReadlink": 0,
+      "gitBlobsCompared": 189,
+      "allHashesAndSizesMatch": true,
+      "models": 0,
+      "reservations": 0,
+      "privateOriginalsRead": 0,
+      "certifiesHeldoutLaunch": false,
+      "certifiesGate": false,
+      "archive": "evidence-r04-moderation-reviewed-20261020.tar.gz",
+      "archiveSha256": "be7d9e9f16cea0968062dd34c8e4508ffd408275149d97caedfed58d740efceb"
+    },
+    {
+      "status": "public_remediation_originals_parent_rehashed",
+      "component": "catalog-experiment",
+      "sourceCommit": "8b3c718eb85a286056b53186f004e444cbc4dfe5",
+      "reportSha256": "78d3b6fc83256bfcb4267c8e7acc5e96bec49110efb08203a17f427b723a07cd",
+      "inventorySha256": "f9df2efcb04fb9534896f8d07ac4cab099e6a7d454a2937839994201ea7adf4e",
+      "savedOriginalsCompared": 212,
+      "directPublicOriginalsCompared": 411,
+      "syntheticSymlinksComparedByReadlink": 0,
+      "gitBlobsCompared": 189,
+      "allHashesAndSizesMatch": true,
+      "models": 0,
+      "reservations": 0,
+      "privateOriginalsRead": 0,
+      "certifiesHeldoutLaunch": false,
+      "certifiesGate": false,
+      "archive": "evidence-r04-catalog-experiment-reviewed-20261020.tar.gz",
+      "archiveSha256": "f9c8c3227674ea021115bb255d153b53fd81b334ebbc2ff1ff494a8cf49141ec"
+    },
+    {
+      "status": "public_remediation_originals_parent_rehashed",
+      "component": "catalog-component",
+      "sourceCommit": "23f6155343b3347c3cb720296171a3328fee108b",
+      "reportSha256": "4d8c7903aaeee5df6fcb40742938941b3373c6a1c08a6d7a7f374cac2b862575",
+      "inventorySha256": "f1fd9a3f9c6f9b2674a5c4b4d4aa1901f08e822ff7e03145c449c8701898fe41",
+      "savedOriginalsCompared": 213,
+      "directPublicOriginalsCompared": 8,
+      "syntheticSymlinksComparedByReadlink": 1,
+      "gitBlobsCompared": 191,
+      "allHashesAndSizesMatch": true,
+      "models": 0,
+      "reservations": 0,
+      "privateOriginalsRead": 0,
+      "certifiesHeldoutLaunch": false,
+      "certifiesGate": false,
+      "archive": "evidence-r04-catalog-component-reviewed-20261020.tar.gz",
+      "archiveSha256": "6bccde3d9597142bf4bb79fe8d28808f50ea688e03005d36c1ef6addd857df9f"
+    },
+    {
+      "status": "public_remediation_originals_parent_rehashed",
+      "component": "catalog-integration-initial",
+      "sourceCommit": "c062f9b35217de0c9282d591ff98fb7e6a0847a2",
+      "reportSha256": "37821aaa1cc2b1ccf178c9f9247228421e7c56e307fcd7a150f8136d68454298",
+      "inventorySha256": "d8387fbadc7f54def159ff80ef45146c1c9ef7a418f55a7ed3ad819591829d9e",
+      "savedOriginalsCompared": 220,
+      "directPublicOriginalsCompared": 41,
+      "syntheticSymlinksComparedByReadlink": 0,
+      "gitBlobsCompared": 191,
+      "allHashesAndSizesMatch": true,
+      "models": 0,
+      "reservations": 0,
+      "privateOriginalsRead": 0,
+      "certifiesHeldoutLaunch": false,
+      "certifiesGate": false,
+      "archive": "evidence-r04-catalog-integration-initial-reviewed-20261021.tar.gz",
+      "archiveSha256": "4b7e66ec41e852e80672a235460f8e9e6a3ba2f722ec32f3077d859af4613c19"
+    }
+  ],
+  "unchangedSurvey": {
+    "publicSlots": 92,
+    "publicCorrect": 52,
+    "publicIncorrect": 3,
+    "publicEvaluationFailed": 37,
+    "heldoutSlots": 24,
+    "heldoutPrimaryReserved": 1,
+    "heldoutPrimaryLaunchMarked": 1,
+    "heldoutIndependentReserved": 0,
+    "heldoutParentVerified": 0,
+    "heldoutPending": 1,
+    "heldoutUnattempted": 23,
+    "oldGlobalStopPreserved": true
+  },
+  "newModels": 0,
+  "newReservations": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesR04Complete": false,
+  "certifiesGate": false,
+  "nextSteps": [
+    "Independently recheck two fixes and run full regression",
+    "Refresh Date21 calibration with fixed catalog and preserve historical calibration originals",
+    "Prepare new source/campaign and bounded remaining23 continuation with prior consumption1",
+    "Recheck actual isolation for both roles and concrete prelaunch before any new paid stage"
+  ]
+}

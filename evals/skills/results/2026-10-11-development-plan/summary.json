@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "sdk_supplement_no_model_classification_before_remaining23_continuation",
+        "status": "catalog_remediation_review_date21_calibration_and_remaining23_continuation_pending",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "native_notification_fix_committed_supplement_selection_unresolved",
+      "status": "fixed_catalog_connected_integrity_findings_remediated_reinspection_pending",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1270,7 +1270,10 @@
         "certifiesSkillGate": false
       },
       "notificationFixCommit": "8b3c718eb85a286056b53186f004e444cbc4dfe5",
-      "contextDiagnosisRecord": "r04-heldout-sdk-context-diagnosis-20261020.json"
+      "contextDiagnosisRecord": "r04-heldout-sdk-context-diagnosis-20261020.json",
+      "catalogConnectionRecord": "r04-heldout-catalog-connection-progress-20261021.json",
+      "catalogRemediationSource": "b474d2d1f30ce9b2c42aba65d07df272e1ce95d7",
+      "currentDateCalibrationRenewalRequired": true
     },
     "r04HeldoutExecution": {
       "status": "stopped",
@@ -1302,7 +1305,10 @@
         "costUsd": null,
         "costStatus": "unknown_not_zero"
       },
-      "supplementInsertionFactorUnresolved": true
+      "supplementInsertionFactorUnresolved": true,
+      "publicCatalogTemplateReproductionVerified": true,
+      "historicalRemoteSelectionPathCertified": false,
+      "newPaidStagesSinceFirstStop": 0
     }
   }
 }

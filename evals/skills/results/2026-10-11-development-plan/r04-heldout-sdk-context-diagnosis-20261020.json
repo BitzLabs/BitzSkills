@@ -5,8 +5,8 @@
   "relatedTests": {
     "count": 144,
     "passed": true,
-    "independentRemediationReviewPending": true,
-    "fullRegressionPending": true
+    "independentRemediationReviewPending": false,
+    "fullRegressionPending": false
   },
   "originalSurvey": {
     "primaryReserved": 1,
@@ -76,5 +76,6 @@
   },
   "next": "Classify public model/catalog/template selection; preserve old stopped slot and continue only remaining23 after independent closure",
   "certifiesR04Complete": false,
-  "certifiesGate": false
+  "certifiesGate": false,
+  "followUpRecord": "r04-heldout-catalog-connection-progress-20261021.json"
 }
