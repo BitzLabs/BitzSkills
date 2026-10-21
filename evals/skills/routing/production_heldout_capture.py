@@ -41,7 +41,8 @@ def child_inputs(base):
     require(io.read_regular(base/launch.model_catalog.FILE) == launch.model_catalog.fixed_catalog(),
         'heldout child public catalog outside fixed runtime')
     expected_config = launch.model_catalog.configuration(base, p.capture.config_for(base, d, repository=ROOT))
-    require(io.read_regular(base/'config.json') == io.encoded(expected_config),
+    config_raw = io.read_regular(base/'config.json')
+    require(config_raw == io.encoded(expected_config),
         'heldout child configuration drift')
     schema_raw = io.read_regular(base/'decision-schema.json')
     require(io.sha(schema_raw) == c['pins']['decisionSchema'], 'heldout child schema drift')
@@ -56,12 +57,12 @@ def child_inputs(base):
         'heldout child product byte drift')
     require(io.read_regular(base/'launch-settings.json') == launch.launch_settings(execution_raw, deployment_raw),
         'heldout child launch settings drift')
-    return c, d, payload_raw, schema_raw
+    return c, d, payload_raw, schema_raw, config_raw
 
 
 def isolated(base):
     os.umask(0o077)
-    c, d, payload_raw, schema_raw = child_inputs(base)
+    c, d, payload_raw, schema_raw, _ = child_inputs(base)
     sys.path.insert(0, str(ROOT/d['sdkRelativePath']))
     from openai_codex import CodexConfig, __version__
     from openai_codex.client import CodexClient
@@ -103,9 +104,9 @@ def main():
     try:
         if args.proxy:
             # proxyも開始前検分と入力/資源の検査を経る。SDKからの再起動で迂回しない。
-            child_inputs(args.proxy)
+            _, _, _, _, config_raw = child_inputs(args.proxy)
             p.capture.sdk.proxy(args.proxy, reject_questions=True, capture_guard=p.capture.CaptureGuard(args.proxy),
-                launch_contract_raw=io.read_regular(args.proxy/'launch-settings.json'))
+                launch_contract_raw=io.read_regular(args.proxy/'launch-settings.json'), validated_config_raw=config_raw)
         else:
             isolated(args.isolated)
         return 0

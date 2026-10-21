@@ -141,9 +141,17 @@ def launch_settings(raw: bytes):
 
 
 def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False,
-          capture_guard=None, *, launch_contract_raw: bytes | None = None):
+          capture_guard=None, *, launch_contract_raw: bytes | None = None,
+          validated_config_raw: bytes | None = None):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
-    config = json.loads((base / 'config.json').read_bytes())
+    if validated_config_raw is None:
+        # 旧Canary/publicの既定経路は維持する。
+        config = json.loads((base / 'config.json').read_bytes())
+    else:
+        from production_trace import strict_json, require
+        require(isinstance(validated_config_raw, bytes), 'validated proxy config bytes required')
+        config = strict_json(validated_config_raw)
+        require(isinstance(config, dict), 'validated proxy config object required')
     contract = (json.loads((base / 'contract.json').read_bytes()) if launch_contract_raw is None
                 else launch_settings(launch_contract_raw))
     trace_config = contract.get('diagnosticTracing')

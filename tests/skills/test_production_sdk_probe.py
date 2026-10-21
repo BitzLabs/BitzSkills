@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
@@ -127,6 +128,33 @@ class ProductionSdkProbeTests(unittest.TestCase):
         self.assertEqual(self.contract['maximumModes'], 2)
         self.assertEqual(self.contract['maximumLocalHttpRequestsPerMode'], 1)
         self.assertEqual(self.contract['paidModelCalls'], 0)
+
+    def proxy_boundary(self,raw,*,trusted):
+        settings=json.dumps(dict(codexPath='/PUBLIC_FIXED_CLI',diagnosticTracing=sdk.DIAGNOSTIC_TRACING)).encode()
+        kwargs=dict(launch_contract_raw=settings)
+        if trusted:kwargs['validated_config_raw']=raw
+        read_patch=(patch.object(Path,'read_bytes',side_effect=AssertionError('unchecked config reopen'))
+            if trusted else patch.object(Path,'read_bytes',return_value=raw))
+        with read_patch as read, \
+            patch.object(sdk.subprocess,'Popen',side_effect=RuntimeError('NO_REAL_PROCESS')) as process:
+            with self.assertRaisesRegex(RuntimeError,'NO_REAL_PROCESS'):
+                sdk.proxy(ROOT/'.venv/PUBLIC_PROXY_ONLY',**kwargs)
+        return read,process.call_args.args[0]
+
+    def test_verified_config_bytes_reach_argv_without_any_file_reopen(self):
+        read,argv=self.proxy_boundary(b'{"model_catalog_json":"/PUBLIC_VERIFIED"}',trusted=True)
+        read.assert_not_called();self.assertIn('model_catalog_json="/PUBLIC_VERIFIED"',argv)
+
+    def test_legacy_proxy_still_reads_its_existing_configuration(self):
+        read,argv=self.proxy_boundary(b'{"model_catalog_json":"/PUBLIC_LEGACY"}',trusted=False)
+        read.assert_called_once();self.assertIn('model_catalog_json="/PUBLIC_LEGACY"',argv)
+
+    def test_verified_config_rejects_wrong_type_duplicate_nonfinite_or_nonobject_before_popen(self):
+        for raw in ['PUBLIC',b'[]',b'{"x":NaN}',b'{"x":1,"x":2}']:
+            with self.subTest(raw=raw),patch.object(Path,'read_bytes',side_effect=AssertionError('unchecked read')), \
+                patch.object(sdk.subprocess,'Popen') as process,self.assertRaises(ValueError):
+                sdk.proxy(ROOT/'.venv/PUBLIC_PROXY_ONLY',validated_config_raw=raw)
+            process.assert_not_called()
 
 
 if __name__ == '__main__':

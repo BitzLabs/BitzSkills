@@ -126,7 +126,7 @@ class HeldoutLaunchTests(unittest.TestCase):
 
     def test_child_validates_only_one_primary_payload_and_rejects_hidden_corpus_visibility(self):
         root,base,_=self.child_fixture()
-        c,d,payload,schema=child.child_inputs(base)
+        c,d,payload,schema,config=child.child_inputs(base)
         self.assertEqual(payload,self.bound.matrix.payloads[0])
         self.assertEqual(c['budget']['primary'],24)
         (root/'.git').write_bytes(b'synthetic visible repository')
@@ -172,3 +172,20 @@ class HeldoutLaunchTests(unittest.TestCase):
             patch.object(child.p.capture.sdk,'proxy') as proxy:
             self.assertEqual(child.main(),1)
         proxy.assert_not_called()
+
+    def test_proxy_uses_verified_config_bytes_if_file_changes_after_validation(self):
+        _,base,originals=self.child_fixture();validate=child.child_inputs
+        def check_then_swap(path):
+            value=validate(path)
+            config=launch.x.inputs.parse(originals['config.json'])
+            config['model_catalog_json']='/PUBLIC_AFTER_CHECK_CATALOG.json'
+            (base/'config.json').write_bytes(launch.io.encoded(config))
+            return value
+        with patch.object(child,'child_inputs',side_effect=check_then_swap), \
+            patch.object(sys,'argv',['PUBLIC_TEST','--proxy',str(base)]),patch.object(child.os,'umask'), \
+            patch.object(child.p.capture.sdk.subprocess,'Popen',side_effect=RuntimeError('NO_REAL_PROCESS')) as process:
+            self.assertEqual(child.main(),1)
+        process.assert_called_once()
+        argv=process.call_args.args[0]
+        self.assertIn('model_catalog_json='+child.p.capture.sdk.toml_value(str(base/launch.model_catalog.FILE)),argv)
+        self.assertFalse(any('PUBLIC_AFTER_CHECK_CATALOG' in value for value in argv))
