@@ -1,0 +1,23 @@
+{
+  "crosses": true,
+  "dimension": "commandDefinitionCount",
+  "dimensions": {
+    "commandDefinitionCount": 10001,
+    "inputBytes": 1532117,
+    "memberCount": 13,
+    "relationEdgeCount": 52,
+    "specFileCount": 104,
+    "statementCount": 52,
+    "traceEntryCount": 20000,
+    "verifyBindingCount": 10000
+  },
+  "fixtureId": "MULTI-041-02",
+  "limit": 10000,
+  "profile": {
+    "bindings": 10000,
+    "commands": 10001,
+    "kind": "single-verify-plan"
+  },
+  "schemaVersion": "1.0",
+  "value": 10001
+}

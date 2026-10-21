@@ -70,6 +70,7 @@ from conformance.multi_verify_fixtures import validate as validate_multi_verify_
 from conformance.multi_report_fixtures import validate as validate_multi_report_fixtures
 from conformance.multi_compat_fixtures import validate as validate_multi_compat_fixtures
 from conformance.multi_limit_fixtures import validate as validate_multi_limit_fixtures
+from conformance.multi_single_verify_limit_fixtures import validate as validate_multi_single_verify_limit_fixtures
 from conformance.multi_relation_type_fixtures import validate as validate_multi_relation_type_fixtures
 from conformance.multi_check_fixtures import validate as validate_multi_check_fixtures
 from conformance.repo_root_fixtures import validate as validate_repo_root_fixtures
@@ -356,6 +357,7 @@ def main():
     checks["multi_report_fixtures"] = validate_multi_report_fixtures()
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
+    checks["multi_single_verify_limit_fixtures"] = validate_multi_single_verify_limit_fixtures()
     checks["multi_relation_type_fixtures"] = validate_multi_relation_type_fixtures()
     checks["multi_check_fixtures"] = validate_multi_check_fixtures()
     checks["repo_root_fixtures"] = validate_repo_root_fixtures()

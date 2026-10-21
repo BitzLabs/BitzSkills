@@ -29,6 +29,10 @@ BASE_MEMBERS = 2
 # 文書・フロントマター・状態仕様 §11のフロントマター32 KiB上限を守るため、1つのテスト割当ての文書へ置く
 # テスト対応（テスト割当て）の件数はこれ以下にする（389件で32,759バイトが実測上の上限。安全側に300とする）。
 BINDINGS_PER_DOCUMENT = 300
+# 単独の`verify`の生成計画（`single_verify_plan`）で、1つの検証対象（ルートのREQ）が閉包に持つ具体化文書1件あたりの
+# テスト対応の件数。コンテキストの閉包の上限（20文書・128 KiB。コンテキスト仕様 §8）と、フロントマター32 KiB上限
+# （文書・フロントマター・状態仕様 §11）の両方に収まるよう、閉包を小さく保つ。
+SINGLE_VERIFY_BINDINGS_PER_DOCUMENT = 250
 PADDING_LINE = "この段落は入力byte数を上限の境界へ合わせるための固定文である。\n"
 FILLER_BODY = "## Context\n\n上限境界の入力を満たすための固定文書である。\n"
 
@@ -106,6 +110,99 @@ def plan(dimension, value):
     return profile
 
 
+def single_verify_plan(bindings, commands, dimension):
+    """ルートからの1回の単独の`verify`で、実行計画が`bindings`件のテスト割当てになり、全ワークスペースのコマンド定義が
+    `commands`件になる生成計画を返す。
+
+    `plan`の`verifyBindingCount`は、割当てを全ワークスペースへ散らし、各ワークスペース内の文書が自分の規範文を`covers`するため、
+    ルートからの単独の`verify`では、ルートワークスペースの分にしか届かない。この計画は、ルート`platform`が
+    検証対象のREQ（`REQ-001`...。規範文は`MUST`1件）だけを持ち、メンバーが、REQ1件につき1件のTECHを置く。TECHは
+    そのREQを`refines`し、自分のテスト対応のすべてが、そのREQの規範文を`covers`する（他のワークスペースの規範文を`covers`できるのは、
+    宣言する文書がその規範文を所有する文書を直接`refines`する場合に限る。関係・トレースモデル §9）。
+    ルートで`verify`にREQを列挙すると、1回の実行計画がメンバー全体のテスト割当てを統合する（`verify` §3・§4）。
+    コマンド定義は、テスト割当てに使わない分を、同じワークスペースの未使用の名前として足す（`commands >= bindings`）。
+    """
+    if bindings < 0 or commands < bindings:
+        raise ValueError("コマンド定義数はテスト割当て数以上である必要があります")
+    members = max(BASE_MEMBERS, -(-commands // COMMANDS_PER_WORKSPACE))
+    workspaces = workspace_ids(members)
+    member_bindings = split(bindings, members)
+    member_commands = split(commands, members)
+    documents = []
+    for index, count_here in enumerate(member_bindings):
+        for size in chunks(count_here, SINGLE_VERIFY_BINDINGS_PER_DOCUMENT):
+            documents.append({"workspace": workspaces[index + 1], "bindings": size})
+    return {
+        "dimension": dimension,
+        "value": bindings if dimension == "verifyBindingCount" else commands,
+        "workspaces": workspaces,
+        "bindings": [0] + member_bindings,
+        "commands": [0] + member_commands,
+        "singleVerify": {"documents": documents},
+    }
+
+
+def single_verify_targets(profile):
+    """`single_verify_plan`の検証対象（ルートのREQの修飾ID）。`verify`の位置引数に並べる。"""
+    return [f"platform::REQ-{number:03d}"
+            for number in range(1, len(profile["singleVerify"]["documents"]) + 1)]
+
+
+def dataset_profile(manifest):
+    """データセットのマニフェストから生成計画を作る。`profile`があれば単独の`verify`の生成計画、なければ`plan`である。"""
+    shape = manifest.get("profile")
+    if shape is None:
+        return plan(manifest["dimension"], manifest["value"])
+    if shape.get("kind") != "single-verify-plan":
+        raise ValueError(f"未知の生成計画の種類です: {shape.get('kind')}")
+    return single_verify_plan(shape["bindings"], shape["commands"], manifest["dimension"])
+
+
+def render_requirement(number):
+    """ルートの`approved`のREQ（`MUST`1件、関係なし）。`multi_binding_missing_fixtures.requirement`と同じ形である。"""
+    document_id = f"REQ-{number:03d}"
+    return (f"---\nid: {document_id}\ntitle: 上限境界の要求\nstatus: approved\n---\n\n"
+            f"# {document_id} 上限境界の要求\n\n## Intent\n\n上限境界の検証対象を定める。\n\n"
+            f"## Acceptance Criteria\n\n- [{document_id}:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] "
+            f"[CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\nメンバーのtestで確認する。\n").encode("utf-8")
+
+
+def render_refining_document(document_id, requirement_id, entries):
+    """メンバーの`approved`のTECH。ルートのREQを`refines`し、`entries`（(テストのパス, コマンド名)の列）が、そのREQの規範文を`covers`する。"""
+    statement = f"platform::{requirement_id}:AC-01"
+    head = [f"---\nid: {document_id}\ntitle: 上限境界の実装方針\nstatus: approved\nrelations:\n"
+            f"  refines: [platform::{requirement_id}]\ntests:\n"]
+    for path, command in entries:
+        head.append(f"  - path: {path}\n    covers: [{statement}]\n    command: {command}\n")
+    head.append("---\n")
+    return ("".join(head) + f"\n# {document_id} 上限境界の実装方針\n\n## Context\n\n"
+            "ルートの要求を具体化するテスト対応を置く。\n").encode("utf-8")
+
+
+def emit_single_verify(profile):
+    workspaces = profile["workspaces"]
+    entries = []
+    for index, workspace_id in enumerate(workspaces):
+        prefix = "" if index == 0 else f"{workspace_path(workspace_id)}/"
+        entries.append((f"{prefix}.spec/bitz.yaml", render_config(profile, index)))
+    cursor = {workspace_id: 0 for workspace_id in workspaces}
+    test_number = 0
+    for number, document in enumerate(profile["singleVerify"]["documents"], 1):
+        workspace_id = document["workspace"]
+        prefix = f"{workspace_path(workspace_id)}/"
+        items = []
+        for _ in range(document["bindings"]):
+            cursor[workspace_id] += 1
+            test_number += 1
+            path = f"tests/test_{test_number:05d}.py"
+            items.append((path, f"c{cursor[workspace_id]:05d}"))
+            entries.append((f"{prefix}{path}", b"def test_generated():\n    assert True\n"))
+        entries.append((f".spec/requirements/REQ-{number:03d}.md", render_requirement(number)))
+        entries.append((f"{prefix}.spec/technical/TECH-{number:06d}.md",
+                        render_refining_document(f"TECH-{number:06d}", f"REQ-{number:03d}", items)))
+    return entries
+
+
 def render_config(profile, index):
     workspaces = profile["workspaces"]
     workspace_id = workspaces[index]
@@ -122,6 +219,9 @@ def render_config(profile, index):
         for member in workspaces[1:]:
             lines.append(f"    - id: {member}\n")
             lines.append(f"      path: {workspace_path(member)}\n")
+    if profile["commands"][index] == 0:
+        # コマンドを持たないワークスペース（単独の`verify`の生成計画のルート）は`verify`の節を置かない。
+        return "".join(lines).encode("utf-8")
     lines.append("verify:\n")
     lines.append("  commands:\n")
     for number in range(1, profile["commands"][index] + 1):
@@ -193,6 +293,8 @@ def render_padding_document(document_id, size):
 
 def emit(profile):
     """(リポジトリのルートからの相対パス, 内容)を、パスの昇順に依存しない決定論的な順序で流す。"""
+    if "singleVerify" in profile:
+        return emit_single_verify(profile)
     workspaces = profile["workspaces"]
     entries = []
     test_cursor, document_number = 1, 1
@@ -303,6 +405,8 @@ def count(entries):
         for line in head.split("\n"):
             if line.startswith("  requires: ["):
                 totals["relationEdgeCount"] += len(line[len("  requires: ["):-1].split(", "))
+            if line.startswith("  refines: ["):
+                totals["relationEdgeCount"] += len(line[len("  refines: ["):-1].split(", "))
             if line.startswith("changes: ["):
                 totals["traceEntryCount"] += len(line[len("changes: ["):-1].split(", "))
             if line.startswith("  - path: "):
@@ -366,7 +470,7 @@ def reduced(manifest, factor=100):
 
 def generate(manifest):
     """データセットのマニフェストから入力の木構造を流し、宣言した全次元と一致することを確かめる。"""
-    entries = emit(plan(manifest["dimension"], manifest["value"]))
+    entries = emit(dataset_profile(manifest))
     totals = count(entries)
     if totals != manifest["dimensions"]:
         raise ValueError("生成物の次元がデータセットのマニフェストと一致しません")

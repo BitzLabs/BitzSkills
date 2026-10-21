@@ -1,0 +1,87 @@
+{
+  "description": "単独のverifyで実行計画のテスト割当てが10,001件、コマンド定義数も10,001件のとき、テスト割当て数を優先して超過を報告する",
+  "expect": {
+    "exitCode": 2,
+    "reportFileCount": 0,
+    "resultDigest": "sha256:c650f232d52ce4ecc5cc93d9d3b413f3a51ecf53bf333ad086b3fc3ef4056bc4",
+    "status": "blocked",
+    "stdout": "json"
+  },
+  "fixtureId": "MULTI-041-01",
+  "invocation": {
+    "argv": [
+      "verify",
+      "platform::REQ-001",
+      "platform::REQ-002",
+      "platform::REQ-003",
+      "platform::REQ-004",
+      "platform::REQ-005",
+      "platform::REQ-006",
+      "platform::REQ-007",
+      "platform::REQ-008",
+      "platform::REQ-009",
+      "platform::REQ-010",
+      "platform::REQ-011",
+      "platform::REQ-012",
+      "platform::REQ-013",
+      "platform::REQ-014",
+      "platform::REQ-015",
+      "platform::REQ-016",
+      "platform::REQ-017",
+      "platform::REQ-018",
+      "platform::REQ-019",
+      "platform::REQ-020",
+      "platform::REQ-021",
+      "platform::REQ-022",
+      "platform::REQ-023",
+      "platform::REQ-024",
+      "platform::REQ-025",
+      "platform::REQ-026",
+      "platform::REQ-027",
+      "platform::REQ-028",
+      "platform::REQ-029",
+      "platform::REQ-030",
+      "platform::REQ-031",
+      "platform::REQ-032",
+      "platform::REQ-033",
+      "platform::REQ-034",
+      "platform::REQ-035",
+      "platform::REQ-036",
+      "platform::REQ-037",
+      "platform::REQ-038",
+      "platform::REQ-039",
+      "platform::REQ-040",
+      "platform::REQ-041",
+      "platform::REQ-042",
+      "platform::REQ-043",
+      "platform::REQ-044",
+      "platform::REQ-045",
+      "platform::REQ-046",
+      "platform::REQ-047",
+      "platform::REQ-048",
+      "platform::REQ-049",
+      "platform::REQ-050",
+      "platform::REQ-051",
+      "platform::REQ-052",
+      "--format",
+      "json"
+    ],
+    "cwd": ".",
+    "env": {},
+    "runner": "bitz"
+  },
+  "setup": {
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:8dae77939e107bc84bb71a2e059e075529b9e948c8960f9477fa46bed851a5a2"
+    },
+    "git": true,
+    "operations": []
+  }
+}

@@ -1,7 +1,10 @@
 """不正な証拠を黙って受理しないことを確認する回帰試験。"""
 import json
 import copy
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import shutil
 import unittest
@@ -75,6 +78,7 @@ from conformance import multi_generator, multi_limit_fixtures, multi_relation_ty
 from conformance import multi_crosscheck, repo_root_fixtures, multi_workspace_option_fixtures
 from conformance import multi_active_workspace_fixtures, multi_single_precheck_fixtures, multi_exclude_fixtures
 from conformance import multi_closure_alias_fixtures, multi_binding_missing_fixtures, multi_doctor_git_fixtures
+from conformance import multi_single_verify_limit_fixtures
 from conformance import doctor_plugin_fixtures
 from conformance import verify_stop_revision_fixtures
 
@@ -4853,6 +4857,164 @@ class AuditTests(unittest.TestCase):
             result = multi_limit_fixtures.validate(root, {"MULTI-020-01"})
         self.assertEqual(result["status"], "Failed")
 
+    def test_multi_single_verify_limit_fixtures(self):
+        """`MULTI-041-01`〜`04`: 単独の`verify`が上限を実行計画の確定後に判定し、`verifyBindingCount`を優先することを固定する（確認事項C40、ADR-066）。"""
+        module = multi_single_verify_limit_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-041-{number:02d}" for number in range(1, 5)])
+        self.assertEqual(result["prepared"], list(module.CASES))
+        self.assertEqual(result["generated_profiles"], "reduced")
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_single_verify_limit_audit_rejects_changed_fixtures(self):
+        mutations = [
+            # 優先の対象と同時に超える次元の宣言を、入力と期待結果からそらさない。
+            ("MULTI-041-01", "dataset.json", lambda v: v.update(dimension="commandDefinitionCount")),
+            ("MULTI-041-01", "dataset.json", lambda v: v.pop("companionDimensions")),
+            ("MULTI-041-01", "dataset.json", lambda v: v["profile"].update(commands=10000)),
+            ("MULTI-041-01", "manifest.json",
+             lambda v: v["expect"].update(resultDigest="sha256:" + "0" * 64)),
+            ("MULTI-041-01", "manifest.json", lambda v: v["invocation"]["argv"].pop(1)),
+            ("MULTI-041-02", "dataset.json", lambda v: v["profile"].update(bindings=10001)),
+            ("MULTI-041-02", "dataset.json", lambda v: v.update(crosses=False)),
+            ("MULTI-041-02", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("MULTI-041-03", "dataset.json", lambda v: v["profile"].update(commands=10001)),
+            ("MULTI-041-03", "dataset.json", lambda v: v.update(value=10001, crosses=True)),
+            ("MULTI-041-03", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-041-04", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("MULTI-041-04", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "web")),
+            ("MULTI-041-04", "cli-output.json", lambda v: v.update(exitCode=2)),
+            ("MULTI-041-04", "dataset.json", lambda v: v["profile"].update(commands=10000)),
+            ("MULTI-041-03", "side-effects.json", lambda v: v.update(policy="explicit-report")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_single_verify_limit_fixtures.validate(root, {identifier})["status"], "Failed")
+        # 結果を返すfixtureが`repo/`や`cli-output.json`を持つことを拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-041-01")
+            (root / "multi/MULTI-041-01/repo").mkdir()
+            self.assertEqual(multi_single_verify_limit_fixtures.validate(root, {"MULTI-041-01"})["status"], "Failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-041-02")
+            (root / "multi/MULTI-041-02/cli-output.json").write_text("{}")
+            self.assertEqual(multi_single_verify_limit_fixtures.validate(root, {"MULTI-041-02"})["status"], "Failed")
+
+    def test_multi_single_verify_limit_expected_results_follow_the_norm(self):
+        """期待結果の根拠（複合ワークスペース仕様 §10、ADR-066）: 両方が超過なら`verifyBindingCount`、`commandDefinitionCount`だけならそれを報告する。"""
+        module = multi_single_verify_limit_fixtures
+        first = module.blocked_result("MULTI-041-01")
+        second = module.blocked_result("MULTI-041-02")
+        for body, dimension, summary in (
+                (first, "verifyBindingCount", "テスト割当て数が上限10,000を超過しました"),
+                (second, "commandDefinitionCount", "コマンド定義数が上限10,000を超過しました")):
+            self.assertEqual(body["status"], "blocked")
+            self.assertEqual(body["scope"], "selected")
+            self.assertEqual(body["workspace"], {"id": "platform", "path": "."})
+            # 上限の超過は部分的な結果へ進まない。
+            self.assertEqual((body["targetResults"], body["commands"]), ([], []))
+            self.assertEqual(len(body["diagnostics"]), 1)
+            diagnostic = body["diagnostics"][0]
+            self.assertEqual(diagnostic["code"], "SPEC-MULTI-LIMIT-001")
+            self.assertEqual(diagnostic["resultStatus"], "blocked")
+            self.assertEqual(diagnostic["summary"], summary)
+            self.assertEqual(diagnostic["evidence"], {"dimension": dimension, "limit": 10000, "observedAtLeast": 10001})
+        # 01は両方の次元が超過し、02は`commandDefinitionCount`だけが超過する（入力の側の前提）。
+        datasets = {identifier: module.reviewed_dataset(identifier)["dimensions"] for identifier in module.CASES}
+        self.assertEqual((datasets["MULTI-041-01"]["verifyBindingCount"], datasets["MULTI-041-01"]["commandDefinitionCount"]),
+                         (10001, 10001))
+        self.assertEqual((datasets["MULTI-041-02"]["verifyBindingCount"], datasets["MULTI-041-02"]["commandDefinitionCount"]),
+                         (10000, 10001))
+        self.assertEqual((datasets["MULTI-041-03"]["verifyBindingCount"], datasets["MULTI-041-03"]["commandDefinitionCount"]),
+                         (10000, 10000))
+        # 04は結果を返さず、引数不正（終了コード4）である。
+        manifest = json.loads((audit.FIXTURES / "multi/MULTI-041-04/manifest.json").read_text())
+        self.assertEqual(manifest["expect"], {"exitCode": 4, "stdout": "none", "reportFileCount": 0})
+        self.assertNotIn("resultDigest", manifest["expect"])
+
+    def test_multi_single_verify_limit_inputs_fit_the_ceilings_and_reach_the_limit_from_the_root(self):
+        """入力は、入力の上限（設定64 KiB、フロントマター32 KiB）とコンテキストの閉包の既定の上限（20文書、128 KiB）に収まり、
+        ルートの検証対象だけで実行計画が上限に届く（既存の`plan`は、ルートの分にしか届かない）。実寸で照合する。"""
+        for identifier, case in multi_single_verify_limit_fixtures.CASES.items():
+            profile = multi_single_verify_limit_fixtures.profile(identifier)
+            entries = dict(multi_generator.emit(profile))
+            targets = multi_generator.single_verify_targets(profile)
+            reached = set()
+            for target in targets:
+                requirement = target.split("::")[1]
+                size = len(entries[f".spec/requirements/{requirement}.md"])
+                documents = 1
+                for path, content in entries.items():
+                    if "/.spec/technical/" in path and f"refines: [platform::{requirement}]" in content.decode():
+                        documents += 1
+                        size += len(content)
+                        head = content.decode().partition("\n---\n")[0]
+                        self.assertLessEqual(len(head.encode()), 32 * 1024, (identifier, path))
+                        workspace = path.split("/.spec/", 1)[0].rsplit("/", 1)[-1]
+                        reached.update((workspace, line[len("    command: "):])
+                                       for line in head.split("\n") if line.startswith("    command: "))
+                self.assertLessEqual(documents, 20, (identifier, target))
+                self.assertLessEqual(size, 128 * 1024, (identifier, target))
+            self.assertEqual(len(reached), case["bindings"], identifier)
+            for path, content in entries.items():
+                if path.endswith("bitz.yaml"):
+                    self.assertLessEqual(len(content), 64 * 1024, (identifier, path))
+            # 検証対象は、ルートの文書と同数で、位置引数に重複なく並ぶ。
+            self.assertEqual(len(set(targets)), len(targets))
+            self.assertEqual(targets, sorted(targets))
+        # 対照: 既存の`plan`は割当てを全ワークスペースへ散らすので、ルートのTECHが持つ割当ては800件以下である。
+        scattered = multi_generator.emit(multi_generator.plan("verifyBindingCount", 10001))
+        root_bindings = {line for path, content in scattered if path.startswith(".spec/technical/")
+                         for line in content.decode().split("\n") if line.startswith("    command: ")}
+        self.assertLessEqual(len(root_bindings), multi_generator.COMMANDS_PER_WORKSPACE)
+
+    def test_multi_single_verify_limit_generation_is_deterministic_across_hash_seeds(self):
+        """生成と期待結果は、集合や辞書の反復順に依存しない（`PYTHONHASHSEED`を変えて2回）。"""
+        script = (
+            "import sys, tempfile\n"
+            "from pathlib import Path\n"
+            "sys.dont_write_bytecode = True\n"
+            f"sys.path.insert(0, {str(audit.FIXTURES.parent)!r})\n"
+            "from conformance import multi_generator, multi_single_verify_limit_fixtures as m\n"
+            "from conformance.harness import tree_digest_bytes, write_generated\n"
+            "from conformance.multi_limit_fixtures import canonical_digest\n"
+            "entries = multi_generator.emit(multi_generator.single_verify_plan(400, 450, 'verifyBindingCount'))\n"
+            "with tempfile.TemporaryDirectory() as t:\n"
+            "    write_generated(entries, Path(t))\n"
+            "    body = m.passed_result(entries, m.context_digests(entries, Path(t)))\n"
+            "print(tree_digest_bytes(entries), canonical_digest(body))\n"
+        )
+        outputs = []
+        for seed in ("1", "2"):
+            outputs.append(subprocess.run([sys.executable, "-B", "-c", script], capture_output=True, text=True, check=True,
+                                          env={**os.environ, "PYTHONHASHSEED": seed}).stdout)
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertRegex(outputs[0], r"^sha256:[0-9a-f]{64} sha256:[0-9a-f]{64}\n$")
+
+    def test_multi_single_verify_limit_harness_reproduces_result_digests(self):
+        """超過側の`resultDigest`を、Coreを実行せずにharnessの手順（`normalize_result`の`durationMs`固定と正規JSON）で再現する。"""
+        from conformance.runner import normalize_result
+
+        for identifier in ("MULTI-041-01", "MULTI-041-02"):
+            manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+            body = multi_single_verify_limit_fixtures.blocked_result(identifier)
+            normalized, warnings = normalize_result(body, zero_duration=True)
+            self.assertEqual(warnings, [], identifier)
+            digest = digest_reference.digest(digest_reference.canonical_bytes(normalized))
+            self.assertEqual(digest, manifest["expect"]["resultDigest"], identifier)
+
     def test_harness_reproduces_generate_fixture_result_digest_for_crosses_cases(self):
         """`runner.py`の`resultDigest`の比較手順(`normalize_result(..., zero_duration=True)`を
         `digest_reference`で正規JSON化してSHA-256を取る)が、生成fixtureのレビュー済みの
@@ -7642,12 +7804,19 @@ class AuditTests(unittest.TestCase):
             return {"fixtureId": identifier, "errors": []}
 
         output = io.StringIO()
-        with patch.object(validate_scale, "validate_fixture", fake), contextlib.redirect_stdout(output):
+
+        def fake_single_verify(identifier):
+            return {"fixtureId": identifier, "errors": []}
+
+        with patch.object(validate_scale, "validate_fixture", fake), \
+                patch.object(validate_scale, "validate_single_verify_fixture", fake_single_verify), \
+                contextlib.redirect_stdout(output):
             exit_code = validate_scale.main()
         report = json.loads(output.getvalue())
         self.assertEqual(exit_code, 1)
         self.assertEqual(report["status"], "Failed")
-        self.assertEqual(report["fixtures"], len(validate_scale.multi_limit_fixtures.CASES))
+        self.assertEqual(report["fixtures"], len(validate_scale.multi_limit_fixtures.CASES)
+                         + len(validate_scale.single_verify.CASES))
         self.assertEqual(len(report["errors"]), 1)
         self.assertTrue(report["errors"][0].startswith(f"{first}: 照合を完了できません（TimeoutExpired: "))
         conformance, _scale = self.certification_runs()

@@ -1,0 +1,35 @@
+{
+  "description": "コマンド定義数だけが超過しカタログにない--workspaceを指定した単独のverifyは、全体事前検査が成功するので上限ではなく引数不正として拒否する",
+  "expect": {
+    "exitCode": 4,
+    "reportFileCount": 0,
+    "stdout": "none"
+  },
+  "fixtureId": "MULTI-041-04",
+  "invocation": {
+    "argv": [
+      "verify",
+      "--workspace",
+      "nope",
+      "--format",
+      "json"
+    ],
+    "cwd": ".",
+    "env": {},
+    "runner": "bitz"
+  },
+  "setup": {
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:36c035f281e5c7d3ddca53305001d91aa5193da59c072bcffd6bcdf2d778c22a"
+    },
+    "git": true,
+    "operations": []
+  }
+}
