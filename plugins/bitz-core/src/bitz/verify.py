@@ -163,6 +163,33 @@ def _total_command_definition_count(config_by_ws: dict[str, dict], workspaces) -
     return total
 
 
+def _plan_limit_diagnostic(
+    binding_count: int, config_by_ws: dict[str, dict], workspaces, root_id: str | None
+) -> dict | None:
+    """実行計画を確定した後の上限の判定（複合ワークスペース仕様 §10、ADR-066）。超過がなければ``None``。
+
+    ``verifyBindingCount``（この実行計画のテスト割当ての数）、``commandDefinitionCount``（全ワークスペースのコマンド定義数）の順で判定し、
+    両方が超過していれば``verifyBindingCount``だけを返す。`--all-workspaces`と複合ワークスペースの単独の`verify`が共有する。
+    コマンドを1件も起動する前に呼び出す。
+    """
+
+    if binding_count > _VERIFY_BINDING_LIMIT:
+        dimension, limit, observed = "verifyBindingCount", _VERIFY_BINDING_LIMIT, binding_count
+    else:
+        # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、ここで自分で判定する。
+        # `verifyBindingCount`が超過していなければ、`commandDefinitionCount`だけの超過をそのまま報告する。
+        dimension, limit = "commandDefinitionCount", multiws.HARD_LIMITS["commandDefinitionCount"]
+        observed = _total_command_definition_count(config_by_ws, workspaces)
+        if observed <= limit:
+            return None
+    diag = _file_diag(
+        "SPEC-MULTI-LIMIT-001", "error", "blocked", messages.multi_limit_exceeded(dimension, limit),
+        root_id, config_mod.CONFIG_PATH,
+    )
+    diag["evidence"] = {"dimension": dimension, "limit": limit, "observedAtLeast": observed}
+    return diag
+
+
 def _hard_entry_target_result(entry: DocEntry, key: str) -> dict:
     """カタログの検証で除外された（`entry.hard`）文書を、そのまま自身の診断を持つ検証対象の結果にする。"""
 
@@ -854,8 +881,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     # --- ワークスペースの決定（複合ワークスペース仕様 §3）。`activews.select_active`が、修飾した検証対象の所有ワークスペース、
     # `--workspace`、最寄りの設定の順で作業ワークスペースを決める（複合ワークスペースを宣言していれば、修飾IDのない対象や引数なしも同じ）。 ---
+    # `commandDefinitionCount`は全体事前検査では判定せず、実行計画を確定した後に`verifyBindingCount`と合わせて判定する
+    # （`--all-workspaces`と同じ。複合ワークスペース仕様 §7・§10、ADR-066）。ほかの次元は今どおり全体事前検査で判定する。
     sel = activews.select_active(
-        "verify", parsed.positionals, requested_workspace, cwd, git, env, loc, subject="対象"
+        "verify", parsed.positionals, requested_workspace, cwd, git, env, loc, subject="対象",
+        skip_limit_dimensions=frozenset({"commandDefinitionCount"}),
     )
     if sel.stop is not None:
         # 全体事前検査が非成功なら、作業ワークスペースの処理もテストコマンドの実行も始めない（複合ワークスペース仕様 §7）。
@@ -1033,7 +1063,26 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         else:
             pending = [(doc_id, doc_id, doc_id) for doc_id in _default_roots(id_index)]
 
+    def _plan_limit_stop(binding_count: int) -> tuple[dict, int] | None:
+        """複合ワークスペースの実行計画の上限（`verifyBindingCount`、`commandDefinitionCount`）を超過していれば停止結果を返す。"""
+
+        if not multi_active:
+            return None
+        assert multi_pre is not None
+        configs = {multi_pre.root_id: multi_pre.root_config or {}}
+        configs.update({m.id: m.config for m in multi_pre.members})
+        limit_diag = _plan_limit_diagnostic(
+            binding_count, configs, multiws.ordered_workspaces(multi_pre), multi_pre.root_id
+        )
+        if limit_diag is None:
+            return None
+        return _empty(workspace_id, "blocked", [limit_diag])
+
     if not pending:
+        # 実行計画が空でも`commandDefinitionCount`は判定する（`--all-workspaces`が対象0件でも上限を先に判定するのと同じ）。
+        limit_stop = _plan_limit_stop(0)
+        if limit_stop is not None:
+            return limit_stop
         diag = _invocation_diag("SPEC-VERIFY-BLOCKED-002", "error", "blocked", messages.VERIFY_TARGETS_EMPTY)
         return _empty(workspace_id, "blocked", [diag] + config_warning_diags)
 
@@ -1068,6 +1117,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             bucket = needs.setdefault((ws_id, name), {"tests": set(), "covers": set()})
             bucket["tests"].add(path)
             bucket["covers"].add(cover)
+
+    # 対象展開とテスト割当ての重複排除が終わった実行計画を確定した後、コマンドを1件も起動する前に上限を判定する。
+    limit_stop = _plan_limit_stop(len(needs))
+    if limit_stop is not None:
+        return limit_stop
 
     commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
@@ -1193,7 +1247,6 @@ def _run_all_workspaces_members(
     per_ws_extra_diags: dict[str, list[dict]] = {wid: [] for wid, _, _ in workspaces}
     needs: dict[tuple[str, str], dict] = {}
     any_targets = False
-    limit_diag: dict | None = None
     cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
 
     for wid, root, _rel in workspaces:
@@ -1243,32 +1296,8 @@ def _run_all_workspaces_members(
                 bucket["tests"].add(path)
                 bucket["covers"].add(cover)
 
-    binding_count = len(needs)
-    if binding_count > _VERIFY_BINDING_LIMIT:
-        limit_diag = _file_diag(
-            "SPEC-MULTI-LIMIT-001", "error", "blocked",
-            messages.multi_limit_exceeded("verifyBindingCount", _VERIFY_BINDING_LIMIT),
-            pre.root_id, config_mod.CONFIG_PATH,
-        )
-        limit_diag["evidence"] = {"dimension": "verifyBindingCount", "limit": _VERIFY_BINDING_LIMIT, "observedAtLeast": binding_count}
-    else:
-        # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、
-        # ここで実行計画を確定した後に自分で判定する。`verifyBindingCount`が超過していなければ、
-        # `commandDefinitionCount`だけの超過をここで遮断する（複合ワークスペース仕様 §10「複数の次元が同時に
-        # 超過する場合は、`verify`実行計画の次元を優先して報告する」の裏を返せば、`verifyBindingCount`が超過しない
-        # 限り`commandDefinitionCount`の超過はそのまま報告する）。コマンドを1件も起動する前
-        # （`_plan_and_run_bindings`より前）に判定する。
-        command_definition_count = _total_command_definition_count(config_by_ws, workspaces)
-        limit = multiws.HARD_LIMITS["commandDefinitionCount"]
-        if command_definition_count > limit:
-            limit_diag = _file_diag(
-                "SPEC-MULTI-LIMIT-001", "error", "blocked",
-                messages.multi_limit_exceeded("commandDefinitionCount", limit),
-                pre.root_id, config_mod.CONFIG_PATH,
-            )
-            limit_diag["evidence"] = {
-                "dimension": "commandDefinitionCount", "limit": limit, "observedAtLeast": command_definition_count,
-            }
+    # 実行計画（`needs`）を確定した後、コマンドを1件も起動する前（`_plan_and_run_bindings`より前）に上限を判定する。
+    limit_diag = _plan_limit_diagnostic(len(needs), config_by_ws, workspaces, pre.root_id)
 
     if limit_diag is not None:
         diagnostics = sort_diagnostics([limit_diag])
