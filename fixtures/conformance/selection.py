@@ -31,15 +31,14 @@ SCALE_SECONDS = {
     (True, "commandDefinitionCount"): 2.64,
     (True, "memberCount"): 0.70,
 }
-# 単独の`verify`の上限の群（`MULTI-041-*`）。入力を生成するので`scale`に含める。CIの実測がまだないため暫定値とし、
-# 修正前のCoreを局所で実行した所要時間（041-01: 4.35秒、041-02: 3.98秒、041-03: 23.04秒、041-04: 1.07秒）を、同じ局所実行の
-# 類似fixture（`MULTI-021-08`: 6.57秒、`MULTI-020-16`: 24.01秒）に対するCI実測（14.43秒、34.90秒）の比で換算した。
-# CIの実測を得たら`MODEL_SOURCE`とともに置き換える。
+# 単独の`verify`の上限の群（`MULTI-041-*`）。入力を生成するので`scale`に含める。GitHub Actionsの実行40084509890
+# （コミットde912ede、CPython 3.12、ubuntu-24.04。PRの実行のため1組）の各fixtureの`durationMs`。`MODEL_SOURCE`の実行には含まれないため、
+# 同じ実行で測り直すときに中央値へ置き換える。
 SINGLE_VERIFY_LIMIT_SECONDS = {
-    "MULTI-041-01": 9.55,
-    "MULTI-041-02": 8.74,
-    "MULTI-041-03": 33.49,
-    "MULTI-041-04": 2.35,
+    "MULTI-041-01": 12.15,
+    "MULTI-041-02": 8.20,
+    "MULTI-041-03": 25.87,
+    "MULTI-041-04": 1.66,
 }
 STANDARD_SECONDS = {
     "SINGLE-126-12": 6.12,
