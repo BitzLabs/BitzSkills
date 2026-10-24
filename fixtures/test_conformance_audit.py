@@ -4076,12 +4076,12 @@ class AuditTests(unittest.TestCase):
                     else:
                         (fixture / name).unlink()
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
-        # 原因を消す・変える書換え。副作用の期待値は準備手順の観測から作り直し、バイト列の不一致以外の検査でも拒否されることを確かめる。
+        # 原因を消す・変える書換え。副作用の期待値は準備手順の観測から作り直したうえで、入力のレビュー済みのcorpusとの照合で拒否されることを確かめる。
         edits = {
             "SINGLE-166-04": [(".spec/requirements/REQ-001.md", "requires: [REQ-999]", "requires: []")],
             "SINGLE-166-10": [(".spec/requirements/REQ-001.md", "requires: [REQ-999]", "requires: []")],
             "SINGLE-166-03": [(".spec/bitz.yaml", 'earsAi: "1.0"', 'earsAi: "1.0"\nx: 1')],
-            "SINGLE-166-02": [(".spec/bitz.yaml", "language: [", "language: ja")],
+            "SINGLE-166-02": [(".spec/bitz.yaml", "language: 42", "language: ja")],
         }
         for identifier, changes in edits.items():
             for relative, old, new in changes:
@@ -4089,8 +4089,7 @@ class AuditTests(unittest.TestCase):
                     root = self.copy_single_fixture(temporary, identifier)
                     fixture = root / "single" / identifier
                     path = fixture / "repo" / relative
-                    if old not in path.read_text():
-                        continue
+                    self.assertIn(old, path.read_text(), "改変の元の文字列が入力にありません")
                     path.write_text(path.read_text().replace(old, new))
                     manifest = json.loads((fixture / "manifest.json").read_text())
                     repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
