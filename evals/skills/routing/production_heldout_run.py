@@ -66,7 +66,7 @@ def checkpoint(bundle,proof):
 
 def next_stage(rows,summary):
     if summary['status']=='stopped':return None,'stopped'
-    if summary['terminalSlots']==24:return None,'complete'
+    if summary.get('accountedSlots',summary['terminalSlots'])==24:return None,'complete'
     if not rows or rows[-1]['stage'] in x.ledger.TERMINALS:
         return summary['primaryReserved']+1,'primary'
     stage=rows[-1]['stage'];ordinal=rows[-1]['ordinal']
@@ -157,7 +157,7 @@ def _run_locked(bundle,proof,maximum_slots):
             if not isinstance(exc,Exception):interruption=exc
             break
     _,summary=checkpoint(bundle,proof)
-    result=dict(version=VERSION,status='heldout_attempts_recorded' if summary['terminalSlots']==24 and summary['status']!='stopped'
+    result=dict(version=VERSION,status=('heldout_attempts_recorded_with_prior_stop' if summary.get('priorStoppedSlots') else 'heldout_attempts_recorded') if summary.get('accountedSlots',summary['terminalSlots'])==24 and summary['status']!='stopped'
         else 'heldout_globally_stopped' if summary['status']=='stopped' else 'heldout_batch_recorded',
         sourceCommit=bundle.bound.contract['sourceCommit'],executionSha256=io.sha(bundle.bound.execution_raw),
         slots=results,summary=summary,automaticRetries=0,certifiesFullR04=False,certifiesSkillGate=False)

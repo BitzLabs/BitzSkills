@@ -16,6 +16,8 @@ PROOF_KEYS = {'status', 'sourceCommit', 'executionSha256', 'deploymentSha256', '
     'launchEnabled', 'certifiesSkillGate', 'certifiesRelease'}
 SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_ledger.py',
+    'evals/skills/routing/production_heldout_continuation.py',
+    'evals/skills/routing/production-heldout-prior-stop-v0.1.json',
     'evals/skills/routing/production_heldout_execution.py',
     'evals/skills/routing/production_heldout_preflight.py',
     'evals/skills/routing/production_heldout_launch.py',

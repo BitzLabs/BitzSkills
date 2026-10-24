@@ -132,6 +132,7 @@ def pace(bound, ordinal, role, ledger):
     require(role in {'primary','independent'}, 'heldout pacing role')
     rows,_=ledger._history();started=[row for row in rows if row['stage'].endswith('_started')]
     previous_sha,previous=None,None
+    handoff = None
     if started:
         last=started[-1];previous_role=last['stage'].removesuffix('_started')
         require(previous_role in {'primary','independent'}, 'heldout prior launch role')
@@ -151,18 +152,32 @@ def pace(bound, ordinal, role, ledger):
         receipt_value=x.inputs.parse(receipt_raw)
         require(receipt_value.get('artifactSha256',{}).get('logical-pacing.json')==previous_sha
             and originals.read_original(previous_base,'logical-pacing.json')==raw, 'heldout prior pacing receipt binding')
-    else:require(role=='primary' and ordinal==1, 'heldout first logical launch')
+    else:
+        from production_heldout_continuation import ContinuationLedger, prior_pacing, ANCHOR_SHA256
+        if isinstance(ledger, ContinuationLedger):
+            require(role == 'primary' and ordinal == 2, 'heldout continuation first launch')
+            old, previous_sha = prior_pacing()
+            require(time.time() >= old['wallSeconds'], 'heldout prior wall clock drift')
+            previous = dict(monotonicSeconds=time.monotonic(), wallSeconds=time.time())
+            handoff = dict(priorStopAnchorSha256=ANCHOR_SHA256, witnessMonotonicSeconds=previous['monotonicSeconds'],
+                witnessWallSeconds=previous['wallSeconds'])
+        else:
+            require(role=='primary' and ordinal==1, 'heldout first logical launch')
     now,wall=time.monotonic(),time.time();delay=0.0
     if previous is not None:
         elapsed=now-previous['monotonicSeconds']
         require(elapsed>=0 and wall>=previous['wallSeconds'], 'heldout pacing clock drift')
-        delay=max(0.0,60-elapsed)
+        delay=60.0 if handoff is not None else max(0.0,60-elapsed)
         if delay:time.sleep(delay)
         require(time.monotonic()-previous['monotonicSeconds']>=60, 'heldout minimum logical launch interval')
-        require(io.sha(read_control(control_root(bound,last['ordinal']),name))==previous_sha, 'heldout previous pacing drift')
+        if handoff is not None:
+            require(prior_pacing()[1] == previous_sha, 'heldout prior stop changed during handoff')
+        else:
+            require(io.sha(read_control(control_root(bound,last['ordinal']),name))==previous_sha, 'heldout previous pacing drift')
     value=dict(version=launch.PACING_VERSION,sourceCommit=bound.contract['sourceCommit'],executionSha256=io.sha(bound.execution_raw),
         ordinal=ordinal,role=role,monotonicSeconds=time.monotonic(),wallSeconds=time.time(),waitedSeconds=delay,
         previousSha256=previous_sha,declaresProviderInvoked=False,minimumGapSeconds=60)
+    if handoff is not None:value.update(version='heldout-logical-pacing-0.2.0', handoff=handoff)
     raw=io.encoded(value);launch.pacing(bound.execution_raw,launch.primary_identity(bound,ordinal),raw,role=role)
     save(control_root(bound,ordinal),'pacing.json' if role=='primary' else 'independent-pacing.json',raw)
     save(bound.stage_root(ordinal,role),'logical-pacing.json',raw)

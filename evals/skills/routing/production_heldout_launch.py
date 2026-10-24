@@ -146,9 +146,11 @@ def pacing(execution_raw, identity, raw, *, role='primary'):
     require(role in {'primary','independent'}, 'heldout pacing role')
     ordinal = checked_identity(execution_raw, identity)
     value = x.inputs.parse(raw)
-    require(isinstance(value, dict) and set(value) == {'version', 'sourceCommit', 'executionSha256',
+    continuation_handoff = isinstance(value, dict) and value.get('version') == 'heldout-logical-pacing-0.2.0'
+    require(isinstance(value, dict) and set(value) == ({'version', 'sourceCommit', 'executionSha256',
         'ordinal', 'role', 'monotonicSeconds', 'wallSeconds', 'waitedSeconds', 'previousSha256',
-        'declaresProviderInvoked', 'minimumGapSeconds'} and value['version'] == PACING_VERSION
+        'declaresProviderInvoked', 'minimumGapSeconds'} | ({'handoff'} if continuation_handoff else set()))
+        and value['version'] in {PACING_VERSION, 'heldout-logical-pacing-0.2.0'}
         and value['sourceCommit'] == identity['sourceCommit'] and value['executionSha256'] == io.sha(execution_raw)
         and type(value['ordinal']) is int and value['ordinal'] == ordinal and value['role'] == role
         and value['declaresProviderInvoked'] is False and type(value['minimumGapSeconds']) is int
@@ -157,4 +159,15 @@ def pacing(execution_raw, identity, raw, *, role='primary'):
         for key in ['monotonicSeconds', 'wallSeconds', 'waitedSeconds']) and value['waitedSeconds'] <= 60,
         'heldout pacing original finite clocks')
     if value['previousSha256'] is not None:io.pin(value['previousSha256'])
+    if continuation_handoff:
+        from production_heldout_continuation import CAMPAIGN, ANCHOR_SHA256, PRIOR_PACING_SHA256
+        h = value['handoff']
+        require(x.execution_contract(execution_raw)['campaignId'] == CAMPAIGN and ordinal == 2 and role == 'primary'
+            and value['previousSha256'] == PRIOR_PACING_SHA256 and value['waitedSeconds'] == 60
+            and isinstance(h, dict) and set(h) == {'priorStopAnchorSha256', 'witnessMonotonicSeconds', 'witnessWallSeconds'}
+            and h['priorStopAnchorSha256'] == ANCHOR_SHA256
+            and all(type(h[key]) in {int,float} and math.isfinite(h[key]) and h[key] >= 0
+                for key in ['witnessMonotonicSeconds','witnessWallSeconds'])
+            and value['monotonicSeconds']-h['witnessMonotonicSeconds'] >= 60
+            and value['wallSeconds'] >= h['witnessWallSeconds'], 'heldout prior completion clock handoff')
     return value

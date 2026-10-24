@@ -104,6 +104,9 @@ class BoundExecution:
             model=c['model'], setVersion=inputs.SET_VERSION, budget=c['budget'],
             timeoutSeconds=c['timeoutSeconds'], certifiesSkillGate=False))
         ledger.contract(raw)
+        if c['campaignId'] == 'heldout-matrix-survey-remaining23-20261024-01':
+            from production_heldout_continuation import contract_from_base
+            return contract_from_base(raw)
         return raw
 
 

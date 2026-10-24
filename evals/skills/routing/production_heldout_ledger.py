@@ -43,6 +43,9 @@ def contract(raw):
 
 def open_shared(contract_raw):
     """製品接続用の所在解決だけ。contractの開始前独立検分は後続adapterの責務。"""
+    if inputs.parse(contract_raw).get('campaignId') == 'heldout-matrix-survey-remaining23-20261024-01':
+        from production_heldout_continuation import open_fixed
+        return open_fixed(contract_raw)
     return HeldoutLedger(SHARED_ROOT, contract_raw)
 
 
