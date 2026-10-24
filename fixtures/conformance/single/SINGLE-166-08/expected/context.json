@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "blocked",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:7344dadb951732bd515e8912cda26fa21a6ff4346b8ffba0c649b0d32002bd22",
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-STALE-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "期待したハッシュ値が現在のコンテキストのハッシュ値と一致しません",
+      "source": {
+        "kind": "invocation",
+        "argument": "--expect-digest"
+      }
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  }
+}
