@@ -615,11 +615,12 @@ class OmittedWorkspaceIdTests(_Base):
     GHOST = "    - id: ghost\n      path: services/ghost\n"
 
     def test_root_config_without_workspace_id_has_null_id_when_the_catalog_stops(self):
+        # ルートのIDの省略は、メンバーの不備（ghost）より先に、ルートの条件の設定不適合で単独に止める（複合ワークスペース仕様 §2、C42）。
         _write(self.root, ".spec/bitz.yaml", ROOT_YAML.replace("workspace:\n  id: platform\n", "") + self.GHOST)
         for runner, extra in ((self.check, ("--full",)), (self.verify, ()), (self.context, ("REQ-001",)), (self.doctor, ())):
             result, code = runner(self.root, *extra)
             self.assertEqual(code, 1, result["diagnostics"])
-            self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-MEMBER-001"])
+            self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-CONFIG-001"])
             self.assertEqual(result["workspace"], {"id": None, "path": "."})
         # 明示したIDを持つメンバーの設定は、ルートがIDを省略していてもそのIDを返す。
         result, _ = self.check(self.web, "--full")
