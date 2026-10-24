@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "remaining23_continuation_with_immutable_prior_stop_and_clock_handoff",
+        "status": "authentication_refresh_current_calibration_and_concrete_prelaunch_before_remaining23",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "catalog_integrity_reviewed_date24_calibration_adopted_continuation_pending",
+      "status": "implementation_verified_pending_authentication_and_current_calibration",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1273,9 +1273,10 @@
       "contextDiagnosisRecord": "r04-heldout-sdk-context-diagnosis-20261020.json",
       "catalogConnectionRecord": "r04-heldout-catalog-connection-progress-20261021.json",
       "catalogRemediationSource": "b474d2d1f30ce9b2c42aba65d07df272e1ce95d7",
-      "currentDateCalibrationRenewalRequired": false,
+      "currentDateCalibrationRenewalRequired": true,
       "catalogIntegrityClosureRecord": "r04-heldout-catalog-integrity-closure-20261024.json",
-      "currentCalibrationDate": "2026-10-24"
+      "currentCalibrationDate": "2026-10-24",
+      "remaining23Record": "r04-heldout-remaining23-progress-20261025.json"
     },
     "r04HeldoutExecution": {
       "status": "stopped",
@@ -1311,6 +1312,23 @@
       "publicCatalogTemplateReproductionVerified": true,
       "historicalRemoteSelectionPathCertified": false,
       "newPaidStagesSinceFirstStop": 0
+    },
+    "r04HeldoutContinuation": {
+      "status": "implementation_verified_pending_authentication_and_current_calibration",
+      "sourceCommit": "57d57a4d5f9b74b5d1b6750f1b385d27b0887791",
+      "record": "r04-heldout-remaining23-progress-20261025.json",
+      "firstOrdinal": 2,
+      "lastOrdinal": 24,
+      "newSlots": 23,
+      "priorStoppedSlots": 1,
+      "newModels": 0,
+      "newReservations": 0,
+      "newLedgerCreated": false,
+      "fullRegressionTests": 1094,
+      "fullRegressionExitCode": 0,
+      "authenticationRefreshRequired": true,
+      "currentDayCalibrationRenewalRequired": true,
+      "positivePrelaunchPending": true
     }
   }
 }
