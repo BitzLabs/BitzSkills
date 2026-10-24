@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "changed",
+  "status": "failed",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "selection": {
+    "changedPathCount": 0,
+    "targetDocumentCount": 0,
+    "excludedCodeTestPathCount": 0
+  },
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-CONFIG-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "ルートワークスペースの設定キーworkspace.idがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "workspace.id"
+      }
+    }
+  ]
+}
