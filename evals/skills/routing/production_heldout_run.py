@@ -118,6 +118,8 @@ def batch_lock(bundle):
 def run(bundle,*,maximum_slots=2):
     require(type(maximum_slots) is int and 1<=maximum_slots<=2, 'heldout maximum2 slots per batch')
     proof=resources(bundle);operator.auth_metadata()
+    # 新継続factoryの旧原検査を、batch controlの新規保存より前にも行う。
+    ledger_for(bundle,proof)
     with batch_lock(bundle):return _run_locked(bundle,proof,maximum_slots)
 
 

@@ -103,6 +103,14 @@ class ContinuationRunTests(unittest.TestCase):
         self.assertEqual(run.run(self.f.bundle)['slots'],[])
         self.assertEqual(self.f.primary.call_count,23)
 
+    def test_prior_drift_is_rejected_before_creating_batch_control(self):
+        run=run_fixture.run
+        with patch.object(c,'verify_prior',side_effect=ValueError('PRIOR_DRIFT')), \
+            patch.object(run,'batch_lock') as lock,self.assertRaisesRegex(ValueError,'PRIOR_DRIFT'):
+            run.run(self.f.bundle)
+        lock.assert_not_called()
+        self.assertFalse((self.f.private/c.ROOT_NAME).exists())
+
     def test_ambiguous_new_start_stops_without_restarting(self):
         self.f.append(2,['primary_reserved','primary_started'])
         result=run_fixture.run.run(self.f.bundle)
