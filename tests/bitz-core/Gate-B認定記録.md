@@ -744,3 +744,22 @@ Core固有の単体試験は959件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は975件がすべて成功した。
+
+## 2026-10-24: 単一ワークスペースのcontextの早期に返す結果のrevisionを直した後のStep 1〜5の再判定
+
+`context.py`の`_empty_bundle`に`revision`を渡し、単一ワークスペースの`context`の早期に返す9か所の結果でも、求めた`revision`を返すようにした（実装の確認事項C45）。
+これを固定する`SINGLE-166-01`〜`SINGLE-166-11`（Step 3）を追加した。修正前のCore（コミット`c3110be3`の版）では、追加した11件のうち9件が非成功（`failed` 9件）となり、
+`revision: null`が正しい対照の`-10`、`-11`と既存の466件はすべて通過することを確かめた。修正後のCoreでは477件すべてが`passed`となる。
+
+コミット`81d09c51ce7bf4867d3dffdb4fcf4bad00fbf477`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 477件（`SINGLE-166-01`〜`SINGLE-166-11`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`64c75c62dd431b1df042d2972e2e447d1f61b6ca5380a07282fa1e68e82e2074` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は991件がすべて成功した。
