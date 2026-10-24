@@ -346,6 +346,8 @@ MULTI_CONFIG_MEMBERS_REQUIRED = "設定キーmultiWorkspace.membersは1件以上
 MULTI_CONFIG_MEMBERS_TYPE = "設定キーmultiWorkspace.membersは配列で指定してください"
 MULTI_CONFIG_MEMBER_ENTRY_TYPE = "設定キーmultiWorkspace.membersの要素はマッピングで指定してください"
 MULTI_CONFIG_MAX_MEMBERS_RANGE = "設定キーmultiWorkspace.maxMembersは1〜100の整数で指定してください"
+# ルートワークスペースのIDの省略（C42。2026-10-25に管理者が承認。一字も変えない）。
+MULTI_CONFIG_ROOT_ID_REQUIRED = "ルートワークスペースの設定キーworkspace.idがありません"
 # 除外の指定（ADR-064の8。管理者が承認した7件の一つ。一字も変えない）。
 MULTI_CONFIG_EXCLUDE_TYPE = "設定キーmultiWorkspace.excludeは文字列の配列で指定してください"
 MULTI_CONFIG_EXCLUDE_COUNT = "設定キーmultiWorkspace.excludeは100件以下で指定してください"
