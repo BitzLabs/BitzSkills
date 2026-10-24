@@ -763,3 +763,22 @@ Core固有の単体試験は975件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は991件がすべて成功した。
+
+## 2026-10-25: 複合ワークスペースのcontextの並びを修飾IDで比べるようにした後のStep 1〜5の再判定
+
+`context.py`の`documents`の並べ替えと、規範文の並び（`_merge_expansions`）で、複合ワークスペースのときだけ出力する修飾IDで比べるようにした（実装の確認事項C46）。
+これを固定する`MULTI-042-01`〜`MULTI-042-03`（Step 5）を追加した。修正前のCore（コミット`a2ca532b`の版）では、追加した3件のうち2件が非成功（`failed` 2件）となり、
+単一ワークスペースの対照の`-03`と既存の477件はすべて通過することを確かめた。修正後のCoreでは480件すべてが`passed`となる。
+
+コミット`2ffe7183b98055cc270e377489a8edba6f6b1452`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 480件（`MULTI-042-01`〜`MULTI-042-03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`fb6b05a70ed9c8632f764d89eb8c777d7e10df5d295748267caea87a1d52d84b` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1007件がすべて成功した。
