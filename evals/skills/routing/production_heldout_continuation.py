@@ -10,6 +10,7 @@ ROOT_NAME = 'measurement-ledgers/r04-heldout-two-repetitions-remaining23-01'
 ANCHOR_PATH = 'evals/skills/routing/production-heldout-prior-stop-v0.1.json'
 ANCHOR_SHA256 = '15660dd2d3147e33fdfd34567f0785092af381eb8e1f79c1c49ef5b5efa226e0'
 PRIOR_PACING_SHA256 = '5380fb10508667668b4b270d266d7e9343e33d884056535b7f507deba3d25b17'
+PRIOR_WALL_SECONDS = 1792484256.029318
 PRIOR_SOURCE = 'a7cd00a357a084dfab859eed4736d882e9faedc0'
 
 
@@ -90,6 +91,7 @@ def prior_pacing():
     import production_heldout_launch as launch
     raws = verify_prior()
     value = launch.pacing(raws['execution'], inputs.parse(raws['reservation']), raws['stagePacing'])
+    require(value['wallSeconds'] == PRIOR_WALL_SECONDS, 'heldout pinned prior wall clock')
     return value, io.sha(raws['stagePacing'])
 
 

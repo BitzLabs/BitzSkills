@@ -159,6 +159,7 @@ def pace(bound, ordinal, role, ledger):
             old, previous_sha = prior_pacing()
             require(time.time() >= old['wallSeconds'], 'heldout prior wall clock drift')
             previous = dict(monotonicSeconds=time.monotonic(), wallSeconds=time.time())
+            require(previous['wallSeconds'] >= old['wallSeconds'], 'heldout prior wall clock drift')
             handoff = dict(priorStopAnchorSha256=ANCHOR_SHA256, witnessMonotonicSeconds=previous['monotonicSeconds'],
                 witnessWallSeconds=previous['wallSeconds'])
         else:

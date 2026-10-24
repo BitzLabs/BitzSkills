@@ -119,6 +119,7 @@ class ContinuationPacingTests(unittest.TestCase):
             **dict(zip(x.inputs.INPUT_NAMES,b.raw_inputs)))
         self.proof=dict(self.f.fixture.proof,executionSha256=c.io.sha(self.bound.execution_raw))
         self.f.stack.enter_context(patch.object(c,'verify_prior',return_value={}))
+        self.f.stack.enter_context(patch.object(c,'PRIOR_WALL_SECONDS',500))
         self.prior=self.f.stack.enter_context(patch.object(c,'prior_pacing',
             return_value=(dict(monotonicSeconds=10**9,wallSeconds=500),c.PRIOR_PACING_SHA256)))
         self.wall_shift=0
@@ -150,6 +151,27 @@ class ContinuationPacingTests(unittest.TestCase):
             ledger.append(2,'independent_captured',io.sha(receipt));ledger.append(2,'parent_verified','e'*64,measured_correct=False)
             ledger.append(3,'primary_reserved');self.f.clock+=3;op.pace(self.bound,3,'primary',ledger)
             self.assertNotIn('handoff',c.inputs.parse(op.verify_pacing(self.bound,3,'primary')))
+
+    def test_first_handoff_cannot_be_downgraded_even_if_both_pacing_copies_change(self):
+        with self.ledger.locked() as ledger:
+            ledger.append(2,'primary_reserved');self.op.pace(self.bound,2,'primary',ledger)
+            value=c.inputs.parse(self.op.verify_pacing(self.bound,2,'primary'))
+            value.pop('handoff');value.update(version=self.op.launch.PACING_VERSION,waitedSeconds=0,
+                monotonicSeconds=1,wallSeconds=1,previousSha256=None)
+            raw=c.io.encoded(value)
+            (self.op.control_root(self.bound,2)/'pacing.json').write_bytes(raw)
+            (self.bound.stage_root(2,'primary')/'logical-pacing.json').write_bytes(raw)
+            with self.assertRaisesRegex(ValueError,'first pacing version'):
+                self.op.verify_pacing(self.bound,2,'primary')
+
+    def test_wall_regression_between_prior_check_and_witness_is_rejected(self):
+        with self.ledger.locked() as ledger:
+            ledger.append(2,'primary_reserved')
+            with patch.object(self.op.time,'time',side_effect=[1000,100,100,100]), \
+                self.assertRaisesRegex(ValueError,'prior wall clock'):
+                self.op.pace(self.bound,2,'primary',ledger)
+        self.sleep.assert_not_called()
+        self.assertFalse((self.bound.stage_root(2,'primary')/'logical-pacing.json').exists())
 
     def test_fake_sleep_cannot_claim60_or_save_pacing(self):
         with self.ledger.locked() as ledger:

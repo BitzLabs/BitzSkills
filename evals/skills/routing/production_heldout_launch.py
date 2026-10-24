@@ -147,6 +147,9 @@ def pacing(execution_raw, identity, raw, *, role='primary'):
     ordinal = checked_identity(execution_raw, identity)
     value = x.inputs.parse(raw)
     continuation_handoff = isinstance(value, dict) and value.get('version') == 'heldout-logical-pacing-0.2.0'
+    first_continuation = (x.execution_contract(execution_raw)['campaignId'] == 'heldout-matrix-survey-remaining23-20261024-01'
+        and ordinal == 2 and role == 'primary')
+    require(not first_continuation or continuation_handoff, 'heldout continuation first pacing version')
     require(isinstance(value, dict) and set(value) == ({'version', 'sourceCommit', 'executionSha256',
         'ordinal', 'role', 'monotonicSeconds', 'wallSeconds', 'waitedSeconds', 'previousSha256',
         'declaresProviderInvoked', 'minimumGapSeconds'} | ({'handoff'} if continuation_handoff else set()))
@@ -160,7 +163,7 @@ def pacing(execution_raw, identity, raw, *, role='primary'):
         'heldout pacing original finite clocks')
     if value['previousSha256'] is not None:io.pin(value['previousSha256'])
     if continuation_handoff:
-        from production_heldout_continuation import CAMPAIGN, ANCHOR_SHA256, PRIOR_PACING_SHA256
+        from production_heldout_continuation import CAMPAIGN, ANCHOR_SHA256, PRIOR_PACING_SHA256, PRIOR_WALL_SECONDS
         h = value['handoff']
         require(x.execution_contract(execution_raw)['campaignId'] == CAMPAIGN and ordinal == 2 and role == 'primary'
             and value['previousSha256'] == PRIOR_PACING_SHA256 and value['waitedSeconds'] == 60
@@ -168,6 +171,7 @@ def pacing(execution_raw, identity, raw, *, role='primary'):
             and h['priorStopAnchorSha256'] == ANCHOR_SHA256
             and all(type(h[key]) in {int,float} and math.isfinite(h[key]) and h[key] >= 0
                 for key in ['witnessMonotonicSeconds','witnessWallSeconds'])
+            and h['witnessWallSeconds'] >= PRIOR_WALL_SECONDS
             and value['monotonicSeconds']-h['witnessMonotonicSeconds'] >= 60
             and value['wallSeconds'] >= h['witnessWallSeconds'], 'heldout prior completion clock handoff')
     return value
