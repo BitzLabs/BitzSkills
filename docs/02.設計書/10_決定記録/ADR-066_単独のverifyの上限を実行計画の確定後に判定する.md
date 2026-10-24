@@ -26,7 +26,7 @@ relations:
    両方が超過していれば`verifyBindingCount`、`commandDefinitionCount`だけが超過していればそれを、診断`SPEC-MULTI-LIMIT-001`（`blocked`）で報告する（ユーザーの決定）。
    `verifyBindingCount`は1回の実行計画にあるテスト割当ての数、`commandDefinitionCount`は全ワークスペースのコマンド定義数とする（§10の表）。
 3. **優先の範囲**。§10の「複数の次元が同時に超過する場合は、`verify`実行計画の次元を優先して報告する」は、`commandDefinitionCount`と`verifyBindingCount`の
-   組に当てる。ほかの次元は、今どおり全体事前検査で判定する（司令塔の判断をユーザーに伝えた。§10に明記）。
+   組に当てる。ほかの次元は、今どおり全体事前検査で判定する（ユーザーの決定。§10に明記）。
 
 ## Consequences
 
