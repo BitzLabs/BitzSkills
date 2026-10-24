@@ -422,7 +422,8 @@ class MultiWorkspaceOrderTests(_MultiCorpus):
 
     # --- 5. check / verify（対照） -----------------------------------------------------------------
 
-    def test_check_and_verify_outputs_are_unchanged(self):
+    def test_check_and_verify_still_pass_with_the_same_statement_set(self):
+        """対照: `check`と`verify`の状態と、`verify`の対象規範文の集合とハッシュ値を確かめる（並びは確かめない。`verify`の`statements`の並びは実装の確認事項C52）。"""
         result, code = self.check("REQ-001")
         self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
         result, code = self.verify("REQ-001")
