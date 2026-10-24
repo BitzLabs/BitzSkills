@@ -83,6 +83,7 @@ from conformance.multi_binding_missing_fixtures import validate as validate_mult
 from conformance.multi_doctor_git_fixtures import validate as validate_multi_doctor_git_fixtures
 from conformance.doctor_plugin_fixtures import validate as validate_doctor_plugin_fixtures
 from conformance.verify_stop_revision_fixtures import validate as validate_verify_stop_revision_fixtures
+from conformance.context_stop_revision_fixtures import validate as validate_context_stop_revision_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -370,6 +371,7 @@ def main():
     checks["multi_doctor_git_fixtures"] = validate_multi_doctor_git_fixtures()
     checks["doctor_plugin_fixtures"] = validate_doctor_plugin_fixtures()
     checks["verify_stop_revision_fixtures"] = validate_verify_stop_revision_fixtures()
+    checks["context_stop_revision_fixtures"] = validate_context_stop_revision_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
