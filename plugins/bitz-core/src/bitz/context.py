@@ -232,7 +232,12 @@ def _file_diag(code: str, severity: str, status: str, summary: str, workspace_id
     return {"code": code, "severity": severity, "resultStatus": status, "summary": summary, "source": src}
 
 
-def _empty_bundle(purpose: str, detail: str, workspace_id, workspace_path: str, roots: list[str]) -> dict:
+def _empty_bundle(
+    purpose: str, detail: str, workspace_id, workspace_path: str, roots: list[str], revision: dict | None = None
+) -> dict:
+    """早期に返すコンテキスト一式。`revision`は呼出し側が求めた値で、単一ワークスペースではGit不在とコミットのない
+    リポジトリだけ`null`とする（結果・診断・終了コード §2）。"""
+
     empty_bucket = {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []}
     return {
         "schemaVersion": "1.0",
@@ -242,7 +247,7 @@ def _empty_bundle(purpose: str, detail: str, workspace_id, workspace_path: str, 
         "workspace": {"id": workspace_id, "path": workspace_path},
         "roots": roots,
         "contextDigest": None,
-        "revision": None,
+        "revision": revision,
         "resolution": {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 0},
         "projection": {"detail": detail, "expanded": []},
         "documents": [],
@@ -453,7 +458,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     if loc.config_path is None or outcome is None:
         # 設定ファイルがない（診断レジストリ`WORKSPACE-CONFIG-MISSING`。発生元は`environment`）。
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw, revision=revision)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
             {
@@ -473,7 +478,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         # ハッシュ値を計算する前に停止し、設定の検査の診断と警告をそのまま返す。
         diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
         worst = status_from_diagnostics(diags) if diags else "error"
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         if multi_active:
@@ -533,7 +538,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     # --- 起点の解決 ---------------------------------------------------------
     missing = [r for r in roots_raw if _lookup_key(r) not in id_index and _lookup_key(r) not in statement_index]
     if missing:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["diagnostics"] = [
             _invocation_diag(
@@ -633,7 +638,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
         worst = status_from_diagnostics(diags)
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
@@ -649,7 +654,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     if relation_error_diags:
         diags = [d.to_dict() for d in relation_error_diags]
         worst = status_from_diagnostics(diags)
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
@@ -737,7 +742,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         summary = messages.CTX_LIMIT_DOCUMENTS if len(context_documents) > max_documents else messages.CTX_LIMIT_BYTES
         root_owner = _owner_of(expansion.root_documents[0], workspace_id) if multi_active else workspace_id
         root_path = id_index[expansion.root_documents[0]].path
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
             _file_diag("CTX-LIMIT-001", "error", "blocked", summary, root_owner, root_path)
@@ -1026,7 +1031,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     expand_lookup = {_lookup_key(e): e for e in expand_ids} if multi_active else {e: e for e in expand_ids}
     bad_expand = [expand_lookup[k] for k in expand_lookup if k not in set(context_documents)]
     if bad_expand:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {
@@ -1052,7 +1057,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         len(body_texts[d].encode("utf-8")) for d in context_documents if projections[d] == "full"
     )
     if presented_bytes > PROJECTION_HARD_LIMIT_BYTES:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {
@@ -1071,7 +1076,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         return bundle, EXIT_CODE_BY_STATUS["failed"]
 
     if expect_digest is not None and expect_digest != context_digest:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "blocked"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {
