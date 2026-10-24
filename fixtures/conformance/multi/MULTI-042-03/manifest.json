@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-042-03",
+  "description": "単一ワークスペースの文書、制約台帳、カバレッジの並びは、修飾しないIDのまま距離、種別、IDの順で変わらない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "implement",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

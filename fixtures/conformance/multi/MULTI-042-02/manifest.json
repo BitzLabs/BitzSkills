@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-042-02",
+  "description": "複合ワークスペースのimplementの文書、制約台帳、カバレッジの各配列は、同じ距離・同じ種別の要素を修飾IDの辞書順に並べる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "platform::REQ-001",
+      "--purpose",
+      "implement",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

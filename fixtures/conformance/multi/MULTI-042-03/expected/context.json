@@ -1,0 +1,199 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "implement",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:ad51d19a1986048dfb7987f2de64c85b898c2aac898295c08484e6bffdaa4c9f",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 5,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-005",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-005.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-005"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-010"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "work",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "秘密情報を出力しない"
+        }
+      },
+      {
+        "id": "TECH-005:C-01",
+        "documentId": "TECH-005",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "TECH-010:C-01",
+        "documentId": "TECH-010",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "応答形式を固定する"
+        }
+      },
+      {
+        "id": "TECH-002:C-01",
+        "documentId": "TECH-002",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "結果を記録する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "TECH-005:C-01",
+        "TECH-010:C-01",
+        "TECH-002:C-01"
+      ],
+      "addressed": [
+        "REQ-001:AC-01",
+        "TECH-005:C-01",
+        "TECH-010:C-01",
+        "TECH-002:C-01"
+      ],
+      "tested": [
+        "REQ-001:AC-01",
+        "TECH-005:C-01",
+        "TECH-010:C-01",
+        "TECH-002:C-01"
+      ],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
