@@ -97,6 +97,13 @@ class PrecheckResult:
     root_config: dict | None = None
 
 
+def _has_explicit_workspace_id(config: dict) -> bool:
+    """設定が`workspace.id`を明示しているか。型と字句は設定の読み込み（:func:`config.read_config`）で検査済みの前提。"""
+
+    workspace_block = config.get("workspace")
+    return isinstance(workspace_block, dict) and isinstance(workspace_block.get("id"), str)
+
+
 def _diag(code: str, status: str, summary: str, source: dict, evidence: object = None) -> Diagnostic:
     return Diagnostic(code=code, severity="error", resultStatus=status, summary=summary, source=source, evidence=evidence)
 
@@ -448,7 +455,8 @@ def _member_config_check(
         )), None
 
     assert m_outcome.config is not None
-    if check_id_match and m_outcome.workspace_id != mid:
+    # 省略時の既定値`root`は明示のIDではないため、カタログのIDが`root`でも一致とみなさない（複合ワークスペース仕様 §2）。
+    if check_id_match and (not _has_explicit_workspace_id(m_outcome.config) or m_outcome.workspace_id != mid):
         return _diag(
             "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_ID_MISMATCH,
             _root_source(root_id, "multiWorkspace.members"),
@@ -1118,8 +1126,12 @@ def precheck(
             root_config=outcome.parsed,
         )
 
-    root_id = outcome.workspace_id
     assert outcome.config is not None
+    # 複合ワークスペースでは、ルートワークスペースも`workspace.id`を必須とする（複合ワークスペース仕様 §2）。省略時の既定値`root`は
+    # 有効なIDではないため、ルートの同一性を構成せず（結果・診断・終了コード §2）、Gitの境界を確定した後に単独で止める。
+    # `multiWorkspace`を宣言しない設定では、既定値`root`をそのまま使う（§4.1）。
+    root_id_explicit = outcome.config.get("multiWorkspace") is None or _has_explicit_workspace_id(outcome.config)
+    root_id = outcome.workspace_id if root_id_explicit else None
 
     if not git_confirmed:
         diag = _diag(
@@ -1130,6 +1142,17 @@ def precheck(
             ok=False, root_id=root_id, diagnostics=[diag], git_status="blocked", catalog_status=None, repo_root=root,
             git_confirmed=False, root_config=outcome.config,
         )
+
+    if not root_id_explicit:
+        diag = _diag(
+            "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_ROOT_ID_REQUIRED,
+            _root_source(None, "workspace.id"),
+        )
+        return PrecheckResult(
+            ok=False, root_id=None, diagnostics=[diag], git_status="passed", catalog_status="failed", repo_root=root,
+            git_confirmed=True, root_config=outcome.config,
+        )
+    assert root_id is not None
 
     revs = list(extra_config_revs or [])
     catalog_diags, members = _validate_catalog(
