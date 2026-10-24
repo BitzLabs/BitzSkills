@@ -323,13 +323,14 @@ def digest_command_materials(doc_ids, id_index: dict[str, DocEntry], owner_of, r
 
 
 def _merge_expansions(
-    expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
+    expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict], active_ws_id: str | None = None
 ):
     """複数の起点の`TargetExpansionResult`を和集合へ統合する（関係・トレースモデル §6.4末尾）。
 
     重複排除した後の各結果を統合し、`targetStatements`／`adjacentStatements`は
     `contextDocuments`の順（距離・種別の順REQ/TECH/ADR/TASK・ID辞書順）、行番号、IDの順で
-    同じ順序規則を再適用する。1つの起点だけの呼び出しでも同じ経路を通る。
+    同じ順序規則を再適用する。1つの起点だけの呼び出しでも同じ経路を通る。複合ワークスペース（``active_ws_id``あり）では、
+    IDの辞書順を出力と同じ修飾IDで比べる（関係・トレースモデル §7、複合ワークスペース仕様 §6）。
     """
 
     root_documents: set[str] = set()
@@ -375,6 +376,8 @@ def _merge_expansions(
         dist = document_distance.get(doc_id, 0)
         kind_rank = _KIND_RANK[id_index[doc_id].kind]
         line = stmt.get("source", {}).get("line", 0)
+        if active_ws_id is not None:
+            return (dist, kind_rank, _canon(doc_id, active_ws_id), line, _canon(stmt_id, active_ws_id))
         return (dist, kind_rank, doc_id, line, stmt_id)
 
     target_statements.sort(key=_sort_key)
@@ -647,7 +650,9 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS[worst]
 
-    expansion = _merge_expansions(expansions, id_index, statement_index)
+    expansion = _merge_expansions(
+        expansions, id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+    )
     context_documents = expansion.context_documents
 
     relation_error_diags = _relation_errors(relation_scope_ids | set(context_documents))
@@ -1022,7 +1027,10 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     documents_sorted = sorted(
         context_documents,
-        key=lambda d: (expansion.document_distance.get(d, 0), _KIND_RANK[id_index[d].kind], d),
+        # 複合ワークスペースでは、IDの辞書順を出力と同じ修飾IDで比べる（関係・トレースモデル §7、複合ワークスペース仕様 §6）。
+        key=lambda d: (
+            expansion.document_distance.get(d, 0), _KIND_RANK[id_index[d].kind], _canon(d, workspace_id) if multi_active else d,
+        ),
     )
 
     # --- 提示形式（`projection`）の割当て（§5） ------------------------------------------------
