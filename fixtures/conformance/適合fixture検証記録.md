@@ -1714,3 +1714,22 @@ commit `30c340e6fbd05b7c489f226cc967e120bb52319c`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-24: `MULTI-041`を追加した後のGate Aの再認定
+
+複合ワークスペースの単独の`verify`も、`--all-workspaces`と同じく`commandDefinitionCount`を実行計画を確定した後に`verifyBindingCount`と合わせて判定し、
+両方が超過すれば`verifyBindingCount`を優先して報告するようにした（実装の確認事項C40、ユーザーの決定、ADR-066。ADR-063のDecision 8を部分改訂）。
+複合ワークスペース仕様 §7・§10に明記した。これを固定する`MULTI-041-01`〜`MULTI-041-04`を追加し（ADR-051の追加、群`multi_single_verify_limit_fixtures`）、
+1回の実行計画で10,000件を超える入力を作るため生成器を拡張し、4件を規模の検証の対象に加えた。matrix、Step 5の割当て、実装計画の完了条件、
+網羅表が固定する根拠文書のハッシュ値、CIの所要時間の予測（暫定値）を合わせた。既存のfixtureの入力と期待値と生成物は変えていない。
+
+commit `be741ca5e1297f769cc664f80a86b35e6ad53e3c`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`9f209c35ffb71519ac3867f96ef6790378f7a2e9634b5dd17748454b33d1250b`。前回から変わったのは次の値だけである: 4件の追加によるmatrixと網羅の件数（462件→466件）、Step 5の件数（159件→163件）、群`multi_single_verify_limit_fixtures`の追加、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`（24件に`MULTI-041-01`〜`-04`を加えた）。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`。既存の24件の`treeDigest`は前回と同じ |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

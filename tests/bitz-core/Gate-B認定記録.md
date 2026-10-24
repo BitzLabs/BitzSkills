@@ -724,3 +724,23 @@ Core固有の単体試験は937件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は959件がすべて成功した。
+
+## 2026-10-24: 単独のverifyの上限を実行計画の確定後に判定するようにした後のStep 1〜5の再判定
+
+`activews.select_active`に`skip_limit_dimensions`を足し、`verify.py`で`--all-workspaces`の上限の判定を共通化して、複合ワークスペースの単独の`verify`も
+`commandDefinitionCount`を実行計画を確定した後に`verifyBindingCount`と合わせて判定するようにした（実装の確認事項C40、ADR-066）。これを固定する
+`MULTI-041-01`〜`MULTI-041-04`（Step 5）を追加した。修正前のCore（コミット`d3c1e052`の版）では、追加した4件のうち2件（`-01`の優先、`-04`の終了コード）が非成功
+（`failed` 2件）となり、対照の`-02`、`-03`と既存の462件はすべて通過することを確かめた。修正後のCoreでは466件すべてが`passed`となる。
+
+コミット`be741ca5e1297f769cc664f80a86b35e6ad53e3c`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 466件（`MULTI-041-01`〜`MULTI-041-04`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`c03ec02a32596ed176c44723aa31832460c6a0c80c8a8390179cf40c728741ee` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は975件がすべて成功した。
