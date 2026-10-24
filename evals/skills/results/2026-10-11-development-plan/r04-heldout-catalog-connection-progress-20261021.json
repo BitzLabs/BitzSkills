@@ -174,5 +174,6 @@
     "Refresh Date21 calibration with fixed catalog and preserve historical calibration originals",
     "Prepare new source/campaign and bounded remaining23 continuation with prior consumption1",
     "Recheck actual isolation for both roles and concrete prelaunch before any new paid stage"
-  ]
+  ],
+  "followUpRecord": "r04-heldout-catalog-integrity-closure-20261024.json"
 }

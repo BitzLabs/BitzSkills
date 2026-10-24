@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "catalog_remediation_review_date21_calibration_and_remaining23_continuation_pending",
+        "status": "remaining23_continuation_with_immutable_prior_stop_and_clock_handoff",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -783,7 +783,7 @@
       "certifiesRelease": false
     },
     "r04HeldoutPreparation": {
-      "status": "fixed_catalog_connected_integrity_findings_remediated_reinspection_pending",
+      "status": "catalog_integrity_reviewed_date24_calibration_adopted_continuation_pending",
       "readAuthorization": {
         "approvedBy": "user",
         "approvedOn": "2026-10-16",
@@ -1273,7 +1273,9 @@
       "contextDiagnosisRecord": "r04-heldout-sdk-context-diagnosis-20261020.json",
       "catalogConnectionRecord": "r04-heldout-catalog-connection-progress-20261021.json",
       "catalogRemediationSource": "b474d2d1f30ce9b2c42aba65d07df272e1ce95d7",
-      "currentDateCalibrationRenewalRequired": true
+      "currentDateCalibrationRenewalRequired": false,
+      "catalogIntegrityClosureRecord": "r04-heldout-catalog-integrity-closure-20261024.json",
+      "currentCalibrationDate": "2026-10-24"
     },
     "r04HeldoutExecution": {
       "status": "stopped",
