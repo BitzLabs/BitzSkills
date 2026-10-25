@@ -6108,8 +6108,11 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(source["status"], "failed")
         for key in ("scope", "revision", "checkedDocumentCount", "checkedStatementCount"):
             self.assertEqual(result[key], source[key], key)
+        # 保存の失敗は末尾ではなく、結果・診断・終了コード §7の順序（発生元のpathの辞書順）に入る（C51）。
         self.assertEqual([d["code"] for d in result["diagnostics"]],
-                         [d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"])
+                         ["SPEC-REPORT-WRITE-001"] + [d["code"] for d in source["diagnostics"]])
+        self.assertEqual([d["source"]["path"] for d in result["diagnostics"]],
+                         sorted(d["source"]["path"] for d in result["diagnostics"]))
         effects = json.loads((audit.FIXTURES / "single/SINGLE-072/side-effects.json").read_text())
         self.assertEqual(effects["policy"], "read-only")
         self.assertNotIn("report", effects)
@@ -6149,6 +6152,8 @@ class AuditTests(unittest.TestCase):
              lambda v: v["before"]["repository"].pop(report_write_fixtures.EXISTING_REPORT)),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(status="failed")),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(diagnostics=v["diagnostics"][1:])),
+            # 保存の失敗を末尾へ足す旧い並び（C51）は、§7の順序に反するので拒否する。
+            ("SINGLE-072", "expected/check.json", lambda v: v.update(diagnostics=v["diagnostics"][::-1])),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
         ]
         for identifier, relative, mutate in mutations:

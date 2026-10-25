@@ -500,7 +500,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-071-02` | 明示`--report`付きの失敗`check` | check | failed／1 | 規定先へ1件を排他的作成 |
 | `SINGLE-071-03` | 明示`--report`付きの成功`verify` | verify | passed／0 | 規定先へ1件を排他的作成 |
 | `SINGLE-071-04` | 明示`--report`付きの失敗`verify` | verify | failed／1 | 規定先へ1件を排他的作成 |
-| `SINGLE-072` | レポートの保存先が書込み不能 | check --report | error／3 | `SPEC-REPORT-WRITE-001`、元結果を端末へ保持 |
+| `SINGLE-072` | レポートの保存先が書込み不能 | check --report | error／3 | `SPEC-REPORT-WRITE-001`、元結果を端末へ保持、診断は結果・診断・終了コード §7の順（`.spec/reports`が`.spec/technical/TECH-001.md`より前） |
 | `SINGLE-073-01` | `context`へ`--report` | context | 結果なし／4 | 未知オプションとして引数不正 |
 | `SINGLE-073-02` | `doctor`へ`--report` | doctor | 結果なし／4 | 未知オプションとして引数不正 |
 | `SINGLE-074-01` | 排他的オプションを同時指定 | check | 結果なし／4 | JSON本体なし、標準エラー1行、レポート0件 |
@@ -664,7 +664,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-125-03` | レポートなし`check`のCore副作用 | check | passed／0 | リポジトリ、`HOME`、キャッシュ、一時ディレクトリへの書込み0件 |
 | `SINGLE-125-04` | 書込みなしコマンドによる`verify` | verify | passed／0 | テストプロセスを除くCore書込み0件 |
 | `SINGLE-125-05` | 明示したレポート付き`check`のCore副作用 | check --report | passed／0 | 最終レポート1件だけ、一時ファイル残存0件 |
-| `SINGLE-125-06` | `.spec/reports`がリポジトリ内ディレクトリへのシンボリックリンク | check --report | error／3 | `SPEC-REPORT-WRITE-001`、シンボリックリンク先の既存ファイル不変、一時ファイル残存0件 |
+| `SINGLE-125-06` | `.spec/reports`がリポジトリ内ディレクトリへのシンボリックリンク | check --report | error／3 | `SPEC-REPORT-WRITE-001`、診断は結果・診断・終了コード §7の順、シンボリックリンク先の既存ファイル不変、一時ファイル残存0件 |
 | `SINGLE-126-01` | `argv`要素が非文字列 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、起動なし |
 | `SINGLE-126-02` | `argv[0]`が空文字列 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、起動なし |
 | `SINGLE-126-03` | `argv`要素にNUL | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、起動なし |

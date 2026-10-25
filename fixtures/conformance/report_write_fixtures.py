@@ -45,6 +45,17 @@ DESCRIPTIONS = {
 }
 
 
+def section7_key(diagnostic):
+    """結果・診断・終了コード §7の順序（発生元のワークスペースID、path、line、column、code）の辞書順。
+
+    この群の診断はすべて、ワークスペースIDを持つ`file`の発生元で、`specRefs`を持たない。
+    `line`と`column`を持たない診断は、持つ診断より前に置く（同じ`path`の診断はこの群にない）。
+    """
+    source = diagnostic["source"]
+    return (source["workspaceId"], source["path"], source.get("line", 0), source.get("column", 0),
+            diagnostic["code"])
+
+
 def reviewed_inputs(identifier):
     inputs = dict(report_absent_fixtures.reviewed_inputs(CASES[identifier][3]))
     if identifier == "SINGLE-072":
@@ -75,13 +86,14 @@ def reviewed_result(identifier):
     if identifier != "SINGLE-072":
         # レポートを保存しても、計算済みの結果は変わらない。
         return result
-    # 元の結果とその診断は端末に残り、状態と
-    # 保存の失敗だけが加わる。
+    # 元の結果とその診断は端末に残り、状態と保存の失敗だけが加わる。
+    # 保存の失敗は末尾に足さず、ほかの診断と同じ§7の順序（発生元のpathの辞書順）に入れる（確認事項C51）。
+    # `.spec/reports`は`.spec/technical/TECH-001.md`より前になる。
     result["status"] = "error"
-    result["diagnostics"] = result["diagnostics"] + [{
+    result["diagnostics"] = sorted(result["diagnostics"] + [{
         "code": "SPEC-REPORT-WRITE-001", "severity": "error", "resultStatus": "error",
         "summary": "レポートの保存先へ排他的に作成できません",
-        "source": {"kind": "file", "workspaceId": "root", "path": REPORT_DIRECTORY}}]
+        "source": {"kind": "file", "workspaceId": "root", "path": REPORT_DIRECTORY}}], key=section7_key)
     return result
 
 
@@ -106,9 +118,13 @@ def check_report_contract(identifier, manifest, effects, result):
         if {k: v for k, v in result.items() if k not in keys} != {
                 k: v for k, v in source.items() if k not in keys}:
             raise ValueError("元の結果は端末に残る必要があります")
-        if ([d["code"] for d in result["diagnostics"]]
-                != [d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"]):
+        codes = [d["code"] for d in result["diagnostics"]]
+        if sorted(codes) != sorted([d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"]):
             raise ValueError("保存の失敗は元の診断に追加する必要があります")
+        if result["diagnostics"] != sorted(result["diagnostics"], key=section7_key):
+            raise ValueError("診断は結果・診断・終了コード §7の順序で並べる必要があります")
+        if [d for d in result["diagnostics"] if d["code"] != "SPEC-REPORT-WRITE-001"] != source["diagnostics"]:
+            raise ValueError("元の診断は内容と相対順序を保つ必要があります")
         if not source["diagnostics"]:
             raise ValueError("このケースは既に診断を持つ結果から始める必要があります")
         return
