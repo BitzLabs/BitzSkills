@@ -6,6 +6,7 @@
 
 この試験の対象:
 1. 単独の`check --report`で、保存の失敗の診断が§7の順に入る（`.spec/decisions` < `.spec/reports` < `.spec/technical`）。
+   `check --all-workspaces --report`の最上位の診断でも、発生元のワークスペースIDの順に入る。
 2. 保存の失敗の診断の内容（コード、状態、発生元）と、結果の`status`と終了コードは変わらない。
 3. 対照: `verify --report`の並びは今までどおり。
 4. 結果は`result.schema.json`に適合する。
@@ -29,6 +30,7 @@ from bitz.resultmodel import sort_diagnostics
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RESULT_SCHEMA = REPO_ROOT / "docs" / "03.詳細設計" / "schemas" / "result.schema.json"
 BASE_REPO = REPO_ROOT / "fixtures" / "conformance" / "single" / "SINGLE-072" / "repo"
+MULTI_REPO = REPO_ROOT / "fixtures" / "conformance" / "multi" / "MULTI-011" / "repo"
 
 _GIT_ENV = {"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
 
@@ -133,6 +135,73 @@ class CheckReportWriteOrderTests(unittest.TestCase):
         result, _ = self.run_op(verify_mod, ["verify", "--report"])
         self.assertIn(REPORT_WRITE, self.keys(result))
         self.assertEqual(result["diagnostics"], sort_diagnostics(result["diagnostics"]))
+
+
+class AllWorkspacesReportWriteOrderTests(unittest.TestCase):
+    """MULTI-011の入力に、基準版だけにあるメンバーを足して作業ツリーで消し、最上位に削除の診断を置く。"""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name) / "repo"
+        shutil.copytree(MULTI_REPO, self.root)
+        self.results: list[dict] = []
+
+    def tearDown(self):
+        if self.results:
+            _validate_against_schema(self.results)
+
+    def prepare(self, removed_id: str, block_reports: bool) -> None:
+        cfg = self.root / ".spec" / "bitz.yaml"
+        base_cfg = cfg.read_text(encoding="utf-8")
+        cfg.write_text(base_cfg + f"    - id: {removed_id}\n      path: services/{removed_id}\n", encoding="utf-8")
+        member = self.root / "services" / removed_id / ".spec"
+        (member / "requirements").mkdir(parents=True)
+        (member / "bitz.yaml").write_text(
+            f'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: {removed_id}\n', encoding="utf-8"
+        )
+        req = (self.root / ".spec" / "requirements" / "REQ-001.md").read_text(encoding="utf-8")
+        (member / "requirements" / "REQ-900.md").write_text(req.replace("REQ-001", "REQ-900"), encoding="utf-8")
+        _git(self.root, "init", "-q", "--initial-branch=main")
+        _git(self.root, "add", ".")
+        _git(self.root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base")
+        cfg.write_text(base_cfg, encoding="utf-8")
+        shutil.rmtree(self.root / "services" / removed_id)
+        if block_reports:
+            (self.root / ".spec" / "reports").write_text("block\n", encoding="utf-8")
+
+    def run_check(self):
+        parsed = parse_argv(["check", "--all-workspaces", "--base", "HEAD", "--report", "--format", "json"])
+        result, code = check_mod.run(parsed, str(self.root), dict(os.environ))
+        self.results.append(result)
+        return result, code
+
+    @staticmethod
+    def top(result):
+        return [(d["code"], d["source"].get("workspaceId")) for d in result["diagnostics"]]
+
+    def test_report_write_failure_is_sorted_by_workspace_id(self):
+        # `platform`（保存先のルート）は削除した`zz`より前に並ぶ。
+        self.prepare("zz", block_reports=True)
+        result, code = self.run_check()
+        self.assertEqual(
+            self.top(result), [("SPEC-REPORT-WRITE-001", "platform"), ("SPEC-STATE-TRANSITION-001", "zz")]
+        )
+        self.assertEqual(result["diagnostics"], sort_diagnostics(result["diagnostics"]))
+        self.assertEqual((result["status"], code), ("error", 3))
+
+    def test_report_write_failure_after_an_earlier_workspace_id(self):
+        self.prepare("aa", block_reports=True)
+        result, _ = self.run_check()
+        self.assertEqual(
+            self.top(result), [("SPEC-STATE-TRANSITION-001", "aa"), ("SPEC-REPORT-WRITE-001", "platform")]
+        )
+
+    def test_without_write_failure_the_status_is_unchanged(self):
+        self.prepare("zz", block_reports=False)
+        result, code = self.run_check()
+        self.assertEqual(self.top(result), [("SPEC-STATE-TRANSITION-001", "zz")])
+        self.assertEqual((result["status"], code), ("failed", 1))
 
 
 if __name__ == "__main__":
