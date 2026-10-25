@@ -996,9 +996,11 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 "applicability": roles.get(d) if roles.get(d) in ("advisory", "replacement") else "applicable",
                 "frontmatter": norm_frontmatters[d],
                 "bodyText": body_texts[d],
-                "statements": [
-                    _digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements
-                ],
+                # 材料の規範文は、文書に書いた順ではなく`id`のコードポイント辞書順にする（コンテキストのハッシュ値の正規化仕様 §3）。
+                "statements": sorted(
+                    (_digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements),
+                    key=lambda stmt: stmt["id"],
+                ),
                 "strongRelations": _strong_relations(
                     entry, id_index, statement_index, owner_ws_id=(owner if multi_active else None)
                 ),
