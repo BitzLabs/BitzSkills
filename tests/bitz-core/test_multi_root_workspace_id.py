@@ -6,7 +6,7 @@
 
 規範:
 - 複合ワークスペース仕様 §2: ルートワークスペースと全メンバーで`workspace.id`を必須とし、カタログの`id`とメンバー設定の`workspace.id`は一致させる。
-  §4.1: 既定値`root`は、`multiWorkspace`がない基準版の写像だけに使う。
+  §4.1: 既定値`root`から明示のIDへの写像は、`multiWorkspace`のない基準版との比較だけに使う。
 - 診断レジストリ`MULTI-CONFIG`（`SPEC-MULTI-CONFIG-001`、900）: ルートの条件の不正。`MULTI-MEMBER`（`SPEC-MULTI-MEMBER-001`、910）: カタログのIDと不一致。
 - 結果・診断・終了コード §2: 有効なルートワークスペースのIDを構成できない全体結果は`multiWorkspace`を`{"id": null, "path": "."}`、
   `workspaces`を空配列にする。単独結果の`workspace.id`は、ルートでは明示した有効なIDを持つときだけそのIDとする。
