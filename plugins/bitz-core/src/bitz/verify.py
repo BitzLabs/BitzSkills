@@ -431,10 +431,11 @@ def _compute_verify_digest(
                 "applicability": "applicable",
                 "frontmatter": norm_frontmatters[d],
                 "bodyText": body_texts[d],
-                "statements": [
-                    context_mod._digest_statement(s, owner_ws_id=(owner if multi_active else None))
-                    for s in entry.statements
-                ],
+                # 材料の規範文は`id`のコードポイント辞書順にする（コンテキストのハッシュ値の正規化仕様 §3。`context`と同じ）。
+                "statements": sorted(
+                    (context_mod._digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements),
+                    key=lambda stmt: stmt["id"],
+                ),
                 "strongRelations": context_mod._strong_relations(
                     entry, id_index, statement_index, owner_ws_id=(owner if multi_active else None)
                 ),
