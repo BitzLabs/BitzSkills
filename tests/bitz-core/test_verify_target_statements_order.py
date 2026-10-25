@@ -1,4 +1,5 @@
-"""`verify`の`targetResults[].statements`が、出力するIDの重複なし辞書順になることの単体試験（確認事項 C52）。
+"""`verify`の`targetResults[].statements`が出力するIDの重複なし辞書順になること（確認事項 C52）と、
+コンテキストのハッシュ値の材料の規範文が`id`のコードポイント辞書順になること（確認事項 C60）の単体試験。
 
 欠陥: `verify`は`targetResults[].statements`を、対象の規範文の内部の並び（起点の規範文を文書順・行番号で並べた後に、
 具体化文書の規範文を足した順）のまま出力していた。そのため、文書の中で規範文を番号の順に書かないときや、
@@ -15,6 +16,8 @@
 3. 複合ワークスペースの修飾IDの並び（`api::`の文書が`platform::`の規範文を具体化する）。
 4. 対照: すでに辞書順の入力は変わらない。`contextDigest`、状態、テスト割当ては並びの修正で変わらない。
 5. 結果は`result.schema.json`に適合し、`PYTHONHASHSEED`を変えても出力は同じ。
+6. C60: `context`と`verify`がハッシュ値の材料（`documents[].statements`）に入れる規範文は、文書に書いた順ではなく`id`のコードポイント辞書順
+   （コンテキストのハッシュ値の正規化仕様 §3の表）。修正前のCoreは文書に書いた順のまま入れていた。
 """
 
 from __future__ import annotations
@@ -28,6 +31,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from unittest import mock
+
+from bitz import context as context_mod
+from bitz import digest as digest_mod
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 
@@ -213,6 +220,52 @@ class MultiWorkspaceOrderTests(_Base):
             self.statements(result),
             {"platform::REQ-001": ["api::TECH-010:C-01", "platform::REQ-001:AC-01"]},
         )
+
+
+class DigestMaterialStatementOrderTests(_Base):
+    """ハッシュ値の材料を`digest.canonical_bytes`の引数から取り出し、規範文の並びを確かめる（C60）。"""
+
+    def setUp(self):
+        super().setUp()
+        _write(self.root, ".spec/bitz.yaml", CONFIG + VERIFY)
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", ["AC-10", "AC-02"]))
+        self.commit()
+
+    def capture(self, run):
+        captured: list[dict] = []
+        original = digest_mod.canonical_bytes
+
+        def spy(materials):
+            captured.append(materials)
+            return original(materials)
+
+        with mock.patch.object(digest_mod, "canonical_bytes", spy):
+            run()
+        self.assertTrue(captured)
+        return captured
+
+    def statement_ids(self, materials):
+        return {doc["id"]: [stmt["id"] for stmt in doc["statements"]] for doc in materials["documents"]}
+
+    def test_context_digest_material_sorts_statements_by_id(self):
+        def run():
+            parsed = parse_argv(["context", "REQ-001", "--format", "json"])
+            result, _ = context_mod.run(parsed, str(self.root), dict(os.environ))
+            self.results.append(result)
+
+        for materials in self.capture(run):
+            self.assertEqual(self.statement_ids(materials)["REQ-001"], ["REQ-001:AC-02", "REQ-001:AC-10"])
+
+    def test_verify_digest_material_sorts_statements_by_id(self):
+        for materials in self.capture(lambda: self.verify("REQ-001")):
+            self.assertEqual(self.statement_ids(materials)["REQ-001"], ["REQ-001:AC-02", "REQ-001:AC-10"])
+
+    def test_context_and_verify_digests_agree(self):
+        parsed = parse_argv(["context", "REQ-001", "--purpose", "verify", "--format", "json"])
+        context_result, _ = context_mod.run(parsed, str(self.root), dict(os.environ))
+        self.results.append(context_result)
+        verify_result, _ = self.verify("REQ-001")
+        self.assertEqual(context_result["contextDigest"], verify_result["targetResults"][0]["contextDigest"])
 
 
 if __name__ == "__main__":
