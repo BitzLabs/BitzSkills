@@ -109,17 +109,34 @@ def current_revision(
     return {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
 
-def save_stop_report(stop: StoppedSelection, operation: str, result: dict) -> None:
-    """``--report``が指定された停止結果を、選択した設定のディレクトリの``.spec/reports/``へ保存する（結果・診断・終了コード §8）。
+def save_report(workspace_root: str, workspace_id: str | None, operation: str, result: dict) -> None:
+    """``--report``が指定された処理を始める前に止まった結果を、``workspace_root``の``.spec/reports/``へ保存する（結果・診断・終了コード §8）。
 
     保存に失敗したときは``SPEC-REPORT-WRITE-001``を``result``の診断へ加え、状態を診断の最悪値で更新する。
     """
 
-    failure = reportio.write_report(stop.workspace_root, stop.workspace_id, operation, result)
+    failure = reportio.write_report(workspace_root, workspace_id, operation, result)
     if failure is not None:
         diagnostics = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
         result["diagnostics"] = diagnostics
         result["status"] = status_from_diagnostics(diagnostics)
+
+
+def save_stop_report(stop: StoppedSelection, operation: str, result: dict) -> None:
+    """単独操作の停止結果を、選択した設定のディレクトリの``.spec/reports/``へ保存する（結果・診断・終了コード §8）。"""
+
+    save_report(stop.workspace_root, stop.workspace_id, operation, result)
+
+
+def save_all_workspaces_report(pre: multiws.PrecheckResult, operation: str, result: dict) -> None:
+    """``--all-workspaces``の早期の結果（全体事前検査の停止、`verify`の上限超過）を、ルートワークスペースの``.spec/reports/``へ保存する。
+
+    全体レポートの保存先はルートワークスペース（結果・診断・終了コード §8）。ルートの同一性が確定しないときは、
+    保存の失敗の診断の``source.workspaceId``を``null``にする（同 §5）。
+    """
+
+    assert pre.repo_root is not None
+    save_report(pre.repo_root, pre.root_id, operation, result)
 
 
 def select_active(

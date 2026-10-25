@@ -1195,7 +1195,9 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": diagnostics,
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if "--report" in parsed.flags:
+            activews.save_all_workspaces_report(pre, "verify", result)
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, started)
 
@@ -1315,7 +1317,9 @@ def _run_all_workspaces_members(
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": diagnostics,
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if want_report:
+            activews.save_all_workspaces_report(pre, "verify", result)
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     if not any_targets:
         top_diagnostics.append(
