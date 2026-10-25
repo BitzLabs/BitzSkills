@@ -433,7 +433,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 - 実装の確認事項C42の修正で、複合ワークスペースのルートの設定が`workspace.id`を省略した場合を、既定値`root`をルートのIDとして通さず、
   全体事前検査で`SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、ルートの条件）の1件だけで止めるようにした。複合ワークスペース仕様 §2は、ルートワークスペースと
-  全メンバーで`workspace.id`を必須とし、§4.1は既定値`root`を`multiWorkspace`のない基準版の写像だけに限る。
+  全メンバーで`workspace.id`を必須とし、§4.1は複合ワークスペースでは既定値`root`を有効なIDとみなさない（写像は`multiWorkspace`のない基準版との比較だけ）と定める。
 - 既存の`SPEC-MULTI-CONFIG-001`の文言（行#85〜#89、2026-10-18の除外の7件）は、`multiWorkspace`の型・件数・除外のパスの文言であり、ルートの`workspace.id`の省略には当てはまらない。
 
 ### 管理者の承認
@@ -443,13 +443,14 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 | 種類 | 診断（条件） | Coreの位置 | 文言 | 固定しているfixture |
 |---|---|---|---|---|
-| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、ルートの設定が`workspace.id`を省略） | `messages.py`の`MULTI_CONFIG_ROOT_ID_REQUIRED` | `ルートワークスペースの設定キーworkspace.idがありません` | `MULTI-043-01`〜`09`；生成器・監査`multi_workspace_id_fixtures.py` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`、ルートの設定が`workspace.id`を省略） | `messages.py`の`MULTI_CONFIG_ROOT_ID_REQUIRED` | `ルートワークスペースの設定キーworkspace.idがありません` | `MULTI-043-01`〜`09`、`MULTI-043-17`、`MULTI-043-18`；生成器・監査`multi_workspace_id_fixtures.py` |
 
 - `source`は`{"kind": "file", "workspaceId": null, "path": ".spec/bitz.yaml", "key": "workspace.id"}`である。ルートのIDを構成できないので`workspaceId`は`null`（結果・診断・終了コード §5）。
 - `suggestedAction`は付けない。複合ワークスペースの診断は`doctor`仕様 §8の表の診断ではないので、`doctor`でも`suggestedAction`を付けない（`doctor`仕様 §8）。
 - メンバーの`workspace.id`の省略は、既存の承認済みの文言（行#103「メンバーの設定キーworkspace.idがカタログのIDと一致しません」、`SPEC-MULTI-MEMBER-001`）を再利用する。
   新しい文言の承認ではない。`MULTI-043-10`、`MULTI-043-11`がこの文言を期待値に使う。
 - 既存のfixtureの期待値は変えない（既存のfixtureのルートは、すべて`workspace.id`を明示している）。
+- 同日に足した`MULTI-043-13`〜`16`（ルートが`workspace.id`を省略したまま版の非対応で止まる）は、既存の承認済みの文言（`summary`は行#31・#45の版の非対応の`SPEC-CONFIG-SCHEMA-001`・`SPEC-EARS-VERSION-001`・`SPEC-DOCTOR-EARS-001`、`suggestedAction`は2026-10-12のPR-4の`SPEC-DOCTOR-EARS-001`。`MULTI-033`・`MULTI-040-02`が固定済み）を期待値に使う。新しい文言の承認ではない。
 
 ### 固定しない範囲
 

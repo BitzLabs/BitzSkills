@@ -1,9 +1,9 @@
 """複合ワークスペースのルートとメンバーの`workspace.id`の省略を、既定値`root`で通さないことを固定する（Coreの公開操作は実行しない）。
 
 実装の確認事項C42とADR-051の追加に対応する。複合ワークスペース仕様 §2は、ルートワークスペースと全メンバーで`workspace.id`を必須とし、
-カタログの`id`とメンバー設定の`workspace.id`を一致させると定める。§4.1は、既定値`root`を`multiWorkspace`のない基準版の写像だけに限る。
+カタログの`id`とメンバー設定の`workspace.id`を一致させると定める。§4.1は、複合ワークスペースでは既定値`root`を有効なIDとみなさず、既定値`root`の写像は`multiWorkspace`のない基準版との比較に限る。
 修正前のCoreは、ルートの`.spec/bitz.yaml`が`workspace.id`を省略しても既定値`root`をルートのIDとして成功し、
-メンバーが省略してカタログの`id`が`root`のときも一致とみなした。この群は、その停止と、停止しない境界を12件で固定する。
+メンバーが省略してカタログの`id`が`root`のときも一致とみなした。この群は、その停止と、停止しない境界を18件で固定する。
 
 | fixture | 操作と実行ディレクトリ | 原因と期待 |
 |---|---|---|
@@ -19,6 +19,12 @@
 | `MULTI-043-10` | `check --all-workspaces --base HEAD`、`.` | メンバーが省略し、カタログの`id`が`root`。ルートは明示。`SPEC-MULTI-MEMBER-001`の1件、`multiWorkspace`は`{platform, .}` |
 | `MULTI-043-11` | `check --base HEAD`、`apps/web` | 同じ入力のメンバーからの単独の`check`。省略したIDはカタログのIDと一致しないので`workspace`は`{null, apps/web}` |
 | `MULTI-043-12` | `check --all-workspaces --base HEAD`、`.` | 対照: ルートが`workspace.id: root`を明示すれば成功する |
+| `MULTI-043-13` | `check --all-workspaces --base HEAD`、`.` | ルートが`workspace.id`を省略し、`earsAi`が`2.0`。版の非対応でも同一性は`null`。`SPEC-EARS-VERSION-001`の1件。`blocked`／2 |
+| `MULTI-043-14` | `check --all-workspaces --base HEAD`、`.` | ルートが`workspace.id`を省略し、`schemaVersion`が`2.0`。`SPEC-CONFIG-SCHEMA-001`の1件。`blocked`／2 |
+| `MULTI-043-15` | `doctor --all-workspaces`、`.` | `13`と同じ入力。`SPEC-DOCTOR-EARS-001`の1件（修復手順つき）、`catalog`が`blocked` |
+| `MULTI-043-16` | `doctor --all-workspaces`、`.` | `14`と同じ入力。`SPEC-CONFIG-SCHEMA-001`の1件、`catalog`が`blocked` |
+| `MULTI-043-17` | `check --all-workspaces --base HEAD`、`.` | ルートが`workspace.id`を省略し、`multiWorkspace:`が値のない宣言。宣言はキーの有無で判定する。`01`と同じ |
+| `MULTI-043-18` | `check --base HEAD`、`.` | `17`と同じ入力の単独の`check`。`04`と同じ |
 
 基本のリポジトリは、ルート（`.`）、メンバー`web`（`apps/web`）と`api`（`services/api`）である。入力の種類は次のとおりである。
 
@@ -29,16 +35,21 @@
 | `root-omitted-id-mismatch` | `root-omitted`で、`web`の設定の`id`をカタログと異なる`frontend`にする |
 | `member-omitted` | ルートは`id: platform`を明示。カタログの`id`が`root`のメンバー（`apps/web`）の設定が`workspace`を持たない |
 | `explicit-root` | ルートが`id: root`を明示する対照。メンバー`web`、`api`は`MULTI-001`と同じ入力 |
+| `root-omitted-ears` | `root-omitted`で、ルートの`earsAi`を`2.0`にする（Coreが対応するメジャーバージョンは1） |
+| `root-omitted-schema` | `root-omitted`で、ルートの`schemaVersion`を`2.0`にする |
+| `root-omitted-empty-declaration` | ルートが`workspace`を持たず、`multiWorkspace:`をキーだけ（値なし）で宣言する。メンバー`web`、`api`の設定は置く |
 
 期待値の根拠は規範文と、このモジュールの参照計算だけである（Coreの出力は根拠にしない）。
 
 - 複合ワークスペース仕様 §2: ルートワークスペースと全メンバーで`workspace.id`を必須とする。カタログの`id`とメンバー設定の`workspace.id`は一致させる。
-  §4.1: 既定値`root`は`multiWorkspace`のない基準版の写像だけ。
+  §4.1: 複合ワークスペースでは既定値`root`を有効なIDとみなさない（写像は`multiWorkspace`のない基準版との比較だけ）。
 - 診断レジストリ: `MULTI-CONFIG`（`SPEC-MULTI-CONFIG-001`、`error`／`failed`、`stop-multi-workspace`、900、「ルートの条件」）、
   `MULTI-MEMBER`（`SPEC-MULTI-MEMBER-001`、910、「カタログのIDと不一致」）。
 - 結果・診断・終了コード §2: 有効なルートワークスペースのIDを構成できない全体結果は`multiWorkspace`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。
   停止した単独結果の`workspace.id`は、ルートでは明示した有効なIDを持つときだけ、メンバーではカタログのIDと一致するときだけそのID、それ以外は`null`。
-  §5: ルートのIDの不正で同一性を構成できない診断の`source.workspaceId`は`null`。
+  §5: ルートのIDの不正で同一性を構成できない診断の`source.workspaceId`は`null`。複合ワークスペースのルートの設定が有効な`workspace.id`を明示しない場合は、
+  停止の原因（スキーマまたはEARS-AIのメジャーバージョンの非対応を含む）によらず、有効なルートワークスペースのIDを構成できないものとする（2026-10-25の明記）。
+  複合ワークスペース仕様 §2.1: `multiWorkspace`の宣言はキーの有無で判定する。
 - ユーザーの決定（2026-10-20、2026-10-25）: ルートの省略は全体事前検査で`SPEC-MULTI-CONFIG-001`の1件だけで単独に止める（ほかのカタログの不備より優先）。
   `summary`は管理者が承認した文言（`Coreの出力文言のレビュー記録.md`）。`source`は`{"kind": "file", "workspaceId": null, "path": ".spec/bitz.yaml", "key": "workspace.id"}`。
   メンバーの省略は、既存の承認済みの文言の`SPEC-MULTI-MEMBER-001`。
@@ -59,6 +70,7 @@ from .schemas import schema_path
 from . import multi_identity_fixtures, multi_reference
 
 HERE = Path(__file__).resolve().parent
+SUPPORTED_MAJOR = 1
 COMMIT = "0" * 40
 CAPABILITIES = ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"]
 CORE = {"version": "1.0.0", "apiVersion": "1.0", "capabilities": CAPABILITIES}
@@ -71,10 +83,13 @@ MEMBERS = (("web", "apps/web"), ("api", "services/api"))
 
 # 承認済みの診断の文言。`Coreの出力文言のレビュー記録.md`（2026-10-25の1件と、2026-10-12の既存の文言）。
 ROOT_ID_REQUIRED = "ルートワークスペースの設定キーworkspace.idがありません"
+EARS_VERSION = "未対応のEARS-AIのメジャーバージョンです"
+SCHEMA_VERSION = "未対応のスキーマのメジャーバージョンです"
+DOCTOR_EARS_ACTION = "設定キーearsAiをCoreが対応するメジャーバージョン1に合わせてください"
 MEMBER_ID_MISMATCH = "メンバーの設定キーworkspace.idがカタログのIDと一致しません"
 
 # id: dict(op, scope, cwd, argv〈`--format json`の前〉, inputs, cause, status, exit, description)
-# scope: `all`は`--all-workspaces`、`single`は単独の操作。cause: `root-id`、`member-id`、`None`（成功）。
+# scope: `all`は`--all-workspaces`、`single`は単独の操作。cause: `root-id`、`member-id`、`ears-version`、`schema-version`、`None`（成功）。
 CASES = {
     "MULTI-043-01": dict(op="check", scope="all", cwd=".", argv=["check", "--all-workspaces", "--base", "HEAD"], inputs="root-omitted",
                          cause="root-id", status="failed", exit=1,
@@ -112,9 +127,28 @@ CASES = {
     "MULTI-043-12": dict(op="check", scope="all", cwd=".", argv=["check", "--all-workspaces", "--base", "HEAD"], inputs="explicit-root",
                          cause=None, status="passed", exit=0,
                          description="ルートがworkspace.id: rootを明示すれば複合ワークスペースとして成功する"),
+    "MULTI-043-13": dict(op="check", scope="all", cwd=".", argv=["check", "--all-workspaces", "--base", "HEAD"], inputs="root-omitted-ears",
+                         cause="ears-version", status="blocked", exit=2,
+                         description="ルートがworkspace.idを省略しEARS-AIの版が非対応のとき、版の非対応で止めてもルートの同一性を既定値rootにしない"),
+    "MULTI-043-14": dict(op="check", scope="all", cwd=".", argv=["check", "--all-workspaces", "--base", "HEAD"], inputs="root-omitted-schema",
+                         cause="schema-version", status="blocked", exit=2,
+                         description="ルートがworkspace.idを省略しスキーマの版が非対応のとき、版の非対応で止めてもルートの同一性を既定値rootにしない"),
+    "MULTI-043-15": dict(op="doctor", scope="all", cwd=".", argv=["doctor", "--all-workspaces"], inputs="root-omitted-ears",
+                         cause="ears-version", status="blocked", exit=2,
+                         description="ルートがworkspace.idを省略しEARS-AIの版が非対応のdoctor --all-workspacesも、ルートの同一性を既定値rootにしない"),
+    "MULTI-043-16": dict(op="doctor", scope="all", cwd=".", argv=["doctor", "--all-workspaces"], inputs="root-omitted-schema",
+                         cause="schema-version", status="blocked", exit=2,
+                         description="ルートがworkspace.idを省略しスキーマの版が非対応のdoctor --all-workspacesも、ルートの同一性を既定値rootにしない"),
+    "MULTI-043-17": dict(op="check", scope="all", cwd=".", argv=["check", "--all-workspaces", "--base", "HEAD"],
+                         inputs="root-omitted-empty-declaration", cause="root-id", status="failed", exit=1,
+                         description="multiWorkspaceが値のない宣言でも、宣言はキーの有無で判定し、ルートのworkspace.idの省略を通さない"),
+    "MULTI-043-18": dict(op="check", scope="single", cwd=".", argv=["check", "--base", "HEAD"],
+                         inputs="root-omitted-empty-declaration", cause="root-id", status="failed", exit=1,
+                         description="multiWorkspaceが値のない宣言でも、単独のcheckがルートのworkspace.idの省略を既定値rootで通さない"),
 }
 RESULT_FILES = {"check": "expected/check.json", "verify": "expected/verify.json", "doctor": "expected/doctor.json"}
-ROOT_OMITTED = ("root-omitted", "root-omitted-member-absent", "root-omitted-id-mismatch")
+ROOT_OMITTED = ("root-omitted", "root-omitted-member-absent", "root-omitted-id-mismatch", "root-omitted-ears", "root-omitted-schema",
+                "root-omitted-empty-declaration")
 
 
 # --- 入力 -------------------------------------------------------------------------------
@@ -127,6 +161,13 @@ def root_config(inputs):
     text = multi_reference.root_config(members, root_id="platform")
     if inputs in ROOT_OMITTED:
         text = text.replace("workspace:\n  id: platform\n", "", 1)
+    if inputs == "root-omitted-ears":
+        text = text.replace('earsAi: "1.0"', 'earsAi: "2.0"', 1)
+    if inputs == "root-omitted-schema":
+        text = text.replace('schemaVersion: "1.0"', 'schemaVersion: "2.0"', 1)
+    if inputs == "root-omitted-empty-declaration":
+        # `multiWorkspace`をキーだけ（値なし）で宣言する。メンバーの一覧は持たない。
+        text = text[:text.index("multiWorkspace:")] + "multiWorkspace:\n"
     if inputs == "explicit-root":
         text = text.replace("id: platform\n", "id: root\n", 1)
     return text
@@ -176,6 +217,16 @@ def reviewed_manifest(identifier):
 
 def diagnostic(identifier):
     cause = CASES[identifier]["cause"]
+    if cause in {"ears-version", "schema-version"}:
+        # 版の非対応で止まっても、ルートは有効な`workspace.id`を明示しないので`workspaceId`は`null`（結果・診断・終了コード §5）。
+        source = {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml",
+                  "key": "earsAi" if cause == "ears-version" else "schemaVersion"}
+        if cause == "ears-version" and CASES[identifier]["op"] == "doctor":
+            return {"code": "SPEC-DOCTOR-EARS-001", "severity": "error", "resultStatus": "blocked", "summary": EARS_VERSION,
+                    "source": source, "suggestedAction": DOCTOR_EARS_ACTION}
+        if cause == "ears-version":
+            return {"code": "SPEC-EARS-VERSION-001", "severity": "error", "resultStatus": "blocked", "summary": EARS_VERSION, "source": source}
+        return {"code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "resultStatus": "blocked", "summary": SCHEMA_VERSION, "source": source}
     if cause == "root-id":
         return {"code": "SPEC-MULTI-CONFIG-001", "severity": "error", "resultStatus": "failed", "summary": ROOT_ID_REQUIRED,
                 "source": {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml", "key": "workspace.id"}}
@@ -186,14 +237,14 @@ def diagnostic(identifier):
 
 
 def multi_workspace(identifier):
-    return {"id": None if CASES[identifier]["cause"] == "root-id" else "platform", "path": "."}
+    return {"id": None if CASES[identifier]["cause"] in {"root-id", "ears-version", "schema-version"} else "platform", "path": "."}
 
 
 # 単独の操作の`workspace`。ルートでは明示した有効なIDを持つときだけそのID、メンバーではカタログのIDと一致するときだけそのID、それ以外は`null`。
 SINGLE_WORKSPACES = {
     "MULTI-043-04": {"id": None, "path": "."}, "MULTI-043-05": {"id": "web", "path": "apps/web"},
     "MULTI-043-06": {"id": None, "path": "."}, "MULTI-043-07": {"id": None, "path": "."},
-    "MULTI-043-11": {"id": None, "path": "apps/web"},
+    "MULTI-043-11": {"id": None, "path": "apps/web"}, "MULTI-043-18": {"id": None, "path": "."},
 }
 
 
@@ -208,11 +259,11 @@ def reviewed_check_result(identifier):
         result = multi_identity_fixtures.all_workspaces_result("MULTI-001")
         return json.loads(json.dumps(result).replace("platform", "root"))
     if case["scope"] == "all":
-        return {"schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "failed",
+        return {"schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": case["status"],
                 "multiWorkspace": multi_workspace(identifier), "workspaces": [], "revision": revision, "durationMs": 0,
                 "diagnostics": [diagnostic(identifier)]}
     # 引数なしの単独の`check`は`scope: changed`。処理を始める前の停止なので件数は0。
-    return {"schemaVersion": "1.0", "operation": "check", "scope": "changed", "status": "failed",
+    return {"schemaVersion": "1.0", "operation": "check", "scope": "changed", "status": case["status"],
             "workspace": dict(SINGLE_WORKSPACES[identifier]), "revision": revision, "durationMs": 0,
             "selection": {"changedPathCount": 0, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0},
             "diagnostics": [diagnostic(identifier)]}
@@ -221,17 +272,18 @@ def reviewed_check_result(identifier):
 def reviewed_verify_result(identifier):
     revision = {"commit": COMMIT, "dirty": False}
     if CASES[identifier]["scope"] == "all":
-        return {"schemaVersion": "1.0", "operation": "verify", "scope": "all-workspaces", "status": "failed",
+        return {"schemaVersion": "1.0", "operation": "verify", "scope": "all-workspaces", "status": CASES[identifier]["status"],
                 "multiWorkspace": multi_workspace(identifier), "workspaces": [], "revision": revision, "durationMs": 0,
                 "diagnostics": [diagnostic(identifier)]}
-    return {"schemaVersion": "1.0", "operation": "verify", "scope": "all", "status": "failed",
+    return {"schemaVersion": "1.0", "operation": "verify", "scope": "all", "status": CASES[identifier]["status"],
             "workspace": dict(SINGLE_WORKSPACES[identifier]), "targetResults": [], "revision": revision, "commands": [],
             "durationMs": 0, "diagnostics": [diagnostic(identifier)]}
 
 
 def reviewed_doctor_result(identifier):
-    result = {"schemaVersion": "1.0", "operation": "doctor", "status": "failed", "core": json.loads(json.dumps(CORE)),
-              "checks": stopped_checks("failed"), "durationMs": 0, "diagnostics": [diagnostic(identifier)]}
+    # `catalog`は、版の非対応では`blocked`、ルートの省略（`SPEC-MULTI-CONFIG-001`）などでは`failed`（`doctor`仕様 §3、`MULTI-040-02`、`MULTI-007-01`）。
+    result = {"schemaVersion": "1.0", "operation": "doctor", "status": CASES[identifier]["status"], "core": json.loads(json.dumps(CORE)),
+              "checks": stopped_checks(CASES[identifier]["status"]), "durationMs": 0, "diagnostics": [diagnostic(identifier)]}
     if CASES[identifier]["scope"] == "all":
         return {**result, "multiWorkspace": multi_workspace(identifier), "workspaces": []}
     return {**result, "workspace": dict(SINGLE_WORKSPACES[identifier])}
@@ -267,6 +319,10 @@ def nearest_directory(repository, cwd):
         current = current.parent
 
 
+def major(value):
+    return int(str(value).split(".")[0])
+
+
 def reference_decision(repository, cwd):
     """参照計算: 入力の木構造から、全体事前検査の停止の原因、ルートのID、停止結果の`workspace`を導く（複合ワークスペース仕様 §2・§4.1・§7、結果・診断・終了コード §2）。
 
@@ -276,11 +332,18 @@ def reference_decision(repository, cwd):
     root = load_config(repository, ".")
     if root is None or "multiWorkspace" not in root:
         raise ValueError("複合ワークスペースのルートの設定が必要です")
-    members = [(item["id"], item["path"]) for item in root["multiWorkspace"]["members"]]
+    declaration = root["multiWorkspace"]
+    members = [(item["id"], item["path"]) for item in declaration.get("members", [])] if isinstance(declaration, dict) else []
     root_id = explicit_id(root)
     cause = None
     if root_id is None:
-        cause = "root-id"
+        # ルートの設定が版の非対応なら、設定の検査より先にその診断で止まる。ルートは有効なIDを明示しないので同一性は`null`のまま。
+        if major(root["earsAi"]) != SUPPORTED_MAJOR:
+            cause = "ears-version"
+        elif major(root["schemaVersion"]) != SUPPORTED_MAJOR:
+            cause = "schema-version"
+        else:
+            cause = "root-id"
     else:
         for member_id, path in members:
             config = load_config(repository, path)
@@ -310,12 +373,19 @@ def check_against_reference(identifier, result, reference):
         if result["multiWorkspace"] != {"id": reference["multiWorkspaceId"], "path": "."}:
             raise ValueError("`multiWorkspace`が入力からの参照計算と異なります")
         return
-    code = "SPEC-MULTI-CONFIG-001" if case["cause"] == "root-id" else "SPEC-MULTI-MEMBER-001"
-    if [(item["code"], item["resultStatus"]) for item in result["diagnostics"]] != [(code, "failed")] or result["status"] != "failed":
+    # 原因ごとの診断コード、結果への効果、`summary`。`doctor`のEARS-AIの非対応だけコードが異なる（診断レジストリ）。
+    table = {
+        "root-id": ("SPEC-MULTI-CONFIG-001", "failed", ROOT_ID_REQUIRED),
+        "member-id": ("SPEC-MULTI-MEMBER-001", "failed", MEMBER_ID_MISMATCH),
+        "ears-version": ("SPEC-DOCTOR-EARS-001" if case["op"] == "doctor" else "SPEC-EARS-VERSION-001", "blocked", EARS_VERSION),
+        "schema-version": ("SPEC-CONFIG-SCHEMA-001", "blocked", SCHEMA_VERSION),
+    }
+    code, effect, summary = table[case["cause"]]
+    if [(item["code"], item["resultStatus"]) for item in result["diagnostics"]] != [(code, effect)] or result["status"] != effect:
         raise ValueError("診断または状態が停止の原因と異なります")
-    summary = ROOT_ID_REQUIRED if case["cause"] == "root-id" else MEMBER_ID_MISMATCH
     source = result["diagnostics"][0]["source"]
-    expected_workspace_id = None if case["cause"] == "root-id" else reference["multiWorkspaceId"]
+    # ルートの省略（版の非対応で止まる場合を含む）は、ルートのIDを構成できないので`workspaceId`が`null`。
+    expected_workspace_id = reference["multiWorkspaceId"] if case["cause"] == "member-id" else None
     if result["diagnostics"][0]["summary"] != summary or source["workspaceId"] != expected_workspace_id:
         raise ValueError("診断の文言、発生元が入力からの参照計算と異なります")
     if case["scope"] == "all":
@@ -328,7 +398,8 @@ def check_against_reference(identifier, result, reference):
         if result["workspace"] != reference["workspace"] or "multiWorkspace" in result or "workspaces" in result:
             raise ValueError("`workspace`が入力からの参照計算と異なります")
     if case["op"] == "doctor" and ([item["name"] for item in result["checks"]] != ["core", "git", "catalog"]
-                                   or result["checks"][2]["status"] != "failed" or "suggestedAction" in result["diagnostics"][0]):
+                                   or result["checks"][2]["status"] != effect
+                                   or ("suggestedAction" in result["diagnostics"][0]) != (code == "SPEC-DOCTOR-EARS-001")):
         raise ValueError("`doctor`の検査項目が全体事前検査の停止結果と異なります")
     if case["op"] == "verify" and case["scope"] == "single" and (result["targetResults"] or result["commands"]):
         raise ValueError("停止した`verify`は検証対象もコマンドも持ちません")
@@ -348,15 +419,34 @@ def check_conditions(identifier, repository):
         raise ValueError("このfixtureの作業ツリーはコミット済みと同じである必要があります")
     reference = reference_decision(repository, case["cwd"])
     root = load_config(repository, ".")
-    members = [(item["id"], item["path"]) for item in root["multiWorkspace"]["members"]]
+    declaration = root["multiWorkspace"]
+    members = [(item["id"], item["path"]) for item in declaration.get("members", [])] if isinstance(declaration, dict) else []
     web = load_config(repository, "apps/web")
     api = load_config(repository, "services/api")
     if inputs in ROOT_OMITTED:
         # ルートの省略。`workspace`キーそのものを持たない（`workspace: {}`などの別の形ではない）。
         if "workspace" in root:
             raise ValueError("ルートの設定が`workspace`を持ってはいけません")
-        if {path for _, path in members} != {"apps/web", "services/api"}:
+        if inputs != "root-omitted-empty-declaration" and {path for _, path in members} != {"apps/web", "services/api"}:
             raise ValueError("カタログはメンバー`web`、`api`を宣言する必要があります")
+    if inputs in {"root-omitted", "root-omitted-ears", "root-omitted-schema"}:
+        # 版の非対応の2件は、ルートの版のほかはすべて`root-omitted`と同じ（原因はルートの省略と、その版の非対応だけ）。
+        if explicit_id(web) != "web" or explicit_id(api) != "api" or git(repository, "ls-files", "--", TOOLS_CONFIG_PATH).strip():
+            raise ValueError("メンバーは明示したIDがカタログのIDと一致し、未登録の設定を持ってはいけません")
+    if inputs == "root-omitted-ears" and (str(root["earsAi"]) != "2.0" or str(root["schemaVersion"]) != "1.0"):
+        raise ValueError("ルートの`earsAi`だけが非対応のメジャーバージョンである必要があります")
+    if inputs == "root-omitted-schema" and (str(root["schemaVersion"]) != "2.0" or str(root["earsAi"]) != "1.0"):
+        raise ValueError("ルートの`schemaVersion`だけが非対応のメジャーバージョンである必要があります")
+    if inputs in {"root-omitted", "root-omitted-member-absent", "root-omitted-id-mismatch", "member-omitted", "explicit-root"} \
+            and (str(root["earsAi"]) != "1.0" or str(root["schemaVersion"]) != "1.0"):
+        raise ValueError("ルートの版は対応するメジャーバージョンである必要があります")
+    if inputs == "root-omitted-empty-declaration":
+        # 値のない宣言: キーはあるが値は空。メンバーの一覧を持たない。メンバーの設定は実在し、ID を明示する。
+        # 設定の簡易な読取り（`read_yaml`）は、値のないキーを空のマッピングとして返す。
+        if declaration not in (None, {}) or members:
+            raise ValueError("`multiWorkspace`は、キーだけで値のない宣言である必要があります")
+        if explicit_id(web) != "web" or explicit_id(api) != "api":
+            raise ValueError("メンバーの設定は明示したIDを持つ必要があります")
     if inputs == "root-omitted":
         # 修正前のCoreが成功する構成: 原因はルートの省略だけで、メンバーは明示したIDがカタログと一致する。
         if explicit_id(web) != "web" or explicit_id(api) != "api" or dict(members) != {"web": "apps/web", "api": "services/api"}:
