@@ -1813,3 +1813,22 @@ commit `68184d289d440ee119d26fcc45c16814b546f3eb`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-25: `MULTI-044`を追加した後のGate Aの再認定
+
+`verify`の`targetResults[].statements`を、対象の規範文の内部の並びのまま出力していた欠陥を直し、出力するIDの重複なし辞書順にした（実装の確認事項C52。verify §8）。
+あわせて、`context`と`verify`のコンテキストのハッシュ値の材料`documents[].statements`を、文書に書いた順ではなく`id`のコードポイント辞書順に置くようにした
+（実装の確認事項C60。コンテキストのハッシュ値の正規化仕様 §3。C52のfixtureの作成中に見つかり、ユーザーの決定で同じ作業で直した）。
+これを固定する`MULTI-044-01`〜`MULTI-044-05`を追加した（ADR-051の追加、群`multi_verify_order_fixtures`）。matrix、Step 5の割当て、実装計画の完了条件を合わせた。
+既存のfixtureの入力と期待値は変えていない。
+
+commit `04c214d11502f24d563a2fcfdb22356a6a014dc1`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`b88dbefba627443e59787e60b21cd277012f950fe39b6298ed872289d17b85c1`。前回から変わったのは次の値だけである: 5件の追加によるmatrixと網羅の件数（498件→503件）、Step 5の件数（184件→189件）、群`multi_verify_order_fixtures`の追加、実行ビットを確かめたファイル数（2806件→2827件）、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
