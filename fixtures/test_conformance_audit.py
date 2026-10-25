@@ -83,6 +83,7 @@ from conformance import doctor_plugin_fixtures
 from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
+from conformance import multi_verify_order_fixtures
 from conformance import multi_workspace_id_fixtures
 
 
@@ -3738,6 +3739,211 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in (
                         "入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_verify_order_fixtures(self):
+        """`MULTI-044-01`〜`05`: verifyの規範文の並びとcontextのハッシュ値の材料の規範文の並びを固定する（確認事項C52・C60）。"""
+        module = multi_verify_order_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-044-{number:02d}" for number in range(1, 6)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_verify_order_reference_rules(self):
+        """対象規範文・テスト割当ての参照計算（関係・トレースモデル §6.4、verify §4・§8）と、修正前の並びの再現。"""
+        module = multi_verify_order_fixtures
+
+        def document(workspace, identifier, kind, labels, tests=(), **relations):
+            body = "".join(f"- [{identifier}:{label}] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n" for label in labels)
+            return {"workspaceId": workspace, "kind": kind, "body": body, "path": f"{identifier}.md",
+                    "frontmatter": {"id": identifier, "title": "t", "status": "approved", "tests": list(tests),
+                                    "relations": {key: value for key, value in relations.items()}}}
+
+        documents = {
+            "platform::REQ-001": document("platform", "REQ-001", "requirement", ["AC-10", "AC-02"],
+                                          [{"path": "t.py", "covers": ["REQ-001:AC-02", "REQ-001:AC-10"], "command": "p"}]),
+            "api::TECH-010": document("api", "TECH-010", "technical", ["C-01"],
+                                      [{"path": "u.py", "covers": ["api::TECH-010:C-01"], "command": "b"}],
+                                      refines=["platform::REQ-001:AC-02"]),
+        }
+        workspaces = {"platform": {"path": ".", "config": {}}, "api": {"path": "services/api", "config": {}}}
+        targets, ordered = module.reference_statements(documents, "platform::REQ-001")
+        # 内部の並び: 起点の規範文を文書に書いた順、その後に具体化文書の規範文。出力する修飾IDの辞書順は別に求める。
+        self.assertEqual(targets, ["platform::REQ-001:AC-10", "platform::REQ-001:AC-02", "api::TECH-010:C-01"])
+        self.assertEqual(sorted(set(targets)), ["api::TECH-010:C-01", "platform::REQ-001:AC-02", "platform::REQ-001:AC-10"])
+        # テスト割当ては、作業ワークスペースを先頭、以降はワークスペースIDの辞書順（`api`が先でも`platform`を先頭に置く）。
+        self.assertEqual(module.reference_bindings(documents, workspaces, ordered, targets, "platform"),
+                         [("platform", "p", ["t.py"], ["platform::REQ-001:AC-02", "platform::REQ-001:AC-10"]),
+                          ("api", "b", ["u.py"], ["api::TECH-010:C-01"])])
+        self.assertEqual([item[0] for item in module.reference_bindings(documents, workspaces, ordered, targets, "api")], ["api", "platform"])
+        # 対象のMUSTにテスト対応がなければ拒否する。
+        documents["api::TECH-010"]["frontmatter"]["tests"] = []
+        with self.assertRaises(ValueError):
+            module.reference_bindings(documents, workspaces, ordered, targets, "platform")
+
+    def test_multi_verify_order_expected_orders_distinguish_the_defect(self):
+        """リテラルの期待する並びは、修正前の並び（内部の並び）と異なる。対照は同じ。ハッシュ値は材料の規範文の並びで変わる（C60）。"""
+        module = multi_verify_order_fixtures
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier):
+                expected, defective = module.EXPECTED_STATEMENTS[identifier], module.DEFECTIVE_STATEMENTS[identifier]
+                self.assertEqual(sorted(defective), expected)
+                self.assertEqual(sorted(set(expected)), expected)
+                if identifier == "MULTI-044-04":
+                    self.assertEqual(defective, expected)
+                else:
+                    self.assertNotEqual(defective, expected)
+        # C60: 材料の規範文を文書に書いた順にすると、リテラルのハッシュ値と異なる値になる（規範は`id`の辞書順）。
+        for identifier in ("MULTI-044-01", "MULTI-044-05"):
+            material = module.reviewed_digest_input(identifier)
+            self.assertEqual([item["id"] for item in material["documents"][0]["statements"]], ["REQ-001:AC-02", "REQ-001:AC-10"])
+            wrong = copy.deepcopy(material)
+            wrong["documents"][0]["statements"].reverse()
+            self.assertNotEqual(module.digest_reference.digest(module.digest_reference.canonical_bytes(wrong)), module.expected_digest(identifier))
+        # 目的`interpret`は、コマンドとタイムアウトを材料に含めない。`verify`は含める。
+        self.assertEqual(module.reviewed_digest_input("MULTI-044-05")["settings"]["commands"], [])
+        self.assertEqual(module.reviewed_digest_input("MULTI-044-05")["settings"]["verifyTimeouts"], [])
+        self.assertEqual(len(module.reviewed_digest_input("MULTI-044-01")["settings"]["commands"]), 1)
+
+    def test_multi_verify_order_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_verify_order_fixtures
+
+        def swap(values, first, second):
+            values[first], values[second] = values[second], values[first]
+
+        results = {
+            "status": lambda v: v.update(status="failed"),
+            "diagnostics-add": lambda v: v["diagnostics"].append({"code": "SPEC-VERIFY-BLOCKED-001"}),
+            "revision": lambda v: v.update(revision=None),
+            "workspace": lambda v: v["workspace"].update(id="web"),
+            "scope": lambda v: v.update(scope="all"),
+            "digest": lambda v: (v["targetResults"][0] if "targetResults" in v else v).update(contextDigest="sha256:" + "0" * 64),
+            "digest-null": lambda v: (v["targetResults"][0] if "targetResults" in v else v).update(contextDigest=None),
+            "target-status": lambda v: v["targetResults"][0].update(status="blocked"),
+            "target": lambda v: v["targetResults"][0].update(target="REQ-002"),
+            "statements-swap": lambda v: swap(v["targetResults"][0]["statements"], 0, 1),
+            "statements-defective-order": lambda v: v["targetResults"][0]["statements"].reverse(),
+            "statements-drop": lambda v: v["targetResults"][0]["statements"].pop(),
+            "statements-duplicate": lambda v: v["targetResults"][0]["statements"].append(v["targetResults"][0]["statements"][0]),
+            "statements-clear": lambda v: v["targetResults"][0]["statements"].clear(),
+            "binding-refs": lambda v: v["targetResults"][0]["bindingRefs"].append("root::other"),
+            "binding-refs-clear": lambda v: v["targetResults"][0]["bindingRefs"].clear(),
+            "target-diagnostics": lambda v: v["targetResults"][0]["diagnostics"].append({"code": "CTX-COVERAGE-TEST-001"}),
+            "commands-clear": lambda v: v["commands"].clear(),
+            "command-covers-swap": lambda v: swap(v["commands"][0]["covers"], 0, 1),
+            "command-covers-drop": lambda v: v["commands"][0]["covers"].pop(),
+            "command-tests": lambda v: v["commands"][0]["tests"].append("tests/extra.py"),
+            "command-argv": lambda v: v["commands"][0]["argv"].__setitem__(0, "/bin/false"),
+            "command-status": lambda v: v["commands"][0].update(status="failed"),
+            "command-exit-code": lambda v: v["commands"][0].update(exitCode=1),
+            "command-binding-id": lambda v: v["commands"][0].update(bindingId="root::other"),
+            "documents-drop": lambda v: v["documents"].pop(),
+            "documents-role": lambda v: v["documents"][0].update(role="refinement"),
+            "documents-count": lambda v: v["resolution"].update(documentCount=2),
+            "roots": lambda v: v["roots"].append("REQ-002"),
+            "ledger-add": lambda v: v["constraintLedger"]["statements"].append({"id": "REQ-001:AC-02"}),
+            "coverage-must": lambda v: v["coverage"]["must"]["total"].append("REQ-001:AC-02"),
+            "purpose": lambda v: v.update(purpose="implement"),
+            "detail": lambda v: v["projection"].update(detail="standard"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=1),
+            "cwd": lambda v: v["invocation"].update(cwd="services/api"),
+            "root": lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-002"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-purpose": lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("--purpose") + 1, "implement"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            result_file = f"expected/{module.CASES[identifier]['operation']}.json"
+            mutations += [(identifier, result_file, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 100)
+
+    def test_multi_verify_order_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、欠陥を検出する構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_verify_order_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        sorted_statements = (".spec/requirements/REQ-001.md", "- [REQ-001:AC-10] [ACTOR", "- [REQ-001:AC-01] [ACTOR")
+        edits = {
+            # 番号の大きい規範文を先に書く構成を、番号の順へ変える。
+            "MULTI-044-01": [sorted_statements],
+            # 起点を具体化する文書が、自分自身を具体化する（循環）。
+            "MULTI-044-02": [(".spec/technical/TECH-003.md", "refines: [TECH-005:C-01]", "refines: [TECH-003:C-01]")],
+            # 起点の規範文のテスト対応を消す（対象のMUSTにテスト対応がない）。
+            "MULTI-044-03": [("services/api/.spec/technical/TECH-010.md", "covers: [api::TECH-010:C-01, platform::REQ-001:AC-01]",
+                              "covers: [api::TECH-010:C-01]")],
+            # 対照の入力を、修正前の並びが辞書順でない形へ変える。
+            "MULTI-044-04": [(".spec/requirements/REQ-001.md", "- [REQ-001:AC-01] [ACTOR", "- [REQ-001:AC-03] [ACTOR")],
+            "MULTI-044-05": [sorted_statements],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe(repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_binding_missing_fixtures(self):
