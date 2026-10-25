@@ -617,7 +617,8 @@ def _process_single_target(
 
     context_digest = digest_fn(expansion)
     entry_out["contextDigest"] = context_digest
-    entry_out["statements"] = [_canon_id(s) for s in target_statements]
+    # 検証証跡の規範文は、出力するIDで重複なし辞書順にする（verify §8）。コンテキストの規範文の並び（文書順、行番号）とは別。
+    entry_out["statements"] = sorted({_canon_id(s) for s in target_statements})
 
     if must_untested:
         entry_out["diagnostics"] = sort_diagnostics(coverage_diags)
