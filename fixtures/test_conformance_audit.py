@@ -3537,11 +3537,11 @@ class AuditTests(unittest.TestCase):
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_workspace_id_fixtures(self):
-        """`MULTI-043-01`〜`12`: 複合ワークスペースのルートとメンバーの`workspace.id`の省略を既定値`root`で通さないことを固定する（確認事項C42）。"""
+        """`MULTI-043-01`〜`18`: 複合ワークスペースのルートとメンバーの`workspace.id`の省略を既定値`root`で通さないことを固定する（確認事項C42）。"""
         module = multi_workspace_id_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-043-{number:02d}" for number in range(1, 13)])
+        self.assertEqual(result["prepared"], [f"MULTI-043-{number:02d}" for number in range(1, 19)])
         self.assertEqual(result["references"], 1)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -3571,6 +3571,14 @@ class AuditTests(unittest.TestCase):
         # メンバーの省略。ルートのIDは明示した値。メンバーからは、カタログのIDと一致しないので`null`。
         self.assertEqual(decide("MULTI-043-10"), {"cause": "member-id", "multiWorkspaceId": "platform", "workspace": {"id": "platform", "path": "."}})
         self.assertEqual(decide("MULTI-043-11")["workspace"], {"id": None, "path": "apps/web"})
+        # 版の非対応で止まっても、ルートが`workspace.id`を明示しなければ同一性は`null`。診断の種類は版の非対応が先。
+        self.assertEqual(decide("MULTI-043-13"), {"cause": "ears-version", "multiWorkspaceId": None, "workspace": {"id": None, "path": "."}})
+        self.assertEqual(decide("MULTI-043-14")["cause"], "schema-version")
+        self.assertEqual(decide("MULTI-043-15")["cause"], "ears-version")
+        self.assertEqual(decide("MULTI-043-16")["cause"], "schema-version")
+        # 値のない`multiWorkspace`の宣言も、キーがあれば複合ワークスペースのルートの省略として扱う。
+        self.assertEqual(decide("MULTI-043-17"), {"cause": "root-id", "multiWorkspaceId": None, "workspace": {"id": None, "path": "."}})
+        self.assertEqual(decide("MULTI-043-18")["cause"], "root-id")
         # 対照: ルートが`root`を明示すれば原因はない。
         self.assertEqual(decide("MULTI-043-12"), {"cause": None, "multiWorkspaceId": "root", "workspace": {"id": "root", "path": "."}})
         # 既定値`root`は明示のIDではない。`workspace`が`id`を持たない形も省略として扱う。
@@ -3591,6 +3599,14 @@ class AuditTests(unittest.TestCase):
             "code": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-PATH-001"),
             "code-member": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001"),
             "summary": lambda v: v["diagnostics"][0].update(summary="ルートワークスペースの設定キーworkspace.idが不正です"),
+            "summary-version": lambda v: v["diagnostics"][0].update(summary="未対応のメジャーバージョンです"),
+            "code-ears": lambda v: v["diagnostics"][0].update(code="SPEC-EARS-VERSION-001"),
+            "code-doctor-ears": lambda v: v["diagnostics"][0].update(code="SPEC-DOCTOR-EARS-001"),
+            "code-schema": lambda v: v["diagnostics"][0].update(code="SPEC-CONFIG-SCHEMA-001"),
+            "result-status-failed": lambda v: v["diagnostics"][0].update(resultStatus="failed"),
+            "source-key-ears": lambda v: v["diagnostics"][0]["source"].update(key="earsAi"),
+            "source-key-schema": lambda v: v["diagnostics"][0]["source"].update(key="schemaVersion"),
+            "suggested-action-drop": lambda v: v["diagnostics"][0].pop("suggestedAction"),
             "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
             "result-status": lambda v: v["diagnostics"][0].update(resultStatus="blocked"),
             "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
@@ -3654,7 +3670,7 @@ class AuditTests(unittest.TestCase):
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
         # 改変の適用が空振りしていないこと。
-        self.assertGreater(applied, 200)
+        self.assertGreater(applied, 400)
 
     def test_multi_workspace_id_audit_rejects_changed_corpus(self):
         """入力の欠落と追加（バイト列の照合）と、原因の構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
@@ -3687,6 +3703,17 @@ class AuditTests(unittest.TestCase):
             "MULTI-043-10": [("apps/web/.spec/bitz.yaml", 'earsAi: "1.0"\n', 'earsAi: "1.0"\nworkspace:\n  id: root\n')],
             # 対照のルートが`root`を明示しない形へ変える。
             "MULTI-043-12": [(".spec/bitz.yaml", "id: root\n", "id: platform\n")],
+            # 版の非対応という原因を消す（ルートの版を対応するメジャーバージョンへ戻す）。
+            "MULTI-043-13": [(".spec/bitz.yaml", 'earsAi: "2.0"', 'earsAi: "1.0"')],
+            "MULTI-043-14": [(".spec/bitz.yaml", 'schemaVersion: "2.0"', 'schemaVersion: "1.0"')],
+            # 版の非対応にもう1つの版を足す、またはルートに`workspace.id`を明示する（省略という原因を消す）。
+            "MULTI-043-15": [(".spec/bitz.yaml", 'schemaVersion: "1.0"', 'schemaVersion: "2.0"'),
+                             (".spec/bitz.yaml", "multiWorkspace:", "workspace:\n  id: platform\nmultiWorkspace:")],
+            "MULTI-043-16": [(".spec/bitz.yaml", "multiWorkspace:", "workspace:\n  id: platform\nmultiWorkspace:")],
+            # 値のない宣言をメンバーの一覧のある宣言へ変える、または宣言を外す。
+            "MULTI-043-17": [(".spec/bitz.yaml", "multiWorkspace:\n", "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"),
+                             (".spec/bitz.yaml", "multiWorkspace:\n", "")],
+            "MULTI-043-18": [(".spec/bitz.yaml", "multiWorkspace:\n", "workspace:\n  id: platform\nmultiWorkspace:\n")],
         }
         for identifier, changes in edits.items():
             for relative, old, new in changes:

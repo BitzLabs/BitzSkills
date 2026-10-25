@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": null,
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-EARS-VERSION-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "未対応のEARS-AIのメジャーバージョンです",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "earsAi"
+      }
+    }
+  ]
+}
