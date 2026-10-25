@@ -84,6 +84,7 @@ from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
 from conformance import multi_verify_order_fixtures
+from conformance import multi_early_report_fixtures
 from conformance import multi_workspace_id_fixtures
 
 
@@ -3944,6 +3945,250 @@ class AuditTests(unittest.TestCase):
                         directory.mkdir()
                     state = module.observe(repository, external)
                     (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_early_report_fixtures(self):
+        """`MULTI-045-01`〜`10`: `--all-workspaces`の早期の結果が`--report`をルートワークスペースへ保存することを固定する（確認事項C53）。"""
+        module = multi_early_report_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-045-{number:02d}" for number in range(1, 11)])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_early_report_reference_rules(self):
+        """保存の失敗の診断の並び（結果・診断・終了コード §7）、状態と終了コード（§3）、保存の件数（§8）の参照計算。"""
+        module = multi_early_report_fixtures
+
+        def diagnostic(workspace, path, code="SPEC-X-001"):
+            return {"code": code, "source": {"kind": "file", "workspaceId": workspace, "path": path}}
+
+        write = diagnostic("platform", ".spec/reports", "SPEC-REPORT-WRITE-001")
+        # 同一性を構成できない発生元（`workspaceId: null`）が先、次に文字列のID、同じIDでは`path`、`code`の辞書順。
+        ordered = [diagnostic(None, "z"), diagnostic("platform", ".spec/bitz.yaml"), write,
+                   diagnostic("platform", "apps/web/.spec/bitz.yaml"), diagnostic("web", "a")]
+        self.assertEqual(sorted(reversed(ordered), key=module.section7_key), ordered)
+        # 保存の失敗は末尾に足さず、この順に入れる: `path`が後ろの診断があれば、保存の失敗はその前に並ぶ。
+        appended = [diagnostic("platform", "apps/web/.spec/bitz.yaml"), write]
+        self.assertEqual(sorted(appended, key=module.section7_key), [write, appended[0]])
+        # `workspaceId: null`の保存の失敗は、文字列のIDの診断より前に並ぶ。
+        self.assertEqual(sorted([diagnostic("platform", ".spec/bitz.yaml"), diagnostic(None, ".spec/reports")], key=module.section7_key)[0]["source"]["workspaceId"], None)
+        self.assertEqual(module.worst_status([{"resultStatus": "failed"}, {"resultStatus": "error"}]), "error")
+        self.assertEqual(module.worst_status([{"resultStatus": "blocked"}, {"resultStatus": "failed"}]), "failed")
+        self.assertEqual({status: module.EXIT_CODES[status] for status in module.SEVERITY_ORDER},
+                         {"passed": 0, "passed_with_warnings": 0, "blocked": 2, "failed": 1, "error": 3})
+        # 原因、`--report`の有無、保存先の状態の全組合せの結果。
+        expectations = {
+            ("member-missing", True, "directory"): (["SPEC-MULTI-MEMBER-001"], ["platform"], "failed", 1, 1),
+            ("member-missing", True, "file"): (["SPEC-MULTI-MEMBER-001", "SPEC-REPORT-WRITE-001"], ["platform", "platform"], "error", 3, 0),
+            ("member-missing", False, "directory"): (["SPEC-MULTI-MEMBER-001"], ["platform"], "failed", 1, 0),
+            ("member-missing", False, "file"): (["SPEC-MULTI-MEMBER-001"], ["platform"], "failed", 1, 0),
+            ("root-id", True, "directory"): (["SPEC-MULTI-CONFIG-001"], [None], "failed", 1, 1),
+            ("root-id", True, "file"): (["SPEC-MULTI-CONFIG-001", "SPEC-REPORT-WRITE-001"], [None, None], "error", 3, 0),
+            ("root-id", True, "absent"): (["SPEC-MULTI-CONFIG-001", "SPEC-REPORT-WRITE-001"], [None, None], "error", 3, 0),
+        }
+        for (cause, report, reports), (codes, workspaces, status, exit_code, saved) in expectations.items():
+            with self.subTest(cause=cause, report=report, reports=reports):
+                root_id = None if cause == "root-id" else "platform"
+                outcome = module.reference_outcome({"report": report}, {"cause": cause, "rootId": root_id, "reports": reports})
+                self.assertEqual(outcome, {"codes": codes, "workspaces": workspaces, "status": status, "exit": exit_code, "saved": saved})
+        with self.assertRaises(ValueError):
+            module.reference_outcome({"report": True}, {"cause": None, "rootId": "platform", "reports": "directory"})
+
+    def test_multi_early_report_expected_results_distinguish_the_defect(self):
+        """修正前のCore（`--report`を無視して保存せず、保存の失敗も返さない）の結果と異なる期待値を持つ。対照は修正の前後で同じ。"""
+        module = multi_early_report_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+                result = json.loads((audit.FIXTURES / "multi" / identifier / module.RESULT_FILES[case["op"]]).read_text())
+                # 修正前: 停止の診断1件だけの結果（`failed`／1）を返し、レポートは0件。
+                defective = (["SPEC-MULTI-CONFIG-001" if case["cause"] == "root-id" else "SPEC-MULTI-MEMBER-001"], "failed", 1, 0)
+                actual = ([item["code"] for item in result["diagnostics"]], result["status"], manifest["expect"]["exitCode"],
+                          manifest["expect"]["reportFileCount"])
+                if not case["report"]:
+                    self.assertEqual(actual, defective)
+                else:
+                    self.assertNotEqual(actual, defective)
+                    self.assertEqual(("--report" in manifest["invocation"]["argv"]), True)
+        # 保存できるケースはレポートがちょうど1件、保存できないケースは0件でSPEC-REPORT-WRITE-001が末尾に入り、状態は`error`／3。
+        self.assertEqual([module.saved_count(identifier) for identifier in module.CASES], [1, 1, 0, 0, 1, 1, 0, 0, 0, 0])
+        for identifier in ("MULTI-045-03", "MULTI-045-04", "MULTI-045-07", "MULTI-045-08"):
+            result = module.reviewed_result(identifier)
+            self.assertEqual((result["status"], [item["code"] for item in result["diagnostics"]][-1]), ("error", "SPEC-REPORT-WRITE-001"))
+        # ルートの同一性を構成できない入力の保存の失敗は`workspaceId: null`、明示したルートでは`platform`。
+        self.assertIsNone(module.reviewed_result("MULTI-045-07")["diagnostics"][-1]["source"]["workspaceId"])
+        self.assertEqual(module.reviewed_result("MULTI-045-03")["diagnostics"][-1]["source"]["workspaceId"], "platform")
+
+    def test_multi_early_report_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_early_report_fixtures
+
+        def last(values, **changes):
+            values["diagnostics"][-1].update(changes)
+
+        def source(values, **changes):
+            values["diagnostics"][-1]["source"].update(changes)
+
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-failed": lambda v: v.update(status="failed" if v["status"] == "error" else "error"),
+            "operation": lambda v: v.update(operation="doctor"),
+            "scope": lambda v: v.update(scope="full"),
+            "diagnostics-drop": lambda v: v["diagnostics"].pop(),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "diagnostics-reverse": lambda v: v["diagnostics"].reverse(),
+            "code": lambda v: last(v, code="SPEC-MULTI-GIT-001"),
+            "summary": lambda v: last(v, summary="x"),
+            "severity": lambda v: last(v, severity="warning"),
+            "effect": lambda v: last(v, resultStatus="blocked"),
+            "source-workspace": lambda v: source(v, workspaceId="web"),
+            "source-workspace-swap": lambda v: source(v, workspaceId="platform" if v["diagnostics"][-1]["source"]["workspaceId"] is None else None),
+            "source-path": lambda v: source(v, path="apps/web/.spec/reports"),
+            "source-key": lambda v: source(v, key="members"),
+            "source-line": lambda v: source(v, line=1),
+            "suggested-action": lambda v: last(v, suggestedAction="x"),
+            "multi-id": lambda v: v["multiWorkspace"].update(id="root"),
+            "multi-id-swap": lambda v: v["multiWorkspace"].update(id="platform" if v["multiWorkspace"]["id"] is None else None),
+            "multi-path": lambda v: v["multiWorkspace"].update(path="apps/web"),
+            "workspaces": lambda v: v["workspaces"].append({"id": "web", "path": "apps/web", "status": "passed", "diagnostics": []}),
+            "workspace": lambda v: v.update(workspace={"id": "platform", "path": "."}),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "revision-null": lambda v: v.update(revision=None),
+            "revision-base": lambda v: v["revision"].update(base="1" * 40) if "base" in v["revision"] else v["revision"].update(base="0" * 40),
+            "duration": lambda v: v.update(durationMs=1),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0),
+            "report-count": lambda v: v["expect"].update(reportFileCount=v["expect"]["reportFileCount"] + 1),
+            "report-count-zero": lambda v: v["expect"].update(reportFileCount=0),
+            "report-flag": lambda v: v["invocation"]["argv"].remove("--report") if "--report" in v["invocation"]["argv"]
+            else v["invocation"]["argv"].append("--report"),
+            "all-workspaces": lambda v: v["invocation"]["argv"].remove("--all-workspaces"),
+            "operation": lambda v: v["invocation"]["argv"].__setitem__(0, "doctor"),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "result-file": lambda v: v["expect"].update(resultFile="expected/doctor.json"),
+        }
+        effects = {
+            "policy-read-only": lambda v: v.update(policy="read-only"),
+            "policy-report": lambda v: v.update(policy="explicit-report", report={
+                "directory": ".spec/reports", "createdCount": 1, "namePattern": module.NAME_PATTERN, "temporaryFilesRemaining": 0}),
+            "policy-read-write": lambda v: v.update(policy="read-write"),
+            "report-drop": lambda v: v.pop("report"),
+            "report-directory": lambda v: v["report"].update(directory="apps/web/.spec/reports"),
+            "report-count": lambda v: v["report"].update(createdCount=2),
+            "report-pattern-loose": lambda v: v["report"].update(namePattern=".*"),
+            "report-pattern-bad": lambda v: v["report"].update(namePattern="^[0-9]{8}T[0-9]{6}Z-doctor\\.json$"),
+            "report-temporary": lambda v: v["report"].update(temporaryFilesRemaining=1),
+            "before-extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+            "after-extra": lambda v: v["after"]["repository"].update(extra={"kind": "directory"}),
+            "after-member-report": lambda v: v["after"]["repository"].update(
+                {"apps/web/.spec/reports": {"kind": "directory"}, "apps/web/.spec/reports/x.json": {"kind": "file", "executable": False, "sha256": "0" * 64}}),
+            "after-existing-report": lambda v: v["after"]["repository"].pop(module.EXISTING_REPORT),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            result_file = f"expected/{module.CASES[identifier]['op']}.json"
+            mutations += [(identifier, result_file, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations += [(identifier, "side-effects.json", name, change) for name, change in effects.items()]
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 400)
+
+    def test_multi_early_report_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、欠陥を検出する構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_early_report_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml")
+                           or name == ".spec/reports" or name.endswith("existing.json"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        api_config = ("add", "services/api/.spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: api\n')
+        declare_root = (".spec/bitz.yaml", "multiWorkspace:", "workspace:\n  id: platform\nmultiWorkspace:")
+        edits = {
+            # メンバー`api`が設定を持つ（メンバーの設定の不在という原因がなくなる）。
+            "MULTI-045-01": [api_config],
+            # `web`の明示したIDがカタログと一致しない。
+            "MULTI-045-02": [("apps/web/.spec/bitz.yaml", "id: web", "id: frontend")],
+            # 保存を妨げる通常ファイルが別の内容になる。
+            "MULTI-045-03": [(".spec/reports", "this path occupies", "this path does not occupy")],
+            # メンバーの`.spec/reports`が存在する。
+            "MULTI-045-04": [("add", "apps/web/.spec/reports/x.json", "{}\n")],
+            # ルートが`workspace.id`を明示する（ルートの省略という原因がなくなる）。
+            "MULTI-045-05": [declare_root],
+            "MULTI-045-06": [("apps/web/.spec/bitz.yaml", "id: web", "id: x")],
+            "MULTI-045-07": [declare_root],
+            # カタログにない設定がGitで追跡されている。
+            "MULTI-045-08": [("add", "tools/x/.spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: x\n')],
+            "MULTI-045-09": [api_config],
+            "MULTI-045-10": [api_config],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for change in changes:
+                with self.subTest(identifier=identifier, change=change[:2]), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    edited = dict(module.reviewed_inputs(identifier))
+                    if change[0] == "add":
+                        _, relative, content = change
+                        path = fixture / "repo" / relative
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text(content)
+                    else:
+                        relative, old, new = change
+                        path = fixture / "repo" / relative
+                        self.assertIn(old, path.read_text())
+                        path.write_text(path.read_text().replace(old, new, 1))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps(module.reviewed_effects(identifier, state)))
                     with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
                         outcome = module.validate(root, {identifier})
                     self.assertEqual(outcome["status"], "Failed")

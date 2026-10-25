@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "error",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-MEMBER-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "メンバーの.spec/bitz.yamlがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "multiWorkspace.members"
+      }
+    },
+    {
+      "code": "SPEC-REPORT-WRITE-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "レポートの保存先へ排他的に作成できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/reports"
+      }
+    }
+  ]
+}

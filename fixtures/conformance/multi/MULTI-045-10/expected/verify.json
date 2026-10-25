@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-MEMBER-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "メンバーの.spec/bitz.yamlがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "multiWorkspace.members"
+      }
+    }
+  ]
+}
