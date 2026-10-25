@@ -594,8 +594,8 @@ def _run_all_workspaces_members(
     if "--report" in parsed.flags:
         failure = reportio.write_report(pre.repo_root, pre.root_id, "check", result)
         if failure is not None:
-            diags_top = list(result["diagnostics"])
-            diags_top.append(failure.to_dict())
+            # レポートの書き込みの失敗も、ほかの診断と同じく結果・診断・終了コード §7の順に並べる（`verify`と同じ）。
+            diags_top = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
             result["diagnostics"] = diags_top
             overall_status = worst_status([w["status"] for w in ws_results] + [status_from_diagnostics(diags_top)])
             result["status"] = overall_status
@@ -1091,8 +1091,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         write_workspace_root = loc.root if loc.root is not None else cwd
         failure = reportio.write_report(write_workspace_root, workspace_id, "check", result)
         if failure is not None:
-            diagnostics = list(result["diagnostics"])
-            diagnostics.append(failure.to_dict())
+            # レポートの書き込みの失敗も、ほかの診断と同じく結果・診断・終了コード §7の順に並べる（`verify`と同じ）。
+            diagnostics = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
             result["diagnostics"] = diagnostics
             status = status_from_diagnostics(diagnostics)
             result["status"] = status
