@@ -86,6 +86,7 @@ from conformance.verify_stop_revision_fixtures import validate as validate_verif
 from conformance.context_stop_revision_fixtures import validate as validate_context_stop_revision_fixtures
 from conformance.multi_context_order_fixtures import validate as validate_multi_context_order_fixtures
 from conformance.multi_verify_order_fixtures import validate as validate_multi_verify_order_fixtures
+from conformance.multi_early_report_fixtures import validate as validate_multi_early_report_fixtures
 from conformance.multi_workspace_id_fixtures import validate as validate_multi_workspace_id_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -377,6 +378,7 @@ def main():
     checks["context_stop_revision_fixtures"] = validate_context_stop_revision_fixtures()
     checks["multi_context_order_fixtures"] = validate_multi_context_order_fixtures()
     checks["multi_verify_order_fixtures"] = validate_multi_verify_order_fixtures()
+    checks["multi_early_report_fixtures"] = validate_multi_early_report_fixtures()
     checks["multi_workspace_id_fixtures"] = validate_multi_workspace_id_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
