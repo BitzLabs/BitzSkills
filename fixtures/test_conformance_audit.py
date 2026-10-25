@@ -3772,20 +3772,25 @@ class AuditTests(unittest.TestCase):
                                       [{"path": "u.py", "covers": ["api::TECH-010:C-01"], "command": "b"}],
                                       refines=["platform::REQ-001:AC-02"]),
         }
-        workspaces = {"platform": {"path": ".", "config": {}}, "api": {"path": "services/api", "config": {}}}
         targets, ordered = module.reference_statements(documents, "platform::REQ-001")
         # 内部の並び: 起点の規範文を文書に書いた順、その後に具体化文書の規範文。出力する修飾IDの辞書順は別に求める。
         self.assertEqual(targets, ["platform::REQ-001:AC-10", "platform::REQ-001:AC-02", "api::TECH-010:C-01"])
         self.assertEqual(sorted(set(targets)), ["api::TECH-010:C-01", "platform::REQ-001:AC-02", "platform::REQ-001:AC-10"])
-        # テスト割当ては、作業ワークスペースを先頭、以降はワークスペースIDの辞書順（`api`が先でも`platform`を先頭に置く）。
-        self.assertEqual(module.reference_bindings(documents, workspaces, ordered, targets, "platform"),
-                         [("platform", "p", ["t.py"], ["platform::REQ-001:AC-02", "platform::REQ-001:AC-10"]),
-                          ("api", "b", ["u.py"], ["api::TECH-010:C-01"])])
-        self.assertEqual([item[0] for item in module.reference_bindings(documents, workspaces, ordered, targets, "api")], ["api", "platform"])
+        # 2つ以上のワークスペースのテスト割当ては、`commands[]`の並びが規範から導けない（確認事項C62）ので止まる。
+        with self.assertRaisesRegex(ValueError, "複数のワークスペース"):
+            module.reference_bindings(documents, ordered, targets)
+        # 1つのワークスペースのテスト割当ては、コマンド名の辞書順にまとめる（テストのパスと`covers`は辞書順）。
+        documents["platform::REQ-001"]["frontmatter"]["tests"] = []
+        documents["api::TECH-010"]["frontmatter"]["tests"] = [
+            {"path": "u.py", "covers": ["api::TECH-010:C-01", "platform::REQ-001:AC-10", "platform::REQ-001:AC-02"], "command": "b"},
+            {"path": "v.py", "covers": ["platform::REQ-001:AC-02"], "command": "a"}]
+        self.assertEqual(module.reference_bindings(documents, ordered, targets),
+                         [("api", "a", ["v.py"], ["platform::REQ-001:AC-02"]),
+                          ("api", "b", ["u.py"], ["api::TECH-010:C-01", "platform::REQ-001:AC-02", "platform::REQ-001:AC-10"])])
         # 対象のMUSTにテスト対応がなければ拒否する。
-        documents["api::TECH-010"]["frontmatter"]["tests"] = []
-        with self.assertRaises(ValueError):
-            module.reference_bindings(documents, workspaces, ordered, targets, "platform")
+        documents["api::TECH-010"]["frontmatter"]["tests"] = [{"path": "u.py", "covers": ["api::TECH-010:C-01"], "command": "b"}]
+        with self.assertRaisesRegex(ValueError, "MUST"):
+            module.reference_bindings(documents, ordered, targets)
 
     def test_multi_verify_order_expected_orders_distinguish_the_defect(self):
         """リテラルの期待する並びは、修正前の並び（内部の並び）と異なる。対照は同じ。ハッシュ値は材料の規範文の並びで変わる（C60）。"""

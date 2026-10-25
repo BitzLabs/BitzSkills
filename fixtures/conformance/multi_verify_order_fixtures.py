@@ -27,7 +27,8 @@
 - 関係・トレースモデル §6.4: 検証対象が文書なら、その文書が所有するすべての規範文と、具体化文書の規範文が対象規範文である。
 - `verify` §3・§4: 全`MUST`に1件以上のテスト対応を要求し、通過した検証対象のテスト割当てを`<ワークスペースID>::<コマンド名>`ごとにまとめて1回実行する。
   テストのパスは所有ワークスペース相対で重複排除して辞書順に並べる。
-- コンテキストのハッシュ値の正規化仕様 §3: 提示の順は材料に含めない。`contextDigest`は並びの修正の前後で同じ値になる。
+- コンテキストのハッシュ値の正規化仕様 §3: 提示の順は材料に含めない。材料の`documents[].statements`は`id`のコードポイント辞書順に置く。
+  `statements`の並びの修正（C52）では`contextDigest`は変わらない。規範文を番号の順に書かない文書（`01`）では、材料の規範文の並びの修正（C60）で変わる。
   ハッシュ値は、独立に書いた2系統の参照計算（このモジュールのリテラルA、入力の木構造から導出するB）のバイト列の一致を要求する。
 
 参照計算`reference_*`は、入力の木構造から、閉包、対象規範文、テスト割当てを導く（`multi_closure_alias_fixtures`の閉包と
@@ -341,8 +342,12 @@ def reference_statements(documents, root, order_of_documents=None):
     return order.reference_targets(documents, order_of_documents if order_of_documents is not None else ordered, edges, root), ordered
 
 
-def reference_bindings(documents, workspaces, ordered, targets, request):
-    """通過した検証対象が要求するテスト割当て（`verify` §4の4.〜5.）。全`MUST`にテスト対応があることを要求する。"""
+def reference_bindings(documents, ordered, targets):
+    """通過した検証対象が要求するテスト割当て（`verify` §4の4.〜5.）。全`MUST`にテスト対応があることを要求する。
+
+    2つ以上のワークスペースのテスト割当てを受け取ったら止める。単独の操作が複数のワークスペースのテスト割当てを実行するときの`commands[]`の並びは、
+    規範から導けない（確認事項C62）ので、この群は固定しない。
+    """
     wanted = set(targets)
     grouped = {}
     for name in ordered:
@@ -358,8 +363,10 @@ def reference_bindings(documents, workspaces, ordered, targets, request):
             slot["covers"] |= covers & wanted
     if set().union(*(slot["covers"] for slot in grouped.values())) != wanted:
         raise ValueError("対象のすべての`MUST`にテスト対応がある必要があります")
-    # 実行はワークスペースの処理順（作業ワークスペースを先頭、以降はID辞書順）、コマンド名の辞書順。
-    keys = sorted(grouped, key=lambda key: (key[0] != request, key[0], key[1]))
+    if len({workspace for workspace, _ in grouped}) > 1:
+        raise ValueError("複数のワークスペースのテスト割当ての`commands[]`の並びは規範から導けないため、この群は扱いません（確認事項C62）")
+    # 1つのワークスペースの中は、コマンド名の辞書順（`verify` §4の6.）。
+    keys = sorted(grouped, key=lambda key: (key[0], key[1]))
     return [(workspace, command, sorted(grouped[(workspace, command)]["tests"]), sorted(grouped[(workspace, command)]["covers"]))
             for workspace, command in keys]
 
@@ -390,7 +397,7 @@ def check_against_reference(identifier, repository, result):
     target = result["targetResults"]
     if len(target) != 1 or target[0]["target"] != case["target"] or target[0]["statements"] != wanted:
         raise ValueError("規範文が入力からの参照計算と異なります")
-    bindings = reference_bindings(documents, workspaces, ordered, targets, root_id)
+    bindings = reference_bindings(documents, ordered, targets)
     if [(workspace, command, tests, [shown(item) for item in covers]) for workspace, command, tests, covers in bindings] != EXPECTED_BINDINGS[identifier]:
         raise ValueError("期待するテスト割当てが入力からの参照計算と異なります")
     if target[0]["bindingRefs"] != sorted(f"{workspace}::{command}" for workspace, command, _, _ in bindings):
