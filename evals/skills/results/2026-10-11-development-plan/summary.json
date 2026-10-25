@@ -722,16 +722,16 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "current_calibration_adopted_bind_resources_and_concrete_prelaunch_then_remaining23",
+        "status": "concrete_prelaunch_verified_attempt_remaining23_maximum2",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
         "heldoutReadApprovalPending": false,
-        "heldoutExecutionContractPending": true,
+        "heldoutExecutionContractPending": false,
         "productRemediationDeferred": true,
         "contextReductionDeferred": true,
         "sameSlotRetries": 0,
-        "quotaUsedPercent": 3,
+        "quotaUsedPercent": 9,
         "automaticWakeupScheduled": false,
         "quotaHeadroomRecheckBeforeFurtherModels": false,
         "certifiesSkillGate": false,
@@ -1314,9 +1314,9 @@
       "newPaidStagesSinceFirstStop": 0
     },
     "r04HeldoutContinuation": {
-      "status": "authentication_revalidated_current_calibration_adopted_pending_concrete_prelaunch",
-      "sourceCommit": "57d57a4d5f9b74b5d1b6750f1b385d27b0887791",
-      "record": "r04-heldout-auth-calibration-refresh-20261025.json",
+      "status": "current_day_resources_and_diagnostic_entry_verified_unconsumed23_ready",
+      "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+      "record": "r04-heldout-remaining23-ready-20261025.json",
       "firstOrdinal": 2,
       "lastOrdinal": 24,
       "newSlots": 23,
@@ -1328,9 +1328,12 @@
       "fullRegressionExitCode": 0,
       "authenticationRefreshRequired": false,
       "currentDayCalibrationRenewalRequired": false,
-      "positivePrelaunchPending": true,
+      "positivePrelaunchPending": false,
       "currentDayCalibration": "2026-10-25",
-      "authenticationObservedAt": "2026-10-25T09:03:23.128259+09:00"
+      "authenticationObservedAt": "2026-10-25T09:03:23.128259+09:00",
+      "originalUnconsumedEntryRefusal": true,
+      "originalEntryRefusalCauseResolved": false,
+      "diagnosticEntrypointVerified": true
     }
   }
 }

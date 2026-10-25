@@ -1,0 +1,224 @@
+{
+  "version": "heldout-remaining23-ready-progress-1",
+  "recordedDate": "2026-10-25",
+  "status": "current_day_resources_and_diagnostic_entry_verified_unconsumed23_ready",
+  "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+  "conditionSha256": "47f1e8a293d18115c01915ba246a57eea39d56767fb58829aa30c5f9f06e15c4",
+  "newCampaignId": "heldout-matrix-survey-remaining23-20261024-01",
+  "newOrdinals": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "newPrimaryMaximum": 23,
+  "newIndependentMaximum": 23,
+  "cumulativeBudget": {
+    "primary": 24,
+    "independent": 24
+  },
+  "priorConsumed": {
+    "primary": 1,
+    "independent": 0
+  },
+  "priorStoppedSlots": 1,
+  "priorPending": 1,
+  "maximumSlotsPerBatch": 2,
+  "automaticRetries": 0,
+  "firstCompletionWitnessWaitSeconds": 60,
+  "implementationUnchangedFrom": "57d57a4d5f9b74b5d1b6750f1b385d27b0887791",
+  "sourceFiles": 60,
+  "productResources": 72,
+  "sdkFiles": 207,
+  "contextDate": "2026-10-25",
+  "authentication": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792929754,
+        "usedPercent": 9,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1793516554,
+        "usedPercent": 1,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.5074871749966405,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-25T16:27:19.642560+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792929754,
+        "usedPercent": 9,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1793516554,
+        "usedPercent": 1,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsPlannedHeldout": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "originalEntryRefusal": {
+    "recordedAt": "2026-10-25T19:59:28.097307+09:00",
+    "status": "unconsumed_entry_refused_cause_unreproduced",
+    "evidenceSource": "execution tool result plus subsequent read-only inspection",
+    "originalEntrypointSha256": "d2f63bd802bc9fca6e94fb84df629c9415123a8b88932776f9eb7e9a1c0d74ce",
+    "originalBootstrapSha256": "bff8aaa39cd5ee4b484e8ffbd6a146fcd7be8043061ac6af2bdccea6409c7f78",
+    "toolOutcome": {
+      "exitCode": 1,
+      "elapsedSeconds": 0.235188276,
+      "status": "heldout_batch_rejected",
+      "errorType": "ValueError",
+      "priorConsumptionMayExist": true
+    },
+    "subsequentReadOnlyInspection": {
+      "newCampaignExists": false,
+      "newLedgerExists": false,
+      "authenticationMetadataVerified": true,
+      "bundlePreflightVerified": true,
+      "resourceProofSha256": "4c987402dbfcc4e56315bb8a1de2df9293abca1f2620f2a38a22164de76193f2"
+    },
+    "parentReadOnlyEntryDiagnostic": {
+      "exitCode": 0,
+      "elapsedSeconds": 0.265443484,
+      "loadPassed": true,
+      "runDeliberatelyBlocked": true,
+      "errorType": "DiagnosticRunBlocked"
+    },
+    "independentDiagnostic": {
+      "resultSha256": "da427670d641338ed7e3b2778a21fa420d6d4f2bc80cde659c5637463c485f93",
+      "inventorySha256": "f01da9f3891274afea13a487d183edbbdae93586c082696d2b226ed0d3a7ba53",
+      "savedOriginalsParentCompared": 3,
+      "modelCalls": 0,
+      "reservations": 0
+    },
+    "modelCalls": 0,
+    "reservations": 0,
+    "priorStopPreserved": true,
+    "causeResolved": false,
+    "diagnosticEntrypointReviewPending": true
+  },
+  "concretePrelaunch": [
+    {
+      "allHashesAndSizesMatch": true,
+      "allMemberBytesCompared": true,
+      "archive": "evidence-r04-remaining23-concrete-prelaunch-reviewed-20261025.tar.gz",
+      "archiveSha256": "9c5085d443fd78a677491ddde29813c22521a433bc9351c1bdb0f759dcae8e86",
+      "certifiesR04Complete": false,
+      "certifiesSkillGate": false,
+      "conditionSha256": "47f1e8a293d18115c01915ba246a57eea39d56767fb58829aa30c5f9f06e15c4",
+      "fixedSourceFilesCompared": 195,
+      "gitBlobsCompared": 1061,
+      "inventorySha256": "15ec29840524ccf0576046f814cfecdabe3b475394ad3fcf475cedcae20e9a3f",
+      "members": 8,
+      "models": 0,
+      "preflightStatus": "heldout_bundle_resources_and_review_verified_not_launched",
+      "privateCaseContentsPublished": false,
+      "privateOriginalInventoryPublished": false,
+      "publicOriginalsCompared": 1112,
+      "reportSha256": "cf2e6655e42630e239b684c45c053874a3353c817f021e13a0d18d4cb0d205fa",
+      "reservations": 0,
+      "reviewSha256": "8035ff829f71a8b0645e885690c09fc236dd87ca30b501e514b4e0963c80ac31",
+      "savedOriginalsCompared": 218,
+      "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+      "status": "concrete_remaining23_prelaunch_originals_parent_rehashed"
+    },
+    {
+      "allHashesAndSizesMatch": true,
+      "allMemberBytesCompared": true,
+      "archive": "evidence-r04-remaining23-diagnostic-entry-reviewed-20261025.tar.gz",
+      "archiveSha256": "f05083d5c45302f6b57e405adf249058ae0666878f896cfc3c43fd6376b49c0e",
+      "certifiesR04Complete": false,
+      "certifiesSkillGate": false,
+      "conditionSha256": "47f1e8a293d18115c01915ba246a57eea39d56767fb58829aa30c5f9f06e15c4",
+      "fixedSourceFilesCompared": 60,
+      "inheritedParentProofSha256": "e3a29b2447257e677442993ab17f7309e7d51c26577e8c040995a6d37b934e77",
+      "inventorySha256": "fc66e8582679a41b2ed849db1ab64c990664187f4b3aac23ccf816ead43224bb",
+      "members": 7,
+      "models": 0,
+      "originalEntryRefusalCauseResolved": false,
+      "parentEntryTests": 13,
+      "parentEntryTestsExitCode": 0,
+      "preflightStatus": "heldout_bundle_resources_and_review_verified_not_launched",
+      "publicOriginalsCompared": 31,
+      "reportSha256": "ecd6a38224e18fd50e5152f98050ec5d52150d68e0033a660e8cc2ea62a709df",
+      "reservations": 0,
+      "reviewSha256": "85a9ccaff60d69b455a82f744de328b01cf5afee3b80ce232ab67844cc64b3b7",
+      "savedOriginalsCompared": 7,
+      "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+      "status": "diagnostic_entry_concrete_prelaunch_originals_parent_rehashed",
+      "unconsumedSlotsInitialEvaluationOnly": true
+    }
+  ],
+  "parentRelatedRegression": {
+    "tests": 46,
+    "exitCode": 0,
+    "cleanBeforeAndAfter": true
+  },
+  "independentRelatedRegression": {
+    "tests": 46,
+    "exitCode": 0
+  },
+  "diagnosticEntrypointTests": {
+    "independent": 13,
+    "parent": 13,
+    "exitCode": 0,
+    "modelCalls": 0,
+    "privateWrites": 0
+  },
+  "entrySha256": "b45024d84817091a83a85ec9b5b3c6126cf74224c925d09b5f01ad45e155f1a4",
+  "bootstrapSha256": "754b45ccc627d28a8605f1c66381aa7b400355a1fadd002fa6e97b77b9fba514",
+  "newModels": 0,
+  "newReservations": 0,
+  "newLedgerCreated": false,
+  "positivePrelaunchPending": false,
+  "pendingUserAction": null,
+  "paidLaunchEnabled": true,
+  "productRemediationDeferred": true,
+  "contextReductionDeferredUntilAll116": true,
+  "certifiesSkillGate": false,
+  "certifiesR04Complete": false
+}
