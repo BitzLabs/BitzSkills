@@ -6152,7 +6152,7 @@ class AuditTests(unittest.TestCase):
              lambda v: v["before"]["repository"].pop(report_write_fixtures.EXISTING_REPORT)),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(status="failed")),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(diagnostics=v["diagnostics"][1:])),
-            # 保存の失敗を末尾へ足す旧い並び（C51）は、§7の順序に反するので拒否する。
+            # 診断を逆順にした期待値は、レビュー済みの期待値との完全一致の比較で拒否される（§7の検査には届かない。下の専用の試験を参照）。
             ("SINGLE-072", "expected/check.json", lambda v: v.update(diagnostics=v["diagnostics"][::-1])),
             ("SINGLE-072", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
         ]
@@ -6168,6 +6168,44 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value))
                 self.assertTrue(validate_report_write(root, [identifier])["errors"])
+
+    def test_report_write_audit_requires_section7_order_independently_of_the_reviewed_result(self):
+        """生成器と期待値がそろって旧い並び（保存の失敗が末尾）でも、§7の検査が文言つきで拒否する（C51）。
+
+        完全一致の比較（`result != reviewed_result`）は、期待値が生成器と一致すれば通る。
+        その先の`check_report_contract`の§7の検査に届くよう、`reviewed_result`を差し替える。
+        """
+        original = report_write_fixtures.reviewed_result
+        section7_message = "診断は結果・診断・終了コード §7の順序で並べる必要があります"
+
+        def old_order(identifier):
+            result = original(identifier)
+            if identifier == "SINGLE-072":
+                result["diagnostics"] = result["diagnostics"][::-1]
+            return result
+
+        for identifier in ("SINGLE-072",):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "expected/check.json"
+                value = json.loads(path.read_text())
+                value["diagnostics"].reverse()
+                path.write_text(json.dumps(value))
+                # 陰性対照: 期待値だけが旧い並びなら、完全一致の比較が先に拒否する。
+                errors = validate_report_write(root, [identifier])["errors"]
+                self.assertEqual(len(errors), 1)
+                self.assertIn("起動条件または完全結果がレビュー済みの期待値と異なります", errors[0])
+                # 生成器も旧い並びにそろえると、完全一致は通り、§7の検査が拒否する。
+                with patch.object(report_write_fixtures, "reviewed_result", old_order):
+                    errors = validate_report_write(root, [identifier])["errors"]
+                self.assertEqual(len(errors), 1)
+                self.assertEqual(errors[0], f"{identifier}: {section7_message}")
+        # 陽性対照: 現在の期待値と生成器では、§7の検査を通る。
+        self.assertEqual(validate_report_write(audit.FIXTURES, ["SINGLE-072"])["errors"], [])
 
     def test_report_absent_and_cli_error_fixtures(self):
         absent = validate_report_absent()
