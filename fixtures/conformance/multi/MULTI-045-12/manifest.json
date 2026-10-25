@@ -1,0 +1,29 @@
+{
+  "fixtureId": "MULTI-045-12",
+  "description": "Git不在でルートの同一性を構成できないverify --all-workspacesの保存の失敗は、environmentの発生元より前に並べる",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json",
+      "--report"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

@@ -18,6 +18,10 @@
 | `MULTI-045-08` | `verify --all-workspaces --report`、`.` | `07`の`verify`。`error`／3 |
 | `MULTI-045-09` | `check --all-workspaces --base HEAD`、`.` | 対照: `01`と同じ入力で`--report`なし。結果は`01`と同じで、ファイルを作らず既存のレポートを変えない |
 | `MULTI-045-10` | `verify --all-workspaces`、`.` | 対照: `02`と同じ入力で`--report`なし |
+| `MULTI-045-11` | `check --all-workspaces --report`、`.`（Git不在） | ルートが`workspace.id`を省略し、Gitがなく（`PATH`は空）、`.spec/reports`が通常ファイル。診断は`SPEC-REPORT-WRITE-001`（`file`、`workspaceId`は`null`）、`SPEC-MULTI-GIT-001`（`environment`）の順。`error`／3、`revision`は`null` |
+| `MULTI-045-12` | `verify --all-workspaces --report`、`.`（Git不在） | `11`の`verify`。`error`／3 |
+| `MULTI-045-13` | `check --all-workspaces --report`、`.`（Git不在） | `11`と同じ入力で`.spec/reports`が通常のディレクトリ。`SPEC-MULTI-GIT-001`の1件、`blocked`／2、ルートの候補の`.spec/reports/`にレポートが1件 |
+| `MULTI-045-14` | `verify --all-workspaces --report`、`.`（Git不在） | `13`の`verify` |
 
 入力は2種類である。どちらも、ルート（`.`）、メンバー`web`（`apps/web`）と`api`（`services/api`）を宣言し、ルートのREQ-001を置く。
 
@@ -25,6 +29,10 @@
 |---|---|
 | `member-absent` | ルートは`workspace.id: platform`を明示する。`web`は設定を持つ。`api`は`.spec/bitz.yaml`を持たない（`services/api`のディレクトリは`src/session.py`で残す） |
 | `root-omitted` | `MULTI-043-01`と同じ入力。ルートの設定が`workspace`を持たない |
+
+`11`〜`14`は`root-omitted`をGitのリポジトリにしない（`setup.git: false`、`PATH`は`/dev/null`。`MULTI-036-04`と同じ）。Gitの境界を確定できないので、
+停止の原因は`SPEC-MULTI-GIT-001`（`environment`の発生元）になる。`11`・`12`は、保存の失敗（`workspaceId: null`の`file`）と`environment`の発生元の2件が並ぶ入力で、
+保存の失敗を末尾に足す実装と、結果・診断・終了コード §7の順に並べる実装を区別する。
 
 レポートのディレクトリの状態は、書き込める場合はコミット済みの既存のレポート`.spec/reports/existing.json`を持つディレクトリ、書き込めない場合は
 `.spec/reports`の位置に置いた通常ファイルである（`SINGLE-072`と同じ。ディレクトリの権限はバージョン管理できない）。
@@ -36,11 +44,16 @@
   ファイル名は`<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`。保存の失敗は`SPEC-REPORT-WRITE-001`（`error`、結果への効果`error`）で、元の結果と診断は端末に保持する。
   レポートは結果のJSONそのものである（保存しても結果は変わらない）。
 - 同 §3: 状態の最悪値の集約（`error > failed > blocked`）と終了コード。`SPEC-MULTI-MEMBER-001`・`SPEC-MULTI-CONFIG-001`は`failed`なので、保存の失敗が加わると`error`／3になる。
-- 同 §5: ルートの`workspace.id`の省略でルートの同一性を構成できない診断の`source.workspaceId`は`null`。保存の失敗の診断の`source`は、ルートワークスペースの
-  `{file, <ルートのID>, .spec/reports}`である（同一性を構成できないときは`workspaceId`が`null`）。
-- 同 §7: 診断の並びは、発生元のワークスペースID（`null`が先）、`path`、`line`、`column`、`code`、`specRefs`の辞書順。保存の失敗を末尾に足さず、この順に入れる（確認事項C51）。
-  この群の入力では、`.spec/bitz.yaml`が`.spec/reports`より辞書順で前なので、停止の診断が先になる。
-- 診断レジストリ: `MULTI-MEMBER`（`SPEC-MULTI-MEMBER-001`、`error`／`failed`）、`MULTI-CONFIG`（`SPEC-MULTI-CONFIG-001`、`error`／`failed`）、`REPORT-WRITE`（`SPEC-REPORT-WRITE-001`、`error`／`error`）。
+- 同 §5: ルートの`workspace.id`の省略でルートの同一性を構成できない診断の`source.workspaceId`は`null`。さらに、同一性を構成できずに停止した結果
+  （`workspace.id`または`multiWorkspace.id`が`null`の結果）のレポートの保存の失敗（`SPEC-REPORT-WRITE-001`）は、設定以外の`file`の発生元だが、`workspaceId`を`null`とし、
+  `path`は保存先のワークスペースの候補からの相対パス（`.spec/reports`）とする（2026-10-26の明記、コミット`a9302ff1`）。同一性が確定していれば、
+  保存の失敗の`source`はルートワークスペースの`{file, <ルートのID>, .spec/reports}`である。
+- 同 §7: 診断の並びは、発生元のワークスペースID（`null`が先）、`path`、`line`、`column`、`code`、`specRefs`の辞書順。ワークスペースIDを持たない発生元（`environment`、`invocation`）は、
+  `workspaceId: null`の発生元の後、文字列のIDの前に置く（ユーザーの決定）。保存の失敗を末尾に足さず、この順に入れる（確認事項C51）。
+  `01`〜`10`の入力では、`.spec/bitz.yaml`が`.spec/reports`より辞書順で前なので、停止の診断が先になり、末尾に足す実装と区別できない。
+  `11`・`12`は、`workspaceId: null`の`file`（保存の失敗）が`environment`（`SPEC-MULTI-GIT-001`）より前に並ぶ入力で、この二つを区別する。
+- 結果・診断・終了コード §2: Gitの境界を確定できずに停止した結果は`revision: null`、`multiWorkspace`は、ルートの`workspace.id`の省略で`{null, .}`、`workspaces`は空。
+- 診断レジストリ: `MULTI-GIT`（`SPEC-MULTI-GIT-001`、`error`／`blocked`、`environment`）、`MULTI-MEMBER`（`SPEC-MULTI-MEMBER-001`、`error`／`failed`）、`MULTI-CONFIG`（`SPEC-MULTI-CONFIG-001`、`error`／`failed`）、`REPORT-WRITE`（`SPEC-REPORT-WRITE-001`、`error`／`error`）。
   `summary`は、承認済みの文言（`Coreの出力文言のレビュー記録.md`）。
 - 複合ワークスペース仕様 §9: `--report`なしの全体操作は、状態にかかわらずファイルを作らない。全体事前検査でルートの同一性を構成できない場合だけ`multiWorkspace`を`{id: null, path: .}`とする。
 
@@ -77,6 +90,7 @@ MEMBERS = workspace_id.MEMBERS
 MEMBER_MISSING = "メンバーの.spec/bitz.yamlがありません"
 ROOT_ID_REQUIRED = workspace_id.ROOT_ID_REQUIRED
 REPORT_WRITE = "レポートの保存先へ排他的に作成できません"
+GIT_BOUNDARY = "Gitのリポジトリの境界を確定できません"
 
 # 結果・診断・終了コード §3の最悪値の集約の順（弱い方から強い方）と、状態と終了コードの対応。
 SEVERITY_ORDER = ["passed", "passed_with_warnings", "blocked", "failed", "error"]
@@ -84,7 +98,7 @@ EXIT_CODES = {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2,
 
 # id: dict(op, inputs, report, reports, status, exit, cause, description)
 # report: `--report`の有無。reports: `directory`（書き込める）または`file`（`.spec/reports`を通常ファイルにして保存を失敗させる）。
-# cause: 全体事前検査の停止の原因（`member-missing`、`root-id`）。
+# cause: 全体事前検査の停止の原因（`member-missing`、`root-id`、`git`）。git: Gitのリポジトリにするか（省略は`True`）。
 CASES = {
     "MULTI-045-01": dict(op="check", inputs="member-absent", report=True, reports="directory", status="failed", exit=1, cause="member-missing",
                          description="全体事前検査で止まったcheck --all-workspacesも、--reportをルートワークスペースへ保存する"),
@@ -106,8 +120,21 @@ CASES = {
                          description="対照: --reportなしの全体事前検査で止まったcheck --all-workspacesはファイルを作らない"),
     "MULTI-045-10": dict(op="verify", inputs="member-absent", report=False, reports="directory", status="failed", exit=1, cause="member-missing",
                          description="対照: --reportなしの全体事前検査で止まったverify --all-workspacesはファイルを作らない"),
+    "MULTI-045-11": dict(op="check", inputs="root-omitted", git=False, report=True, reports="file", status="error", exit=3, cause="git",
+                         description="Git不在でルートの同一性を構成できないcheck --all-workspacesの保存の失敗は、environmentの発生元より前に並べる"),
+    "MULTI-045-12": dict(op="verify", inputs="root-omitted", git=False, report=True, reports="file", status="error", exit=3, cause="git",
+                         description="Git不在でルートの同一性を構成できないverify --all-workspacesの保存の失敗は、environmentの発生元より前に並べる"),
+    "MULTI-045-13": dict(op="check", inputs="root-omitted", git=False, report=True, reports="directory", status="blocked", exit=2, cause="git",
+                         description="Git不在でルートの同一性を構成できないcheck --all-workspacesの停止の結果も、ルートの候補へ--reportを保存する"),
+    "MULTI-045-14": dict(op="verify", inputs="root-omitted", git=False, report=True, reports="directory", status="blocked", exit=2, cause="git",
+                         description="Git不在でルートの同一性を構成できないverify --all-workspacesの停止の結果も、ルートの候補へ--reportを保存する"),
 }
+GIT_ABSENT_ENV = {"PATH": "/dev/null"}
 RESULT_FILES = {"check": "expected/check.json", "verify": "expected/verify.json"}
+
+
+def git_enabled(identifier):
+    return CASES[identifier].get("git", True)
 
 
 def saved_count(identifier):
@@ -134,6 +161,7 @@ def reviewed_inputs(identifier):
     case = CASES[identifier]
     files = member_absent_files() if case["inputs"] == "member-absent" else dict(workspace_id.reviewed_inputs("MULTI-043-01"))
     if case["reports"] == "directory":
+        # Gitのリポジトリにする入力では、コミットされる。Git不在の入力では、作業ツリーにあるだけ。
         files[EXISTING_REPORT] = b"{}\n"
     else:
         # 通常ファイルがパスを占めるので、レポートのディレクトリは存在できない（`SINGLE-072`と同じ）。
@@ -144,16 +172,21 @@ def reviewed_inputs(identifier):
 def reviewed_manifest(identifier):
     case = CASES[identifier]
     argv = [case["op"], "--all-workspaces"]
-    if case["op"] == "check":
+    if case["op"] == "check" and git_enabled(identifier):
+        # Git不在では、明示の`--base`を解決できない（終了コード4）ので渡さない。
         argv += ["--base", "HEAD"]
     argv += ["--format", "json"]
     if case["report"]:
         argv.append("--report")
+    if git_enabled(identifier):
+        setup_plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []}
+    else:
+        setup_plan = {"git": False, "operations": []}
     return {
         "fixtureId": identifier,
         "description": case["description"],
-        "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []},
-        "invocation": {"runner": "bitz", "cwd": ".", "argv": argv, "env": {}},
+        "setup": setup_plan,
+        "invocation": {"runner": "bitz", "cwd": ".", "argv": argv, "env": {} if git_enabled(identifier) else dict(GIT_ABSENT_ENV)},
         "expect": {"status": case["status"], "exitCode": case["exit"], "stdout": "json",
                    "resultFile": RESULT_FILES[case["op"]], "reportFileCount": saved_count(identifier)},
     }
@@ -163,10 +196,14 @@ def reviewed_manifest(identifier):
 
 def root_workspace_id(identifier):
     """ルートワークスペースのID。ルートが`workspace.id`を省略するときは構成できないので`None`。"""
-    return None if CASES[identifier]["cause"] == "root-id" else "platform"
+    return None if CASES[identifier]["inputs"] == "root-omitted" else "platform"
 
 
 def stop_diagnostic(identifier):
+    if CASES[identifier]["cause"] == "git":
+        # `MULTI-036-04`と同じ。Gitのリポジトリの境界を確定できない（`environment`の発生元）。
+        return {"code": "SPEC-MULTI-GIT-001", "severity": "error", "resultStatus": "blocked", "summary": GIT_BOUNDARY,
+                "source": {"kind": "environment", "component": "git"}}
     if CASES[identifier]["cause"] == "root-id":
         return {"code": "SPEC-MULTI-CONFIG-001", "severity": "error", "resultStatus": "failed", "summary": ROOT_ID_REQUIRED,
                 "source": {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml", "key": "workspace.id"}}
@@ -183,11 +220,15 @@ def write_diagnostic(workspace):
 def section7_key(diagnostic):
     """結果・診断・終了コード §7: 発生元のワークスペースID（`null`が先）、`path`、`line`、`column`、`code`の辞書順。
 
-    この群の診断はすべて、`file`の発生元で、`specRefs`を持たない。`line`と`column`は持たない。
+    この群の診断は`specRefs`、`line`、`column`を持たない。ワークスペースIDを持たない発生元（`environment`）は、`workspaceId: null`の`file`の後、
+    文字列のIDの`file`の前に置く（§7、ユーザーの決定）。
     """
     source = diagnostic["source"]
+    if source["kind"] != "file":
+        # ワークスペースIDを持たない発生元は、`workspaceId: null`の発生元の後、文字列のIDの前（ユーザーの決定）。
+        return (1, "", "", 0, 0, diagnostic["code"])
     workspace = source["workspaceId"]
-    return (workspace is not None, workspace or "", source["path"], source.get("line", 0), source.get("column", 0), diagnostic["code"])
+    return (0 if workspace is None else 2, workspace or "", source["path"], source.get("line", 0), source.get("column", 0), diagnostic["code"])
 
 
 def worst_status(diagnostics):
@@ -207,7 +248,9 @@ def reviewed_result(identifier):
     diagnostics = reviewed_diagnostics(identifier)
     common = {"schemaVersion": "1.0", "operation": case["op"], "scope": "all-workspaces", "status": worst_status(diagnostics),
               "multiWorkspace": {"id": root_workspace_id(identifier), "path": "."}, "workspaces": []}
-    if case["op"] == "check":
+    if not git_enabled(identifier):
+        revision = None
+    elif case["op"] == "check":
         revision = {"base": COMMIT, "commit": COMMIT, "dirty": False}
     else:
         revision = {"commit": COMMIT, "dirty": False}
@@ -227,6 +270,7 @@ def reviewed_effects(identifier, state):
 def reference_decision(repository):
     """参照計算: 入力の木構造から、全体事前検査の停止の原因、ルートのID、レポートの保存先の状態を導く。
 
+    Gitのリポジトリの境界を確定できないこと（`.git`がない）は、設定の検査より先の原因である（診断レジストリの`MULTI-GIT`、`MULTI-036-04`）。
     ルートの`workspace.id`の省略は、ほかのカタログの不備より先に判定する（複合ワークスペース仕様 §2、ユーザーの決定）。
     メンバーの設定の不在は`SPEC-MULTI-MEMBER-001`の原因である（診断レジストリ）。
     """
@@ -237,7 +281,9 @@ def reference_decision(repository):
     declaration = root["multiWorkspace"]
     members = [(item["id"], item["path"]) for item in declaration.get("members", [])] if isinstance(declaration, dict) else []
     cause = None
-    if root_id is None:
+    if not (repository / ".git").exists():
+        cause = "git"
+    elif root_id is None:
         cause = "root-id"
     else:
         for _, path in members:
@@ -250,27 +296,36 @@ def reference_decision(repository):
     return {"cause": cause, "rootId": root_id, "reports": state, "members": members}
 
 
+# 停止の原因ごとの診断: (コード, 結果への効果, 発生元の種類, `path`)。
+STOP_DIAGNOSTICS = {
+    "root-id": ("SPEC-MULTI-CONFIG-001", "failed", "file", ".spec/bitz.yaml"),
+    "member-missing": ("SPEC-MULTI-MEMBER-001", "failed", "file", ".spec/bitz.yaml"),
+    "git": ("SPEC-MULTI-GIT-001", "blocked", "environment", ""),
+}
+
+
 def reference_outcome(case, decision):
     """参照計算: 起動条件と入力から、診断の並び、状態、終了コード、保存されるレポートの件数を導く。"""
     if decision["cause"] is None:
         raise ValueError("このfixtureは全体事前検査が非成功である必要があります")
     root_id = decision["rootId"]
-    if decision["cause"] == "root-id":
-        stop = ("SPEC-MULTI-CONFIG-001", "failed", None)
-    else:
-        stop = ("SPEC-MULTI-MEMBER-001", "failed", root_id)
-    pairs = [(stop[0], stop[1], stop[2], ".spec/bitz.yaml")]
+    code, effect, kind, path = STOP_DIAGNOSTICS[decision["cause"]]
+    # 発生元のワークスペースID。`environment`は持たない。ルートの同一性を構成できない診断は`null`。
+    stop_workspace = None if kind == "environment" or decision["cause"] == "root-id" else root_id
+    items = [{"code": code, "effect": effect, "kind": kind, "workspace": stop_workspace, "path": path}]
     saved = 0
     if case["report"]:
         if decision["reports"] == "directory":
             saved = 1
         else:
-            pairs.append(("SPEC-REPORT-WRITE-001", "error", root_id, REPORT_DIRECTORY))
-    # §7の並び。ワークスペースIDの`null`が先、次に`path`、`code`。
-    pairs.sort(key=lambda pair: (pair[2] is not None, pair[2] or "", pair[3], pair[0]))
-    status = max((pair[1] for pair in pairs), key=SEVERITY_ORDER.index)
-    return {"codes": [pair[0] for pair in pairs], "workspaces": [pair[2] for pair in pairs], "status": status,
-            "exit": EXIT_CODES[status], "saved": saved}
+            # 同一性を構成できない結果（`multiWorkspace.id`が`null`）の保存の失敗は`workspaceId: null`（結果・診断・終了コード §5）。
+            items.append({"code": "SPEC-REPORT-WRITE-001", "effect": "error", "kind": "file", "workspace": root_id, "path": REPORT_DIRECTORY})
+    # §7の並び。`workspaceId: null`の`file`、ワークスペースIDを持たない発生元、文字列のIDの`file`の順。次に`path`、`code`。
+    items.sort(key=lambda item: (1, "", "", item["code"]) if item["kind"] != "file"
+              else (0 if item["workspace"] is None else 2, item["workspace"] or "", item["path"], item["code"]))
+    status = max((item["effect"] for item in items), key=SEVERITY_ORDER.index)
+    return {"codes": [item["code"] for item in items], "kinds": [item["kind"] for item in items],
+            "workspaces": [item["workspace"] for item in items], "status": status, "exit": EXIT_CODES[status], "saved": saved}
 
 
 def check_against_reference(identifier, manifest, result, decision):
@@ -283,7 +338,9 @@ def check_against_reference(identifier, manifest, result, decision):
     outcome = reference_outcome(case, decision)
     if [item["code"] for item in result["diagnostics"]] != outcome["codes"]:
         raise ValueError("診断の並びが入力からの参照計算と異なります")
-    if [item["source"]["workspaceId"] for item in result["diagnostics"]] != outcome["workspaces"]:
+    if [item["source"]["kind"] for item in result["diagnostics"]] != outcome["kinds"]:
+        raise ValueError("診断の発生元の種類が入力からの参照計算と異なります")
+    if [item["source"].get("workspaceId") for item in result["diagnostics"]] != outcome["workspaces"]:
         raise ValueError("診断の発生元のワークスペースIDが入力からの参照計算と異なります")
     if result["status"] != outcome["status"] or manifest["expect"]["status"] != outcome["status"] \
             or manifest["expect"]["exitCode"] != outcome["exit"]:
@@ -293,6 +350,9 @@ def check_against_reference(identifier, manifest, result, decision):
     # 有効なルートのIDを構成できないときだけ`multiWorkspace.id`は`null`。`workspaces`は空配列（停止の結果はメンバーの処理を始めない）。
     if result["multiWorkspace"] != {"id": decision["rootId"], "path": "."} or result["workspaces"] != []:
         raise ValueError("`multiWorkspace`または`workspaces`が入力からの参照計算と異なります")
+    # Gitの境界を確定できない停止は`revision: null`（結果・診断・終了コード §2）。
+    if (result["revision"] is None) != (decision["cause"] == "git"):
+        raise ValueError("`revision`が入力からの参照計算と異なります")
     if result["diagnostics"] != sorted(result["diagnostics"], key=section7_key):
         raise ValueError("診断は結果・診断・終了コード §7の順序で並べる必要があります")
 
@@ -304,6 +364,9 @@ def check_report_contract(identifier, manifest, effects):
         raise ValueError("マニフェストの`--report`がレビュー済みのケースと異なります")
     if "--all-workspaces" not in argv or manifest["invocation"]["cwd"] != ".":
         raise ValueError("この群はルートで`--all-workspaces`を渡す必要があります")
+    if git_enabled(identifier) == (manifest["setup"]["git"] is False) \
+            or manifest["invocation"]["env"] != ({} if git_enabled(identifier) else GIT_ABSENT_ENV):
+        raise ValueError("Git不在の起動条件がレビュー済みのケースと異なります")
     if effects["before"] != effects["after"]:
         raise ValueError("実行前後で既存のパスは不変でなければなりません")
     if not saved_count(identifier):
@@ -335,9 +398,9 @@ def git_dirty(repository):
 def check_conditions(identifier, repository):
     """原因の構成を、散文ではなく準備手順の後の入力とGitの状態から確かめる。原因以外のカタログの不備を持たないことも要求する。"""
     case = CASES[identifier]
-    if not (repository / ".git").exists():
-        raise ValueError("Gitのリポジトリが必要です")
-    if git_dirty(repository):
+    if (repository / ".git").exists() != git_enabled(identifier):
+        raise ValueError("Gitのリポジトリの有無がレビュー済みのケースと異なります")
+    if git_enabled(identifier) and git_dirty(repository):
         raise ValueError("このfixtureの作業ツリーはコミット済みと同じである必要があります")
     decision = reference_decision(repository)
     root = workspace_id.load_config(repository, ".")
@@ -347,7 +410,7 @@ def check_conditions(identifier, repository):
         raise ValueError("カタログはメンバー`web`、`api`を宣言する必要があります")
     if str(root["earsAi"]) != "1.0" or str(root["schemaVersion"]) != "1.0":
         raise ValueError("ルートの版は対応するメジャーバージョンである必要があります")
-    if git(repository, "ls-files", "--", "tools").strip():
+    if (repository / "tools").exists() or (git_enabled(identifier) and git(repository, "ls-files", "--", "tools").strip()):
         raise ValueError("カタログにない設定を持ってはいけません")
     if case["inputs"] == "member-absent":
         if workspace_id.explicit_id(root) != "platform" or workspace_id.explicit_id(web) != "web":
@@ -367,7 +430,7 @@ def check_conditions(identifier, repository):
     if case["reports"] == "directory":
         if not reports.is_dir() or sorted(path.name for path in reports.iterdir()) != ["existing.json"]:
             raise ValueError("レポートのディレクトリは既存のレポート1件だけを持つ必要があります")
-        if not git(repository, "ls-files", "--", EXISTING_REPORT).strip():
+        if git_enabled(identifier) and not git(repository, "ls-files", "--", EXISTING_REPORT).strip():
             raise ValueError("既存のレポートはコミット済みである必要があります")
     elif not reports.is_file() or reports.read_bytes() != BLOCKING_FILE:
         raise ValueError("`.spec/reports`は保存を妨げる通常ファイルである必要があります")

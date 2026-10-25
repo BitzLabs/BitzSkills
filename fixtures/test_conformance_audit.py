@@ -3953,11 +3953,11 @@ class AuditTests(unittest.TestCase):
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_early_report_fixtures(self):
-        """`MULTI-045-01`〜`10`: `--all-workspaces`の早期の結果が`--report`をルートワークスペースへ保存することを固定する（確認事項C53）。"""
+        """`MULTI-045-01`〜`14`: `--all-workspaces`の早期の結果が`--report`をルートワークスペースへ保存することを固定する（確認事項C53）。"""
         module = multi_early_report_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-045-{number:02d}" for number in range(1, 11)])
+        self.assertEqual(result["prepared"], [f"MULTI-045-{number:02d}" for number in range(1, 15)])
         self.assertEqual(result["references"], 1)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -3978,6 +3978,12 @@ class AuditTests(unittest.TestCase):
         ordered = [diagnostic(None, "z"), diagnostic("platform", ".spec/bitz.yaml"), write,
                    diagnostic("platform", "apps/web/.spec/bitz.yaml"), diagnostic("web", "a")]
         self.assertEqual(sorted(reversed(ordered), key=module.section7_key), ordered)
+        # ワークスペースIDを持たない発生元（`environment`）は、`workspaceId: null`の`file`の後、文字列のIDの`file`の前に並ぶ。
+        environment = {"code": "SPEC-MULTI-GIT-001", "source": {"kind": "environment", "component": "git"}}
+        null_write = diagnostic(None, ".spec/reports", "SPEC-REPORT-WRITE-001")
+        self.assertEqual(sorted([environment, null_write], key=module.section7_key), [null_write, environment])
+        self.assertEqual(sorted([diagnostic("platform", ".spec/bitz.yaml"), environment, null_write], key=module.section7_key),
+                         [null_write, environment, diagnostic("platform", ".spec/bitz.yaml")])
         # 保存の失敗は末尾に足さず、この順に入れる: `path`が後ろの診断があれば、保存の失敗はその前に並ぶ。
         appended = [diagnostic("platform", "apps/web/.spec/bitz.yaml"), write]
         self.assertEqual(sorted(appended, key=module.section7_key), [write, appended[0]])
@@ -3996,12 +4002,18 @@ class AuditTests(unittest.TestCase):
             ("root-id", True, "directory"): (["SPEC-MULTI-CONFIG-001"], [None], "failed", 1, 1),
             ("root-id", True, "file"): (["SPEC-MULTI-CONFIG-001", "SPEC-REPORT-WRITE-001"], [None, None], "error", 3, 0),
             ("root-id", True, "absent"): (["SPEC-MULTI-CONFIG-001", "SPEC-REPORT-WRITE-001"], [None, None], "error", 3, 0),
+            # Gitの境界を確定できない停止（`environment`の発生元）。保存の失敗が先に並ぶ。保存できれば`blocked`／2。
+            ("git", True, "file"): (["SPEC-REPORT-WRITE-001", "SPEC-MULTI-GIT-001"], [None, None], "error", 3, 0),
+            ("git", True, "directory"): (["SPEC-MULTI-GIT-001"], [None], "blocked", 2, 1),
+            ("git", False, "file"): (["SPEC-MULTI-GIT-001"], [None], "blocked", 2, 0),
         }
         for (cause, report, reports), (codes, workspaces, status, exit_code, saved) in expectations.items():
             with self.subTest(cause=cause, report=report, reports=reports):
-                root_id = None if cause == "root-id" else "platform"
+                root_id = "platform" if cause == "member-missing" else None
                 outcome = module.reference_outcome({"report": report}, {"cause": cause, "rootId": root_id, "reports": reports})
-                self.assertEqual(outcome, {"codes": codes, "workspaces": workspaces, "status": status, "exit": exit_code, "saved": saved})
+                self.assertEqual({key: value for key, value in outcome.items() if key != "kinds"},
+                                 {"codes": codes, "workspaces": workspaces, "status": status, "exit": exit_code, "saved": saved})
+                self.assertEqual(outcome["kinds"], ["environment" if code == "SPEC-MULTI-GIT-001" else "file" for code in codes])
         with self.assertRaises(ValueError):
             module.reference_outcome({"report": True}, {"cause": None, "rootId": "platform", "reports": "directory"})
 
@@ -4013,7 +4025,9 @@ class AuditTests(unittest.TestCase):
                 manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
                 result = json.loads((audit.FIXTURES / "multi" / identifier / module.RESULT_FILES[case["op"]]).read_text())
                 # 修正前: 停止の診断1件だけの結果（`failed`／1）を返し、レポートは0件。
-                defective = (["SPEC-MULTI-CONFIG-001" if case["cause"] == "root-id" else "SPEC-MULTI-MEMBER-001"], "failed", 1, 0)
+                stop = {"root-id": ("SPEC-MULTI-CONFIG-001", "failed", 1), "member-missing": ("SPEC-MULTI-MEMBER-001", "failed", 1),
+                        "git": ("SPEC-MULTI-GIT-001", "blocked", 2)}[case["cause"]]
+                defective = ([stop[0]], stop[1], stop[2], 0)
                 actual = ([item["code"] for item in result["diagnostics"]], result["status"], manifest["expect"]["exitCode"],
                           manifest["expect"]["reportFileCount"])
                 if not case["report"]:
@@ -4022,12 +4036,18 @@ class AuditTests(unittest.TestCase):
                     self.assertNotEqual(actual, defective)
                     self.assertEqual(("--report" in manifest["invocation"]["argv"]), True)
         # 保存できるケースはレポートがちょうど1件、保存できないケースは0件でSPEC-REPORT-WRITE-001が末尾に入り、状態は`error`／3。
-        self.assertEqual([module.saved_count(identifier) for identifier in module.CASES], [1, 1, 0, 0, 1, 1, 0, 0, 0, 0])
+        self.assertEqual([module.saved_count(identifier) for identifier in module.CASES], [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1])
         for identifier in ("MULTI-045-03", "MULTI-045-04", "MULTI-045-07", "MULTI-045-08"):
             result = module.reviewed_result(identifier)
             self.assertEqual((result["status"], [item["code"] for item in result["diagnostics"]][-1]), ("error", "SPEC-REPORT-WRITE-001"))
+        # `11`・`12`は、保存の失敗が末尾ではなく先頭に並ぶ入力（末尾に足す実装と区別できる）。
+        for identifier in ("MULTI-045-11", "MULTI-045-12"):
+            result = module.reviewed_result(identifier)
+            self.assertEqual([item["code"] for item in result["diagnostics"]], ["SPEC-REPORT-WRITE-001", "SPEC-MULTI-GIT-001"])
+            self.assertEqual((result["status"], result["revision"]), ("error", None))
         # ルートの同一性を構成できない入力の保存の失敗は`workspaceId: null`、明示したルートでは`platform`。
         self.assertIsNone(module.reviewed_result("MULTI-045-07")["diagnostics"][-1]["source"]["workspaceId"])
+        self.assertIsNone(module.reviewed_result("MULTI-045-11")["diagnostics"][0]["source"]["workspaceId"])
         self.assertEqual(module.reviewed_result("MULTI-045-03")["diagnostics"][-1]["source"]["workspaceId"], "platform")
 
     def test_multi_early_report_audit_rejects_changed_expectations(self):
@@ -4066,6 +4086,7 @@ class AuditTests(unittest.TestCase):
             "workspace": lambda v: v.update(workspace={"id": "platform", "path": "."}),
             "revision-dirty": lambda v: v["revision"].update(dirty=True),
             "revision-null": lambda v: v.update(revision=None),
+            "revision-object": lambda v: v.update(revision={"commit": "0" * 40, "dirty": False}) if v["revision"] is None else None,
             "revision-base": lambda v: v["revision"].update(base="1" * 40) if "base" in v["revision"] else v["revision"].update(base="0" * 40),
             "duration": lambda v: v.update(durationMs=1),
         }
@@ -4163,6 +4184,12 @@ class AuditTests(unittest.TestCase):
             "MULTI-045-08": [("add", "tools/x/.spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: x\n')],
             "MULTI-045-09": [api_config],
             "MULTI-045-10": [api_config],
+            # 保存を妨げる通常ファイルが別の内容になる（Gitのメタデータは入力に置けない: harnessが拒否する）。
+            "MULTI-045-11": [(".spec/reports", "this path occupies", "this path does not occupy")],
+            "MULTI-045-12": [("add", "tools/x/.spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: x\n')],
+            # ルートが`workspace.id`を明示する（`multiWorkspace.id`が`null`という期待と合わなくなる）。
+            "MULTI-045-13": [declare_root],
+            "MULTI-045-14": [("apps/web/.spec/bitz.yaml", "id: web", "id: x")],
         }
         byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
         for identifier, changes in edits.items():
