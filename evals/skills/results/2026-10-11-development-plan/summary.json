@@ -722,10 +722,10 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "concrete_prelaunch_verified_attempt_remaining23_maximum2",
+        "status": "remaining23_evaluation_in_progress_preserving_prior_stop",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
-        "heldoutRemaining": 24,
+        "heldoutRemaining": 21,
         "heldoutReadApprovalPending": false,
         "heldoutExecutionContractPending": false,
         "productRemediationDeferred": true,
@@ -1314,16 +1314,16 @@
       "newPaidStagesSinceFirstStop": 0
     },
     "r04HeldoutContinuation": {
-      "status": "current_day_resources_and_diagnostic_entry_verified_unconsumed23_ready",
+      "status": "heldout_batch_recorded",
       "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
-      "record": "r04-heldout-remaining23-ready-20261025.json",
+      "record": "r04-heldout-remaining23-batch01-20261025.json",
       "firstOrdinal": 2,
       "lastOrdinal": 24,
       "newSlots": 23,
       "priorStoppedSlots": 1,
-      "newModels": 0,
-      "newReservations": 0,
-      "newLedgerCreated": false,
+      "newModels": null,
+      "newReservations": 4,
+      "newLedgerCreated": true,
       "fullRegressionTests": 1094,
       "fullRegressionExitCode": 0,
       "authenticationRefreshRequired": false,
@@ -1333,7 +1333,19 @@
       "authenticationObservedAt": "2026-10-25T09:03:23.128259+09:00",
       "originalUnconsumedEntryRefusal": true,
       "originalEntryRefusalCauseResolved": false,
-      "diagnosticEntrypointVerified": true
+      "diagnosticEntrypointVerified": true,
+      "actualProviderCallCount": "not_inferred_from_launch_marks",
+      "correct": 2,
+      "evaluationFailed": 0,
+      "heldoutUnattempted": 21,
+      "incorrect": 0,
+      "latestBatch": 1,
+      "newIndependentReserved": 2,
+      "newLogicalLaunchMarks": 4,
+      "newPrimaryReserved": 2,
+      "newTerminalSlots": 2,
+      "parentVerified": 2,
+      "priorPending": 1
     }
   }
 }

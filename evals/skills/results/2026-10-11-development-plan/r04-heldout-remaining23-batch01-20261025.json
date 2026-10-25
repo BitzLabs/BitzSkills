@@ -1,0 +1,72 @@
+{
+  "aggregate": {
+    "automaticRetries": 0,
+    "batchIndex": 1,
+    "certifiesFullR04": false,
+    "certifiesSkillGate": false,
+    "executionSha256": "2a4b2a1d7e230b0c3da78c6e6b71ba3411a5046aaa0b535784e8e44258a1f968",
+    "perSlotResultsPublished": false,
+    "privateBatchReportSha256": "e744d649016dfc656054c3813e04fc5aabf4116a6749b77e616db810661ef84b",
+    "privateCaseContentsPublished": false,
+    "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+    "status": "heldout_batch_recorded",
+    "summary": {
+      "accountedSlots": 3,
+      "certifiesSkillGate": false,
+      "correct": 2,
+      "evaluationFailed": 0,
+      "incorrect": 0,
+      "independentLaunchMarked": 2,
+      "independentReserved": 2,
+      "parentVerified": 2,
+      "pending": 1,
+      "primaryLaunchMarked": 3,
+      "primaryReserved": 3,
+      "priorPending": 1,
+      "priorStopPreserved": true,
+      "priorStoppedSlots": 1,
+      "segment": {
+        "certifiesSkillGate": false,
+        "correct": 2,
+        "evaluationFailed": 0,
+        "incorrect": 0,
+        "independentLaunchMarked": 2,
+        "independentReserved": 2,
+        "parentVerified": 2,
+        "pending": 0,
+        "primaryLaunchMarked": 2,
+        "primaryReserved": 2,
+        "status": "in_progress",
+        "terminalSlots": 2,
+        "unattempted": 22
+      },
+      "status": "in_progress",
+      "terminalSlots": 2,
+      "unattempted": 21
+    },
+    "version": "heldout-finite-batch-0.1.0"
+  },
+  "allCaseDisposition": {
+    "newHeldoutTerminal": 2,
+    "notAttempted": 21,
+    "planned": 116,
+    "priorStopped": 1,
+    "publicTerminal": 92
+  },
+  "automaticRetries": 0,
+  "baseline": {
+    "correct": 52,
+    "evaluationFailed": 37,
+    "incorrect": 3,
+    "publicSlots": 92
+  },
+  "certifiesR04Complete": false,
+  "certifiesSkillGate": false,
+  "conditionSha256": "47f1e8a293d18115c01915ba246a57eea39d56767fb58829aa30c5f9f06e15c4",
+  "cost": "unknown_not_zero",
+  "priorFixedOriginalsCompared": 12,
+  "privateBatchReportHashParentCompared": true,
+  "publicAggregateSha256": "a1f754f4f85f6c423f9e7f5d82b1540b8d6266d36040c990192c1e1c739b3adb",
+  "recordedAt": "2026-10-25T21:15:04.119347+09:00",
+  "version": "heldout-remaining23-batch-progress-1"
+}
