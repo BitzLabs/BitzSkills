@@ -722,7 +722,7 @@
       "globalStop": false,
       "quotaUsedPercent": 97,
       "nextPlan": {
-        "status": "authentication_refresh_current_calibration_and_concrete_prelaunch_before_remaining23",
+        "status": "current_calibration_adopted_bind_resources_and_concrete_prelaunch_then_remaining23",
         "publicRemainingOrdinals": [],
         "publicRemaining": 0,
         "heldoutRemaining": 24,
@@ -731,9 +731,9 @@
         "productRemediationDeferred": true,
         "contextReductionDeferred": true,
         "sameSlotRetries": 0,
-        "quotaUsedPercent": 18,
+        "quotaUsedPercent": 3,
         "automaticWakeupScheduled": false,
-        "quotaHeadroomRecheckBeforeFurtherModels": true,
+        "quotaHeadroomRecheckBeforeFurtherModels": false,
         "certifiesSkillGate": false,
         "quotaWait": false,
         "heldoutReadApprovalRequest": "User explicitly approved necessary reading on 2026-10-16 (許可します and structured approval reply)."
@@ -1314,9 +1314,9 @@
       "newPaidStagesSinceFirstStop": 0
     },
     "r04HeldoutContinuation": {
-      "status": "implementation_verified_pending_authentication_and_current_calibration",
+      "status": "authentication_revalidated_current_calibration_adopted_pending_concrete_prelaunch",
       "sourceCommit": "57d57a4d5f9b74b5d1b6750f1b385d27b0887791",
-      "record": "r04-heldout-remaining23-progress-20261025.json",
+      "record": "r04-heldout-auth-calibration-refresh-20261025.json",
       "firstOrdinal": 2,
       "lastOrdinal": 24,
       "newSlots": 23,
@@ -1326,9 +1326,11 @@
       "newLedgerCreated": false,
       "fullRegressionTests": 1094,
       "fullRegressionExitCode": 0,
-      "authenticationRefreshRequired": true,
-      "currentDayCalibrationRenewalRequired": true,
-      "positivePrelaunchPending": true
+      "authenticationRefreshRequired": false,
+      "currentDayCalibrationRenewalRequired": false,
+      "positivePrelaunchPending": true,
+      "currentDayCalibration": "2026-10-25",
+      "authenticationObservedAt": "2026-10-25T09:03:23.128259+09:00"
     }
   }
 }
