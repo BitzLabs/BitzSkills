@@ -57,13 +57,14 @@
 - 対照にならない組合せは、置かない。`--report`なしでレポートを作らないことは、`SINGLE-070-*`が検証対象を解決した結果で固定済みであり、
   この群の`04`・`05`が早期に返す結果でも固定する。
 
-## 規範から導けず、fixtureにしなかったもの
+## fixtureにしなかったもの
 
 - **設定がない（`.spec/bitz.yaml`がない）リポジトリの`verify --report`。** `.spec`がなければ保存先を作れず、`SPEC-REPORT-WRITE-001`が加わって
   `error`／3になる。これは`check --report`と同じ状態と終了コードである。診断の並びは、`verify`も`check`も結果・診断・終了コード §7に従い、
   `workspaceId: null`のファイルの発生元（`SPEC-REPORT-WRITE-001`）を環境の発生元（`SPEC-WORKSPACE-MISSING-001`）より先に並べる
   （`check`は以前、保存の失敗を診断の末尾に加えていた。2026-10-25の確認事項C51で§7の並びに入れ、`SINGLE-072`の期待値を訂正した）。
-  この経路の並びを固定する`verify`のfixtureは置かず、単体試験（`tests/bitz-core/test_verify_stop_revision_report.py`）で
+  並びは§7から導けるが、この群の範囲は`revision`と`--report`の独立性で、診断の並びの固定は別の関心事なので、
+  この経路の`verify`のfixtureは置かず（追加するなら別の群として、ADR-051の追加の手順による）、単体試験（`tests/bitz-core/test_verify_stop_revision_report.py`）で
   `verify`の並びが§7に従うことと、状態・終了コード・診断の集合が`check`と同じことだけを確かめる。
 - **複合ワークスペースの検証対象が0件の経路。** 規則は同じ（コミットがあれば`revision`を返し、作業ワークスペースの`.spec/reports/`へ保存する）だが、
   この群は単一ワークスペースだけを固定し、複合ワークスペースは単体試験で確かめる。
