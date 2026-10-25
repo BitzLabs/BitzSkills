@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "error",
+  "multiWorkspace": {
+    "id": null,
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": null,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-REPORT-WRITE-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "レポートの保存先へ排他的に作成できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/reports"
+      }
+    },
+    {
+      "code": "SPEC-MULTI-GIT-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "Gitのリポジトリの境界を確定できません",
+      "source": {
+        "kind": "environment",
+        "component": "git"
+      }
+    }
+  ]
+}
