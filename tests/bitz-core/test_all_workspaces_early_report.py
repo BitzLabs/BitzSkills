@@ -13,6 +13,8 @@
 2. 保存の失敗は`SPEC-REPORT-WRITE-001`を§7の順に加え、状態は`error`、終了コードは3。
 3. ルートの同一性が確定しない停止（ルートの`workspace.id`の省略）でも保存し、保存の失敗の`source.workspaceId`は`null`。
 4. 対照: `--report`がなければ何も作らない。メンバーの`.spec/reports/`には保存しない。
+6. Gitの境界を確定できない停止でも、ルートの候補へ保存する。保存の失敗は§7の順（`file`の`null`の後に`environment`）に入る
+   （末尾に足すだけでは逆の並びになる入力）。入れ子の複合ワークスペースでは、入れ子のルートへ保存する。
 5. 結果は`result.schema.json`に適合する。
 """
 
@@ -211,6 +213,67 @@ class RootIdentityUnknownReportTests(_Base):
         self.assertEqual(
             [d["source"] for d in failure], [{"kind": "file", "workspaceId": None, "path": ".spec/reports"}]
         )
+
+
+class GitBoundaryUnknownReportTests(_Base):
+    """Gitを見つけられない環境で、ルートの`workspace.id`も省略する（C42の同一性の`null`と`SPEC-MULTI-GIT-001`）。"""
+
+    root_yaml = CONFIG + MEMBERS + VERIFY
+
+    def run_op(self, module, name: str, *flags: str):
+        parsed = parse_argv([name, "--all-workspaces", *flags, "--format", "json"])
+        env = {**os.environ, "PATH": "", "GIT_CEILING_DIRECTORIES": str(self.root.parent)}
+        result, code = module.run(parsed, str(self.root), env)
+        self.results.append(result)
+        return result, code
+
+    def test_stopped_result_is_saved_to_the_root_candidate(self):
+        for module, name in ((check_mod, "check"), (verify_mod, "verify")):
+            result, code = self.run_op(module, name, "--report")
+            self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
+            self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-GIT-001"])
+            self.assertIsNone(result["revision"])
+        self.assertEqual(
+            sorted(p.name.split("-", 1)[1] for p in self.reports()), ["check.json", "verify.json"]
+        )
+        self.assertEqual(self.reports(self.root / "apps" / "web"), [])
+
+    def test_write_failure_sorts_before_the_environment_source(self):
+        _write(self.root, ".spec/reports", "block\n")
+        for module, name in ((check_mod, "check"), (verify_mod, "verify")):
+            result, code = self.run_op(module, name, "--report")
+            self.assertEqual((result["status"], code), ("error", 3), result["diagnostics"])
+            self.assertEqual(
+                [(d["code"], d["source"]["kind"], d["source"].get("workspaceId")) for d in result["diagnostics"]],
+                [("SPEC-REPORT-WRITE-001", "file", None), ("SPEC-MULTI-GIT-001", "environment", None)],
+            )
+
+
+class NestedMultiWorkspaceReportTests(unittest.TestCase):
+    """外側の除外した範囲の中の入れ子の複合ワークスペースでは、入れ子のルートへ保存する（複合ワークスペース仕様 §2.1）。"""
+
+    def test_report_is_saved_to_the_nested_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(
+                root, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: platform\n" + MEMBERS + "  exclude:\n    - vendor\n" + VERIFY
+            )
+            _write(root, "apps/web/.spec/bitz.yaml", WEB_YAML)
+            _write(root, ".spec/requirements/REQ-001.md", REQ)
+            inner = root / "vendor" / "inner"
+            _write(inner, ".spec/bitz.yaml", CONFIG + "workspace:\n  id: inner\nmultiWorkspace:\n  members:\n    - id: m\n      path: m\n")
+            _git(root, "init", "-q", "--initial-branch=main")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base")
+            parsed = parse_argv(["check", "--all-workspaces", "--report", "--format", "json"])
+            result, code = check_mod.run(parsed, str(inner), dict(os.environ))
+            self.assertEqual((result["status"], code), ("failed", 1), result["diagnostics"])
+            self.assertEqual(result["multiWorkspace"], {"id": "inner", "path": "."})
+            saved = sorted((inner / ".spec" / "reports").iterdir())
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(json.loads(saved[0].read_text(encoding="utf-8")), result)
+            self.assertFalse((root / ".spec" / "reports").exists())
+            _validate_against_schema([result])
 
 
 if __name__ == "__main__":
