@@ -1798,3 +1798,18 @@ Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051に�
 matrixの2行、生成器`report_write_fixtures.py`、監査の回帰試験を合わせた。根拠は規範文（§7）だけで、Coreの観測出力ではない。
 理由と確認は[明示したレポートのレビュー記録](single/明示したレポートのレビュー記録.md)に記録した。
 fixtureの総数（498件）、Step 5の件数（184件）、入力は変わらない。この訂正の後のGate Aの再認定は、別に記録する。
+
+## 2026-10-25: `SINGLE-072`と`SINGLE-125-06`の期待値を訂正した後のGate Aの再認定
+
+上の訂正（実装の確認事項C51）の後、独立レビューの指摘で、監査の回帰試験に、生成器の§7の順序の検査に届く試験を足した。fixtureの件数と入力は変えていない。
+
+commit `68184d289d440ee119d26fcc45c16814b546f3eb`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`a2ff5292d2bcb499e3be9ecde7c9f8822e765736826a1f376c3e56fc8850800d`（前回と同じ。件数、Stepの割当て、網羅表が固定する根拠文書のハッシュ値は変わらない） |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

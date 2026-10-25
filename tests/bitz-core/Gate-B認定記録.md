@@ -803,3 +803,22 @@ Core固有の単体試験は1007件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1026件がすべて成功した。
+
+## 2026-10-25: checkのレポートの保存の失敗の診断を§7の順に並べるようにした後のStep 1〜5の再判定
+
+`check.py`で、`--report`の保存の失敗の診断`SPEC-REPORT-WRITE-001`を、単独の`check`と`--all-workspaces`の両方で、ほかの診断と同じ結果・診断・終了コード §7の順に並べるようにした
+（実装の確認事項C51。`verify`は並べ直していた）。これに合わせて`SINGLE-072`と`SINGLE-125-06`（Step 5）の期待値を訂正した。修正前のCore（コミット`921230ea`の版）では、
+訂正した2件だけが非成功（`failed` 2件）となり、ほかの496件はすべて通過することを確かめた。修正後のCoreでは498件すべてが`passed`となる。
+
+コミット`68184d289d440ee119d26fcc45c16814b546f3eb`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 498件（訂正した`SINGLE-072`と`SINGLE-125-06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`14c5e8fac5aeb5b48af3b27db442440ff6295358e32223e3a169b7f645a84404`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1033件がすべて成功した。
