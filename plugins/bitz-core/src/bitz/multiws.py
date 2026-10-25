@@ -1146,7 +1146,7 @@ def precheck(
     assert outcome.config is not None
     # 複合ワークスペースでは、ルートワークスペースも`workspace.id`を必須とする（複合ワークスペース仕様 §2）。省略時の既定値`root`は
     # 有効なIDではないため、ルートの同一性を構成せず（結果・診断・終了コード §2）、Gitの境界を確定した後に単独で止める。
-    # `multiWorkspace`を宣言しない設定では、既定値`root`をそのまま使う（§4.1）。宣言はキーの有無で判定する（§2.1）。
+    # `multiWorkspace`を宣言しない設定では、既定値`root`をそのまま使う（ワークスペース・設定仕様 §1）。宣言はキーの有無で判定する（§2.1）。
     root_id_explicit = "multiWorkspace" not in outcome.config or _has_explicit_workspace_id(outcome.config)
     root_id = outcome.workspace_id if root_id_explicit else None
 
