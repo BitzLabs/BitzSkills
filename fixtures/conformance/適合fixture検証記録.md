@@ -1788,3 +1788,13 @@ commit `38a6cb0caa9b15578d85237bf0b6b1be86577e68`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-25: `check`のレポートの保存の失敗の診断の並びの訂正
+
+`check --report`の保存の失敗の診断`SPEC-REPORT-WRITE-001`を、Coreが並べ終えた診断の末尾に足していた欠陥を直した（実装の確認事項C51。`verify`は並べ直していた）。
+結果・診断・終了コード §7の診断の順序（発生元のワークスペースID、`path`、`line`、`column`、`code`、`specRefs`の辞書順）に従い、
+2026-10-20にユーザーが`check`も§7の並びに入れると決定した。これに合わせ、ADR-051の期待値の訂正として`SINGLE-072`と`SINGLE-125-06`の
+`expected/check.json`の`diagnostics`の順を入れ替えた（`.spec/reports`が`.spec/technical/TECH-001.md`より前）。内容、状態、終了コード、入力は変えていない。
+matrixの2行、生成器`report_write_fixtures.py`、監査の回帰試験を合わせた。根拠は規範文（§7）だけで、Coreの観測出力ではない。
+理由と確認は[明示したレポートのレビュー記録](single/明示したレポートのレビュー記録.md)に記録した。
+fixtureの総数（498件）、Step 5の件数（184件）、入力は変わらない。この訂正の後のGate Aの再認定は、別に記録する。
