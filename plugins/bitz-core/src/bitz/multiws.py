@@ -98,10 +98,14 @@ class PrecheckResult:
 
 
 def _has_explicit_workspace_id(config: dict) -> bool:
-    """設定が`workspace.id`を明示しているか。型と字句は設定の読み込み（:func:`config.read_config`）で検査済みの前提。"""
+    """設定が有効な`workspace.id`を明示しているか。
+
+    版の非対応で止まった設定は`workspace`の型と字句をまだ検査していないため、ここで字句も確かめる。
+    """
 
     workspace_block = config.get("workspace")
-    return isinstance(workspace_block, dict) and isinstance(workspace_block.get("id"), str)
+    wid = workspace_block.get("id") if isinstance(workspace_block, dict) else None
+    return isinstance(wid, str) and lex.WORKSPACE_ID_RE.match(wid) is not None
 
 
 def _diag(code: str, status: str, summary: str, source: dict, evidence: object = None) -> Diagnostic:
@@ -1113,9 +1117,22 @@ def precheck(
                 "SPEC-MULTI-GIT-001", "blocked", messages.MULTI_GIT_BOUNDARY_UNKNOWN,
                 {"kind": "environment", "component": "git"},
             )]
+        stop_root_id = outcome.workspace_id
+        if (
+            outcome.stop_stage in ("schema-major", "ears-major")
+            and outcome.parsed is not None
+            and "multiWorkspace" in outcome.parsed
+            and not _has_explicit_workspace_id(outcome.parsed)
+        ):
+            # 版の非対応で止まっても、ルートが有効な`workspace.id`を明示しなければルートの同一性を構成しない
+            # （結果・診断・終了コード §2・§5）。設定の読み込みが補った既定値`root`を発生元からも外す。
+            stop_root_id = None
+            for d in diags:
+                if d.source.get("kind") == "file":
+                    d.source["workspaceId"] = None
         return PrecheckResult(
             ok=False,
-            root_id=outcome.workspace_id,
+            root_id=stop_root_id,
             diagnostics=diags,
             git_status="passed" if git_confirmed else "blocked",
             # ルートの設定のスキーマまたはEARS-AIのメジャーバージョンが非互換なら、メンバーの非互換（`SPEC-MULTI-VERSION-001`）と
@@ -1129,8 +1146,8 @@ def precheck(
     assert outcome.config is not None
     # 複合ワークスペースでは、ルートワークスペースも`workspace.id`を必須とする（複合ワークスペース仕様 §2）。省略時の既定値`root`は
     # 有効なIDではないため、ルートの同一性を構成せず（結果・診断・終了コード §2）、Gitの境界を確定した後に単独で止める。
-    # `multiWorkspace`を宣言しない設定では、既定値`root`をそのまま使う（§4.1）。
-    root_id_explicit = outcome.config.get("multiWorkspace") is None or _has_explicit_workspace_id(outcome.config)
+    # `multiWorkspace`を宣言しない設定では、既定値`root`をそのまま使う（§4.1）。宣言はキーの有無で判定する（§2.1）。
+    root_id_explicit = "multiWorkspace" not in outcome.config or _has_explicit_workspace_id(outcome.config)
     root_id = outcome.workspace_id if root_id_explicit else None
 
     if not git_confirmed:
