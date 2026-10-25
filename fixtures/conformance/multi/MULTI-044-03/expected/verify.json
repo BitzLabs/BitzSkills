@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:5f3e05db982dfd5a68470e99f1c2b0e83ccbdbfb0d133ffa3d20ffcd1110e51b",
+      "statements": [
+        "api::TECH-010:C-01",
+        "platform::REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "api::backend"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "api::backend",
+      "workspaceId": "api",
+      "name": "backend",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_tech_010.py"
+      ],
+      "tests": [
+        "tests/test_tech_010.py"
+      ],
+      "covers": [
+        "api::TECH-010:C-01",
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

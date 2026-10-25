@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cfdf7c318124633ef46550cc47b9018dca0a56cb6706e16f394725e871165e9a"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f48d47ab5e30728669a11303eef07440fdf9b2f9158a3d9fb073915eeb985b50"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff4269b4ad6ecf586c4d69f9c737b2233c061ac1e0b54656d5fb49eccd37bb59"
+      },
+      "services/api/.spec/technical": {
+        "kind": "directory"
+      },
+      "services/api/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "23d5106db301eb9b7b376cfeb14b43e50a02985a392fb1a953e98e9e89961b41"
+      },
+      "services/api/tests": {
+        "kind": "directory"
+      },
+      "services/api/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 c3ba653c8d864b0c39b40e8f48faa509a4ba0c32 0\t.spec/bitz.yaml\n100644 1a1f889c3db0447fed8d9272f770f149dab22b2e 0\t.spec/requirements/REQ-001.md\n100644 aaa6fde1e7d9db687f11c4fade42da21dc134c22 0\tservices/api/.spec/bitz.yaml\n100644 0c75925778e78ba207e9b4b46c5d28530975f930 0\tservices/api/.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_010.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cfdf7c318124633ef46550cc47b9018dca0a56cb6706e16f394725e871165e9a"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f48d47ab5e30728669a11303eef07440fdf9b2f9158a3d9fb073915eeb985b50"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff4269b4ad6ecf586c4d69f9c737b2233c061ac1e0b54656d5fb49eccd37bb59"
+      },
+      "services/api/.spec/technical": {
+        "kind": "directory"
+      },
+      "services/api/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "23d5106db301eb9b7b376cfeb14b43e50a02985a392fb1a953e98e9e89961b41"
+      },
+      "services/api/tests": {
+        "kind": "directory"
+      },
+      "services/api/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 c3ba653c8d864b0c39b40e8f48faa509a4ba0c32 0\t.spec/bitz.yaml\n100644 1a1f889c3db0447fed8d9272f770f149dab22b2e 0\t.spec/requirements/REQ-001.md\n100644 aaa6fde1e7d9db687f11c4fade42da21dc134c22 0\tservices/api/.spec/bitz.yaml\n100644 0c75925778e78ba207e9b4b46c5d28530975f930 0\tservices/api/.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_010.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-044-05",
+  "description": "contextのハッシュ値の材料は、規範文を番号の順に書かない文書でも、規範文をidの辞書順に置く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "interpret",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

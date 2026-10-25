@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-044-01",
+  "description": "verifyの規範文は、1つの文書で番号の順に書かない規範文を出力するIDの辞書順に並べる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

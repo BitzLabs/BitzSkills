@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TECH-005",
+      "status": "passed",
+      "contextDigest": "sha256:0f640f702be166dd63e581d00eccba49204ae1c5c96fa919a2e40996a4ca7fdc",
+      "statements": [
+        "TECH-003:C-01",
+        "TECH-005:C-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_tech_003.py",
+        "tests/test_tech_005.py"
+      ],
+      "tests": [
+        "tests/test_tech_003.py",
+        "tests/test_tech_005.py"
+      ],
+      "covers": [
+        "TECH-003:C-01",
+        "TECH-005:C-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

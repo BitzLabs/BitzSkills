@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:627be71d7c093432724613ae93c2b2e433192d0489dd1c5f86e06625d2eddd72",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 1,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
