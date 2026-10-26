@@ -13,7 +13,8 @@
 この試験の対象:
 1. 自ワークスペースの修飾の`covers`を、`check`の全体操作・単独操作・明示した対象のすべてで通す。修飾の有無で`check`の出力は同じ。
 2. `refines`と`covers`の書き方の組合せのすべてで、同じ対象を通す。
-3. 対照: 存在しない規範文、`refines`していない規範文、他のワークスペースの不在の規範文は、修飾の有無によらず拒否し、`evidence`は宣言どおり。
+3. 対照: 存在しない規範文、`refines`していない規範文、他のワークスペースの不在の規範文と、実在するが`refines`していない他のワークスペースの規範文は、
+   修飾の有無によらず拒否し、`evidence`は宣言どおり。
 4. 結果は`result.schema.json`に適合する。
 """
 
@@ -216,7 +217,10 @@ class InvalidCoversControlTests(_Base):
         )
         _write(
             self.root, "apps/web/.spec/technical/TECH-010.md",
-            _tech("TECH-010", None, ["TECH-010:C-01", "web::REQ-002:AC-01", "api::REQ-001:AC-07", "web::REQ-099"]),
+            _tech(
+                "TECH-010", None,
+                ["TECH-010:C-01", "web::REQ-002:AC-01", "api::REQ-001:AC-07", "api::REQ-001:AC-01", "web::REQ-099"],
+            ),
         )
         self.commit()
         result, code = self.check(self.root, "--all-workspaces")
@@ -226,6 +230,7 @@ class InvalidCoversControlTests(_Base):
             [
                 (".spec/requirements/REQ-001.md", "REQ-001:AC-98"),
                 (".spec/requirements/REQ-001.md", "web::REQ-001:AC-99"),
+                (".spec/technical/TECH-010.md", "api::REQ-001:AC-01"),
                 (".spec/technical/TECH-010.md", "api::REQ-001:AC-07"),
                 (".spec/technical/TECH-010.md", "web::REQ-002:AC-01"),
                 (".spec/technical/TECH-010.md", "web::REQ-099"),
