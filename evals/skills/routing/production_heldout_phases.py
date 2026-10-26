@@ -69,10 +69,52 @@ def _originals():
     return production_heldout_originals
 
 
-def _read(root, name, *, maximum=MAX_METADATA_BYTES):
-    raw = _originals().read_original(root, name, additional_artifacts=frozenset({name}))
-    require(0 < len(raw) <= maximum, 'heldout phase finite metadata')
-    return raw
+def _fingerprint(value):
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_uid, value.st_nlink,
+        value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+def _directory_identity(directory, root):
+    current = _originals()._open_root(root)
+    try:
+        a, b = os.fstat(directory), os.fstat(current)
+        require((a.st_dev, a.st_ino) == (b.st_dev, b.st_ino),
+            'heldout phase journal directory identity drift')
+    finally:
+        os.close(current)
+
+
+def _read(root, name, *, maximum=MAX_METADATA_BYTES, directory=None, observed=None):
+    """固定fd配下から読み、開いたinode・現在名・scan全体のfingerprintを照合する。"""
+    _originals().additional_names(frozenset({name}))
+    own_directory = directory is None
+    if own_directory:
+        directory = _originals()._open_root(root)
+    file = None
+    try:
+        _directory_identity(directory, root)
+        file = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        before = os.fstat(file)
+        require(stat.S_ISREG(before.st_mode) and before.st_uid == os.getuid()
+            and stat.S_IMODE(before.st_mode) == 0o600 and before.st_nlink == 1
+            and 0 < before.st_size <= maximum, 'heldout phase metadata file')
+        with os.fdopen(file, 'rb', closefd=False) as stream:
+            raw = stream.read(maximum+1)
+        after = os.fstat(file)
+        named = os.stat(name, dir_fd=directory, follow_symlinks=False)
+        require(_fingerprint(before) == _fingerprint(after) == _fingerprint(named)
+            and len(raw) == before.st_size, 'heldout phase metadata read drift')
+        if observed is not None:
+            observation = (_fingerprint(before), io.sha(raw), maximum)
+            require(observed.setdefault(name, observation) == observation,
+                'heldout phase metadata scan drift')
+        _directory_identity(directory, root)
+        return raw
+    finally:
+        if file is not None:
+            os.close(file)
+        if own_directory:
+            os.close(directory)
 
 
 def base_contract(raw):
@@ -132,13 +174,17 @@ def scan_journal(directory, root, contract_raw, first_ordinal, *, seal_sha256=No
     require(type(first_ordinal) is int and 2 <= first_ordinal <= 24,
         'heldout phase first ordinal')
     base = base_contract(contract_raw)
-    require(_read(root, 'contract.json', maximum=65536) == contract_raw,
+    directory_before = _fingerprint(os.fstat(directory))
+    observed = {}
+    read = lambda name, maximum=MAX_METADATA_BYTES: _read(root, name, maximum=maximum,
+        directory=directory, observed=observed)
+    require(read('contract.json', maximum=65536) == contract_raw,
         'heldout phase original contract drift')
     names = set(os.listdir(directory))
     expected_fixed = {'lock', 'contract.json'}
     if seal_sha256 is not None:
         io.pin(seal_sha256)
-        require(io.sha(_read(root, SEAL_NAME)) == seal_sha256, 'heldout phase seal drift')
+        require(io.sha(read(SEAL_NAME)) == seal_sha256, 'heldout phase seal drift')
         expected_fixed.add(SEAL_NAME)
     events = names-expected_fixed
     require(all(re.fullmatch(r'event-[0-9]{4}\.json', name) is not None for name in events)
@@ -149,7 +195,7 @@ def scan_journal(directory, root, contract_raw, first_ordinal, *, seal_sha256=No
     validator = legacy.HeldoutLedger(root, io.encoded(base))
     rows, previous = [], io.sha(contract_raw)
     for index in range(1, len(events)+1):
-        raw = _read(root, f'event-{index:04d}.json', maximum=65536)
+        raw = read(f'event-{index:04d}.json', maximum=65536)
         value = inputs.parse(raw)
         require(isinstance(value, dict) and set(value) == EVENT_KEYS
             and value['version'] == legacy.VERSION and value['contractSha256'] == io.sha(contract_raw)
@@ -167,14 +213,15 @@ def scan_journal(directory, root, contract_raw, first_ordinal, *, seal_sha256=No
             validator._transition(rows, value)
         rows.append(MappingProxyType(value))
         previous = io.sha(raw)
-    # lockで固定したdirectoryと現パスの同一性、既存名集合の不変性を再確認する。
-    current = _originals()._open_root(root)
-    try:
-        a, b = os.fstat(directory), os.fstat(current)
-        require((a.st_dev, a.st_ino) == (b.st_dev, b.st_ino) and set(os.listdir(directory)) == names,
-            'heldout phase journal directory drift')
-    finally:
-        os.close(current)
+    # 最後のeventを読んだ後も、先に読んだ契約/全event/sealの差替えを拒否する。
+    for name, (_, _, maximum) in tuple(observed.items()):
+        read(name, maximum)
+    for name, (fingerprint, _, _) in observed.items():
+        require(_fingerprint(os.stat(name, dir_fd=directory, follow_symlinks=False)) == fingerprint,
+            'heldout phase final original identity drift')
+    _directory_identity(directory, root)
+    require(_fingerprint(os.fstat(directory)) == directory_before and set(os.listdir(directory)) == names,
+        'heldout phase journal directory drift')
     return JournalSnapshot(contract_raw, first_ordinal, tuple(rows), previous, seal_sha256)
 
 

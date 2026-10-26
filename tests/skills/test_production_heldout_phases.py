@@ -185,6 +185,64 @@ class PhasePrimitiveTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.snapshot()
 
+    def test_last_event_changed_after_read_cannot_return_a_stale_snapshot(self):
+        original, fired = p._read, []
+
+        def change(root, name, **kwargs):
+            raw = original(root, name, **kwargs)
+            if name == 'event-0014.json' and not fired:
+                row = p.inputs.parse(raw)
+                (root/name).write_bytes(p.io.encoded(dict(row, measuredCorrect=False)))
+                fired.append(True)
+            return raw
+
+        with patch.object(p, '_read', side_effect=change), self.assertRaises(ValueError):
+            self.snapshot()
+        self.assertEqual(self.snapshot().counts()['correct'], 1)
+
+    def test_contract_changed_during_last_event_read_is_rejected(self):
+        original, fired = p._read, []
+
+        def change(root, name, **kwargs):
+            raw = original(root, name, **kwargs)
+            if name == 'event-0014.json' and not fired:
+                (root/'contract.json').write_bytes(p.io.encoded(
+                    dict(p.inputs.parse(self.raw), sourceCommit='f'*40)))
+                fired.append(True)
+            return raw
+
+        with patch.object(p, '_read', side_effect=change), self.assertRaises(ValueError):
+            self.snapshot()
+
+    def test_directory_exchange_cannot_supply_rows_from_an_unlocked_directory(self):
+        alternate = self.f.root.parent/'alternate'
+        alternate.mkdir(mode=0o700)
+        for path in self.f.root.iterdir():
+            raw = path.read_bytes()
+            if path.name == 'event-0014.json':
+                raw = p.io.encoded(dict(p.inputs.parse(raw), measuredCorrect=False))
+            fd = os.open(alternate/path.name, os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)
+            with os.fdopen(fd, 'wb') as stream:
+                stream.write(raw)
+        original, fired = p._read, []
+        backup = self.f.root.parent/'temporarily-moved'
+
+        def swap(root, name, **kwargs):
+            if name == 'event-0014.json' and not fired:
+                root.rename(backup)
+                alternate.rename(root)
+                fired.append(True)
+                try:
+                    return original(root, name, **kwargs)
+                finally:
+                    root.rename(alternate)
+                    backup.rename(root)
+            return original(root, name, **kwargs)
+
+        with patch.object(p, '_read', side_effect=swap), self.assertRaises(ValueError):
+            self.snapshot()
+        self.assertEqual(self.snapshot().counts()['correct'], 2)
+
 
 if __name__ == '__main__':
     unittest.main()
