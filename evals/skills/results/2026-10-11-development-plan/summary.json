@@ -1317,9 +1317,9 @@
       "newPaidStagesSinceFirstStop": 0
     },
     "r04HeldoutContinuation": {
-      "status": "phase_protocol_designed_implementation_pending",
+      "status": "readonly_primitives_verified_phase_admission_and_activation_pending",
       "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
-      "record": "r04-heldout-day26-rollover-plan-20261026.json",
+      "record": "r04-heldout-phase-primitives-progress-20261026.json",
       "firstOrdinal": 2,
       "lastOrdinal": 24,
       "newSlots": 23,
@@ -1351,7 +1351,10 @@
       "priorPending": 1,
       "conditionPhaseImplementationPending": true,
       "conditionRegistryCreated": false,
-      "oldLedgerSealed": false
+      "oldLedgerSealed": false,
+      "primitivesSourceCommit": "f9ce35e3c99443fcc90a1e1b1060f3152aa2f706",
+      "readonlyPrimitivesVerified": true,
+      "componentBlockingFindings": 0
     }
   }
 }
