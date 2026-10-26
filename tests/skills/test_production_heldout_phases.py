@@ -243,6 +243,47 @@ class PhasePrimitiveTests(unittest.TestCase):
             self.snapshot()
         self.assertEqual(self.snapshot().counts()['correct'], 2)
 
+    def test_lock_replaced_immediately_after_flock_is_rejected(self):
+        original, fired = p.fcntl.flock, []
+
+        def replace(fd, operation):
+            result = original(fd, operation)
+            if operation == p.fcntl.LOCK_SH and not fired:
+                (self.f.root/'lock').rename(self.f.root.parent/'old-lock')
+                new = os.open(self.f.root/'lock', os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)
+                os.close(new)
+                fired.append(True)
+            return result
+
+        with patch.object(p.fcntl, 'flock', side_effect=replace), self.assertRaises(ValueError):
+            self.snapshot()
+
+    def test_lock_mode_changed_immediately_after_flock_is_rejected(self):
+        original, fired = p.fcntl.flock, []
+
+        def change(fd, operation):
+            result = original(fd, operation)
+            if operation == p.fcntl.LOCK_SH and not fired:
+                (self.f.root/'lock').chmod(0o644)
+                fired.append(True)
+            return result
+
+        with patch.object(p.fcntl, 'flock', side_effect=change), self.assertRaises(ValueError):
+            self.snapshot()
+
+    def test_lock_hardlinked_outside_directory_during_scan_is_rejected(self):
+        original, fired = p._read, []
+
+        def change(root, name, **kwargs):
+            raw = original(root, name, **kwargs)
+            if name == 'event-0014.json' and not fired:
+                os.link(root/'lock', root.parent/'outside-lock-link')
+                fired.append(True)
+            return raw
+
+        with patch.object(p, '_read', side_effect=change), self.assertRaises(ValueError):
+            self.snapshot()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -157,16 +157,27 @@ def journal_read_lock(root):
     lock = None
     try:
         lock = os.open('lock', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
-        value = os.fstat(lock)
-        require(stat.S_ISREG(value.st_mode) and value.st_uid == os.getuid()
-            and stat.S_IMODE(value.st_mode) == 0o600 and value.st_nlink == 1 and value.st_size == 0,
-            'heldout phase readonly lock metadata')
+        fingerprint = _fingerprint(os.fstat(lock))
+        check_read_lock(directory, lock, fingerprint)
         fcntl.flock(lock, fcntl.LOCK_SH)
+        check_read_lock(directory, lock, fingerprint)
+        _directory_identity(directory, root)
         yield directory
+        check_read_lock(directory, lock, fingerprint)
+        _directory_identity(directory, root)
     finally:
         if lock is not None:
             os.close(lock)
         os.close(directory)
+
+
+def check_read_lock(directory, lock, fingerprint):
+    held = os.fstat(lock)
+    named = os.stat('lock', dir_fd=directory, follow_symlinks=False)
+    require(stat.S_ISREG(held.st_mode) and held.st_uid == os.getuid()
+        and stat.S_IMODE(held.st_mode) == 0o600 and held.st_nlink == 1 and held.st_size == 0
+        and _fingerprint(held) == _fingerprint(named) == fingerprint,
+        'heldout phase readonly lock identity or metadata drift')
 
 
 def scan_journal(directory, root, contract_raw, first_ordinal, *, seal_sha256=None):
