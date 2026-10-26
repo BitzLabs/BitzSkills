@@ -25,6 +25,10 @@ execution phaseheader（前activationのみ）→proposal（前head/再計算car
 
 BoundExecution.ledger_contractのphase分岐だけはreview/report/isolationも要求し、factoryへmetadata admission envelopeを渡す。全caller(run/operator/score)で同じ検分原を供給する。準備用proposal関数はreadonlyであり単独で起動を許さない。旧分岐のAPIとraw bytesは維持。
 
+実接続用headerは`heldout-condition-phase-header-0.2.0`とし、`priorLaunch`に最後の完了起動のphase番号・ordinal・role・旧execution SHA・旧source・receipt SHA・pacing SHA・wall時刻を固定する。空phaseを飛ばした実原から派生し、proposalより前に確定するためhash循環を作らない。workerでもこのmetadataとphase先頭pacingを厳密照合する。未接続のv0.1 prototypeの通過を新形式の起動許可へ読み替えない。
+
+`production_heldout_phase_registry.py`のproposal/admission builderは公開metadataと検査済みsnapshotを引数に取り、自己申告carryを採用せず全条件を再構成する。review/report/isolationは空白・改行を含む原bytesを保持する。registry readerと管理seal/activation、全caller接続が完成するまで、新execution v0.2の`ledger_contract`は明示拒否する。
+
 ## 時計・日付
 
 - 歴史receipt/control/pacingは各旧executionで検証。当日要求は新launch資源へ適用し、歴史へ遡及しない。

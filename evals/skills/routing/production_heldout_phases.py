@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
 import fcntl
+import math
 import os
 from pathlib import Path
 import re
@@ -14,7 +15,7 @@ legacy, inputs, io, require = (continuation.legacy, continuation.inputs,
     continuation.io, continuation.require)
 ANCHOR_PATH = 'evals/skills/routing/production-heldout-condition-genesis-v0.1.json'
 ANCHOR_SHA256 = 'd5efb3e140185bba4cae2695a166fce5f8397f94269707288be81508fa85ef81'
-HEADER_VERSION = 'heldout-condition-phase-header-0.1.0'
+HEADER_VERSION = 'heldout-condition-phase-header-0.2.0'
 REGISTRY_NAME = 'measurement-ledgers/r04-heldout-condition-phases-01'
 SEAL_NAME = 'condition-seal.json'
 MAX_PHASES = 64
@@ -41,7 +42,7 @@ def anchor():
 
 def phase_header(value):
     require(isinstance(value, dict) and set(value) == {'version', 'purposeAnchorSha256',
-        'index', 'previousActivationSha256', 'previousJournalHeadSha256', 'firstOrdinal'},
+        'index', 'previousActivationSha256', 'previousJournalHeadSha256', 'firstOrdinal', 'priorLaunch'},
         'heldout phase header inventory')
     require(value['version'] == HEADER_VERSION and value['purposeAnchorSha256'] == ANCHOR_SHA256
         and type(value['index']) is int and 1 <= value['index'] <= MAX_PHASES
@@ -51,6 +52,17 @@ def phase_header(value):
         io.pin(value[name])
     require(value['index'] != 1 or value['previousActivationSha256'] == ANCHOR_SHA256,
         'heldout first phase predecessor')
+    prior = value['priorLaunch']
+    require(isinstance(prior, dict) and set(prior) == {'phaseIndex', 'ordinal', 'role',
+        'executionSha256', 'sourceCommit', 'receiptSha256', 'pacingSha256', 'wallSeconds'}
+        and type(prior['phaseIndex']) is int and 0 <= prior['phaseIndex'] < value['index']
+        and type(prior['ordinal']) is int and 2 <= prior['ordinal'] < value['firstOrdinal']
+        and type(prior['role']) is str and prior['role'] in {'primary', 'independent'}
+        and type(prior['sourceCommit']) is str and re.fullmatch(r'[0-9a-f]{40}', prior['sourceCommit']) is not None
+        and type(prior['wallSeconds']) in {int, float} and math.isfinite(prior['wallSeconds'])
+        and prior['wallSeconds'] >= 0, 'heldout phase prior completed launch witness')
+    for name in ['executionSha256', 'receiptSha256', 'pacingSha256']:
+        io.pin(prior[name])
     return value
 
 

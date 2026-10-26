@@ -32,7 +32,9 @@ class PhasePrimitiveTests(unittest.TestCase):
     def header(self):
         return dict(version=p.HEADER_VERSION, purposeAnchorSha256=p.ANCHOR_SHA256,
             index=1, previousActivationSha256=p.ANCHOR_SHA256,
-            previousJournalHeadSha256=self.snapshot().head, firstOrdinal=4)
+            previousJournalHeadSha256=self.snapshot().head, firstOrdinal=4,
+            priorLaunch=dict(phaseIndex=0, ordinal=3, role='independent', sourceCommit='a'*40,
+                executionSha256='b'*64, receiptSha256='c'*64, pacingSha256='d'*64, wallSeconds=500))
 
     def phase_fixture(self, first, slots=(), *, pending=(), stopped=False):
         root = self.f.root.parent/('phase-'+str(len(list(self.f.root.parent.iterdir()))))
@@ -86,6 +88,16 @@ class PhasePrimitiveTests(unittest.TestCase):
                 ('claimedCarry', 0)]:
             with self.subTest(name=name, replacement=replacement), self.assertRaises(ValueError):
                 p.phase_header(dict(value, **{name:replacement}))
+
+    def test_prior_launch_witness_rejects_forged_shape_and_nonfinite_clocks(self):
+        value = self.header()
+        for name, replacement in [('phaseIndex', True), ('phaseIndex', 1), ('ordinal', True),
+                ('ordinal', 4), ('role', 'other'), ('executionSha256', 'wrong'),
+                ('receiptSha256', 'wrong'), ('pacingSha256', 'wrong'), ('sourceCommit', 'wrong'),
+                ('wallSeconds', True), ('wallSeconds', -1), ('wallSeconds', float('inf')),
+                ('wallSeconds', float('nan')), ('claimedComplete', True)]:
+            with self.subTest(name=name, replacement=replacement), self.assertRaises(ValueError):
+                p.phase_header(dict(value, priorLaunch=dict(value['priorLaunch'], **{name:replacement})))
 
     def test_roots_have_no_caller_selected_directory(self):
         self.assertEqual(p.phase_root(0), p.inputs.PRIVATE_CASES.parent/p.continuation.ROOT_NAME)

@@ -9,6 +9,7 @@ import production_matrix_preflight as public
 
 io, require, trace = inputs.io, inputs.require, inputs.trace
 VERSION = 'heldout-production-matrix-execution-0.1.0'
+PHASE_VERSION = 'heldout-production-matrix-execution-0.2.0'
 DEPLOYMENT_VERSION = 'heldout-matrix-deployment-resources-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'sdk', 'cli',
     'contextProfile', 'decisionSchema'}
@@ -18,10 +19,13 @@ DEPLOYMENT_KEYS = public.DEPLOYMENT_KEYS - {'executionSha256'}
 def execution_contract(raw):
     require(isinstance(raw, bytes), 'heldout execution bytes')
     c = inputs.parse(raw)
-    require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
+    require(isinstance(c, dict), 'heldout execution object')
+    phased = c.get('version') == PHASE_VERSION
+    require(set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
         'inputContractSha256', 'deploymentSha256', 'outputRelativeRoot', 'pins', 'budget',
-        'timeoutSeconds', 'cliVersion', 'certifiesSkillGate'}, 'heldout execution inventory')
-    require(c['version'] == VERSION and isinstance(c['campaignId'], str)
+        'timeoutSeconds', 'cliVersion', 'certifiesSkillGate'} | ({'conditionPhase'} if phased else set()),
+        'heldout execution inventory')
+    require((c['version'] == VERSION or c['version'] == PHASE_VERSION) and isinstance(c['campaignId'], str)
         and re.fullmatch(r'heldout-matrix-[a-z0-9]+(?:-[a-z0-9]+)*', c['campaignId']) is not None
         and isinstance(c['sourceCommit'], str) and re.fullmatch(r'[0-9a-f]{40}', c['sourceCommit']) is not None
         and c['model'] == 'gpt-6.1-sol' and c['cliVersion'] == '0.160.1'
@@ -35,6 +39,10 @@ def execution_contract(raw):
     require(isinstance(c['pins'], dict) and set(c['pins']) == PINS, 'heldout execution pin inventory')
     for value in [c['inputContractSha256'], c['deploymentSha256'], *c['pins'].values()]:
         io.pin(value)
+    if phased:
+        from production_heldout_phases import phase_header, continuation
+        require(c['campaignId'] == continuation.CAMPAIGN, 'heldout phase fixed campaign')
+        phase_header(c['conditionPhase'])
     return c
 
 
@@ -92,6 +100,8 @@ class BoundExecution:
 
     def ledger_contract(self, resource_proof_raw):
         # resource proofの現物/意味の検証はpreflightの責務。ここでは同じ条件へ束縛する。
+        require(self.contract['version'] != PHASE_VERSION,
+            'heldout phase reviewed ledger admission not connected')
         require(isinstance(resource_proof_raw, bytes), 'heldout resource proof bytes')
         proof = inputs.parse(resource_proof_raw)
         require(isinstance(proof, dict) and proof.get('status') == 'heldout_resources_verified_not_launchable'
