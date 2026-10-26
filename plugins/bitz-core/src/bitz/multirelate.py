@@ -462,10 +462,11 @@ def _covers_allowed_refs(
         target_entry = payload
         q = parse_qualified(ref)
         local_part = q[1] if q is not None else ref
-        if ":" in local_part:
-            allowed_statement_ids.add(ref)
-            continue
         target_ws = q[0] if q is not None else ws_id
+        if ":" in local_part:
+            # 自ワークスペースを自身のIDで修飾した参照は、非修飾の形（許可集合の自ワークスペースの表現）へそろえる（複合ワークスペース仕様 §4）。
+            allowed_statement_ids.add(local_part if target_ws == ws_id else ref)
+            continue
         for stmt in target_entry.statements:
             allowed_statement_ids.add(stmt["id"] if target_ws == ws_id else f"{target_ws}::{stmt['id']}")
 
@@ -498,10 +499,13 @@ def coverage_diagnostics(
             for ref in covers:
                 q = parse_qualified(ref)
                 local_part = q[1] if q is not None else ref
+                # 自ワークスペースを自身のIDで修飾した参照は、非修飾形式と同じ対象を指す（複合ワークスペース仕様 §4）。
+                # `evidence`は宣言どおりの表記を保つ。
+                key = local_part if q is not None and q[0] == ws_id else ref
                 if ":" in local_part:
-                    valid = ref in allowed_statement_ids
+                    valid = key in allowed_statement_ids
                 else:
-                    valid = ref in allowed_doc_ids
+                    valid = key in allowed_doc_ids
                 if not valid:
                     diags.append(
                         _mk(
