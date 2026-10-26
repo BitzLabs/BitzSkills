@@ -842,3 +842,23 @@ C52だけを直した時点のCore（コミット`df26cb1e`の版）では、ハ
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1042件がすべて成功した。
+
+## 2026-10-26: --all-workspacesの早期の結果のレポートを保存するようにした後のStep 1〜5の再判定
+
+`activews.py`、`check.py`、`verify.py`で、`check --all-workspaces`と`verify --all-workspaces`の全体事前検査の停止と、`verify`の実行計画の上限超過の結果を、
+`--report`のときルートワークスペースの`.spec/reports/`へ保存するようにした（実装の確認事項C53）。これを固定する`MULTI-045-01`〜`MULTI-045-14`（Step 5）を追加した。
+修正前のCore（コミット`2032e47a`の版）では、追加した14件のうち12件が非成功となり、`--report`を指定しない対照の`-09`、`-10`と既存の503件はすべて通過することを確かめた。
+保存の失敗の診断を並べ替えずに末尾に足す変異体では、`-11`、`-12`の2件だけが非成功となった。修正後のCoreでは517件すべてが`passed`となる。
+
+コミット`d7f8951ce15418eea9d0f09797419170221dea66`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 517件（`MULTI-045-01`〜`MULTI-045-14`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`176d569f237999dcee5209e45c59bf3a49aec12adb1e9809ad01c85cf1ba01b9` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1053件がすべて成功した。
