@@ -819,6 +819,11 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         "adjacent": list(expansion.adjacent_statements),
     }
 
+    def _summary_stmt_id(stmt_id: str) -> str:
+        """診断の`summary`に差し込む規範文ID。複合ワークスペースでは作業ワークスペースの規範文も修飾する（`coverage`の出力と同じ形）。"""
+
+        return _canon(stmt_id, workspace_id) if multi_active else stmt_id
+
     def _stmt_source(stmt_id: str) -> dict:
         doc_id = statement_index[stmt_id]["documentId"]
         owner = _owner_of(doc_id, workspace_id) if multi_active else workspace_id
@@ -833,7 +838,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                         "code": "CTX-COVERAGE-TASK-001",
                         "severity": "warning",
                         "resultStatus": "passed_with_warnings",
-                        "summary": messages.coverage_task_unaddressed(modality_label, stmt_id),
+                        "summary": messages.coverage_task_unaddressed(modality_label, _summary_stmt_id(stmt_id)),
                         "source": _stmt_source(stmt_id),
                     }
                 )
@@ -843,7 +848,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("MUST", stmt_id),
+                    "summary": messages.coverage_test_untested("MUST", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -853,7 +858,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("SHOULD", stmt_id),
+                    "summary": messages.coverage_test_untested("SHOULD", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -864,7 +869,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "error",
                     "resultStatus": "blocked",
-                    "summary": messages.coverage_test_untested("MUST", stmt_id),
+                    "summary": messages.coverage_test_untested("MUST", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -874,7 +879,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("SHOULD", stmt_id),
+                    "summary": messages.coverage_test_untested("SHOULD", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )

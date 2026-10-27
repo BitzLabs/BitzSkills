@@ -477,7 +477,7 @@ def target_expansion(
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
+                        "summary": messages.state_inapplicable(_display_id(doc_id), entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
@@ -488,7 +488,7 @@ def target_expansion(
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
+                        "summary": messages.state_inapplicable(_display_id(doc_id), entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
@@ -501,7 +501,7 @@ def target_expansion(
                         "code": "CTX-STATE-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id, entry.status, purpose),
+                        "summary": messages.state_inapplicable(_display_id(doc_id), entry.status, purpose),
                         "doc_id": doc_id,
                     }
                 )
@@ -562,8 +562,8 @@ def target_expansion(
                         "code": "CTX-TASK-DEPENDENCY-001",
                         "severity": "error",
                         "resultStatus": "blocked",
-                        "summary": messages.task_dependency_incomplete(target_id, target_entry.status),
-                        "suggestedAction": messages.task_dependency_suggested_action(target_id),
+                        "summary": messages.task_dependency_incomplete(_display_id(target_id), target_entry.status),
+                        "suggestedAction": messages.task_dependency_suggested_action(_display_id(target_id)),
                         "doc_id": owning_id,
                         "key": "relations.requires",
                     }
