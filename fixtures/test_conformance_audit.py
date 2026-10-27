@@ -85,6 +85,7 @@ from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
 from conformance import multi_qualified_summary_fixtures
+from conformance import multi_null_declaration_fixtures
 from conformance import multi_verify_order_fixtures
 from conformance import multi_early_report_fixtures
 from conformance import multi_workspace_id_fixtures
@@ -4765,6 +4766,191 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(outcome["status"], "Failed")
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_null_declaration_fixtures(self):
+        """`MULTI-048-01`〜`05`: 値が空の`multiWorkspace:`の宣言を、ルートではメンバー0件の設定不適合、メンバーでは宣言の拒否として止めることを固定する（確認事項C58・C63）。"""
+        module = multi_null_declaration_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-048-{number:02d}" for number in range(1, 6)])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_null_declaration_reference_rules(self):
+        """参照計算（複合ワークスペース仕様 §2・§2.1、結果・診断・終了コード §2）と、修正前の読み方の再現。宣言はキーの有無で判定する。"""
+        module = multi_null_declaration_fixtures
+
+        def decide(identifier, cwd=None, edits=(), function="reference_decision"):
+            with tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary)
+                for name, data in module.reviewed_inputs(identifier).items():
+                    (repository / name).parent.mkdir(parents=True, exist_ok=True)
+                    (repository / name).write_bytes(data)
+                for relative, text in edits:
+                    (repository / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (repository / relative).write_text(text)
+                return getattr(module, function)(repository, cwd or module.CASES[identifier]["cwd"])
+
+        # 値が空の宣言は、`members: []`と同じくメンバー0件。ルートのIDは明示した値なので`multiWorkspace.id`は`platform`。
+        wanted = {"cause": "members-required", "multiWorkspaceId": "platform", "workspace": {"id": "platform", "path": "."}}
+        self.assertEqual(decide("MULTI-048-01"), wanted)
+        self.assertEqual(decide("MULTI-048-05"), wanted)
+        # 未登録の設定が実在しても、原因はルートの設定不適合に定まる。単独の操作の`workspace.id`は、未登録なので`null`。
+        self.assertEqual(decide("MULTI-048-03"), {"cause": "members-required", "multiWorkspaceId": "platform", "workspace": {"id": None, "path": "apps/web"}})
+        # メンバーの値が空の宣言は、メンバーの宣言の拒否。
+        self.assertEqual(decide("MULTI-048-04")["cause"], "member-nested")
+        # メンバーの宣言が値を持っても、同じ原因（キーの有無で判定する）。宣言がなければ原因はない（対照）。
+        web_config = module.multi_reference.plain_config("web")
+        self.assertEqual(decide("MULTI-048-04", edits=[("apps/web/.spec/bitz.yaml", web_config + "multiWorkspace:\n  members: []\n")])["cause"], "member-nested")
+        self.assertIsNone(decide("MULTI-048-04", edits=[("apps/web/.spec/bitz.yaml", web_config)])["cause"])
+        # 宣言はキーの有無で判定する。キーがなければ複合ワークスペースのルートではない。
+        with self.assertRaises(ValueError):
+            decide("MULTI-048-01", edits=[(".spec/bitz.yaml", module.CONFIG_HEAD)])
+        # 修正前の読み方は、値が空の宣言を不備なしとみなす。値のある宣言（`members: []`）は修正前も同じ原因を持つ。
+        for identifier in ("MULTI-048-01", "MULTI-048-02", "MULTI-048-03", "MULTI-048-04"):
+            self.assertIsNone(decide(identifier, function="defective_decision")["cause"], identifier)
+        self.assertEqual(decide("MULTI-048-05", function="defective_decision")["cause"], "members-required")
+        # 修正前の読み方でも、メンバーが値のある宣言をすれば拒否していた（値が空のときだけ通した）。
+        self.assertEqual(decide("MULTI-048-04", function="defective_decision",
+                                edits=[("apps/web/.spec/bitz.yaml", web_config + "multiWorkspace:\n  members: []\n")])["cause"], "member-nested")
+
+    def test_multi_null_declaration_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_null_declaration_fixtures
+
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-blocked": lambda v: v.update(status="blocked"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code-config": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-CONFIG-001"),
+            "code-member": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001"),
+            "code-unregistered": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-UNREGISTERED-001"),
+            "code-path": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-PATH-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="設定キーmultiWorkspace.membersは配列で指定してください"),
+            "summary-required": lambda v: v["diagnostics"][0].update(summary=module.MEMBERS_REQUIRED),
+            "summary-nested": lambda v: v["diagnostics"][0].update(summary=module.MEMBER_NESTED),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="blocked"),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId=None),
+            "source-workspace-web": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="multiWorkspace"),
+            "source-key-drop": lambda v: v["diagnostics"][0]["source"].pop("key"),
+            "source-path": lambda v: v["diagnostics"][0]["source"].update(path="apps/web/.spec/bitz.yaml"),
+            "suggested-action": lambda v: v["diagnostics"][0].update(suggestedAction="設定キーmultiWorkspace.membersを指定してください"),
+            "multi-id": lambda v: v["multiWorkspace"].update(id=None),
+            "multi-id-root": lambda v: v["multiWorkspace"].update(id="root"),
+            "multi-path": lambda v: v["multiWorkspace"].update(path="apps/web"),
+            "workspaces-fill": lambda v: v["workspaces"].append({"id": "platform", "path": ".", "status": "passed", "durationMs": 0, "diagnostics": []}),
+            "workspace-id": lambda v: v["workspace"].update(id="web"),
+            "workspace-id-platform": lambda v: v["workspace"].update(id="platform"),
+            "workspace-path": lambda v: v["workspace"].update(path="."),
+            "workspace-add": lambda v: v.update(workspace={"id": "platform", "path": "."}),
+            "multi-add": lambda v: v.update(multiWorkspace={"id": "platform", "path": "."}),
+            "checks-catalog": lambda v: v["checks"][2].update(status="passed"),
+            "checks-catalog-blocked": lambda v: v["checks"][2].update(status="blocked"),
+            "checks-drop": lambda v: v["checks"].pop(),
+            "scope": lambda v: v.update(scope="full"),
+            "selection": lambda v: v["selection"].update(changedPathCount=1),
+            "revision-null": lambda v: v.update(revision=None),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web" if v["invocation"]["cwd"] == "." else "."),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--full"),
+            "argv-all": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            result_file = module.RESULT_FILES[module.CASES[identifier]["op"]]
+            mutations += [(identifier, result_file, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 100)
+
+    def test_multi_null_declaration_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因の構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_null_declaration_fixtures
+        for identifier in module.CASES:
+            for name in [*(f"repo/{name}" for name in sorted(module.reviewed_inputs(identifier))), "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        members = "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"
+        edits = {
+            # 値が空の宣言を、メンバーのある宣言、`{}`の形、宣言なしへ変える。ルートが`workspace.id`を省略する形も拒否する（この群はルートのIDを明示する）。
+            "MULTI-048-01": [(".spec/bitz.yaml", "multiWorkspace:\n", members), (".spec/bitz.yaml", "multiWorkspace:\n", "multiWorkspace: {}\n"),
+                             (".spec/bitz.yaml", "multiWorkspace:\n", ""), (".spec/bitz.yaml", "workspace:\n  id: platform\n", "")],
+            "MULTI-048-02": [(".spec/bitz.yaml", "multiWorkspace:\n", members), (".spec/bitz.yaml", "multiWorkspace:\n", "multiWorkspace: {}\n")],
+            # 未登録の設定をカタログへ登録する、未登録の設定のIDを変える、未登録の設定が宣言する。
+            "MULTI-048-03": [(".spec/bitz.yaml", "multiWorkspace:\n", members), ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: frontend\n"),
+                             ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: web\nmultiWorkspace:\n")],
+            # メンバーの宣言を外す、`{}`の形にする、カタログのIDを不一致にする。
+            "MULTI-048-04": [("apps/web/.spec/bitz.yaml", "multiWorkspace:\n", ""), ("apps/web/.spec/bitz.yaml", "multiWorkspace:\n", "multiWorkspace: {}\n"),
+                             (".spec/bitz.yaml", "id: web", "id: frontend")],
+            # 対照のメンバーの一覧を空でなくする、キーだけの宣言へ変える。
+            "MULTI-048-05": [(".spec/bitz.yaml", "  members: []\n", "  members:\n    - id: web\n      path: apps/web\n"),
+                             (".spec/bitz.yaml", "  members: []\n", "")],
+        }
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old, new=new), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new, 1))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir(parents=True)
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in (
+                        "入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_binding_missing_fixtures(self):

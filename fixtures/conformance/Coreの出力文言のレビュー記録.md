@@ -523,3 +523,20 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - `verify`の`CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`（検証対象の`diagnostics`）の複合ワークスペースでの修飾。この群は`context`だけを固定する。`verify`の修飾は単体試験で固定している
   （`tests/bitz-core/test_multi_summary_qualified_ids.py`）。
 - 状態の診断で止まった結果の`resolution.workspaces`と`crossWorkspaceEdges`。規範が定めていないので、強い関係の失敗（`MULTI-038-08`、`MULTI-027-01`）と同じ、起点ワークスペースだけ・横断するエッジなしを置いた。
+
+## 2026-10-27: 値が空のmultiWorkspaceの宣言の文言の再利用（C58・C63）
+
+### 追加の理由
+
+- 実装の確認事項C58・C63の修正で、値が空の`multiWorkspace:`の宣言を、ルートではメンバー0件の設定不適合（`SPEC-MULTI-CONFIG-001`）、メンバーでは宣言の拒否
+  （`SPEC-MULTI-MEMBER-001`）として止めるようにした。ユーザーの決定（2026-10-26）は、値が空の宣言を`members: []`と同じ既存の文言で止めることである。
+
+### 新しい文言はない
+
+- ルートの値が空の宣言の`summary`は、行#86「設定キーmultiWorkspace.membersは1件以上指定してください」（2026-10-12の承認）を再利用する。`source`は
+  `{"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "multiWorkspace.members"}`で、`members: []`の`MULTI-037-26`と同じ形である。
+- メンバーの値が空の宣言の`summary`は、行#104「メンバーは設定キーmultiWorkspaceを宣言できません」（同じ承認）を再利用する。`source`は`SPEC-MULTI-MEMBER-001`の既存の
+  fixture（`MULTI-036-03`、`MULTI-043-10`）と同じく、カタログの宣言（ルートの`.spec/bitz.yaml`の`multiWorkspace.members`）である。
+- 固定するfixtureは`MULTI-048-01`〜`05`で、生成器・監査は`multi_null_declaration_fixtures.py`である
+  （[レビュー記録](multi/複合ワークスペースの値が空の宣言のレビュー記録.md)）。新しい文言の承認ではない。
+- 既存のfixtureの期待値は変えない。

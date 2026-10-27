@@ -90,6 +90,7 @@ from conformance.multi_early_report_fixtures import validate as validate_multi_e
 from conformance.multi_workspace_id_fixtures import validate as validate_multi_workspace_id_fixtures
 from conformance.multi_self_qualified_covers_fixtures import validate as validate_multi_self_qualified_covers_fixtures
 from conformance.multi_qualified_summary_fixtures import validate as validate_multi_qualified_summary_fixtures
+from conformance.multi_null_declaration_fixtures import validate as validate_multi_null_declaration_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -384,6 +385,7 @@ def main():
     checks["multi_workspace_id_fixtures"] = validate_multi_workspace_id_fixtures()
     checks["multi_self_qualified_covers_fixtures"] = validate_multi_self_qualified_covers_fixtures()
     checks["multi_qualified_summary_fixtures"] = validate_multi_qualified_summary_fixtures()
+    checks["multi_null_declaration_fixtures"] = validate_multi_null_declaration_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

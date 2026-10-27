@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "failed",
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "catalog",
+      "status": "failed"
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-CONFIG-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "設定キーmultiWorkspace.membersは1件以上指定してください",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "multiWorkspace.members"
+      }
+    }
+  ],
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": []
+}
