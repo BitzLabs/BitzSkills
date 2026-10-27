@@ -1,0 +1,58 @@
+{
+  "version": "sdk-trace-review-0.40.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "primary-capture-monitor-and-irreversible-host-stop-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-40",
+  "payloadFiles": [
+    "evals/skills/routing/production_canary_capture.py",
+    "evals/skills/routing/production_canary_host.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "tests/skills/test_production_canary_capture.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_canary_capture.py",
+    "evals/skills/routing/production_canary_host.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "tests/skills/test_production_canary_capture.py",
+    "evals/skills/routing/production-canary-v0.1.json",
+    "evals/skills/routing/production-canary-cases-v0.1.json",
+    "evals/skills/routing/production-canary-instructions-v0.1.txt",
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/host.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.40.json"
+  ],
+  "constraints": [
+    "Phase 4期間の本人送信/SOL継続許可内。公開4本文の限定静的是正検分1回/300秒/primary0/retry0。旧v39の指摘・消費と、無課金全体試験のモジュール名衝突失敗を保持する。",
+    "v39 P2=2: fields=nullの監視例外が停止へ伝わらず捕捉成功になり得る経路と、一度hostが拒否してもsequence2で本文が読める経路。今回fields/notification/item型を検査、proxy全relayの例外と未完了をcaptureIntegrity=falseへ伝播し、正常CLI exit0でも取得成功を拒否する。callbackなし旧模擬profileの結果形式は維持する。",
+    "proxy callback例外を注入した無課金実subprocess回帰は、模擬CLI exit0でもruntime captureIntegrity=false/error AttributeErrorを原出力で確認した。ホストはlisted状態とstop markerを入口で確認し、拒否後の正しい本文要求も不可逆に拒否する。",
+    "今回固定CLI原通知で無視されるinclude_internal_metadata設定をcanary configから除去し、skip_host_skill_discoveryの既知unstable warningを抑制する。標準認証/URL/通常stream retry0/WS無効は維持する。認証内容は読取/コピー/出力しない。",
+    "有限初回案は公開正例1/負例1各2回、common ledger起動前予約、pending前回の独立原照合前に次を起動しない。SDK1 turn/300秒/読取り2/exec-wait制御2。モデルAPI3/モデル一覧2は応答ログの観測閾値で送信前hard capや認証復旧ゼロを保証しない。旧API合計1未達は保持する。",
+    "captureは原取得のみで、親の原入力/RPC/host/rollout/telemetry照合と独立採点は後続。この未実装後続、未知profileの拒否、明示した未認定wire/hard capだけを欠陥にしない。限定取得成功を誤認定する具体的経路や提示境界の突破を検分する。",
+    "依存の非提示本文は未読。tool/追加モデル/委譲/ファイル読取り/試験実行は禁止。私的原SDK/stdio/rolloutと認証は送信せず、静的検分を実軌跡検分に代用しない。"
+  ],
+  "previousReview": {
+    "sourceCommit": "dcdfd4f21831ff17a21a2a237366263e55060fc7",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-39",
+    "receiptSha256": "c52540dc2b04e75924f56609a3449d5ab725ed0143e2c9dd6cf85c670cd52d25",
+    "responseSha256": "4b709eae957bbfbbf540315af316636eefb37ed1becd47ba780bcad1e0c23323",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

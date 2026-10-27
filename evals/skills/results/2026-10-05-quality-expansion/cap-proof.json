@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "reason": "global authorized trajectory budget exhausted",
+  "codexCalls": 0,
+  "ledgerUnchanged": true,
+  "attemptsUnchanged": true,
+  "originalIndependentInterruptionPreserved": true,
+  "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8"
+}

@@ -1,0 +1,386 @@
+{
+  "schemaVersion": "1.0",
+  "id": "plan-implement-matrix-20261012-05",
+  "purpose": "原runのhashを解析前に照合し、未提出以外の検査例外を恒久stopへ保存する新条件で計画7・実装10のskill/baseline各2反復を測る。旧01/02/03/04は準備P2停止・一次0/準備独立SOL各1を保持。全体Gateは未認定",
+  "model": "gpt-6.1-sol",
+  "candidateVersion": "0.3.0",
+  "protocolSha256": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+  "casesSha256": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+  "automaticRetries": 0,
+  "maximumPrimaryCalls": 68,
+  "timeoutSeconds": 240,
+  "slots": [
+    {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "baseline",
+      "repetition": 1
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-010",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-001",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-002",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-003",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-004",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-005",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-006",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SP-007",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-001",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-002",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-003",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-004",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-005",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-006",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-007",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-008",
+      "variant": "baseline",
+      "repetition": 2
+    },
+    {
+      "caseId": "SI-009",
+      "variant": "baseline",
+      "repetition": 2
+    }
+  ],
+  "stopPolicy": "毎回1枠を起動前に消費。機械不適合・中断・原証拠不一致・独立意味不適合で残枠を恒久停止。同条件の自動再試行0。独立receipt未完了では次を拒否",
+  "reviewBudget": {
+    "preparationIndependentSol": 1,
+    "semanticIndependentSolMaximum": 68,
+    "maximumPerPrimary": 1,
+    "automaticRetries": 0
+  },
+  "usagePolicy": "一次Codex exec軌跡単位。trace usageと実時間を保存し、独立usage・provider請求の欠測を0扱いしない",
+  "limitations": [
+    "新source/CLI版/入力/環境/保存先/共有台帳は起動前に固定し準備独立検分する。現manifest保存だけでは起動許可条件を満たさない。",
+    "公開合成17ケースの2反復比較だけ。3反復以上・保持・別モデル系統・実地・sdd-converge行動は別測定。",
+    "実行版0.1.4は原native正常終端/usageと固定artifactを照合し、独立失敗/原不整合の永久stopを保存。新refの準備検分が必要。",
+    "旧01/02/03/04を再開せず、専用output/ledgerの新05として固定ref/全回帰/開始前独立検分/準備SOL1を要求する。"
+  ],
+  "predecessorPreparationStop": {
+    "status": "stopped_preparation",
+    "sourceCommit": "9518ec7b917e5490a48b8021a1aa7faa33f6a087",
+    "receiptRelativePath": ".venv/r05-matrix-prelaunch-sol-04/receipt.json",
+    "receiptSha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91",
+    "preparationIndependentSolConsumed": 1,
+    "primaryConsumed": 0,
+    "reason": "deep JSON RecursionError bypassed permanent stop; original preparation P2 retained"
+  },
+  "preparationStop": {
+    "status": "stopped_preparation",
+    "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+    "receiptRelativePath": ".venv/r05-matrix-prelaunch-sol-05/receipt.json",
+    "receiptSha256": "f55adc033f7ed7b87c6298de431b8baa3b262f327f586748d2765f1f1d3ec70a",
+    "preparationIndependentSolConsumed": 1,
+    "primaryConsumed": 0,
+    "reason": "failure persistence repeated an unprotected snapshot and lost original failure record; original preparation P2 retained"
+  }
+}

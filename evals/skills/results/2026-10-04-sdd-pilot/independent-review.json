@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_pilot_review",
+  "subjectCommit": "26f0a5feb6897287cc226739d097b69f45dca2ca",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["AGENTS.md", "evals/skills/sdd/", "plugins/bitz-sdd/", "docs/", ".venv/sdd-evaluation-01/skill/repetition-1/SP-001/", ".venv/sdd-evaluation-01/skill/repetition-1/SI-001/"],
+  "directChecks": [
+    "fork_turns=none、gpt-6.1-solの独立文脈で元ref・スキル・公開仕様・実traceとhost結果を検分。モデル呼出し・外部サービス・編集・資格情報とstate/logs読取りは行わなかった",
+    "開始HEADと終了HEADは26f0a5feb6897287cc226739d097b69f45dca2ca。開始clean、終了は主作業者による証拠保存ディレクトリのuntrackedだけ。追跡ソース変更は検分中に観測されていない",
+    "両runのartifact hashと固定refのsource hashを直接再計算して一致を確認",
+    "SI-001のcontextが返した固定commitを公開checkへ直接渡し、exit 0/status passed/revision.base一致/dirty false/diagnostics []を確認。ホストが合法な引数をCore起動前に拒否した欠陥と判定",
+    "SP-001の公開checkを直接再現し、exit 1/status failed/SPEC-TASK-BOUNDARY-001を確認。TASK自身だけが境界比較から除外され、draftREQ差分は除外されない（ADR-025/ADR-034）",
+    "SP-001の両check通過期待は狭い実装TASKと同時作成REQの条件に矛盾。境界拡張・REQ削除・無許可commit・比較元変更は非推薦。境界失敗に対する停止ケースへの明確化を推薦",
+    "両ケースのモデル停止はスキルと公開仕様に整合。元の機械採点Failed/not-certifiedは維持し、66件の未実行をモデル失敗とは区別する",
+    "主作業者もSI-001の公開check passed/0、SP-001の境界failed/1を自分で再実行して確認"
+  ],
+  "notRerun": [
+    {"check": "是正後のコードの検分とモデル再評価", "reason": "この記録は元refと停止証拠の独立判定。修正コードと新しい評価版は別refで検分し、モデル再実行は未承認"},
+    {"check": "全68測定、Skill Gate、Core全件適合・Gate認定、収束・配布", "reason": "実モデル2件で新規呼出しを停止。欠測66件と未認定を維持。Core・適合fixtureは変更していない"}
+  ],
+  "independent": true
+}

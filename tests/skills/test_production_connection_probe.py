@@ -1,0 +1,227 @@
+"""接続診断の予約・停止・原相関を無課金で検証する。"""
+import copy
+import json
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
+import production_connection_probe as probe
+import production_sdk_probe as sdk
+import production_rpc_capture as rpc
+
+
+class ConnectionProbeTests(unittest.TestCase):
+    def contract(self):
+        return json.loads((ROOT / probe.CONTRACT).read_bytes())
+
+    def fixture(self):
+        sent = [{'id': 1, 'method': 'initialize', 'params': {}}, {'method': 'initialized'},
+                {'id': 2, 'method': 'thread/start', 'params': {'model': 'gpt-6.1-sol', 'modelProvider': 'openai',
+                 'allowProviderModelFallback': False, 'sandbox': 'read-only', 'approvalPolicy': 'never',
+                 'cwd': '/private-diagnostic/work',
+                 'ephemeral': True, 'baseInstructions': probe.BASE, 'developerInstructions': probe.DEVELOPER}},
+                {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread', 'outputSchema': probe.SCHEMA, 'effort': 'low',
+                 'input': [{'type': 'text', 'text': probe.PROMPT}]}}]
+        frames = [{'id': 1, 'result': {}}, {'id': 2, 'result': {'thread': {'id': 'thread'}}},
+                  {'method': 'thread/started', 'params': {'thread': {'id': 'thread'}}},
+                  {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}},
+                  {'id': 3, 'result': {'turn': {'id': 'turn'}}},
+                  {'method': 'item/started', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                   'item': {'id': 'message', 'type': 'agentMessage'}}},
+                  {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                   'item': {'id': 'message', 'type': 'agentMessage', 'phase': 'final_answer', 'text': json.dumps(probe.FINAL)}}},
+                  {'method': 'turn/completed', 'params': {'threadId': 'thread',
+                   'turn': {'id': 'turn', 'status': 'completed', 'error': None}}}]
+        api = [{'attempt': 0, 'http.response.status_code': 200, 'auth.header_attached': True}]
+        return sent, frames, api, {'exitCode': 0, 'forcedShutdown': False}
+
+    def test_finite_contract_rejects_extra_turns_retries_models_and_bool_counts(self):
+        probe.policy(self.contract())
+        for key, value in [('maximumInvocations', True), ('maximumLogicalTurns', 2), ('automaticRetries', 1),
+                           ('timeoutSeconds', 300), ('model', 'other'), ('primaryModelTrajectories', 1), ('version', 'unknown')]:
+            bad = self.contract()
+            bad[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): probe.policy(bad)
+
+    def test_same_contract_reservation_cannot_be_repeated_with_another_source_or_output(self):
+        for contract_path in [probe.CONTRACT, probe.HTTP_CONTRACT]:
+            with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
+                storage = Path(temporary) / 'ledger'
+                contract = json.loads((ROOT / contract_path).read_bytes())
+                raw = json.dumps(contract).encode()
+                reservation = probe.reserve(ROOT, 'a' * 40, raw, storage)
+                self.assertEqual(reservation['role'], 'paidConnectionDiagnostic')
+                self.assertEqual(reservation['contractPath'], contract_path)
+                for source, changed in [('b' * 40, raw), ('a' * 40, json.dumps(dict(contract, outputRelativeRoot='other')).encode())]:
+                    with self.assertRaises(FileExistsError): probe.reserve(ROOT, source, changed, storage)
+
+    def test_reservation_rejects_symlink_storage(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
+            root = Path(temporary)
+            (root / 'target').mkdir()
+            (root / 'link').symlink_to(root / 'target')
+            with self.assertRaises(ValueError): probe.reserve(ROOT, 'a' * 40, json.dumps(self.contract()).encode(), root / 'link')
+
+    def test_original_success_needs_one_api_and_matching_native_and_caller_context(self):
+        self.assertTrue(probe.evaluate(*self.fixture())['finalMatched'])
+        for mutation in ['extra-api', 'attempt-bool', 'wrong-auth', 'other-turn', 'other-reply', 'post-terminal',
+                         'tool', 'caller-prompt', 'schema', 'forced-shutdown', 'failed-turn', 'steer', 'duplicate-reply',
+                         'unknown-reply', 'duplicate-request', 'id-only-unknown', 'id-only-duplicate', 'empty-notification',
+                         'unknown-notification', 'missing-item-start', 'other-caller-thread']:
+            sent, frames, api, runtime = copy.deepcopy(self.fixture())
+            if mutation == 'extra-api': api += copy.deepcopy(api)
+            elif mutation == 'attempt-bool': api[0]['attempt'] = False
+            elif mutation == 'wrong-auth': api[0]['auth.header_attached'] = False
+            elif mutation == 'other-turn': frames[-1]['params']['turn']['id'] = 'other'
+            elif mutation == 'other-reply': frames[1]['result']['thread']['id'] = 'other'
+            elif mutation == 'post-terminal': frames.append(frames.pop(6))
+            elif mutation == 'tool': frames[6]['params']['item']['type'] = 'commandExecution'
+            elif mutation == 'caller-prompt': sent[3]['params']['input'][0]['text'] = 'different'
+            elif mutation == 'schema': sent[3]['params']['outputSchema']['properties']['ok']['const'] = False
+            elif mutation == 'forced-shutdown': runtime['forcedShutdown'] = True
+            elif mutation == 'failed-turn': frames[-1]['params']['turn']['status'] = 'failed'
+            elif mutation == 'steer': sent.append({'id': 4, 'method': 'turn/steer', 'params': {}})
+            elif mutation == 'duplicate-reply': frames.insert(0, {'id': 2, 'result': {'thread': {'id': 'other'}}})
+            elif mutation == 'unknown-reply': frames.append({'id': 4, 'result': {}})
+            elif mutation == 'duplicate-request': sent[3]['id'] = sent[2]['id']
+            elif mutation == 'id-only-unknown': frames.append({'id': 4})
+            elif mutation == 'id-only-duplicate': frames.append({'id': 2})
+            elif mutation == 'empty-notification': frames.append({})
+            elif mutation == 'unknown-notification': frames.append({'method': 'unknown', 'params': {}})
+            elif mutation == 'missing-item-start': frames.pop(5)
+            elif mutation == 'other-caller-thread': sent[3]['params']['threadId'] = 'other'
+            with self.subTest(mutation=mutation), self.assertRaises((ValueError, KeyError)):
+                probe.evaluate(sent, frames, api, runtime)
+
+    def test_alias_profile_is_explicit_and_rejects_provider_and_runtime_contradictions(self):
+        sent, frames, api, runtime = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_openai_http'
+        self.assertTrue(probe.evaluate(sent, frames, api, runtime, expected_provider='bitz_openai_http')['finalMatched'])
+        with self.assertRaises(ValueError): probe.evaluate(sent, frames, api, runtime)
+        for key, value in [('model', 'other'), ('app.version', 'other'), ('provider_name', 'other'),
+                           ('auth.retry_after_unauthorized', True)]:
+            changed = copy.deepcopy(api)
+            changed[0][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                probe.evaluate(sent, frames, changed, runtime, expected_provider='bitz_openai_http')
+
+    def test_fault_profile_uses_same_caller_and_reply_checks(self):
+        sent, frames, _, _ = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+        sent[3]['params'].pop('outputSchema')
+        sent[3]['params'].pop('effort')
+        frames[-1]['params']['turn']['status'] = 'failed'
+        frames.insert(-1, {'method': 'error', 'params': {'threadId': 'thread', 'turnId': 'turn', 'willRetry': False}})
+        self.assertEqual(rpc.correlate(sent, frames, allow_turn_error=True), {'threadId': 'thread', 'turnId': 'turn'})
+        for mutation in ['steer', 'other-thread', 'unknown-id', 'retry-error']:
+            s, f = copy.deepcopy((sent, frames))
+            if mutation == 'steer': s.append({'id': 4, 'method': 'turn/steer', 'params': {}})
+            elif mutation == 'other-thread': s[3]['params']['threadId'] = 'other'
+            elif mutation == 'unknown-id': f.append({'id': 4})
+            elif mutation == 'retry-error': f[-2]['params']['willRetry'] = True
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                rpc.correlate(s, f, allow_turn_error=True)
+
+    def test_deltas_require_an_active_matching_item_and_thread_starts_before_turn(self):
+        for failed in [False, True]:
+            for mutation in ['ghost', 'late', 'wrong-type', 'payload', 'text-mismatch', 'late-thread', 'turn-before-thread', 'thread-before-init']:
+                sent, frames, _, _ = copy.deepcopy(self.fixture())
+                if failed:
+                    sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+                    sent[3]['params'].pop('outputSchema')
+                    sent[3]['params'].pop('effort')
+                frames[-1]['params']['turn']['status'] = 'failed' if failed else 'completed'
+                if mutation in {'late-thread', 'turn-before-thread', 'thread-before-init'}:
+                    frame = frames.pop(2)
+                    frames.insert(len(frames) if mutation == 'late-thread' else 0 if mutation == 'thread-before-init' else 3, frame)
+                else:
+                    delta = {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                             'itemId': 'message', 'delta': frames[6]['params']['item']['text']}}
+                    if mutation == 'ghost': delta['params']['itemId'] = 'ghost'
+                    elif mutation == 'wrong-type': delta['method'] = 'item/reasoning/textDelta'
+                    elif mutation == 'payload': delta['params']['delta'] = None
+                    elif mutation == 'text-mismatch': delta['params']['delta'] = 'different'
+                    frames.insert(7 if mutation == 'late' else 6, delta)
+                with self.subTest(failed=failed, mutation=mutation), self.assertRaises(ValueError):
+                    rpc.correlate(sent, frames, allow_turn_error=failed)
+        sent, frames, _, _ = copy.deepcopy(self.fixture())
+        frames.insert(6, {'method': 'item/agentMessage/delta', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                         'itemId': 'message', 'delta': frames[6]['params']['item']['text']}})
+        self.assertEqual(rpc.correlate(sent, frames)['turnId'], 'turn')
+
+    def test_turn_model_and_other_input_overrides_are_rejected_in_both_profiles(self):
+        for failed in [False, True]:
+            sent, frames, _, _ = copy.deepcopy(self.fixture())
+            if failed:
+                sent[2]['params']['modelProvider'] = 'bitz_local_probe'
+                sent[3]['params'].pop('outputSchema')
+                sent[3]['params'].pop('effort')
+                frames[-1]['params']['turn']['status'] = 'failed'
+            for key, value in [('model', 'other'), ('developerInstructions', 'other'), ('sandboxPolicy', {})]:
+                bad = copy.deepcopy(sent)
+                bad[3]['params'][key] = value
+                with self.subTest(failed=failed, key=key), self.assertRaises(ValueError):
+                    rpc.correlate(bad, frames, allow_turn_error=failed)
+
+    def test_service_classification_keeps_total_api_mismatch_and_rejects_extra_or_unknown_requests(self):
+        sent, frames, api, runtime = copy.deepcopy(self.fixture())
+        sent[2]['params']['modelProvider'] = 'bitz_openai_http'
+        api[0].update(endpoint='/responses', model='gpt-6.1-sol', **{'conversation.id': 'thread', 'app.version': '0.160.1'})
+        catalog = dict(endpoint='/models', attempt=0, success=True, **{'http.response.status_code': 200, 'auth.header_attached': True})
+        all_api = [copy.deepcopy(catalog), copy.deepcopy(catalog), api[0]]
+        result = probe.evaluate_service_capture(sent, frames, all_api, runtime, expected_cwd='/private-diagnostic/work')
+        self.assertEqual((result['totalServiceApiRequests'], result['modelApiRequests'], result['modelCatalogApiRequests']), (3, 1, 2))
+        self.assertFalse(result['originalOneTotalApiCriterionMet'])
+        for mutation in ['extra-model', 'extra-catalog', 'unknown-endpoint', 'bad-version', 'metadata-failure']:
+            changed = copy.deepcopy(all_api)
+            if mutation == 'extra-model': changed.append(copy.deepcopy(api[0]))
+            elif mutation == 'extra-catalog': changed.insert(0, copy.deepcopy(catalog))
+            elif mutation == 'unknown-endpoint': changed[0]['endpoint'] = '/unknown'
+            elif mutation == 'bad-version': changed[0]['app.version'] = 'other'
+            elif mutation == 'metadata-failure': changed[0]['success'] = False
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                probe.evaluate_service_capture(sent, frames, changed, runtime, expected_cwd='/private-diagnostic/work')
+
+    def test_unknown_actions_and_server_requests_are_stopped_before_forwarding(self):
+        for item in ['commandExecution', 'dynamicToolCall', 'mcpToolCall', 'unknown', None]:
+            self.assertTrue(sdk.action_frame({'method': 'item/started', 'params': {'item': {'type': item}}}))
+        self.assertTrue(sdk.action_frame({'method': 'unknown', 'id': 1, 'params': {}}))
+        for item in ['userMessage', 'agentMessage', 'reasoning']:
+            self.assertFalse(sdk.action_frame({'method': 'item/started', 'params': {'item': {'type': item}}}))
+
+    def test_native_config_disables_nonbudgeted_connection_retry_and_tools(self):
+        config = probe.config_for(Path('/private-diagnostic'))
+        self.assertFalse(config['features.unbounded_connection_retries'])
+        self.assertFalse(config['features.system_proxy_fallback'])
+        self.assertFalse(config['model_providers.openai.supports_websockets'])
+        self.assertEqual(config['model_providers.openai.request_max_retries'], 0)
+        self.assertFalse(config['features.code_mode_host'])
+        self.assertFalse(any(key.startswith('mcp_servers.') for key in config))
+
+    def test_http_alias_keeps_standard_auth_without_overriding_builtin_or_adding_destination(self):
+        config = probe.http_config_for(Path('/private-diagnostic'))
+        self.assertEqual(config['model_provider'], 'bitz_openai_http')
+        self.assertFalse(any(k.startswith('model_providers.openai.') for k in config))
+        self.assertTrue(config['model_providers.bitz_openai_http.requires_openai_auth'])
+        self.assertEqual(config['model_providers.bitz_openai_http.name'], 'OpenAI')
+        self.assertEqual(config['model_providers.bitz_openai_http.request_max_retries'], 0)
+        self.assertFalse(config['model_providers.bitz_openai_http.supports_websockets'])
+        self.assertFalse(any(k.endswith(('base_url', 'env_key', 'experimental_bearer_token')) for k in config))
+
+    def test_original_inventory_excludes_home_and_caches_and_rejects_rollout_root_symlink(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / '.venv') as temporary:
+            base = Path(temporary)
+            (base / 'codex-home').mkdir()
+            (base / 'codex-home/auth.json').touch()
+            (base / 'config.json').write_text('{}')
+            (base / 'cache.bin').touch()
+            self.assertEqual(probe.original_artifact_paths(base), [base / 'config.json'])
+            (base / 'rollout-traces').symlink_to(base / 'codex-home')
+            with self.assertRaises(ValueError): probe.original_artifact_paths(base)
+
+
+if __name__ == '__main__':
+    unittest.main()

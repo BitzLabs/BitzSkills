@@ -1,0 +1,739 @@
+{
+  "schemaVersion": "1.0",
+  "archiveSha256": "6e5e1f77d578a3f5b7ee785e6e5d68b7a23f068cefcfa5561e0ed14185b75917",
+  "files": {
+    "review/budget-final.json": {
+      "bytes": 870,
+      "sha256": "2cc6a97ee6402e072d7b66e86743497474e58b93b42e3c2250c6ca3a602133cf"
+    },
+    "review/build-archive.py": {
+      "bytes": 2926,
+      "sha256": "a23f6c66c64793df244c3df3335a650504cd190ce6962cb7f6d3bc005b987ea6"
+    },
+    "review/independent-snapshot.json": {
+      "bytes": 263,
+      "sha256": "86cd76911a61c81d533c02b310c52ec1105a6d57de790920d2da593409d56375"
+    },
+    "review/independent-tests.txt": {
+      "bytes": 106,
+      "sha256": "76157b8c2382ff484d3b97e9f19e4584da7d4e603c9a3f7d06b07192efc3d4ad"
+    },
+    "review/parent-audit.json": {
+      "bytes": 466,
+      "sha256": "38b67b92d089d667450040e7e3bd32b007dbca36357a569789671cea3757111d"
+    },
+    "review/parent-recheck-snapshot.json": {
+      "bytes": 263,
+      "sha256": "86cd76911a61c81d533c02b310c52ec1105a6d57de790920d2da593409d56375"
+    },
+    "review/parent-recheck-tests.txt": {
+      "bytes": 106,
+      "sha256": "76d6f18a323f3249e4a9e91cf4b6b32545ffe48fc432e7db06d53672e54074bb"
+    },
+    "review/parent-tests.txt": {
+      "bytes": 106,
+      "sha256": "b491b0c46762550a5690794aab6ae9c41284feae68ce8053db5536789edcd2e8"
+    },
+    "review/review.json": {
+      "bytes": 2452,
+      "sha256": "e1cea48090fda23a9b77fc929fb9c941e8b8016a314d0f301bbc4e7a078bd09d"
+    },
+    "review/scope.json": {
+      "bytes": 803,
+      "sha256": "d0678689ef5a1806476e46398d674fab56a4f2dfba047d2255500ae32217496d"
+    },
+    "review/snapshot.json": {
+      "bytes": 263,
+      "sha256": "86cd76911a61c81d533c02b310c52ec1105a6d57de790920d2da593409d56375"
+    },
+    "snapshots/independent-snapshot/manifest.json": {
+      "bytes": 12756,
+      "sha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b"
+    },
+    "snapshots/parent-recheck-snapshot/manifest.json": {
+      "bytes": 12756,
+      "sha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b"
+    },
+    "snapshots/snapshot/manifest.json": {
+      "bytes": 12756,
+      "sha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b"
+    },
+    "source/evals/skills/routing/README.md": {
+      "bytes": 1477,
+      "sha256": "6e9b8228b0fe0dd63646060ecf20893962e332ba27255b48ab1a2957c9098133"
+    },
+    "source/evals/skills/routing/held-out-storage-plan.md": {
+      "bytes": 2054,
+      "sha256": "e5cf5869612f84c46fa15abe3cce54690dff8e7fd48053cebcccaa5fb6ca0243"
+    },
+    "source/evals/skills/routing/prepare.py": {
+      "bytes": 5900,
+      "sha256": "2754045a0f3f523c066e4a394e8d20390acc53a4ccd1e37bfd5e8142362f450b"
+    },
+    "source/plugins/bitz-core/README.md": {
+      "bytes": 1593,
+      "sha256": "6200400f97a9fe98e58dbc110f52f94ba534f5033ab74f6fae975f0a091db704"
+    },
+    "source/plugins/bitz-core/plugin.json": {
+      "bytes": 321,
+      "sha256": "207495ffecbdd9ef12ba510d91ae513ba40b02971e7409b9910f4c90fad215be"
+    },
+    "source/plugins/bitz-core/pyproject.toml": {
+      "bytes": 302,
+      "sha256": "2afe9d196391e6648722ef9aafe7e40f3aabf3ac690b5ede25723b2a24070b1d"
+    },
+    "source/plugins/bitz-core/skills/bitz-core/SKILL.md": {
+      "bytes": 9409,
+      "sha256": "758a53ed601402f706822e382f469eb17160ab8ba73135fa6353defe2bc367aa"
+    },
+    "source/plugins/bitz-core/skills/bitz-core/references/operations.md": {
+      "bytes": 4647,
+      "sha256": "e60e1aa9627cc58695d23436ff7d4ec6177a2b2dddff5742c3c32c8ad12cafcd"
+    },
+    "source/plugins/bitz-core/skills/bitz-core/references/results.md": {
+      "bytes": 6140,
+      "sha256": "7591c03063a1c17c20f8fc9c7de5fc5347c6925686d957ec8506796692601d7b"
+    },
+    "source/plugins/bitz-core/skills/bitz-core/references/safety.md": {
+      "bytes": 4116,
+      "sha256": "c4310f6066b6b2ea65c7cbbb0e9a3e266bd32942d6623a0ce49c00e3d6fb604a"
+    },
+    "source/plugins/bitz-core/src/bitz/__init__.py": {
+      "bytes": 110,
+      "sha256": "22fa8fb0d650c135824f80e2440e9178b5d5cddf742be0c3f7714bd6f248cf6a"
+    },
+    "source/plugins/bitz-core/src/bitz/basecompare.py": {
+      "bytes": 14906,
+      "sha256": "1de40b5bc5998f191ac2106986adda2a587bc1289781a8956278752a855f10b6"
+    },
+    "source/plugins/bitz-core/src/bitz/check.py": {
+      "bytes": 45013,
+      "sha256": "e6a55418643b8861fe82b337d1a5b3015e8f0dc6238517defc16f27c7869e4d0"
+    },
+    "source/plugins/bitz-core/src/bitz/cli.py": {
+      "bytes": 2733,
+      "sha256": "c781170f92cdc02dbf2ffad014dbb825ecf305ae55c2134253c9e8386816b8ed"
+    },
+    "source/plugins/bitz-core/src/bitz/cliargs.py": {
+      "bytes": 8656,
+      "sha256": "587d76800587097dc3b849a0daa416a3f55c9d0a88b90e53e4e99f7625219247"
+    },
+    "source/plugins/bitz-core/src/bitz/compat.py": {
+      "bytes": 8336,
+      "sha256": "52714177067e15dfc370c8dd3f5f2a2717e963deedddd9439fcdffbe07f41853"
+    },
+    "source/plugins/bitz-core/src/bitz/config.py": {
+      "bytes": 21306,
+      "sha256": "0be9f752542502ce693b817b8cebceabab19bda956dd12ecde3e8dbba6b948b1"
+    },
+    "source/plugins/bitz-core/src/bitz/context.py": {
+      "bytes": 51966,
+      "sha256": "72698dc7d56bfc9299ca5d837d2e2a852e4f6cc87e384d7524bebde37c34351d"
+    },
+    "source/plugins/bitz-core/src/bitz/contextrender.py": {
+      "bytes": 6638,
+      "sha256": "10489858562d97fff48c1f8f7bcf22960293a8a65a9d00317147eeeb0e145873"
+    },
+    "source/plugins/bitz-core/src/bitz/digest.py": {
+      "bytes": 5441,
+      "sha256": "4cad49bcc8c9ef47c344f52038c820acc5d4175d469bc7233916debdcf6f3e2d"
+    },
+    "source/plugins/bitz-core/src/bitz/doctor.py": {
+      "bytes": 15129,
+      "sha256": "18d20ca0e2f1552e17e026b6f09f609c23593193181a644ef4fc248a0745a141"
+    },
+    "source/plugins/bitz-core/src/bitz/document.py": {
+      "bytes": 26634,
+      "sha256": "ed1f731ef74bea7f3c750acf6e70bb2130a441f51d03966225011832103b2a52"
+    },
+    "source/plugins/bitz-core/src/bitz/earsai/__init__.py": {
+      "bytes": 807,
+      "sha256": "8d5d968bd2653b5eea0b22dbc930ab2316eac7249bf14e0af344c8e48665ca3e"
+    },
+    "source/plugins/bitz-core/src/bitz/earsai/ir.py": {
+      "bytes": 5170,
+      "sha256": "d2f14958ad6e672082e32fdb90da35a0657633d45c3406b959918fda8603331c"
+    },
+    "source/plugins/bitz-core/src/bitz/earsai/lexer.py": {
+      "bytes": 9338,
+      "sha256": "9330810cfd5689f1850f5c715aa5123f73e5fbff34b6a8541e456bf98a5d355b"
+    },
+    "source/plugins/bitz-core/src/bitz/earsai/parser.py": {
+      "bytes": 18496,
+      "sha256": "0c01e5a12b5dab80eff0e97c6cd0844e0623a350c1899a4d45c3b8b153a2191e"
+    },
+    "source/plugins/bitz-core/src/bitz/earsai/scanner.py": {
+      "bytes": 5926,
+      "sha256": "f9dba99f4558334b4d045e4124055a5fa2f1f28c53624825ab074b62607d74c9"
+    },
+    "source/plugins/bitz-core/src/bitz/errors.py": {
+      "bytes": 626,
+      "sha256": "6c3ccec7f4a83003e204aef7828d259e744ec48575400ac5bed6de4af138ccab"
+    },
+    "source/plugins/bitz-core/src/bitz/execfile.py": {
+      "bytes": 1438,
+      "sha256": "2db01f5b4748633934ca826fcfff4d495728f88e797f109cadb0dc069ebef805"
+    },
+    "source/plugins/bitz-core/src/bitz/frontmatter.py": {
+      "bytes": 16686,
+      "sha256": "df05b645ab14aeeeb2721e1d3e15a993888d24560e94ed9bdd3d46f53ba1fec3"
+    },
+    "source/plugins/bitz-core/src/bitz/gitutil.py": {
+      "bytes": 19877,
+      "sha256": "0a8e99f74e5abf298e0320a4562ca95497183174f8e17e590d82c6a039931ff5"
+    },
+    "source/plugins/bitz-core/src/bitz/lex.py": {
+      "bytes": 2840,
+      "sha256": "4c4ff373316636bdae3dbfbdc361164f73a3d2feb1df48419a81b89c56d7f256"
+    },
+    "source/plugins/bitz-core/src/bitz/messages.py": {
+      "bytes": 15610,
+      "sha256": "903ff7ed1dc1bfcaf3b749e1d6376b08f400f186fce1129ffa489c9f869c8f02"
+    },
+    "source/plugins/bitz-core/src/bitz/multirelate.py": {
+      "bytes": 30278,
+      "sha256": "8b58d0ee6bb6f7e01cc883cdb72cee701c606cd8f18c2b5cdd63ac381e808721"
+    },
+    "source/plugins/bitz-core/src/bitz/multiws.py": {
+      "bytes": 34889,
+      "sha256": "bb901b5df26a6d5e0ede100ba5966442e9f8b2db819564a5741956fcf606d358"
+    },
+    "source/plugins/bitz-core/src/bitz/notimpl.py": {
+      "bytes": 585,
+      "sha256": "763be39b081269fbc969f85f19131e5ea6f921aea9960efdb889b4042613f6a2"
+    },
+    "source/plugins/bitz-core/src/bitz/procrun.py": {
+      "bytes": 6448,
+      "sha256": "149405e85c4d2df9289f7efbd01998b3db9a6792320e5c4d744378c38c42e976"
+    },
+    "source/plugins/bitz-core/src/bitz/redact.py": {
+      "bytes": 15316,
+      "sha256": "5024696824bb9f0aeb0cf069d9d84bbeb7e0ec481922e822992ac35869847c66"
+    },
+    "source/plugins/bitz-core/src/bitz/relations.py": {
+      "bytes": 23642,
+      "sha256": "c3b6ab42ba2cc48a0335748292e32cb9226db99a7e56499c555952e5d9eab069"
+    },
+    "source/plugins/bitz-core/src/bitz/reportio.py": {
+      "bytes": 9777,
+      "sha256": "58f40ee8546ace8970a82676122d5ceadfc189fe192ed75a4b17046f7ef54e45"
+    },
+    "source/plugins/bitz-core/src/bitz/resultmodel.py": {
+      "bytes": 1964,
+      "sha256": "e53bb67d3676ddfce0f61623b85aa9c21325efbe4fc546a52b344439a1121282"
+    },
+    "source/plugins/bitz-core/src/bitz/targetexpand.py": {
+      "bytes": 30068,
+      "sha256": "a837683114c3afcd704bf68aad9dd0e8aafc29d460e38e580785cc8e408d826c"
+    },
+    "source/plugins/bitz-core/src/bitz/textrender.py": {
+      "bytes": 2843,
+      "sha256": "076ac35c367abd8d906d73cff4efc7c9b14b7aca7bb01e62df58f28c93a1881c"
+    },
+    "source/plugins/bitz-core/src/bitz/textutil.py": {
+      "bytes": 728,
+      "sha256": "61a6a331d8d292068fdde5f40dc45cffde2459d1f344d15b5e8b0a3fc62fff40"
+    },
+    "source/plugins/bitz-core/src/bitz/verify.py": {
+      "bytes": 60157,
+      "sha256": "7f93077f77da93a60e780206b0635a438e2e86225f2cfda150dff7321fd7df2d"
+    },
+    "source/plugins/bitz-core/src/bitz/workspace.py": {
+      "bytes": 1499,
+      "sha256": "89d0e0caa26c76c12a9e3cf7cb593ab98b01f95f369e45f3a69549b1bdf6b48e"
+    },
+    "source/plugins/bitz-core/src/bitz/yamlsafe.py": {
+      "bytes": 8806,
+      "sha256": "cd1d3d8ae1a91556e1d89882e836cf873d628aa922bc062b6e14971e5803c9c7"
+    },
+    "source/plugins/bitz-core/uv.lock": {
+      "bytes": 967,
+      "sha256": "ec886b17057cb735c4b7469a26f952c1f91bf8a6590d5f540667036c49f17af1"
+    },
+    "source/plugins/bitz-quality/README.md": {
+      "bytes": 4162,
+      "sha256": "e63b85adb2253a490ad6d75e5dd631099416fff1f30a621a5210c6c85bca41c9"
+    },
+    "source/plugins/bitz-quality/core-compatibility.json": {
+      "bytes": 600,
+      "sha256": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d"
+    },
+    "source/plugins/bitz-quality/examples/local-change-plan.json": {
+      "bytes": 3426,
+      "sha256": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756"
+    },
+    "source/plugins/bitz-quality/examples/missing-evidence-review.json": {
+      "bytes": 1108,
+      "sha256": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef"
+    },
+    "source/plugins/bitz-quality/plugin.json": {
+      "bytes": 243,
+      "sha256": "39d81d8e3c8b947090b7e4942fb37551b438270df02975ba4ecf03399583ce06"
+    },
+    "source/plugins/bitz-quality/schemas/core-observation.schema.json": {
+      "bytes": 1859,
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d"
+    },
+    "source/plugins/bitz-quality/schemas/quality-plan.schema.json": {
+      "bytes": 3983,
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a"
+    },
+    "source/plugins/bitz-quality/schemas/quality-review.schema.json": {
+      "bytes": 4493,
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a"
+    },
+    "source/plugins/bitz-quality/scripts/validate_quality.py": {
+      "bytes": 8513,
+      "sha256": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634"
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/SKILL.md": {
+      "bytes": 6307,
+      "sha256": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa"
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": {
+      "bytes": 2215,
+      "sha256": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10"
+    },
+    "source/plugins/bitz-quality/skills/quality-review/SKILL.md": {
+      "bytes": 8312,
+      "sha256": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a"
+    },
+    "source/plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "bytes": 3372,
+      "sha256": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113"
+    },
+    "source/plugins/bitz-sdd/README.md": {
+      "bytes": 2637,
+      "sha256": "7ef28534e0eb298a0ba40937e266feec4630f69fa79f5731787c468c00f0e52c"
+    },
+    "source/plugins/bitz-sdd/plugin.json": {
+      "bytes": 324,
+      "sha256": "60f1879d9389e786d3f8f7849758aad6c8ea8ba3d11048cb4555ab644cfca864"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-converge/SKILL.md": {
+      "bytes": 5861,
+      "sha256": "c15811a734884db28858edf38faffc8eafe9633ff428093ec9c30310b23d2a58"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-converge/references/completion.md": {
+      "bytes": 2620,
+      "sha256": "4e1d7bd631227ef0f2e538b8beb598b69d539ef4fdc0fcc210cdde993f9d4289"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-converge/references/evidence-record.md": {
+      "bytes": 3264,
+      "sha256": "0bf8950c381737a23841bf11ab42db7ac4462493ac76880d656834a3a552c5e0"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-implement/SKILL.md": {
+      "bytes": 6936,
+      "sha256": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-implement/references/execution.md": {
+      "bytes": 5101,
+      "sha256": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": {
+      "bytes": 2898,
+      "sha256": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": {
+      "bytes": 3176,
+      "sha256": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-plan/SKILL.md": {
+      "bytes": 6399,
+      "sha256": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-plan/examples/REQ-001.md": {
+      "bytes": 541,
+      "sha256": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-plan/examples/TASK-001.md": {
+      "bytes": 562,
+      "sha256": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374"
+    },
+    "source/plugins/bitz-sdd/skills/sdd-plan/references/planning.md": {
+      "bytes": 6001,
+      "sha256": "94541c6ec9f1a06300467ee9244f8caeaf5f48a233023eb70f891af8efa7410a"
+    },
+    "source/tests/skills/test_routing_prepare.py": {
+      "bytes": 6643,
+      "sha256": "feafe22578867e8fd803cc34283ff7d26b14f30a9288ab8ac87e70a624efd28a"
+    }
+  },
+  "fixedSources": [
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "evals/skills/routing/prepare.py",
+      "archivePath": "source/evals/skills/routing/prepare.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "evals/skills/routing/README.md",
+      "archivePath": "source/evals/skills/routing/README.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "evals/skills/routing/held-out-storage-plan.md",
+      "archivePath": "source/evals/skills/routing/held-out-storage-plan.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "tests/skills/test_routing_prepare.py",
+      "archivePath": "source/tests/skills/test_routing_prepare.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/README.md",
+      "archivePath": "source/plugins/bitz-core/README.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/plugin.json",
+      "archivePath": "source/plugins/bitz-core/plugin.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/pyproject.toml",
+      "archivePath": "source/plugins/bitz-core/pyproject.toml"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/skills/bitz-core/SKILL.md",
+      "archivePath": "source/plugins/bitz-core/skills/bitz-core/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/skills/bitz-core/references/operations.md",
+      "archivePath": "source/plugins/bitz-core/skills/bitz-core/references/operations.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/skills/bitz-core/references/results.md",
+      "archivePath": "source/plugins/bitz-core/skills/bitz-core/references/results.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/skills/bitz-core/references/safety.md",
+      "archivePath": "source/plugins/bitz-core/skills/bitz-core/references/safety.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/__init__.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/__init__.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/basecompare.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/basecompare.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/check.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/check.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/cli.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/cli.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/cliargs.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/cliargs.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/compat.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/compat.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/config.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/config.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/context.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/context.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/contextrender.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/contextrender.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/digest.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/digest.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/doctor.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/doctor.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/document.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/document.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/earsai/__init__.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/earsai/__init__.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/earsai/ir.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/earsai/ir.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/earsai/lexer.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/earsai/lexer.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/earsai/parser.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/earsai/parser.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/earsai/scanner.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/earsai/scanner.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/errors.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/errors.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/execfile.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/execfile.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/frontmatter.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/frontmatter.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/gitutil.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/gitutil.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/lex.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/lex.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/messages.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/messages.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/multirelate.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/multirelate.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/multiws.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/multiws.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/notimpl.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/notimpl.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/procrun.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/procrun.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/redact.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/redact.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/relations.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/relations.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/reportio.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/reportio.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/resultmodel.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/resultmodel.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/targetexpand.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/targetexpand.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/textrender.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/textrender.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/textutil.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/textutil.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/verify.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/verify.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/workspace.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/workspace.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/src/bitz/yamlsafe.py",
+      "archivePath": "source/plugins/bitz-core/src/bitz/yamlsafe.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-core/uv.lock",
+      "archivePath": "source/plugins/bitz-core/uv.lock"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/README.md",
+      "archivePath": "source/plugins/bitz-quality/README.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/core-compatibility.json",
+      "archivePath": "source/plugins/bitz-quality/core-compatibility.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/examples/local-change-plan.json",
+      "archivePath": "source/plugins/bitz-quality/examples/local-change-plan.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/examples/missing-evidence-review.json",
+      "archivePath": "source/plugins/bitz-quality/examples/missing-evidence-review.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/plugin.json",
+      "archivePath": "source/plugins/bitz-quality/plugin.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/schemas/core-observation.schema.json",
+      "archivePath": "source/plugins/bitz-quality/schemas/core-observation.schema.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/schemas/quality-plan.schema.json",
+      "archivePath": "source/plugins/bitz-quality/schemas/quality-plan.schema.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/schemas/quality-review.schema.json",
+      "archivePath": "source/plugins/bitz-quality/schemas/quality-review.schema.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/scripts/validate_quality.py",
+      "archivePath": "source/plugins/bitz-quality/scripts/validate_quality.py"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/skills/quality-plan/SKILL.md",
+      "archivePath": "source/plugins/bitz-quality/skills/quality-plan/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md",
+      "archivePath": "source/plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/skills/quality-review/SKILL.md",
+      "archivePath": "source/plugins/bitz-quality/skills/quality-review/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md",
+      "archivePath": "source/plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/README.md",
+      "archivePath": "source/plugins/bitz-sdd/README.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/plugin.json",
+      "archivePath": "source/plugins/bitz-sdd/plugin.json"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-converge/SKILL.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-converge/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-converge/references/completion.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-converge/references/completion.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-converge/references/evidence-record.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-converge/references/evidence-record.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-implement/SKILL.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-implement/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-implement/references/execution.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-implement/references/execution.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-implement/references/handoff.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-plan/SKILL.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-plan/SKILL.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-plan/examples/REQ-001.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-plan/examples/REQ-001.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-plan/examples/TASK-001.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-plan/examples/TASK-001.md"
+    },
+    {
+      "ref": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "path": "plugins/bitz-sdd/skills/sdd-plan/references/planning.md",
+      "archivePath": "source/plugins/bitz-sdd/skills/sdd-plan/references/planning.md"
+    }
+  ]
+}

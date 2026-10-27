@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "subjectCommit": "db9ae9f7fddccd81b6855750102ef0556f287ff1",
+  "archive": "evidence.tar.gz",
+  "sha256": "ee7612ab6a4482fdcde25927b9455c2c8111efa161b54b22a88bbc265ed41788",
+  "members": 246,
+  "files": 141,
+  "uncompressedFileBytes": 316533,
+  "errors": [],
+  "requiredChecksAndIndependentSemantic": {"SI-002": "passed", "SI-008": "passed"},
+  "rootRecheckedReceipts": 2,
+  "rootCheckSI002": {"exitCode": 1, "status": "failed", "diagnostic": "SPEC-TASK-BOUNDARY-001", "snapshotUnchanged": true},
+  "rootContextSI008": {"exitCode": 2, "status": "blocked", "diagnostic": "CTX-STATE-001", "contextDigest": null, "modelChanged": [], "fixtureChanged": [".spec/requirements/REQ-001.md"]},
+  "budgetRecheck": {"output": "固定した一次評価の呼出し上限に到達しました", "thirdBackendCalls": 0, "ledgerUnchanged": true},
+  "primaryWallMsTotal": 134865,
+  "primaryUsageTotals": {"input_tokens": 248888, "cached_input_tokens": 186112, "cache_write_input_tokens": 0, "output_tokens": 1760, "reasoning_output_tokens": 24},
+  "providerCost": null,
+  "reviewUsage": null,
+  "gateDecision": "not-certified"
+}

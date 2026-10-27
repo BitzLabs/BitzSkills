@@ -1,0 +1,327 @@
+{
+  "recordedAt": "2026-10-16T01:15:04.888323+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 28,
+    "evaluationFailed": 2,
+    "independentReserved": 26,
+    "maximumPrimary": 92,
+    "measuredCorrect": 24,
+    "measuredIncorrect": 2,
+    "missingMeasurements": 66,
+    "parentVerified": 26,
+    "pendingSlots": 0,
+    "primaryCompleted": 26,
+    "primaryLaunchMarked": 28,
+    "primaryReserved": 28,
+    "status": "in_progress",
+    "unattemptedSlots": 64
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 28,
+      "evaluationFailed": 2,
+      "independentReserved": 26,
+      "maximumPrimary": 92,
+      "measuredCorrect": 24,
+      "measuredIncorrect": 2,
+      "missingMeasurements": 66,
+      "parentVerified": 26,
+      "pendingSlots": 0,
+      "primaryCompleted": 26,
+      "primaryLaunchMarked": 28,
+      "primaryReserved": 28,
+      "status": "in_progress",
+      "unattemptedSlots": 64
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 20.7375757789996,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "b65d70569e5f0fbfffd41362fd560ab802a1454f6010084f86fc0f62c5746b74",
+    "later29Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage28 with direct new21..28 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25509,
+          "output_tokens": 629,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 23,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18924
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25589,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 24,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 382,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26644,
+          "output_tokens": 542,
+          "reasoning_output_tokens": 43
+        },
+        "ordinal": 25,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19233,
+          "outputTokens": 368,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19601
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26902,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 26,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6144,
+          "inputTokens": 19233,
+          "outputTokens": 401,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19634
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25728,
+          "output_tokens": 695,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 27,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18679,
+          "outputTokens": 399,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19078
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25736,
+          "output_tokens": 608,
+          "reasoning_output_tokens": 33
+        },
+        "ordinal": 28,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 12416,
+          "inputTokens": 18679,
+          "outputTokens": 425,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19104
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 609,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786,
+      78.76884007400076,
+      60.00115757800086,
+      60.00058168000032,
+      60.0001286839979,
+      82.28957645600167,
+      60.00063617699925,
+      60.00009891300215,
+      60.000376017000235,
+      84.31695708999905,
+      60.00078728099834,
+      60.00011558800179,
+      60.00308058899827
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_28_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "c0bbd397f6c6c0b0c6ab14e7582143e2f4cb2ab8118914c9b1f21851708942d6",
+    "inventorySha256": "b65d70569e5f0fbfffd41362fd560ab802a1454f6010084f86fc0f62c5746b74",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 609
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 51,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 24,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.4073516649987141,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T01:14:24.416304+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792096410,
+        "usedPercent": 51,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 24,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-progress28-20261016.tar.gz",
+    "sha256": "c5dc7cdaf03c870a382331d4b69fb3b92f9b10caa457e8c228d03d7750635c4c",
+    "bytes": 49039,
+    "regularMembers": 14,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

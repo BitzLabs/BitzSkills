@@ -1,0 +1,354 @@
+{
+  "status": "interrupted_provider_usage_limit_permanent_stop",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "ordinal": 9,
+  "slot": {
+    "caseId": "SP-006",
+    "variant": "skill",
+    "repetition": 1
+  },
+  "evaluationRunId": "93d0b4a4-6b49-4587-9ec4-f223f64ceeb4",
+  "primaryConsumed": 9,
+  "primaryCompleted": 8,
+  "semanticConsumed": 8,
+  "parentVerified": 8,
+  "process": {
+    "exitCode": 1,
+    "error": null,
+    "seconds": 16.950198461068794,
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "slot": {
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "ordinal": 9,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "21afc75d5d1d1eca592a147aa1e6e243204cc391e786f304292bfd9d2d941d41",
+    "cleanAfter": true,
+    "gateDecision": "not-certified",
+    "ledgerSha256": "3c18e36e539626f74a21c2782ca99342d5a3a67ad6d8b003f95d02bcb9f6c8c9",
+    "attemptCount": 9,
+    "attempts": [
+      {
+        "slot": {
+          "caseId": "SI-009",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "69b0a939-f092-41e2-8030-fb4f7f7aaada",
+        "status": "completed",
+        "runSha256": "a9090793c76d2e3c69e4f0afb346cb3d65bf8eb9f655e0fc9ed88a1f4cc49156"
+      },
+      {
+        "slot": {
+          "caseId": "SI-009",
+          "variant": "baseline",
+          "repetition": 1
+        },
+        "evaluationRunId": "6c993b5a-15f8-4603-87f5-ac2617a5e29c",
+        "status": "completed",
+        "runSha256": "4ba86fdc7a17cc1a971c5aa63f0f7459948c4f564113dca702d1e9d04a5d81af"
+      },
+      {
+        "slot": {
+          "caseId": "SP-001",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "dc70343b-9505-4be9-8cce-76ccea9d29ab",
+        "status": "completed",
+        "runSha256": "eba107c2cd77b9c495b471dceb67a9b64a2e00d853b0d5792e25290936c3b87c"
+      },
+      {
+        "slot": {
+          "caseId": "SI-010",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "b0fa6b22-4d76-47c8-b945-86bf7abc51eb",
+        "status": "completed",
+        "runSha256": "bf588bbb8aebb9de155587f0300d8c927866c4d28d073b32fb8cdb7b28bfa1a6"
+      },
+      {
+        "slot": {
+          "caseId": "SP-002",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "d02da472-d962-47c8-9959-77f3dd03c3fe",
+        "status": "completed",
+        "runSha256": "582e821122b54c243951ce47ce4c3dc4d348591ed1b06eee70d0af447b4debf5"
+      },
+      {
+        "slot": {
+          "caseId": "SP-003",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "8fae3e0a-b884-471e-ab3e-63a76ad14723",
+        "status": "completed",
+        "runSha256": "583f82cc1b2fbe396fb0d8247d50a2ded8a835104aa9791086fdbdd5af59577e"
+      },
+      {
+        "slot": {
+          "caseId": "SP-004",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "774ad46d-56d6-46fe-a096-cbedb36e29c7",
+        "status": "completed",
+        "runSha256": "4beb58aa63ca5db0a2946036ed1381047d4b8f92016867f1bd991b1b658cd5d2"
+      },
+      {
+        "slot": {
+          "caseId": "SP-005",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "89dfc6d4-cea4-4f69-8196-c4e45cfbb653",
+        "status": "completed",
+        "runSha256": "6b6083bdc5064cb82c46036dfdaed66d547dcbea8eaab7ecc097301afa9382fb"
+      },
+      {
+        "slot": {
+          "caseId": "SP-006",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "93d0b4a4-6b49-4587-9ec4-f223f64ceeb4",
+        "status": "interrupted",
+        "errorType": "ValueError"
+      }
+    ],
+    "artifacts": {
+      "failure.json": "6b6af2e77329b57e557f13a9d14f619d8f55d5142426ec04ad6eed024a205e58",
+      "trace.jsonl": "f5acac6db9ef3a956e351afd05ba21f26d8668ad96e03d7d8457277c33dbe913",
+      "host.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "control.json": "e33b8e6b8bcf91fb5cf68a150e5089d490c3843d30d2fff6adb6b25841577e89",
+      "stderr.log": "26c53ad04a77a1e7e916f511884db89e5f2d53816798ac363b9a0c7d6509178b",
+      "prompt.txt": "9c32303df83df39780f051b8f2861bd4e0a62f2948a0a1253ed3bd7edb22eb03",
+      "invocation.json": "645f54868f220f8ae46ee30cfb146d240802b6f027be8c3e119613bbb38e16b9"
+    },
+    "postVerificationErrors": {}
+  },
+  "failure": {
+    "schemaVersion": "1.0",
+    "status": "interrupted",
+    "identity": {
+      "setVersion": "sdd-0.1.5",
+      "executionVersion": "sdd-execution-0.1.5",
+      "subjectCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+      "sourceSha256": "5212aa53389524abd447758d7a2e96f6f08bf4330781282fa68a7d67e70855e5",
+      "caseSha256": "87f9a8ca4384cdf9e35a78004173cb67a085984de3a2e24bb62b477d013f1893",
+      "caseId": "SP-006",
+      "variant": "skill",
+      "repetition": 1,
+      "model": "gpt-6.1-sol",
+      "modelVersion": "unversioned-alias-observed-2026-10-13",
+      "pythonpath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/src:/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/.venv/lib/python3.12/site-packages:/usr/lib/python3/dist-packages"
+    },
+    "errorType": "NonzeroExit",
+    "exitCode": 1,
+    "errno": null,
+    "wallMs": 6811,
+    "invocation": {
+      "argv": [
+        "codex",
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--ignore-rules",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/workspace",
+        "--model",
+        "gpt-6.1-sol",
+        "--output-schema",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/decision.schema.json",
+        "--output-last-message",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/decision.json",
+        "-c",
+        "web_search=\"disabled\"",
+        "-c",
+        "approval_policy=\"never\"",
+        "-c",
+        "apps._default.enabled=false",
+        "-c",
+        "suppress_unstable_features_warning=true",
+        "-c",
+        "log_dir=\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/logs\"",
+        "-c",
+        "sqlite_home=\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/state\"",
+        "-c",
+        "mcp_servers.sdd_eval.command=\"/usr/bin/python3\"",
+        "-c",
+        "mcp_servers.sdd_eval.args=[\"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/evaluate.py\", \"serve\", \"--workspace\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/workspace\", \"--control\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/control.json\", \"--log\", \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/host.jsonl\"]",
+        "-c",
+        "mcp_servers.sdd_eval.required=true",
+        "-c",
+        "mcp_servers.sdd_eval.default_tools_approval_mode=\"approve\"",
+        "-c",
+        "features.shell_tool=false",
+        "-c",
+        "features.unified_exec=false",
+        "-c",
+        "features.shell_snapshot=false",
+        "-c",
+        "features.apply_patch_freeform=false",
+        "-c",
+        "features.apps=false",
+        "-c",
+        "features.enable_mcp_apps=false",
+        "-c",
+        "features.plugins=false",
+        "-c",
+        "features.remote_plugin=false",
+        "-c",
+        "features.tool_suggest=false",
+        "-c",
+        "features.skill_search=false",
+        "-c",
+        "features.skill_mcp_dependency_install=false",
+        "-c",
+        "features.browser_use=false",
+        "-c",
+        "features.browser_use_external=false",
+        "-c",
+        "features.browser_use_full_cdp_access=false",
+        "-c",
+        "features.in_app_browser=false",
+        "-c",
+        "features.in_app_chat=false",
+        "-c",
+        "features.in_app_local_automation=false",
+        "-c",
+        "features.computer_use=false",
+        "-c",
+        "features.image_generation=false",
+        "-c",
+        "features.view_image=false",
+        "-c",
+        "features.code_mode=false",
+        "-c",
+        "features.multi_agent=false",
+        "-c",
+        "features.goals=false",
+        "-c",
+        "features.sleep_tool=false",
+        "-c",
+        "features.tool_call_mcp_elicitation=false",
+        "-c",
+        "features.skip_host_skill_discovery=true",
+        "-c",
+        "features.code_mode_host=true",
+        "-"
+      ],
+      "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/workspace",
+      "timeoutSeconds": 240,
+      "stateDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/state",
+      "logDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/sdd-plan-implement-matrix-20261013-08/skill/repetition-1/SP-006/logs"
+    },
+    "changes": {
+      "before": {
+        "outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+        "tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+        "src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+        ".spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+        ".codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+        ".codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+        ".codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+        ".codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+        ".codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+        ".codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+        ".codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+        ".codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+        ".codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+        ".spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+        ".spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b"
+      },
+      "after": {
+        "outside.py": "1a87850e5301a28a3163e91f5ae6e512fd6f7786e01ede6ec2889d6dee5941da",
+        "tests/test_input.py": "9e3901f82bded3d7edfb51f0d30301226ca3b9ccb97570d56d8148b484bb4cd5",
+        "src/input.py": "d94ac8b8927f0c0cdc647ed990ec400f378d2393bd23586b873667046a3c9305",
+        ".spec/bitz.yaml": "c5e94c6b023d01562afda1071bcb6d5bb98dcd922333b7ae3de1abf1d74bca70",
+        ".codex/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+        ".codex/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+        ".codex/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+        ".codex/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+        ".codex/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+        ".codex/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+        ".codex/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+        ".codex/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+        ".codex/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+        ".spec/tasks/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+        ".spec/requirements/REQ-001.md": "860687819b11d7c2a02f541a8d89c8419bb5de967662a2e5b0cce1d3bafc171b"
+      },
+      "changedPaths": [],
+      "afterObtained": true,
+      "snapshotError": null
+    },
+    "artifacts": {
+      "trace.jsonl": "f5acac6db9ef3a956e351afd05ba21f26d8668ad96e03d7d8457277c33dbe913",
+      "host.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr.log": "26c53ad04a77a1e7e916f511884db89e5f2d53816798ac363b9a0c7d6509178b",
+      "decision.json": null,
+      "changes.json": null,
+      "control.json": "e33b8e6b8bcf91fb5cf68a150e5089d490c3843d30d2fff6adb6b25841577e89",
+      "prompt.txt": "9c32303df83df39780f051b8f2861bd4e0a62f2948a0a1253ed3bd7edb22eb03",
+      "invocation.json": "645f54868f220f8ae46ee30cfb146d240802b6f027be8c3e119613bbb38e16b9"
+    },
+    "artifactReadErrors": {},
+    "missingArtifacts": [
+      "decision.json",
+      "changes.json"
+    ],
+    "providerUsage": null,
+    "providerCost": null,
+    "nativeOutputsObtained": true,
+    "nativeOutputAvailability": {
+      "stdout": true,
+      "stderr": true
+    },
+    "outputSaveErrors": [],
+    "unsavedOutputs": {},
+    "semantic": "not-measured",
+    "gateDecision": "not-certified"
+  },
+  "permanentStop": {
+    "status": "permanent_stop_saved_before_next_reservation_or_model",
+    "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+    "primaryConsumed": 9,
+    "primaryCompleted": 8,
+    "semanticConsumed": 8,
+    "parentVerified": 8,
+    "modelsStartedByStopProof": 0,
+    "newReservationsByStopProof": 0,
+    "seconds": 9.723317296011373,
+    "rejection": "失敗・中断済み測定を自動再開しません",
+    "stop": {
+      "reason": "previous-evidence-or-review-rejected",
+      "slot": {
+        "caseId": "SP-006",
+        "variant": "skill",
+        "repetition": 1
+      },
+      "errorType": "ValueError",
+      "runSha256": null,
+      "independentReceiptSha256": null
+    },
+    "ledgerBeforeSha256": "3c18e36e539626f74a21c2782ca99342d5a3a67ad6d8b003f95d02bcb9f6c8c9",
+    "ledgerAfterSha256": "34faebd9f01104c31b17a36b61fea331dbee1c711c95b68c9908bf59214a2d72",
+    "certifiesSkillGate": false
+  },
+  "semanticForThisAttempt": "not-started",
+  "automaticRetries": 0,
+  "nextSlot": "not-started",
+  "workspaceUnchanged": true,
+  "providerUsage": null,
+  "providerCost": null,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

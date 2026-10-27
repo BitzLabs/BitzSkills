@@ -1,0 +1,21 @@
+{
+  "status": "mechanical_checks_passed",
+  "contractSha256": "e254d1dd5a67615df222d5203058d08910b5cb4ffb15300edcbd183cdcf28907",
+  "heldOut": {
+    "setVersion": "production-routing-held-out-0.1.0",
+    "caseCount": 12,
+    "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7"
+  },
+  "categoryCounts": {
+    "contextual": 2,
+    "explicit": 2,
+    "implicit": 2,
+    "negative": 3,
+    "safety": 3
+  },
+  "capabilityCount": 6,
+  "positiveCases": 6,
+  "negativeOrStopCases": 6,
+  "primaryModelTrajectories": 0,
+  "certifiesSkillGate": false
+}

@@ -1,0 +1,57 @@
+{
+  "status": "stopped",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "updatedAt": "2026-10-13T07:02:25.636116+09:00",
+  "batchId": "plan-implement-matrix-20261012-07",
+  "maximumPrimary": 68,
+  "maximumSemantic": 68,
+  "preparationConsumed": 1,
+  "primaryConsumed": 17,
+  "primaryCompleted": 16,
+  "semanticConsumed": 16,
+  "semanticPassed": 16,
+  "parentVerified": 16,
+  "latestVerified": {
+    "caseId": "SI-008",
+    "repetition": 1,
+    "variant": "skill"
+  },
+  "primaryLedgerSha256": "151ce979fb089d66c1f42a9f2ce941de02d6380e699996149a2ea1632da3b46a",
+  "stop": {
+    "reason": "previous-evidence-or-review-rejected",
+    "slot": {
+      "caseId": "SI-009",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "errorType": "ValueError",
+    "runSha256": "a4e5c7dd6654f4278931dc21a93ccaa5cc9fbf67ed17b0638e4da69cfe7dfeeb",
+    "independentReceiptSha256": null
+  },
+  "primaryUsage": {
+    "availableUsageRecords": 17,
+    "totalsOfAvailableRecords": {
+      "input_tokens": 1743889,
+      "cached_input_tokens": 1361792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 15532,
+      "reasoning_output_tokens": 410
+    },
+    "providerCost": null
+  },
+  "semanticUsage": {
+    "availableUsageRecords": 16,
+    "totalsOfAvailableRecords": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 12032,
+      "input_tokens": 720179,
+      "output_tokens": 10612,
+      "reasoning_output_tokens": 529
+    },
+    "providerCost": null
+  },
+  "oldConditions01To05": "each_preparation1_primary0_stopped_preserved",
+  "oldCondition06": "preparation1_primary2_semantic1_permanent_stop_preserved",
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

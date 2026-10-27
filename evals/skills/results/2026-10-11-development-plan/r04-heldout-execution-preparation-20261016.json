@@ -1,0 +1,66 @@
+{
+  "status": "frozen_product_baseline_fix_pending_independent_review",
+  "sourceCommit": "e480e89beca2e44586aaec1dd8df7cb0ab15f14e",
+  "scope": "heldout_typed_execution_and_resource_binding_only",
+  "originalIndependentReview": {
+    "blockingP2": 1,
+    "relatedTests": 60,
+    "adversarialTests": 10,
+    "baselineRegressionFailed": true,
+    "reportSha256": "d4eb9bc9b3f0fc1c67f632a46a5d2792e416733150a4288cb9ab23c576484e7f",
+    "inventorySha256": "5049f5efe19dc0735e75ea3f2efff433eb3754f5830b3965eaf2ccf9d13c8f02",
+    "parentOriginalHashesMatched": 74
+  },
+  "originalFullRegression": {
+    "count": 948,
+    "seconds": 134.351,
+    "exitCode": 0,
+    "cleanBeforeAfter": true,
+    "stderrSha256": "f31e9392e822fe18c3871f4ee292cf1192747a31581fce7b9cd2ba41aee7ae73"
+  },
+  "originalRealResourcePreparation": {
+    "caseCount": 12,
+    "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+    "certifiesHeldoutLaunch": false,
+    "contextDate": "2026-10-16",
+    "deploymentSha256": "abc28c7c11350cd79d90e99f91f6c2019978643c83567d98998f6b17092ffede",
+    "executionSha256": "46d43549e017d37858603a512d1a7bf89ac83d3dd543aef0878386d50add607b",
+    "inputContractSha256": "ffc84f5956ce8aa640e1bfa14ddcc00624add26433228509ab04a2bf59edae69",
+    "ledgerContractSha256": "cbf028027977619744fb93c91471d4cd8fc6cec084a86c26560f5bd0adf11f73",
+    "models": 0,
+    "plannedIndependent": 24,
+    "plannedPrimary": 24,
+    "privateCaseContentsDisplayed": false,
+    "privateCaseContentsSaved": false,
+    "realPrivateStorageWrites": 0,
+    "repetitions": 2,
+    "reservations": 0,
+    "resourceProofSha256": "3a3ee878387bf555f51c111aaf03d0242d259390096b686ab86cf234996eb833",
+    "sdkFileCount": 207,
+    "snapshotResourceCount": 72,
+    "sourceCommit": "e480e89beca2e44586aaec1dd8df7cb0ab15f14e",
+    "sourceFileCount": 48,
+    "status": "heldout_resource_preparation_verified_not_launchable"
+  },
+  "remediation": {
+    "change": "compare complete product inventory and every snapshot byte to both new source and fixed public92 product source b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "relatedTests": 61,
+    "seconds": 2.665,
+    "exitCode": 0,
+    "independentClosurePending": true
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "privateContentsPublished": false,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-execution-initial-review-20261016.tar.gz",
+    "sha256": "012909484786a0c9db6762d9b5eb378412f1636e48254f3401a1f3c066c089a4",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

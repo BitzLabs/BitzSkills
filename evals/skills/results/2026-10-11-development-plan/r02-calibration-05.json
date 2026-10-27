@@ -1,0 +1,243 @@
+{
+  "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+  "exitCode": 0,
+  "seconds": 3.57244445302058,
+  "cleanAfter": true,
+  "stdoutSha256": "71dc317161caaf7b17c1f568088ec20f63681d00bd6b4c5a5d710a4a25cd4dfd",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "receipt": {
+    "eligibleForMeasurement": false,
+    "exitCode": 0,
+    "localResult": {
+      "credentialsHidden": true,
+      "errorType": null,
+      "errors": [],
+      "localRequests": 1,
+      "networkNamespaceIsolated": true,
+      "paidModelCalls": 0
+    },
+    "paidModelCalls": 0,
+    "primaryModelTrajectories": 0,
+    "runtimeGuards": {
+      "after": {
+        "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+        "files": 50,
+        "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "status": "fixed_runtime_bytes_match"
+      },
+      "before": {
+        "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+        "files": 50,
+        "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "status": "fixed_runtime_bytes_match"
+      },
+      "invoke": {
+        "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+        "files": 50,
+        "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "status": "fixed_runtime_bytes_match"
+      }
+    },
+    "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+    "sourceGuards": {
+      "after": {
+        "headIsCondition": false,
+        "observedHead": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+        "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+        "sourceSha256": {
+          "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+          "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+          "evals/skills/routing/production-canary-calibration-v0.1.json": "e48c25cd5864c351f6a5129cbcf9674552cefd56155157c0e5722d010dd8b495",
+          "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+          "evals/skills/routing/production-canary-context-v0.1.json": "78485e34aca006daefacef764799c91d5359885f1e75942ef2360f22dd1d427a",
+          "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+          "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+          "evals/skills/routing/production-canary-score-v0.1.json": "20d3151ab0fb692e000975434b7c72cdaf220d8aa41b15c3387f0600835b2232",
+          "evals/skills/routing/production-canary-score.schema.json": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+          "evals/skills/routing/production-canary-v0.1.json": "7738a4b6e5ae3d2a206ffec09b4d9ed93ac05c734c2ded93a1e0fc5ea1313a2e",
+          "evals/skills/routing/production_canary_calibration.py": "43634580646fdf79ae584f3b57575c8eab2857d21a38c963dde47f3842449806",
+          "evals/skills/routing/production_canary_campaign.py": "11102453d83961d2f3ddc949f09879f85a67ae56ab5534e6bf9750cd94dffc22",
+          "evals/skills/routing/production_canary_capture.py": "134d4f8c6fa1ee59b756b24e460b109699f3b7279e693f18916f002a939516ea",
+          "evals/skills/routing/production_canary_context_probe.py": "0e3d48af70cdf4514f2cd3b1a719f0e104e6ce5838f9235f18dff5629c307b07",
+          "evals/skills/routing/production_canary_evidence.py": "2b395b569101f79fea6f2e2c575ca9d1e1a9fdc037cf32ae300cfcd6c2c9b8ba",
+          "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+          "evals/skills/routing/production_canary_review.py": "fde90ff1995592c0eecdd38d75a5268f35507313dde58ecf24eda63804706091",
+          "evals/skills/routing/production_canary_rollout.py": "1978a6ef6d622209b805b313a1aa103b6156d742738760c2b018566db1c4e4ad",
+          "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+          "evals/skills/routing/production_canary_score.py": "8f133b083afcbc3fd81e3718bd6354b358d1d226c0c753f788cb748c94446345",
+          "evals/skills/routing/production_canary_trace.py": "8d8c2922105434db0dd72516bcbfad2002157986b970aa045cb38889fde767c2",
+          "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+          "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+          "evals/skills/routing/production_ledger.py": "75b19cdf88aa052d06cf1ef22ad6bdd77ae4a2f4ccc6206ad16137d5f66755f5",
+          "evals/skills/routing/production_sdk_probe.py": "236f43a438fe30d63ef81b1705cfe836d0cc4a778a2c02b7b187c2c423673f91",
+          "evals/skills/routing/production_sdk_trace.py": "6ba65facdeec7086303915844e86b39f44802b501270b6d4f40c6db9300a36c0",
+          "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+          "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+          "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+          "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+          "tests/skills/test_production_canary_calibration.py": "552af4dc5c2a0f1ad907f2d053ce16a1db0b2dbb24901e67950a935ce467b22a",
+          "tests/skills/test_production_canary_campaign.py": "a4ebd6bcf0e2d2871fa62a46729842067eb7499b46c6c929925fde14647fa95b",
+          "tests/skills/test_production_canary_capture.py": "e0fbc3d84f1e05ef06ba2f180949294df78d85d82e113fdd42bc2b516bd02557",
+          "tests/skills/test_production_canary_runtime.py": "c20c45fce3a7a717738df128b15e148bf4a7bb6f0299848039bf781081ff992d",
+          "tests/skills/test_production_canary_score.py": "56a91a763cc9d0beb3164a0a65cc79c85dfb3c50fa9d165f3b5e9128ae569fec",
+          "tests/skills/test_production_source_integration.py": "a669c87af3b6b8d173d84fdfe2738c83dec53b2447a2894c64987ca4f5d9d599"
+        },
+        "status": "fixed_source_matches"
+      },
+      "before": {
+        "headIsCondition": false,
+        "observedHead": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+        "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+        "sourceSha256": {
+          "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+          "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+          "evals/skills/routing/production-canary-calibration-v0.1.json": "e48c25cd5864c351f6a5129cbcf9674552cefd56155157c0e5722d010dd8b495",
+          "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+          "evals/skills/routing/production-canary-context-v0.1.json": "78485e34aca006daefacef764799c91d5359885f1e75942ef2360f22dd1d427a",
+          "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+          "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+          "evals/skills/routing/production-canary-score-v0.1.json": "20d3151ab0fb692e000975434b7c72cdaf220d8aa41b15c3387f0600835b2232",
+          "evals/skills/routing/production-canary-score.schema.json": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+          "evals/skills/routing/production-canary-v0.1.json": "7738a4b6e5ae3d2a206ffec09b4d9ed93ac05c734c2ded93a1e0fc5ea1313a2e",
+          "evals/skills/routing/production_canary_calibration.py": "43634580646fdf79ae584f3b57575c8eab2857d21a38c963dde47f3842449806",
+          "evals/skills/routing/production_canary_campaign.py": "11102453d83961d2f3ddc949f09879f85a67ae56ab5534e6bf9750cd94dffc22",
+          "evals/skills/routing/production_canary_capture.py": "134d4f8c6fa1ee59b756b24e460b109699f3b7279e693f18916f002a939516ea",
+          "evals/skills/routing/production_canary_context_probe.py": "0e3d48af70cdf4514f2cd3b1a719f0e104e6ce5838f9235f18dff5629c307b07",
+          "evals/skills/routing/production_canary_evidence.py": "2b395b569101f79fea6f2e2c575ca9d1e1a9fdc037cf32ae300cfcd6c2c9b8ba",
+          "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+          "evals/skills/routing/production_canary_review.py": "fde90ff1995592c0eecdd38d75a5268f35507313dde58ecf24eda63804706091",
+          "evals/skills/routing/production_canary_rollout.py": "1978a6ef6d622209b805b313a1aa103b6156d742738760c2b018566db1c4e4ad",
+          "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+          "evals/skills/routing/production_canary_score.py": "8f133b083afcbc3fd81e3718bd6354b358d1d226c0c753f788cb748c94446345",
+          "evals/skills/routing/production_canary_trace.py": "8d8c2922105434db0dd72516bcbfad2002157986b970aa045cb38889fde767c2",
+          "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+          "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+          "evals/skills/routing/production_ledger.py": "75b19cdf88aa052d06cf1ef22ad6bdd77ae4a2f4ccc6206ad16137d5f66755f5",
+          "evals/skills/routing/production_sdk_probe.py": "236f43a438fe30d63ef81b1705cfe836d0cc4a778a2c02b7b187c2c423673f91",
+          "evals/skills/routing/production_sdk_trace.py": "6ba65facdeec7086303915844e86b39f44802b501270b6d4f40c6db9300a36c0",
+          "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+          "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+          "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+          "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+          "tests/skills/test_production_canary_calibration.py": "552af4dc5c2a0f1ad907f2d053ce16a1db0b2dbb24901e67950a935ce467b22a",
+          "tests/skills/test_production_canary_campaign.py": "a4ebd6bcf0e2d2871fa62a46729842067eb7499b46c6c929925fde14647fa95b",
+          "tests/skills/test_production_canary_capture.py": "e0fbc3d84f1e05ef06ba2f180949294df78d85d82e113fdd42bc2b516bd02557",
+          "tests/skills/test_production_canary_runtime.py": "c20c45fce3a7a717738df128b15e148bf4a7bb6f0299848039bf781081ff992d",
+          "tests/skills/test_production_canary_score.py": "56a91a763cc9d0beb3164a0a65cc79c85dfb3c50fa9d165f3b5e9128ae569fec",
+          "tests/skills/test_production_source_integration.py": "a669c87af3b6b8d173d84fdfe2738c83dec53b2447a2894c64987ca4f5d9d599"
+        },
+        "status": "fixed_source_matches"
+      }
+    },
+    "status": "local_primary_context_captured",
+    "timedOut": false
+  },
+  "manifest": {
+    "version": "primary-client-calibration-originals-0.1.2",
+    "sourceCommit": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+    "artifactSha256": {
+      "config.json": "92815a80dab3c2eddd8123f9c00cb69602c1f53010b80038621175937b713f13",
+      "contract.json": "3f43ab3127a1e85170cd541c81873def9d44eca88e88d5520442846e997171c2",
+      "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+      "invocation.json": "3fdb500263882854ffd2baef523172af7b09c8ff1e2afe2862bc7835987b31b9",
+      "isolated-result.json": "ee1f95b3d363cb73ae1a2ebc73b0c98d97a55d69084c8367b6bf2095ee473d8a",
+      "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+      "receipt.json": "ce404c07894e7b23d7f24a0e6103c8aad8e764cf06e393750eab9879883a2fc1",
+      "request-1.json": "2e6b3cea6cd68c8bab93b9902e1d251f2d52db13f0a83dc4d7f36f28bc62ff24",
+      "rpc-in.jsonl": "efffc3a558f64cbf03bd12c449bd51f9f63a84dc937863282732b31f789304ec",
+      "rpc-out.jsonl": "098761d2ac7d3d751053a554daded9e18f3642898b826a038805cf559d39bec1",
+      "runtime-result.json": "28b5c6f075b67543cac8b1d207294f74cf54d959b1c83ae23cec2f4b4480dacd",
+      "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
+    }
+  },
+  "context": {
+    "version": "primary-client-context-0.1.0",
+    "calibrationSource": "5d86fc92a6bc3883ebf1112770366aa586bd8c4e",
+    "calibrationRequestSha256": "2e6b3cea6cd68c8bab93b9902e1d251f2d52db13f0a83dc4d7f36f28bc62ff24",
+    "calibrationReceiptSha256": "ce404c07894e7b23d7f24a0e6103c8aad8e764cf06e393750eab9879883a2fc1",
+    "sdkVersion": "0.160.1",
+    "codexVersion": "codex-cli 0.160.1",
+    "date": "2026-10-12",
+    "toolsValueSha256": "d3ba928b8cb4b51fa55b403a74ec96eac5b967d9d9b257485d2eb203ec404316",
+    "supplementValueSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d",
+    "primaryModelTrajectories": 0,
+    "paidModelCalls": 0,
+    "certifiesProviderWireBodies": false,
+    "certifiesSkillGate": false,
+    "limitations": [
+      "Four bundled system skills are explicitly disabled. The fixed CLI exec helper declaration is hashed in full; calls outside the read-only host and exec/wait are forbidden and stop the canary.",
+      "Loopback scripted response calibrates client context only; it is not primary evidence, actual-provider behavior or usage certification."
+    ],
+    "supplementBlockCount": 2,
+    "systemSkillsDisabled": true
+  },
+  "fixedInputRef": "7a9fc8d5dcc41d19f6e47e4ef210d643d242e518",
+  "independentReviewPending": true,
+  "fullSkillTests": {
+    "sourceCommit": "7a9fc8d5dcc41d19f6e47e4ef210d643d242e518",
+    "exitCode": 0,
+    "seconds": 71.89100820198655,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "1c26e3379d930e5ccd24a9a72648913c40bfa1ea96d0db4d1c2231d8702cd246",
+    "testCount": 648,
+    "testSeconds": 71.471
+  },
+  "audit": {
+    "summary": {
+      "sourceCommit": "7a9fc8d5dcc41d19f6e47e4ef210d643d242e518",
+      "exitCode": 0,
+      "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "initialWrongSubcommandAttemptPreservedInToolHistory": true
+    },
+    "report": {
+      "capabilityModes": {
+        "bitz-core": [
+          "do-not-use",
+          "stop",
+          "use"
+        ],
+        "quality-plan": [
+          "do-not-use",
+          "stop",
+          "use"
+        ],
+        "quality-review": [
+          "do-not-use",
+          "stop",
+          "use"
+        ],
+        "sdd-converge": [
+          "do-not-use",
+          "stop",
+          "use"
+        ],
+        "sdd-implement": [
+          "do-not-use",
+          "stop",
+          "use"
+        ],
+        "sdd-plan": [
+          "do-not-use",
+          "stop",
+          "use"
+        ]
+      },
+      "cases": 46,
+      "categories": {
+        "behavior": 6,
+        "conflict": 6,
+        "contextual": 6,
+        "explicit": 6,
+        "implicit": 6,
+        "negative": 10,
+        "safety": 6
+      },
+      "errors": [],
+      "evaluationSetVersion": "0.7.2",
+      "schemas": 7,
+      "status": "Passed"
+    }
+  }
+}

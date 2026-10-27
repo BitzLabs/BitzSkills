@@ -1,0 +1,52 @@
+{
+  "status": "artifact_source_bindings_verified",
+  "sourceCommit": "f760649f44a3d7bb2bd723181e3ab155b81d4140",
+  "sourceFileCount": 12,
+  "inputFileCount": 7,
+  "candidateResourceCount": 71,
+  "privateArtifactsVerified": 14,
+  "creatorFilesUnchanged": 8,
+  "oldCollectionArtifactBindingsVerified": 13,
+  "oldCollectionFileCount": 13,
+  "excludedCollectionsUnchanged": 2,
+  "privateArtifactSha256": {
+    "cases.json": "17327fa66c83ec69d2357dea9279923bb2207ce4a4e11256fb435c864013add8",
+    "creation-audit.json": "508bd1f86b82dbafd35f14a94e970bf28e7b2d540bdaba959f595951bc0840a8",
+    "creation-notes.md": "9285488431e6d1ec29319935ef87aeb7837671012f932152418115735bd194a7",
+    "creation-receipt.json": "45a1f209c5467c7a9c108a09f5fe33b2dd3174b11a91555013a817066aaa0ed4",
+    "evidence.json": "f2acdf3aae1bcedb3a8d7bc978104979051e1a34e64170d5ebfee408c58448c2",
+    "retention.json": "3a9007b4c1925cefe4b213426895a7ef79ffd520eceb5f5a799f22bebffc18fa",
+    "source-guard-presave.json": "80d511bd25d80d7cfa63a3e0f863d9b200e39cde1c6849ca984d93524b895118",
+    "source-guard-start.json": "80d511bd25d80d7cfa63a3e0f863d9b200e39cde1c6849ca984d93524b895118",
+    "independent-review.md": "cd3364b0d3f6cc03c25f1a17a6af76178edb3b37a9efd130429fa92289ffb078",
+    "independent-receipt.json": "67a1bde0bcf479b16ccfba02b775bdaff27dfdf05c43f2bcc9ed3d69d7869937",
+    "independent-audit.json": "887f78254107b8a73ec076e83b926b7e6041c6c44e6e63d6ef1d149ba295664b",
+    "independent-audit.log": "dc1fcb3131fd7bf333b5b0327b1507881c99c9b2cf9a6ed44bdabe0218dd561a",
+    "independent-source-guard.json": "bed9e01b1c4f18ecf75cc802ab0a5893827fa135678d47d7aee8b6343b0d3ee0",
+    "independent-invocation-error.json": "a35b284bc47c862766429f3852234cc2c32e26832d66768448253a8e58726d49"
+  },
+  "sourceSha256": {
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/routing/audit_held_out.py": "84a881f82cf02cc6c6c658c3f3160bce526b4d097f063e84cdd154fc8c6c0aa6",
+    "evals/skills/routing/audit_remediated_held_out.py": "442cc4111b7b538d9b3e7ac4ab1e61b54c0f27695f941c84e93ef36dc9cb8d8f",
+    "evals/skills/routing/held-out-collection-v0.4.json": "240b26eea12bff2a37518edc9698260eeb7765ff987bdfdbf4a150dd29f09f20",
+    "evals/skills/routing/remediation-evidence.schema.json": "9bf7675e7c2a301a93dd530315209cded0183686d4bda5241711a7af4197d795",
+    "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c",
+    "tests/skills/test_held_out_remediation.py": "b2810ef802e39def50c51e1a729fa5195a7f7c96dba6d4613359835d685fdc3f"
+  },
+  "nativeGuardCount": 5,
+  "reportCaseCoverage": 12,
+  "semanticDecisionAdoptedFromIndependentReceipt": true,
+  "severityCounts": {
+    "P1": 0,
+    "P2": 1
+  },
+  "affectedCaseCount": 1,
+  "semanticStatus": "stopped_on_p2",
+  "certifiesSkillGate": false
+}

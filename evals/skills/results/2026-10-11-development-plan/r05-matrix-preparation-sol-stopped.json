@@ -1,0 +1,109 @@
+{
+  "status": "preparation_P2_stopped_primary_zero",
+  "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+  "receipt": {
+    "acceptedStartupWarningHashes": [
+      "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+    ],
+    "actualInvocations": 1,
+    "artifactSha256": {
+      "config.json": "45064b338f6550f4b81642c9d24d729bc54947e00b1e464fb0bab51e20a89eec",
+      "contract.json": "31ad8910df064601d85d852b7fc786eff67ddef652c8379db028c2b09842217f",
+      "invocation.json": "dddde7cd703199a46bb93c9aa2c2840774ed726ed4c6ad7a5be580a17ee8d055",
+      "prompt.txt": "8e1d101976d1ae323c36eb95cd002a759eabb49e115272b868609f8041067c96",
+      "reservation.json": "9c6ad83c2cb6b6808bccb6cee6e35f565634909a2e209efb90d02366ba1259cb",
+      "response.json": "81dac24a3e2f76f0f0b6d63972cc107fd8f3580349d78f0962a91cab108c9bff",
+      "runner.py": "38a160f31d6f0b3d6311bc160848c43120889832d9e3842bed145e698daf5c03",
+      "schema.json": "286435e24cd0ccfde06e4df803efdf8c0ee81ed4db16974c3817c59263bb75fc",
+      "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "trace.jsonl": "9e9b5491ba429fac5e09b26448df96e74d6370d961d5a4006eb4bb3a7e4677e8"
+    },
+    "automaticRetries": 0,
+    "certifiesBehavior": false,
+    "certifiesSkillGate": false,
+    "consumedReservations": 1,
+    "elapsedSeconds": 52.1601031239843,
+    "error": null,
+    "exitCode": 0,
+    "maximumInvocations": 1,
+    "newPrimaryLedgerExists": false,
+    "predecessorsUnchanged": true,
+    "primaryModelTrajectories": 0,
+    "response": {
+      "findings": [
+        {
+          "line": 360,
+          "message": "Coreの原stdoutは通常のjson.loadsで解析するため、重複キーと非有限数値を拒否しません。trace/hostの外側をparse_jsonで検査しても、文字列として格納されたstdout内部には適用されず、重複statusの末尾値を成功判定へ使用できます。",
+          "path": "evals/skills/sdd/evaluate.py",
+          "priority": "P2",
+          "reproduction": "静的再現例（未実行）: core_resultsへ、tool='run_bitz'、accepted=true、result.stdout='{\"schemaVersion\":\"1.0\",\"operation\":\"check\",\"status\":\"failed\",\"status\":\"passed\",\"extra\":1e999}'のcallを渡す。360行は例外を出さず、status='passed'とextra=Infinityを持つ結果を返す。",
+          "suggestion": "Core stdoutもparse_jsonで解析し、ValueErrorを不正なCore結果として扱ってください。final_task_boundariesの385行とbatch.pyのdoctor解析78行も同じ厳格パーサーへ統一してください。"
+        }
+      ],
+      "scope": "public-sdd-matrix-prelaunch-static-only",
+      "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "verdict": "findings"
+    },
+    "runtimeUnchanged": true,
+    "scope": "public-static-sdd-prelaunch-only",
+    "sourceAfter": {
+      "headIsCondition": false,
+      "observedHead": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "sourceSha256": {
+        "evals/skills/sdd/batch.py": "115a3e3306e0707dc7fa0c86405bac94d05e3c02421ca9e76a00cc665e1e93a7",
+        "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json": "fea89e29f930afb6464039952a137c1589bfaaf10af41906c0c13a438fcb3395",
+        "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+        "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+        "evals/skills/sdd/evaluate.py": "91b2d57d1ee2d9c0c177a1a5e69f36542a5de824185267cf17f8cc756cce38ba",
+        "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+        "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+        "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+        "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+        "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+        "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+        "tests/skills/test_sdd_batch.py": "0187c499e2104be493d2060f21796db03306568a6e65ed629e68a08bf71c8852",
+        "tests/skills/test_sdd_native_completion.py": "964c5b2fe8962601386c66cd2008f6511599bd04b2ea85f8cac8e893af959085"
+      },
+      "status": "fixed_source_matches"
+    },
+    "sourceBefore": {
+      "headIsCondition": false,
+      "observedHead": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+      "sourceSha256": {
+        "evals/skills/sdd/batch.py": "115a3e3306e0707dc7fa0c86405bac94d05e3c02421ca9e76a00cc665e1e93a7",
+        "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json": "fea89e29f930afb6464039952a137c1589bfaaf10af41906c0c13a438fcb3395",
+        "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+        "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+        "evals/skills/sdd/evaluate.py": "91b2d57d1ee2d9c0c177a1a5e69f36542a5de824185267cf17f8cc756cce38ba",
+        "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+        "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+        "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+        "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+        "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+        "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+        "tests/skills/test_sdd_batch.py": "0187c499e2104be493d2060f21796db03306568a6e65ed629e68a08bf71c8852",
+        "tests/skills/test_sdd_native_completion.py": "964c5b2fe8962601386c66cd2008f6511599bd04b2ea85f8cac8e893af959085"
+      },
+      "status": "fixed_source_matches"
+    },
+    "sourceCommit": "e10998dd5703b812f51ae86edeb1bf215a62609e",
+    "status": "static_prelaunch_review_stopped",
+    "timedOut": false,
+    "usage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 43788,
+      "output_tokens": 1140,
+      "reasoning_output_tokens": 802
+    }
+  },
+  "receiptSha256": "538c9fe7ff1ef430a6cf55783b7f19524134128b83a5282801435e434a280890",
+  "parentOriginalsRechecked": true,
+  "originalPrimaryBudget": 68,
+  "primaryConsumed": 0,
+  "preparationIndependentSolConsumed": 1,
+  "nextCondition": "plan-implement-matrix-20261012-02",
+  "cost": null
+}

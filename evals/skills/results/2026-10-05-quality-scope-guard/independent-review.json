@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "independent": true,
+  "implementationPrivateHistoryInherited": false,
+  "subjectCommit": "b11de631a5dac3d53d1758cbc223b27552bb0261",
+  "reviewRunId": "90b3d2a6-3209-483a-8cb9-c28609e5ae7c",
+  "status": "passed",
+  "directChecks": [
+    {
+      "command": "git show b11de631a5dac3d53d1758cbc223b27552bb0261 -- evals/skills/quality/evaluate.py tests/skills/test_quality_evaluation.py",
+      "readOnly": true,
+      "exitCode": 0,
+      "output": "measureの条件3行と反例4ケース追加を確定refで直接検分。"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i /home/hide/.cache/uv/environments-v2/run-conformance-3a9acb64608185bd/bin/python -B -W ignore::DeprecationWarning tests/skills/test_quality_evaluation.py",
+      "chunk_id": "5c75a2",
+      "wall_time_seconds": 6.438624592,
+      "exit_code": 0,
+      "original_token_count": 31,
+      "output": "........................\n----------------------------------------------------------------------\nRan 24 tests in 6.444s\n\nOK\n"
+    },
+    {
+      "command": "指定python -B stdinで親版条件を差分通りメモリ内復元、approvedBy/scope/models辞書の反例を旧条件と新コードへ適用。subprocess/authorization_lock/preflight.gitをmock。",
+      "chunk_id": "f19afe",
+      "wall_time_seconds": 0.000012744,
+      "exit_code": 0,
+      "original_token_count": 134,
+      "output": "approvedBy parent accepted authorization; stopped at mocked preflight\napprovedBy new rejected: sol authorization or fixed model/evaluation identity mismatch\nscope parent accepted authorization; stopped at mocked preflight\nscope new rejected: sol authorization or fixed model/evaluation identity mismatch\nmodels parent accepted authorization; stopped at mocked preflight\nmodels new rejected: sol authorization or fixed model/evaluation identity mismatch\nNo output created; authorization_lock and subprocess were mocked and never called.\n"
+    },
+    {
+      "command": "python -B stdinで報告生成を試行",
+      "exitCode": 127,
+      "output": "/bin/bash: line 1: python: command not found",
+      "effect": "試験・モデル実行なし。報告はapply_patchで生成。"
+    }
+  ],
+  "findings": [],
+  "reason": "approved/user/固定scope/SOL一要素配列をworkspace確認・出力mkdir・台帳・setup・モデル呼出し前に照合。既存モデル版・評価版・承認版・予算拒否条件を維持し24試験OK。旧条件で通る3反例を新コードで拒否し、出力未作成を確認。",
+  "limitations": [
+    "型・スコープ一致は改ざん耐性や人間承認の外部真正性を証明しない。",
+    "独立検分1回。追加モデル実測なし。試験retryなし。",
+    "旧版反例は確定ref差分に基づく条件のメモリ内復元でありcheckoutなし。",
+    "指定試験の一時生成物はリポジトリ内.venvに生成後cleanup。永続書込みは本報告のみ。"
+  ]
+}

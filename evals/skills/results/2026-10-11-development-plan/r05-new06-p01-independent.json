@@ -1,0 +1,79 @@
+{
+  "status": "limited_independent_originals_parent_rehashed",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "reportSha256": "8b0f46490dcfc33d0274a33aaf711a6e3bad6cac5ef32ca2447bab0c6cd143a3",
+  "inventorySha256": "efb51b34f1e6f6ce5671b68e8aeb99425b35f7ab04601e590c3fd046cd80fc7a",
+  "parentRehashedCounts": {
+    "fixedOriginalSha256": 42,
+    "liveLedgerSnapshotSha256": 1,
+    "evidenceSha256": 9
+  },
+  "mutableSourcePathsResolvedAtOriginalGitRef": [
+    "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/evals/skills/sdd/batches/plan-implement-matrix-20261012-06.json"
+  ],
+  "report": {
+    "status": "p01_originals_and_semantic_parent_proof_independently_verified",
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "slot": {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "unresolvedBlockingFindings": [],
+    "primaryOriginals": 9,
+    "semanticOriginals": 11,
+    "semanticPayloads": 27,
+    "primaryInvocationsForP01": 1,
+    "semanticInvocationsForP01": 1,
+    "automaticRetries": 0,
+    "primaryUsage": {
+      "input_tokens": 64559,
+      "cached_input_tokens": 45440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 677,
+      "reasoning_output_tokens": 74
+    },
+    "semanticUsage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 42183,
+      "output_tokens": 699,
+      "reasoning_output_tokens": 37
+    },
+    "si010Result": "既知の固定テスト障害による許可された開始前停止。変更0、Core/verify未実行、未完了・人手レビュー待ちを維持。",
+    "actualInspectChecks": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    },
+    "helperSha256": "e843042423b43eec1ed262d1842073698b6acc9b6850a708a4977b69e8f05137",
+    "helperScopeNotes": [
+      "親helperはその時点の最終ordinalだけを対象とするため、進行後のP01再検分では第1entryを選び現在件数>=1へ限定適応。モデル/予約/公開記録の書込み部分は実行しない。",
+      "helper単独はpassed flags/receipt/runtimeUnchanged等の照合であり、今回は独立にinspectを再実行し、Git schema・原prompt本文27・config/argv・runtime50を追加照合した。"
+    ],
+    "observedLiveLedgerAttemptCount": 2,
+    "newModelsStartedByIndependent": 0,
+    "newReservationsByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "clean": true,
+    "limits": [
+      "P01原・意味receipt・親照合helperの限定検分。意味SOL評価の代替ではない。",
+      "SP001以降の結果、全R05、Skill Gate、Phase、releaseは未認定。"
+    ],
+    "hashInventory": "hashinventory.json"
+  },
+  "certifiesSkillGate": false
+}

@@ -1,0 +1,364 @@
+{
+  "status": "passed",
+  "scope": "synthetic-input-preflight",
+  "certifiesQuality": false,
+  "newModelTrajectories": 0,
+  "sourceCommit": "2faa9fb687e381d3ba883dff7b87a46c91884f45",
+  "evaluationSetVersion": "quality-pilot-0.1.0",
+  "protocolSha256": "972e93a0519b7386cce7331dcaed8f1d78091c1871628019d4de3e5fea19ee48",
+  "cases": [
+    {
+      "caseId": "QP-001",
+      "baseCommit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+      "subjectCommit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+      "files": {
+        ".spec/bitz.yaml": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+        ".spec/requirements/REQ-001.md": "3e553454b7ac63028c134788cf2be5f2cf5fc03668d72793e5ddc8e09783ebce",
+        "target.py": "7180a539ac90f58fb648db6eb396c8cc0bb17f5e93267576f7ccba2745a85fc2",
+        "test_fixture.py": "33a648651e76b2d023fb11c2dbe223055a0631854eeb0c68b0e06ed64ffd1b82"
+      },
+      "diff": "",
+      "coreResults": [
+        {
+          "operation": "context",
+          "status": "passed",
+          "exitCode": 0,
+          "source": "preflight report: QP-001/coreStdout/context",
+          "sha256": "bbbe171c929f94230ed53f27e00471d6d6c151f65741ff40838aa9f649468610",
+          "subjectCommit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+          "role": "current_gate",
+          "roleReason": "先行固定入力の事前検査",
+          "argv": [
+            "/usr/bin/python3",
+            "-B",
+            "-m",
+            "bitz.cli",
+            "context",
+            "REQ-001:AC-01",
+            "--purpose",
+            "interpret",
+            "--format",
+            "json"
+          ],
+          "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/quality-plan-worktree/.venv/quality-preflight-fvda_72p/QP-001",
+          "rawResult": {
+            "schemaVersion": "1.0",
+            "operation": "context",
+            "status": "passed",
+            "purpose": "interpret",
+            "workspace": {
+              "id": "root",
+              "path": "."
+            },
+            "roots": [
+              "REQ-001:AC-01"
+            ],
+            "contextDigest": "sha256:c741591e5d491c6421c7830177a54507ca5ed35c83dfc249e391f1c2f2427d80",
+            "revision": {
+              "commit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+              "dirty": false
+            },
+            "resolution": {
+              "complete": true,
+              "documentCount": 1,
+              "unresolvedStrongRelations": 0
+            },
+            "projection": {
+              "detail": "standard",
+              "expanded": []
+            },
+            "documents": [
+              {
+                "id": "REQ-001",
+                "kind": "requirement",
+                "status": "approved",
+                "role": "root",
+                "path": ".spec/requirements/REQ-001.md",
+                "projection": "full",
+                "reachedBy": [
+                  "root"
+                ],
+                "statementRefs": [
+                  "REQ-001:AC-01"
+                ],
+                "frontmatter": {
+                  "id": "REQ-001",
+                  "title": "空入力のエラー件数を維持する",
+                  "status": "approved"
+                },
+                "bodyText": "# REQ-001 空入力のエラー件数を維持する\n\n## Intent\n\n空入力に対する既存の契約を保つ。保存や外部サービスの変更は対象外。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [WHEN] 空の入力を受け取った場合 [MUST] [THEN] 入力エラーを1件返す。\n\n## Verification\n\ntest_fixture.pyはエラー件数だけを検査する。型・内容と通常入力は未検査。\n",
+                "untrustedText": true
+              }
+            ],
+            "constraintLedger": {
+              "statements": []
+            },
+            "coverage": {
+              "must": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "should": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "may": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "adjacent": []
+            },
+            "durationMs": 9,
+            "diagnostics": []
+          },
+          "stderr": ""
+        },
+        {
+          "operation": "check",
+          "status": "passed",
+          "exitCode": 0,
+          "source": "preflight report: QP-001/coreStdout/check",
+          "sha256": "5a90962c9f355c18c9a2d81e32d8af445b268aedd16c9f09eeaaa52058900c2c",
+          "subjectCommit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+          "role": "current_gate",
+          "roleReason": "先行固定入力の事前検査",
+          "argv": [
+            "/usr/bin/python3",
+            "-B",
+            "-m",
+            "bitz.cli",
+            "check",
+            "REQ-001:AC-01",
+            "--format",
+            "json"
+          ],
+          "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/quality-plan-worktree/.venv/quality-preflight-fvda_72p/QP-001",
+          "rawResult": {
+            "schemaVersion": "1.0",
+            "operation": "check",
+            "status": "passed",
+            "scope": "selected",
+            "workspace": {
+              "id": "root",
+              "path": "."
+            },
+            "revision": {
+              "base": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+              "commit": "0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531",
+              "dirty": false
+            },
+            "checkedDocumentCount": 1,
+            "checkedStatementCount": 1,
+            "durationMs": 17,
+            "diagnostics": []
+          },
+          "stderr": ""
+        }
+      ],
+      "coreStdout": {
+        "context": "{\"schemaVersion\": \"1.0\", \"operation\": \"context\", \"status\": \"passed\", \"purpose\": \"interpret\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"roots\": [\"REQ-001:AC-01\"], \"contextDigest\": \"sha256:c741591e5d491c6421c7830177a54507ca5ed35c83dfc249e391f1c2f2427d80\", \"revision\": {\"commit\": \"0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531\", \"dirty\": false}, \"resolution\": {\"complete\": true, \"documentCount\": 1, \"unresolvedStrongRelations\": 0}, \"projection\": {\"detail\": \"standard\", \"expanded\": []}, \"documents\": [{\"id\": \"REQ-001\", \"kind\": \"requirement\", \"status\": \"approved\", \"role\": \"root\", \"path\": \".spec/requirements/REQ-001.md\", \"projection\": \"full\", \"reachedBy\": [\"root\"], \"statementRefs\": [\"REQ-001:AC-01\"], \"frontmatter\": {\"id\": \"REQ-001\", \"title\": \"空入力のエラー件数を維持する\", \"status\": \"approved\"}, \"bodyText\": \"# REQ-001 空入力のエラー件数を維持する\\n\\n## Intent\\n\\n空入力に対する既存の契約を保つ。保存や外部サービスの変更は対象外。\\n\\n## Acceptance Criteria\\n\\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [WHEN] 空の入力を受け取った場合 [MUST] [THEN] 入力エラーを1件返す。\\n\\n## Verification\\n\\ntest_fixture.pyはエラー件数だけを検査する。型・内容と通常入力は未検査。\\n\", \"untrustedText\": true}], \"constraintLedger\": {\"statements\": []}, \"coverage\": {\"must\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"should\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"may\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"adjacent\": []}, \"durationMs\": 9, \"diagnostics\": []}\n",
+        "check": "{\"schemaVersion\": \"1.0\", \"operation\": \"check\", \"status\": \"passed\", \"scope\": \"selected\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"revision\": {\"base\": \"0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531\", \"commit\": \"0d7d9d7960f8bb7dc4fa48bdcd24de5a4ce32531\", \"dirty\": false}, \"checkedDocumentCount\": 1, \"checkedStatementCount\": 1, \"durationMs\": 17, \"diagnostics\": []}\n"
+      },
+      "testExitCode": 0,
+      "testStdout": "",
+      "testStderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+      "counterexample": null,
+      "unchanged": true
+    },
+    {
+      "caseId": "QR-001",
+      "baseCommit": "4daeadd3fbe7e8d2119b717070fd3f1966ba04eb",
+      "subjectCommit": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+      "files": {
+        ".spec/bitz.yaml": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+        ".spec/requirements/REQ-002.md": "5b5abed57d61e30a00794b486aab50835566ae7117b69b2b5f8f15f58f526046",
+        "target.py": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+        "test_fixture.py": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df"
+      },
+      "diff": "diff --git a/target.py b/target.py\nindex c3c0acd..c27e255 100644\n--- a/target.py\n+++ b/target.py\n@@ -1,4 +1,2 @@\n def read_document(requester, document):\n-    if requester != document[\"owner\"]:\n-        return {\"status\": 403, \"body\": None}\n     return {\"status\": 200, \"body\": document[\"body\"]}\n",
+      "coreResults": [
+        {
+          "operation": "context",
+          "status": "passed",
+          "exitCode": 0,
+          "source": "preflight report: QR-001/coreStdout/context",
+          "sha256": "0b4f84973bdb73b67b133cc4c56a768dff0bed0f26e07d57a9a455fe14085fee",
+          "subjectCommit": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+          "role": "current_gate",
+          "roleReason": "先行固定入力の事前検査",
+          "argv": [
+            "/usr/bin/python3",
+            "-B",
+            "-m",
+            "bitz.cli",
+            "context",
+            "REQ-002",
+            "--purpose",
+            "interpret",
+            "--format",
+            "json"
+          ],
+          "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/quality-plan-worktree/.venv/quality-preflight-fvda_72p/QR-001",
+          "rawResult": {
+            "schemaVersion": "1.0",
+            "operation": "context",
+            "status": "passed",
+            "purpose": "interpret",
+            "workspace": {
+              "id": "root",
+              "path": "."
+            },
+            "roots": [
+              "REQ-002"
+            ],
+            "contextDigest": "sha256:a067c4a615177c465122768e11336f6dedc5bdb827e1ae2ba68f905da05d08df",
+            "revision": {
+              "commit": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+              "dirty": false
+            },
+            "resolution": {
+              "complete": true,
+              "documentCount": 1,
+              "unresolvedStrongRelations": 0
+            },
+            "projection": {
+              "detail": "standard",
+              "expanded": []
+            },
+            "documents": [
+              {
+                "id": "REQ-002",
+                "kind": "requirement",
+                "status": "approved",
+                "role": "root",
+                "path": ".spec/requirements/REQ-002.md",
+                "projection": "full",
+                "reachedBy": [
+                  "root"
+                ],
+                "statementRefs": [
+                  "REQ-002:AC-01",
+                  "REQ-002:AC-02"
+                ],
+                "frontmatter": {
+                  "id": "REQ-002",
+                  "title": "所有者だけに文書を返す",
+                  "status": "approved"
+                },
+                "bodyText": "# REQ-002 所有者だけに文書を返す\n\n## Intent\n\n文書の閲覧を所有者に限定する。fixtureのIDと文書内容は合成データである。\n\n## Acceptance Criteria\n\n- [REQ-002:AC-01] [ACTOR:TargetSystem] [WHEN] 文書の所有者が閲覧を要求した場合 [MUST] [THEN] 文書本文と成功状態を返す。\n- [REQ-002:AC-02] [ACTOR:TargetSystem] [WHEN] 文書の所有者ではない利用者が閲覧を要求した場合 [MUST] [THEN] 文書本文を返さず禁止状態を返す。\n\n## Verification\n\ntest_fixture.pyは所有者の成功結果だけを検査する。他所有者の拒否は未検査。\n",
+                "untrustedText": true
+              }
+            ],
+            "constraintLedger": {
+              "statements": []
+            },
+            "coverage": {
+              "must": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "should": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "may": {
+                "total": [],
+                "addressed": [],
+                "tested": [],
+                "unaddressed": [],
+                "untested": []
+              },
+              "adjacent": []
+            },
+            "durationMs": 10,
+            "diagnostics": []
+          },
+          "stderr": ""
+        },
+        {
+          "operation": "check",
+          "status": "passed",
+          "exitCode": 0,
+          "source": "preflight report: QR-001/coreStdout/check",
+          "sha256": "d094831a44b5cac8b8d1ac8ff9109c83fe1b6cb5de006ba4a699ed1f293ca068",
+          "subjectCommit": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+          "role": "current_gate",
+          "roleReason": "先行固定入力の事前検査",
+          "argv": [
+            "/usr/bin/python3",
+            "-B",
+            "-m",
+            "bitz.cli",
+            "check",
+            "REQ-002",
+            "--format",
+            "json"
+          ],
+          "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/quality-plan-worktree/.venv/quality-preflight-fvda_72p/QR-001",
+          "rawResult": {
+            "schemaVersion": "1.0",
+            "operation": "check",
+            "status": "passed",
+            "scope": "selected",
+            "workspace": {
+              "id": "root",
+              "path": "."
+            },
+            "revision": {
+              "base": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+              "commit": "0a3e6791b64087e3fad95935eaac55e0c810f4d5",
+              "dirty": false
+            },
+            "checkedDocumentCount": 1,
+            "checkedStatementCount": 2,
+            "durationMs": 17,
+            "diagnostics": []
+          },
+          "stderr": ""
+        }
+      ],
+      "coreStdout": {
+        "context": "{\"schemaVersion\": \"1.0\", \"operation\": \"context\", \"status\": \"passed\", \"purpose\": \"interpret\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"roots\": [\"REQ-002\"], \"contextDigest\": \"sha256:a067c4a615177c465122768e11336f6dedc5bdb827e1ae2ba68f905da05d08df\", \"revision\": {\"commit\": \"0a3e6791b64087e3fad95935eaac55e0c810f4d5\", \"dirty\": false}, \"resolution\": {\"complete\": true, \"documentCount\": 1, \"unresolvedStrongRelations\": 0}, \"projection\": {\"detail\": \"standard\", \"expanded\": []}, \"documents\": [{\"id\": \"REQ-002\", \"kind\": \"requirement\", \"status\": \"approved\", \"role\": \"root\", \"path\": \".spec/requirements/REQ-002.md\", \"projection\": \"full\", \"reachedBy\": [\"root\"], \"statementRefs\": [\"REQ-002:AC-01\", \"REQ-002:AC-02\"], \"frontmatter\": {\"id\": \"REQ-002\", \"title\": \"所有者だけに文書を返す\", \"status\": \"approved\"}, \"bodyText\": \"# REQ-002 所有者だけに文書を返す\\n\\n## Intent\\n\\n文書の閲覧を所有者に限定する。fixtureのIDと文書内容は合成データである。\\n\\n## Acceptance Criteria\\n\\n- [REQ-002:AC-01] [ACTOR:TargetSystem] [WHEN] 文書の所有者が閲覧を要求した場合 [MUST] [THEN] 文書本文と成功状態を返す。\\n- [REQ-002:AC-02] [ACTOR:TargetSystem] [WHEN] 文書の所有者ではない利用者が閲覧を要求した場合 [MUST] [THEN] 文書本文を返さず禁止状態を返す。\\n\\n## Verification\\n\\ntest_fixture.pyは所有者の成功結果だけを検査する。他所有者の拒否は未検査。\\n\", \"untrustedText\": true}], \"constraintLedger\": {\"statements\": []}, \"coverage\": {\"must\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"should\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"may\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"adjacent\": []}, \"durationMs\": 10, \"diagnostics\": []}\n",
+        "check": "{\"schemaVersion\": \"1.0\", \"operation\": \"check\", \"status\": \"passed\", \"scope\": \"selected\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"revision\": {\"base\": \"0a3e6791b64087e3fad95935eaac55e0c810f4d5\", \"commit\": \"0a3e6791b64087e3fad95935eaac55e0c810f4d5\", \"dirty\": false}, \"checkedDocumentCount\": 1, \"checkedStatementCount\": 2, \"durationMs\": 17, \"diagnostics\": []}\n"
+      },
+      "testExitCode": 0,
+      "testStdout": "",
+      "testStderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+      "counterexample": {
+        "status": 200,
+        "body": "synthetic document"
+      },
+      "unchanged": true
+    }
+  ],
+  "pluginFiles": {
+    "README.md": "409720043fd94a98a627f238fd508cb1677126fdde6d24c95a74f2fae1e1c347",
+    "core-compatibility.json": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+    "examples/local-change-plan.json": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+    "examples/missing-evidence-review.json": "6b3a88de680cc9a35c2991226bc51145de3f54471ea9070ead8ecfcbe2401dfd",
+    "plugin.json": "eee2049b966537b6e3e255ebf025dfd70ce477467b55d901459fe5086deec577",
+    "schemas/core-observation.schema.json": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+    "schemas/quality-plan.schema.json": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+    "schemas/quality-review.schema.json": "a8cf3d89e3c403d1481fbbbaef4f3c79059582f340c307bfce033f2f7aae2917",
+    "scripts/validate_quality.py": "d37843f13395afdfa67d573c9a3db64fe0d5c8e9620c221d9493fc180ba8244e",
+    "skills/quality-plan/SKILL.md": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+    "skills/quality-plan/references/risk-and-evidence.md": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+    "skills/quality-review/SKILL.md": "dbcd3ee24a06ce160fc0fad52a6302cf37739f397f68b1560ea86d157e1df224",
+    "skills/quality-review/references/independence-and-evidence.md": "47c25efba80f0c083934054517feb53bb2b7d58ce589c5b71c45a02c42be2c18"
+  }
+}

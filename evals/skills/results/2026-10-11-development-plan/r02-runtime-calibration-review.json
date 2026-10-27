@@ -1,0 +1,149 @@
+{
+  "originalSource": "b7607fa9c2195e3fb90db23c15b120aada31a1c8",
+  "originalFullTests": 618,
+  "originalFullResult": {
+    "exitCode": 0,
+    "elapsedSeconds": 70.52753259299789,
+    "sourceCommit": "b7607fa9c2195e3fb90db23c15b120aada31a1c8",
+    "clean": true,
+    "stderrSha256": "aebe75613555fb76e68db68a34d5fb23c177c0a79bd9e170db87588758d92675"
+  },
+  "originalIndependent": {
+    "ref": "b7607fa9c2195e3fb90db23c15b120aada31a1c8",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 3.225,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "1935f7b7682609472df249c0474b2f0f92dcd43fdc0f0de581e172b5e8f13433"
+      },
+      {
+        "check": "ledger",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.525,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "a45b492772ea1e18c116fdc319fc03551735da309f849a0947a6153264274e07"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production-canary-calibration-v0.1.json": "a360a371a47f475a360ad4d6fdb3c61ab22d565ab0fb14049864135dd893daf5",
+      "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "evals/skills/routing/production-canary-v0.1.json": "16c990ef2360725946b275619c8b64863e29368abcf2e11f0c7c8900c98e94f4",
+      "evals/skills/routing/production_canary_calibration.py": "4ec8783cfea026cd891ae11448bf89790708fd1ec324152cf3c0f6e71ec83dd1",
+      "evals/skills/routing/production_canary_capture.py": "313e4a36a19b69f09c64adfdace4b176391d83c243ed047663d1323fc492fa50",
+      "evals/skills/routing/production_canary_evidence.py": "a7b1d7857b2cdce41945bd784efcbe4c9f309a53f93f26ab9d4cada22e63848b",
+      "evals/skills/routing/production_canary_rollout.py": "1978a6ef6d622209b805b313a1aa103b6156d742738760c2b018566db1c4e4ad",
+      "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+      "tests/skills/test_production_canary_calibration.py": "14dbced22b652b7f448ccd70a4222346901715e0d58164d135192c1d6947b0db",
+      "tests/skills/test_production_canary_evidence.py": "d2bfd4d635140e93a7399bf8b5b119c9d8b4f238294cc79f0143de25d1787229",
+      "tests/skills/test_production_canary_review.py": "0bf39f1ef62f33568fe6cc8c40fab785cc6846f505dccbcaa5f0dae842664d7f",
+      "tests/skills/test_production_canary_rollout.py": "214e4b472c918470ebd92545c2c2be1cae5dd9edb83b4363701f9e82b752331d",
+      "tests/skills/test_production_canary_runtime.py": "c20c45fce3a7a717738df128b15e148bf4a7bb6f0299848039bf781081ff992d"
+    }
+  },
+  "originalFindings": {
+    "ref": "b7607fa9c2195e3fb90db23c15b120aada31a1c8",
+    "cleanAfter": true,
+    "publicSynthetic": true,
+    "modelsOrClisStarted": 0,
+    "records": [
+      {
+        "name": "original_extra_parent_wrapper",
+        "rejected": true,
+        "reason": "unknown parent JSON wrapper or additional context"
+      },
+      {
+        "name": "normal_no-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "normal_single-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "normal_two-exec",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "normal_exec-wait",
+        "status": "primary_client_rollout_raw_usage_correlated",
+        "eligibleForMeasurement": false
+      },
+      {
+        "name": "unknown_rpc_action",
+        "rejected": false,
+        "status": "original_local_calibration_matches",
+        "paidModelCalls": 0
+      },
+      {
+        "name": "error_rpc",
+        "rejected": false,
+        "status": "original_local_calibration_matches",
+        "paidModelCalls": 0
+      },
+      {
+        "name": "wrong_terminal_rpc",
+        "rejected": false,
+        "status": "original_local_calibration_matches",
+        "paidModelCalls": 0
+      }
+    ]
+  },
+  "remediationSource": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+  "independentPending": false,
+  "primaryModelTrajectories": 0,
+  "independentScoringCalls": 0,
+  "R02Complete": false,
+  "remediationResult": {
+    "sourceCommit": "c9614b52f9f5548921fc5d138ae65cc93895c871",
+    "originalRpcFindingsRejected": true,
+    "newBlockingP2": 2,
+    "complete": false
+  }
+}

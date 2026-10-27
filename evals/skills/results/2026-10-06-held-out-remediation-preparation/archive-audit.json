@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "payloadFileCount": 93,
+  "archiveMemberCount": 94,
+  "fixedSourceCount": 84,
+  "payloadBytes": 803337,
+  "manifestBytes": 21414,
+  "archiveBytes": 211826,
+  "archiveSha256": "ad182dd11aff78b0f7b8c2b79018d1d4ab561c9b37f0e41609cef9f278201995",
+  "privateCaseDataIncluded": false
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_assert_scope_review",
+  "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [".venv/sdd-evaluation-04/", ".venv/sdd-evaluation-04-resume/", "plugins/bitz-sdd/", "plugins/bitz-core/", "evals/skills/sdd/", "docs/"],
+  "directChecks": [
+    "前回の独立文脈を継続。未認定2件SP-001/SP-002反復2は実reasonと操作・固定assert・snapshotを照合して意味適合。旧中断・旧不適合は維持",
+    "別手動試行SP-004と新SP-005/006/007反復2は全4件意味適合。同一ref/sourceで旧完成10＋新skill4の全14を再照合、14 passed / 0 failed / 0 unknown",
+    "全14の70artifact hash・trace-host・最終応答・snapshot・source/case hash・実読/実書内容は全一致、Core実操作17回",
+    "baseline SP-003反復1は機械全4通過だが実assertにない型まで既存テストに対応付けて説明し、独立意味failed。未実行・Core・無変更は整合。skillへ混ぜない",
+    "主作業者もreasonと固定assertを直接照合し、新旧15完成件75artifact hash一致とsource差分空を確認。30 tests in 16.698s / OK / exit 0を再実行",
+    "独立報告は元測定を変更せず/tmpに保存後、原本を複写。新しい評価モデル呼出しやsource編集、秘密やCodex state/logs読取りはしていない",
+    "未承認継続案と事実記録の独立検分で必須是正なし。56+13=69<=70、予定反復と再試行の区別、原中断hashとdecision/run不在、元score保持、archiveとusage再計算一致。pendingを承認扱いせず、報告保存中の未追跡treeをcleanと記録しない"
+  ],
+  "notRerun": [
+    {"check": "残baseline13件、実装10ケース、全17比較", "reason": "baseline理由不適合で新規投入を停止。継続方針の承認は未取得"},
+    {"check": "Phase 2完了、発火Gate、Skill Gate、品質接続、収束、配布、Gate A/B", "reason": "完成した計画ケース14件と比較1件の限定実証の範囲外"}
+  ],
+  "independent": true
+}

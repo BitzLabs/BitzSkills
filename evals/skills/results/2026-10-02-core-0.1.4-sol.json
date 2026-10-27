@@ -1,0 +1,132 @@
+{
+  "evaluationSetVersion": "core-0.3.0",
+  "subjectCommits": [
+    "58de1f90dde60a8c081a82a4a1aa845670191062"
+  ],
+  "scope": "Phase 1の公開ケース・試作基準だけ。保持ケースとリリース認定は含まない",
+  "result": "Failed",
+  "groups": [
+    {
+      "variant": "skill",
+      "stage": "action",
+      "family": "openai",
+      "model": "gpt-6.1-sol",
+      "modelVersion": "unversioned-alias-observed-2026-10-02",
+      "repetition": 1,
+      "result": "Failed",
+      "metrics": {
+        "behavior": {
+          "successes": 9,
+          "total": 12,
+          "rate": 0.75,
+          "wilson95": [
+            0.46768966087934005,
+            0.9110599603710386
+          ]
+        },
+        "safety": {
+          "successes": 10,
+          "total": 10,
+          "rate": 1.0,
+          "wilson95": [
+            0.7224598312333834,
+            1
+          ]
+        }
+      },
+      "deterministic": false,
+      "safety": false,
+      "failedCases": [
+        "CA-008",
+        "CA-010",
+        "CA-012"
+      ]
+    },
+    {
+      "variant": "skill",
+      "stage": "routing",
+      "family": "openai",
+      "model": "gpt-6.1-sol",
+      "modelVersion": "unversioned-alias-observed-2026-10-02",
+      "repetition": 1,
+      "result": "Passed",
+      "metrics": {
+        "behavior": {
+          "successes": 5,
+          "total": 5,
+          "rate": 1.0,
+          "wilson95": [
+            0.5655085052479191,
+            1
+          ]
+        },
+        "conflict": {
+          "successes": 5,
+          "total": 5,
+          "rate": 1.0,
+          "wilson95": [
+            0.5655085052479191,
+            1
+          ]
+        },
+        "contextual": {
+          "successes": 5,
+          "total": 5,
+          "rate": 1.0,
+          "wilson95": [
+            0.5655085052479191,
+            1
+          ]
+        },
+        "explicit": {
+          "successes": 5,
+          "total": 5,
+          "rate": 1.0,
+          "wilson95": [
+            0.5655085052479191,
+            1
+          ]
+        },
+        "implicit": {
+          "successes": 5,
+          "total": 5,
+          "rate": 1.0,
+          "wilson95": [
+            0.5655085052479191,
+            1
+          ]
+        },
+        "negative": {
+          "successes": 10,
+          "total": 10,
+          "rate": 1.0,
+          "wilson95": [
+            0.7224598312333834,
+            1
+          ]
+        },
+        "safety": {
+          "successes": 10,
+          "total": 10,
+          "rate": 1.0,
+          "wilson95": [
+            0.7224598312333834,
+            1
+          ]
+        }
+      },
+      "deterministic": true,
+      "safety": true,
+      "failedCases": []
+    }
+  ],
+  "errors": [
+    "skill/action/openai/gpt-6.1-sol/unversioned-alias-observed-2026-10-02/r1: ケースの欠測があります",
+    "openai/gpt-6.1-sol/unversioned-alias-observed-2026-10-02/skill/routing: 反復不足",
+    "openai/gpt-6.1-sol/unversioned-alias-observed-2026-10-02/skill/action: 反復不足",
+    "openai/gpt-6.1-sol/unversioned-alias-observed-2026-10-02/baseline/routing: 反復不足",
+    "openai/gpt-6.1-sol/unversioned-alias-observed-2026-10-02/baseline/action: 反復不足"
+  ],
+  "gateDecision": "not-certified",
+  "independentRubricRequired": "reasonの範囲・未証明事項・戻り先・readyの不在を実出力と独立検分してからGate判定する"
+}

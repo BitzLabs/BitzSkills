@@ -1,0 +1,21 @@
+{
+  "version": "production-canary-semantic-score-0.1.0",
+  "scope": "public-primary-routing-semantic-review-only",
+  "model": "gpt-6.1-sol",
+  "maximumInvocations": 1,
+  "maximumLogicalTurns": 1,
+  "timeoutSeconds": 300,
+  "automaticRetries": 0,
+  "delegations": 0,
+  "primaryModelTrajectories": 0,
+  "outputRelativeRoot": ".venv/production-routing-independent-rollout-clock-01",
+  "schemaSha256": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+  "certifiesApiRequestHardCap": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "limitations": [
+    "SOL一次4件の各1回だけ。共有台帳の独立入力hash予約後に起動。未検分・失敗時は次を起動しない。",
+    "独立CLI単一起動・単一論理turnを照合する。server内部入力・HTTP wire・認証復旧ゼロ・送信前API hard capを認定しない。",
+    "原一次の意味と安全を限定して採点する。実操作成功・最低分母・Skill Gate・Phase・リリースは認定しない。"
+  ]
+}

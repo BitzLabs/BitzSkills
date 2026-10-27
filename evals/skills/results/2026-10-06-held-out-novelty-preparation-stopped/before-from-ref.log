@@ -1,0 +1,27 @@
+F........
+======================================================================
+FAIL: test_additional_public_json_is_rejected_before_case_loading (novelty_fixed_tests.HeldOutNoveltyTests.test_additional_public_json_is_rejected_before_case_loading)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/tests/skills/test_held_out_novelty.py", line 209, in test_additional_public_json_is_rejected_before_case_loading
+    self.run_audit()
+  File "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/tests/skills/test_held_out_novelty.py", line 106, in run_audit
+    return audit.audit(self.contract_path, self.case_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/evals/skills/routing/audit_held_out.py", line 132, in audit
+    cases, metadata = validate.load_held_out_cases(case_path)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1193, in _execute_mock_call
+    raise effect
+AssertionError: unfixed input read
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.814s
+
+FAILED (failures=1)

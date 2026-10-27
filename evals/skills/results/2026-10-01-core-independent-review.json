@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "2026-10-01-core-skill-implementation",
+  "reviewRunId": "/root/core_skill_review",
+  "subjectCommit": "e7d1e5d5d3e7f3d539d089fd555dce54a180fd89",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["AGENTS.md", "提案30のPhase 1とSkill Gate 0契約", "ADR-060", "Coreの公開操作・結果契約", "plugins/bitz-core/skills/bitz-core/", "plugins/bitz-core/README.md", "plugins/bitz-core/plugin.json", "tests/skills/test_core_skill_commands.py", "是正したファイルと対象範囲"],
+  "directChecks": ["公開契約とスキル本文・全参照の照合", "CLI例試験の直接再実行", "発生元file/environment/invocationの是正確認", "単独・全体結果の識別フィールド排他と不備時停止の是正確認"],
+  "notRerun": [{"check": "Skill Gate 1〜3のモデル発火・行動・安全評価", "reason": "契約とCLI掲載例の検分に限定したため未認定"}],
+  "independent": true
+}

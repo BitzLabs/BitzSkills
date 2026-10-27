@@ -1,0 +1,200 @@
+{
+  "status": "connection_startup_failed_before_initialization",
+  "sourceCommit": "86db7ca7f965366c9d7e2ebab1ccf83faf577286",
+  "contractPath": "evals/skills/routing/production-connection-probe-v0.1.json",
+  "outputRelativeRoot": ".venv/production-provider-connection-01",
+  "receiptSha256": "2c411ce443be28a93e4d2e749e8eeeccef09ded3928f39e8d331b43bf4fd385e",
+  "consumedConnectionReservations": 1,
+  "connectionStartupInvocations": 1,
+  "observedModelApiRequests": 0,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "staticSolInvocations": 6,
+  "staticReviewStages": [
+    {
+      "sourceCommit": "a37bd2118c373021bc8f4b6a29e8bfc410f35f98",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.38.json",
+      "verification": {"outputRelativeRoot": ".venv/production-provider-connection-check-06", "summarySha256": "efcaee0a3eed909e2d05a7ce6aaa56ce3e415012ca950c4fcee2391a95c86c1b", "testCount": 554, "testSeconds": 62.698, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "a37bd2118c373021bc8f4b6a29e8bfc410f35f98",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.38.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-38",
+        "receiptSha256": "dc1169a91fda55b417108530bf93d0512efccdbbf0f80b84937e6716e0ea27e5",
+        "responseSha256": "6ee37f0a985bff32e483929b846ae3ebbc23cfc38e0a4da0630450666ea8eb9d",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 26398, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 832, "reasoning_output_tokens": 421},
+        "findings": {"P1": 0, "P2": 1, "P3": 0}
+      }
+    },
+    {
+      "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.37.json",
+      "verification": {"outputRelativeRoot": ".venv/production-provider-connection-check-05", "summarySha256": "fc09536151b17f74130b649f68ef89b5e987a5e4e25cf5fce4432c5e4b37c70c", "testCount": 550, "testSeconds": 63.266, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.37.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-37",
+        "receiptSha256": "8dd850b2c9b07a8a9d02e6cbf7d1f0de6b64900ea5e5803b148cc40256c836a5",
+        "responseSha256": "664159236b8dd5a62720e41b035b6aa8feef12a1fa86a1102723b73f2e3b1aab",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 22321, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 1004, "reasoning_output_tokens": 682},
+        "findings": {"P1": 0, "P2": 1, "P3": 0}
+      }
+    },
+    {
+      "sourceCommit": "3449e12c8a0cc484b91f66b432238637983d7c9f",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.33.json",
+      "verification": {
+        "outputRelativeRoot": ".venv/production-provider-connection-check-01",
+        "summarySha256": "b6da47465844f00d79227eb92eb663c4224a079fa41e157fc95cd05644456680",
+        "testCount": 544,
+        "testSeconds": 63.897,
+        "testExitCode": 0
+      },
+      "independentReview": {
+        "sourceCommit": "3449e12c8a0cc484b91f66b432238637983d7c9f",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.33.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-33",
+        "receiptSha256": "51d29a65c343220afa2146eb3a3351b44c168c8dc61149a566d3853b77094d31",
+        "responseSha256": "7b0fdee4fa31d1b1728ed0091288338a55f060e99ad8cc63379adcfe367d0292",
+        "status": "review_findings",
+        "actualInvocations": 1,
+        "usage": {
+          "input_tokens": 27197,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1929,
+          "reasoning_output_tokens": 1034
+        },
+        "findings": {
+          "P1": 0,
+          "P2": 3,
+          "P3": 0
+        }
+      }
+    },
+    {
+      "sourceCommit": "fde5cf50dada17c3e367a5ec6bb51127ae939f15",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.34.json",
+      "verification": {
+        "outputRelativeRoot": ".venv/production-provider-connection-check-02",
+        "summarySha256": "bb65807b88255ea4544bebd01550b370bfd907be3d4201a7fad8e514476f7e39",
+        "testCount": 545,
+        "testSeconds": 64.198,
+        "testExitCode": 0
+      },
+      "independentReview": {
+        "sourceCommit": "fde5cf50dada17c3e367a5ec6bb51127ae939f15",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.34.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-34",
+        "receiptSha256": "a557f9257203a6f204686aa32f12d346bfe978c7bcd0238f86a1a4eafb985853",
+        "responseSha256": "e3f71468c7138b1740fff84afd3fda01b827518d55e3dd39af4dac6caa87c5d1",
+        "status": "review_findings",
+        "actualInvocations": 1,
+        "usage": {
+          "input_tokens": 18405,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1049,
+          "reasoning_output_tokens": 376
+        },
+        "findings": {
+          "P1": 0,
+          "P2": 2,
+          "P3": 0
+        }
+      }
+    },
+    {
+      "sourceCommit": "6d32a56210e7a282d35455e0cfc09969906137ce",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.35.json",
+      "verification": {
+        "outputRelativeRoot": ".venv/production-provider-connection-check-03",
+        "summarySha256": "8320f4913d35ac93daf489d8de6855f14ecdd38507aa55d2a98e08ccb1bf216b",
+        "testCount": 546,
+        "testSeconds": 63.834,
+        "testExitCode": 0
+      },
+      "independentReview": {
+        "sourceCommit": "6d32a56210e7a282d35455e0cfc09969906137ce",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.35.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-35",
+        "receiptSha256": "790cd737de9c224a9c898c229e8d6c6d7b23dfdcf7bdc58ee3658a5a997adb19",
+        "responseSha256": "55cc9c1e2f554a15c781909363c592d98d70ad27cc2d75ad0235940bcfee78aa",
+        "status": "review_findings",
+        "actualInvocations": 1,
+        "usage": {
+          "input_tokens": 19354,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 921,
+          "reasoning_output_tokens": 273
+        },
+        "findings": {
+          "P1": 0,
+          "P2": 2,
+          "P3": 0
+        }
+      }
+    },
+    {
+      "sourceCommit": "86db7ca7f965366c9d7e2ebab1ccf83faf577286",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.36.json",
+      "verification": {
+        "outputRelativeRoot": ".venv/production-provider-connection-check-04",
+        "summarySha256": "2d91351a3079eeb71bd8e6a64a206b8fc327a45fd378514288b56d72df5bee91",
+        "testCount": 547,
+        "testSeconds": 62.867,
+        "testExitCode": 0
+      },
+      "independentReview": {
+        "sourceCommit": "86db7ca7f965366c9d7e2ebab1ccf83faf577286",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.36.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-36",
+        "receiptSha256": "2a4c65a19b35ed142d80e8bdc2c9de14e66666f6d632f17c50a83bf30c8ec9c4",
+        "responseSha256": "3295ad183a53b5ad2cb52a01fba846a90fbbfb2e4b9455e126864adab0cca93c",
+        "status": "review_findings",
+        "actualInvocations": 1,
+        "usage": {
+          "input_tokens": 13050,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 790,
+          "reasoning_output_tokens": 447
+        },
+        "findings": {
+          "P1": 0,
+          "P2": 1,
+          "P3": 0
+        }
+      }
+    }
+  ],
+  "connectionCaptures": [
+    {
+      "sourceCommit": "e81c0e8fd7d7aa7b148c9810e36bce5c48082736",
+      "contractPath": "evals/skills/routing/production-connection-probe-v0.2.json",
+      "outputRelativeRoot": ".venv/production-provider-connection-02",
+      "receiptSha256": "57c4b4fc0ecd9b8b5e0a4e7b652dc75f7f630af80e2ea75cbe5cb5f8e498d627",
+      "totalServiceApiRequests": 3,
+      "modelApiRequests": 1,
+      "modelCatalogApiRequests": 2,
+      "originalOneTotalApiCriterionMet": false,
+      "artifactCount": 26,
+      "rolloutEvents": 15,
+      "initialInputRoles": ["developer", "developer", "developer", "user", "user"],
+      "requestPayloadSha256": "2ade34c63fc6aae64babb76798bf2b9cdc23bc8bd6f1e901e39329a64adfd4af",
+      "tokenUsage": {"input_tokens": 2635, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 22, "reasoning_output_tokens": 0, "total_tokens": 2657},
+      "eligibleForMeasurement": false,
+      "certifiesWholeTrace": false,
+      "certifiesPhaseCompletion": false
+    }
+  ],
+  "startupDiagnostics": [
+    {"sourceCommit": "ede0b4876f413f758e810e289c5f75c13db89ce6", "contractPath": "evals/skills/routing/production-provider-startup-v0.1.json", "outputRelativeRoot": ".venv/production-provider-startup-01", "receiptSha256": "460241d03788d773c7150483cc5dc4f0ae8fe9ec479e73a1b2f132415acfed10", "status": "startup_diagnostic_stopped", "namespaceExitCode": 1},
+    {"sourceCommit": "c5e7d41a51c12feb2235eedb955b2d3861f957f6", "contractPath": "evals/skills/routing/production-provider-startup-v0.2.json", "outputRelativeRoot": ".venv/production-provider-startup-02", "receiptSha256": "094dabcad32a275a3618c689ab2adb7b43e0a3f2e65489fe23a09e34bd664fee", "status": "unpaid_sdk_initialization_captured", "namespaceExitCode": 0}
+  ],
+  "certifiesNativeProvider": false,
+  "eligibleForMeasurement": false,
+  "phaseComplete": false
+}

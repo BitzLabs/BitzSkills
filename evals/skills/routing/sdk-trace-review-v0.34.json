@@ -1,0 +1,57 @@
+{
+  "version": "sdk-trace-review-0.34.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "connection-caller-methods-unique-replies-and-fixed-fault-api-counts-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-34",
+  "payloadFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py",
+    "tests/skills/test_production_fault_probe.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.1.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_fault_probe.py",
+    "evals/skills/routing/production-fault-probe-v0.1.json",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py",
+    "tests/skills/test_production_fault_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.34.json"
+  ],
+  "constraints": [
+    "本人が許可したPhase 4の公開4本文のみの独立静的検分。SOL1回/300秒/一次0/自動retry0。前回のP2=3と原応答/消費は保持する。",
+    "前回: turn/steer等の追加送信を見落とす、重複replyがdictで後勝ちになる、故障のAPI件数がsummaryの自己申告だけに一致。親も前2件の受入れを修正前に実際に再現した。",
+    "是正: caller全methodはinitialize/initialized/thread-start/turn-startの固定順、要求ID3個は重複なし。reply3件のIDがcallerと一致し重複/未知を拒否。故障APIは固定faultから期待件数/statusを導出しrow/receipt/原API全てを束縛する。回帰に同じ3反例を含める。",
+    "connection policyは最大SDK起動1/turn1/timeout60/自動retry0/primary0/期待観測API1、gpt-6.1-sol/OpenAI/SDK・CLI0.160.1。共通repositoryのpaidConnectionDiagnostic別roleの有限予約は未消費。",
+    "通常/stream retry0とWebSocket/無制限接続retry/proxy fallback無効。認証復旧0やAPI事前hard capは保証しない。collector capturedは取得であり診断passではない。parent evaluateと原rollout/RPC/APIの照合を後続で実行する。Gate/Phase/行動/一次未認定。",
+    "標準CLIだけが認証を内部利用し既承認read-only bind。コードは認証内容を読取/コピー/出力しない。原RPC/stdio/bundle/HTTP/SSE/保持期待値はpayloadに含めない。",
+    "非提示依存は未読。限定是正と原相関/有限枠/停止/偽認定の具体的な矛盾のみを検分する。ツール/追加モデル/委譲/ファイル読取り/試験実行は禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "3449e12c8a0cc484b91f66b432238637983d7c9f",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-33",
+    "receiptSha256": "51d29a65c343220afa2146eb3a3351b44c168c8dc61149a566d3853b77094d31",
+    "responseSha256": "7b0fdee4fa31d1b1728ed0091288338a55f060e99ad8cc63379adcfe367d0292",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

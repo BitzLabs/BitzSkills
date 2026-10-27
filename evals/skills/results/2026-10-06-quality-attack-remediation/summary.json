@@ -1,0 +1,191 @@
+{
+  "schemaVersion": "1.0",
+  "status": "limited_checks_passed_with_terminal_error",
+  "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+  "primaryAttempts": 4,
+  "completedPrimaryRuns": 4,
+  "independentPassed": 4,
+  "sameSourceAndConditions": true,
+  "identicalCommonInputsAndPermissions": true,
+  "uniqueNativeThreads": 4,
+  "model": "gpt-6.1-sol",
+  "protocolSha256": "0ee7a737d70218553afd27321970746d7942e64a630dce31920b085f85c38fa4",
+  "certifiesSkillGate": false,
+  "publicSyntheticCases": true,
+  "rows": [
+    {
+      "runId": "quality-pilot-skill-r1-QR-006",
+      "caseId": "QR-006",
+      "variant": "skill",
+      "repetition": 1,
+      "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "riskBand": "Q3",
+      "decision": "not_ready",
+      "missingEvidenceIds": [
+        "non-owner-rejection-test",
+        "quality-plan"
+      ],
+      "findingCount": 4,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 17,
+      "threadId": "01a10d33-54a9-7c21-a9ea-ad0218234e9a",
+      "wallMs": 140666,
+      "usage": {
+        "input_tokens": 349686,
+        "cached_input_tokens": 300672,
+        "output_tokens": 3208
+      },
+      "runSha256": "98cc04702485c88f4ac2ad55c36202aecbffe65c3a8cce0625d0a61fa269795c",
+      "receiptSha256": "efba75aa3473be74014b50b80dfabee41e0f8d576266678fc9a704d6b60fcc7e"
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-006",
+      "caseId": "QR-006",
+      "variant": "baseline",
+      "repetition": 1,
+      "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "riskBand": "Q3",
+      "decision": "not_ready",
+      "missingEvidenceIds": [
+        "quality-plan"
+      ],
+      "findingCount": 3,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 15,
+      "threadId": "01a10d38-d3ef-7f50-8c18-0736bde6fa7c",
+      "wallMs": 99033,
+      "usage": {
+        "input_tokens": 268814,
+        "cached_input_tokens": 227968,
+        "output_tokens": 2570
+      },
+      "runSha256": "81e91aabb611186d9e7a339f94a77c9dd632f71940fca776f4fab00c7d76a1e1",
+      "receiptSha256": "46af8c2135b4dc4cd9d399156b08e8ec5df0b5b556f731974bb1fb629e6fbdb2"
+    },
+    {
+      "runId": "quality-pilot-skill-r2-QR-006",
+      "caseId": "QR-006",
+      "variant": "skill",
+      "repetition": 2,
+      "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "riskBand": "Q3",
+      "decision": "not_ready",
+      "missingEvidenceIds": [
+        "quality-plan",
+        "non-owner-rejection"
+      ],
+      "findingCount": 4,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 17,
+      "threadId": "01a10d3d-9495-78e3-938f-4fe1202a8d98",
+      "wallMs": 105746,
+      "usage": {
+        "input_tokens": 350965,
+        "cached_input_tokens": 323840,
+        "output_tokens": 3080
+      },
+      "runSha256": "c141cf8498955519fe82444821adf4904b2e90392bbcb8efbb51af7084bbac73",
+      "receiptSha256": "95350bd2258524b5aff4479ddce5ae74160e90a5c7dc3175bc80ada2d6e66c3f"
+    },
+    {
+      "runId": "quality-pilot-baseline-r2-QR-006",
+      "caseId": "QR-006",
+      "variant": "baseline",
+      "repetition": 2,
+      "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "riskBand": "Q3",
+      "decision": "not_ready",
+      "missingEvidenceIds": [
+        "quality-plan"
+      ],
+      "findingCount": 3,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 15,
+      "threadId": "01a10d43-4145-7972-b43e-353be815f23e",
+      "wallMs": 102262,
+      "usage": {
+        "input_tokens": 268814,
+        "cached_input_tokens": 226688,
+        "output_tokens": 2899
+      },
+      "runSha256": "951d099a05f63c6c8b338c5a83dbf75c983898b1300b688d979914bb9e19f0a7",
+      "receiptSha256": "7691d2a0f4294f53be5786f82f55eebcc662cc16327da6f825ae1cce5cd6c929"
+    }
+  ],
+  "totals": {
+    "skill": {
+      "runs": 2,
+      "wallMs": 246412,
+      "usage": {
+        "input_tokens": 700651,
+        "cached_input_tokens": 624512,
+        "output_tokens": 6288
+      },
+      "estimatedCostUsd": null
+    },
+    "baseline": {
+      "runs": 2,
+      "wallMs": 201295,
+      "usage": {
+        "input_tokens": 537628,
+        "cached_input_tokens": 454656,
+        "output_tokens": 5469
+      },
+      "estimatedCostUsd": null
+    }
+  },
+  "batchExecutionStatus": "stopped",
+  "capacityEvent": {
+    "reviewRunId": "sol-quality-attack-remediation-grade-baseline-r2",
+    "agentStatus": "errored",
+    "message": "Selected model is at capacity. Please try a different model.",
+    "savedReceiptStatus": "passed",
+    "parentReinspectionExitCode": 0,
+    "automaticRetries": 0,
+    "additionalBatchModelCallsAfterError": 0,
+    "providerResetTime": null
+  },
+  "originalComparison": {
+    "result": "../2026-10-06-quality-attack-stopped/report.md",
+    "status": "failed",
+    "independenceInterpretation": "unknown",
+    "unusedBudgetReusable": false
+  },
+  "limits": [
+    "公開QR-006の是正後限定4軌跡と保存済み独立receipt。最終agentの正常終端は主張しない。",
+    "両側4/4の限定適合でスキル優位を示さない。保持・発火・実地・複数モデル・全Skill Gate未認定。",
+    "cached_input_tokensはinput_tokensの内数。一次以外の使用量と実料金は不明。"
+  ]
+}

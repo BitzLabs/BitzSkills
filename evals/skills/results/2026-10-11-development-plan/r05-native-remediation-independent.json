@@ -1,0 +1,104 @@
+{
+  "status": "original_two_fixed_additional_nonfinite_P2_blocked",
+  "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+  "report": {
+    "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "original_two_p2_remediated_new_p2_blocks_launch",
+    "r05StartAllowed": false,
+    "originalFindingsPreserved": true,
+    "originalP2Correction": {
+      "durableIndependentFailure": "old ca retry after restored receipt demonstrated; new stop stores failed receipt sha and next reservation remains rejected after restore; missing submission stays pending; unreadable receipt/hash unavailable and restored original run remain stopped.",
+      "nativeUnknownFailed": "old ca original3 mutations accepted; new full inspect rejects all3. Additional missingusage/unknown tool/bool token/missingterminal/MCP ID drift reject. Unmodified old SI010 native original passes with original usage."
+    },
+    "newFindings": [
+      {
+        "priority": "P2",
+        "id": "R05-exponent-overflow-json-accepted",
+        "file": "evals/skills/sdd/evaluate.py",
+        "line": 278,
+        "title": "指数オーバーフローによる非有限JSONを受理する",
+        "evidence": "independent-probes.json.exponentOverflowMeta",
+        "trigger": "許可済みMCP result._metaに{\"overflow\":1e999}を置いた原JSONL。read_eventsはfloat infinityへ変換するがparse_constantを呼ばない。",
+        "observed": "read_events/native_completionとexecutionVersion0.1.4・固定8artifact・providerUsage付き完全inspectが通過し、4必須checksが全passed。公開合成・model0。",
+        "implication": "新README/契約の非有限JSON拒否が満たされず、serde_json::Valueを保持する固定CLI原形式とも不整合な値を受理する。",
+        "minimumFix": "json.loadsへfinite検査付きparse_floatを渡す、またはdecode後すべてのfloatを再帰math.isfinite検査。NaN/Infinity/duplicatekey拒否を維持し、raw1e999/-1e999と正常有限floatの完全入口回帰を追加。"
+      }
+    ],
+    "targetedTests": {
+      "count": 85,
+      "seconds": 32.424,
+      "status": "OK",
+      "models": 0,
+      "modules": 9
+    },
+    "preflight": {
+      "status": "actual_batch_plan_passed",
+      "seconds": 9.141353431041352,
+      "executionVersion": "sdd-execution-0.1.4",
+      "slots": 68,
+      "model": "gpt-6.1-sol",
+      "modelVersion": "unversioned-alias-observed-2026-10-12",
+      "timeoutSeconds": 240,
+      "retries": 0,
+      "codexVersion": "codex-cli 0.160.1",
+      "pythonVersion": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "jsonschemaPath": "/usr/lib/python3/dist-packages/jsonschema/__init__.py",
+      "ruamelPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/.venv/lib/python3.12/site-packages/ruamel/yaml/__init__.py",
+      "coreDoctor": "passed/exit0",
+      "newOutput": false,
+      "newLedger": false,
+      "newLock": false
+    },
+    "officialSource": {
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.160.1/codex-rs/exec/src/exec_events.rs",
+      "sha256": "dafa872d7e86a099e56e28a329dcb9c03db90ed768c3b88cca8c91d46dc1d0e5",
+      "scope": "Local pinned official event-definition bytes read; no current online fetch or new CLI/model.",
+      "additionalSource404Preserved": {
+        "path": "event_processor_with_json_output.rs",
+        "status": 404
+      }
+    },
+    "historicalNative": {
+      "archiveSha256": "51eb4613b1ff6c89bcbf4e415d40f4e57b2d793ef3eec21e98d2372897d43c5b",
+      "traceSha256": "048be2b91f23ae72b130dcb70dd52e72644cf517fa3196fbe04a93332cefbee2",
+      "nativePassed": true,
+      "usage": {
+        "input_tokens": 64887,
+        "cached_input_tokens": 45824,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 637,
+        "reasoning_output_tokens": 35
+      },
+      "modelReplayed": false
+    },
+    "sourceSha256": {
+      "evals/skills/sdd/README.md": "ea5565a16a2864ee9918ea96dfbef146f78f20784e7519dc0cd0e655132cc3e2",
+      "evals/skills/sdd/batch.py": "115a3e3306e0707dc7fa0c86405bac94d05e3c02421ca9e76a00cc665e1e93a7",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json": "fea89e29f930afb6464039952a137c1589bfaaf10af41906c0c13a438fcb3395",
+      "evals/skills/sdd/evaluate.py": "47a2bef6e1be72fdbe2b25ce46eddfdfb1a1c171ac9bd3e7974d32f2c2dd36a8",
+      "tests/skills/test_sdd_batch.py": "0187c499e2104be493d2060f21796db03306568a6e65ed629e68a08bf71c8852",
+      "tests/skills/test_sdd_interruption.py": "ce03a059fc24eddfce8c7bbb61f3d036c53c268e749edb1900e62de60f54ec57",
+      "tests/skills/test_sdd_native_completion.py": "064e960576a149a656ed019e051276a2607455c34de9f7f765887878de85bd10",
+      "tests/skills/test_sdd_skill_eval.py": "bd4f1e624f4fe88a7b183d574aeadbeb34c31aae70f299e702934ed8aef5b25a"
+    },
+    "originalPublicHashesUnchanged": true,
+    "newModelsStarted": 0,
+    "newPrimary": 0,
+    "newReservations": 0,
+    "sharedLedgerWrites": 0,
+    "sourceEdits": 0,
+    "gitChanges": 0,
+    "limitations": [
+      "Only R05 remediation source/native/ledger/preflight and public synthetics; no actual 68 primary behavior or independent SOL review run.",
+      "Independent review invocation budget and truthful separate context remain external operational duties.",
+      "Fixed v0.160.1 restricted profile may safely stop on other known but unauthorized items; full CLI event support is not claimed.",
+      "No R08 formal2-environment/Gate/SkillGate/Phase/release certification."
+    ]
+  },
+  "reportSha256": "4716e07fb88ab4d550ef402c7a56260ddc71006cb088ea642d5e68a0c75d9e85",
+  "inventorySha256": "2962e53c7d584fcdf37e562831c83b0786421c6a07d409eccadf190daa0fba87",
+  "parentRechecked": true,
+  "newPrimary": 0
+}

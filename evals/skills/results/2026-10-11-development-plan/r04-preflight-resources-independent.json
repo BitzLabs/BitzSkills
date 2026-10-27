@@ -1,0 +1,1777 @@
+{
+  "status": "deployment_resources_component_independently_verified_launch_not_enabled",
+  "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+  "parentFullRegression": {
+    "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+    "results": [
+      {
+        "label": "unit",
+        "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+        "exitCode": 0,
+        "seconds": 104.75293876999058,
+        "testCount": 763,
+        "testSeconds": 104.356,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "6dc0ee15676bb266c36994ccb399e856b6e9a5cfbb9b31445be02a7a7ecd2d25",
+        "cleanAfter": true
+      },
+      {
+        "label": "audit",
+        "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+        "exitCode": 0,
+        "seconds": 0.16587292996700853,
+        "testCount": null,
+        "testSeconds": null,
+        "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cleanAfter": true
+      }
+    ],
+    "modelsStarted": 0,
+    "certifiesSkillGate": false
+  },
+  "parentResourceProbe": {
+    "allSlotsBound": 92,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanBeforeAndAfter": true,
+    "contextDate": "2026-10-13",
+    "contextProfileSha256": "47924991f8d93264f3757672dcf9216dd85b7e4b76dc9aa1dbc751afc2eebe1b",
+    "decisionSchemaSha256": "98ecdddcf7e5a63ee27b218e7e93a93de9a98ca299bcaf7ab6f5abf1c1484332",
+    "deploymentSha256": "fd3e5e4937d7c88a48381d4cf4d994713023c5710ddbd7aa1d6e6d3c367c02a5",
+    "eligibleForMeasurement": false,
+    "executionSha256": "e966538e892ebdd6e259ddcea8a6a183698ffc0d272d3a03cba79f4956d5d934",
+    "independentPrelaunchReviewPerformed": false,
+    "launchEnabled": false,
+    "oldCanaryBudgetReused": false,
+    "originalCalibration": {
+      "calibrationManifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
+      "certifiesProviderWireBodies": false,
+      "paidModelCalls": 0,
+      "primaryModelTrajectories": 0,
+      "receiptSha256": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+      "requestSha256": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+      "sourceCommit": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+      "status": "original_local_calibration_matches"
+    },
+    "physicalMatrixIsolationAndArgvTested": false,
+    "prelaunchPinIsDiagnosticPlaceholder": true,
+    "primaryModelTrajectories": 0,
+    "realReservations": 0,
+    "runtime": {
+      "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+      "files": 50,
+      "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "status": "fixed_runtime_bytes_match"
+    },
+    "sdkFileCount": 207,
+    "sdkManifestSha256": "14128a2836901fe8a2d4daf907d3f8b1502cd88674eaaf2a4003e7f178851ca1",
+    "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+    "snapshotManifestSha256": "3cd76c70e41cac93e714e1a456c190f659a9cf7cb473f88a72d38f1a7076884e",
+    "snapshotResourceCount": 72,
+    "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+    "sourceSha256": {
+      "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+      "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+      "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+      "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+      "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+      "evals/skills/routing/production-canary-calibration-v0.1.json": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
+      "evals/skills/routing/production-canary-context-v0.1.json": "47924991f8d93264f3757672dcf9216dd85b7e4b76dc9aa1dbc751afc2eebe1b",
+      "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+      "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "evals/skills/routing/production_canary_calibration.py": "eb3c77ceea3af7a801a56868e6873f4f72d6f8b143d20ae8edfc397e851e8317",
+      "evals/skills/routing/production_canary_capture.py": "93550cce6eecc8677c7d7f072b160b11f7b69c7786481b76c9c99d0fb77beda5",
+      "evals/skills/routing/production_canary_evidence.py": "6a03171e302f6252d12f55422cbf06de0bf7ac64bfabfa6a7c3bd6972a4f99aa",
+      "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+      "evals/skills/routing/production_canary_review.py": "1a333d6695128fa70857bf382d57c829648965982f3f72d1c0b83339854959e2",
+      "evals/skills/routing/production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd",
+      "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+      "evals/skills/routing/production_canary_trace.py": "7a7efd2b67bffb7472729e872be2c174a9e273f45db95be6f425f9262ac58638",
+      "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+      "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+      "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+      "evals/skills/routing/production_matrix_evidence.py": "b523354eae79e20acd2bc8190be5d4c1ac15a02d0648a8b0849b44defc3a73a7",
+      "evals/skills/routing/production_matrix_inputs.py": "dfbe11be8c65f782aefc0e77bf7a103a4b30fd4f9d08ad2e8d152dbf8d9dca77",
+      "evals/skills/routing/production_matrix_ledger.py": "3cfe0079bf21895e984255cae7ba8e2d51761439a3a324f381e638aaa532f033",
+      "evals/skills/routing/production_matrix_preflight.py": "85db9806c5504f1f86a4a639a3124287b0b21a7f70b4c9113f4d433df3b17e30",
+      "evals/skills/routing/production_primary_review.py": "7c44fd7bafd2c8dbf53f8ba8edc1a47d8c113c484572df161d83a3521eafc1df",
+      "evals/skills/routing/production_sdk_probe.py": "236f43a438fe30d63ef81b1705cfe836d0cc4a778a2c02b7b187c2c423673f91",
+      "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+      "evals/skills/routing/production_trace.py": "02535147cfdad6bbf235d3b2fd747a1addbf63b5a5ffdf28e1a8947bf74b654b",
+      "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+      "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+      "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+      "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e"
+    },
+    "status": "matrix_deployment_resources_verified_launch_not_enabled",
+    "wallSeconds": 1.2431516180513427
+  },
+  "independentReport": {
+    "actualResources": {
+      "SDKPathOrderMatchesExistingTreeHash": true,
+      "allSlotsBound": 92,
+      "cliExecutablePinMatches": true,
+      "closedInventoriesMatched": true,
+      "contextDate": "2026-10-13",
+      "oldCalibration": {
+        "calibrationManifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
+        "certifiesProviderWireBodies": false,
+        "paidModelCalls": 0,
+        "primaryModelTrajectories": 0,
+        "receiptSha256": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+        "requestSha256": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+        "sourceCommit": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+        "status": "original_local_calibration_matches"
+      },
+      "oldCalibrationKnownFiles": 12,
+      "readHashesSha256": "a1e35dacad29caab37b581accbc8b623704342e72e4da9e2d815d6c202b637dc",
+      "resultFile": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-preflight-review-53641ccc/.venv/r04-preflight-independent-01/actual-result.json",
+      "resultSha256": "e5eb6a736f11466a30239a401f1dcb2da2d3f3a1e3d430d4c5100dfddc736eb8",
+      "runtimeFiles": 50,
+      "schemaSha256": "98ecdddcf7e5a63ee27b218e7e93a93de9a98ca299bcaf7ab6f5abf1c1484332",
+      "sdkFiles": 207,
+      "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+      "snapshotResources": 72,
+      "sourceFiles": 32,
+      "stringOrderDiffers": true,
+      "wallSeconds": 0.9996432339539751
+    },
+    "cleanBeforeAndAfter": true,
+    "models": 0,
+    "newBlockingFindings": [],
+    "readOnlyResourceRepository": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree",
+    "realSharedLedgerWrites": 0,
+    "realSharedReservations": 0,
+    "retainedSdkCopyFailure": {
+      "correctCopyPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-preflight-sdk-copy-01/result.json",
+      "correctCopySha256": "81a7c11593dd7e77127a35a13c0f1b88aee68c029b4351d32dcd4f553c9aa251",
+      "oldBytecodeCachesRead": false,
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-preflight-sdk-copy-failure-01/result.json",
+      "sha256": "173f48fc0ff5ebc4e614ed63bb569d80d2fb58f4cdcd6a07694c39a8287dbe29",
+      "targetCreated": false
+    },
+    "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-preflight-review-53641ccc",
+    "scopeLimits": [
+      "SOURCE_FILES固定Git/NOFOLLOW single-link、6入力Git、snapshot全Git資源集合、SDK閉集合207/Path順、runtime50/CLI pin、当日context/旧校正原照合の部品範囲。",
+      "実probeのprelaunchReview pinはRESOURCE-PROBE-ONLY-NO-PRELAUNCH-REVIEWの診断placeholder。開始前独立検分成功や起動許可の証拠ではない。",
+      "旧校正12原は旧sourceの有料0/local1隔離条件の原検証。行列の新物理隔離やargv検証へ読み替えない。",
+      "launchEnabled/eligibleForMeasurement/physicalMatrixIsolationAndArgvTested/independentPrelaunchReviewPerformed/oldCanaryBudgetReused/certifiesSkillGate/certifiesRelease=false、primaryModelTrajectories/realReservations=0を維持。",
+      "資源照合は単一時点の部品。製品入口・原取得/実起動・実API/モデル行動・独立意味安全採点・台帳確定・全R04/Step/Gate/release未認定。",
+      "SDK/source/snapshot原はsingle-linkのread_regular。配布runtimeは既存file_hashのNOFOLLOW/regular全byteshashで既知hardlinkを許容する設計を維持。",
+      "親の全763件と監査は別測定。本独立検分では対象77件を実行し全回帰を追加再実行していない。",
+      "旧63b/B8/f3/02bf報告・EA実測・停止原・paid原・実共有台帳・approved意味への書込み無し。"
+    ],
+    "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+    "sourceEdits": 0,
+    "status": "independent_deployment_resources_component_verified_launch_not_enabled",
+    "targetGitBytesMatched": {
+      "evals/skills/routing/production_matrix_preflight.py": "85db9806c5504f1f86a4a639a3124287b0b21a7f70b4c9113f4d433df3b17e30",
+      "tests/skills/test_production_matrix_preflight.py": "1e1075219fa10126732b3e1455e4650981aafcf5bac254982e5e3ce3e0d41626"
+    },
+    "tests": {
+      "allRejected": true,
+      "independentNegativeCount": 37,
+      "negativeScope": "36隔離合成fault＋有効SDK名のみの全pin再hash文字列順tree拒否1。初期sdk-string-orderケースは未知top名で先に拒否されたため、別valid-names原でPath順拒否を実証。",
+      "newPreflightTestsIncluded": 11,
+      "targeted": {
+        "count": 77,
+        "exitCode": 0,
+        "result": "OK",
+        "source": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+        "stderrSha256": "2454263184227e1ca62141802ca617023821b3b9d808ce9c97f83a4b602a1eeb",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "testSeconds": 26.491,
+        "wallSeconds": 26.772024297970347
+      },
+      "unknownPrivateCachedMemberContentsRead": false
+    }
+  },
+  "independentReportSha256": "2f90f9e8abd9609d7b8b3d2c338ddccbb8b044c6937aad7cce2a9f192b7c4f5f",
+  "inventorySha256": "3092ffecc8dbcffc322455503bd739656cbe1c9b7b9247444cb3a6b4f293f175",
+  "parentRehashed": {
+    "originalHashes": 387,
+    "sourceGitHashes": 142,
+    "evidenceHashes": 196
+  },
+  "archive": {
+    "path": "evidence-r04-preflight-resources.tar.gz",
+    "sha256": "c8793672f3218628be9f2d0b6dc9a68a4b2b5e7554728f66d23a9c6cb678f8d2",
+    "fileCount": 482,
+    "allMembersRehashed": true
+  },
+  "excludedRuntimeAndSdkOriginals": [
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/node",
+      "sha256": "3de740a941a630439b22b79aafb383f4912b76354a2694765e8d59a033746538",
+      "bytes": 148010504,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/README.md",
+      "sha256": "ba4e1f69ff48386e72a9c5e1edaf76aad64a475c2d51af79ccba6d1128261ba7",
+      "bytes": 3334,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/bin/codex.js",
+      "sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+      "bytes": 8790,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/README.md",
+      "sha256": "ba4e1f69ff48386e72a9c5e1edaf76aad64a475c2d51af79ccba6d1128261ba7",
+      "bytes": 3334,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/package.json",
+      "sha256": "131c7afb8a1f1c9d4606cd0abc3a9f8ff182e162840ea7203bf553a79be33eff",
+      "bytes": 511,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+      "sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+      "bytes": 289166920,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex-code-mode-host",
+      "sha256": "b33e8a5283f3c65c2a0aca6d43a59cfe850f624d8fa16992e3cad4fcc27c14e1",
+      "bytes": 74077072,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-package.json",
+      "sha256": "a04a3cfb05f6738fc1e01678975cdae4c3a0859ff36f06ecfbf8392beee7f86c",
+      "bytes": 205,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path/rg",
+      "sha256": "e62198eb19b136b88c330af83647b5a962cb99b6b1f066758568f12de1974849",
+      "bytes": 5408904,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/bwrap",
+      "sha256": "77360cb751ccedc5971391444ac86a8a33c15b04d6b4a6fe45f5d25496e62c4c",
+      "bytes": 529776,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/NOTICE.md",
+      "sha256": "40097a1799441051aa0b6645cdc819cceb19be73cdd265eb602aa2b15e0b1f48",
+      "bytes": 2403,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/bin/codex-voice-host",
+      "sha256": "4a55aa2085f8e66aaa9872b1ebaec4149247f5806aef17d57c4bc909e4d16505",
+      "bytes": 64531016,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstapp.so",
+      "sha256": "2646b2ab46674e09128f63bfb58f416bb622f3357a63ccb91d8674e68d2a1223",
+      "bytes": 6488,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstaudioconvert.so",
+      "sha256": "37d771eadef4166792176c105c5c86a7cc208923295bf595b544557daaa75317",
+      "bytes": 40928,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstaudioresample.so",
+      "sha256": "6eda61f5c63bfa466ef5e327a2034ba53914eefb67a46c6990a441efc916d3b2",
+      "bytes": 35120,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstcoreelements.so",
+      "sha256": "8ebc31edf0b41bb12aaad82646dfff52c2cab5c7f5fd8787ed12be469e25ad37",
+      "bytes": 473176,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstopus.so",
+      "sha256": "56fada956e68ef837b701842d0447e5bda26e875442cf401509bf6d902a0dcfd",
+      "bytes": 71992,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstrtp.so",
+      "sha256": "b916d45f805dd683474b4fc1138bf6be02dc7fedd6f8c2aef987da11631ed51c",
+      "bytes": 739744,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/gstreamer-1.0/libgstrtpmanager.so",
+      "sha256": "06f6bc45bbbff1b7d940d18b3ff083ee70b6caee24ef35ebcd960a6e76fe71fa",
+      "bytes": 558104,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libffi.so.8",
+      "sha256": "6ef5db59b2e4b1eb63032fa6c8afb1669bc09b073789233c379efda85b1353db",
+      "bytes": 63112,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgio-2.0.so.0",
+      "sha256": "bbe26ed6cf51923e00c5bb13599a66eff1d08ca56a9fb25221fe2d7110fa3704",
+      "bytes": 2307904,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libglib-2.0.so.0",
+      "sha256": "20994b31ff8856fc0d1417959b856e1d2f932837d98959d6ae427821b3103e14",
+      "bytes": 1480224,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgmodule-2.0.so.0",
+      "sha256": "16acd2347c68e531912016d9263f99c36721077003a54957ed9dee6fb680c4fd",
+      "bytes": 15656,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgobject-2.0.so.0",
+      "sha256": "cd5ac7e7811422ee62ac5e968b26691436c94105c537a40e7f31d45725147a90",
+      "bytes": 449600,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstallocators-1.0.so.0",
+      "sha256": "9b6896e3a4fd95ae4297d000778088b7f1feb0a098a44e90a1f94b042ea7268e",
+      "bytes": 30128,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstapp-1.0.so.0",
+      "sha256": "ed37774d99ed62ea4e6d74af97692b965feae704fa71169b2808cfd3c6c862a7",
+      "bytes": 105200,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstaudio-1.0.so.0",
+      "sha256": "c7ba5593c2fa5785a621f04f95c66037cf000f5a28aa9ea41821bc9d0019a29f",
+      "bytes": 597832,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstbase-1.0.so.0",
+      "sha256": "f7277672aea1fb2b3d3faaf9027267da31b5f3220ffd8ede94200a7bfa420c1d",
+      "bytes": 564592,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstnet-1.0.so.0",
+      "sha256": "55e08152618026db734712f7599347a5c918206ffccfb4f8c77de0693120e966",
+      "bytes": 73856,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstpbutils-1.0.so.0",
+      "sha256": "af8e6bce5d11f414ebf3d29b00204fe1c6c9bd41c6db203ee1c49ad0000d63ff",
+      "bytes": 316576,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstreamer-1.0.so.0",
+      "sha256": "2879fc2ce0af0d73e97a79305f1d3e48ce457ca6ae0fa842d9cb60036f23592f",
+      "bytes": 1548568,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstrtp-1.0.so.0",
+      "sha256": "1b5a5724f386bdfe4953d7875659b855801bdd56c888b65b2cccf68fd309d308",
+      "bytes": 209200,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgsttag-1.0.so.0",
+      "sha256": "511e2374d4faf0ed0624987c9c9fc076d88207e20b609b46bba9f5e70f2b7925",
+      "bytes": 268280,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libgstvideo-1.0.so.0",
+      "sha256": "0867ad6f4814f232855443da34e842a6b1e1c6d3e95576f8a891ea78bb739211",
+      "bytes": 975136,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libintl.so.8",
+      "sha256": "f50f3ab34be7b3392f2db82bd67d50e133b35fa41d352dc3b3a97b70b0ffd960",
+      "bytes": 6288,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libopus.so.0",
+      "sha256": "8aa8e09d2b6716a4161d7168f9950f052ecf6369e07fd6164f18c4a196c08fc0",
+      "bytes": 565744,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libpcre2-8.so.0",
+      "sha256": "e39519b242f40686734ed8d0218f68cac24f0e956ec64c8c1b49b9da5cc9788b",
+      "bytes": 442424,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/lib/libz.so.1",
+      "sha256": "6c5d765f42d9368cc4bdbd11f725c1bcf6b14b78322033d3c94f787fc6261f5e",
+      "bytes": 109296,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/LGPL-2.1.txt",
+      "sha256": "ad2eec519ebd4b5df86ea84dff24ae3bfa2edea846a703b58902dd221ae375db",
+      "bytes": 26431,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/Opus.txt",
+      "sha256": "01e1167d54a096d123cf6dfbbeb19587278845c6481d2d66d545669846079551",
+      "bytes": 1945,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/PCRE2.md",
+      "sha256": "197d8a73ffee0d6b09adba2f9c677b5f5aede24edf89258a68e48248d010d811",
+      "bytes": 4011,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/libffi.txt",
+      "sha256": "17b64dc60f3b6897a60f971e288b973f655c2edcdf08b25f3c3dd5549857881c",
+      "bytes": 1132,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/proxy-libintl.txt",
+      "sha256": "d245807f90032872d1438d741ed21e2490e1175dc8aa3afa5ddb6c8e529b58e5",
+      "bytes": 25292,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/sljit.txt",
+      "sha256": "5f216505c0f6ea3273caec89e766eef93cdeb7bbb0c429f9360116d7c938feeb",
+      "bytes": 1444,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/licenses/zlib.txt",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+      "bytes": 1002,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/manifest.json",
+      "sha256": "404a7aec7659e95d588d85797b1987651674c24c9ba61d372566f42553f813fe",
+      "bytes": 4768,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/runtime.json",
+      "sha256": "9da3d02ddcb8fa5c1441983839653e76b5325640e33674bd0e456af869f339ba",
+      "bytes": 13941,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/voice/sources.json",
+      "sha256": "e2f6b124f6277e7c3c4f5c7cc8830c66190f671ad65e972bb2cc9507dbfcb937",
+      "bytes": 4911,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-resources/zsh/bin/zsh",
+      "sha256": "67faaaa89242c4a332e16e508a1977cffc24bf7fca31d4411cdfd101f3831ef3",
+      "bytes": 898480,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/lib/node_modules/@openai/codex/package.json",
+      "sha256": "05d54db58bd6e525e69e770052b189970dc52f72457e5cc189bab0cbd70d11f8",
+      "bytes": 1082,
+      "reason": "fixed packaged runtime; retained locally, full-byte rehashed, binary not exported"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types-0.8.0.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types-0.8.0.dist-info/METADATA",
+      "sha256": "614985b278f601b8ef863f82783b991cc3ada4b89f592eb71c7c48c5f2ef2298",
+      "bytes": 15009,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types-0.8.0.dist-info/RECORD",
+      "sha256": "906944aac6c7f85a4ebedde03e8fc1fcc2e4b99ec400b60bc088c9ae321d2c82",
+      "bytes": 802,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types-0.8.0.dist-info/WHEEL",
+      "sha256": "942926c567d0b1273d09f20295879abd37507845f6b683eab9f87d808df91100",
+      "bytes": 87,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types-0.8.0.dist-info/licenses/LICENSE",
+      "sha256": "fe1049884b1a0d9342901e88e07f32925d24b3121d9972b6a6805fb9824b095d",
+      "bytes": 1083,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types/__init__.py",
+      "sha256": "a7104a4d439b27a9f74fc0be236b9ba1b7831e6044026802a205abc1298a9bc8",
+      "bytes": 13273,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/annotated_types/test_cases.py",
+      "sha256": "d867472acb57b81ce97f78972828e6bc5669ca4db33fd1e6f645c6183846068e",
+      "bytes": 6310,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/METADATA",
+      "sha256": "4b714353d9f0d1fd8594af5cc5602d17b78cc75f6d98495424e11fb1fce82ef3",
+      "bytes": 2680,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/RECORD",
+      "sha256": "6425502f95c50c3cc12697ed46f437abef56bfbcc029225447ec79f3036fb095",
+      "bytes": 3551,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/REQUESTED",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/WHEEL",
+      "sha256": "6b4b5ae132bb50a301d046c37ac9a2da69f40e3925cbb6a3ffb4eed91ed2b1e1",
+      "bytes": 81,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex-0.160.1.dist-info/direct_url.json",
+      "sha256": "0d4ce2c235e2b1b36c16969ce420aa37482d37fb5c280e3af02afce55e0423c0",
+      "bytes": 341,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/__init__.py",
+      "sha256": "9a58d9301d099824b21c15fef2fdc4e98191aa9ee4fb1b9b9026e5d700590bd3",
+      "bytes": 2053,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_approval_mode.py",
+      "sha256": "9cd7dbf7f20529b97adb9291832ed01645befff58d9642670f1fb8b774bd1b62",
+      "bytes": 1685,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_goal.py",
+      "sha256": "b61a1a25322e8d385ded39a1a93f0c4131d5bf0c66461cee89989930d2352643",
+      "bytes": 16291,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_initialize_metadata.py",
+      "sha256": "9ab05330ae46e2c2fc1e6279efeca98789a759f43b19601e887e4772d0f4f6da",
+      "bytes": 1863,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_inputs.py",
+      "sha256": "6b6b92ce54bb65c8eb68585e794207d3c800434a5486d91b38c4eefefdb371ce",
+      "bytes": 3122,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_login.py",
+      "sha256": "0acc5d5e801afbb9b1b73ce2867412031dbb099fb4747713fdaec41b3c02e91b",
+      "bytes": 5985,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_message_router.py",
+      "sha256": "8c1239bae89e3128ea797fd1ed23619bccab5614212908f3cb498f84ea67c396",
+      "bytes": 16756,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_run.py",
+      "sha256": "ca0e0c0d9a2c3ae8606cc5986c93bae100c47583df6c4e5643dc5cc582428263",
+      "bytes": 4295,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_runtime_requirements.py",
+      "sha256": "dab856ff4ff4a02c567b3f362c5b1298b0cdeaed6d2a84384c5dc87765447d28",
+      "bytes": 2481,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_sandbox.py",
+      "sha256": "01ab6cabc1642941ba958b287c34a5475066c934b67e4fd194d78b4bb2eb27b2",
+      "bytes": 2443,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/_version.py",
+      "sha256": "678f4945d9906b0150a3d84cfc217e06824b9a963e7d248bd4b0d0fb51210658",
+      "bytes": 906,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/api.py",
+      "sha256": "bd9cac51820997fa4d3fa4ac5c24894f45b92da8ba481d49c44cb96dcc9af430",
+      "bytes": 33152,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/async_client.py",
+      "sha256": "7d1e291eed8ce7a907b9dafd79580f286451224c12c59302b61918046a01f99c",
+      "bytes": 16245,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/client.py",
+      "sha256": "8452afbd8148ea212c94e8a6727468054b175acb0daf95002c84b66b604d05a6",
+      "bytes": 33781,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/errors.py",
+      "sha256": "104b435d7e9f293c3327ad59fc7985363503fb4d919cadbb73f943d12a75a615",
+      "bytes": 3656,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/generated/__init__.py",
+      "sha256": "0fa172a905073649a4c73e2559c8f3c81816da814ebb692ee812d67ae0dcc599",
+      "bytes": 71,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/generated/notification_registry.py",
+      "sha256": "620fa0b751ac864b4f8618e6720b643a83f9cd05ed6069048fb5ed353ff1752e",
+      "bytes": 14625,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/generated/v2_all.py",
+      "sha256": "d91b972a188b8ca766454e877de3986dfbb072789635bb51c2f6a4693f86fd72",
+      "bytes": 397501,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/models.py",
+      "sha256": "f0a33994b07369711e4d5b2c7a977d20dfbad5d9e0a72b922ca14ce639a6c4fd",
+      "bytes": 3337,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/retry.py",
+      "sha256": "0d0d048748a675ea29a2df497ae416d79887d5a69d03453fb7ca7387c4c8af47",
+      "bytes": 1007,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/openai_codex/types.py",
+      "sha256": "31a95f0a42e1e4f655663db0473927d102664547f534713ec2040cdb913c8afc",
+      "bytes": 1910,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/METADATA",
+      "sha256": "70fdb89fc4d4a9a043bf7372b8972bcc883fddff34ab55e9cf80d73875384763",
+      "bytes": 3544,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/RECORD",
+      "sha256": "fd59b791119d91d0602060c81541e41118992995c6a0070e411a5ea3c6b1ebb2",
+      "bytes": 3670,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/REQUESTED",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/WHEEL",
+      "sha256": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db",
+      "bytes": 82,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/licenses/LICENSE",
+      "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+      "bytes": 197,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "bytes": 10174,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging-26.3.dist-info/licenses/LICENSE.BSD",
+      "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+      "bytes": 1344,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/__init__.py",
+      "sha256": "6e758cdd0028b2cad74c739b9adc9c9f06f054932306280b878bfe59d39219b5",
+      "bytes": 494,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_elffile.py",
+      "sha256": "1f025f54c573f1a85740c4fbd908cc1d1fb0c177c14377ebf5f09d6cd5368780",
+      "bytes": 3236,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_manylinux.py",
+      "sha256": "5b6e84324c42538ab4cdb148e2430fdba36f04427b0efda55bea083a35fa6136",
+      "bytes": 10000,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_musllinux.py",
+      "sha256": "0328fb827b1170c77df4c107d49be8df8d37262103490a61e8acad8a2f9cadff",
+      "bytes": 2774,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_parser.py",
+      "sha256": "88a348115209327497e453b635e5db099fd592f9335d710c7313b29cdb30c50c",
+      "bytes": 12639,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_ranges.py",
+      "sha256": "b7b595f2e692aeb3697c545b85c24cbbcb4552f2adc6d9059aa82d0877e816b7",
+      "bytes": 30850,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_structures.py",
+      "sha256": "eb48d16c5efca7ccf930a9cd77a700a6b80e69d0891d5d03966526441a8565cb",
+      "bytes": 1109,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/_tokenizer.py",
+      "sha256": "cc25e57c0d564c89e15073471d6e1c264299ca946fb17c0e1e4af54ef7713ee6",
+      "bytes": 5573,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/dependency_groups.py",
+      "sha256": "5309cc564ca3022dfb594816e9d593bb09cdf34208c1fb8c5ec9afb6c670278c",
+      "bytes": 11224,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/direct_url.py",
+      "sha256": "843baa95d04cbb49288de9d9fd77ee946e862cb603123e7e46a69e171fa7d06b",
+      "bytes": 11645,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/errors.py",
+      "sha256": "ea17c461701ff2ffc817ae7e94569d24e30889e04fdb120ab721178c6d67188b",
+      "bytes": 2680,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/licenses/__init__.py",
+      "sha256": "590d12eee73ddbec53b4e9ee5bfc64d9cb3aacb4940e8ebcba260757ce56740b",
+      "bytes": 7859,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/licenses/_spdx.py",
+      "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314",
+      "bytes": 51122,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/markers.py",
+      "sha256": "6cbe860d35d98d2b599e7f0ec73feab124e015711b30be9045e678c92940d9cc",
+      "bytes": 20554,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/metadata.py",
+      "sha256": "934149f420a5449e6f376aa61d6f26a0823eb82cc7c6a1c8cde5aa7be43d0f63",
+      "bytes": 42059,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/pylock.py",
+      "sha256": "1bce0a9fe63e42b87e8ced05da272baf16a68aa704b3718405e2735a6112467c",
+      "bytes": 35232,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/ranges.py",
+      "sha256": "b4781ce913e5dff9e07906f20585c54c3028e1f7ff56341828e79d522ddbfab6",
+      "bytes": 83054,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/requirements.py",
+      "sha256": "459476eb2107fe30e6b1310051a5bdb44c7d3b7f78e0e87bada268282cba62f5",
+      "bytes": 7040,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/specifiers.py",
+      "sha256": "661ad31ddf45ffb861d2626734f4e3d66966029b8fdb79586bb105825d8d9d59",
+      "bytes": 52798,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/tags.py",
+      "sha256": "0e717a082a79620d79cf0321b420df15593c4916fcda03c27cb9d82e07ef5d6e",
+      "bytes": 38302,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/utils.py",
+      "sha256": "a13742cd9994eeca5adfb0249d126408c478026eb1f48cb97afbf2fe9f28ecc6",
+      "bytes": 12215,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/packaging/version.py",
+      "sha256": "558b2fb50fd198c660a4c082f96b8919c565911b6b4b6e07f34b6b60c074be97",
+      "bytes": 39040,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/METADATA",
+      "sha256": "0685830d13647bd6f3f05526043d32a8b2a221d86b53773053d6c52bb17a9c07",
+      "bytes": 110178,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/RECORD",
+      "sha256": "a6560fda20ac818f8e86aa91d5ab3185dd31a15aecf67e0faff8ab40c3effdaf",
+      "bytes": 15546,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/REQUESTED",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/WHEEL",
+      "sha256": "ccec20e2307acd7da453dd7437e70c6b08e2bc3ead3bc3445af135da37b56d59",
+      "bytes": 87,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic-2.13.5.dist-info/licenses/LICENSE",
+      "sha256": "a9e186f3ca16b5eef84318e7a701721351a00cb7b8ae3a4394b67b49e3529ef3",
+      "bytes": 1129,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/__init__.py",
+      "sha256": "e62127278c07bf5384cdd2903f368a69929f3b8a524000bae4e0eb608ebf4bc6",
+      "bytes": 15812,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_config.py",
+      "sha256": "473cacd49a1f7e7e097331257180eab192d18018079f69585aa0d1e79a0048f0",
+      "bytes": 14839,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_core_metadata.py",
+      "sha256": "63f836b778bbba5b8afb05c266fcc97d114c3d4336dda0582df69ee05cc13f2d",
+      "bytes": 5162,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_core_utils.py",
+      "sha256": "d63aeee156c9d31eb747a76d55cb8e23e74a4130bf77f9529c9584050cc63444",
+      "bytes": 6487,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_dataclasses.py",
+      "sha256": "660a9c9b559a24b0704d0402e6618a368c23953817de67d7fc9e5edaf776e253",
+      "bytes": 13188,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_decorators.py",
+      "sha256": "443106fc96aee4d88971f3b4c60753ec43a0b14d4b816218957ef0379ad8b55b",
+      "bytes": 33620,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_decorators_v1.py",
+      "sha256": "b5f75f76940a6384765c23b0a876d97a840cbabe95362811adf86e757047c77f",
+      "bytes": 6185,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_discriminated_union.py",
+      "sha256": "24bc7f3152dea7b331975cdba5d3598ef1c3733f89dce116e9671d575f3875c3",
+      "bytes": 26255,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_docs_extraction.py",
+      "sha256": "7f2ce74801e1e40ce88675d94ad5741ef1fe9d16dabcd1cfca0fa49f1f92fc41",
+      "bytes": 4127,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_fields.py",
+      "sha256": "85779bfb3a1d1b04c3bc6f4e2b5ba6d7c3fae1bedca876f418e9e03f88eb81c6",
+      "bytes": 31557,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_forward_ref.py",
+      "sha256": "e67dd8efedc028b9fcfc54b761cecabad2e23d48725e602d90464e6859e89f03",
+      "bytes": 611,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_generate_schema.py",
+      "sha256": "3e3a2051ac085e67fc2ee2cd7bdb1e26987b58b5b8309efe181b17c02b100bd4",
+      "bytes": 136348,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_generics.py",
+      "sha256": "0978dc22796f722f157a36969f57f7f64bf401c7c92f4479db7a912c56550feb",
+      "bytes": 23393,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_git.py",
+      "sha256": "2303e1dc33df6b65eadeb06e07d371f25b91d80d62ebd41d7937d659722e0958",
+      "bytes": 809,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_import_utils.py",
+      "sha256": "4d18710f93ae63a094a2c8a805d05c254b34a26ec820e36265d60057bcd0f233",
+      "bytes": 402,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_internal_dataclass.py",
+      "sha256": "fdb79d7355dbbaeca044688b66a914930c05a506a847584a2e5479d359f2c926",
+      "bytes": 144,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_known_annotated_metadata.py",
+      "sha256": "3f29d020543ad7fff819caf39f40f910d96583b8cfabf731a0b4e6b8540163cf",
+      "bytes": 16805,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_mock_val_ser.py",
+      "sha256": "c2645115206fa9f70b6c8e353ec165881e2ed80677989a597a21116c3df1293a",
+      "bytes": 8885,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_model_construction.py",
+      "sha256": "2682a663826b0c1bb79c6fed088ac982d249135baaeafdbd4ef4f3e449471398",
+      "bytes": 38928,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_namespace_utils.py",
+      "sha256": "865dfe4d102bf365368d3c8f3f7b7e42ab2f28b8abc6d90b7cd7eb37e7e9d31f",
+      "bytes": 12878,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_repr.py",
+      "sha256": "8d07e726ec83c50a5244d846dbd208f4f5fc7b836fdaa599ac4c3696a8a1dd41",
+      "bytes": 5172,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_schema_gather.py",
+      "sha256": "f2727eb8ce98e33eb1a5ab271a89c432e6ed3555ff9b179e44316677fa8c54b0",
+      "bytes": 9052,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_schema_generation_shared.py",
+      "sha256": "17fadb41bae4a289a0c6cb24747a4fd23509ed309f7b40400c0124aba089e273",
+      "bytes": 4842,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_serializers.py",
+      "sha256": "6085af4a6011e5f9db19258239076e5add72078650638d9e02bb9cf9e9eb6fa7",
+      "bytes": 1491,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_signature.py",
+      "sha256": "8bf6fac2d96e895599461d5963c52f076519ce23f52a3a925d9802f87c70393d",
+      "bytes": 6808,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_typing_extra.py",
+      "sha256": "743c6a178ea5ceea82a0a2eb007fe4f791036dac8478a6f69478ee4c9e4e0686",
+      "bytes": 31574,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_utils.py",
+      "sha256": "80de3c06c47e143ac90e26c29a8ebdb6d420ebb59bb85addcbfd4d40bddcbcb2",
+      "bytes": 15959,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_validate_call.py",
+      "sha256": "383fc1b291da2fd14acd9f57ae7761884b8c9e3177491209507b70bfac947df5",
+      "bytes": 5366,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_internal/_validators.py",
+      "sha256": "ec64e35d758530b89be1dc50f8779a8879406624760761bc6f2098306ae6438f",
+      "bytes": 20563,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/_migration.py",
+      "sha256": "545ef72d1094cf722b6f9c55b75de36f7340717567105e93d7e27438b7de6790",
+      "bytes": 12160,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/alias_generators.py",
+      "sha256": "28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0",
+      "bytes": 2124,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/aliases.py",
+      "sha256": "be1087ca84969d7f8427ec166f9aa3e31c91b2c8065a74d07f3429e06499f6e8",
+      "bytes": 4937,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/annotated_handlers.py",
+      "sha256": "59fc854aac28108157061ed3ef73f270a9682350e25f8e465a2d3e24eb024786",
+      "bytes": 4407,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/class_validators.py",
+      "sha256": "8bf5778fe3d87462d22e68ff20965e913463ba73bc488573f0b325aae3f23fb1",
+      "bytes": 148,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/color.py",
+      "sha256": "033a867d540717ddbf65cb4372e7b40cce324e9d8fead7a49304483535ab2c8a",
+      "bytes": 21481,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/config.py",
+      "sha256": "a353faec53162101befd17c6b4a8ac9641f0a38a579bfea37ec478d4ff3cbfbf",
+      "bytes": 44533,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/dataclasses.py",
+      "sha256": "e17f567b48e3d4a2f006dbd84a40055cda27e3aceba4199164035fe0b7f06d78",
+      "bytes": 18963,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/datetime_parse.py",
+      "sha256": "402f9680cc4caffc10fe6357512ec055ffb684b121befb0f6353d0ca148639d9",
+      "bytes": 150,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/decorator.py",
+      "sha256": "617fa3500a6ee4029a55628fa1a57e9fee25ed46d2ebd184b7d45ade1b3398a2",
+      "bytes": 145,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/class_validators.py",
+      "sha256": "9f48d840e71be58422c346fb617ca2ecd3e261d57bba3591e0ac99ba68d33e89",
+      "bytes": 10281,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/config.py",
+      "sha256": "93f96c564e7ba5ac4b24e701b9e1f4edcbb53a012059d541c66ea57da0b70825",
+      "bytes": 2663,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/copy_internals.py",
+      "sha256": "1a177ebe431de446020a0c821ad3ca3b9f27a7d704281402eaa9017881052368",
+      "bytes": 7618,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/decorator.py",
+      "sha256": "4c19ba6c9ef026c36287ff16ab92330dcc0fdf69bdfef7f1b3de9d7ac2ee934d",
+      "bytes": 10845,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/json.py",
+      "sha256": "1e55821b7e5146bc72cee4d2e8b4d089907046198365699ea901fcacb5bac00f",
+      "bytes": 4657,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/parse.py",
+      "sha256": "1b377a6ff83ccc95dcb84ed046ae5a761c7f10c25a8577dca57085d1182baaa2",
+      "bytes": 2511,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/deprecated/tools.py",
+      "sha256": "36b9bda054595a9f3e8e57ef3e02482c4b32c29e18cd90f9d972063c32f11dc2",
+      "bytes": 3330,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/env_settings.py",
+      "sha256": "e881de79612a9543d152fdd5f805e217f5bdd5f836270fccdced25df827f7b20",
+      "bytes": 148,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/error_wrappers.py",
+      "sha256": "44aea6a804dcf72303f8a043f48252f47a4a0a9ad61ddf30a3ce019e6fb77d1f",
+      "bytes": 150,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/errors.py",
+      "sha256": "0eb1023c25a1498ad0f016b83bc84acc800cda2f460474d75802f36850e92dfe",
+      "bytes": 6013,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/experimental/__init__.py",
+      "sha256": "413eeb298743b0289327d1848e6b107561d2730a4aaeb3641aaeafa8e34fe914",
+      "bytes": 104,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/experimental/arguments_schema.py",
+      "sha256": "1059e35ffba5a7eb4fc948d05f9a6642dba0d4e14bfc071cf1b70c6cb77e7d56",
+      "bytes": 1866,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/experimental/missing_sentinel.py",
+      "sha256": "8507a382d174d3052e40c9e2f78dbd7af83e797c88c292af8ec0fca1fa9f8fec",
+      "bytes": 127,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/experimental/pipeline.py",
+      "sha256": "6aea16ea5ea0d450b8d4b7223e6b08d4cea771fd344b375ef41dc2fb2bdbf662",
+      "bytes": 23956,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/fields.py",
+      "sha256": "6bc66125f23c143e934030fbf9c58c9b5657950bdad3031d4f6132e55bd57be3",
+      "bytes": 82023,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/functional_serializers.py",
+      "sha256": "cf04408d9bac391b446edc69554db4920f05a5e9b2673e05abac099359a9c184",
+      "bytes": 18117,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/functional_validators.py",
+      "sha256": "ee9fb88ef3ffffd8d9caf71d5e289d7b9a406bf26533b7c9d41824a9b8f14963",
+      "bytes": 31724,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/generics.py",
+      "sha256": "d19a99f4ef5a9e7223ff7986051aa9b3886d7b2ddbe65575f9ddad5313cc3270",
+      "bytes": 144,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/json.py",
+      "sha256": "647f11908ee1e01cfece9f0e7530316c952856f72853e8e131d459d01fa4d317",
+      "bytes": 140,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/json_schema.py",
+      "sha256": "75ade143dbd03cb1213ecac39d49628df4357ee0825621959d4cceac064b803b",
+      "bytes": 125955,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/main.py",
+      "sha256": "35b842cfe92ef300e060b40c062ef93afee1cb075cf0b7b0037a1434867c2554",
+      "bytes": 85334,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/mypy.py",
+      "sha256": "ca99e187b867f8bfa693ab16e0272b755d82e65c8ccdc33a153063db51ae7ec1",
+      "bytes": 61074,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/networks.py",
+      "sha256": "80207dea0b741bbb625438559c97e92abd4044be6a907f923d992e364986d8ee",
+      "bytes": 42102,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/parse.py",
+      "sha256": "c2477cd9d82dbd6b43f3de54fc8e84d61b6a3251a1052604577f5cb8149ea370",
+      "bytes": 141,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/plugin/__init__.py",
+      "sha256": "6bb4f0dfae94e8ade496d08235963bea773db2cfbbb86190e344d769df4eca94",
+      "bytes": 7333,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/plugin/_loader.py",
+      "sha256": "8408e04a58e82211b1dc0569229baac3948fb6d04d35e181493aea48c9cd8899",
+      "bytes": 2213,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/plugin/_schema_validator.py",
+      "sha256": "b616d9cfffb9b183f3c6c0b9b962b91837d87269abb1e702f15c3f034da68705",
+      "bytes": 5815,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/root_model.py",
+      "sha256": "70e328796769e77e8a17ce6e448716fa8cf53bb7791910a9c7d1d34b8fb5b9ff",
+      "bytes": 6394,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/schema.py",
+      "sha256": "56aaa3beafcb9daa5592779b51ddc1a7f275a768176599d94602f8f1b5441bba",
+      "bytes": 142,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/tools.py",
+      "sha256": "88742977c489e43093b4f5796ad015d3a4fcf5b8d268c15e659d8b5fd95ab196",
+      "bytes": 141,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/type_adapter.py",
+      "sha256": "4f4e60f1641ccc1b1553fdf945d2b1823222ed8ecb222a7aee9177348ed7e061",
+      "bytes": 36123,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/types.py",
+      "sha256": "7e961c1a702770ae108da166de366da98c31258cc1eeb2493df025f3d7a6cf24",
+      "bytes": 105961,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/typing.py",
+      "sha256": "3fb7de037e4cc1370bb11d6e2fb75bd12fa8c9d071a1b9976b9e580e80606a34",
+      "bytes": 138,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/utils.py",
+      "sha256": "d799d1d90a6a4c1165415e1336d4c8b4cc93271fdf6f257e80f988118d46a287",
+      "bytes": 141,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/__init__.py",
+      "sha256": "4b140f925801b385c727013a059f6aa1ec18a0688dc98527987cc414265b7e72",
+      "bytes": 2946,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/_hypothesis_plugin.py",
+      "sha256": "e444b9c56bb0d45400b3298b7b3cbc4209d5cf466955f5378e4993ef81f6ed54",
+      "bytes": 14847,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/annotated_types.py",
+      "sha256": "ba4d8d000c6a88d10b2a388787287129a20e87c1759585bf2f3ad6dd7ee86417",
+      "bytes": 3157,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/class_validators.py",
+      "sha256": "50b39a21481850306c1cbec411511aadc33e52e6ca52082837c8526c3a27b051",
+      "bytes": 14672,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/color.py",
+      "sha256": "8990012d8a7a395a28d801643fd229ae2ff049cebe2a496ef18ba149aaed7798",
+      "bytes": 16844,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/config.py",
+      "sha256": "6ba3f459eafdc7871bc0a5bb5eff29a1252a33858ff912d6c17e9832962af400",
+      "bytes": 6532,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/dataclasses.py",
+      "sha256": "efce1caaf2276f020f5abf6eb1fa57ddc87bcf8b77276b532ba374ebbff0935a",
+      "bytes": 18172,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/datetime_parse.py",
+      "sha256": "e10cb5910a6adeb3556497881de48f0e9b92d81be1a7528fb73246d71bbe1f4d",
+      "bytes": 7724,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/decorator.py",
+      "sha256": "cda6b1c71a163c29bcd7c0f56ecd3285aa518d79b7d95f06d191d609d335b970",
+      "bytes": 10339,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/env_settings.py",
+      "sha256": "03d557c2d465d36018fa31f40b4a2ecb954dc377e2e85fe9933b870e380000e3",
+      "bytes": 14105,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/error_wrappers.py",
+      "sha256": "ebadb931fc3daa40b63708ad07f2450167bc07e5efeb3054eeb2fd936f2d7f2a",
+      "bytes": 5196,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/errors.py",
+      "sha256": "988c0f103e6f18ce50e6fe02e19d493e5753447fa89af132947ea4b0c84e98fc",
+      "bytes": 17726,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/fields.py",
+      "sha256": "56a5890ab894362132a6d5eba03549e74d49a550347a7d9500d724b2a5cbd9bf",
+      "bytes": 50649,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/generics.py",
+      "sha256": "633c8a4d937ac79435446277590f6337ebb01c9c4bdd6e2aa19ab07195eac568",
+      "bytes": 17829,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/json.py",
+      "sha256": "590e47cbf848a5f751dd84bc93a37613a28c273b1d6c18bf95d58e3c9695f353",
+      "bytes": 3390,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/main.py",
+      "sha256": "bd10754dba64ccf3773f98a326573e72336e3be1dc88d3a90b86fc2b7cd99df7",
+      "bytes": 45697,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/mypy.py",
+      "sha256": "0a5f1745f0a621c544de3e40114e760bc88387c95c5fffc3de1cf68c85b1300b",
+      "bytes": 38860,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/networks.py",
+      "sha256": "1d836d2807ce98e9ca269b0383583a488923f563e153ffa2f25e5ed89281a46e",
+      "bytes": 22124,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/parse.py",
+      "sha256": "049b5daa2651b5abfd55114298ec6863e2889909a33f2f80fcda288e21546716",
+      "bytes": 1821,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/schema.py",
+      "sha256": "6aa06e03ef9cabc8005648a6e4124f140487cce67c745b66157fdf346afa8a9e",
+      "bytes": 47801,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/tools.py",
+      "sha256": "d650dd5c79348cbe6e3f7bb9442600bd402518296000efb8e6592af63edfc810",
+      "bytes": 2881,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/types.py",
+      "sha256": "07397e45c9e2b4f0479eac308fd8afec98c7b8dd46a67587db874a905de5f5ef",
+      "bytes": 35455,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/typing.py",
+      "sha256": "a2fc2d2e911909b9e08596877d2349ba9cdeb731cd90b5e39ffeba9204e7215e",
+      "bytes": 20102,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/utils.py",
+      "sha256": "d4fa8e225cfa3955b019db371c12a5c3812de9ab05a2ed1452902da3b8c5382b",
+      "bytes": 26014,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/validators.py",
+      "sha256": "9725249f5316847c65097e597c48058ff0801e88e888f71a41e31d10cf57be25",
+      "bytes": 22187,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/v1/version.py",
+      "sha256": "6291d63902ad1a8c5fca29331ab7265c954a515601f4405da0247df784314a71",
+      "bytes": 1039,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/validate_call_decorator.py",
+      "sha256": "54b022e21a05a630bed5e2f41e2c5869a59a1053ba86d19c0dcb60b2a6b95482",
+      "bytes": 4416,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/validators.py",
+      "sha256": "a706c825755bd42576980138c3f1067cd8fb0f0cec29a5b0fed4cbe9cbe24eeb",
+      "bytes": 146,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/version.py",
+      "sha256": "b8a3b18742e3899919d0a7cb9a5a4f611018fbf369217f228f138b0cd856f26f",
+      "bytes": 3985,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic/warnings.py",
+      "sha256": "dd0c90a3a94ddf970eece5c36c511759c35a3e518245aade815640f86fa56702",
+      "bytes": 4822,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/METADATA",
+      "sha256": "29768c038c0bb3564c0a87ef50ef78d18a2372474bdef0ba356a8c0fd4bd6028",
+      "bytes": 6573,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/RECORD",
+      "sha256": "1e3d7d7def8711e2d58c5ba258177e7b32b67f08aa44ae2a93bda94fb7f0c486",
+      "bytes": 1127,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/WHEEL",
+      "sha256": "71d661618d9b707f61ac372a0d51047692f4339b639a602bfa5c14ab5e4211d6",
+      "bytes": 147,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/licenses/LICENSE",
+      "sha256": "2afdd30d54b4d62b6f488a6bcc1546e84ec5061f13f4209c03d012348783795a",
+      "bytes": 1080,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core-2.46.5.dist-info/sboms/pydantic-core.cyclonedx.json",
+      "sha256": "4f40c790f0cb384a793663331904117a914a50ef220b112c399d77f1463e3dd5",
+      "bytes": 125376,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core/__init__.py",
+      "sha256": "9cad6292b75254af606a970aae9bff6e5ae9f0b08089cd63acafa391b60794d2",
+      "bytes": 5115,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core/_pydantic_core.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "95f68ef2535a5102a03442e073d4906c01211b208902f56e24ec23cea402b5a0",
+      "bytes": 4692312,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core/_pydantic_core.pyi",
+      "sha256": "1ff946f222a2bf70697dddeb8b163bc73b3aee013eb347a202a25a49b9c5f12b",
+      "bytes": 45932,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core/core_schema.py",
+      "sha256": "d4f337d727ff906a66fc7ec62e734546420f01018f2fdce1eab7f64b1a215718",
+      "bytes": 155574,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/pydantic_core/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions-4.16.0.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions-4.16.0.dist-info/METADATA",
+      "sha256": "b05084ca1d50879865178d9fff9fabeab61bdfb1f361bfbde95421ffc8f9be46",
+      "bytes": 3310,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions-4.16.0.dist-info/RECORD",
+      "sha256": "78f74ed46a377d6e1debed78b3e994ff9cfe02a529d393d7c8ab80989bd25079",
+      "bytes": 580,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions-4.16.0.dist-info/WHEEL",
+      "sha256": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db",
+      "bytes": 82,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+      "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+      "bytes": 13936,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_extensions.py",
+      "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696",
+      "bytes": 165012,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection-0.4.4.dist-info/INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "bytes": 4,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection-0.4.4.dist-info/METADATA",
+      "sha256": "bad3d9e6342ef6750cf5128ec942327b8bebdce0b6e4d6f67cb15b27ae5118da",
+      "bytes": 2554,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection-0.4.4.dist-info/RECORD",
+      "sha256": "fdadfc73202e3db8d9a4683df0cb4b75e828e634b84374b7e99b899bc08652ab",
+      "bytes": 1076,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection-0.4.4.dist-info/WHEEL",
+      "sha256": "ccec20e2307acd7da453dd7437e70c6b08e2bc3ead3bc3445af135da37b56d59",
+      "bytes": 87,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection-0.4.4.dist-info/licenses/LICENSE",
+      "sha256": "804b59b25f2c31bd278f9202a19ae49a3945aa2664387e2d0a128c7cacc61ec3",
+      "bytes": 1090,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection/introspection.py",
+      "sha256": "5888c45bd627da692d9527699e3f549adf35651596b1656772310e12181b4396",
+      "bytes": 22550,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection/typing_objects.py",
+      "sha256": "a778d6290d51581c9c9a23e0263af2a4604c76def5c4d40a7cd1a375b0046ff6",
+      "bytes": 17838,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/matrix-codex-python-sdk-deps-01/typing_inspection/typing_objects.pyi",
+      "sha256": "3bd24dd92d0270d31d64fd40abc1ef8693f5322aab9a78aeb3c5b62f992f84be",
+      "bytes": 9635,
+      "reason": "fixed public SDK dependency; retained locally, rehashed, package not vendored in evidence archive"
+    }
+  ],
+  "exclusionsFullyRehashedAndRetainedLocally": true,
+  "nextAdapterDesign": {
+    "artifactRepository": "/home/hide/BitzLabs/BitzSkills",
+    "launchEnabled": false,
+    "models": 0,
+    "nextSteps": [
+      "proxyのlaunch paramsを原executionと別に渡す共通入口を作り、旧Canaryの既定互換を保つ。",
+      "行列専用のdeployment/開始前proof/SDKmanifestの有限artifact allowlistと原hash束縛を追加する。",
+      "Git共通artifactRootとsourceWorktreeを区別したnamespace/argvを固定する。",
+      "network namespaceを分離し認証mountを持たない局所1HTTP応答で実SDK/CLIのcontextと原通知を検査する。",
+      "独立検分後に意味安全採点・親確定・有限取得を接続し、開始前条件を固定してから実測する。"
+    ],
+    "observedConstraints": [
+      "MatrixLedger storageはartifactRepository/.venv内。sourceWorktreeとGit共通artifactRootを区別する必要がある。",
+      "既存 sdk.proxy は contract.json からCLI path/tracingを読む。行列の閉じたexecutionにはそれらのdeployment fieldを混入しない。",
+      "旧 capture.isolated は4枠policyを必須にするため、92枠へ直接転用しない。",
+      "新SDKコピーは207公開資源だけ。未束縛bytecode cacheをmountしない。",
+      "子processへ保持case/expected/category/全入力集合をmountしない。選択した一次payloadと閉じたexecution/deploymentのみ渡す。"
+    ],
+    "physicalIsolationExecuted": false,
+    "reservations": 0,
+    "sourceCommit": "53641ccc1631f9ec9a85c9cd36f0413021bf9ec2",
+    "sourceRepository": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree",
+    "status": "next_adapter_design_only_not_executed"
+  },
+  "actualMatrixModels": 0,
+  "actualMatrixReservations": 0,
+  "launchEnabled": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

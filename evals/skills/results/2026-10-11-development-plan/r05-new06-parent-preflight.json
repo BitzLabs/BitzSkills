@@ -1,0 +1,16 @@
+{
+  "status": "original_preparation_prefix_passed_without_mutation_or_model",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "driverSha256": "a5365016c0bb26673c51a2c76b1346746b3b40425e009f0bb69112c2306f7d90",
+  "primaryLedgerExists": false,
+  "preparationReservationExists": false,
+  "preparationOutputExists": false,
+  "modelsStarted": 0,
+  "reservationsConsumed": 0,
+  "prefixEndsBefore": "base.mkdir",
+  "predecessorStateSha256": "7736b2f7fb2f2458db8103ae7392da4c462682247e1f7cfed30bb0cb22e1ee67",
+  "calibrationDate": "2026-10-12",
+  "runtimeAndCalibrationVerifiedBy": "capture.prepare at exact clean source",
+  "originalResultSha256": "32261a35d7a74a233432d81beb6679877b8ac98e49ae3db6e553fb573b7ca4b4",
+  "independentReview": "final_report_pending"
+}

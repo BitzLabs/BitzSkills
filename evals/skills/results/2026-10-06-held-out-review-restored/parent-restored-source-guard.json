@@ -1,0 +1,21 @@
+{
+  "status": "fixed_source_matches",
+  "sourceCommit": "5ff330a73de281be8708cba4083e1235c2ad8fca",
+  "observedHead": "5f39141c51059003802ce61408884821b3470e85",
+  "headIsCondition": false,
+  "sourceSha256": {
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/routing/README.md": "44c4ab310efcad1a604011b543608cb1d3fc5edfab8f66acea98f83bae852948",
+    "evals/skills/routing/audit_held_out.py": "84a881f82cf02cc6c6c658c3f3160bce526b4d097f063e84cdd154fc8c6c0aa6",
+    "evals/skills/routing/held-out-collection-v0.3.json": "cb74a7c9f522762f3935e9148b13610a55fdd983d4658ca11752d84d8577d136",
+    "evals/skills/routing/novelty.schema.json": "6f438ca7e4b9b8680d9db333c91a28888bff2fb3483993eee44d4106565dbf77",
+    "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c",
+    "tests/skills/test_held_out_novelty.py": "4507d2501c115eeaad77d8f30cb2b6bdc7b1be04a003e2de886110ba14efa3e6",
+    "tests/skills/test_routing_source_guard.py": "c219d05b88dde8d11bf7468f9f23397c01b0eb517c2fd444c87d528367ba7dc3"
+  }
+}

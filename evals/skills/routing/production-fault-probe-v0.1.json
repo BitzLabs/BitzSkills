@@ -1,0 +1,36 @@
+{
+  "version": "production-fault-probe-0.1.0",
+  "phase": 4,
+  "scope": "isolated-unauthenticated-provider-fault-diagnostics-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "sourceFiles": [
+    "evals/skills/routing/production_fault_probe.py",
+    "evals/skills/routing/production-fault-probe-v0.1.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "tests/skills/test_production_fault_probe.py"
+  ],
+  "outputRelativeRoot": ".venv/production-provider-faults-01",
+  "maximumScenarios": 4,
+  "maximumLocalHttpRequestsPerScenario": 2,
+  "timeoutSeconds": 30,
+  "paidModelCalls": 0,
+  "primaryModelTrajectories": 0,
+  "automaticPaidRetries": 0,
+  "codeModeHostEnabled": false,
+  "diagnosticTracing": {"format": "json", "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"},
+  "limitations": [
+    "ネットワーク隔離・認証なし。HTTP503/retry0、HTTP503/retry1対照、stream切断/retry0、接続失敗/retry0の4条件を各1回実行する。",
+    "stream retry0、supports_websockets=false、unbounded_connection_retries=false、system_proxy_fallback/respect_system_proxy=false。MCP serverは無効。",
+    "原RPC/stdio/HTTP要求/応答/config/version/終了を私的出力に保持。各条件の期待要求数は1/2/1/0で、対応するSDK turnのfailed終端と正常process終了を確認する。",
+    "有料・一次・有料自動retry0。認証復旧、実provider、任意の失敗分類、tool操作、実地/Phase/Skill Gateは未認定。"
+  ]
+}

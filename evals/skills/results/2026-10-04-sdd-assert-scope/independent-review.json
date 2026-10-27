@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_assert_scope_review",
+  "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["plugins/bitz-sdd/", "evals/skills/sdd/", "evals/skills/results/2026-10-04-sdd-semantic-stop/", "docs/", "tests/skills/"],
+  "directChecks": [
+    "固定refの差分は実assertの検査範囲・コード推論・未実行結果の区別と版更新のみ。cases、評価器、試験期待は不変",
+    "archiveの元SP-003両反復reason・REQ・testを直接照合し、len==1のみでlist/str型assert不存在を確認。旧16通過/1失敗の判定を維持",
+    "SDD-flowの未証明事項の確認と整合。全7計画ケースの意図・権限は不変。狭い是正として妥当",
+    "独立実行: plan examples 2 tests in 0.941s / OK / exit 0、評価器30 tests in 16.660s / OK / exit 0",
+    "主作業者もplan examples 2 tests in 0.924s / OK / exit 0、評価器30 tests in 16.642s / OK / exit 0、audit Passed cases17 errors[] exit 0を実行",
+    "開始終了refは対象refでclean。ソース編集・新規モデル測定・外部サービス・秘密読取りはない",
+    "是正後skill反復1全7とSP-003反復2の実理由・Core・trace-host・最終snapshotを独立照合、8 passed / 0 failed / 0 unknown。型・内容未検査、テスト未実行を適切に区別。旧0.1.3不適合は保持",
+    "完成済み8runの各artifact hash、sourceHash/commit、trace最終応答とdecision/run、snapshotに不一致なし。原本はindependent-report.mdとindependent-evidence-checks.json"
+  ],
+  "notRerun": [
+    {"check": "反復2のSP-001/SP-002と中断SP-004の独立意味検分", "reason": "これらの完了・中断後、独立レビューも利用上限で停止。主作業者の照合を独立認定へ置き換えない"},
+    {"check": "baseline、残計画ケース、実装10ケース、Skill Gate、Phase 2完了", "reason": "利用上限で新規投入を停止。限定8件の独立適合を全件完了へ拡張しない"}
+  ],
+  "independent": true
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "sdd-plan-static-ed9ca3e9-66fb-45ef-b261-e04b7cf04d6f",
+  "subjectCommit": "d68a1a194acc2dacb99b0a260b83f32712b1e183",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [
+    "plugins/bitz-sdd/",
+    "tests/skills/test_sdd_plan_examples.py",
+    "docs/02.設計書/03_SDD-flow.md",
+    "docs/03.詳細設計/02_SPECモデル/",
+    "docs/03.詳細設計/01_EARS-AI/",
+    "docs/02.設計書/10_決定記録/ADR-060_スキル評価契約と独立検分の境界を固定する.md",
+    "docs/04.提案資料/30_bitz-sdd・品質管理・Coreスキル化実装計画.md"
+  ],
+  "directChecks": [
+    "新しいfork_turns=noneの文脈/root/sdd_plan_reviewで差分と正本を直接照合。起動条件は親側のspawn記録による",
+    "機能・バグ修正・保守・スパイク、計画のみと保存、草案・承認、Q2/Q3、Core不在・非成功、所有者不明、未信頼入力、最小成果物と後続引渡しの静的検分",
+    "python3 tests/skills/test_sdd_plan_examples.py -vを再実行: 2 tests、0.921s、OK、exit 0",
+    "quick_validate.pyを再実行: Skill is valid!、exit 0",
+    "掲載REQ/TASKを/tmp合成workspaceで公開CLIへ直接入力: check各passed、context interpret passed/complete、context TASK implement blocked/CTX-STATE-001",
+    "TASK境界内の差分は通過、境界外はBOUNDARYでfailed。CLIによる暗黙のworkspace変更なし",
+    "配布6ファイルのsourcehash 3b43dd45a095b19693fb990a9c5cb1d1d4e4eb6f4419aba56e299e69a7a76d98。開始・終了時のtreeはclean"
+  ],
+  "notRerun": [
+    {
+      "check": "モデルによる発火・行動・安全・複合workspace・引渡しの実動作評価",
+      "reason": "今回は静的・公開CLI検分のみ。追加モデル呼出しは実施していない。モデル行動とSkill Gateを認定しない"
+    },
+    {
+      "check": "実テスト本文の実行・要件実証・出荷認定",
+      "reason": "配布例の構文・草案状態・TASK境界を調べる合成fixtureであり、製品要求を実証していない"
+    }
+  ],
+  "independent": true
+}

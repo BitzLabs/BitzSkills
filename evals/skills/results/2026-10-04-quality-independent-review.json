@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root:quality-prototype-2026-10-04",
+  "reviewRunId": "/root/sol_quality_prototype_review:remediation",
+  "subjectCommit": "1baae6e36ed09c471ec5bec7ef65c050ea52c331",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["確定refの品質スキル本文・references・schemas・examples・checker・接続試験", "提案30、ADR-060、品質属性と安全境界、SDDフロー", "初回独立指摘と局所是正対象"],
+  "directChecks": ["開始/終了refとclean確認", "29契約試験の再実行: exit 0 / OK", "両quick_validate: 各exit 0 / Skill is valid!", "過去成功のみ・期待負例のみ・check欠落・dirty・完全解決欠落の独自合成検査: exit 0 / OK", "計画の元警告JSON保持と未再実行/証拠取得可否の直接検分"],
+  "notRerun": [{"check": "モデル比較・保持ケース・実地・Skill Gate・導入互換性", "reason": "対象外・未認定。新規モデル実測は起動しない"}],
+  "independent": true
+}

@@ -1,0 +1,59 @@
+{
+  "status": "heldout_semantic_component_review_passed",
+  "sourceCommit": "f6b314b7a4dd36fb36923d441448f3f7e6e02517",
+  "scope": "heldout_private_semantic_response_binding_only",
+  "relatedTests": {
+    "count": 114,
+    "seconds": 19.74,
+    "exitCode": 0
+  },
+  "adversarialTests": {
+    "count": 11,
+    "seconds": 6.79,
+    "exitCode": 0
+  },
+  "nativeCorrectAndSafeIncorrectTests": {
+    "count": 2,
+    "seconds": 0.937,
+    "exitCode": 0
+  },
+  "publicMechanicalCasesCompared": 54,
+  "publicResponseRubricAstMatched": true,
+  "fullRegression": {
+    "count": 988,
+    "exitCode": 0,
+    "seconds": 146.89343017899955,
+    "cleanAfter": true
+  },
+  "parentOriginals": {
+    "status": "parent_originals_consumed",
+    "sourceCommit": "f6b314b7a4dd36fb36923d441448f3f7e6e02517",
+    "independentReportSha256": "5f3493d50d23c2be12a461ec0a45141753c5e500744b60353aa2977467393da5",
+    "inventorySha256": "dcc9941d9a0f742e47077475deeb6b761cc271965d56604c98c0e89e42ac0523",
+    "originalCount": 195,
+    "allOriginalHashesMatched": true,
+    "fullRegression": {
+      "count": 988,
+      "exitCode": 0,
+      "seconds": 146.89343017899955,
+      "cleanAfter": true
+    },
+    "models": 0,
+    "reservations": 0
+  },
+  "blockingFindings": 0,
+  "prior193OriginalHashesUnchanged": true,
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-semantic-reviewed-20261017.tar.gz",
+    "sha256": "57ca72259c2d6d5e4fcdd15cc0e90e93984dd566438ba98e83d59e9a645b3605",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "version": "sdk-raw-response-review-0.6.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-06",
+  "payloadFiles": [
+    "evals/skills/routing/production_operation_probe.py",
+    "tests/skills/test_production_operation_probe.py",
+    "evals/skills/routing/production-operation-probe-v0.7.json",
+    "evals/skills/routing/production-operation-probe-v0.8.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_operation_probe.py",
+    "tests/skills/test_production_operation_probe.py",
+    "evals/skills/routing/production-operation-probe-v0.7.json",
+    "evals/skills/routing/production-operation-probe-v0.8.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-raw-response-review-v0.6.json",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-artifacts.py",
+    "evals/skills/routing/production-operation-probe-v0.9.json",
+    "evals/skills/results/2026-10-10-sdk-yielded-cell/verify-recorded-results.py"
+  ],
+  "constraints": [
+    "親が最初の入力読取り前と呼出し前後に確定sourceとhashを照合する。列挙した公開コードだけを送る。原ログ/実結果/認証情報を送らない。",
+    "独立静的検分1回だけ。tool/試験/追加モデル/委譲/私的領域読取り/自動retryは禁止。原stdioとschemaと実exitを保存する。",
+    "固定1exec/2読取りの局所模擬Responsesとraw通知捕捉だけを検査する。実provider互換/一般SDK監査/一次台帳/Phase完了を認定しない。",
+    "SDK配送値は原RPC外側timestampを配送しない。原RPC bytesを保持したままmethod/paramsを完全照合する限定を確認する。",
+    "v0.7のSDK側ログは整形された複数JSON、v0.8は1通知1JSONL。旧原bytesを変更せず別形式として検査する。",
+    "raw ResponseItemは上流SSE bytesそのものではない。生成id/内部metadataと固定finalのstatus/annotations変換を本文改変と混同せず、明示した限定投影とbody相関を確認する。",
+    "既存SDK交換診断はexperimentalRawEventsを未知paramsとして停止する。新捕捉の成功をその診断の通過・eligibleForMeasurement=trueへ代用していないか検査する。",
+    "同じ承認済み公開8パスの修正版だけを送る。新契約v0.9の本文・実ログは送らない。",
+    "固定yielded-readは1exec/list/yield_control/200ms後readと同じ最初のcell_id=1へのwait1回、局所HTTP3件、有料モデル0。列挙・読取り2件以外の操作は拡張しない。",
+    "新捕捉は原RPC/SSE/SDK/stdio/telemetryを保持するだけ。yielded marker欠如・違うcell・未完了を停止する。親子継続の全件監査・Phase完了は別工程であり、この捕捉を認定に代用しない。",
+    "直前v0.4のP2はlisted段階を第3要求の再掲から集めてstageだけ照合するため、元出力の欠落と本文欠落を見逃すこと。元の第2要求のlisted、第3要求のread、再掲履歴の不変性と原ホスト本文を検査する修正版を独立再検分する。旧原結果・指摘・消費枠は保持し、新模擬試行は行わない。",
+    "直前v0.5のP2は第3要求の末尾のwait呼出しを検査しない点。保存済みSSE3件と原exec/waitの再掲、呼出し→同call_id出力、cell=1固定args、provider履歴/settings/生成idを厳密照合する修正版を検分する。親子継続全件監査は依然別工程。"
+  ],
+  "target": "public-sdk-raw-response-notification-capture-components",
+  "previousReview": {
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-05",
+    "sourceCommit": "4539307f6e10d38e17c6f03d9c32c4676df8cc2e",
+    "receiptSha256": "50d77c1884d03c618f18cadb2b87351d4ec2a7a6c4b9da3b4387763da9bda20c",
+    "responseSha256": "890e7c35e70b81a00cdf558a399d1e73edd19792c2623b919c3d93e0b83b5dc9"
+  }
+}

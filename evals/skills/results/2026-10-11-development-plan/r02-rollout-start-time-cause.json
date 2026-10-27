@@ -1,0 +1,174 @@
+{
+  "independentReport": {
+    "sourceCommit": "bfcc9b1bf361b9def0a65b9b08b445d8d976d110",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "sourceRolloutSha256": "f19e492b74775d45068479af286f9993e6b4ae188e3dc6ef88c68897b2fa7eaf",
+    "blockingFindings": [
+      {
+        "priority": "P2",
+        "file": "evals/skills/routing/production_canary_rollout.py",
+        "line": 294,
+        "reason": "manifest createとevent appendで別SystemTime採時計測。完全一致は公式writer仕様にない条件で原互換性を誤拒否する。"
+      }
+    ],
+    "originalReceiptSha256": "a75a0b88466017feabf2953deb48b27120a543ee1be9891ff0edf38986a9b763",
+    "originalArtifactSha256": {
+      "config.json": "389a3ed818b83b9d8fbbc38a773e5b616ce014e9a627f02783f097b1d2093cb9",
+      "contract.json": "fdb72605ef4c947d3066ada4a67c46674e48d08ed4ca652c1430b92ea60dae6e",
+      "invocation.json": "ede014d1fec49571926704f0f273653dae859f9db79c96fccf68baeb9ec685f5",
+      "isolated-result.json": "3f248af02047b88ff9bcdadb4dd796efd3b8da3f1280de748299cf1741538794",
+      "namespace.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "namespace.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reservation.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+      "rpc-in.jsonl": "a4b2056e7042e863957553b3817a3608fd0576a2edb869a3068243a32b2f438b",
+      "rpc-out.jsonl": "bc2346226df70cf27eb4481f57224d1cbf92bd0f4cd4c2372efe2ad837dbf45c",
+      "runtime-result.json": "f550326fc45f27e978d0b8c86c4db7d782ccadcba61728c716dccb6afe649146",
+      "runtime-stderr.bin": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+      "trace-safe.jsonl": "78ff90595655eac9f582a646787c2a04066fe867687b725e6475991dc4e4ae86",
+      "version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/manifest.json": "d6f1ec7e218db8eeb1cddcc2a5cbb51af683afe93d1d17ba16fe99ea07c500dd",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/trace.jsonl": "800dacc3d84ed7f982783ca4088b1ae998648dfaabef5cf2d4fd115b878ee212",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/12.json": "c1a892aa197f73912585d9aa39a12dc0da644bafa6b247104151e20ef06a358d",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/19.json": "6510e50c16a0f319a4b911114a38d776c5ae00641cc2ec9c06b5a8677604fbd0",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/18.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/3.json": "7133f20d598c131cb8182971324fd220b9175279a216303fbddd37afee0f2bb7",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/23.json": "43568e86ce2556ab8da6303a89a2e0359509abc830739979977ac0efe671c432",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/22.json": "e6fd95ec772299d521fe8b7e4543470b6ecdb90f7fb8847697a334dacfa06218",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/7.json": "5ab8b706ff9799a8c4f9b1ecf32638979fafa8b408ee877a7202aae5ca3cc546",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/13.json": "58de024e2f2fc38132cb62fe0377c2fae8a4f601eab70c85044cf7f8eaa1d8d7",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/11.json": "0f9d64623224b506848fe8b59560c8f475be793cf260bb061b995c32b09fd47a",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/1.json": "1fbf5d5cb63235ae9dc8cafdb1649349d796b2d1a4f4b984a0c76ab6f6e237b3",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/21.json": "aa79aa3a8f9ae878bf3b65e8b2260f75e27632a8067b3d2e930f6e3ee2fdfb2b",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/9.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/5.json": "612e120d92ebb7eb30103c6cfa9ca3d82e09e540b4904f5ff298ff76a98becae",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/10.json": "b3c9cab5f1fb8401806138e7c5f934fb52c80b6576bcc4d42a8e6680360fcb30",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/6.json": "00de996884ece0eeeca6df420e07e063928086ae01fb19ecb91a4258827f2341",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/20.json": "88e047e314d5f5d2ad57c9b15cbeb49015660083cd3d89f885dbffc01922464e",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/14.json": "e36c4311420e75e662117cda67919bade86041e492f7b38d4a7c1e68e9f4e457",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/15.json": "ba75885cff2b3db24215c300bfba88c27b474df0eef7e08161ff5fc650378d81",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/8.json": "d97f19df44c4102327a87aceed6f138e48c5df4e246d7716305c22319e9ee0cd",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/2.json": "e0a666543ac372254176c9b7cc591780061b0bd40e3e2932f56647b3de26f80f",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/17.json": "6efbe2a789e75a342051eaedeecc0c010f1377f8a19f50efd221a7f22f2d0b36",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/16.json": "8533618e7fa957cd2a289feaff84b94d39bf6e32700b07a6f758946b95a70b03",
+      "rollout-traces/trace-6ad1de6c-ca3c-4ab8-8d26-f428623eb489-01a12d0c-e1de-73f1-80b0-63d938432910/payloads/4.json": "6b020577ecf0d2a7e967f3b764de695c5af4a25d880e683def25eab86ab93b54",
+      "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+      "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+      "host.jsonl": "8e63f880a8e13d5c4a90c6a266434d15b1b4570888de39595590f2d4ca5acec8"
+    },
+    "originalRejection": "original rollout start timestamp binding",
+    "timing": {
+      "manifestStartedAt": 1791757181742,
+      "firstEventWall": 1791757181743,
+      "differenceMs": 1,
+      "lastEventWall": 1791757190798,
+      "spanMs": 9056,
+      "elapsedSeconds": 10.927914393949322,
+      "elapsedCeilMs": 10928
+    },
+    "officialSources": [
+      {
+        "name": "writer.rs",
+        "sha256": "5efa68c044b9f880e3ee1db7d208fecdea806a6e1fbdfa2f9037b74e076c6d4a",
+        "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.160.1/codex-rs/rollout-trace/src/writer.rs",
+        "officialUrlIndependentlyOpened": true
+      },
+      {
+        "name": "raw_event.rs",
+        "sha256": "94768a4fbd6a3c5b4a5bf792b4b57bb01793b7b3fbfb8f3415027d407420165f",
+        "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.160.1/codex-rs/rollout-trace/src/raw_event.rs",
+        "officialUrlIndependentlyOpened": true
+      }
+    ],
+    "officialSourceConclusions": [
+      "writer create: manifest採時計測後にmanifest write/eventlog open。append_with_contextは別SystemTime採時計測。完全一致は保証されない。",
+      "raw_event: seqはwriter contiguous order。wallはdisplay/latency用でSystemTime単調性は保証されない。"
+    ],
+    "proposal": "元hash/trace/root/seq/有限typedfields/lifecycleを維持し、manifest<=first<=…<=last とlast-manifest<=ceil(原capture elapsed*1000)を保守的なclock安定測定profileとして検査。elapsedは原receiptからhash束縛されたresult JSONbytesへ伝播する。",
+    "proposalScope": "wallはSystemTime display/latency値、単調性保証なし。逆転/大きな前進は測定停止policyであり改ざんの証明ではない。ceilはfloat.as_integer_ratioにより有限float*1000 overflowを避ける。",
+    "requiredConnection": "evidenceで原receiptからfinite非負elapsedを検証しresult JSONbytesへ保持、reviewで原receipt SHA/値束縛を確認、整数ceil msをcorrelate mandatory引数へ渡す。rawhash/ID/seq/typedfields/lifecycleは維持。",
+    "hypotheticalOnly": {
+      "replacedOneGuardFullOriginalPass": true,
+      "validatorSha256": "284d1f4a31c982f5dc8f65071fc33baa38c19467c408c3913ddbc0a2e8c83048",
+      "eligible": false,
+      "negativeCount": 20,
+      "negativeCases": {
+        "manifest-bool": true,
+        "manifest-float": true,
+        "manifest-negative": true,
+        "manifest-i64-overflow": true,
+        "manifest-after-first": true,
+        "manifest-span-too-large": true,
+        "wall-bool": true,
+        "wall-float": true,
+        "wall-negative": true,
+        "wall-i64-overflow": true,
+        "wall-backward": true,
+        "wall-span-too-large": true,
+        "missing-events": true,
+        "elapsed-bool": true,
+        "elapsed-negative": true,
+        "elapsed-nan": true,
+        "elapsed-inf": true,
+        "elapsed-null": true,
+        "trace-id": {
+          "rejected": true,
+          "message": "rollout start"
+        },
+        "seq-gap": {
+          "rejected": true,
+          "message": "original rollout sequence"
+        }
+      },
+      "implementationCertified": false
+    },
+    "original42AndReceiptUnchanged": true,
+    "recordedFourthLedgerSha256": {
+      "campaign.json": "0fe4bcde4ba03ff4d89e35e06dbfbc99e890faa2c65946372d8548708505b903",
+      "attempt-0001.json": "f6477fda149bc4249bdf7701f2c994528acd572c0fc6c4c6165a464989340598",
+      "attempt-0002.json": "48d8184ece0f88b22de6f8b634abf16115d773598c7288108e8d699a767cbfcc",
+      "independent-0001.json": "2b4d42bebc610d21b12d6a45d5f49cacb4a5e9a52daf56a5f20bef33318bda35",
+      "review-0001.json": "6332ed4e120d40160f692fd553538457c5c63ea846260a1431b743ff4348cb6a",
+      "stop-0002.json": "6717780d44623dede2bb83fb06e315cde8d584fb14dfe4f8f9e834321c222be3"
+    },
+    "totalPrimaryConsumed": 7,
+    "totalSemanticIndependentConsumed": 3,
+    "fourthAccepted": 1,
+    "fourthStopped": 1,
+    "remainingTwoNotStarted": true,
+    "durableStopReject": "primary stopped before independent review",
+    "modelsOrClisStarted": 0,
+    "sharedLedgerWrites": 0,
+    "sourceOrGitChanges": 0,
+    "limits": [
+      "production source未是正。hypotheticalは新判定器の解消/起動可判定ではない。",
+      "旧停止と一次7/意味独立3の消費を維持。同条件再開・停止受理化を認定しない。",
+      "原時計時刻の絶対的正確さや非改ざんをseq/wallだけから証明しない。原hash/receipt/台帳束縛が別途必須。",
+      "公式tagソースを確認したが配布binaryの再現build/provenance証明は行わない。",
+      "実exec-wait cell/MCP transport envelope/全行動/Skill Gate/Step/Gate/Phase/リリース未認定。"
+    ],
+    "conclusion": "P2: 2回の異なる採時計測に完全一致を要求した互換性誤拒否。有限な原elapsed束縛関係を提案。source未是正のため解消/同条件再開は認定しない。",
+    "rawFindingLineCorrection": {
+      "initialHarnessHandEnteredLine": 299,
+      "verifiedFixedGitLine": 294,
+      "originalRawOutputPreserved": true
+    }
+  },
+  "independentEvidenceSha256": {
+    "hypothetical-validator.py": "284d1f4a31c982f5dc8f65071fc33baa38c19467c408c3913ddbc0a2e8c83048",
+    "raw_event.rs": "94768a4fbd6a3c5b4a5bf792b4b57bb01793b7b3fbfb8f3415027d407420165f",
+    "original-hypothetical-diagnostic.json": "bde59fc7d5ac1fafa2d30b1948895e6330d163b5780f9bc221534f2857514375",
+    "report.json": "eb22e42f5d34dcc558eb9c6baa31c1881074143ddf15f5de4ba5e86793a62c9f",
+    "original-rejection.traceback": "d6a5fbee03dd738ae488ff637b7a1e1e9fae9bb94006a35e8ad9151bad81e1bd",
+    "original-check.json": "4c87b174e55ee4882faaff4d53d2aca5ff9ff64262bce563da41ec6d9533bf94",
+    "original-check.argv.json": "8e9e40814ccbfc73c924ef15e9aac7209771ab43efa30ec05405cff1fc8a9955",
+    "report.md": "cb18ea7520ba105bee39d0d6e15d374ca4d30eb259013539c2e93be0ac3d8132",
+    "original-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-check.stdout": "4c87b174e55ee4882faaff4d53d2aca5ff9ff64262bce563da41ec6d9533bf94",
+    "original-check.py": "330cff4f892e279aee929f005052a070e38750f0ce07070e30c2f5eff18364f5",
+    "original-check.process.json": "07a0d36f1c0c38887a6cf19e34fa446b7d22e31fbe0ccabcc8f769e5a0bd54a7",
+    "writer.rs": "5efa68c044b9f880e3ee1db7d208fecdea806a6e1fbdfa2f9037b74e076c6d4a"
+  },
+  "parentRehashedEvidenceCount": 13
+}

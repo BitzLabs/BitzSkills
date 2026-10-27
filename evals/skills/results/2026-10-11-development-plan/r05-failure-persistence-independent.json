@@ -1,0 +1,125 @@
+{
+  "status": "limited_new06_remediation_and_first_launch_independently_verified_parent_rehashed",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "reportSha256": "d2e9233d1e5f33058c6a60d29de490ae0f2e8b49c830485111f0aed8a4079995",
+  "inventorySha256": "69118c9992a8da9f6374abb8b0aa2f442c0de977f57b6603024aaed54f5eebb7",
+  "parentRehashedCounts": {
+    "sourceGitSha256": 6,
+    "payloadGitSha256": 17,
+    "originalSha256": 81,
+    "evidenceSha256": 62
+  },
+  "report": {
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "new06_first_primary_si010_ready_within_finite_scope",
+    "unresolvedLaunchBlockingFindings": [],
+    "decision": "新06一次SI-010 skill反復1を1枠開始可。各一次後の独立意味検分・原再照合を終えるまで次枠を拒否する有限条件を維持する。",
+    "independentTests": {
+      "count": 104,
+      "testSeconds": 31.522,
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "37e95e56c816645dac0eb54310c66a19d0d4ec70b8af1f2a89030cd6b4f1cb50"
+    },
+    "preflight": {
+      "status": "actual_batch_plan_passed_without_model_or_ledger",
+      "seconds": 9.245969608076848,
+      "originalSha256": "5267ebeda6809e78f206947b20c12d5b7a33b7edc4db86ca9c63dc13c022ba4c",
+      "commandsCopied": false
+    },
+    "originalP2Closure": {
+      "old745FailureJsonSaved": false,
+      "new97FailureJsonSaved": true,
+      "callerErrorPreserved": true,
+      "secondarySnapshotAndArtifactFailuresRecorded": true,
+      "keyboardInterruptPublicCases": 2,
+      "oldFailedFullRunRetained": true,
+      "d870ProductionUnchangedBy97TestCorrection": true
+    },
+    "parentFullOriginals": {
+      "r05-failure-persistence-full": {
+        "sourceCommit": "d870ac1661a81a719410511aba4ebfbdcab4d249",
+        "tests": 705,
+        "testSeconds": 73.752,
+        "exitCode": 1,
+        "originalReadVerified": true,
+        "independentlyRerun": false
+      },
+      "r05-failure-persistence-full-02": {
+        "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+        "tests": 705,
+        "testSeconds": 73.396,
+        "exitCode": 0,
+        "originalReadVerified": true,
+        "independentlyRerun": false
+      }
+    },
+    "measurementChronology": {
+      "initialIndependentPreflightPreparationConsumed": 0,
+      "currentPreparationConsumed": 1,
+      "currentPreparationReviewVersion": "0.48",
+      "currentPrimaryConsumed": 0
+    },
+    "sol48": {
+      "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "receiptSha256": "2656a695029d0bd45ddf0376589c7dde343bb277d6b875e3a4f804fb8d7fa6a5",
+      "closedOriginalCount": 10,
+      "payloadGitCount": 17,
+      "nativeResponseSchemaUsageVerified": true,
+      "usage": {
+        "input_tokens": 66349,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 784,
+        "reasoning_output_tokens": 722
+      },
+      "findings": [],
+      "reservationConsumed": 1,
+      "primaryConsumed": 0,
+      "sourceGuardVerified": true,
+      "runtimeInventoryCount": 50,
+      "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "configAndArgvRecomputed": true,
+      "oldPreparationConsumed": 5,
+      "oldPrimaryConsumed": 0,
+      "primaryOutputsAndLedgersAbsent": true,
+      "modelsStartedByIndependent": 0,
+      "sharedLedgerWrites": 0
+    },
+    "finiteConditions": {
+      "primaryMaximum": 68,
+      "semanticMaximum": 68,
+      "semanticMaximumPerPrimary": 1,
+      "preparationMaximum": 1,
+      "primaryTimeoutSeconds": 240,
+      "reviewTimeoutSeconds": 300,
+      "automaticRetries": 0,
+      "oldStoppedConditions": 5,
+      "oldPreparationConsumed": 5,
+      "oldPrimaryConsumed": 0
+    },
+    "scopeLimits": [
+      "公開合成の失敗保持・固定原読取り・実batch.plan・静的準備原照合の範囲。一次モデル行動は未検証。",
+      "failure.json自体を書き込めない環境まで保存成功と認定しない。",
+      "実exec-wait/MCP transport、全R05、Skill Gate、Phase、releaseを認定しない。"
+    ],
+    "modelsStartedByIndependent": 0,
+    "newReservationsByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "sourceGitSha256": {
+      "evals/skills/sdd/README.md": "929660d3fa7471d656d9aca1c8f3393a31405325281d176cd3cee9a110ed51cd",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-05.json": "65fa7e9d495c86b254a5d54f4269894953754c5e2c555dc0e36a883e3cc10e71",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-06.json": "2129a0079d9b7d528f62fa65881c0b16a1033f335218cc6e0ccf599078f29dd8",
+      "evals/skills/sdd/evaluate.py": "6210d44fee927f320cb8710f7e0d91b9706ca9857c47171e8ab86258759b5972",
+      "tests/skills/test_sdd_interruption.py": "6454ac0fed00761f54d0bd780d40a349673743fa80f8b8a4776c7f091a28962b",
+      "tests/skills/test_sdd_skill_eval.py": "eb50301415ad26853e8a0888f2ca0576db0ab327bda3456c04ba8af274fb3c45"
+    },
+    "hashInventory": "hashinventory.json"
+  },
+  "primaryMeasurementChronology": "Independent measurement primary0; root started finite ordinal1 after ready verdict; outcome pending.",
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

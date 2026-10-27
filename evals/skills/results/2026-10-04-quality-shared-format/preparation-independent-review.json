@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root:quality-shared-format-2026-10-04",
+  "reviewRunId": "/root/sol_quality_shared_format_review",
+  "model": "gpt-6.1-sol",
+  "independent": true,
+  "freshContextForInitialReview": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": true,
+  "inputs": ["固定refの差分・共有形式とhelper・評価/承認契約・回帰試験", "旧baseline失敗と比較資料の非対称性、今回の是正内容・検分範囲", "原保存report/archiveと再検分対象ref"],
+  "initialReview": {
+    "subjectCommit": "333c01a4097874dc813fa6ff2571a4305ef1d3e2",
+    "beginClean": true,
+    "endClean": true,
+    "requiredCorrections": ["approval/protocolのモデル・評価版対応と包括承認のsolモデル集合を起動前に照合する"],
+    "directChecks": ["23試験6.233s・32試験0.395s、双方OK/exit 0", "共有資料はhelper規則と対応し、ケース正解・選ぶべきriskを含まない", "両側の同hash配布・actual read・旧判定を変えない分岐・pair whitelist・台帳/予算/失敗停止を検分", "旧archive 55 member/38 file/54171 bytes・SHA/原artifact/使用量/実時間一致", "model/version不一致の独立probeがREACHED_LEDGERに到達し認可拘束不足を確認"]
+  },
+  "remediationReview": {
+    "subjectCommit": "471d360007df9ec401b21a38d5ace7617fb8676e",
+    "beginCommit": "471d360007df9ec401b21a38d5ace7617fb8676e",
+    "endCommit": "471d360007df9ec401b21a38d5ace7617fb8676e",
+    "beginClean": true,
+    "endClean": true,
+    "requiredCorrections": [],
+    "directChecks": ["24試験6.270s・32試験0.411s、双方OK/exit 0", "model/evaluationSetVersion/all-agree-astra独立probeがValueError sol authorization or fixed model/evaluation identity mismatchで停止", "workspace/mkdir/台帳/model呼出し遮断mock未到達", "旧failed・新4件contract・共通形式は変更なし、2ファイルの認可是正のみ"]
+  },
+  "notRerun": [{"check": "比較モデル実測", "reason": "本検分は実測前の準備是正。比較4件は別の採点者が独立検分してreceiptへ記録"}],
+  "limits": ["helper申告整合性の検査は品質・証拠・独立性の真実性を証明しない", "Phase3・Skill Gate認定ではない"]
+}

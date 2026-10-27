@@ -1,0 +1,88 @@
+{
+  "full": {
+    "exitCode": 0,
+    "elapsedSeconds": 71.87580487399828,
+    "sourceCommit": "4eb6a871bf58f90e5a252e48cdc72ee39942fd99",
+    "clean": true,
+    "stderrSha256": "ed30e79ca81847ef936b772f1efeacc86dd2680d32b2bf3a84802527df623732"
+  },
+  "independent": {
+    "ref": "4eb6a871bf58f90e5a252e48cdc72ee39942fd99",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "tests": [
+      {
+        "check": "canary",
+        "ref": "4eb6a871bf58f90e5a252e48cdc72ee39942fd99",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production_canary*.py"
+        ],
+        "exitCode": 0,
+        "seconds": 1.791,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "e33fcd869ab745afe2bd004c4307a2b75d81a88ff2ad6d3ba67c5fe7a0956f5d"
+      },
+      {
+        "check": "ledger",
+        "ref": "4eb6a871bf58f90e5a252e48cdc72ee39942fd99",
+        "command": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_production*ledger.py"
+        ],
+        "exitCode": 0,
+        "seconds": 0.517,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "471e8da3c0c4687a94bf7d7a2339862293e53239672f7c273bfc26132425abe9"
+      }
+    ],
+    "gitSha256": {
+      "evals/skills/routing/production_canary_review.py": "782ee2829ddb82ae08e21202bfc1bd5001b6f2eb62f40202f08ff8bf02782fbb",
+      "evals/skills/routing/production_canary_context_probe.py": "d9244e96e0d5b35140b365bf89d8d74b720abc292b6f9fb95a041e77b8792eaa",
+      "evals/skills/routing/production_canary_evidence.py": "50cf05764562e1fd49a7c4d6c390c884c5ba85f048cd85e3471cd95a814501f9",
+      "evals/skills/routing/production_canary_trace.py": "8d8c2922105434db0dd72516bcbfad2002157986b970aa045cb38889fde767c2",
+      "evals/skills/routing/production_sdk_trace.py": "6ba65facdeec7086303915844e86b39f44802b501270b6d4f40c6db9300a36c0",
+      "evals/skills/routing/production-canary-v0.1.json": "30b9290859c16025a365d686a33be60c7d449d2719c4bd56e66e4217a33a1e89",
+      "tests/skills/test_production_canary_review.py": "272f459a1ce3cbdbbb4fb52f4b0c182b34959e62194358f9597b8e3c50ee4420"
+    }
+  },
+  "originalFinding": {
+    "sourceCommit": "f5d0ea5e95c4634ddd942d3ea09ac0e0c211c900",
+    "severity": "P2",
+    "description": "mutable verified originals can diverge from binding hash"
+  },
+  "scope": "native component only",
+  "primaryModelTrajectories": 0
+}

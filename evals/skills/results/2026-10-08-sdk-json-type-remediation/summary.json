@@ -1,0 +1,168 @@
+{
+  "version": "sdk-json-type-remediation-0.1.0",
+  "phase": 4,
+  "status": "local_verified_independent_review_approval_pending",
+  "sourceCommit": "dad596b2034bbcd0abb4cd25c19aea78143aa5a3",
+  "previousHistoricalReportCommit": "a29eb28296a4ae8c0293c98178e5fc2b93a9bc63",
+  "originalReview": {
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-05",
+    "receiptSha256": "0f8fd777c401e66d246babea04bb81ae0465913fa5aa4b260d975e7c3621e326",
+    "status": "review_findings",
+    "sourceCommit": "f62a87a6181831f87cd24de72c843588869dd736",
+    "model": "gpt-6.1-sol",
+    "scope": "public-sdk-trace-component-static-review-only",
+    "exitCode": 0,
+    "timedOut": false,
+    "independentReviewerSolInvocations": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "promptSha256": "8f646c5a6c9cc467f2dcc2488f789fcab4947637e8703c28bad66e1fbb250d11",
+    "stdoutSha256": "11bc729cb719c55452a9c7bed9792ff99e83bddaa9aaa48aa61aa23424cda751",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "responseSha256": "baabaaa31ddafbf45e34f9f38fe5430713fd3cb79f8bfdcfcb7035c14e80fd2e",
+    "usage": {
+      "input_tokens": 31457,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2086,
+      "reasoning_output_tokens": 1552
+    },
+    "acceptedStartupWarningHashes": [
+      "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+    ],
+    "findings": [
+      {
+        "priority": "P2",
+        "path": "evals/skills/routing/production_trace.py",
+        "line": 194,
+        "message": "JSON結果の照合がPythonの等値比較なので、数値と真偽値の改変を検出できません。host/native結果の一致という限定的な診断でも偽の通過になります。eligibleForMeasurement=falseは維持されます。",
+        "reproduction": "静的に導ける条件（未実行）：整合する入力のmanifest.candidateVersionを1とし、list_resourcesのhost結果にも1を設定する。native完了itemのresult.content[0].text内だけcandidateVersionをtrueに変更する。strict_jsonで得た辞書ではTrue == 1となるため、この照合を通過する。diagnose_exchangeではprovider出力のlisted側もtrueにするとproduction_sdk_trace.py:360の比較も通過する。",
+        "suggestion": "JSON値の型を区別する再帰比較、または検証済みJSON値の正規化ダイジェストによって照合してください。host/native/providerの各比較で数値と真偽値の置換を拒否する回帰条件を追加してください。"
+      },
+      {
+        "priority": "P3",
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "line": 87,
+        "message": "固定SDKの真偽値フィールドを辞書の等値比較だけで検査しており、真偽値を整数に置換した不正なRPCも構造診断を通過します。",
+        "reproduction": "静的に導ける条件（未実行）：それ以外が整合する入力で、thread/start応答のsandbox.networkAccessをfalseから整数0へ変更する。辞書比較では0 == Falseなので診断は拒否しない。同様に、initialize要求のcapabilities.experimentalApiをtrueから整数1へ変更しても42行の検査を通過する。",
+        "suggestion": "networkAccessは「is False」、experimentalApiは「is True」で検査し、辞書のキー集合も別途検査してください。整数0/1への置換を拒否する回帰条件を追加してください。"
+      }
+    ],
+    "sourceGuardsEqual": true
+  },
+  "reproducedAtOriginalSource": [
+    "experimentalApi true->1 passed SDK diagnostic",
+    "networkAccess false->0 passed SDK diagnostic",
+    "synthetic candidateVersion 1->true in native result passed SDK diagnostic"
+  ],
+  "remediationVerification": {
+    "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-07",
+    "summarySha256": "bb43683d8b1cd37c89394bdca38fb78e05cc9d36d77b8da05a2f85a62e20b17f",
+    "status": "sdk_parent_links_artifacts_rechecked",
+    "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+    "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+    "snapshotResourceCount": 71,
+    "originalHashesChecked": true,
+    "allTargetTraceRowsPreserved": true,
+    "sourceGuardsEqual": true,
+    "parentLinks": {
+      "status": "scripted_parent_cell_child_ids_matched",
+      "scope": "one-scripted-exec-two-mcp-calls",
+      "parentCallId": "probe-call",
+      "cellId": "1",
+      "nativeChildIds": [
+        "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+        "exec-36439273-97f9-4060-9031-434414328c02"
+      ],
+      "traceEventCount": 19,
+      "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+      "certifiesMultipleOrYieldedCells": false,
+      "eligibleForMeasurement": false
+    },
+    "tests": {
+      "count": 426,
+      "seconds": 61.879,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e8053c6d7f557dc2e8b9cbe65a0e6941a95d57a3157a6465ac0c2c9ad5b13934"
+    }
+  },
+  "pendingReview": {
+    "status": "auto_approval_rejected_before_invocation",
+    "rejectedSourceCommit": "48c4951500b2cf0653dfb36bb2697a711fe37a1d",
+    "sourceCommit": "dad596b2034bbcd0abb4cd25c19aea78143aa5a3",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.6.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-06",
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "outputDirectoryExists": false,
+    "destination": "OpenAI Codex CLI / gpt-6.1-sol",
+    "payloadFiles": [
+      {
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "bytes": 35645,
+        "sha256": "2ba2313cf875c021efaef5db445f586f212d73ae318dc75637b92c0f7dec2564"
+      },
+      {
+        "path": "evals/skills/routing/production_trace.py",
+        "bytes": 13733,
+        "sha256": "4e24f801e049362167abb448a3607826c739bb8b43586e5ea1f24c68d0324535"
+      },
+      {
+        "path": "tests/skills/test_production_sdk_trace.py",
+        "bytes": 33407,
+        "sha256": "d16d918f71ac2476b6c45a11d4bdee6ccfd5ab02704d0d011f8a540b089f50d2"
+      },
+      {
+        "path": "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+        "bytes": 4868,
+        "sha256": "9e4ebd5d0de79b759babfc60c3e3092afe3b45ffb2e81811dc47ea42ba8def6b"
+      },
+      {
+        "path": "evals/skills/routing/sdk-trace-review-remediation.md",
+        "bytes": 5083,
+        "sha256": "512dd7853b1d84e42ff429cd53bc3c5abe6226497c22f3dc1cb62050ffb407bb"
+      },
+      {
+        "path": "tests/skills/test_production_trace.py",
+        "bytes": 16171,
+        "sha256": "15ed0c37f0a567c0ba647ed55b2013dedebbb9d7922b3742b0221d166b87f08d"
+      }
+    ],
+    "payloadBytes": 108907,
+    "additionalPayload": "固定静的検分指示・確定source ID・行番号/hash・公開JSON応答schema（922 bytes）",
+    "reason": "直前の承認済み5ファイルとは異なる新sourceと追加回帰テストの具体的payloadへの明示承認がないとして自動審査が拒否した。"
+  },
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "newIndependentReviewerSolInvocations": 1,
+  "cumulativeSdkTraceIndependentReviewerSolInvocations": 5,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "independentRemediationReviewPassed": false,
+  "eligibleForMeasurement": false,
+  "certifiesExpectedBehavior": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

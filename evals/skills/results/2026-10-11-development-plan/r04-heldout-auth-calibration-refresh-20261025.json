@@ -1,0 +1,120 @@
+{
+  "version": "heldout-authentication-and-calibration-refresh-1",
+  "recordedDate": "2026-10-25",
+  "status": "authentication_revalidated_current_calibration_adopted_pending_concrete_prelaunch",
+  "calibrationProducerSource": "1c9ddeff6059cda11a24e909c4a7c744d29fb478",
+  "implementationSource": "57d57a4d5f9b74b5d1b6750f1b385d27b0887791",
+  "authentication": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792897937,
+        "usedPercent": 3,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1793430694,
+        "usedPercent": 19,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.665590049000457,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-25T09:03:23.128259+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792897937,
+        "usedPercent": 3,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1793430694,
+        "usedPercent": 19,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsPlannedHeldout": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0,
+    "artifactSha256": "62368739191272c28e316555133ba5e8fad9200772b6c4880fbb42707a302cc2"
+  },
+  "calibration": {
+    "independentReview": {
+      "status": "public_remediation_originals_parent_rehashed",
+      "component": "matrix-calibration-date25",
+      "sourceCommit": "1c9ddeff6059cda11a24e909c4a7c744d29fb478",
+      "reportSha256": "2f9bd876f58161ec5ef80db2d8a38a0fbc560458493e786d1918f5c953c7071e",
+      "inventorySha256": "0fb1e13e8d1735aaf475ede3b09dd67fcf9ae4e8b2fe826f53a98363abef2ba4",
+      "savedOriginalsCompared": 54,
+      "directPublicOriginalsCompared": 892,
+      "syntheticSymlinksComparedByReadlink": 0,
+      "gitBlobsCompared": 790,
+      "allHashesAndSizesMatch": true,
+      "models": 0,
+      "reservations": 0,
+      "privateOriginalsRead": 0,
+      "certifiesHeldoutLaunch": false,
+      "certifiesGate": false,
+      "archive": "evidence-r04-matrix-calibration-date25-reviewed-20261025.tar.gz",
+      "archiveSha256": "d0973047537527bf31a2fb33b8d73439a9418f183c066f884b5e5e6b6a8aeb6f"
+    },
+    "profileSha256": "422d23c5b97f8221acafed8d0fbb6f9a3b2935046e73cfa383e17cebcfbeebc1",
+    "manifestSha256": "b690bb170491bf24e0526c1d1ad027dd7d2c07f351d201f7ddd8f9c707bd6bd1",
+    "positiveVerification": {
+      "exitCode": 0,
+      "seconds": 4.1668680110014975,
+      "result": {
+        "status": "original_local_calibration_matches",
+        "calibrationManifestSha256": "b690bb170491bf24e0526c1d1ad027dd7d2c07f351d201f7ddd8f9c707bd6bd1",
+        "sourceCommit": "1c9ddeff6059cda11a24e909c4a7c744d29fb478",
+        "requestSha256": "044a1c83fc5930168c2786bfc92838f32b1c77ef935109df20e5a52e48f2450c",
+        "receiptSha256": "83dc2f953dada258a19a540f1f15064002414ace33f4b3ef5feb04182eaf1297",
+        "paidModelCalls": 0,
+        "primaryModelTrajectories": 0,
+        "certifiesProviderWireBodies": false
+      }
+    },
+    "negativeTests": {
+      "count": 6,
+      "exitCode": 0
+    },
+    "models": 0,
+    "reservations": 0
+  },
+  "priorStoppedSlots": 1,
+  "priorPending": 1,
+  "heldoutUnattempted": 23,
+  "publicEvaluated": 92,
+  "newModels": 0,
+  "newReservations": 0,
+  "newLedgerCreated": false,
+  "positivePrelaunchPending": true,
+  "pendingUserAction": null,
+  "nextSteps": [
+    "Bind committed current-day resources",
+    "Verify both-role local isolation and fixed-catalog client diagnostics",
+    "Independent concrete prelaunch review and parent original rehash",
+    "Attempt original ordinals2..24 in batches of maximum2 preserving all failures",
+    "After all116 outcomes plan failure measures and total LLM context reduction"
+  ],
+  "certifiesSkillGate": false,
+  "certifiesR04Complete": false
+}

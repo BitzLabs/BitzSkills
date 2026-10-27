@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "approved",
+  "approvedAt": "2026-10-04",
+  "approvedBy": "user",
+  "userMessage": "進めましょう",
+  "scopeReference": "直前の最大8軌跡の品質比較への確認",
+  "preparedCommit": "457a59a0db81f0613f56a5954fe59d9a09e97399",
+  "evaluationSetVersion": "quality-pilot-0.1.0",
+  "protocolSha256": "972e93a0519b7386cce7331dcaed8f1d78091c1871628019d4de3e5fea19ee48",
+  "pluginVersion": "0.1.1",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 8,
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseSddBudget": false,
+  "notes": "金額未確定。使用量と未確定費用を記録する。モデル比較用軌跡と独立準備検分は別集計。新規認定や本番操作を許可するものではない"
+}

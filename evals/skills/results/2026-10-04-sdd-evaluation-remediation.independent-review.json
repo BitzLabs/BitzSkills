@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_pilot_review",
+  "subjectCommit": "6a5b8b6168d20c759c39a7a0efffeaacfa522b6c",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["evals/skills/sdd/", "tests/skills/test_sdd_skill_eval.py", "evals/skills/results/2026-10-04-sdd-pilot/", "plugins/bitz-sdd/", "docs/"],
+  "directChecks": [
+    "初回fork_turns=none、gpt-6.1-solの独立文脈を継続した再検分。元評価の独自判定と是正案を保持するが、主作業者の非公開履歴は継承していない",
+    "b4a0b18の開始・終了refとstatusは固定ref/clean。絶対PYTHONPATHで24 tests / 14.971s / OKとaudit Passedを確認。最初の相対PYTHONPATH実行は合成workspace内でCoreを解決できず19 errorsとなり、環境を修正して再実行した",
+    "b4a0b18で独自否定例を実行し、HEAD移動後のbase省略で別baseのcheckが通過し、outside.pyだけへの部分境界拡張で4分類passedになる漏れを実証。解消済み判定を保留した",
+    "主作業者も漏れの回帰試験2件を追加し、元是正コードに対してRan 2/FAILED failures=2/exit 1を確認した",
+    "最終ref6a5b8b6168d20c759c39a7a0efffeaacfa522b6cは開始・終了clean。同じ独立文脈で27 tests / 16.359s / OK / exit 0、audit Passed / cases17 / plannedCalls68 / errors[]を自分で実行",
+    "独自否定例でHEAD移動後のbase省略・明示HEAD・HEAD^{commit}・短縮commit・--base=<commit>を拒否。保存した初期commitの明示指定だけが受理され、公開revision.baseが一致",
+    "outside.pyだけの部分境界拡張が期待診断と併存してもworkflow false/final TASK boundary mismatch: TASK-001になることを直接確認",
+    "最終境界取得は資格情報を継承しない環境で公開contextを読取り再実行。表記・順序差の陽性例とtimeoutを失敗へ保持する試験が通過。独自再実行でworkspace snapshot・hostログ・モデルdecisionが不変。採点者の検査をモデル実行証拠へ混ぜていない",
+    "SP-001の停止条件は公開境界仕様と元実測に整合。旧測定Failed/not-certifiedを維持し、別版・ref・出力先へ分離する扱いは妥当。今回の範囲で追加の是正必須事項なし",
+    "評価5ファイルと試験1ファイルを相対pathsort、path+NUL+content+NULで測定したSHA-256はf0859041f32314181a0bff3291ee277f8c22c04d7947ea432ea8c8a3d4ad1e6cで主作業者と一致",
+    "主作業者も最終clean refで27 tests / 16.393s / OK / exit 0とaudit Passedを実行。元archive artifact hashと元refのsource hashを直接再計算し、元runと一致を確認。Core・SDD・fixtureの原refからのdiffは空"
+  ],
+  "notRerun": [
+    {"check": "是正後の実モデル評価とSkill Gate", "reason": "追加のモデル測定は未実施。今回の再検分は公開CLIと合成の単体試験だけであり、モデル評価成功へ読み替えない"},
+    {"check": "Core全件単体・適合試験、Gate A/B/C、macOS、実地パイロット、品質接続・収束・配布", "reason": "今回の変更は評価器とケース条件。Core・スキル・規範・適合fixtureは変更していない。これらの認定は別工程"}
+  ],
+  "independent": true
+}

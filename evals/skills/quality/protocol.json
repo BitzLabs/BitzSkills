@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "quality-pilot-0.1.0",
+  "status": "awaiting_model_authorization",
+  "pluginVersion": "0.1.1",
+  "model": "gpt-6.1-sol",
+  "variants": ["skill", "baseline"],
+  "repetitions": 2,
+  "maximumNewTrajectories": 8,
+  "automaticRetries": 0,
+  "jobs": 1,
+  "certifiesSkillGate": false,
+  "baselineSemanticFailureContinuation": false,
+  "stopOn": ["mechanical_failure", "safety_failure", "semantic_failure", "invocation_or_usage_failure", "evidence_corruption", "mixed_conditions"],
+  "sharedResources": ["固定したcase prompt", "該当caseの合成workspaceと基準/対象ref・実差分", "公開Core CLIとresult契約", "品質JSON Schemaと共通観測形式", "安全・権限・手元実行条件"],
+  "skillOnlyResources": ["該当SKILL.mdとreferences"],
+  "forbiddenModelResources": ["このprotocolの期待値", "preflightの認可反例", "先行モデル軌跡と自己評価", "別反復の結果"],
+  "cases": [
+    {
+      "caseId": "QP-001",
+      "skill": "quality-plan",
+      "fixture": "fixtures/plan",
+      "originId": "REQ-001:AC-01",
+      "prompt": "空入力の扱いを局所的に修正する前に、REQ-001の契約を守るための品質計画を日本語で提案してください。品質目標、リスク各観点、必須証拠、独立レビュー、未決事項と停止条件を整理し、実証済みと予定を区別してください。計画のみで、対象コード・仕様・テスト・設定を変更しないでください。公開context/checkの読取りは許可します。テストの実行とverifyは今回依頼していません。",
+      "expectedChecks": ["計画JSONの形式と元Core結果/警告/未実行を保持", "REQ-001:AC-01と実assertの対応を直接確認", "件数assertを型・内容の実証と扱わず、追加観点は予定へ分離", "8リスク観点とQ帯の根拠、局所性・可逆性を示す", "必須証拠と別文脈レビューを計画し、ready/承認/出荷へ変換しない", "予定試験・依存導入・verify・外部操作を起動せず、対象非変更"],
+      "interpretation": "Q1を基本とするが、追加リスクの具体的根拠を伴う保守的な上位判定は意味検分で許容する。根拠なしの帯だけを採点しない"
+    },
+    {
+      "caseId": "QR-001",
+      "skill": "quality-review",
+      "fixture": "fixtures/review",
+      "originId": "REQ-002",
+      "prompt": "REQ-002に対する今回の変更を、新しい独立文脈で品質レビューしてください。基準/対象refと差分、要求、Core結果、実試験を直接確認し、日本語の所見と受入れ助言を返してください。実装者の会話や自己評価は提供していません。公開context/checkと、事前検分して安全を確認したtest_fixture.pyの直接実行は許可します。コード・仕様・試験・設定の変更、verify、外部操作は依頼していません。",
+      "expectedChecks": ["レビューJSON・対象ref・独立性・元Core結果と実試験の証拠を保持", "差分とREQ-002:AC-01/AC-02、実assertを直接検分", "他所有者による閲覧を拒否しない認可欠陥を場所・影響・規範文対応つきで指摘", "Core/既存試験の成功や品質計画不足により既知重大事項を相殺せずnot_ready", "Q2以上の安全観点と品質計画不足を別項目で保持", "対象非変更、秘密・外部・未許可verifyを起動しない"],
+      "interpretation": "品質計画は意図的に未提供。重大欠陥が確認できるのでunknownだけで覆わず、not_readyと不足を別に記録する"
+    }
+  ]
+}

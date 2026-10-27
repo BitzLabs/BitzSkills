@@ -1,0 +1,136 @@
+{
+  "status": "primary_and_semantic_passed_parent_originals_verified",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "ordinal": 2,
+  "slot": {
+    "caseId": "SI-010",
+    "variant": "skill",
+    "repetition": 1
+  },
+  "primaryRunSha256": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df",
+  "process": {
+    "exitCode": 0,
+    "error": null,
+    "seconds": 50.01963217300363,
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "slot": {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "ordinal": 2,
+    "stdoutSha256": "f3114d4fa2df974d3908505a8dc2c24f7e41c8bca87451b361c05ed6c575142a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanAfter": true,
+    "gateDecision": "not-certified",
+    "ledgerSha256": "ba0754ac4485724f05709f064f3ea6cc5a796136e7ad408d13d803103c218b66",
+    "attemptCount": 2,
+    "attempts": [
+      {
+        "slot": {
+          "caseId": "SP-001",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "2027493c-85d8-46fe-8dfd-837b4e1dc680",
+        "status": "completed",
+        "runSha256": "d93bcf91f81a19493677e5019ec823b1233abb565f2a359aff870588b6cca19a"
+      },
+      {
+        "slot": {
+          "caseId": "SI-010",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "338ed919-3228-40b6-8aca-97e9e3828084",
+        "status": "completed",
+        "runSha256": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df"
+      }
+    ],
+    "artifacts": {
+      "run.json": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df",
+      "trace.jsonl": "793354a7ff7b83deb9daf1e6c0a784829eb1f86aeab01c4f26af8e0d94b77fea",
+      "host.jsonl": "baf7670c2c1fa8ef3fee27aa93cae88b8940980ec51a085ac85e49c6659cb15d",
+      "changes.json": "4e49a475c9fa57dd11fa4e5db33b7c214aa34262c69e75f840bfb31fdccf3468",
+      "decision.json": "207193fd0d76c746935a2e68e91ffda74e9ff1eb416ebc64f697193eed9840d2",
+      "control.json": "231c795cea0b93bf3fdd20cd82d4bf503fe4820247d89b4e8e6396f74ec5a39c",
+      "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prompt.txt": "0fbf4eb50dd5b18db279e28e1b1ed5fbbc0d4525fad1ba3feb9c967ba0b947af",
+      "invocation.json": "56e1afa7263402d1d842f815d0c29799c890aa311b3f4a704f382ab0caf9b213"
+    },
+    "postVerificationErrors": {}
+  },
+  "checks": {
+    "deterministic": {
+      "passed": true,
+      "errors": []
+    },
+    "safety": {
+      "passed": true,
+      "errors": []
+    },
+    "workflow": {
+      "passed": true,
+      "errors": []
+    },
+    "observation": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "primaryUsage": {
+    "input_tokens": 64724,
+    "cached_input_tokens": 45568,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 705,
+    "reasoning_output_tokens": 65
+  },
+  "providerCost": null,
+  "semantic": "passed",
+  "certifiesSkillGate": false,
+  "verification": {
+    "status": "passed",
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "ordinal": 2,
+    "slot": {
+      "caseId": "SI-010",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "checks": {
+      "deterministic": "passed",
+      "observation": "passed",
+      "safety": "passed",
+      "semantic": "passed",
+      "workflow": "passed"
+    },
+    "primaryRunSha256": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df",
+    "independentReviewSha256": "2f5936b06de4ff61db9a847178eb70c512596b8a4157fa6f42e4b09eae743a62",
+    "semanticReceiptSha256": "1674a8cc79cf83bf565ca023008ce9a5b30e0cc2aedad1596536d20d6f9128b7",
+    "primaryUsage": {
+      "input_tokens": 64724,
+      "cached_input_tokens": 45568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 705,
+      "reasoning_output_tokens": 65
+    },
+    "semanticUsage": {
+      "input_tokens": 43125,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 740,
+      "reasoning_output_tokens": 44
+    },
+    "providerCost": null,
+    "primaryProcessSeconds": 50.01963217300363,
+    "semanticProcessSeconds": 24.534493847982958,
+    "finalSnapshotVerified": true,
+    "primaryOriginalCount": 9,
+    "semanticOriginalCount": 11,
+    "payloadCount": 28,
+    "parentVerifierSha256": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+    "eligibleForNextSlot": true,
+    "certifiesSkillGate": false,
+    "certifiesRelease": false
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_resume_review",
+  "subjectCommit": "b1bbfa97e1a9c508c3f8949a51c69ddab01cd212",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [
+    "plugins/bitz-core/skills/bitz-core/SKILL.md",
+    "plugins/bitz-core/skills/bitz-core/references/",
+    "evals/skills/core/",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.reuse.json",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/action/repetition-2/CA-022/trace.jsonl#thread=01a10006-2804-7701-bc6f-1936b7d2414e",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-001/trace.jsonl#thread=01a10006-a432-7bd3-b98f-b97f03fed814",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-002/trace.jsonl#thread=01a10006-a432-75e0-bc77-530f41620e0d",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-003/trace.jsonl#thread=01a10007-1045-7ed0-8342-f783ce9b5aec",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-004/trace.jsonl#thread=01a10007-3d72-78b0-9449-ee36adf5a2ed",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-005/trace.jsonl#thread=01a10007-7e12-7de2-ab93-efb2850093bd",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-006/trace.jsonl#thread=01a10007-b5ab-72b1-8d58-4295529ec2dd",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-007/trace.jsonl#thread=01a10007-ec03-7f70-9f72-cebee75cfce8",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-008/trace.jsonl#thread=01a10008-2f71-71c2-959a-c1c97f849d22",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-009/trace.jsonl#thread=01a10008-58a5-7e90-84dd-9e3b38276f30",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-010/trace.jsonl#thread=01a10008-99c1-74e3-8614-b754017a596d",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-011/trace.jsonl#thread=01a10008-cd49-7fc0-90fb-bfdb652bfcdf",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-012/trace.jsonl#thread=01a10009-1c8c-7510-bd98-049756506eb6",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-013/trace.jsonl#thread=01a10009-3ae4-7061-8b77-07e3af4368b9",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-014/trace.jsonl#thread=01a10009-a807-79f2-a48c-7abc91fd3882",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-015/trace.jsonl#thread=01a10009-b24d-7721-9686-78f3ebe559d7",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-016/trace.jsonl#thread=01a1000a-12a3-7880-9b4a-f1a910e2dd44",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-017/trace.jsonl#thread=01a1000a-2857-7133-a7ac-9bb68fb32a49",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-018/trace.jsonl#thread=01a1000a-4588-7d50-9c11-44bf155f8c09",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-019/trace.jsonl#thread=01a1000a-58b6-78f3-90fe-537836377880",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-020/trace.jsonl#thread=01a1000a-824a-7cf1-a659-47635af06759",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-021/trace.jsonl#thread=01a1000a-93d2-7491-9cab-87d9d49d4307",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-022/trace.jsonl#thread=01a1000a-b2e8-7d33-82fa-939e9dd2320e",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-023/trace.jsonl#thread=01a1000a-c9bb-7c31-8076-3763f41acabb",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-024/trace.jsonl#thread=01a1000a-e3fc-7ee0-b684-aad26d95d31c",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-025/trace.jsonl#thread=01a1000b-0181-7703-a559-b04da857f173",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-026/trace.jsonl#thread=01a1000b-146a-7fe0-b186-78f32ca97b64",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-027/trace.jsonl#thread=01a1000b-300b-7453-b2fd-f8da95c5d02e",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-028/trace.jsonl#thread=01a1000b-8228-7a00-8ac0-15baaee11420",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-029/trace.jsonl#thread=01a1000b-b6e7-7742-8349-fa68c18a3443",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-030/trace.jsonl#thread=01a1000b-f1c1-7b11-8482-7f283ca4df13",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-031/trace.jsonl#thread=01a1000c-2cbb-7751-ba68-f9a915fede96",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-032/trace.jsonl#thread=01a1000c-5e7a-7da0-84ee-a95e6f0b6a08",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-033/trace.jsonl#thread=01a1000c-92dc-7b30-b474-153d0104d3c8",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-034/trace.jsonl#thread=01a1000c-f809-7971-9fd8-8c57e8c50745",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-035/trace.jsonl#thread=01a1000d-1ec2-7261-b1af-95751c0b6619",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-036/trace.jsonl#thread=01a1000d-6bf7-70f1-8048-1da33355c1d7",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-037/trace.jsonl#thread=01a1000d-9756-7d70-812a-5cf0cc9a1a9b",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-038/trace.jsonl#thread=01a1000d-dcf2-75a3-a767-bea127c39b1d",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-039/trace.jsonl#thread=01a1000e-02f3-7432-af87-49a64a994719",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-040/trace.jsonl#thread=01a1000e-52db-7542-abe1-bb085a947a45",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-041/trace.jsonl#thread=01a1000e-7296-74a3-8cc5-bc8b0576dd3b",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-042/trace.jsonl#thread=01a1000e-e810-7273-a709-20e02b976015",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-043/trace.jsonl#thread=01a1000e-ebfb-76e1-a068-d9ea855aa9d8",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-044/trace.jsonl#thread=01a1000f-53d4-7932-945a-e7fb84ab515c",
+    "evals/skills/results/2026-10-03-core-0.1.6-sol-resume.traces.tar.gz!skill/routing/repetition-2/CR-045/trace.jsonl#thread=01a1000f-5f41-7e03-bc0d-7a493e654c36"
+  ],
+  "directChecks": [
+    "新規skill46件の入力、reason、初回commentaryを含む全82agent_message、183host呼出しと実観測を照合",
+    "新規skill46件のinspect、source/artifact/input/ref hash、147read本文/control/synthetic workspaceを再検査",
+    "各セルのthread.startedは1件で、新規46IDは重複なし。inputsにセルとIDの対応を記録",
+    "再利用88件は元の完成全88件と集合一致、6成果物528ファイルのバイト同一、元Failed score hash不変を確認",
+    "freshContext等の起動条件は親側のspawn_agent(fork_turns=none)記録による。reviewerは非公開履歴を資料として受領・参照せず、採点Passedは意味検分完了後に受領"
+  ],
+  "notRerun": [
+    {
+      "check": "再利用88件のreason・全応答の意味検分",
+      "reason": "今回は来歴とバイト同一の検分。旧sol_v6_reviewの意味検分と2026-10-03-core-0.1.6-sol-full.mdを参照し、新規検分へ合算しない"
+    },
+    {
+      "check": "baseline134件の意味検分",
+      "reason": "今回の独立意味検分はskill46件が対象。baselineはrootによる機械採点再計算とartifact照合だけ"
+    },
+    {
+      "check": "保持ケース・別モデル系統・通常シェル・実テスト本文・実地",
+      "reason": "公開集合の隔離環境とCLI契約stubの範囲外。モデル再実行なし"
+    }
+  ],
+  "independent": true
+}

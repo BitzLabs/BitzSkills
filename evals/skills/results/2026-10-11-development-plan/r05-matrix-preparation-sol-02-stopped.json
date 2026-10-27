@@ -1,0 +1,87 @@
+{
+  "status": "new02_preparation_stopped_original_verified",
+  "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+  "receiptRelativePath": ".venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-02/receipt.json",
+  "receiptSha256": "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+  "preparationIndependentSolConsumed": 1,
+  "primaryConsumed": 0,
+  "automaticRetries": 0,
+  "findings": [
+    {
+      "line": 173,
+      "message": "不正な独立receiptがAttributeErrorを起こすと、恒久stopが保存されません。verify_previousはreceiptのobject型を確認せず.getを呼びますが、この例外は捕捉対象外です。その後receiptを正常な内容へ差し替えると次枠へ進めるため、「未提出だけpending、不適合は永久stop」という条件を満たしません。",
+      "path": "evals/skills/sdd/batch.py",
+      "priority": "P2",
+      "reproduction": "静的に導出した手順（未実行）：必須検査が通過した一次のindependent-review.jsonへnullまたは[]を保存し、次枠を要求する。131行でAttributeErrorとなり、181〜185行のstop保存を通らない。続いて正常なreceiptへ置き換え、同じ次枠を要求すると恒久停止されず起動できる。",
+      "suggestion": "receiptがdictであることを確認し、型不正はValueErrorとして既存の恒久stop保存経路へ送ってください。null・配列のreceiptを拒否した後、正常receiptへ復元しても再開できない回帰を追加してください。"
+    }
+  ],
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 44629,
+    "output_tokens": 1081,
+    "reasoning_output_tokens": 706
+  },
+  "elapsedSeconds": 42.9631898769876,
+  "originalReproduction": {
+    "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+    "preparationReceiptSha256": "547c63d0a55c08b915c1b2fdb74bd10fafcab293dd0a94af5bc1757aafac3c15",
+    "preparationArtifactsRechecked": 10,
+    "nativeResponseRechecked": true,
+    "primaryCalls": 0,
+    "syntheticReproductions": [
+      {
+        "invalidReceipt": null,
+        "error": "AttributeError",
+        "permanentStopSaved": false,
+        "restoredNextExit": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidReceipt": [],
+        "error": "AttributeError",
+        "permanentStopSaved": false,
+        "restoredNextExit": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidReceipt": true,
+        "error": "AttributeError",
+        "permanentStopSaved": false,
+        "restoredNextExit": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidReceipt": 1,
+        "error": "AttributeError",
+        "permanentStopSaved": false,
+        "restoredNextExit": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidReceipt": "bad",
+        "error": "AttributeError",
+        "permanentStopSaved": false,
+        "restoredNextExit": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      }
+    ]
+  },
+  "certifiesSkillGate": false
+}

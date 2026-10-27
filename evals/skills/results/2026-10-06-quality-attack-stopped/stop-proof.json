@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "primaryAttempts": 2,
+  "unusedPrimaryTrajectories": 2,
+  "unusedBudgetReusable": false,
+  "additionalCodexCalls": 0,
+  "ledgerAndAttemptsUnchanged": true,
+  "oldEvidenceUnchanged": 9,
+  "reason": "previous trajectory needs independent review; no new call",
+  "automaticRetry": false
+}

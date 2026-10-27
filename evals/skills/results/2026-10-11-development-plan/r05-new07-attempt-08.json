@@ -1,0 +1,197 @@
+{
+  "status": "primary_and_semantic_passed_parent_originals_verified",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "ordinal": 8,
+  "slot": {
+    "caseId": "SP-007",
+    "variant": "skill",
+    "repetition": 1
+  },
+  "primaryRunSha256": "c3957625904a4fb5033ee4592d6c9fe6e2d08c2a13fc3c19a4197d801b079c81",
+  "process": {
+    "exitCode": 0,
+    "error": null,
+    "seconds": 52.42445761698764,
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "slot": {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "ordinal": 8,
+    "stdoutSha256": "426fd1131bdb2b11cfb90c3617403989f1d66a23e48968ac7e5a5f1a1f6ec0c0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanAfter": true,
+    "gateDecision": "not-certified",
+    "ledgerSha256": "d5cdbfd4fb6d161946faa1189832ed3bd58ea272afe00f4e17475cacd8c50654",
+    "attemptCount": 8,
+    "attempts": [
+      {
+        "slot": {
+          "caseId": "SP-001",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "2027493c-85d8-46fe-8dfd-837b4e1dc680",
+        "status": "completed",
+        "runSha256": "d93bcf91f81a19493677e5019ec823b1233abb565f2a359aff870588b6cca19a"
+      },
+      {
+        "slot": {
+          "caseId": "SI-010",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "338ed919-3228-40b6-8aca-97e9e3828084",
+        "status": "completed",
+        "runSha256": "f1399423503d9c084d3664e2a9e38de799ddd41a715786e33ba2a5177d0744df"
+      },
+      {
+        "slot": {
+          "caseId": "SP-002",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "c728e1b2-9f3d-4714-839c-8103d4f464ad",
+        "status": "completed",
+        "runSha256": "84c85891f379f9914f623b715796ab9df8a7f927c548dcc4f7c42662b3a8b47a"
+      },
+      {
+        "slot": {
+          "caseId": "SP-003",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "ab08f2be-843a-4e00-b8cc-8446410a8dd3",
+        "status": "completed",
+        "runSha256": "51e7ed047efd24967aeec97967c80bf36ba88e9236e6b935bf0b5e75a4a2dedc"
+      },
+      {
+        "slot": {
+          "caseId": "SP-004",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "02b96039-0891-4152-9b36-f7d3e0c83391",
+        "status": "completed",
+        "runSha256": "69e2457ece06505274872b734ce2fbbb47698ee880ed2ad7fdad4f28bd9b107b"
+      },
+      {
+        "slot": {
+          "caseId": "SP-005",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "c6248822-1de0-4b46-955e-39b1c4aa4764",
+        "status": "completed",
+        "runSha256": "dc2617a92e81d51a9f757077e06bd21df288b248d32eff4c6eee6a3dbb985fdf"
+      },
+      {
+        "slot": {
+          "caseId": "SP-006",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "c242a470-1158-4fd0-8e16-895b6ecb112f",
+        "status": "completed",
+        "runSha256": "a28fb65131d5730b37b97e276ddacaebe35e2f2f6bb9d5d0c8b7064aa5fbce27"
+      },
+      {
+        "slot": {
+          "caseId": "SP-007",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "fd515234-7423-40c4-88af-bfb303f13d53",
+        "status": "completed",
+        "runSha256": "c3957625904a4fb5033ee4592d6c9fe6e2d08c2a13fc3c19a4197d801b079c81"
+      }
+    ],
+    "artifacts": {
+      "run.json": "c3957625904a4fb5033ee4592d6c9fe6e2d08c2a13fc3c19a4197d801b079c81",
+      "trace.jsonl": "aa358c9e7dee08f13e7f6202b2c55bf893dd9876efaca51bdf56eaba94d2163e",
+      "host.jsonl": "30e769a5631bcc7452c42f1dce47b36eefaeae1e8d5eed6b62931fe5fcdc0753",
+      "changes.json": "6db33ddad40afe0bcb36f13167bf3d390a7d50ffe38d6c0c1307439aca62c2f7",
+      "decision.json": "9ccf78858ef7f368a63f49837691f917807cfd6dcc4d08ee90f841de30b6f6fa",
+      "control.json": "8cff2395a2a21cf249207f7e9ef62a05662888e1086e3215406e1c29ab1df913",
+      "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prompt.txt": "e9c17ade6631d1ab1a63de7a4866260496d68ea6cd0cea03eaa38383f051f091",
+      "invocation.json": "870c85b0dcfe0432d89875671668a341b82e922f4347002f8d7104598fbbeced"
+    },
+    "postVerificationErrors": {}
+  },
+  "checks": {
+    "deterministic": {
+      "passed": true,
+      "errors": []
+    },
+    "safety": {
+      "passed": true,
+      "errors": []
+    },
+    "workflow": {
+      "passed": true,
+      "errors": []
+    },
+    "observation": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "primaryUsage": {
+    "input_tokens": 80911,
+    "cached_input_tokens": 62080,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 837,
+    "reasoning_output_tokens": 67
+  },
+  "providerCost": null,
+  "semantic": "passed",
+  "recorderSha256": "88d79c235def8f9c12696931965ad84c90d67b8ff6830af0cf4845c3cbd83045",
+  "certifiesSkillGate": false,
+  "verification": {
+    "status": "passed",
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "ordinal": 8,
+    "slot": {
+      "caseId": "SP-007",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "checks": {
+      "deterministic": "passed",
+      "observation": "passed",
+      "safety": "passed",
+      "semantic": "passed",
+      "workflow": "passed"
+    },
+    "primaryRunSha256": "c3957625904a4fb5033ee4592d6c9fe6e2d08c2a13fc3c19a4197d801b079c81",
+    "independentReviewSha256": "bc6de00549999f8832d96a5ec07f94ddcc9ab7f450a79b06b384e0d0c7360ec0",
+    "semanticReceiptSha256": "21ec7aebb1763d6506860a3243619922990394074bcb7364cf18a0a7280847e8",
+    "primaryUsage": {
+      "input_tokens": 80911,
+      "cached_input_tokens": 62080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 837,
+      "reasoning_output_tokens": 67
+    },
+    "semanticUsage": {
+      "input_tokens": 42330,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 711,
+      "reasoning_output_tokens": 26
+    },
+    "providerCost": null,
+    "primaryProcessSeconds": 52.42445761698764,
+    "semanticProcessSeconds": 18.759611585061066,
+    "finalSnapshotVerified": true,
+    "primaryOriginalCount": 9,
+    "semanticOriginalCount": 11,
+    "payloadCount": 28,
+    "parentVerifierSha256": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+    "eligibleForNextSlot": true,
+    "certifiesSkillGate": false,
+    "certifiesRelease": false
+  }
+}

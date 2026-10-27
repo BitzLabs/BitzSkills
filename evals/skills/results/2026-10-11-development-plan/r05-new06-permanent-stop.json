@@ -1,0 +1,24 @@
+{
+  "status": "permanent_stop_saved_before_next_reservation_or_model",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "primaryConsumed": 2,
+  "semanticConsumed": 1,
+  "modelsStartedByStopProof": 0,
+  "newReservationsByStopProof": 0,
+  "rejection": "失敗・中断済み測定を自動再開しません",
+  "stop": {
+    "reason": "previous-evidence-or-review-rejected",
+    "slot": {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "errorType": "ValueError",
+    "runSha256": "a54ca4821c0ef0f2861de8e67bd2f4e81231b463620062763d68121ab5d461b3",
+    "independentReceiptSha256": null
+  },
+  "ledgerAfterSha256": "cf5610308348c7669deefb02ec28a966bfc677e37af0061a6adbfdca5828cfa8",
+  "certifiesSkillGate": false,
+  "ledgerBeforeCanonicalSnapshotSha256": "42f5460d630a6b99e86e11624c1e5de7a29b69382c7b1ce8b67d454b7df089f8",
+  "hashLabelClarification": "Before hash is the canonical encoded parsed snapshot, not the original ledger file bytes. Original stop-proof record is retained unchanged."
+}

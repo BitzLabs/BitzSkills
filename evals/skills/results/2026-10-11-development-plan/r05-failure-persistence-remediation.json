@@ -1,0 +1,223 @@
+{
+  "status": "full_regression_passed_independent_review_running",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "relatedInterruptionTests": {
+    "count": 9,
+    "seconds": 0.839,
+    "exitCode": 0
+  },
+  "newCondition": "06 primary68 semantic68 preparation1 retry0",
+  "oldConditions": {
+    "01": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "02": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "03": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "04": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "05": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    }
+  },
+  "newPrimary": 0,
+  "changes": [
+    "snapshot and original reads individually protected during failure persistence",
+    "keep caller errorType/errno/exitCode",
+    "unknown after/changedPaths null, snapshotError/afterObtained",
+    "artifact read errors and missing artifacts preserved",
+    "snapshot reads use shared NOFOLLOW reader"
+  ],
+  "driverInventorySynthetic": {
+    "modelsStarted": 0,
+    "reservationsConsumed": 0,
+    "exactAstTailTests": [
+      {
+        "kind": "preparation",
+        "fault": "none",
+        "status": "static_sdd_prelaunch_review_passed",
+        "error": null,
+        "artifactReadErrors": {},
+        "independentStatus": null
+      },
+      {
+        "kind": "preparation",
+        "fault": "source",
+        "status": "static_prelaunch_review_stopped",
+        "error": "ValueError: synthetic afterguard failure",
+        "artifactReadErrors": {},
+        "independentStatus": null
+      },
+      {
+        "kind": "preparation",
+        "fault": "runtime",
+        "status": "static_prelaunch_review_stopped",
+        "error": "ValueError: synthetic afterguard failure",
+        "artifactReadErrors": {},
+        "independentStatus": null
+      },
+      {
+        "kind": "preparation",
+        "fault": "target-artifact",
+        "status": "static_prelaunch_review_stopped",
+        "error": "ValueError: synthetic afterguard failure",
+        "artifactReadErrors": {},
+        "independentStatus": null
+      },
+      {
+        "kind": "preparation",
+        "fault": "inventory-read",
+        "status": "static_prelaunch_review_stopped",
+        "error": "original artifact inventory read failed",
+        "artifactReadErrors": {
+          "reservation.json": "RuntimeError: synthetic required artifact read failure"
+        },
+        "independentStatus": null
+      },
+      {
+        "kind": "preparation",
+        "fault": "inventory-missing",
+        "status": "static_prelaunch_review_stopped",
+        "error": "original artifact inventory read failed",
+        "artifactReadErrors": {
+          "trace.jsonl": "FileNotFoundError: [Errno 2] No such file or directory: 'trace.jsonl'"
+        },
+        "independentStatus": null
+      },
+      {
+        "kind": "semantic",
+        "fault": "none",
+        "status": "passed",
+        "error": null,
+        "artifactReadErrors": {},
+        "independentStatus": "passed"
+      },
+      {
+        "kind": "semantic",
+        "fault": "source",
+        "status": "stopped",
+        "error": "ValueError: synthetic afterguard failure",
+        "artifactReadErrors": {},
+        "independentStatus": "failed"
+      },
+      {
+        "kind": "semantic",
+        "fault": "runtime",
+        "status": "stopped",
+        "error": "ValueError: synthetic afterguard failure",
+        "artifactReadErrors": {},
+        "independentStatus": "failed"
+      },
+      {
+        "kind": "semantic",
+        "fault": "target-artifact",
+        "status": "stopped",
+        "error": "OSError: synthetic primary original read failure",
+        "artifactReadErrors": {},
+        "independentStatus": "failed"
+      },
+      {
+        "kind": "semantic",
+        "fault": "inventory-read",
+        "status": "stopped",
+        "error": "original artifact inventory read failed",
+        "artifactReadErrors": {
+          "reservation.json": "RuntimeError: synthetic required artifact read failure"
+        },
+        "independentStatus": "failed"
+      },
+      {
+        "kind": "semantic",
+        "fault": "inventory-missing",
+        "status": "stopped",
+        "error": "original artifact inventory read failed",
+        "artifactReadErrors": {
+          "trace.jsonl": "FileNotFoundError: [Errno 2] No such file or directory: 'trace.jsonl'"
+        },
+        "independentStatus": "failed"
+      }
+    ]
+  },
+  "driverPrimaryPostSynthetic": {
+    "modelsStarted": 0,
+    "reservationsConsumed": 0,
+    "exactAstTailTests": [
+      {
+        "fault": "none",
+        "originalNativeExitCode": 0,
+        "metadataError": null,
+        "postVerificationErrors": {},
+        "summarySaved": true
+      },
+      {
+        "fault": "stdout",
+        "originalNativeExitCode": 0,
+        "metadataError": "original process/ledger/artifact verification failed",
+        "postVerificationErrors": {
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-primary-post-regression/stdout/stdout": "RuntimeError: synthetic original hash read failure"
+        },
+        "summarySaved": true
+      },
+      {
+        "fault": "ledger",
+        "originalNativeExitCode": 0,
+        "metadataError": "original process/ledger/artifact verification failed",
+        "postVerificationErrors": {
+          "source-or-ledger": "RuntimeError: synthetic ledger read failure"
+        },
+        "summarySaved": true
+      },
+      {
+        "fault": "target",
+        "originalNativeExitCode": 0,
+        "metadataError": "original process/ledger/artifact verification failed",
+        "postVerificationErrors": {
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-primary-post-regression/target/synthetic-output/skill/repetition-1/SI-010/trace.jsonl": "RuntimeError: synthetic original hash read failure"
+        },
+        "summarySaved": true
+      }
+    ]
+  },
+  "certifiesSkillGate": false,
+  "implementationFixSourceCommit": "d870ac1661a81a719410511aba4ebfbdcab4d249",
+  "fullRegressionAttempts": [
+    {
+      "sourceCommit": "d870ac1661a81a719410511aba4ebfbdcab4d249",
+      "exitCode": 1,
+      "seconds": 74.17226812092122,
+      "testCount": 705,
+      "testSeconds": 73.752,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "c78ee2998c0a78c8279156a6758807f498a290cff31a6e36c55876c1bfaf0f5c",
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-failure-persistence-full",
+      "parentOriginalHashesVerified": true
+    },
+    {
+      "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "exitCode": 0,
+      "seconds": 73.82177730905823,
+      "testCount": 705,
+      "testSeconds": 73.396,
+      "cleanAfter": true,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "0193198e6e1eb1d04f5e1ea29755347a69c591352fe0a07521d9b70d072bb0b9",
+      "evidenceDirectory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-failure-persistence-full-02",
+      "parentOriginalHashesVerified": true
+    }
+  ],
+  "testCorrection": "Nullable hashes are required to carry a missing-artifact or read-error reason; available artifact hashes are verified against original bytes.",
+  "newPreparationConsumed": 1,
+  "independentReview": "limited_first_primary_ready_independently_verified_parent_rehashed",
+  "preparationRecord": "r05-matrix-preparation-sol-06-passed.json",
+  "independentRecord": "r05-failure-persistence-independent.json"
+}

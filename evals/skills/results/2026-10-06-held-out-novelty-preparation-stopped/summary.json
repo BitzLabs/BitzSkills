@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_independent_p2",
+  "sourceCommit": "3d98bf728498d6fa511cf53a454a587fc75be00a",
+  "severityCounts": {
+    "P1": 0,
+    "P2": 1
+  },
+  "findingType": "unfixed-public-input-inventory-and-denominator",
+  "tests": {
+    "parentTargeted": 8,
+    "parentAll": 223,
+    "independentTargeted": 8,
+    "beforeFromRef": {
+      "tests": 9,
+      "failures": 1,
+      "exitCode": 1
+    }
+  },
+  "budgetConsumed": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 0,
+    "independentReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "collectionCreated": false,
+  "usage": "unknown",
+  "costUsd": null,
+  "certifiesSkillGate": false,
+  "sourceSha256": {
+    "evals/skills/routing/audit_held_out.py": "72ee9c5f6c22596c440b6c0c3148d71ab1e55859a1838eed8fec4a3fc4be40ce",
+    "evals/skills/routing/novelty.schema.json": "24bb25a6c522035193d52a7897bf0768ccfc3f07878e2c41254a8d9263244eae",
+    "evals/skills/routing/held-out-collection-v0.2.json": "0053ab9e24f3a11b8fae462a97f44a08bb44d7cf4724eb363d0e43dce866c990",
+    "evals/skills/routing/README.md": "f818eb7ee72d373a11079c322a4077cb8b83f0f18ada8fd769dfc9e50b3b8a4a",
+    "tests/skills/test_held_out_novelty.py": "40cf7d78bfd566b4a303d092c15cd69a69467391ebe1c9aa6778c235eb386223"
+  },
+  "artifactSha256": {
+    "preparation-independent-review.json": "123875e060520635369c025e31020a339fdb21100109d733caed8754c684202f",
+    "preparation-independent-unit.log": "d0eeb2ded44a39ca21dd26cefe769a697a85fe1f0da9a3e4aa2a48688574827d",
+    "preparation-independent-legacy-audit.json": "3eaa16ed53fe6c96e5b2ce9ae86a666f1f412e764c5fa8a99907e55f0b7f194c",
+    "parent-preparation-unit.log": "31176ebc3c8ae042ad8051123a4acce2afa631500ee8f2fd5bd6175038aa9ecc",
+    "parent-all-unit.log": "00948028e5fd436a4cc977f70fdc0579b3973dab42b618c95088c1c0c37fb492",
+    "before-from-ref.log": "fcfce24d55ffd688971a79bfe4b09d596f8e0f2e54288071b65875aa619edeb3"
+  }
+}

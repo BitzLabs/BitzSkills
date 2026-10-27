@@ -1,0 +1,72 @@
+{
+  "version": "sdk-trace-review-0.18.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-18",
+  "payloadFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "tests/skills/test_production_trace.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review-v0.1.json",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/sdk-trace-review-v0.2.json",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "evals/skills/routing/sdk-trace-review-v0.3.json",
+    "evals/skills/routing/sdk-trace-review-v0.4.json",
+    "evals/skills/routing/sdk-trace-review-v0.5.json",
+    "tests/skills/test_production_trace.py",
+    "evals/skills/routing/sdk-trace-review-v0.6.json",
+    "evals/skills/routing/sdk-trace-review-v0.7.json",
+    "evals/skills/routing/sdk-trace-review-v0.8.json",
+    "evals/skills/routing/sdk-trace-review-v0.9.json",
+    "evals/skills/routing/sdk-trace-review-v0.10.json",
+    "evals/skills/routing/sdk-trace-review-v0.11.json",
+    "evals/skills/routing/sdk-trace-review-v0.12.json",
+    "evals/skills/routing/sdk-trace-review-v0.13.json",
+    "evals/skills/routing/sdk-trace-review-v0.14.json",
+    "evals/skills/routing/sdk-trace-review-v0.15.json",
+    "evals/skills/routing/sdk-trace-review-v0.16.json",
+    "evals/skills/routing/sdk-trace-review-v0.17.json",
+    "evals/skills/routing/sdk-trace-review-v0.18.json"
+  ],
+  "constraints": [
+    "親が最初の入力読取り前と呼出し前後に確定sourceを照合して送信する。検分者が自らGitを読んだ検分とは扱わない。",
+    "モデルへ渡すのは列挙した公開コードの確定bytesだけ。保持入力・期待値・過去の作業者判断を渡さない。",
+    "単一の独立CLI文脈で静的検分する。追加モデル・委譲・tool実行・私的領域読取り・自動retryは禁止。",
+    "親子IDの固定1exec診断を任意複数/待機/実provider/一次採点の認定へ拡張していないか確認する。",
+    "独立静的検分だけ。試験実行・全証拠検分・Phase完了を認定しない。原stdio・source・入力hash・実exitを保持する。"
+  ],
+  "previousReview": {
+    "sourceCommit": "af7689fa6e37fb951e42ff3ebaae18a4fa4eb10a",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-17",
+    "receiptSha256": "8aa3ad9d5989ca4390616de364f1cff9084d8c92b3bc120872e933a0b6f3479b",
+    "responseSha256": "9f6e6731b6bb7c9e151ee253e8dacade2f6d30780f80344cc43ddd8d6b3465ea",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0,
+    "findings": {
+      "P2": 0,
+      "P3": 0
+    },
+    "reason": "Original static review passed; parent reproduced hidden command in common completion summary at same source",
+    "status": "static_review_passed"
+  }
+}

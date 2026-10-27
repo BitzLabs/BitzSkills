@@ -1,0 +1,119 @@
+{
+  "version": "sdk-raw-exchange-0.1.0",
+  "phase": 4,
+  "sourceCommit": "3cc0690505c64951b06816fd5ae0272051351067",
+  "status": "sdk_raw_exchange_locally_and_statically_verified",
+  "verification": {
+    "outputRelativeRoot": ".venv/production-sdk-raw-exchange-verification-01",
+    "summarySha256": "d449e3d0ced2abd9d5301e57fb171c2ed8d23f44cac5f1900ec51eefc2c960a4",
+    "tests": {
+      "count": 472,
+      "seconds": 62.714,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "f9295c74afabad375b9d19e89873fe22771377d8aa6cadc00ed8141e08488732"
+    }
+  },
+  "captures": [
+    {
+      "probeSourceCommit": "c026dabede3e40bc010f895a431050ccdae47a9c",
+      "receiptSha256": "6436ca1ec70adc74a9a3da6b4a54d0a04aaf57ab09f8f1e7ec5b24ce99ac72e3",
+      "snapshotResourceCount": 71,
+      "rawExchangeAudit": {
+        "status": "sdk_raw_scripted_exchange_diagnostic_passed",
+        "rawItemCount": 6,
+        "rawCompletedCount": 2,
+        "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-09",
+        "originalSentValueSha256": "415ecaf547855bd47cac8a5bae77ec2f119e9d17c3e32c93e29e2ad81ec0562b",
+        "originalReceivedValueSha256": "074c5eeb43e31bd820e2ab3d33c1f8bdd0a618fae99322f213a80310b697a346",
+        "rawNotificationsValueSha256": "a600230d948023d07ac4e59926dbb8084ba08bae186aa10af513f86845d441f9",
+        "sdkRawNotificationsValueSha256": "a54d7fb4567fa05d3753ff3a50f5a4fff5f7e5a209c4e601d55194120e908c01",
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "rawProviderCallOutputBindingVerified": true,
+        "rawProjection": "explicit-raw-flag-and-raw-notifications-only",
+        "rawInternalMetadataScope": "turn-id-and-field-types",
+        "rawItemsAreOriginalSseBytes": false,
+        "certifiesCompleteRawProviderContext": false,
+        "providerParentBindingVerified": false,
+        "eligibleForMeasurement": false,
+        "certifiesNativeProvider": false,
+        "certifiesAllNativeLifecycle": false
+      }
+    },
+    {
+      "probeSourceCommit": "e23222215a79238a082e15e0751b331955f42aa0",
+      "receiptSha256": "985a5bdecffb4cd4408ea9b8a06ffe5173971a334328b68ee82d009e33fa0822",
+      "snapshotResourceCount": 71,
+      "rawExchangeAudit": {
+        "status": "sdk_raw_scripted_exchange_diagnostic_passed",
+        "rawItemCount": 6,
+        "rawCompletedCount": 2,
+        "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-09",
+        "originalSentValueSha256": "59a7d5671a61b3f24eae7ddc216a8b0f0a83f455c6ea44d1080b76d22fec43a2",
+        "originalReceivedValueSha256": "c74d60db49df2b68e2d421913353c4e6033eb421ce970b1eea80f04d322a34d3",
+        "rawNotificationsValueSha256": "733efd072a24de7a753183a9ccbcfbef6421df3e34458c907e790cc32a93afd2",
+        "sdkRawNotificationsValueSha256": "c6199b03fdcf7bb71f69cebd39f4da86bf64a0886a30329bb631bacae9acf753",
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "rawProviderCallOutputBindingVerified": true,
+        "rawProjection": "explicit-raw-flag-and-raw-notifications-only",
+        "rawInternalMetadataScope": "turn-id-and-field-types",
+        "rawItemsAreOriginalSseBytes": false,
+        "certifiesCompleteRawProviderContext": false,
+        "providerParentBindingVerified": false,
+        "eligibleForMeasurement": false,
+        "certifiesNativeProvider": false,
+        "certifiesAllNativeLifecycle": false
+      }
+    }
+  ],
+  "independentReview": {
+    "status": "static_review_passed",
+    "sourceCommit": "3cc0690505c64951b06816fd5ae0272051351067",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.19.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-19",
+    "receiptSha256": "e242bcec07906bba9db0f7e46f7500a6297ebe647626ac89649a28d259b9f7f3",
+    "responseSha256": "5d4181974c0c39117b57bc845624d6749304cf5d2328e642064a4be666f270b4",
+    "usage": {
+      "input_tokens": 55756,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1047,
+      "reasoning_output_tokens": 991
+    },
+    "actualInvocations": 1
+  },
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "probePaidModelCalls": 0,
+  "newIndependentReviewerSolInvocations": 1,
+  "sdkTraceReviewSeriesInvocations": 19,
+  "rawCaptureReviewSeriesInvocations": 3,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "eligibleForMeasurement": false,
+  "phaseComplete": false,
+  "stoppedInitialChecks": [
+    "provider/SDK complete input context mismatch: explicit date 2026-10-09 needed",
+    "raw initial input correlation: raw developer input is SDK supplement, not baseInstructions"
+  ]
+}

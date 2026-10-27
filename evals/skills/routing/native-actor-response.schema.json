@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "severityCounts", "note"],
+  "properties": {
+    "status": {"enum": ["completed", "stopped"]},
+    "severityCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["P1", "P2"],
+      "properties": {
+        "P1": {"type": "integer", "minimum": 0, "maximum": 24},
+        "P2": {"type": "integer", "minimum": 0, "maximum": 24}
+      }
+    },
+    "note": {"type": "string", "minLength": 1, "maxLength": 300}
+  }
+}

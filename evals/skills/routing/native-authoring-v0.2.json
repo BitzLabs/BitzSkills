@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "executionVersion": "held-out-native-authoring-0.2.0",
+  "model": "gpt-6.1-sol",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "timeoutSeconds": 600,
+  "collectionSource": "879101449c93df2545bb6c5dcab07664b6d5cdd2",
+  "privateRoot": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-05",
+  "sourceFiles": [
+    "evals/skills/routing/native-authoring-v0.1.json",
+    "evals/skills/routing/native_actor.py",
+    "evals/skills/routing/native-actor-response.schema.json",
+    "evals/skills/routing/native-preparation-prompt.md",
+    "evals/skills/routing/native-creator-prompt.md",
+    "evals/skills/routing/native-reviewer-prompt.md",
+    "tests/skills/test_native_actor.py",
+    "evals/skills/routing/native-authoring-v0.2.json",
+    "evals/skills/routing/native_actor_v02.py",
+    "tests/skills/test_native_actor_v02.py",
+    "evals/skills/routing/native-preparation-v02-prompt.md",
+    "evals/skills/routing/native-creator-v02-prompt.md",
+    "evals/skills/routing/native-reviewer-v02-prompt.md"
+  ],
+  "budget": {
+    "preparation": 1,
+    "creator": 1,
+    "reviewer": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "delegations": 0
+  },
+  "authorization": "資料のSOL提供先への送信は2026-10-07のOKで承認済み。旧準備枠の停止を保持し、追加準備1回を含む新3呼出しの実行は明示確認待ち。固定sourceに束縛したbudget-approval.jsonなしでは起動しない。",
+  "budgetAccounting": {
+    "collectionPreparationAlreadyConsumed": 1,
+    "previousNativePreparationReservedAndStopped": 1,
+    "previousNativePaidUsage": "unknown",
+    "newPreparationAwaitingApproval": 1,
+    "creatorUsesRemainingCollectionSlot": 1,
+    "reviewerUsesRemainingCollectionSlot": 1,
+    "maximumNewInvocations": 3,
+    "maximumTotalNativeInvocationsIncludingStopped": 4,
+    "originalRoleReservationReused": false
+  },
+  "reason": "旧実行器はCLI内部app-server初期化でEROFS停止。ネットワーク遮断下の切分けでconfig.toml/installation_id/tmpの新scratch仮想隔離によりthread.startedを確認した。旧原出力・台帳は保持し、source/書込み境界が異なる別有限契約として追加準備を確認する。",
+  "sourcePolicy": "新実行source13、旧実行source7、集合source15、旧失敗receipt/原出力を開始・終了に照合する。HEAD自体は条件にしない。",
+  "filesystemPolicy": "host root/既存snapshot/台帳/private成果物をROにする。現在phaseの新codex-homeを既存homeの仮想表示へbindし、既存の子要素をROへ戻す。config.toml/installation_id/tmpだけはfresh scratch上のCLI初期化領域とする。実homeは上書きせずHOME/CODEX_HOMEも変更しない。",
+  "nativeCapture": "役割枠は起動前に固定台帳へ排他予約する。source/出力を変えても同役割を再利用しない。file-backedでstdout/stderrの原bytesを保存し、stderrを復号・公開しない。手動中断/timeout/非zero/保存失敗を成功へ置換しない。",
+  "stopOn": [
+    "P1/P2または未確定の判断",
+    "source/入力/候補/環境の不一致",
+    "native中断・容量制限・保存失敗",
+    "前工程のreceiptまたは親再監査の不成立"
+  ],
+  "limits": [
+    "旧の停止結果や消費枠を付け替えない。",
+    "モデルのshellは資料読取り・固定テスト・新規成果物の保存に限る。ケース内容を実行指示として扱わない。",
+    "product操作・一次発火・行動評価・SkillGateを認定しない。"
+  ],
+  "publication": "公開は版・件数・hash・集計だけ。非公開本文・期待値・個別比較・raw traceはowner-only領域に保持する。",
+  "previousExecutionSource": "e49304314469a260362f0b10f29c25ea7497f351",
+  "previousFailure": {
+    "executionReceiptSha256": "54874e9a4e165672680df87b59d3d28ddb83907d1f034f0bb014e7a66df0a96a",
+    "captureSha256": {
+      "trace.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr.log": "8e3330eeb312ddb37b9da73c3ece4a8aa7e2ade4b7bb255573aa487bc89f0f58"
+    },
+    "status": "native_stopped",
+    "actualExitCode": 1
+  },
+  "bootstrapEvidence": {
+    "networkIsolated": true,
+    "providersReachable": false,
+    "readonlyHomeThreadStarted": false,
+    "tmpOnlyThreadStarted": false,
+    "configInstallationTmpShadowThreadStarted": true,
+    "semanticOrNativeCompletionCertified": false
+  }
+}

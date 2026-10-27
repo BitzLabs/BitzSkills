@@ -1,0 +1,27 @@
+# 継続方針変更案と事実記録の独立検分
+
+## 結論
+
+必須是正の指摘なし。案は承認待ちであり、この検分は承認・実行許可を与えない。baselineの理由説明の意味不適合だけはfailedを保持して未投入予定枠を続けるという変更範囲が具体化され、skill不適合・全variant機械4非通過・安全違反・証拠破損/条件混在・実行障害/利用上限は引き続き停止する。
+
+ケース・期待/assert・source/ref/model/environmentを変える案ではなく、失敗を成功へ置換する案でもない。原baseline SP-003反復1と原skill SP-004中断をnoRetryへ列挙し、予定baseline反復2 SP-003は元から予定された独立反復として扱う。これを原反復1の再試行や改善後成功と混ぜてはならない、という区別は案と報告に保たれている。
+
+## 直接照合した事実
+
+- 継続案のplannedはbaseline反復1の未投入6件と反復2全7件、合計13件で重複なし。完了済みfailedの反復1 SP-003は含まない。approvalStatusはpending、automaticRetriesは0。
+- 既存execution.jsonの累計51に、新しい実完成turn 5件（skill4＋baseline1）を加えて56。追加最大13なら69、記録された承認済み上限70内。元51の全試行履歴と人間承認本文を今回新たに再検分したとは主張せず、既存確定記録を起点とする算術検証である。
+- 旧10完成と新skill4の全14skillを独立意味適合とした自分の直接検分、baseline1を型・内容未検査の過大申告でfailedとした直接検分と、report/review記載は一致。skillへbaseline失敗を混ぜない。原0.1.3不適合は保持。
+- 新旧15完成runの登録75artifact SHA-256をこの検分でも再計算し一致。原SP-004中断はdecision/run不在と、記録されたcontrol/trace/hostの3hashが一致。
+- 新5件のturn.completed usageを直接集計：input_tokens412265、cached_input_tokens328576、output_tokens4492、reasoning_output_tokens200。請求額は推定しない記載と整合。
+- 新archive実測は159member／93807byte／SHA-256 6c7f27a6f2e929ec0e350d90ae1c4c8d061a62194f05a8b6857b1b372778b7c3。state/logs、Git内部、credential関連のmemberがないことをmember名で検査。秘密やstate本文を読んでいない。
+- 元source1e3a472から現HEAD ed25e89859aab2aa5935b78fab09235ce11fabe7へのCore/skill/eval source差分は空。現在は新報告ディレクトリevals/skills/results/2026-10-04-sdd-plan-resume/がuntrackedであり、現在treeをcleanとは扱わない。測定中の固定refとその時点のclean確認とは別の現在状態である。
+
+主作業者30試験16.698s/OK/exit0の記載は主作業者の実行結果として明示されている。今回この試験を再実行したり、そのstdoutの保存原本を読んだりしたものではないため、自分の独立再実行結果には数えない。先行自分の30試験16.660s/OK/exit0とは混同しない。
+
+## 独立レビュー記録の範囲
+
+reviewRunIdは実際の独立エージェントを示し、前回の独立文脈の継続というdirectChecksとも整合する。今回の方針案検分は既存評価結論を必要情報として含むが、新モデルの結論を誘導した検分ではない。freshContext等のフラグを、新しいモデル試験や今回だけの全件再実行を意味する表現へ拡張しない。
+
+全17ケース、Phase2完了、Skill Gate認定や一般的なスキル効果を示す証拠ではないことも案・報告・reviewで明記。限定比較を継続する場合にも、条件混在、意味failedと機械passed、原中断、別試行を別に保持する必要がある。
+
+新モデル呼出し、案承認、source編集、外部サービス、秘密やCodex state/logs読取りは行っていない。対象staging文書も変更していない。

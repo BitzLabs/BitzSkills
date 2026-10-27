@@ -7,6 +7,8 @@
 """
 
 import os
+import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -85,13 +87,13 @@ status: {status}
 
 
 def _run_context(root: str, positionals: list, *, purpose: str = "interpret", detail: str = "standard",
-                  fmt: str = "json", expand=None, expect_digest=None) -> tuple[dict, int]:
+                  fmt: str = "json", expand=None, expect_digest=None, env=None) -> tuple[dict, int]:
     single = {"--purpose": purpose, "--detail": detail, "--format": fmt}
     if expect_digest is not None:
         single["--expect-digest"] = expect_digest
     repeat = {"--expand": expand} if expand else {}
     parsed = ParsedArgs(operation="context", positionals=positionals, flags=set(), single=single, repeat=repeat)
-    return context_mod.run(parsed, root, dict(_NO_GIT_ENV))
+    return context_mod.run(parsed, root, dict(_NO_GIT_ENV) if env is None else env)
 
 
 class BasicBundleTests(unittest.TestCase):
@@ -784,8 +786,14 @@ class ConfigDiagnosticsTests(unittest.TestCase):
 
     def test_missing_config_is_an_environment_diagnostic(self):
         with tempfile.TemporaryDirectory() as root:
+            # repo内TMPDIRでも親の設定を拾わない、実Gitの探索境界を作る。
+            git = shutil.which("git")
+            self.assertIsNotNone(git, "この境界試験にはGitが必要です")
+            subprocess.run([git, "-c", "core.hooksPath=/dev/null", "init", "--quiet",
+                            "--initial-branch=codex/context-missing-config", root], check=True)
+            env = {"PATH": os.path.dirname(git)}
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
-            result, exit_code = _run_context(root, ["REQ-001"])
+            result, exit_code = _run_context(root, ["REQ-001"], env=env)
             self.assertEqual((result["status"], exit_code), ("blocked", 2))
             self.assertEqual(result["diagnostics"][0]["code"], "SPEC-WORKSPACE-MISSING-001")
             self.assertIsNone(result["workspace"]["id"])
@@ -810,8 +818,14 @@ class ConfigDiagnosticsTests(unittest.TestCase):
     def test_markdown_shows_null_workspace_id(self):
         # 値のないフィールドは`null`と示す（`context` §9.1）。
         with tempfile.TemporaryDirectory() as root:
+            # repo内TMPDIRでも親の設定を拾わない、実Gitの探索境界を作る。
+            git = shutil.which("git")
+            self.assertIsNotNone(git, "この境界試験にはGitが必要です")
+            subprocess.run([git, "-c", "core.hooksPath=/dev/null", "init", "--quiet",
+                            "--initial-branch=codex/context-missing-config", root], check=True)
+            env = {"PATH": os.path.dirname(git)}
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
-            result, _exit_code = _run_context(root, ["REQ-001"])
+            result, _exit_code = _run_context(root, ["REQ-001"], env=env)
             text = render_context_markdown(result)
             self.assertIn("- workspace: null (.)", text)
             self.assertNotIn("None", text)

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "version": "production-trace-preparation-0.2.0",
+  "phase": 4,
+  "task": "製品入力・証拠監査のP2是正と独立検分",
+  "status": "frozen_for_remediation_review",
+  "scope": "public-code-component-review-only",
+  "model": "gpt-6.1-sol",
+  "sourceFiles": [
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/host.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/production-trace-preparation-v0.2.json",
+    "evals/skills/routing/production-trace-preparation-instructions.md",
+    "evals/skills/routing/production-trace-review-receipt.schema.json",
+    "evals/skills/schemas/decision.schema.json",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_routing_host.py"
+  ],
+  "budget": {"independentReviewerSol": 1, "primaryModelTrajectories": 0, "automaticRetries": 0, "delegations": 0},
+  "previousFailure": {
+    "sourceCommit": "7c556166d7552dc2faed8502b5dddfdc6de94b53",
+    "rootRelativePath": ".venv/production-trace-review-01",
+    "severityCounts": {"P1": 0, "P2": 3},
+    "reportSha256": "ee6e9dd1213cda02c8d519cf6e4118fa23f140216cb19ca3c495b28decdbb392",
+    "receiptSha256": "275ee1664d022a52ade36610365cbb1d36c8b077ffa84ce0c84796e802e7ee6e",
+    "reservationSha256": "80af01f32f794cd2b8766426784668feb665962d33e15b0e1dd0febe85ebc6f5",
+    "consumedIndependentReviewerSol": 1,
+    "preserveOriginalReceiptKeyNames": true,
+    "nativeProviderBytesAvailable": false
+  },
+  "reservation": {"rootRelativePath": ".venv/production-trace-review-02", "file": "reservation.json", "exclusiveCreateBeforeCall": true, "failedAttemptsPreserved": true},
+  "outputs": {"rootRelativePath": ".venv/production-trace-review-02", "report": "review.md", "receipt": "receipt.json", "receiptSchema": "evals/skills/routing/production-trace-review-receipt.schema.json", "nativeProviderBytesAvailable": false, "evidenceType": "collaboration-tool-transcript-and-local-command-output"},
+  "componentTestCount": 26,
+  "allSkillTestCount": 320,
+  "messagePhasePolicy": "explicit-final_answer-required; missing-null-or-unknown-phase-stops",
+  "finalReadPolicy": "all-tools-complete-before-final-start; no-tools-after-final-start",
+  "forbidden": ["private-evaluation-inputs", "credentials-and-tokens", "source-file-edits", "additional-model-calls", "production-primary-measurement", "behavior-or-skill-gate-certification"],
+  "certifiesCaseSet": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "certifiesProductCompletion": false
+}

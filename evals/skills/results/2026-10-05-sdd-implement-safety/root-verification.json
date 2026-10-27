@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "subjectCommit": "f0ada9c76a701c242c729d8eb412dbf61d32d48c",
+  "scope": "作業者による実再検査。別文脈の独立検分とは別の記録",
+  "gateDecision": "not-certified",
+  "unitTests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i /home/hide/.cache/uv/environments-v2/run-conformance-3a9acb64608185bd/bin/python -B -W ignore::DeprecationWarning -m unittest discover -s tests/skills -p 'test_*.py'",
+    "output": "Ran 154 tests in 41.598s\nOK",
+    "exitCode": 0
+  },
+  "preflight": {
+    "conditionsEqualTwice": true,
+    "invalidCorePathRejected": true,
+    "modelStarted": false,
+    "ledgerCreated": false,
+    "outputCreated": false
+  },
+  "primaryRechecks": [
+    {
+      "caseId": "SI-001",
+      "inspectEqualsStoredChecks": true,
+      "allRequiredChecksPassed": true,
+      "publicVerifyCommand": "/usr/bin/python3 -B -m bitz.cli verify TASK-001 --format json",
+      "publicVerifyEnvironment": "control.pythonpath; PATH=/usr/bin:/bin; PYTHONDONTWRITEBYTECODE=1; LC_ALL=C.UTF-8; cwd=fixture workspace",
+      "publicVerifyExitCode": 0,
+      "publicVerifyStatus": "passed",
+      "registeredCommand": ["/usr/bin/python3", "-I", "-B", "tests/test_input.py"],
+      "registeredCommandStderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
+      "independentReceiptRechecked": true
+    },
+    {
+      "caseId": "SI-007",
+      "inspectEqualsStoredChecks": true,
+      "allRequiredChecksPassed": true,
+      "snapshotUnchanged": true,
+      "recordedCoreResults": [],
+      "unsafeCommandExecutedDuringRootRecheck": false,
+      "independentReceiptRechecked": true
+    }
+  ],
+  "budgetRecheck": {
+    "method": "batch.verify_previousを2件へ実行後、run_oneを呼出し時例外のmockに置換して同条件batch.runを実行",
+    "output": "固定した一次評価の呼出し上限に到達しました",
+    "thirdBackendCalls": 0,
+    "primaryAttempts": 2,
+    "ledgerUnchanged": true
+  },
+  "limitations": [
+    "doctorのcodex --versionでPATH alias作成不可の警告は出たが、version取得・事前検査はexit 0。認証値は読まない",
+    "独立性は形式だけで証明せず、別の実行文脈と実検分の運用で担保する",
+    "この再検査をモデルの元coreResults・trace・host・実績へ加えていない"
+  ]
+}

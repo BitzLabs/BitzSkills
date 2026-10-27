@@ -1,0 +1,41 @@
+{
+  "status": "stopped",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "contextDate": "2026-10-13",
+  "model": "gpt-6.1-sol",
+  "preparation": {
+    "identity": "evals/skills/routing/sdk-trace-review-v0.49.json",
+    "maximum": 1,
+    "timeoutSeconds": 300,
+    "consumed": 1,
+    "receiptSha256": "324528a12d3417a2039436bc5e2477b4dcddde3a706209a2683dd316c2d957da"
+  },
+  "primary": {
+    "maximum": 68,
+    "timeoutSeconds": 240,
+    "consumed": 17
+  },
+  "semantic": {
+    "maximum": 68,
+    "maximumPerPrimary": 1,
+    "timeoutSeconds": 300,
+    "consumed": 16
+  },
+  "automaticRetries": 0,
+  "stopOn": "preparation failure, primary invalid/failed, semantic nonpassed, any original/source/runtime/calibration inconsistency",
+  "oldStoppedConditions": "01-06 preserved; no result or consumed-budget transfer",
+  "driverSha256": {
+    "r05-prelaunch-sol-review-07.py": "91ef204afb1d5ee34316231a5b746ff503f5c987452a5da18ccc88a335196d6c",
+    "run-r05-new07-primary.py": "8d5eab0765e0f1345f9499e660c9dff132cd4e646c7b3e9d313883d82776b724",
+    "run-r05-new07-semantic.py": "23a8de702c27246901d2cc679980d9aff20334ed0f717ff69c5d42feb5c25038",
+    "r05-new07-parent-verify.py": "495055cbe15564f3a05af1e35b9a9d32b07eac2a92abc65bdf6593f74bc08ecc",
+    "r05-new07-update-progress.py": "6736c6a1e276f855646eb2de01707633d1c609656705b99f01ecf3fc5df40933",
+    "r05-new07-record-primary.py": "88d79c235def8f9c12696931965ad84c90d67b8ff6830af0cf4845c3cbd83045",
+    "r05-new07-verify-and-record.py": "34407efdd49bb08a6af0175a086395c5c83b018aacfa5c8f759234b74081a68e"
+  },
+  "manifestSha256": "909f1bb0585c51291834e69898dfa570449e35496088b4b536dbe72b019a6d84",
+  "providerCost": null,
+  "certifiesSkillGate": false,
+  "parentVerifierRemediation": "r05-new07-parent-verifier-format-remediation.json",
+  "parentVerified": 16
+}

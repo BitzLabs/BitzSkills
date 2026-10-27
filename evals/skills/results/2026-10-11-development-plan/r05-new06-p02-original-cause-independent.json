@@ -1,0 +1,126 @@
+{
+  "status": "limited_independent_originals_parent_rehashed",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "reportSha256": "9a42325d27aa7327692eff3aafffbd05e685ec1c88520879186aa8ce78085032",
+  "inventorySha256": "1e5cc9f00685e4d6a4f68a6f4594fccfb4921827cbaced4f172e89f4cd799a01",
+  "parentRehashedCounts": {
+    "originalSha256": 12,
+    "evidenceSha256": 29
+  },
+  "mutableSourcePathsResolvedAtOriginalGitRef": [],
+  "report": {
+    "status": "p02_original_frontmatter_failure_reproduced_readonly",
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "slot": {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "cause": "REQ tests[0] が文字列で、固定Core schemaのobject要求に違反。SPEC-FM-SCHEMA-001 hardでdoc_id未登録となりcheck REQ起点不足、TASKのREQ参照も未解決。",
+    "gitIsolationHypothesisSupported": false,
+    "gitListsBothUntrackedDrafts": true,
+    "gitIgnoresDrafts": false,
+    "catalog": [
+      {
+        "path": ".spec/requirements/REQ-001.md",
+        "docId": null,
+        "status": null,
+        "hard": [
+          {
+            "code": "SPEC-FM-SCHEMA-001",
+            "summary": "Frontmatter tests[0]はobjectが必要です"
+          }
+        ]
+      },
+      {
+        "path": ".spec/tasks/TASK-001.md",
+        "docId": "TASK-001",
+        "status": "open",
+        "hard": null
+      }
+    ],
+    "coreReexecutions": [
+      {
+        "name": "git-root",
+        "exitCode": 0,
+        "seconds": 0.0012005569878965616,
+        "stdoutSha256": "84c9df4238d3586c3c537c31da4295333fa29a0418938baa27dc90d885927c71",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "git-spec-members",
+        "exitCode": 0,
+        "seconds": 0.0013764449395239353,
+        "stdoutSha256": "471d82a3cd51171e0ed4ffe35c11b2dc2751f6a119e7bcc1e894698ed35ad87b",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "git-ignore",
+        "exitCode": 1,
+        "seconds": 0.0011629089713096619,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "check-req",
+        "exitCode": 1,
+        "seconds": 0.1587039710721001,
+        "stdoutSha256": "ae0b3f0654cd1d33a7e29f72267a87800ac5a00dfcff57a5f7b9cfdbced31e78",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "failed",
+        "diagnostics": [
+          "CTX-ROOT-MISSING-001"
+        ]
+      },
+      {
+        "name": "context-task",
+        "exitCode": 1,
+        "seconds": 0.14431026903912425,
+        "stdoutSha256": "bdf835836513246bfb6c1b82c3cd8792d469fba1aca79fe3ff4131ae276a1889",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "failed",
+        "diagnostics": [
+          "SPEC-RELATION-MISSING-001"
+        ]
+      },
+      {
+        "name": "check-full",
+        "exitCode": 1,
+        "seconds": 0.14789899298921227,
+        "stdoutSha256": "36cbe5c77319b298964e2838e29e2c15108f1578b189e4da89d557626ef9d335",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "failed",
+        "diagnostics": [
+          "SPEC-FM-SCHEMA-001",
+          "SPEC-RELATION-MISSING-001"
+        ]
+      }
+    ],
+    "primaryOriginalCount": 9,
+    "primaryUsage": {
+      "input_tokens": 81801,
+      "cached_input_tokens": 45568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1686,
+      "reasoning_output_tokens": 96
+    },
+    "originalDecisionStopPreserved": true,
+    "workspaceSnapshotUnchanged": true,
+    "primaryConsumedObserved": 2,
+    "semanticConsumedForP01": 1,
+    "p02IndependentReviewAndOutputAbsent": true,
+    "ledgerP02Status": "failed",
+    "ledgerStop": null,
+    "proposedAction": "原停止・消費を保持する。REQ testsのobject形式(path/covers/command)を使う必要があり、原workspaceの修正や同条件再試行で成功へ変換しない。Coreの未追跡文書発見の補修根拠は得られていない。",
+    "modelInvocationsAdded": 0,
+    "reservationsAdded": 0,
+    "sharedLedgerWrites": 0,
+    "clean": true,
+    "scopeLimits": [
+      "P02の失敗原因の原読取り・公開Core再実行に限定。新開始条件、行列全体、Skill Gate、Phase、releaseは未判定。"
+    ],
+    "failedAttemptRefusesBeforeOriginalInspection": true,
+    "stopObservation": "検分snapshotではtop-level stop無し。P02 status=failedが原run/receipt復元より前に次要求を拒否し、batch.runはその拒否時にstopを保存する。共有台帳への次要求は実行していない。"
+  },
+  "certifiesSkillGate": false
+}

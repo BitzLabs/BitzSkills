@@ -1,0 +1,185 @@
+{
+  "version": "sdk-context-remediation-0.1.0",
+  "phase": 4,
+  "status": "local_verified_independent_review_approval_pending",
+  "sourceCommit": "220df0dde378cae10ffc7dc917d84cf1bc5f8f1b",
+  "previousHistoricalReportCommit": "83b8668253581094704bec8597fde4e116ccaaad",
+  "originalReview": {
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-06",
+    "receiptSha256": "196a929fa99c8bad2facb8284f01a5b43ed939cfa9c5c5ab0a43cd4b330a1fa4",
+    "status": "review_findings",
+    "sourceCommit": "dad596b2034bbcd0abb4cd25c19aea78143aa5a3",
+    "model": "gpt-6.1-sol",
+    "scope": "public-sdk-trace-component-static-review-only",
+    "exitCode": 0,
+    "timedOut": false,
+    "independentReviewerSolInvocations": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "promptSha256": "2f94b4f2713e88a77ad2b6fff72889b2bd4fb30438a6d2947bffd03ad775719b",
+    "stdoutSha256": "0f7cb111dbb9126dace48c213f06c11a9aef43a1d050b5278d3ebbfb7afbb386",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "responseSha256": "0c40c9ef80fff85c627d149a905cebdd4b1190978f86aca8704f27dcd11de699",
+    "usage": {
+      "input_tokens": 37410,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1695,
+      "reasoning_output_tokens": 1030
+    },
+    "acceptedStartupWarningHashes": [
+      "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+    ],
+    "findings": [
+      {
+        "priority": "P2",
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "line": 291,
+        "message": "cwdがない合成profileでは、SDK要求のbaseInstructions/developerInstructionsを無視して単一user messageだけを受理します。SDK側に追加指示があるのにprovider入力から欠落した交換を、入力相関診断が通過させます。eligibleForMeasurement=falseは維持されますが、限定診断内の文脈一致が偽の通過になります。",
+        "reproduction": "静的再現条件（未実行）：test_production_sdk_trace.pyのexchange()が構築する引数で、sent[2]['params']['baseInstructions']='EXTRA_INSTRUCTIONS'を追加し、provider_requestsとreceivedを変更しないままdiagnose_exchangeへ渡します。requests()はこのフィールドを許可し、audit_provider_input()のcwdなし分岐は追加指示を検査しないため、拒否条件に到達しません。developerInstructionsでも同様です。",
+        "suggestion": "synthetic-one-input-onlyではbaseInstructions/developerInstructionsの指定を拒否してください。追加指示を扱う場合は別の明示profileでproviderの前置文脈との完全一致を要求してください。"
+      },
+      {
+        "priority": "P2",
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "line": 184,
+        "message": "turn/completedの外側params.turnIdを検査しません。内側turn.idが正しくても、外側に別turnのIDが明記された矛盾する完了証拠を受理します。委譲先completed_items()も完了分岐では外側turnIdの照合を通らないため、交換診断まで通過できます。",
+        "reproduction": "静的再現条件（未実行）：test_production_sdk_trace.pyのexchange()が構築する引数で、received[-1]['params']['turnId']='other'だけを変更します。内側turn.id='u'、summary、provider証拠は保持します。normalized()はsummaryを照合するだけで、production_trace.pyの150〜154行も内側IDだけを照合するため、この矛盾を拒否しません。",
+        "suggestion": "turn/completedでparams.turnIdが存在する場合は確定turn IDとの一致を要求してください。turn/startedについても、内側IDと外側に指定されたturnIdの矛盾を拒否する共通検査を追加してください。"
+      }
+    ],
+    "sourceGuardsEqual": true
+  },
+  "reproducedAtOriginalSource": [
+    "synthetic baseInstructions added without provider context passed exchange diagnostic",
+    "outer turn/completed turnId=other passed exchange diagnostic"
+  ],
+  "remediationVerification": {
+    "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-08",
+    "summarySha256": "ef8271222d5d86a5d344ac917e56001391a5aff67208fe86513f28d7ae705b4b",
+    "status": "sdk_parent_links_artifacts_rechecked",
+    "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+    "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+    "snapshotResourceCount": 71,
+    "originalHashesChecked": true,
+    "allTargetTraceRowsPreserved": true,
+    "sourceGuardsEqual": true,
+    "parentLinks": {
+      "status": "scripted_parent_cell_child_ids_matched",
+      "scope": "one-scripted-exec-two-mcp-calls",
+      "parentCallId": "probe-call",
+      "cellId": "1",
+      "nativeChildIds": [
+        "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+        "exec-36439273-97f9-4060-9031-434414328c02"
+      ],
+      "traceEventCount": 19,
+      "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+      "certifiesMultipleOrYieldedCells": false,
+      "eligibleForMeasurement": false
+    },
+    "tests": {
+      "count": 431,
+      "seconds": 62.113,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "bdc9da638f4a8e6adff1cc45d93397cccf8e0bbdc5dd717212d7db8f618f1d7f"
+    }
+  },
+  "pendingReview": {
+    "status": "auto_approval_rejected_before_invocation",
+    "sourceCommit": "220df0dde378cae10ffc7dc917d84cf1bc5f8f1b",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.7.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-07",
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "outputDirectoryExists": false,
+    "destination": "OpenAI Codex CLI / gpt-6.1-sol",
+    "payloadFiles": [
+      {
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "bytes": 36017,
+        "sha256": "4dfb5dd61df755448f9f7143a638c2edf6bc8c12765348dbbc97cdf8cfd2a3c2"
+      },
+      {
+        "path": "evals/skills/routing/production_trace.py",
+        "bytes": 14150,
+        "sha256": "b19c0f1808bc4c3d1116eb08b6f39de3e7c3a47d3a196960aede071e4c1cc5f2"
+      },
+      {
+        "path": "tests/skills/test_production_sdk_trace.py",
+        "bytes": 34746,
+        "sha256": "b0ea1c31483fcea4901bd1aca59300b609a051bb8e46bbb3c1b95c2b3f432d8e"
+      },
+      {
+        "path": "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+        "bytes": 4868,
+        "sha256": "d95ed39dea52687f98d248f7aeb10e42e128f46242ab30e4c9737b656acb3eab"
+      },
+      {
+        "path": "evals/skills/routing/sdk-trace-review-remediation.md",
+        "bytes": 5988,
+        "sha256": "f8b0212d5c08c8460a72f7da309375ce10b504c5c31272b895a48ea3843fac05"
+      },
+      {
+        "path": "tests/skills/test_production_trace.py",
+        "bytes": 17097,
+        "sha256": "381f8b6a1b87fbe32e7fbed71ea7909253fcf94580465b0bc14882fa5654eee3"
+      }
+    ],
+    "payloadBytes": 112866,
+    "additionalPayload": "固定静的検分指示・確定source ID・行番号/hash・公開JSON応答schema（922 bytes）",
+    "reason": "同じ6ファイルでも旧sourceの承認だけでは新sourceの変更後payloadへの明示承認が不足する、と自動審査が拒否した。"
+  },
+  "requestedContinuingTransmissionScope": {
+    "status": "awaiting_explicit_user_approval",
+    "phase": 4,
+    "model": "gpt-6.1-sol",
+    "payloadPaths": [
+      "evals/skills/routing/production_sdk_trace.py",
+      "evals/skills/routing/production_trace.py",
+      "tests/skills/test_production_sdk_trace.py",
+      "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+      "evals/skills/routing/sdk-trace-review-remediation.md",
+      "tests/skills/test_production_trace.py"
+    ],
+    "purpose": "same public SDK trace component static remediation review",
+    "fixedGitSourceAndHashesPerInvocation": true,
+    "maximumInvocationsPerReviewContract": 1,
+    "additionalDelegation": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "newIndependentReviewerSolInvocations": 1,
+  "cumulativeSdkTraceIndependentReviewerSolInvocations": 6,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "independentRemediationReviewPassed": false,
+  "eligibleForMeasurement": false,
+  "certifiesExpectedBehavior": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

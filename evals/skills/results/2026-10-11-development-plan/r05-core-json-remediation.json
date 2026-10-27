@@ -1,0 +1,32 @@
+{
+  "status": "original_core_json_closure_independently_verified_new02_preparation_stopped",
+  "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+  "files": [
+    "evals/skills/sdd/evaluate.py",
+    "evals/skills/sdd/batch.py",
+    "evals/skills/sdd/README.md",
+    "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json",
+    "evals/skills/sdd/batches/plan-implement-matrix-20261012-02.json",
+    "tests/skills/test_sdd_native_completion.py",
+    "tests/skills/test_sdd_batch.py"
+  ],
+  "oldCondition": "01 stopped preparation SOL1 primary0",
+  "newCondition": "02 primary68 semantic68 preparation1 retry0",
+  "newPrimary": 0,
+  "fullTests": {
+    "sourceCommit": "a6975a89a4a1e8de1d1c2ba8d02f231417e58a19",
+    "exitCode": 0,
+    "seconds": 72.62024563900195,
+    "testCount": 691,
+    "testSeconds": 72.199,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a07cb2f18360d0a42f7f0b86bdfc26e6fd927c3f3b0ce73d929aa58a5aecc040"
+  },
+  "independentVerification": {
+    "reportSha256": "9117229c93914b061155d69869db574c552f4024dd9e2a21f1daf2404af2aa24",
+    "hashinventorySha256": "f2bd0a01163d72423b23c2cbd32c735d9ff8a7cba0289b19f8b014c80d9cd875",
+    "parentRehashed": 92,
+    "primaryLaunchCertified": false
+  }
+}

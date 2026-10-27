@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "archiveSha256": "4a3b09a3c1122e01ab11ee4cb3a97962db8e0b402d2215f322738bb3a05c6657",
+  "files": 100,
+  "bytes": 457786,
+  "primaryRuns": 2,
+  "uniqueNativeThreads": 2,
+  "originalComparisonStatus": "failed",
+  "independenceInterpretation": "unknown",
+  "errors": [],
+  "limits": "保存監査のpassedであり、停止した比較や独立性の不明を合格へ変換しない。"
+}

@@ -1,0 +1,435 @@
+{
+  "status": "local_wheel_install_independently_verified",
+  "report": {
+    "sourceCommit": "f33148e3e4c8823cd0300222020f9628f7b3f369",
+    "scope": "repo-isolated-core-wheel-install-only",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "wheel": {
+      "name": "bitz-1.0.0-py3-none-any.whl",
+      "sha256": "0999753f22980e0f8d6e617bbf57b194b35542950953eaf257075291a9d42b71"
+    },
+    "installedMetadata": {
+      "bitzVersion": "1.0.0",
+      "yamlVersion": "0.19.1",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "bitzPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/lib/python3.12/site-packages/bitz/__init__.py"
+    },
+    "beforeCoreAbsent": true,
+    "packageChecks": {
+      "metadata": [
+        "accepted",
+        []
+      ],
+      "dependencies": [
+        "accepted",
+        []
+      ]
+    },
+    "cli": {
+      "doctor": {
+        "status": "passed",
+        "exitCode": 0,
+        "result": {
+          "schemaVersion": "1.0",
+          "operation": "doctor",
+          "status": "passed",
+          "workspace": {
+            "id": "root",
+            "path": "."
+          },
+          "durationMs": 3,
+          "diagnostics": [],
+          "core": {
+            "version": "1.0.0",
+            "apiVersion": "1.0",
+            "capabilities": [
+              "context.v1",
+              "check.v1",
+              "verify.v1",
+              "doctor.v1",
+              "multiWorkspace.v1"
+            ]
+          },
+          "checks": [
+            {
+              "name": "core",
+              "status": "passed"
+            },
+            {
+              "name": "workspace",
+              "status": "passed"
+            },
+            {
+              "name": "config",
+              "status": "passed"
+            },
+            {
+              "name": "schema",
+              "status": "passed"
+            },
+            {
+              "name": "ears",
+              "status": "passed"
+            },
+            {
+              "name": "git",
+              "status": "passed"
+            },
+            {
+              "name": "command",
+              "status": "passed"
+            },
+            {
+              "name": "impact",
+              "status": "info"
+            }
+          ]
+        }
+      },
+      "context": {
+        "status": "passed",
+        "exitCode": 0,
+        "result": {
+          "schemaVersion": "1.0",
+          "operation": "context",
+          "status": "passed",
+          "purpose": "implement",
+          "workspace": {
+            "id": "root",
+            "path": "."
+          },
+          "roots": [
+            "TASK-001"
+          ],
+          "contextDigest": "sha256:67f773c6dae99c5f529b1c8406aae02620190aef7231688b2745b3bd203c5f43",
+          "revision": {
+            "commit": "c770aebda76323cacb6e62af5dcbc355b7f203fe",
+            "dirty": false
+          },
+          "resolution": {
+            "complete": true,
+            "documentCount": 2,
+            "unresolvedStrongRelations": 0
+          },
+          "projection": {
+            "detail": "standard",
+            "expanded": []
+          },
+          "documents": [
+            {
+              "id": "TASK-001",
+              "kind": "task",
+              "status": "open",
+              "role": "root",
+              "path": ".spec/tasks/TASK-001.md",
+              "projection": "full",
+              "reachedBy": [
+                "root"
+              ],
+              "statementRefs": [],
+              "frontmatter": {
+                "id": "TASK-001",
+                "title": "空入力の拒否と回帰テストを実装する",
+                "status": "open",
+                "relations": {
+                  "addresses": [
+                    "REQ-001:AC-01"
+                  ]
+                },
+                "changes": [
+                  "src/input.py",
+                  "tests/test_input.py"
+                ]
+              },
+              "bodyText": "# TASK-001 空入力の拒否と回帰テストを実装する\n\n## Objective\n\nREQ-001:AC-01の意味が人間に承認された後、指定境界内で空入力の拒否を実装する。\n\n## Completion Criteria\n\n実装の前後のCore検査、対象テスト、最終差分の人手レビューを経て完了する。\n起点REQがdraftの間は実装へ着手しない。\n",
+              "untrustedText": true
+            },
+            {
+              "id": "REQ-001",
+              "kind": "requirement",
+              "status": "approved",
+              "role": "requirement",
+              "path": ".spec/requirements/REQ-001.md",
+              "projection": "full",
+              "reachedBy": [
+                "addresses:TASK-001"
+              ],
+              "statementRefs": [
+                "REQ-001:AC-01"
+              ],
+              "frontmatter": {
+                "id": "REQ-001",
+                "title": "空の入力を拒否する",
+                "status": "approved",
+                "implements": [
+                  "src/input.py"
+                ],
+                "tests": [
+                  {
+                    "path": "tests/test_input.py",
+                    "covers": [
+                      "REQ-001:AC-01"
+                    ],
+                    "command": "default"
+                  }
+                ]
+              },
+              "bodyText": "# REQ-001 空の入力を拒否する\n\n## Intent\n\n利用者が空の入力に対する理由を確認できるようにする。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [WHEN] 空の入力を受け取った場合 [MUST] [THEN] 入力エラーを1件返す。\n\n## Verification\n\n入力の公開入口へ空の値を渡し、エラー件数を確認するテストを計画する。\nテストは未実装で、要件の実証は未完了である。\n",
+              "untrustedText": true
+            }
+          ],
+          "constraintLedger": {
+            "statements": [
+              {
+                "id": "REQ-001:AC-01",
+                "documentId": "REQ-001",
+                "documentRole": "requirement",
+                "modality": "MUST",
+                "reason": null,
+                "actor": "TargetSystem",
+                "activation": {
+                  "kind": "WHEN",
+                  "text": "空の入力を受け取った場合"
+                },
+                "operation": {
+                  "kind": "THEN",
+                  "text": "入力エラーを1件返す"
+                }
+              }
+            ]
+          },
+          "coverage": {
+            "must": {
+              "total": [
+                "REQ-001:AC-01"
+              ],
+              "addressed": [
+                "REQ-001:AC-01"
+              ],
+              "tested": [
+                "REQ-001:AC-01"
+              ],
+              "unaddressed": [],
+              "untested": []
+            },
+            "should": {
+              "total": [],
+              "addressed": [],
+              "tested": [],
+              "unaddressed": [],
+              "untested": []
+            },
+            "may": {
+              "total": [],
+              "addressed": [],
+              "tested": [],
+              "unaddressed": [],
+              "untested": []
+            },
+            "adjacent": []
+          },
+          "durationMs": 10,
+          "diagnostics": []
+        }
+      },
+      "check": {
+        "status": "passed",
+        "exitCode": 0,
+        "result": {
+          "schemaVersion": "1.0",
+          "operation": "check",
+          "status": "passed",
+          "scope": "selected",
+          "workspace": {
+            "id": "root",
+            "path": "."
+          },
+          "revision": {
+            "base": "c770aebda76323cacb6e62af5dcbc355b7f203fe",
+            "commit": "c770aebda76323cacb6e62af5dcbc355b7f203fe",
+            "dirty": false
+          },
+          "checkedDocumentCount": 1,
+          "checkedStatementCount": 0,
+          "durationMs": 29,
+          "diagnostics": []
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "build",
+        "argv": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "build",
+          "--offline",
+          "--wheel",
+          "--out-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/dist",
+          "plugins/bitz-core"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011",
+        "exitCode": 0,
+        "elapsedSeconds": 0.0499711730517447,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "b6532887340a4c13e8d01791ee9dde3a1cc202d1fe2cb0ebbfbaf73d8ade60db"
+      },
+      {
+        "name": "venv",
+        "argv": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "venv",
+          "--python",
+          "/usr/bin/python3.12",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011",
+        "exitCode": 0,
+        "elapsedSeconds": 0.03830995608586818,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "003b3687d3723c8631ac4d18e7f60578a000a321e7d0a3bf5850a50231a61a98"
+      },
+      {
+        "name": "before-import",
+        "argv": [
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/python",
+          "-I",
+          "-B",
+          "-c",
+          "import importlib.util; assert importlib.util.find_spec(\"bitz\") is None"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011",
+        "exitCode": 0,
+        "elapsedSeconds": 0.011448543053120375,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "install",
+        "argv": [
+          "/home/hide/.local/bin/uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "pip",
+          "install",
+          "--offline",
+          "--no-index",
+          "--find-links",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-01/dependency-wheel",
+          "--python",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/python",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/dist/bitz-1.0.0-py3-none-any.whl"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011",
+        "exitCode": 0,
+        "elapsedSeconds": 0.09097162296529859,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "f49c0cf3d080c20ace24401b7c77f16d8c5f8ceda819cafb7761f9ede70688e0"
+      },
+      {
+        "name": "installed-metadata",
+        "argv": [
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/python",
+          "-I",
+          "-B",
+          "-c",
+          "import json,sys,importlib.metadata as m,bitz; print(json.dumps(dict(bitzVersion=m.version(\"bitz\"),yamlVersion=m.version(\"ruamel.yaml\"),python=sys.version,bitzPath=bitz.__file__))); assert m.version(\"bitz\")==\"1.0.0\" and m.version(\"ruamel.yaml\")==\"0.19.1\""
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011",
+        "exitCode": 0,
+        "elapsedSeconds": 0.034606146975420415,
+        "stdoutSha256": "c5cd0936a69f5435313f75264bea838d20f737bcf6c17a40f960d4fa9a6782f8",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "fixture-commit",
+        "argv": [
+          "git",
+          "-c",
+          "user.name=Distribution Fixture",
+          "-c",
+          "user.email=fixture@example.invalid",
+          "-c",
+          "core.hooksPath=/dev/null",
+          "commit",
+          "-m",
+          "test: 導入済みCoreの固定Pythonを登録する"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/workspace",
+        "exitCode": 0,
+        "elapsedSeconds": 0.005500875995494425,
+        "stdoutSha256": "c82f4b70ccecf1ba7121e25823c07247b5b43614d962c3e07df0f3c3b1ab0f99",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "cli-doctor",
+        "argv": [
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/bitz",
+          "doctor",
+          "--format",
+          "json"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/workspace",
+        "exitCode": 0,
+        "elapsedSeconds": 0.12683376600034535,
+        "stdoutSha256": "a817ea7deaba79f9c76961160e05156e19f213bac39f4e86bfbaeae1e0cd3a30",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "cli-context",
+        "argv": [
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/bitz",
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/workspace",
+        "exitCode": 0,
+        "elapsedSeconds": 0.13316452701110393,
+        "stdoutSha256": "f01717df4214012b55c50b78e6587abd44f8d510a15609df9442363c2bbd2f88",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "cli-check",
+        "argv": [
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/venv/bin/bitz",
+          "check",
+          "TASK-001",
+          "--base",
+          "HEAD",
+          "--format",
+          "json"
+        ],
+        "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r09-wheel-install-03/workspace",
+        "exitCode": 0,
+        "elapsedSeconds": 0.1544880470028147,
+        "stdoutSha256": "8699c7531844c203540a6781d9c137379e2056c6408da2339e535ba721c47043",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "newModelsStarted": 0,
+    "certifiesNativeSkillInstall": false,
+    "certifiesDistribution": false,
+    "certifiesSkillGate": false
+  },
+  "priorFailures": [
+    {
+      "output": ".venv/r09-wheel-install-01",
+      "reason": "offline dependency wheel absent"
+    },
+    {
+      "output": ".venv/r09-wheel-install-02",
+      "reason": "fixture Git identity absent"
+    }
+  ],
+  "certifiesDistribution": false,
+  "independentReviewRecord": "r09-core-wheel-install-independent.json"
+}

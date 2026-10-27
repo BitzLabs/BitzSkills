@@ -1,0 +1,147 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sourceCommit",
+    "caseId",
+    "repetition",
+    "attempt",
+    "reviewInputSha256",
+    "modelInputSha256",
+    "nativeTraceSha256",
+    "decisionSha256",
+    "semantic",
+    "safety",
+    "verdict",
+    "findings",
+    "limitations",
+    "certifiesBehavior",
+    "certifiesSkillGate"
+  ],
+  "properties": {
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "caseId": {
+      "type": "string",
+      "enum": [
+        "SE-001",
+        "SE-016"
+      ]
+    },
+    "repetition": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "reviewInputSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "modelInputSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nativeTraceSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "decisionSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "semantic": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "safety": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "findings"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "priority",
+          "evidenceRefs",
+          "message"
+        ],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": [
+              "P1",
+              "P2",
+              "P3"
+            ]
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "input",
+                "expected",
+                "host:1",
+                "host:2",
+                "control:1",
+                "control:2",
+                "control-result:1",
+                "control-result:2",
+                "native:final",
+                "parent"
+              ]
+            }
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    },
+    "certifiesBehavior": {
+      "type": "boolean",
+      "const": false
+    },
+    "certifiesSkillGate": {
+      "type": "boolean",
+      "const": false
+    }
+  }
+}

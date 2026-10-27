@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_implement_review",
+  "subjectCommit": "36567d4463fad3cdd0da3d3522be201038b608c5",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [
+    "plugins/bitz-sdd/",
+    "tests/skills/test_sdd_plan_examples.py",
+    "tests/skills/test_sdd_implement_connection.py",
+    "docs/02.設計書/03_SDD-flow.md",
+    "docs/03.詳細設計/03_操作仕様/",
+    "docs/03.詳細設計/02_SPECモデル/",
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md",
+    "docs/04.提案資料/30_bitz-sdd・品質管理・Coreスキル化実装計画.md",
+    "docs/02.設計書/10_決定記録/ADR-060_スキル評価契約と独立検分の境界を固定する.md",
+    "evals/skills/schemas/handoff.schema.json"
+  ],
+  "directChecks": [
+    "fork_turns=none、gpt-6.1-solで独立検分を開始。主作業者の非公開履歴・意図した結論は渡していない。開始条件は親のspawn記録に基づく",
+    "初版ref a85eab068f7cfc5ae4f02bc652641abeb1015db1の全配布10ファイルと両試験、正本の関連節を直接読んだ。規範全体の網羅監査ではない",
+    "初版で配布例2 tests / 0.935s / OK、接続6 tests / 3.056s / OK、quick_validate valid。全てexit 0",
+    "初版のdigest保証範囲の誤説明を指摘。/tmp合成workspaceで登録argv変更後もimplement digestが不変・passedと直接再現",
+    "初版のQ帯分類・降格・Q3追加証拠への到達不足を指摘。直接TASK実装を依頼された場合の不足は静的判断で、モデル行動の実測ではない",
+    "同じ独立検分文脈を継続して是正ref 36567d4463fad3cdd0da3d3522be201038b608c5を再検分。初版との差分はSKILL.md、execution.md、接続試験の3ファイル",
+    "context仕様§6と目的別digestの説明を再照合し、登録コマンド設定はverifyだけに含むことを確認。追加試験でimplement一致とverify CTX-STALE-001遮断を確認",
+    "Q0〜Q3の目安、重大観点の引上げ、降格時の人間の承認、Q3の専門観点・復旧/攻撃証拠、不足時停止を提案30§5.3と直接照合",
+    "是正refで接続7 tests / 3.917s / OK、配布例2 tests / 1.072s / OK、quick_validate Skill is valid!。全てexit 0",
+    "初版と是正refの検分開始・終了でHEADはそれぞれ指定ref、git status --porcelainは空。検分者はソースと対象Gitを変更していない",
+    "是正refの配布10ファイルをrepo相対path sortでpath+NUL+content+NULから測定: 4dee0fd64d9afe9a01098a35f0ef06e0e980c74d73133ad0c35b74a858d30364",
+    "是正refの接続試験SHA-256: 40b89d40335a1fdf7f0a9501bf00a3a3764c24f4b66dacf91802163a397c7e8e。主作業者の確定ref再測定と一致",
+    "現実的なTASK実装依頼に対する承認・高リスク・precheck/digest・安全なverify・失敗の戻り先・人手レビュー待ち・Git権限・不足証拠の扱いを静的検分",
+    "今回確認した範囲では初版2指摘の是正を確認し、新たな指摘はない。主作業者も是正refで接続7 tests / 4.065s / OK、配布例2 tests / 1.177s / OK、quick_validate validを再実行"
+  ],
+  "notRerun": [
+    {
+      "check": "モデルによる発火・分類・実装行動、完全フローの不足承認/設計レビューに対する実応答、敵対入力",
+      "reason": "静的検分とローカルCLI接続試験のみ。評価用モデルCLI・追加比較ベンチマーク・外部サービスは実行しておらず、モデル行動・Skill Gateは未認定"
+    },
+    {
+      "check": "cwd・timeout変更の追加実動作試験、高リスク・複合workspaceの全工程、保持ケース、実地パイロット、macOS",
+      "reason": "LinuxのQ1相当合成例に限定。command設定の追加再現はargvだけで、未検査の条件まで一般化しない"
+    },
+    {
+      "check": "Core全件単体・適合試験、Gate A/B/C、製品要求の実証・出荷認定",
+      "reason": "Core実装・適合fixture・承認済み製品要求を変更していない。今回の9件はスキル配布例と公開CLI接続の検査で、製品Gateの再認定ではない"
+    }
+  ],
+  "independent": true
+}

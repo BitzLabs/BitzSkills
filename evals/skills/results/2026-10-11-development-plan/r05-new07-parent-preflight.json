@@ -1,0 +1,14 @@
+{
+  "contextDate": "2026-10-13",
+  "driverSha256": "91ef204afb1d5ee34316231a5b746ff503f5c987452a5da18ccc88a335196d6c",
+  "fullTests": 709,
+  "modelsStarted": 0,
+  "newPrimaryLedgerExists": false,
+  "prefixEndsBefore": "base.mkdir",
+  "preparationOutputExists": false,
+  "preparationReservationExists": false,
+  "reservationsConsumed": 0,
+  "snapshotRelativePath": ".venv/production-routing-preparation-03/snapshot",
+  "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "status": "original_preparation_prefix_passed_without_mutation_or_model"
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "native-fixed-source-head-movement-proof",
+  "sourceCommit": "5ff330a73de281be8708cba4083e1235c2ad8fca",
+  "sourceFileCount": 13,
+  "actualResultCommitMovedHead": true,
+  "fixedSourceHashesUnchanged": true,
+  "exitCode": 0,
+  "headIsCondition": false,
+  "logSha256": "e50de88030381c780cdd9d383063301b8e8cefe506669d534f37e0ce312c7825",
+  "primaryModelTrajectories": 0,
+  "certifiesSkillGate": false
+}

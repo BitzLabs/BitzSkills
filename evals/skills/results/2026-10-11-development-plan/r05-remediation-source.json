@@ -1,0 +1,26 @@
+{
+  "status": "fixed_full_passed_independent_pending",
+  "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+  "files": [
+    "evals/skills/sdd/evaluate.py",
+    "evals/skills/sdd/batch.py",
+    "evals/skills/sdd/README.md",
+    "evals/skills/sdd/batches/plan-implement-matrix-20261012-01.json",
+    "tests/skills/test_sdd_batch.py",
+    "tests/skills/test_sdd_skill_eval.py",
+    "tests/skills/test_sdd_interruption.py",
+    "tests/skills/test_sdd_native_completion.py"
+  ],
+  "executionVersion": "sdd-execution-0.1.4",
+  "newPrimary": 0,
+  "fullTests": {
+    "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+    "exitCode": 0,
+    "seconds": 76.18865389702842,
+    "testCount": 686,
+    "testSeconds": 75.752,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c9189d0eea961d61bfc0a7d58abe32ad5033f565c54b2f5b15f528aef891d866"
+  }
+}

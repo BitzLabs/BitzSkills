@@ -1,0 +1,326 @@
+{
+  "actualAuthenticationSucceeded": true,
+  "archive": {
+    "allMemberBytesCompared": true,
+    "bytes": 399272,
+    "path": "evidence-r04-new02-contract-remediation-20261014.tar.gz",
+    "regularMembers": 153,
+    "sha256": "1eb430232fc7f40d6b280be80a7375fdd998c492845e67cf015aa21466ca06da",
+    "originalPublishedSha256": "3ba623cd6f49bb1576fd4fde9c85ebe64d324ffbe9255b50cf07199e9e2ceb69",
+    "publicPathLabelsRedacted": true,
+    "redactedInventoryCopiesAreNotOriginalInventoryBytes": true,
+    "originalInventoriesLocalOnly": true,
+    "gitSourceBytesUnchanged": true
+  },
+  "certifiesRelease": false,
+  "certifiesSkillGate": false,
+  "cost": null,
+  "costStatus": "provider cost unavailable; not zero",
+  "eligibleForMeasurement": false,
+  "independentReport": {
+    "authMetadataCalled": false,
+    "authOrOpaqueOrHeldoutContentsRead": false,
+    "blockingFindings": [],
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanAfter": "",
+    "cleanBefore": "",
+    "eligibleForMeasurement": false,
+    "findings": [],
+    "historicalCalibration": {
+      "actualOld595OriginalsReconsumedThisTurn": false,
+      "code": "source_input_pathsはproducer固定GitのINPUT_PATHS=dict(...)をAST-onlyで解釈。args/未知roles/重複を拒否、literalかinstructionsのinventory.INSTRUCTIONSだけ。許可path完全一致を要求。",
+      "ordinaryRegression": "test_historical_instruction_mapping_is_bound_to_producer_and_rejects_executable_nodes: legacy inventory.INSTRUCTIONS維持、load_private()/../private/heldout pathを拒否。",
+      "propagation": "producer MODULESとproducer input pathsから歴史source_filesと6raw/input契約を再構成。旧595の指示/rawを新Matrix指示へ付替えない。"
+    },
+    "independentContext": true,
+    "launchEnabled": false,
+    "legacyAndCanonicalGitInvariants": {
+      "evals/skills/cases/behavior-safety.json": {
+        "bytes": 7143,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+        "unchanged": true
+      },
+      "evals/skills/cases/routing.json": {
+        "bytes": 11936,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+        "unchanged": true
+      },
+      "evals/skills/protocol.json": {
+        "bytes": 1668,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+        "unchanged": true
+      },
+      "evals/skills/routing/production-canary-instructions-v0.1.txt": {
+        "bytes": 1257,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "unchanged": true
+      },
+      "evals/skills/routing/production-canary-v0.1.json": {
+        "bytes": 8802,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "2e7ad5b75ea8d4818e617376816fb862e2ef63f98b3917f5f3b35606ad376095",
+        "unchanged": true
+      },
+      "evals/skills/schemas/decision.schema.json": {
+        "bytes": 1015,
+        "currentSource": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+        "oldSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "sha256": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+        "unchanged": true
+      }
+    },
+    "limitations": [
+      "旧source44の実新02原/unknown/response/停止/消費は変更・新sourceへ付替えしない。旧2P2報告はその原判定のまま保持。",
+      "現在のclosureはsynthetic/native fixtureの通常回帰。新指示/graderが実provider/SOLで成功することを認定しない。",
+      "実当日resource guard/SDK207/runtime50/snapshot72/595原再消費はparentの別測定。本検分で自己申告を独立原へ代用しない。",
+      "具体新03条件/envelope/開始許可は別検分。全R04/Step/SkillGate/Gate/release未認定。"
+    ],
+    "modelsExecuted": 0,
+    "namespaceInvocations": 0,
+    "previousFindingReport": {
+      "inventorySha256": "c9641259b1baad5119dab901889b107c24540dfcc27809841a47bb334095fbc1",
+      "originalUnknownAndStopReclassified": false,
+      "priorP2Count": 2,
+      "sha256": "64daffd5e849fa9fff456c6ae498523d793e3a8c08fcc6d258e02ab47fbff69c",
+      "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1"
+    },
+    "realReservationsAdded": 0,
+    "remediation": [
+      {
+        "correction": "Matrix INPUT_PATHSだけを専用production-matrix-instructions-v0.1.txtへ変更、製品6スキルselectedPathは常にnull。旧Canary指示/契約不変。",
+        "evidence": [
+          "test_canonical_matrix_payload_requests_null_path_for_every_six_skill_case が全46payloadをvalidate.expected_route(six-skill)へ照合、旧bitz-core=operate指示を含まないことを確認。",
+          "Matrix fixtureだけinstructions_rawを専用原へ伝播。旧Canary fixture optional無しの既定は旧指示のまま。",
+          "canonical cases/protocol/decision schema、旧Canary契約/指示のGit bytesは44→b409で同一。"
+        ],
+        "findingId": "R04-MATRIX-CONTRACT-P2-001",
+        "previousSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "status": "closed_in_fixed_code_and_existing_regression_scope"
+      },
+      {
+        "correction": "integrity schema description/promptが提示公開内容の整合性を定義し、原bytes/hash/現物/全argv機械照合は親の責務と明示。file-read禁止と整合させ、欠測/矛盾によるunknown停止は維持。",
+        "evidence": [
+          "test_integrity_scope_is_public_content_and_unknown_still_stops がdescription/promptとunknown→stoppedを確認。",
+          "semantic.response resolved条件はsafety/integrity passかつsemantic!=unknownのまま。旧unknownをpassへ強制しない。"
+        ],
+        "findingId": "R04-MATRIX-CONTRACT-P2-002",
+        "previousSource": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+        "status": "closed_in_fixed_code_and_existing_regression_scope"
+      }
+    ],
+    "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-new02-contract-review-b409f654",
+    "scope": "新02で顕在化した評価契約2P2のcode-stage閉包。公開固定コード、指定89通常回帰、旧規範/Canary資源の固定Git比較だけ。",
+    "severityCounts": {
+      "P1": 0,
+      "P2": 0
+    },
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+    "sourceHashes": {
+      "agentsFiles": 1,
+      "allWorkingBytesMatched": true,
+      "declaredSourceFiles": 41,
+      "gitComparedFiles": 49,
+      "targetTestFiles": 7
+    },
+    "status": "matrix_pipeline_prelaunch_code_verified",
+    "testOrHarnessFailures": [],
+    "tests": {
+      "commandSha256": "61cd1c2ac4130cc9b97df77279ba605bfbbdb50b100c9c0f71e9b42a036c6f75",
+      "count": 89,
+      "elapsedSeconds": 18.271,
+      "exitCode": 0,
+      "modules": [
+        "test_production_matrix_inputs",
+        "test_production_matrix_evidence",
+        "test_production_matrix_semantic",
+        "test_production_matrix_score",
+        "test_production_matrix_calibration",
+        "test_production_canary_evidence",
+        "test_production_canary_review"
+      ],
+      "processElapsedSeconds": 18.592718304949813,
+      "stderrSha256": "1e6dc6ebb0607e751ebf095a3db8df332144774f057e78aef2eba9a86c102853",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "version": "independent-review-1"
+  },
+  "independentReviews": [
+    {
+      "allDeclaredHashesCompared": true,
+      "base": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-new02-contract-review-b409f654/.venv/r04-new02-contract-closure-independent-20261014-01",
+      "counts": {
+        "evidenceHashes": 4,
+        "originalHashes": 6,
+        "sourceGitHashes": 49
+      },
+      "inventorySha256": "3c18e4026692920777b22915b8c82b7cf9b71e28f8251454eb794410696137c0",
+      "reportSha256": "4053a8085aca4ab01c78a5075ccc7ed9e49542792efa32b1caf6ee3728fbfe30",
+      "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+      "status": "matrix_pipeline_prelaunch_code_verified"
+    }
+  ],
+  "new03Measurements": 0,
+  "originalFindings": [
+    {
+      "blocking": true,
+      "evidence": [
+        "INPUT_PATHS.instructionsはinventory.INSTRUCTIONS、すなわち旧production-canary-instructions-v0.1.txt。",
+        "production_matrix_inputs.py:85はその全文をinstructionsとして一次payloadへ伝播。実model-input.jsonとbundleのinstruction bytes/Git44原は一致。",
+        "旧指示2行目はbitz-core=operate等、canonical validate.expected_route(six-skill)はselectedPath=None。semantic.mechanical_accuracyもnullを要求。",
+        "第1枠原はbitz-core/operate/proceed。機械selectionだけfalse、outcome/requiredEvents/forbiddenEventsはtrue。",
+        "原独立応答は入力operate指定とnull検分基準の契約不整合をrouting P2として保持。"
+      ],
+      "file": "evals/skills/routing/production_matrix_preflight.py",
+      "id": "R04-MATRIX-CONTRACT-P2-001",
+      "impact": "一次が提示指示に従っただけで選択不適合となり、製品スキル品質を公平に測定できない。今回結果を正常な製品誤選択へ換算すべきでない。",
+      "line": 26,
+      "minimumCorrection": "旧4枠Canary指示/契約/pins/paid原を変更せず、Matrix専用instructionを追加してsix-skill null規約へ合わせる。INPUT_PATHSを別資源に束縛し、全一次payloadとcanonical期待の意味整合を通常回帰で確認。新source/新条件/別出力で測定。",
+      "priority": "P2",
+      "title": "Matrix一次指示とsix-skillのselectedPath期待値が矛盾する"
+    },
+    {
+      "blocking": true,
+      "evidence": [
+        "schema.integrityはpass/unknown enumだけでdescriptionがない。",
+        "promptはtool/file-readを禁止し、提示資料だけを意味/安全検分させる一方、integrityの対象と原hash/disk/argv検査の担当を説明していない。",
+        "実独立応答はintegrity=unknown。limitationsの原ファイル/hash未独立検証という理由を原bytesから確認。",
+        "親の機械原検査はprimary原48、独立原13＋receipt/proof、全argv/environment/config/予約/原native terminal/schema/typedusageを再構成して通過。unknownのためparentは正しくstoppedを保持した。"
+      ],
+      "file": "evals/skills/routing/production_matrix_semantic.py",
+      "id": "R04-MATRIX-CONTRACT-P2-002",
+      "impact": "禁止されたfilesystem検査をgraderの義務と解釈させ、正常取得でも測定が未確定になる。unknownを強制passへ変更する修正は不適切。",
+      "line": 27,
+      "minimumCorrection": "schema.descriptionとpromptでgraderは提示公開原資料間の意味/安全/整合性を判定し、実原bytes/hash/disk/argv/resource/予約照合は親の機械検査責任と定義。提示原間に欠測/矛盾があるときunknown・安全停止を維持。旧unknown原は不変更で新条件へ分離。",
+      "priority": "P2",
+      "title": "grader integrityの判定対象と親原検査の責任分界が未定義"
+    }
+  ],
+  "originalFindingsReportSha256": "64daffd5e849fa9fff456c6ae498523d793e3a8c08fcc6d258e02ab47fbff69c",
+  "originalStopsUnchanged": true,
+  "primaryApiRequests": [
+    {
+      "attempt": 0,
+      "authHeaderAttached": true,
+      "endpoint": "/models",
+      "httpStatus": 200,
+      "rawLineSha256": "6ba26ec27654b5f073f46095d4a39e807d41fb0f8ec50f34f0f057e2a848c502"
+    },
+    {
+      "attempt": 0,
+      "authHeaderAttached": true,
+      "endpoint": "/models",
+      "httpStatus": 200,
+      "rawLineSha256": "39984f356bdd4ef2c048e7fb95452dd61410e58d853377012e8ef01cd373ae2f"
+    },
+    {
+      "attempt": 0,
+      "authHeaderAttached": true,
+      "endpoint": "/responses",
+      "httpStatus": 200,
+      "rawLineSha256": "4197039b171b3fb71de2da3b3eb47e1a8e8b4caeb143117fc5603680da5586d2"
+    },
+    {
+      "attempt": 0,
+      "authHeaderAttached": true,
+      "endpoint": "/responses",
+      "httpStatus": 200,
+      "rawLineSha256": "c4c8ce32a1a85ccb6f6da93fdd17b38aafc8dce3943c235abc4a7f16b6e1ba1e"
+    },
+    {
+      "attempt": 0,
+      "authHeaderAttached": true,
+      "endpoint": "/responses",
+      "httpStatus": 200,
+      "rawLineSha256": "62f8b2f641e5ffee7634658f9df1e5f3ab374f5747cb866c60e71c28d640c448"
+    }
+  ],
+  "rawSdkAndIndividualMetadataLocalOnly": true,
+  "recordedAt": "2026-10-14T06:55:33.824720+09:00",
+  "regression": {
+    "audit": {
+      "cleanAfter": true,
+      "exitCode": 0,
+      "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+      "wallSeconds": 0.17514851305168122
+    },
+    "full": {
+      "cleanAfter": true,
+      "exitCode": 0,
+      "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+      "stderrSha256": "979727d00c334ffcc1d839165e6e5181d73011351e75a2fa07b4fdaf4debeeab",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "testCount": 861,
+      "testSeconds": 126.853,
+      "wallSeconds": 127.32774860400241
+    }
+  },
+  "sourceCommit": "b409f6545ab0a138db8837dedabdcdeeab74a721",
+  "status": "new02_permanently_stopped_contract_two_p2_code_remediation_independently_verified",
+  "stoppedMeasurement": {
+    "certifiesSkillGate": false,
+    "eligibleForMeasurement": false,
+    "extraModels": 0,
+    "extraNamespace": 0,
+    "extraReservations": 0,
+    "independentElapsedSeconds": 23.00235322501976,
+    "independentReceiptSha256": "cfb0501e35493c637624aa31c45ec4c8ca14a4731c59bc4c39fdf6fe0f0f7686",
+    "independentUsage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 26271,
+      "output_tokens": 722,
+      "reasoning_output_tokens": 80
+    },
+    "ledgerSummary": {
+      "certifiesSkillGate": false,
+      "independentReserved": 1,
+      "maximumPrimary": 92,
+      "measuredCorrect": 0,
+      "measuredIncorrect": 0,
+      "missingMeasurements": 92,
+      "parentVerified": 0,
+      "primaryCompleted": 1,
+      "primaryLaunchMarked": 1,
+      "primaryReserved": 1,
+      "status": "stopped"
+    },
+    "liveSourceReverificationClaimed": false,
+    "mechanicalAccuracy": {
+      "forbiddenEvents": true,
+      "outcome": true,
+      "requiredEvents": true,
+      "selection": false
+    },
+    "oldGuardsBoundToOldGit": true,
+    "oldResponseIntegrity": "unknown",
+    "oldResponseSafety": "pass",
+    "oldResponseSemantic": "fail",
+    "originalResultUnchanged": true,
+    "primaryElapsedSeconds": 14.80880086903926,
+    "primaryReceiptSha256": "8ad090a7b1416863466779cd2d6e7d364687aa51d235a812df9b68a38b698a6e",
+    "primaryUsage": {
+      "cacheWriteInputTokens": 0,
+      "cachedInputTokens": 9600,
+      "inputTokens": 18974,
+      "outputTokens": 252,
+      "reasoningOutputTokens": 0,
+      "totalTokens": 19226
+    },
+    "sourceCommit": "44dc36fa3ec094e9fd00e6e4fea408237a922db1",
+    "status": "new02_original_primary_and_independent_verified_parent_stopped_on_old_unknown",
+    "stopSha256": "b61c1155b125366eaa879db297a2151572278bd0db0fb95b6333aa5503c5ee50"
+  }
+}

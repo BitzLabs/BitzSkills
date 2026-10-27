@@ -1,0 +1,283 @@
+{
+  "status": "two_original_findings_independently_closed_within_ledger_component",
+  "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+  "originalAndClosure": [
+    {
+      "sourceCommit": "63b05dae22dce98e945c5fa7a09036b171481f7b",
+      "reportSha256": "6e903989b8498b83788f4a6437b2d1a2f4342b208f85798fa1c13148601da5d1",
+      "inventorySha256": "4ffdb9e0355a14fb8de3f9c5d507231700640b8438fbba7ec73592977dfafa97",
+      "parentRehashed": {
+        "originals": 17,
+        "sourceGit": 13,
+        "evidence": 45
+      },
+      "record": {
+        "actualModelStarts": 0,
+        "checksCovered": [
+          "46cases×2/92 ordinal order・metadata非投影/期待変更非漏洩",
+          "閉じたinput/execution inventories・model/budget/pins/timeouts/拒否型",
+          "最大92/二重予約/独立最大1/競合2process exclusive1",
+          "未提出待機・提出不正raw保持/永久stop/復元拒否の既存正負例",
+          "安全な誤選択をmeasuredIncorrectへ、未完了をmissingへ別集計",
+          "同Git common storage解決/source/output drift拒否",
+          "regular single-link/openat NOFOLLOW/親パス/保存境界",
+          "追加原改変2例で恒久stop漏れを実再現"
+        ],
+        "cleanBeforeAndAfter": true,
+        "findings": [
+          {
+            "file": "evals/skills/routing/production_matrix_ledger.py",
+            "kind": "campaign_corruption_restore_reopens",
+            "line": 108,
+            "minimalRemediation": "保存済campaignの読取り/parse/owner/link/閉集合/条件検査異常を同ロック内の恒久stopへ接続し、削除/異常/復元後にも次予約不可を確認する。既存消費と拒否原を保持。",
+            "observed": "initializeの閉集合・固定条件照合で拒否されるが、checked_countの例外捕捉へ到達しないためstop.json無し。復元後reserve(2)成功、消費1→2。",
+            "priority": "P2",
+            "relatedLines": [
+              114,
+              229,
+              231
+            ],
+            "trigger": "正常slot1完了後、同一bound/source/outputのcampaign.jsonを{}に改変しreserve(2)、その後元bytes復元"
+          },
+          {
+            "file": "evals/skills/routing/production_matrix_ledger.py",
+            "kind": "dangling_submitted_review_misclassified_pending",
+            "line": 214,
+            "minimalRemediation": "stage/campaign/stopの存在判定をlstat/lexists相当へ統一し、未提出と提出済不正リンクを区別。提出済は既存NOFOLLOW/singlelink/owner検査を必ず通して恒久stopし、復元拒否を検証する。",
+            "observed": "Path.exists()がfalseとなり保存済提出原を未提出pendingとして扱う。NOFOLLOW読取りへ進まずstop無し。復元後reserve(2)成功、消費1→2。",
+            "priority": "P2",
+            "relatedLines": [
+              198,
+              208,
+              234,
+              242
+            ],
+            "trigger": "正常slot1完了後、review-0001.jsonを欠落public targetへのdangling symlinkへ差替えreserve(2)、その後元review復元"
+          }
+        ],
+        "newDetachedReviewWorktreeCreatedWithExplicitAuthorization": true,
+        "realSharedLedgerWrites": 0,
+        "realSharedReservations": 0,
+        "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-independent-review-63b05dae",
+        "scopeLimits": [
+          "台帳は親の完了証明と原参照/hashの管理部品。native本文の意味、実runtime/SDK/CLI/pinsの実物検証、製品起動入口は未接続。",
+          "typed primary completeness/integrity/safetyは親が渡す申告であり、台帳がモデル/nativeを採点した証拠ではない。",
+          "shared_storageは解決のみ。MatrixLedger storageは隔離試験用途。製品接続/取得/独立採点の完成を今回認定しない。",
+          "全740成功は原改変2P2を解消しない。新refで別是正検分が必要。",
+          "全R04/SkillGate/Step/Gate/Phase/release未認定。",
+          "既存development-review-ea・実測共有台帳・paid原・approved意味は変更なし。"
+        ],
+        "sourceCommit": "63b05dae22dce98e945c5fa7a09036b171481f7b",
+        "sourceEdits": 0,
+        "status": "independent_component_review_completed_with_two_open_p2",
+        "targetSixGitBytesMatched": {
+          "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+          "evals/skills/routing/production_matrix_inputs.py": "dfbe11be8c65f782aefc0e77bf7a103a4b30fd4f9d08ad2e8d152dbf8d9dca77",
+          "evals/skills/routing/production_matrix_ledger.py": "484b52b47ca5b0e40754dfe72cb490db7c19cbde11d05e99898598369c7a43cb",
+          "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+          "tests/skills/test_production_matrix_inputs.py": "7fb1798c78715db47b875105a22e1033e629f6cd6cf9e49fe7818abc29d6e920",
+          "tests/skills/test_production_matrix_ledger.py": "e5066ce1bf5545671f19489add1376109c82f753c31db24618d7418644ec6e01"
+        },
+        "tests": {
+          "allSkills": {
+            "count": 740,
+            "exitCode": 0,
+            "outerWallSeconds": 102.26856687106192,
+            "result": "OK",
+            "testSeconds": 101.793
+          },
+          "targeted": {
+            "count": 23,
+            "exitCode": 0,
+            "result": "OK",
+            "testSeconds": 23.239
+          }
+        }
+      }
+    },
+    {
+      "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+      "reportSha256": "40f49faa6e6bd8a1f0f4c4d534a64863c13ef0b9d2cd3c1563cc1fcfa6430179",
+      "inventorySha256": "d48a4c18cd11cc90a04bbc3d473fbcad19595c69e0f26a628c5c37f1ee93d50a",
+      "parentRehashed": {
+        "originals": 5,
+        "sourceGit": 7,
+        "evidence": 217
+      },
+      "record": {
+        "cleanBeforeAndAfter": true,
+        "closure": [
+          {
+            "newLines": [
+              113,
+              117,
+              124
+            ],
+            "originalKind": "campaign_corruption_restore_reopens",
+            "result": "initializeの保存原読取り・条件検査例外を同ロック内stopへ接続。異常拒否/0600復元後も予約2拒否・消費1維持。"
+          },
+          {
+            "newLines": [
+              24,
+              207,
+              224,
+              240
+            ],
+            "originalKind": "dangling_submitted_review_misclassified_pending",
+            "result": "stage/control全存在判定をlexistsへ統一。提出済dangling原をNOFOLLOW拒否しstop保存、復元後予約2拒否。"
+          }
+        ],
+        "models": 0,
+        "newBlockingFindings": [],
+        "originalReview": {
+          "all740": {
+            "count": 740,
+            "exitCode": 0,
+            "outerWallSeconds": 102.26856687106192,
+            "result": "OK",
+            "testSeconds": 101.793
+          },
+          "findingsPreserved": [
+            {
+              "file": "evals/skills/routing/production_matrix_ledger.py",
+              "kind": "campaign_corruption_restore_reopens",
+              "line": 108,
+              "minimalRemediation": "保存済campaignの読取り/parse/owner/link/閉集合/条件検査異常を同ロック内の恒久stopへ接続し、削除/異常/復元後にも次予約不可を確認する。既存消費と拒否原を保持。",
+              "observed": "initializeの閉集合・固定条件照合で拒否されるが、checked_countの例外捕捉へ到達しないためstop.json無し。復元後reserve(2)成功、消費1→2。",
+              "priority": "P2",
+              "relatedLines": [
+                114,
+                229,
+                231
+              ],
+              "trigger": "正常slot1完了後、同一bound/source/outputのcampaign.jsonを{}に改変しreserve(2)、その後元bytes復元"
+            },
+            {
+              "file": "evals/skills/routing/production_matrix_ledger.py",
+              "kind": "dangling_submitted_review_misclassified_pending",
+              "line": 214,
+              "minimalRemediation": "stage/campaign/stopの存在判定をlstat/lexists相当へ統一し、未提出と提出済不正リンクを区別。提出済は既存NOFOLLOW/singlelink/owner検査を必ず通して恒久stopし、復元拒否を検証する。",
+              "observed": "Path.exists()がfalseとなり保存済提出原を未提出pendingとして扱う。NOFOLLOW読取りへ進まずstop無し。復元後reserve(2)成功、消費1→2。",
+              "priority": "P2",
+              "relatedLines": [
+                198,
+                208,
+                234,
+                242
+              ],
+              "trigger": "正常slot1完了後、review-0001.jsonを欠落public targetへのdangling symlinkへ差替えreserve(2)、その後元review復元"
+            }
+          ],
+          "hashinventory": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-independent-review-63b05dae/.venv/r04-ledger-independent-01/hashinventory.json",
+          "hashinventorySha256": "4ffdb9e0355a14fb8de3f9c5d507231700640b8438fbba7ec73592977dfafa97",
+          "report": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-independent-review-63b05dae/.venv/r04-ledger-independent-01/report.json",
+          "reportSha256": "6e903989b8498b83788f4a6437b2d1a2f4342b208f85798fa1c13148601da5d1",
+          "targeted23": {
+            "count": 23,
+            "exitCode": 0,
+            "result": "OK",
+            "testSeconds": 23.239
+          }
+        },
+        "realSharedLedgerWrites": 0,
+        "realSharedReservations": 0,
+        "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-stop-review-b8aa4e77",
+        "scopeLimits": [
+          "是正2ファイル・対象25試験・隔離公開合成14負例の独立閉包。全repoの追加網羅検分は行わない。",
+          "元63b 23件/全740成功と2P2は元refの事実として保持し、新refの全回帰は親の別測定。",
+          "台帳は親完了証明と原参照/hashを管理する部品。native本文意味・実runtime/SDK/CLI/pins・製品起動入口・モデル取得/独立採点接続は今回未認定。",
+          "全R04/SkillGate/Step/Gate/Phase/release未認定。",
+          "旧development-review-eaと旧63b原・実測共有台帳・paid原・approved意味は変更なし。"
+        ],
+        "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+        "sourceEdits": 0,
+        "status": "two_original_p2_closed_within_independent_component_scope",
+        "targetGitBytesMatched": {
+          "AGENTS.md": "3b3ac500245bb2dd253597de9e1f2046ec346e01597ca08d5beb65071b7d579e",
+          "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+          "evals/skills/routing/production_matrix_inputs.py": "dfbe11be8c65f782aefc0e77bf7a103a4b30fd4f9d08ad2e8d152dbf8d9dca77",
+          "evals/skills/routing/production_matrix_ledger.py": "22d3d8aad5f1abd5b593730cbc31c579317c90d7c109c077a8778382e24b62da",
+          "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+          "tests/skills/test_production_matrix_inputs.py": "7fb1798c78715db47b875105a22e1033e629f6cd6cf9e49fe7818abc29d6e920",
+          "tests/skills/test_production_matrix_ledger.py": "6910cd3c761e8659df0f76d725b9cdfe389f0d0bff5f5fbe0e2fccbb2cd7d7c4"
+        },
+        "tests": {
+          "independentFaults": {
+            "allExpected": true,
+            "count": 14,
+            "exitCode": 0,
+            "faults": [
+              "campaign-fields",
+              "campaign-json",
+              "campaign-missing",
+              "campaign-dangling",
+              "campaign-symlink",
+              "campaign-hardlink",
+              "campaign-mode",
+              "drift-output",
+              "drift-pins",
+              "stage-dangling-attempt",
+              "stage-dangling-started",
+              "stage-dangling-primary",
+              "stage-dangling-independent",
+              "stage-dangling-review"
+            ],
+            "independentReservationsPerFixture": 1,
+            "primaryReservationsPerFixture": 1,
+            "restored0600": true,
+            "source": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+            "stdoutSha256": "48c8597be64b1ed21a96f8ec28092a75e7c1761cf95f913bd7fafa39b3ec88a5",
+            "stopBytesUnchanged": true,
+            "wallSeconds": 1.7393374310340732
+          },
+          "targeted": {
+            "count": 25,
+            "exitCode": 0,
+            "result": "OK",
+            "source": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+            "stderrSha256": "7ef7963ffa412b96ac5fb62af983e7c11924d7d7127b37b89d79b7344f82c1bf",
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "testSeconds": 23.878,
+            "wallSeconds": 24.093038736027665
+          }
+        }
+      }
+    }
+  ],
+  "parentFullRegression": {
+    "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+    "results": [
+      {
+        "label": "unit",
+        "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+        "exitCode": 0,
+        "seconds": 102.5701595779974,
+        "testCount": 742,
+        "testSeconds": 102.142,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "f55414e7794046e426303a3cac83db84216f326809c233c903512b4027da380a",
+        "cleanAfter": true
+      },
+      {
+        "label": "audit",
+        "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c",
+        "exitCode": 0,
+        "seconds": 0.1613093300256878,
+        "testCount": null,
+        "testSeconds": null,
+        "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cleanAfter": true
+      }
+    ],
+    "modelsStarted": 0,
+    "certifiesSkillGate": false
+  },
+  "archive": "evidence-r04-stop-independent-closure.tar.gz",
+  "archiveSha256": "a82aa1f5c8c3161bbdf9ea1cf91f610d25bc6141b27665244f9b1924e30583aa",
+  "archiveFileCount": 306,
+  "externalEvaluationModelInvocations": 0,
+  "actualMatrixReservations": 0,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

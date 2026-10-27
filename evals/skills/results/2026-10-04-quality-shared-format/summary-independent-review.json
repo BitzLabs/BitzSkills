@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "saved-results-audit",
+  "subjectCommit": "b5948e78831c37341bbfceff199f44d988196c8f",
+  "reviewRunId": "/root/sol_quality_shared_grade_r1:saved-results-audit",
+  "model": "gpt-6.1-sol",
+  "independent": true,
+  "implementationPrivateHistoryInherited": false,
+  "beginCommit": "b5948e78831c37341bbfceff199f44d988196c8f",
+  "endCommit": "b5948e78831c37341bbfceff199f44d988196c8f",
+  "beginClean": true,
+  "endClean": true,
+  "requiredCorrections": [],
+  "directChecks": ["保存archive 112 member / 78 file / 120380 bytesとSHA-256一致", "stderrを除く原artifactと全readableFiles hash errors=[]", "原runと保存receipt/runSha一致4/4、全4観点passed", "禁止member/リンクなし", "使用量1039980/914688/10485/38、wallMs合計510855一致", "skill Q3/critical、baseline Q2/major、全件not_readyと固定条件の限界を照合", "全帯/Gate未認定・比較優位を主張しない範囲は適切", "測定源471d360からの変更はREADME/保存記録のみ、旧失敗/実装/protocol変更なし"],
+  "archiveSha256": "5d3caee597fa535d07106c51bf32838d0ce7ca03c7907d3750c17a83dfbfdc88",
+  "modelInvocationsDuringAudit": 0,
+  "limits": ["QR-001限定の保存事実の監査でありPhase3・Skill Gate認定ではない"]
+}

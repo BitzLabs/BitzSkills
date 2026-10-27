@@ -1,0 +1,56 @@
+{
+  "status": "primary_capture_implementation_awaits_remediation_review",
+  "staticSolInvocations": 1,
+  "staticReviewStages": [
+    {
+      "sourceCommit": "dcdfd4f21831ff17a21a2a237366263e55060fc7",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.39.json",
+      "verification": {
+        "outputRelativeRoot": ".venv/production-canary-capture-check-02",
+        "summarySha256": "6c1f514763ecc0fe53a7c21056fd99502187dd7dbd19f6e5bd9c532298313a01",
+        "testCount": 561,
+        "testSeconds": 62.516,
+        "testExitCode": 0
+      },
+      "independentReview": {
+        "sourceCommit": "dcdfd4f21831ff17a21a2a237366263e55060fc7",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.39.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-39",
+        "receiptSha256": "c52540dc2b04e75924f56609a3449d5ab725ed0143e2c9dd6cf85c670cd52d25",
+        "responseSha256": "4b709eae957bbfbbf540315af316636eefb37ed1becd47ba780bcad1e0c23323",
+        "status": "review_findings",
+        "actualInvocations": 1,
+        "usage": {
+          "input_tokens": 25653,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1798,
+          "reasoning_output_tokens": 1034
+        },
+        "findings": {
+          "P1": 0,
+          "P2": 2,
+          "P3": 0
+        }
+      }
+    }
+  ],
+  "failedPreparations": [
+    {
+      "sourceCommit": "533f0f11b91bcf025a6592d049f8d1838ae87e99",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.39.json",
+      "outputRelativeRoot": ".venv/production-canary-capture-check-01",
+      "summarySha256": "6c745ebc58dc5acdffae406e4e0675897393469b0a4147295e3d9c1862aaa9cc",
+      "stderrSha256": "57f0ce0d6d1d57a121ab2711b8b46dedce1de250fd2990410950c569329991f1",
+      "testCount": 560,
+      "testSeconds": 56.069,
+      "testErrors": 26,
+      "testExitCode": 1
+    }
+  ],
+  "primaryModelTrajectories": 0,
+  "primaryIndependentReviews": 0,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

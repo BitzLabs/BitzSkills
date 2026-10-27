@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_before_candidate_save",
+  "sourceCommit": "88e7d12a25ec973954d5f857260a939ebffdb714",
+  "observedHeadAtStop": "365cd9691d28d3e0b520175697820acdaacb5098",
+  "caseCount": 0,
+  "noveltySaved": false,
+  "committedSourceFilesUnchanged": 6,
+  "budgetConsumed": {
+    "creatorSol": 1,
+    "caseReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "unusedCaseReviewerSol": 1,
+  "privateArtifactSha256": {
+    "creation-failure.json": "c58e8f4a55de4c41b85801be1f4df2026bdb987e494b4288ce1870a4030a1c63",
+    "creation-notes.md": "5cfc96b8a7ef62144c6c3ec64903a52d33f61f7d8bed9c4b80f5555883b052e7",
+    "creation-receipt.json": "c58e8f4a55de4c41b85801be1f4df2026bdb987e494b4288ce1870a4030a1c63"
+  },
+  "usage": "unknown",
+  "costUsd": null,
+  "certifiesSkillGate": false
+}

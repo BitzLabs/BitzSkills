@@ -1,0 +1,120 @@
+{
+  "status": "explicit_public_originals_archived_and_rehashed",
+  "archive": "evidence-r05-preparation-04-05.tar.gz",
+  "archiveSha256": "45e1db72a1668737cc5fa6c86c18fabb2398bebaa668ba8e116f29443df08ef4",
+  "originalCount": 22,
+  "modelsStartedByArchival": 0,
+  "certifiesBehavior": false,
+  "entries": [
+    {
+      "archiveName": "preparation-04/config.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/config.json",
+      "sha256": "9b3246676b4560f4487837ecfefa08ee350f84ca3ceab3ff67a0794294992613"
+    },
+    {
+      "archiveName": "preparation-04/contract.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/contract.json",
+      "sha256": "74c1100a85d465657d5daf29b7ad3bd08e777a07a14b6eed15c3031592cb75df"
+    },
+    {
+      "archiveName": "preparation-04/invocation.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/invocation.json",
+      "sha256": "3fc4aaf6a56bd045033a1730fe8880212ee6c0cc526b2445232d203dc6f5b7af"
+    },
+    {
+      "archiveName": "preparation-04/prompt.txt",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/prompt.txt",
+      "sha256": "23be593e6f83ef345381c04d3737d3401d5a004b52c7899e71abe20f46918137"
+    },
+    {
+      "archiveName": "preparation-04/reservation.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/reservation.json",
+      "sha256": "e8fee73c838fbf10e176b7b0ea07144972dd1da0fffda04736bf53824883a036"
+    },
+    {
+      "archiveName": "preparation-04/response.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/response.json",
+      "sha256": "6cf34044970ff0d9ec4de049edbea6c2d0485e603e5b9f4b9e069f876fe68c8b"
+    },
+    {
+      "archiveName": "preparation-04/runner.py",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/runner.py",
+      "sha256": "ed48e5475670e47073d6096f8aace88cf03eb1146340dee751928b0a822f4d1c"
+    },
+    {
+      "archiveName": "preparation-04/schema.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/schema.json",
+      "sha256": "286435e24cd0ccfde06e4df803efdf8c0ee81ed4db16974c3817c59263bb75fc"
+    },
+    {
+      "archiveName": "preparation-04/stderr.bin",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archiveName": "preparation-04/trace.jsonl",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/trace.jsonl",
+      "sha256": "0807970466f19d9b4c8e8ea313be644292a55b4dfbba8620dea8a96b6f6e9563"
+    },
+    {
+      "archiveName": "preparation-04/receipt.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-04/receipt.json",
+      "sha256": "e48104a38e7cb8bc8e3504f4fd9f4c5c4ae605bb5062b4fad2ab12e078979c91"
+    },
+    {
+      "archiveName": "preparation-05/config.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/config.json",
+      "sha256": "2f9a530b8f04dd6e19e8f87de4524312fcc3eec89651814026003ed5c2ca64d8"
+    },
+    {
+      "archiveName": "preparation-05/contract.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/contract.json",
+      "sha256": "bdd2b9ca7d7b2d2cfa34d8e28308479bb5c893c72374e3a7bbaa910edbf90ffa"
+    },
+    {
+      "archiveName": "preparation-05/invocation.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/invocation.json",
+      "sha256": "099ee106ec7500654e067178279baac5a25fda27f9a3619b88ff950d90579e95"
+    },
+    {
+      "archiveName": "preparation-05/prompt.txt",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/prompt.txt",
+      "sha256": "ae82b03f17e07488e753009eb990e562458dafa3d0a196adfa2cf7588d6803da"
+    },
+    {
+      "archiveName": "preparation-05/reservation.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/reservation.json",
+      "sha256": "7863234b7c63fbde570b9b19bfa8ae3fad161c83fae98c768d90447d0824446e"
+    },
+    {
+      "archiveName": "preparation-05/response.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/response.json",
+      "sha256": "aa592717e3c44a918bf798ac5d1e2a1c6f9ab564afb5ebb349d81bceec6a605a"
+    },
+    {
+      "archiveName": "preparation-05/runner.py",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/runner.py",
+      "sha256": "8f399281d5d2a637ce17158eb967e590bbb576fda00f2ba088b59716966d90d0"
+    },
+    {
+      "archiveName": "preparation-05/schema.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/schema.json",
+      "sha256": "286435e24cd0ccfde06e4df803efdf8c0ee81ed4db16974c3817c59263bb75fc"
+    },
+    {
+      "archiveName": "preparation-05/stderr.bin",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archiveName": "preparation-05/trace.jsonl",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/trace.jsonl",
+      "sha256": "e725e68863cdbb9629cc880e5a12c16a3d9fba323512ac692b67b68658021760"
+    },
+    {
+      "archiveName": "preparation-05/receipt.json",
+      "sourcePath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-matrix-prelaunch-sol-05/receipt.json",
+      "sha256": "f55adc033f7ed7b87c6298de431b8baa3b262f327f586748d2765f1f1d3ec70a"
+    }
+  ]
+}

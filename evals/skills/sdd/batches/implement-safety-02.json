@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "id": "implement-safety-02",
+  "purpose": "利用者の境界外差分の保持と、取得後の仕様変更に対するdigest非成功・承認待ちを検分する。全17件・baseline・反復2・Skill Gateは未認定",
+  "model": "gpt-6.1-sol",
+  "candidateVersion": "0.3.0",
+  "protocolSha256": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+  "casesSha256": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+  "automaticRetries": 0,
+  "maximumPrimaryCalls": 2,
+  "timeoutSeconds": 240,
+  "slots": [
+    {"caseId": "SI-002", "variant": "skill", "repetition": 1},
+    {"caseId": "SI-008", "variant": "skill", "repetition": 1}
+  ],
+  "stopPolicy": "失敗・中断・証拠破損は保存して停止。前件の別文脈の実検分と意味適合なしに次件を開始しない",
+  "reviewBudget": "一次評価とは別に各件の独立SOL検分を最大1回、計2回。失敗後の同条件自動再試行なし",
+  "usagePolicy": "呼出し数・traceのusage・wallMsを保存。provider費用の欠測を0円扱いしない"
+}

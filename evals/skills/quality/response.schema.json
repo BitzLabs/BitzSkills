@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentJson", "coreObservationIds", "reason"],
+  "properties": {
+    "documentJson": {"type": "string"},
+    "coreObservationIds": {"type": "array", "items": {"type": "string"}},
+    "reason": {"type": "string"}
+  }
+}

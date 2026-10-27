@@ -1,0 +1,56 @@
+{
+  "status": "classification_and_synthetic_fixture_independently_closed",
+  "records": [
+    {
+      "sourceCommit": "345454283bc275cdbb28df8678e2fd8e273a1b36",
+      "reportSha256": "fefe30f04f6fb38f011b3ac1581dd711f05e07c6720a9934915445607a41a773",
+      "inventorySha256": "0842ae2bae73a2960152875e04be086f2385762a6d58367279337cceaa4e5972",
+      "parentRehashedCounts": {
+        "originalHashes": 23,
+        "sourceGitHashes": 14,
+        "evidenceHashes": 13
+      },
+      "sourceOriginalSubstitutions": [
+        {
+          "originalPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/tests/skills/test_sdd_batch.py",
+          "reason": "検分後に履歴ref345からfixture是正ref855へ進んだソース。現bytesの同一性を主張せず、確定Git原bytesを再hashする",
+          "gitRef": "345454283bc275cdbb28df8678e2fd8e273a1b36",
+          "gitPath": "tests/skills/test_sdd_batch.py",
+          "sha256": "0e2986bf7764db08af1a548d4c6bdf475ac160a94cae8ae9138ab62bb2e18e6d"
+        }
+      ],
+      "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-outcome-contract-independent/report.json"
+    },
+    {
+      "sourceCommit": "85528324212137a5a06383cf6b2bf34a66d764ca",
+      "reportSha256": "bb3adb9dda12eaa2186b56f70672d748b094a0dec7acc932032484c270b51d8b",
+      "inventorySha256": "4482c9d64f057e2d310f4d8734afc6c3bc92957d17846011fa13636d6e38fa42",
+      "parentRehashedCounts": {
+        "originalHashes": 14,
+        "sourceGitHashes": 8,
+        "evidenceHashes": 8
+      },
+      "sourceOriginalSubstitutions": [],
+      "independentReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-outcome-fixture-closure-independent/report.json"
+    }
+  ],
+  "independentLatestTests": {
+    "tests": 77,
+    "wallSeconds": 21.891,
+    "exitCode": 0
+  },
+  "earlierIndependentFailedTests": {
+    "tests": 77,
+    "wallSeconds": 21.789,
+    "exitCode": 1,
+    "failures": 2,
+    "errors": 2,
+    "reason": "synthetic plan fixture retained historical protocol hash",
+    "preserved": true
+  },
+  "parentFirstInventoryRecheck": "345 working source test_sdd_batch.py differed after855 correction; stopped first scan and explicitly resolved from345 Git bytes. Paid originals unchanged.",
+  "old07FailureAndConsumptionRetained": true,
+  "newModelCalls": 0,
+  "newMeasurementPrepared": false,
+  "certifiesGate": false
+}

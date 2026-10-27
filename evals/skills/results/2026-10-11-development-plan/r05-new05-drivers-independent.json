@@ -1,0 +1,403 @@
+{
+  "status": "limited_old745_driver_review_parent_original_hashes_verified",
+  "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+  "reportSha256": "086fc05edf1540d03916ecf103cd04bd5bc0e914d73d6784ae33b14b1ea87707",
+  "inventorySha256": "8f3c04c05b83a9e208dba5580e1f0601d8653d20cee3744532b13082abfc6953",
+  "parentRehashedCounts": {
+    "originalHashes": 6,
+    "evidenceHashes": 272,
+    "gitPayload": 16,
+    "driverSnapshots": 3
+  },
+  "report": {
+    "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+    "currentSourceState": {
+      "head": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+      "status": "",
+      "parentMovedRefAfter745Measurements": true
+    },
+    "status": "745_new05_ignored_driver_finite_and_IO_corrections_independently_verified_in_limited_scope",
+    "driverHashes": {
+      "preparation": {
+        "sha256": "8f399281d5d2a637ce17158eb967e590bbb576fda00f2ba088b59716966d90d0",
+        "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+        "snapshot": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new05-drivers-independent/current-snapshot-r05-prelaunch-sol-review-05.py"
+      },
+      "semantic": {
+        "sha256": "b64c91537c225fbe42471b2e95405fc752cc5bd0b32bfcb93cfb5e234457fb7e",
+        "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+        "snapshot": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new05-drivers-independent/current-snapshot-run-r05-new05-semantic.py"
+      },
+      "primary": {
+        "sha256": "855d2e4fd073368d6bd3be426e51029ad395476d1993f42e32f72257593e700e",
+        "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+        "snapshot": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new05-drivers-independent/final-snapshot-run-r05-new05-primary.py"
+      }
+    },
+    "preparationPayloadGitHashes": {
+      "evals/skills/sdd/evaluate.py": "f93af79a4d89cd25a88e6ffada29ee9231d2a9eb9bdd8567aee1da4e5ded4472",
+      "evals/skills/sdd/batch.py": "125a7c6a3c5bc680d44c782425030318f08aa1fb8041ce9d94d2d4b173b91413",
+      "evals/skills/sdd/protocol.json": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-05.json": "de1dd030484e7cdf2b8141ed6e81fe45d920ca641e28213a610419c732c6826b",
+      "evals/skills/sdd/cases.json": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+      "evals/skills/sdd/decision.schema.json": "9876a9c6cbdc8e8806ecb63904430d4ca12d776f746480c40b0e1ff14b528726",
+      "plugins/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "plugins/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "plugins/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "plugins/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "e9d6ea2fdf4f0a5b264e0aebc198b777770e5c4c12c0de067e9eb43c8763ad16",
+      "tests/skills/test_sdd_native_completion.py": "bc4eaf23ff0bc5b7164abfce717c155a483462908317c30b0b97494dd014ed65",
+      "tests/skills/test_sdd_batch.py": "e16648fba6a43342166120b52614f359ab0a032e05307d81c9f352aeeef2f0ac",
+      "evals/skills/sdd/sdd_originals.py": "a33de77393ea6b17f9ce091b7a6a1f217255528a68efea9038c8ffeaa4363feb",
+      "evals/skills/routing/production_ledger.py": "32de84ffb2324bcf3e42db9815521931658fcdaa9b8480e5b16185ca8fd96968",
+      "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca"
+    },
+    "findingsPreservedAndClosed": [
+      {
+        "priority": "P2",
+        "description": "Primary read_raw global ledger module was shadowed by ledger dict; old/new AST proves old AttributeError and new original_io alias succeeds."
+      },
+      {
+        "priority": "P2",
+        "description": "Receipt inventory IO failure escaped before stop record; missing trace original allowed passed. Original fault/missing cases retained; fixed closed10/11 collection records null hash/errors/stopped and failed independent."
+      }
+    ],
+    "originalFaults": {
+      "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+      "originalTailFaults": [
+        {
+          "kind": "preparation",
+          "fault": "source",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "static_prelaunch_review_stopped",
+          "independentFailedWritten": false,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "preparation",
+          "fault": "runtime",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "static_prelaunch_review_stopped",
+          "independentFailedWritten": false,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "preparation",
+          "fault": "artifact",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "static_prelaunch_review_stopped",
+          "independentFailedWritten": false,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "preparation",
+          "fault": "receipt-original-hash",
+          "exception": "RuntimeError: public synthetic receipt-original-hash fault",
+          "receiptWritten": false,
+          "status": null,
+          "independentFailedWritten": false,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "semantic",
+          "fault": "source",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "stopped",
+          "independentFailedWritten": true,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "semantic",
+          "fault": "runtime",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "stopped",
+          "independentFailedWritten": true,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "semantic",
+          "fault": "artifact",
+          "exception": null,
+          "receiptWritten": true,
+          "status": "stopped",
+          "independentFailedWritten": true,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        },
+        {
+          "kind": "semantic",
+          "fault": "receipt-original-hash",
+          "exception": "RuntimeError: public synthetic receipt-original-hash fault",
+          "receiptWritten": false,
+          "status": null,
+          "independentFailedWritten": false,
+          "modelsStarted": 0,
+          "reservationsCreated": 0
+        }
+      ],
+      "primaryModuleDataAliasClosure": [
+        {
+          "subject": "old",
+          "exception": "AttributeError: 'dict' object has no attribute 'read_regular'",
+          "originalReadSucceeded": false,
+          "driverSha256": "c1d25f567c426872131ab7ca52f859a11983d07944ee69c3f9f5f1ff8fc5312b"
+        },
+        {
+          "subject": "new",
+          "exception": null,
+          "originalReadSucceeded": true,
+          "driverSha256": "f20c7939e20f2cc3adacf013cac5ca382a89b853dfed5281290878b8137b5f19"
+        }
+      ],
+      "driverHashes": {
+        "r05-prelaunch-sol-review-05.py": "7b3ba943d9d4fcf7a189c0e81e25ac8a587814dbf97e46c9f836df590a377c84",
+        "run-r05-new05-semantic.py": "423f4482d7206e42e5769ce020b371ea2dc0d0eb99135fa2e009fa9b5f93b4a7"
+      },
+      "modelsStarted": 0,
+      "reservationsCreated": 0,
+      "authFilesRead": 0
+    },
+    "originalMissingCases": [
+      {
+        "kind": "preparation",
+        "fault": "missing-success-original",
+        "exception": null,
+        "receiptWritten": true,
+        "status": "static_sdd_prelaunch_review_passed",
+        "modelsStarted": 0,
+        "reservationsCreated": 0,
+        "independentReceiptStatus": null,
+        "failedReceiptWritten": false
+      },
+      {
+        "kind": "semantic",
+        "fault": "missing-success-original",
+        "exception": null,
+        "receiptWritten": true,
+        "status": "passed",
+        "modelsStarted": 0,
+        "reservationsCreated": 0,
+        "independentReceiptStatus": "passed",
+        "failedReceiptWritten": false
+      }
+    ],
+    "correctedFaultTests": {
+      "modelsStarted": 0,
+      "reservationsConsumed": 0,
+      "exactAstTailTests": [
+        {
+          "kind": "preparation",
+          "fault": "none",
+          "status": "static_sdd_prelaunch_review_passed",
+          "error": null,
+          "artifactReadErrors": {},
+          "independentStatus": null
+        },
+        {
+          "kind": "preparation",
+          "fault": "source",
+          "status": "static_prelaunch_review_stopped",
+          "error": "ValueError: synthetic afterguard failure",
+          "artifactReadErrors": {},
+          "independentStatus": null
+        },
+        {
+          "kind": "preparation",
+          "fault": "runtime",
+          "status": "static_prelaunch_review_stopped",
+          "error": "ValueError: synthetic afterguard failure",
+          "artifactReadErrors": {},
+          "independentStatus": null
+        },
+        {
+          "kind": "preparation",
+          "fault": "target-artifact",
+          "status": "static_prelaunch_review_stopped",
+          "error": "ValueError: synthetic afterguard failure",
+          "artifactReadErrors": {},
+          "independentStatus": null
+        },
+        {
+          "kind": "preparation",
+          "fault": "inventory-read",
+          "status": "static_prelaunch_review_stopped",
+          "error": "original artifact inventory read failed",
+          "artifactReadErrors": {
+            "reservation.json": "RuntimeError: synthetic required artifact read failure"
+          },
+          "independentStatus": null
+        },
+        {
+          "kind": "preparation",
+          "fault": "inventory-missing",
+          "status": "static_prelaunch_review_stopped",
+          "error": "original artifact inventory read failed",
+          "artifactReadErrors": {
+            "trace.jsonl": "FileNotFoundError: [Errno 2] No such file or directory: 'trace.jsonl'"
+          },
+          "independentStatus": null
+        },
+        {
+          "kind": "semantic",
+          "fault": "none",
+          "status": "passed",
+          "error": null,
+          "artifactReadErrors": {},
+          "independentStatus": "passed"
+        },
+        {
+          "kind": "semantic",
+          "fault": "source",
+          "status": "stopped",
+          "error": "ValueError: synthetic afterguard failure",
+          "artifactReadErrors": {},
+          "independentStatus": "failed"
+        },
+        {
+          "kind": "semantic",
+          "fault": "runtime",
+          "status": "stopped",
+          "error": "ValueError: synthetic afterguard failure",
+          "artifactReadErrors": {},
+          "independentStatus": "failed"
+        },
+        {
+          "kind": "semantic",
+          "fault": "target-artifact",
+          "status": "stopped",
+          "error": "OSError: synthetic primary original read failure",
+          "artifactReadErrors": {},
+          "independentStatus": "failed"
+        },
+        {
+          "kind": "semantic",
+          "fault": "inventory-read",
+          "status": "stopped",
+          "error": "original artifact inventory read failed",
+          "artifactReadErrors": {
+            "reservation.json": "RuntimeError: synthetic required artifact read failure"
+          },
+          "independentStatus": "failed"
+        },
+        {
+          "kind": "semantic",
+          "fault": "inventory-missing",
+          "status": "stopped",
+          "error": "original artifact inventory read failed",
+          "artifactReadErrors": {
+            "trace.jsonl": "FileNotFoundError: [Errno 2] No such file or directory: 'trace.jsonl'"
+          },
+          "independentStatus": "failed"
+        }
+      ]
+    },
+    "safeNativeGetter": {
+      "modelsStarted": 0,
+      "reservationsCreated": 0,
+      "actualNativeParserNormalPublicFixturePassed": true,
+      "symlinkResponseRejected": true,
+      "unknownNamesRejectedBeforeIO": true,
+      "driverSha256": "8f399281d5d2a637ce17158eb967e590bbb576fda00f2ba088b59716966d90d0",
+      "scope": "Original safe-view class plus actual native parser; synthetic stdout/response, not model observations"
+    },
+    "primaryPostTests": {
+      "driverSha256": "855d2e4fd073368d6bd3be426e51029ad395476d1993f42e32f72257593e700e",
+      "modelsStarted": 0,
+      "reservationsCreated": 0,
+      "exactAstPostTests": [
+        {
+          "fault": "none",
+          "summaryWritten": true,
+          "nativeExitCode": 0,
+          "wrapperExitCode": 0,
+          "postVerificationErrors": {}
+        },
+        {
+          "fault": "stdout",
+          "summaryWritten": true,
+          "nativeExitCode": 0,
+          "wrapperExitCode": 1,
+          "postVerificationErrors": {
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new05-drivers-independent/primary-post-v2-stdout/stdout": "PermissionError: public synthetic post read failure"
+          }
+        },
+        {
+          "fault": "ledger",
+          "summaryWritten": true,
+          "nativeExitCode": 0,
+          "wrapperExitCode": 1,
+          "postVerificationErrors": {
+            "source-or-ledger": "PermissionError: public synthetic post read failure"
+          }
+        },
+        {
+          "fault": "target",
+          "summaryWritten": true,
+          "nativeExitCode": 0,
+          "wrapperExitCode": 1,
+          "postVerificationErrors": {
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new05-drivers-independent/primary-post-v2-target/public-output/skill/repetition-1/SI-010/run.json": "PermissionError: public synthetic post read failure"
+          }
+        }
+      ]
+    },
+    "full703Original": {
+      "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+      "count": 703,
+      "testSeconds": 76.813,
+      "exitCode": 0,
+      "cleanAfter": true,
+      "independentlyRerun": false,
+      "originalsVerified": true,
+      "originalHashes": {
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-atomic-originals-full/command.json": "faf28bd712287b3d7f19f8e66e691125f0bb61487bfc2253dd7da2e523ad915c",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-atomic-originals-full/stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-atomic-originals-full/stderr": "cefcb3e2b121ba2e066deafbb94854fc948a3385e7c4774184048863844eb983",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-atomic-originals-full/summary.json": "3dc1b2607442b8e02bfe287432d9880a3c9fa4a6ab75ce3faa441c7e7105c16d"
+      }
+    },
+    "finiteLimits": {
+      "preparationSolMaximum": 1,
+      "preparationTimeoutSeconds": 300,
+      "primaryMaximum": 68,
+      "primaryTimeoutSeconds": 240,
+      "semanticMaximum": 68,
+      "semanticMaximumPerPrimary": 1,
+      "semanticTimeoutSeconds": 300,
+      "retry0": true,
+      "sharedSemanticOrdinalReservationNotRefunded": true
+    },
+    "SI010BothCanonicalBranchesPreserved": true,
+    "preparationSol47WasStartReadyBeforeItsActualNewFinding": true,
+    "new05CurrentPreparationStopped": true,
+    "SOL47NewSourceFinding": {
+      "independentlyReproducedHere": false,
+      "description": "Parent reports continuing snapshot failure prevents original failure.json; retained separately for subsequent97 corrective review.",
+      "reportedReceiptSha256": "f55adc033f7ed7b87c6298de431b8baa3b262f327f586748d2765f1f1d3ec70a"
+    },
+    "primaryStartCertified": false,
+    "modelsStartedByIndependent": 0,
+    "reservationsCreatedByIndependent": 0,
+    "sharedLedgerWrites": 0,
+    "authFilesRead": 0,
+    "scope": "Fixed745 source + exact ignored driver snapshots; static source/pins/public AST/native parser probes only. Twelve receipt tails/four primary post cases do not certify all filesystem write failures or model/provider behavior. Subsequent97/source snapshot defect not closed by this report. No SkillGate/Phase/release certification.",
+    "harnessFailuresPreserved": [
+      "primary_post initial assumed literal nativeExitCode, actual source field exitCode carries native return; v2 verifies it and wrapperexit separately",
+      "missing-original raw independentFailedWritten label corrected in separate record; originals retained"
+    ]
+  },
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "new06Independence": "pending_separate_review"
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1.0",
+  "status": "native_preparation_stopped_corrected_execution_awaiting_additional_preparation_approval",
+  "transmissionAuthorization": "user_OK_2026-10-07",
+  "collectionSource": "879101449c93df2545bb6c5dcab07664b6d5cdd2",
+  "previousExecutionSource": "e49304314469a260362f0b10f29c25ea7497f351",
+  "correctedExecutionSource": "4736737b25b8e0b190e3863b508e56589e952f1e",
+  "correctedSourceFileCount": 13,
+  "correctedContractSha256": "17e446eaa6137e2c8d1ebdba938c00915f3009b38c41c597626c43998449cbb3",
+  "headIsCondition": false,
+  "previousNative": {
+    "role": "preparation",
+    "status": "native_stopped",
+    "actualExitCode": 1,
+    "wallMs": 5280,
+    "traceBytes": 0,
+    "stderrBytes": 197,
+    "threadStarted": false,
+    "turnCompleted": false,
+    "outputSaveErrors": [],
+    "postSourceMatched": true,
+    "phaseConditionsMatched": true,
+    "paidUsage": "unknown",
+    "executionReceiptSha256": "54874e9a4e165672680df87b59d3d28ddb83907d1f034f0bb014e7a66df0a96a",
+    "privateArtifactSha256": {
+      "native-result.json": "0f992a1ce8a83eefbe7b9b61c9947a02483740b34bc90d6772d00df8af060f0c",
+      "stderr.log": "8e3330eeb312ddb37b9da73c3ece4a8aa7e2ade4b7bb255573aa487bc89f0f58",
+      "prompt.txt": "6c1ced9a14ea4ca7197413ee3d811815f95732c88b83a364a632b8b142fadb29",
+      "invocation.json": "17478ff5a9f21b0a6b428f815a93bdae9955b88cccec38f60a9a54572a43aa0f",
+      "trace.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "execution-receipt.json": "54874e9a4e165672680df87b59d3d28ddb83907d1f034f0bb014e7a66df0a96a",
+      "model-config.json": "14a7db9642b68b9e6b4e885c84acaea605e0b3e3915f390f1013159c90f7c6c9"
+    }
+  },
+  "diagnosis": {
+    "classification": "readonly_filesystem_during_in_process_app_server_initialization",
+    "rawStderrDecodedOrPublished": false,
+    "networkIsolatedConditions": 6,
+    "paidDiagnosticCalls": 0,
+    "readonlyHomeThreadStarted": false,
+    "tmpOnlyThreadStarted": false,
+    "shadowConfigInstallationTmpThreadStarted": true,
+    "fullCorrectedNamespaceThreadStarted": true,
+    "fullCorrectedNamespaceActualExitCode": -15,
+    "fullCorrectedNamespaceTermination": "TimeoutExpired",
+    "diagnosticCompletionOrSemanticPassClaimed": false,
+    "actualHomeOverwritten": false,
+    "homeEnvironmentVariablesRepurposed": false
+  },
+  "verification": {
+    "afterStopActorTests": {
+      "count": 16,
+      "actualExitCode": 0
+    },
+    "afterStopCollectionTests": {
+      "count": 14,
+      "actualExitCode": 0
+    },
+    "correctedShadowTests": {
+      "count": 9,
+      "actualExitCode": 0
+    },
+    "correctedAllSkillTests": {
+      "count": 285,
+      "actualExitCode": 0
+    },
+    "sourceAndPreviousFailureGuardActualExitCode": 0,
+    "parentArtifactsVerificationActualExitCode": 0,
+    "missingApprovalBlocksBeforeCliOrReservation": {
+      "actualExitCode": 1,
+      "errorType": "FileNotFoundError"
+    },
+    "correctedLedgerExists": false,
+    "correctedPrivateExecutionExists": false,
+    "casesSaved": 0,
+    "evidenceSaved": 0
+  },
+  "localArtifactSha256": {
+    "parent-after-native-stop-actor-unit.log": "cab795bfff61863baceeddcdb3a5290f837fffa44ca38a9c405b2a66f55b575c",
+    "parent-after-native-stop-collection-unit.log": "4ca4bf027da89f72ec2261923fceaedef131fe022d9db84cb272897569aefe66",
+    "parent-native-shadow-final-unit.log": "60fd3d27ee304593bc377f04a2083f9bb4235592048ad2f46d59a4a8dad8db56",
+    "parent-native-shadow-final-all-unit.log": "d266e5e856c1aead12d7e1754a5126f09e27b9764b4d3e8ccd53c98c960c01ab",
+    "parent-native-stop-final-source-guard.json": "00e485dd5a7c251f1f2cd81d70feaa0b8b1921509d3fd2f35849d3d3681e12de"
+  },
+  "diagnosticArtifactSha256": {
+    "readonlyAndMaskedHomeSummary": "fb3420ac2c4f4b138400c0d03be849787a5139c8a0f2dadec020a72f9e1e7296",
+    "selectiveShadowSummary": "ec549e32618cd20926afa026fa433e80b1bbebb75ec4bf85d7002a517b8aafae",
+    "fullNamespaceSummary": "e72d4a0f4201c8f4353ec2f5d336799fda7f95d4d81399a89ef58e55a9781a24",
+    "offlineBootstrapCode": "1f0375ecc3d57ccc4694bb48bfbf4462bacdd98bd50a70f98dde439d8cffa4bd"
+  },
+  "budgetConsumed": {
+    "collectionPreparationSol": 1,
+    "previousNativePreparationReservedAndStopped": 1,
+    "correctedNativePreparation": 0,
+    "creatorSol": 0,
+    "collectionReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticPaidRetries": 0,
+    "delegations": 0
+  },
+  "proposedBudget": {
+    "newPreparation": 1,
+    "creatorRemaining": 1,
+    "reviewerRemaining": 1,
+    "maximumNewInvocations": 3,
+    "maximumTotalNativeInvocationsIncludingStopped": 4,
+    "previousRoleReservationRefunded": false
+  },
+  "certifiesCollection": false,
+  "certifiesModelCompletion": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "certifiesProductCompletion": false,
+  "nextAction": "confirm_one_additional_preparation_invocation_then_execute_fixed_corrected_source"
+}

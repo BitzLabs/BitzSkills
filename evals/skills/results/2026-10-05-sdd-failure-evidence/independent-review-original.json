@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "independent": true,
+  "implementationPrivateHistoryInherited": false,
+  "subjectCommit": "a63dbd2c24bf53537d5c80ebf8e805043573b531",
+  "newUUIDreviewRunId": "769978ec-fbe4-495b-9162-4becedd89e4a",
+  "status": "failed",
+  "directChecks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i python3 -B tests/skills/test_sdd_skill_eval.py",
+      "exitCode": 0,
+      "output": "Ran 31 tests in 18.500s\nOK"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i python3 -B tests/skills/test_sdd_batch.py",
+      "exitCode": 0,
+      "output": "Ran 13 tests in 0.070s\nOK"
+    },
+    {
+      "check": "指定確定refの run_one / preserve_invocation_failure と追加試験の直接検分",
+      "result": "nonzero / timeout / OSError / missing-response の合成試験は通過。既存ディレクトリ拒否および非採点 status を確認。親との差分に旧 SI-010 実測結果の成功変換はない。"
+    },
+    {
+      "check": "追加モデルなしの応答保存失敗反例",
+      "result": "subprocess.run を CompletedProcess(returncode=1) に固定し、write の trace.jsonl に限って OSError(28) を注入。他パスは通常保存。setup / identity / snapshot は合成固定。",
+      "output": "exception: OSError(28, 'Synthetic response-save failure')\n{\"failureJsonExists\": false, \"invocationCount\": 1, \"runJsonExists\": false, \"stderrExists\": false}"
+    }
+  ],
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "evals/skills/sdd/evaluate.py",
+      "line": 538,
+      "title": "応答保存失敗が failure.json 保存処理を迂回する",
+      "reason": "trace.jsonl と stderr.log の保存が後段の try 節より前にあり、書込みが OSError を返すと preserve_invocation_failure が実行されない。timeout / OSError 捕捉節の原応答保存にも同じ構造がある。failure.json 自体への書込みが可能な状況でも identity / argv / cwd / timeout / elapsed / snapshot / artifact hash が失われる。",
+      "reproduction": "run_one の subprocess.run を非zero CompletedProcess に差し替え、write(directory, \"trace.jsonl\", ...) のみ OSError(28) にする。他の write は許可する。出力は failureJsonExists=false となる。"
+    }
+  ],
+  "reason": "応答保存失敗時の証拠保存要件を満たさない再現可能な P2 を検出したため停止。",
+  "limitations": [
+    "追加モデル実測および Codex 起動なし。秘密ファイル読取りおよび tracked / Git 変更なし。",
+    "既存 source SI-010 の read-only 原因解消は主張しない。",
+    "非UTF-8 timeout bytes は decode の errors 指定なしを直接確認したが、最初の P2 検出後の停止指示に従い追加再現しない。",
+    "既存 untracked evals/skills/results/2026-10-05-quality-scope-guard/ があるため clean tree の認定はしていない。"
+  ]
+}

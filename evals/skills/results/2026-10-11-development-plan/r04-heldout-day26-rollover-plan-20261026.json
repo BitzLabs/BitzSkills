@@ -1,0 +1,157 @@
+{
+  "version": "heldout-condition-phase-rollover-plan-1",
+  "recordedDate": "2026-10-26",
+  "status": "phase_protocol_designed_implementation_pending",
+  "historicalExecutionSource": "559713f28635ee013c253316b9e8348dd9d7f293",
+  "calibrationSource": "0965ff293c91a29b2d1c00d2664cbc85e5588a2c",
+  "calibration": {
+    "status": "public_remediation_originals_parent_rehashed",
+    "component": "matrix-calibration-date26",
+    "sourceCommit": "0965ff293c91a29b2d1c00d2664cbc85e5588a2c",
+    "reportSha256": "60962e870dbe1f275a8f8c0cb38488bd1dac92e1be96216111332d276c8848a4",
+    "inventorySha256": "a20ec1463731aee47957ab1cb504e8d1d5f023da51317ef9a9f03682fc5041a3",
+    "savedOriginalsCompared": 53,
+    "directPublicOriginalsCompared": 994,
+    "syntheticSymlinksComparedByReadlink": 0,
+    "gitBlobsCompared": 905,
+    "allHashesAndSizesMatch": true,
+    "models": 0,
+    "reservations": 0,
+    "privateOriginalsRead": 0,
+    "certifiesHeldoutLaunch": false,
+    "certifiesGate": false,
+    "archive": "evidence-r04-matrix-calibration-date26-reviewed-20261026.tar.gz",
+    "archiveSha256": "0741c22779428f710edecc9318089fd7a3e58ed0e4378dc1f0941d6e2d546416"
+  },
+  "parentFormalCalibration": {
+    "calibrationManifestSha256": "10915f7153abaa877a17c42a265e630d949f8d2619df418bc23baa1aaf771e95",
+    "certifiesProviderWireBodies": false,
+    "paidModelCalls": 0,
+    "primaryModelTrajectories": 0,
+    "receiptSha256": "e7fd707be8476c27693edc63b6e6387b3bf7b7f0f88a7234fe09f2d96b7903b1",
+    "requestSha256": "1c355be5041766f3d61e801e45ae7c76185877b475039dee1533093231d5405e",
+    "sourceCommit": "0965ff293c91a29b2d1c00d2664cbc85e5588a2c",
+    "status": "original_local_calibration_matches"
+  },
+  "genesisAnchorSha256": "d5efb3e140185bba4cae2695a166fce5f8397f94269707288be81508fa85ef81",
+  "designSha256": "611c1794bc7faaee28e414a3f4c7c11389a4eb1c8f41a196cd9e5b6c2b4ce652",
+  "completedPrefix": {
+    "existingPrivateFilesWritten": 0,
+    "journalEvents": 14,
+    "journalHeadSha256": "ad971f71bfaf8cef0a53501fe9b07a09e034e5588dc10d144b053dda9c5895d2",
+    "lastCompletedOrdinal": 3,
+    "ledgerContractSha256": "238cd5693ee0e7c6fcba55af94d1d00790d75bd31f2c91283ca643b96f183754",
+    "newModels": 0,
+    "newReservations": 0,
+    "nextUnattemptedOrdinal": 4,
+    "privateBodiesPublished": false,
+    "recordedAt": "2026-10-26T08:30:03.957796+09:00",
+    "sourceCommit": "559713f28635ee013c253316b9e8348dd9d7f293",
+    "status": "day25_completed_prefix_readonly_verified_for_day26_design",
+    "summary": {
+      "accountedSlots": 3,
+      "certifiesSkillGate": false,
+      "correct": 2,
+      "evaluationFailed": 0,
+      "incorrect": 0,
+      "independentLaunchMarked": 2,
+      "independentReserved": 2,
+      "parentVerified": 2,
+      "pending": 1,
+      "primaryLaunchMarked": 3,
+      "primaryReserved": 3,
+      "priorPending": 1,
+      "priorStopPreserved": true,
+      "priorStoppedSlots": 1,
+      "segment": {
+        "certifiesSkillGate": false,
+        "correct": 2,
+        "evaluationFailed": 0,
+        "incorrect": 0,
+        "independentLaunchMarked": 2,
+        "independentReserved": 2,
+        "parentVerified": 2,
+        "pending": 0,
+        "primaryLaunchMarked": 2,
+        "primaryReserved": 2,
+        "status": "in_progress",
+        "terminalSlots": 2,
+        "unattempted": 22
+      },
+      "status": "in_progress",
+      "terminalSlots": 2,
+      "unattempted": 21
+    }
+  },
+  "independentDesignReview": {
+    "independentContext": true,
+    "result": "conditionally_accepted",
+    "evidence": "independent reviewer message and independent readonly14-event verification",
+    "conditions": [
+      "purpose-wide counters recomputed from all journals",
+      "purpose and previous-ledger locks held for terminal-head seal",
+      "pending seal never permits paid execution and exact-proposal management recovery only",
+      "old-reader refusal and unknown-file rejection preserved",
+      "acyclic execution-proposal-review-seal-activation hashes",
+      "historical receipts use historical execution, new launch uses current-day calibration",
+      "terminal or empty phase only; ambiguous and global_stop rejected",
+      "bounded generic phases and new-clock60 with remaining-day admission"
+    ],
+    "approvedReqTechMeaningChangeIdentified": false
+  },
+  "implementation": [
+    {
+      "id": "D01",
+      "work": "typed phase header, proposal, genesis and secure journal reader",
+      "purpose": "Keep exact purpose inputs and all prior consumption",
+      "status": "planned"
+    },
+    {
+      "id": "D02",
+      "work": "bounded phase registry, seal, activation and crash recovery",
+      "purpose": "Switch immutable conditions without refund or old-entry reuse",
+      "status": "planned"
+    },
+    {
+      "id": "D03",
+      "work": "run/operator/score admission and new-clock pacing",
+      "purpose": "Require exact reviewed conditions and fresh60 only at phase boundary",
+      "status": "planned"
+    },
+    {
+      "id": "D04",
+      "work": "regression, independent code review and current-source prelaunch",
+      "purpose": "Verify normal, rejection, crash and historical compatibility paths",
+      "status": "planned"
+    },
+    {
+      "id": "D05",
+      "work": "evaluate ordinal4..24 in batches maximum2",
+      "purpose": "Record all remaining21 outcomes including failures",
+      "status": "pending_implementation_and_prelaunch"
+    },
+    {
+      "id": "D06",
+      "work": "after all116 plan failure measures and total context reduction",
+      "purpose": "Preserve correctness and safety while sending only necessary LLM context",
+      "status": "deferred_until_all_outcomes"
+    }
+  ],
+  "heldoutUnattempted": 21,
+  "priorStoppedSlots": 1,
+  "priorPending": 1,
+  "newTerminalSlots": 2,
+  "newCorrect": 2,
+  "newIncorrect": 0,
+  "newEvaluationFailed": 0,
+  "cumulativePrimaryReserved": 3,
+  "cumulativeIndependentReserved": 2,
+  "additionalDay26Models": 0,
+  "additionalDay26Reservations": 0,
+  "conditionRegistryCreated": false,
+  "oldLedgerSealed": false,
+  "pendingUserAction": null,
+  "paidLaunchEnabled": false,
+  "certifiesSkillGate": false,
+  "certifiesR04Complete": false
+}

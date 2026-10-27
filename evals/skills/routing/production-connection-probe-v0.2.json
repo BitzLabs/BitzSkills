@@ -1,0 +1,53 @@
+{
+  "version": "production-connection-probe-0.2.0",
+  "phase": 4,
+  "scope": "public-provider-connection-diagnostic-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.2.json",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_startup_probe.py",
+    "evals/skills/routing/production-provider-startup-v0.2.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/source_guard.py",
+    "tests/skills/test_production_connection_probe.py"
+  ],
+  "outputRelativeRoot": ".venv/production-provider-connection-02",
+  "maximumInvocations": 1,
+  "maximumLogicalTurns": 1,
+  "timeoutSeconds": 60,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "expectedObservedApiRequests": 1,
+  "diagnosticTracing": {"format": "json", "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"},
+  "previousFailure": {
+    "sourceCommit": "86db7ca7f965366c9d7e2ebab1ccf83faf577286",
+    "outputRelativeRoot": ".venv/production-provider-connection-01",
+    "receiptSha256": "2c411ce443be28a93e4d2e749e8eeeccef09ded3928f39e8d331b43bf4fd385e",
+    "oldConsumedReservations": 1,
+    "oldRemaining": 0,
+    "reason": "reserved builtin openai provider override rejected before initialization"
+  },
+  "startupPreparation": {
+    "sourceCommit": "c5e7d41a51c12feb2235eedb955b2d3861f957f6",
+    "outputRelativeRoot": ".venv/production-provider-startup-02",
+    "receiptSha256": "094dabcad32a275a3618c689ab2adb7b43e0a3f2e65489fe23a09e34bd664fee",
+    "paidModelCalls": 0
+  },
+  "limitations": [
+    "Phase 4期間の本人送信許可内の公開固定入力。旧予約・設定起動失敗を保持し、無課金の初期化成功に基づく設定是正を新有限契約へ固定する。旧枠の返金/再起動や出力だけを変えた枠更新ではない。",
+    "公式CLIのbitz_openai_http別名providerを使用。name OpenAI/Responses/標準OpenAI認証/標準URL解決。宛先、key、bearer tokenを独自指定せず、組込みopenai IDそのものの設定を上書きしない。",
+    "通常/stream retry0、WebSocket/無制限接続retry/system proxy fallback無効。SDK turn1/60秒/caller retry0。API1は観測期待で事前hard capと認証復旧0を保証しない。",
+    "CLIだけが認証を内部利用し既承認read-only bind。認証内容は読取/コピー/出力しない。集計は明示した原記録とrolloutだけでhome/cacheを除外する。",
+    "原取得のcapturedは診断passではない。原入力/RPC/API/終端の照合と独立検分は別。一次/行動/実地/Gate/Phaseは未認定。"
+  ]
+}

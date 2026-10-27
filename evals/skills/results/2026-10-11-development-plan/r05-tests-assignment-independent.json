@@ -1,0 +1,118 @@
+{
+  "status": "limited_source131b_independent_review_parent_rehashed",
+  "sourceCommit": "131b857f83633b27addc64bb40eb9dc19775be7a",
+  "reportSha256": "b418e7a440301e42136c6e42a830cd1c8d43041d84b0b2a21d6298634516a2ca",
+  "inventorySha256": "6d7f2761091766c2f529f9c3b4ec62a244b5ed75984693e7f7fc141034ad4303",
+  "parentRehashedCounts": {
+    "sourceGitSha256": 9,
+    "originalSha256": 21,
+    "evidenceSha256": 22
+  },
+  "report": {
+    "sourceCommit": "131b857f83633b27addc64bb40eb9dc19775be7a",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "new07_tests_assignment_and_old_stop_component_verified",
+    "launchDecision": "コード/草案形式/旧停止/有限manifestの検分範囲で新たな阻害なし。日付13校正・runtime/最終source pins・新07 driver・準備SOLの別検分前なので実起動は未認定。",
+    "blockingFindingsInComponent": [],
+    "independentTests": {
+      "count": 5,
+      "testSeconds": 1.823,
+      "exitCode": 0,
+      "stderrSha256": "ad445dbf1a339272ea0779d605fd9df9b26eb6b66927a40b6ae19dd0478b7d42"
+    },
+    "actualBatchPlan": {
+      "status": "actual_batch_plan_passed_without_model_or_ledger",
+      "seconds": 9.694285921985283,
+      "originalSha256": "52bc308fb59941e6a15e74e65a24245b0a2bcc7cabe62e5ba9bacab403eebddb",
+      "modelVersionLabelUsed": "unversioned-alias-observed-2026-10-13",
+      "newOutputAndLedgerCreated": false
+    },
+    "realCoreRegression": "path/covers/command object草案→REQ passed/TASK境界failed/全4検査passed。不正文字列→REQ起点拒否/全4failed。合成モデル通知だけを使い実Coreを実行。",
+    "oldConditionsBeforeDoctorRefusals": [
+      {
+        "condition": "01",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "02",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "03",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "04",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "05",
+        "error": "独立準備検分で停止した旧条件は起動しません"
+      },
+      {
+        "condition": "06",
+        "error": "行動評価で停止した旧条件は起動しません"
+      }
+    ],
+    "old06Consumed": {
+      "preparation": 1,
+      "primary": 2,
+      "semantic": 1,
+      "verified": 1,
+      "permanentStopHash": "cf5610308348c7669deefb02ec28a966bfc677e37af0061a6adbfdca5828cfa8"
+    },
+    "old01To05PreparationConsumed": 5,
+    "oldOriginalFailurePreserved": true,
+    "finiteNew07": {
+      "primary": 68,
+      "semantic": 68,
+      "preparation": 1,
+      "maximumSemanticPerPrimary": 1,
+      "timeoutSeconds": 240,
+      "retry": 0,
+      "firstSlot": "SP-001 skill rep1",
+      "secondSlot": "SI-010 skill rep1",
+      "same68SlotSetAsOld06": true
+    },
+    "documentationNote": "new07 limitations末尾に旧コピー名「新06」が残る。実id/台帳名/slotsは07。親が後続metadata refで新07へ補正予定、現ref検分では記録を保持。",
+    "calibrationBoundary": {
+      "sourceCommit": "131b857f83633b27addc64bb40eb9dc19775be7a",
+      "jstDate": "2026-10-13",
+      "modelsStarted": 0,
+      "reservationWrites": 0,
+      "status": "normal_prepare_rejected",
+      "errorType": "ValueError",
+      "message": "calibrated context date differs before launch"
+    },
+    "parentFullOriginalReadVerified": {
+      "count": 708,
+      "testSeconds": 74.688,
+      "exitCode": 0,
+      "independentlyRerun": false,
+      "stderrSha256": "ca650eaedc25c572833a4ca2371d047c2a936029f2d59b01de257ee6647d555e"
+    },
+    "oldInitialFiveTestCleanupFailurePreserved": true,
+    "coreFixturesApprovedSpecAndCaseExpectationsUnchanged": true,
+    "modelsStartedByIndependent": 0,
+    "newSharedReservations": 0,
+    "sharedLedgerWrites": 0,
+    "scopeLimits": [
+      "source131bの接続・無課金検分限定。後続refのruntime/date13校正/driver/準備SOLへ結果を移さない。",
+      "新07実provider行動・行列全体・Skill Gate・Phase・releaseは未認定。"
+    ],
+    "sourceGitSha256": {
+      "evals/skills/sdd/README.md": "dba04da8f342a97011ba2b7263d9773be098aa1f3780a64bd64800f99cea345c",
+      "evals/skills/sdd/batch.py": "721a66a80c3704be44f2a5a8764ec0a7311f5d75f50eda8c755e3ffb143ae5dd",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-06.json": "679f282f3dc74521c24b68830ad3b0e85b677acd9032b9b6e0a4f47a9c057fd9",
+      "evals/skills/sdd/batches/plan-implement-matrix-20261012-07.json": "c0dce2990d559162f6750c5676bfa863030768b042295d5755037fbf94523e0e",
+      "plugins/bitz-sdd/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "plugins/bitz-sdd/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "plugins/bitz-sdd/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c",
+      "tests/skills/test_sdd_batch.py": "0e2986bf7764db08af1a548d4c6bdf475ac160a94cae8ae9138ab62bb2e18e6d",
+      "tests/skills/test_sdd_skill_eval.py": "5843a8cd821f21ad1a517971ddc294a183679faa06cb725c2a08f54df188b738"
+    }
+  },
+  "final915faeReview": "pending",
+  "certifiesSkillGate": false
+}

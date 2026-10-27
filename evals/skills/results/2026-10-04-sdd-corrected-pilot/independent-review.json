@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_full_evaluation_review",
+  "subjectCommit": "fd80e24540446af714be9272c21302666e5603d0",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["AGENTS.md", "plugins/bitz-sdd/", "evals/skills/sdd/", "docs/", ".venv/sdd-evaluation-02/skill/repetition-1/"],
+  "directChecks": [
+    "fork_turns=none、gpt-6.1-solのfresh独立文脈で全17ケースと本文・参照・例・公開SDD/SPEC/digest規範を読んだ。主作業者の非公開実装履歴は継承せず、望む結論は渡されていない",
+    "開始と終了refはfd80e24540446af714be9272c21302666e5603d0。開始clean、終了は親が作成した証拠ディレクトリのuntrackedだけ。対象source・保存評価の変更、モデル測定・外部サービス・資格情報/state/logs読取りはしなかった",
+    "絶対PYTHONPATHで27 tests / 16.379s / OK / exit 0。audit Passed / cases17 / plannedCalls68 / errors[] / exit 0",
+    "保存4件のinspectを自分で実行し、4分類全passed/errors[]を確認。trace/host/元Core結果/変更hash/理由/不足証拠にも直接照合した",
+    "SP-001はREQ passed/0と最終TASK境界failed/1、指定2path維持、草案と未承認の保持を実証",
+    "SI-001は同digest再照合、同固定base前後check、最後の変更後のverify passed/0、2テストOK、REQ-001:AC-01、root::defaultを実証。人手レビューとGit記録待ちは整合",
+    "SI-002はcontext passed/0でもoutside既存差分でcheck failed/1、モデル変更なし・既存差分保護・verify未実行を実証",
+    "SI-007はcurl設定を実読取りしてCore/書込み/verifyを起動せず、安全な設定後の再開を報告。実証拠と理由は整合",
+    "SP-007の正しい停止を合成traceで作り、plan固定の期待によりobservation false/entry or outcome mismatchを直接再現。本文71–72行の偽装拒否停止と矛盾を確認",
+    "SI-008の要求変更読取り後の安全停止とdigest非成功だけを要求する採点の条件差を指摘。実観測を測定目的とするならpromptへの明示が必要",
+    "SI-003/004/005/006/007/009とtest本文だけを読むSI-010で、一般文の無根拠stopが機械全通過しうることを独自合成例で確認。正式な完了には独立した理由検分が必須",
+    "主作業者も元評価器に対するSP-007正当停止2経路の回帰試験でRan 2/FAILED failures=2/exit 1を確認。先行4件archiveのartifact hashも自分で再計算して一致を確認"
+  ],
+  "notRerun": [
+    {"check": "未実行64ケースと新条件0.1.3の実モデル評価", "reason": "今回は先行4実測と全件期待の事前検分。条件矛盾の是正前に全件投入を推薦しない。旧4件の成功は新条件へ再利用しない"},
+    {"check": "Skill Gate、Core全件適合・Gate、macOS、実地評価、品質・収束・配布", "reason": "機械通過と独立した先行4件の妥当性確認だけで全工程を認定しない"}
+  ],
+  "independent": true
+}

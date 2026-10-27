@@ -1,0 +1,177 @@
+{
+  "schemaVersion": "1.0",
+  "sourceCommit": "9c576c508219a757d496f25319b8a1d56e50c8b3",
+  "originalSourceCommit": "997299b34dfe6be537a74248a016e146baac674c",
+  "failedCorrectionSourceCommit": "d659d1af9d58926952e8e2c2fcf38fb137d643b8",
+  "archiveSha256": "92551b18c1736a6b27a12d1467eeadb60e7a01ea85fbc358f5a8d897a29e5705",
+  "files": {
+    "first-review/scope.json": {
+      "sha256": "2bf4a1594a4887a8109bb65c6b1bf197dcafa6d1d4169c33509625e7b0514157",
+      "bytes": 1535
+    },
+    "first-review/independent-tests.txt": {
+      "sha256": "652bf586594f16299f532c2e41b7350b6d60811ffb8d114ff22ea428c35de450",
+      "bytes": 451
+    },
+    "first-review/existing-eval-tests.txt": {
+      "sha256": "6991bfa4076b4e68c6d448690ef0a39dab3b1eb1c20b6427038310f4225c9d43",
+      "bytes": 132
+    },
+    "first-review/batch-tests.txt": {
+      "sha256": "152cf428edf5a9fd3485c812de72f671a1c070f0c945c2de309838946a7ba04c",
+      "bytes": 112
+    },
+    "first-review/review.json": {
+      "sha256": "6b90eefab87ca9fa0719e5fa7946ef8dad4fcc735b4c8a1cc7e30fef419656fc",
+      "bytes": 3863
+    },
+    "first-review/all-skills.txt": {
+      "sha256": "4bb3f54ce4b1afcf6d8e123625fd2cf3891c8de5b3bdd1b32dab1e270e14d4b8",
+      "bytes": 3929
+    },
+    "first-review/five-tests.txt": {
+      "sha256": "afdd59700fd7f0d2acf469c2936b6162a963337e83f77b3276a2fbfbeaeacece",
+      "bytes": 103
+    },
+    "final-review/test_sdd_interruption.py.txt": {
+      "sha256": "0a0a9d5a2fd49b6ab1246a008ecb46a7198815cd2951a3a43bacb5028958177f",
+      "bytes": 105
+    },
+    "final-review/parent-recheck-test_sdd_batch.py.txt": {
+      "sha256": "378c0d92b40e8d5b21f9299aced189b5ff72d097664e19752cdff5df679e9e2b",
+      "bytes": 112
+    },
+    "final-review/parent-audit.json": {
+      "sha256": "9895a57f45e5e146f6af70c787391cc9b0a3fa8bda147fb1a24676480aac3dac",
+      "bytes": 1457
+    },
+    "final-review/scope.json": {
+      "sha256": "4ef6c07821068df31b07c798ea2048eeddfae824af555bf667e7931e03da4c58",
+      "bytes": 1702
+    },
+    "final-review/independent-tests.txt": {
+      "sha256": "e02df4e2436b2e663963f01cfdf5cc6bd923928c0f13be8df60dc31f1b65b452",
+      "bytes": 1624
+    },
+    "final-review/parent-recheck-test_sdd_interruption.py.txt": {
+      "sha256": "1c36c2fd4d1e120383200182e90a2ba200aeebddee6f5fb6cc19884d6e7c740d",
+      "bytes": 105
+    },
+    "final-review/test_sdd_batch.py.txt": {
+      "sha256": "6b80f1f7116fee7db8b792cc8801e6602ae419af1c2d8fa423134d3232861b75",
+      "bytes": 112
+    },
+    "final-review/parent-recheck-test_sdd_skill_eval.py.txt": {
+      "sha256": "6e063385098b46000ddb4c67da15dd6adecb1f672a47d95b80eef856fb42d444",
+      "bytes": 132
+    },
+    "final-review/review.json": {
+      "sha256": "31d27e853fa825ef7f3bc130153718e837b26dc19382e9d143542ae884800f97",
+      "bytes": 4348
+    },
+    "final-review/test_sdd_skill_eval.py.txt": {
+      "sha256": "2664668701ace18d7e85dc1086a3901fe89f5e55763ee08adab4a4f4f87656f3",
+      "bytes": 132
+    },
+    "regressions/original-three-tests.txt": {
+      "sha256": "76358a8013ea4ea1eb994025f4b1495f5281847cfe48d90cdeb4168fcccec250",
+      "bytes": 5213
+    },
+    "regressions/original-four-tests.txt": {
+      "sha256": "8d736b4c5fefddd61c448f5f4cbdd6e39e1ea08e70a0eb5aeab1f44fd31faa13",
+      "bytes": 6986
+    },
+    "regressions/original-three-test-harness.py": {
+      "sha256": "278f4e8c61f37e98fa56a6549b82f1e94e3aad69aaa68d0d814ace1641cc0801",
+      "bytes": 4012
+    },
+    "regressions/initial-newline-test-expectation-failure.txt": {
+      "sha256": "c325ed6d0da10700cd9da4ac179f71a5e229d4082eaf21e1b83e67119b54813e",
+      "bytes": 818
+    },
+    "regressions/original-save-window-seven-tests.txt": {
+      "sha256": "a2d92b6609d3e09aaf55e58459e495c515c8127e5397e95c4b038137d6b90cf2",
+      "bytes": 3678
+    },
+    "parent-audit.json": {
+      "sha256": "9895a57f45e5e146f6af70c787391cc9b0a3fa8bda147fb1a24676480aac3dac",
+      "bytes": 1457
+    },
+    "source/evals/skills/sdd/evaluate.py": {
+      "sha256": "e278284b77653549169417a362940b17c334fd0a4b28483050e2b3d9b680450e",
+      "bytes": 46952
+    },
+    "source/evals/skills/sdd/README.md": {
+      "sha256": "b80b169042546e2dcc50ba48f14f445ad0069a05006563a5a8c045335b8799fc",
+      "bytes": 11851
+    },
+    "source/tests/skills/test_sdd_interruption.py": {
+      "sha256": "5b7863076db06a32fc4226d86cd532cb820c32a0bbfe7dbac1c37f1b14e4cfbb",
+      "bytes": 7853
+    },
+    "source/tests/skills/test_sdd_skill_eval.py": {
+      "sha256": "096d2fc233d223757edd7ca6575ef47a8780c2ba308308cddf526414e9c028f3",
+      "bytes": 31505
+    },
+    "first-correction-source/evals/skills/sdd/evaluate.py": {
+      "sha256": "8e03db7a498f97ef40730515078ebd9a468812285b9618e1d873cdd5a1e24d65",
+      "bytes": 46895
+    },
+    "first-correction-source/evals/skills/sdd/README.md": {
+      "sha256": "623aff3314f3902b1b23c90bc5d44a2cd7d2434a4cc16b51b7800353363355f8",
+      "bytes": 11611
+    },
+    "first-correction-source/tests/skills/test_sdd_interruption.py": {
+      "sha256": "0bd9d55ea46390b56787cb53f30dd8ccb320bed24cd10d241540ed0fd14642dd",
+      "bytes": 5921
+    },
+    "first-correction-source/tests/skills/test_sdd_skill_eval.py": {
+      "sha256": "096d2fc233d223757edd7ca6575ef47a8780c2ba308308cddf526414e9c028f3",
+      "bytes": 31505
+    },
+    "original-source/evals/skills/sdd/evaluate.py": {
+      "sha256": "1d6363fc7bd41184b05e44f6f20286e4d13fee6d5b7f001c46b209aaae57c094",
+      "bytes": 46115
+    },
+    "original-source/evals/skills/sdd/README.md": {
+      "sha256": "11d41506c2a2c5f6ab2e471207cc0ca6773561b510158dc437b158967d83be85",
+      "bytes": 10913
+    },
+    "original-source/tests/skills/test_sdd_skill_eval.py": {
+      "sha256": "bad98593028c9f7e19e337c59ce3b7b8261effa4f46f26fe0a6a783d5d169053",
+      "bytes": 31454
+    },
+    "independent-budget.json": {
+      "sha256": "5f2ed5cd4917fccc5ca6e58776e89309fdb2a03d92a3706e59d04ff815485f47",
+      "bytes": 926
+    }
+  },
+  "sourceSnapshotSha256": {
+    "source/evals/skills/sdd/evaluate.py": "e278284b77653549169417a362940b17c334fd0a4b28483050e2b3d9b680450e",
+    "source/evals/skills/sdd/README.md": "b80b169042546e2dcc50ba48f14f445ad0069a05006563a5a8c045335b8799fc",
+    "source/tests/skills/test_sdd_interruption.py": "5b7863076db06a32fc4226d86cd532cb820c32a0bbfe7dbac1c37f1b14e4cfbb",
+    "source/tests/skills/test_sdd_skill_eval.py": "096d2fc233d223757edd7ca6575ef47a8780c2ba308308cddf526414e9c028f3",
+    "first-correction-source/evals/skills/sdd/evaluate.py": "8e03db7a498f97ef40730515078ebd9a468812285b9618e1d873cdd5a1e24d65",
+    "first-correction-source/evals/skills/sdd/README.md": "623aff3314f3902b1b23c90bc5d44a2cd7d2434a4cc16b51b7800353363355f8",
+    "first-correction-source/tests/skills/test_sdd_interruption.py": "0bd9d55ea46390b56787cb53f30dd8ccb320bed24cd10d241540ed0fd14642dd",
+    "first-correction-source/tests/skills/test_sdd_skill_eval.py": "096d2fc233d223757edd7ca6575ef47a8780c2ba308308cddf526414e9c028f3",
+    "original-source/evals/skills/sdd/evaluate.py": "1d6363fc7bd41184b05e44f6f20286e4d13fee6d5b7f001c46b209aaae57c094",
+    "original-source/evals/skills/sdd/README.md": "11d41506c2a2c5f6ab2e471207cc0ca6773561b510158dc437b158967d83be85",
+    "original-source/tests/skills/test_sdd_skill_eval.py": "bad98593028c9f7e19e337c59ce3b7b8261effa4f46f26fe0a6a783d5d169053"
+  },
+  "sourceSnapshotVerification": "11 file bytes compared with git show at 997299b / d659d1a / 9c576c5",
+  "model": "gpt-6.1-sol",
+  "newPrimaryModelTrajectories": 0,
+  "independentReviewScopes": 2,
+  "maximumCallsPerScope": 1,
+  "automaticRetries": 0,
+  "targetedParentTests": 52,
+  "targetedIndependentTests": 52,
+  "fullSuiteTests": 194,
+  "fullSuiteStatus": "approval_required",
+  "outsideTestRoot": "/tmp/bitzskills-tests-20261006",
+  "outsideTestRootWritten": false,
+  "independentProviderUsage": null,
+  "estimatedCostUsd": null,
+  "certifiesSkillGate": false
+}

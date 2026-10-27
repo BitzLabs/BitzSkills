@@ -1,0 +1,37 @@
+{
+  "status": "new05_preparation_stopped_original_verified",
+  "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+  "receiptSha256": "f55adc033f7ed7b87c6298de431b8baa3b262f327f586748d2765f1f1d3ec70a",
+  "preparationIndependentSolConsumed": 1,
+  "primaryConsumed": 0,
+  "automaticRetries": 0,
+  "findings": [
+    {
+      "line": 594,
+      "message": "P2: 失敗保存処理がsnapshotを無保護で再実行するため、後処理のsnapshot失敗ではfailure.jsonが保存されません。例えばworkspace内のファイルが読取り不能になると、run_oneの678行でPermissionErrorが発生し、例外処理から呼ぶ594行でも同じ失敗が起きます。台帳はinterruptedになりますが、要求された原失敗・実条件の記録が欠落します。",
+      "path": "evals/skills/sdd/evaluate.py",
+      "priority": "P2",
+      "reproduction": "未実行の静的再現手順: 非rootのfresh合成環境で、subprocess.runが正常終了した直後、678行のsnapshot前にworkspace/src/input.pyをchmod 000にする。678行と594行の読取りがともにPermissionErrorとなり、611行に到達せずfailure.jsonが作成されない。",
+      "suggestion": "失敗保存時のsnapshotとartifact取得を個別に保護し、取得不能の項目と例外を記録して保存を継続する。呼出し元の原失敗を保持し、差分取得の失敗で置き換えない。"
+    }
+  ],
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 63463,
+    "output_tokens": 1154,
+    "reasoning_output_tokens": 813
+  },
+  "elapsedSeconds": 54.16501656593755,
+  "artifactReadErrors": {},
+  "originalReproduction": {
+    "sourceCommit": "745a03c1c6d6521b31350d017097c995ef6ef26c",
+    "modelsStarted": 0,
+    "syntheticNativeBoundaries": 1,
+    "errorAtOriginalFailureRead": "FileNotFoundError",
+    "failureJsonSaved": false,
+    "originalStdoutSaved": true,
+    "originalStderrSaved": true
+  },
+  "certifiesSkillGate": false
+}

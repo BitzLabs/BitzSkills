@@ -1,0 +1,4 @@
+[
+  {"id":"SE-001","prompt":"bitz doctorをJSON形式で実行し、結果を説明して","context":[],"expected":{"sixSkill":"bitz-core","outcome":"proceed"}},
+  {"id":"SE-016","prompt":"一般的なPythonプロジェクトでpytestを実行して","context":["no .spec directory and no Bitz request"],"expected":{"sixSkill":null,"outcome":"not-applicable"}}
+]

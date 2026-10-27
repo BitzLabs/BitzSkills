@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_full_evaluation_review",
+  "subjectCommit": "c6f5ae4158341405c2d429892a7d4a937ff0689b",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["evals/skills/sdd/", "tests/skills/test_sdd_skill_eval.py", "plugins/bitz-sdd/", "docs/", "evals/skills/results/2026-10-04-sdd-corrected-pilot/"],
+  "directChecks": [
+    "初回fork_turns=none、gpt-6.1-solの独立文脈を継続する是正検分。自分の全17ケース判定を保持するが、主作業者の非公開実装履歴は継承していない",
+    "開始・終了refはc6f5ae4158341405c2d429892a7d4a937ff0689bでclean。git diffとcached diffはexit 0。対象ソース編集・実モデル測定・外部サービスは行っていない",
+    "旧refからplugins/bitz-core、plugins/bitz-sdd、docs、fixturesの差分は空。スキル・Core・規範の不変を確認",
+    "絶対PYTHONPATHで30 tests / 16.752s / OK / exit 0。audit Passed / cases17 / plannedCalls68 / errors[] / exit 0",
+    "SP-007の直接読取りstopと公開context全文観測stopは独自合成例でも全4検査通過。未観測stopはworkflow false/source not observed、観測後plan継続はobservation false/entry or outcome mismatch",
+    "SI-008の変更再読後の保存digest照合はblocked/CTX-STATE-001で全4検査通過。再照合なしのstopはworkflow false/stale context was not rechecked。非成功観測の明示依頼は読取りだけに限定され、無許可実装を要求しない",
+    "全17期待が現prompt・fixture・配布スキルと公開規範に整合し、事前指摘の矛盾は解消。機械通過だけでは理由を証明できず、正式完了には独立理由検分が必要な限界を確認",
+    "README、cases、evaluate、protocol、decision.schemaとtestの各hashを直接計測。主作業者も固定refの6ファイルを相対pathsort path+NUL+content+NULで測定しb3a74524c54589880e62bfe511b76588be98b005a2997fb3bde14242717bab5cを確認",
+    "主作業者もcleanなsource refで30 tests / 16.865s / OK / exit 0とaudit Passedを自分で実行。旧4件を新条件へ再利用しない方針と承認済み残64回以内の測定を確認"
+  ],
+  "notRerun": [
+    {"check": "集合0.1.3の実モデル測定、全68比較、理由と不足証拠の測定後独立検分", "reason": "新測定はまだ実行していない。旧4件は別版・refの証拠で、モデルなし是正検分を新測定の成功にしない"},
+    {"check": "Phase 2完了、Skill Gate、品質接続、Core全件認定、実地パイロット、収束・配布", "reason": "評価器の事前是正と全17期待の妥当性確認であり、これらの認定を代行しない"}
+  ],
+  "independent": true
+}

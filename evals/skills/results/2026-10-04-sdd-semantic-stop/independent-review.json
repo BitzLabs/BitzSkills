@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_measured_reason_review",
+  "subjectCommit": "18a2bf25652de9334c7ca32a509ca8bf21bbcac1",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [".venv/sdd-evaluation-03/skill/repetition-1", ".venv/sdd-evaluation-03/skill/repetition-2", "evals/skills/sdd/", "plugins/bitz-sdd/", "plugins/bitz-core/", "docs/"],
+  "directChecks": [
+    "各反復の17ケースの実理由、操作、元Core結果と最終snapshotを直接照合。機械は34件通過、理由は各16通過・SP-003不適合",
+    "各17 identityと85 artifact hash一致。隔離複写で反復1 TOTAL 17 CORE 28 ERRORS 0、反復2 TOTAL 17 CORE 26 ERRORS 0、各exit 0",
+    "30 tests in 16.773s / OK / exit 0。反復2は同一ソースのため試験を重複実行していない",
+    "主作業者もSP-003の元理由とtest_emptyのlen比較、test_nonemptyの[]比較を直接照合して型assert不存在を確認",
+    "開始・終了は対象refでclean、元モデルworkspace・sourceは変更していない。独立報告原本は反復別ファイルに保存"
+  ],
+  "notRerun": [
+    {"check": "baselineと全68比較", "reason": "理由不適合で停止し、新バッチを投入しない"},
+    {"check": "Skill Gate、Phase 2完了、品質接続、収束、配布、Gate A/B", "reason": "今回の測定と独立検分の範囲外。機械score Passedを認定へ拡張しない"}
+  ],
+  "independent": true
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "quality-review",
+  "advisory": true,
+  "decision": "unknown",
+  "subjectCommit": null,
+  "riskBand": "Q1",
+  "riskAssessment": {"minimumBand": null, "rationale": "Q1の合成例を想定した未実証入力。対象の一次資料がなく、最低帯を観測から確定していない"},
+  "qualityPlanPresent": false,
+  "independence": {
+    "independent": false,
+    "implementationRunId": "example-implementation",
+    "reviewRunId": "example-review",
+    "freshContext": false,
+    "implementationPrivateHistoryInherited": false,
+    "leadingConclusionProvided": false,
+    "directChecks": []
+  },
+  "requiredEvidenceIds": ["regression", "diff-review"],
+  "collectedEvidence": [],
+  "missingEvidenceIds": ["regression", "diff-review"],
+  "coreResults": [],
+  "findings": [],
+  "conditions": [],
+  "notRerun": [{"check": "対象試験と差分", "reason": "未実証の合成例。対象ref・実コマンド・一次結果・独立文脈が未取得", "evidenceIds": ["regression", "diff-review"], "evidenceAvailable": false}],
+  "humanDecisionPending": true
+}

@@ -1,0 +1,131 @@
+{
+  "version": "0.1.0",
+  "phase": 4,
+  "date": "2026-10-10",
+  "scope": "fixed-two-exec-parent-diagnostic-independently-reviewed",
+  "sourceCommit": "1d72e209691a06c81c3e53cc82468165f7fe2f81",
+  "verification": {
+    "sourceCommit": "1d72e209691a06c81c3e53cc82468165f7fe2f81",
+    "outputRelativeRoot": ".venv/production-sdk-sequential-parent-verification-01",
+    "summarySha256": "30ddd7e47df49cab8fa974c1976879db2d75a66496514d0279952b1eaaa550a0",
+    "tests": {
+      "count": 501,
+      "seconds": 62.274,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "032638639c1152c2560d9aa385f75fb44c3beb32ff75af419b0ee8cb44024d37"
+    }
+  },
+  "capture": {
+    "probeSourceCommit": "27c399431ab09737927914e1b6942775bd229f43",
+    "receiptSha256": "b390a1791cdf06fdce9759f4d56b90cab66e2ce28022f902fd8dff347befb77b",
+    "artifactAudit": {
+      "status": "fixed_sequential_capture_original_bytes_rechecked",
+      "sourceCommit": "27c399431ab09737927914e1b6942775bd229f43",
+      "receiptSha256": "b390a1791cdf06fdce9759f4d56b90cab66e2ce28022f902fd8dff347befb77b",
+      "localHttpRequests": 3,
+      "hostCalls": 2,
+      "snapshotResources": 71,
+      "rawItems": 8,
+      "rawCompleted": 3,
+      "traceEventCount": 24,
+      "observedCellIds": [
+        "1",
+        "2"
+      ],
+      "stages": [
+        "listed",
+        "read"
+      ],
+      "rpcSdkPayloadsMatch": true,
+      "providerHostBodiesMatch": true,
+      "completeTargetTelemetryPreserved": true,
+      "legacyParentAuditStatus": "stopped_unexpected_telemetry_call",
+      "certifiesMultipleCellCorrelation": false,
+      "certifiesAllNativeLifecycle": false,
+      "certifiesNativeProvider": false,
+      "certifiesSkillGate": false,
+      "eligibleForMeasurement": false
+    },
+    "parentLinks": {
+      "status": "scripted_sequential_parent_cells_child_ids_matched",
+      "scope": "two-fixed-sequential-exec-two-cells-two-mcp-calls",
+      "parentCallId": "probe-call",
+      "cellId": "1",
+      "nativeChildIds": [
+        "exec-8ca48034-2964-4cb7-80a9-0c5a3ab1fe5b",
+        "exec-9572041f-adf4-4746-92fa-2c8cc92ef6f8"
+      ],
+      "traceEventCount": 24,
+      "traceValueSha256": "02d32fbfd3029e7324c8c978892a7651130dfb00cd93950cc7b191d979d4937e",
+      "telemetryTruncatedPreviewCallIds": [
+        "exec-8ca48034-2964-4cb7-80a9-0c5a3ab1fe5b",
+        "probe-call",
+        "exec-9572041f-adf4-4746-92fa-2c8cc92ef6f8",
+        "probe-read"
+      ],
+      "certifiesTelemetryOutputBodies": false,
+      "certifiesMultipleOrYieldedCells": false,
+      "eligibleForMeasurement": false,
+      "parentCallIds": [
+        "probe-call",
+        "probe-read"
+      ],
+      "cellIds": [
+        "1",
+        "2"
+      ],
+      "certifiesProviderWireBodies": false,
+      "certifiesArbitraryMultipleOrYieldedCells": false
+    },
+    "certifiesNativeProvider": false,
+    "certifiesSkillGate": false,
+    "eligibleForMeasurement": false
+  },
+  "independentReview": {
+    "sourceCommit": "1d72e209691a06c81c3e53cc82468165f7fe2f81",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.22.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-22",
+    "receiptSha256": "f3ab4a6301b554c6c92612fa76e040ba5c5dbdc379da7d6b23216cbbe94439a2",
+    "responseSha256": "19fddee8d9bdb2965bb3fb3390dd7fc5bf8c8e76f8c124b944275daa80a0f72c",
+    "status": "static_review_passed",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 63602,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1302,
+      "reasoning_output_tokens": 1241
+    }
+  },
+  "reviewFindingCount": 0,
+  "publicPayloadBytes": 202879,
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "paidModelCalls": 0,
+  "independentSolInvocations": 1,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "phaseComplete": false,
+  "eligibleForMeasurement": false
+}

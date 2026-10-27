@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceCommit", "scope", "verdict", "findings"],
+  "properties": {
+    "sourceCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "scope": {"type": "string", "enum": ["public-sdk-trace-component-static-review-only"]},
+    "verdict": {"type": "string", "enum": ["pass", "findings"]},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["priority", "path", "line", "message", "reproduction", "suggestion"],
+        "properties": {
+          "priority": {"type": "string", "enum": ["P1", "P2", "P3"]},
+          "path": {"type": "string"},
+          "line": {"type": "integer", "minimum": 1},
+          "message": {"type": "string"},
+          "reproduction": {"type": "string"},
+          "suggestion": {"type": "string"}
+        }
+      }
+    }
+  }
+}

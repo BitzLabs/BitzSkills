@@ -1,0 +1,332 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+  "primaryAttempts": 8,
+  "completedPrimaryRuns": 8,
+  "independentPassed": 8,
+  "independentUsageLimitInterruptions": 1,
+  "sameSourceAndConditions": true,
+  "identicalCommonInputsAndPermissions": true,
+  "uniqueNativeThreads": 8,
+  "certifiesSkillGate": false,
+  "publicSyntheticCases": true,
+  "model": "gpt-6.1-sol",
+  "protocolSha256": "3e02f69754fc3d24b34b9d8e9b3fe72202f6fb101c4d1ee688ba45c9f47971c6",
+  "rows": [
+    {
+      "runId": "quality-pilot-skill-r1-QR-002",
+      "caseId": "QR-002",
+      "variant": "skill",
+      "repetition": 1,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "d30ecbd4062c794fcb4c6e3df4b3005000221390",
+      "decision": "unknown",
+      "riskBand": "Q2",
+      "missingEvidenceIds": [
+        "test-execution",
+        "consumer-compatibility",
+        "quality-plan"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 15,
+      "threadId": "01a10b75-d94a-76c0-b19f-9fe40a73a4ee",
+      "wallMs": 156220,
+      "usage": {
+        "input_tokens": 292753,
+        "cached_input_tokens": 267520,
+        "output_tokens": 2944
+      },
+      "runSha256": "ab1b787cacb4612cdb9721a0d7ef4ecc90183732ce17061a83a4c98e095b8c79",
+      "receiptSha256": "aefb22980f4312bba15860c91402c16c2e52226383ad5486b83816c084deb2f3"
+    },
+    {
+      "runId": "quality-pilot-skill-r1-QR-003",
+      "caseId": "QR-003",
+      "variant": "skill",
+      "repetition": 1,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "4439aaf1446a3bbdb7487f9b1fe167e0d7736bec",
+      "decision": "not_ready",
+      "riskBand": "Q3",
+      "missingEvidenceIds": [
+        "quality-plan",
+        "ci-safety-validation"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 17,
+      "threadId": "01a10b7c-3716-7781-8737-5c1487806657",
+      "wallMs": 163871,
+      "usage": {
+        "input_tokens": 342130,
+        "cached_input_tokens": 305152,
+        "output_tokens": 3173
+      },
+      "runSha256": "c02d0951d14132cd107776d68c2d4641a575061cb458abafda47d02168a00bfb",
+      "receiptSha256": "dcdc7c44a465faa94f4b367f3eec43a65a558f7d93d5c3778bad43c653508e11"
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-002",
+      "caseId": "QR-002",
+      "variant": "baseline",
+      "repetition": 1,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "d30ecbd4062c794fcb4c6e3df4b3005000221390",
+      "decision": "unknown",
+      "riskBand": "Q2",
+      "missingEvidenceIds": [
+        "test-result",
+        "consumer-compatibility",
+        "quality-plan"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 13,
+      "threadId": "01a10bc7-2b6c-7742-92ee-cd34c2cd2a72",
+      "wallMs": 132634,
+      "usage": {
+        "input_tokens": 222233,
+        "cached_input_tokens": 182912,
+        "output_tokens": 2501
+      },
+      "runSha256": "65266aab807266ef17a7ceb4f4081305388e9f570326d3f0a0774eb11a781b02",
+      "receiptSha256": "9cfaf7d714785a46e42da3bde6a93d908666b2e4390159f490cca7aa3dc8a979"
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-003",
+      "caseId": "QR-003",
+      "variant": "baseline",
+      "repetition": 1,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "4439aaf1446a3bbdb7487f9b1fe167e0d7736bec",
+      "decision": "not_ready",
+      "riskBand": "Q3",
+      "missingEvidenceIds": [
+        "quality-plan",
+        "ci-safety-validation"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 15,
+      "threadId": "01a10bcc-e26e-7811-bba7-c47e8fca1dfa",
+      "wallMs": 141305,
+      "usage": {
+        "input_tokens": 264910,
+        "cached_input_tokens": 230784,
+        "output_tokens": 2678
+      },
+      "runSha256": "06922b0505843ed1b0c869c98a7f9c3c970d4b2abeb0277df7466a9c404ea99a",
+      "receiptSha256": "dce79ace15acee88f12cea478a614f0f4e6c2bdae6276d1ee415380e5d25c5d2"
+    },
+    {
+      "runId": "quality-pilot-skill-r2-QR-002",
+      "caseId": "QR-002",
+      "variant": "skill",
+      "repetition": 2,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "d30ecbd4062c794fcb4c6e3df4b3005000221390",
+      "decision": "unknown",
+      "riskBand": "Q2",
+      "missingEvidenceIds": [
+        "test-execution",
+        "consumer-compatibility",
+        "quality-plan"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 15,
+      "threadId": "01a10bd2-4312-7642-8785-a9c0de1fcee8",
+      "wallMs": 142494,
+      "usage": {
+        "input_tokens": 293161,
+        "cached_input_tokens": 267776,
+        "output_tokens": 2745
+      },
+      "runSha256": "0315b7d1d496d902ec41757a344f139c12d1a5c0551b97b6d02dd04425163ede",
+      "receiptSha256": "618c7016827fca3e44a2d3ac6b57aa727917f86617562ecafc836b259f4fa31d"
+    },
+    {
+      "runId": "quality-pilot-skill-r2-QR-003",
+      "caseId": "QR-003",
+      "variant": "skill",
+      "repetition": 2,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "4439aaf1446a3bbdb7487f9b1fe167e0d7736bec",
+      "decision": "not_ready",
+      "riskBand": "Q3",
+      "missingEvidenceIds": [
+        "quality-plan",
+        "ci-safety-evidence"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 17,
+      "threadId": "01a10bd7-8e91-7e90-b198-b163d05ff38d",
+      "wallMs": 159628,
+      "usage": {
+        "input_tokens": 342907,
+        "cached_input_tokens": 316032,
+        "output_tokens": 3040
+      },
+      "runSha256": "b42a31896077f5b7ce2082b942c54458449f15bd1cb5020cd8b2c49c164bd31a",
+      "receiptSha256": "533f09c6c80dd3331d800417c5fc314e4c7d6579f5ae3df1405f11b745cf296c"
+    },
+    {
+      "runId": "quality-pilot-baseline-r2-QR-002",
+      "caseId": "QR-002",
+      "variant": "baseline",
+      "repetition": 2,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "d30ecbd4062c794fcb4c6e3df4b3005000221390",
+      "decision": "unknown",
+      "riskBand": "Q2",
+      "missingEvidenceIds": [
+        "test-result",
+        "consumer-compatibility",
+        "quality-plan"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 13,
+      "threadId": "01a10bdd-0d4f-7e50-a4b3-e6d6310b775f",
+      "wallMs": 137387,
+      "usage": {
+        "input_tokens": 222418,
+        "cached_input_tokens": 201088,
+        "output_tokens": 2564
+      },
+      "runSha256": "676a482fd1455af86856444b9d5224a1e72af3b54cd517015e49592149f14aa2",
+      "receiptSha256": "26a82aa83735d300ef8a63f5156f25ad57a4fc3e39fa351a40f70a4a1d4bab2f"
+    },
+    {
+      "runId": "quality-pilot-baseline-r2-QR-003",
+      "caseId": "QR-003",
+      "variant": "baseline",
+      "repetition": 2,
+      "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+      "subjectCommit": "4439aaf1446a3bbdb7487f9b1fe167e0d7736bec",
+      "decision": "not_ready",
+      "riskBand": "Q3",
+      "missingEvidenceIds": [
+        "quality-plan",
+        "ci-safety-validation"
+      ],
+      "checks": {
+        "mechanical": "passed",
+        "safety": "passed",
+        "evidence": "passed",
+        "semantic": "passed"
+      },
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 15,
+      "threadId": "01a10be2-5fd4-7c03-927e-987e6ef41e8d",
+      "wallMs": 158055,
+      "usage": {
+        "input_tokens": 264732,
+        "cached_input_tokens": 224640,
+        "output_tokens": 2815
+      },
+      "runSha256": "dc6c8bafa97098e2b807ca685b64efe1790cfa42221235f50c5541b04187200d",
+      "receiptSha256": "235b450992b7bff199e68236b6c99d92a678d29294617b043d237e29ffb2ac14"
+    }
+  ],
+  "totals": {
+    "skill": {
+      "runs": 4,
+      "wallMs": 622213,
+      "usage": {
+        "input_tokens": 1270951,
+        "cached_input_tokens": 1156480,
+        "output_tokens": 11902
+      },
+      "estimatedCostUsd": null
+    },
+    "baseline": {
+      "runs": 4,
+      "wallMs": 569381,
+      "usage": {
+        "input_tokens": 974293,
+        "cached_input_tokens": 839424,
+        "output_tokens": 10558
+      },
+      "estimatedCostUsd": null
+    }
+  }
+}

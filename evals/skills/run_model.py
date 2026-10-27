@@ -98,7 +98,17 @@ def selected_skill_was_read(events, selected_entry, architecture):
         paths = [CANDIDATES / architecture / "skills" / name / "SKILL.md" for name in names]
         if not all(path.is_file() for path in paths):
             continue
-        expected = "".join(path.read_text(encoding="utf-8") for path in paths)
+        contents = [path.read_text(encoding="utf-8") for path in paths]
+        selected_content = contents[names.index(selected_entry)]
+        lines = selected_content.splitlines()
+        if lines and lines[0].strip() == "---":
+            closing = next((index for index, line in enumerate(lines[1:], 1) if line.strip() == "---"), None)
+            body = "\n".join(lines[closing + 1:]) if closing is not None else ""
+        else:
+            body = selected_content
+        if not body.strip():
+            continue
+        expected = "".join(contents)
         if item.get("aggregated_output") == expected:
             return True
     return False

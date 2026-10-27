@@ -1,0 +1,1078 @@
+{
+  "status": "original_bytes_binding_schema_read_finding_independently_closed",
+  "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+  "originalAndClosure": [
+    {
+      "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+      "reportSha256": "c3acd04840ff779cbdca248f3436cb680cc4212d3e831080b76d667fe5398ad4",
+      "inventorySha256": "cebc9df419dc8cf0c2316b16c1da9b716330be1a62eac5175d5a2527f19dc68e",
+      "parentRehashed": {
+        "originals": 54,
+        "sourceGit": 13,
+        "evidence": 183
+      },
+      "record": {
+        "cleanBeforeAndAfter": true,
+        "findings": [
+          {
+            "cause": "nativeが明示schema_rawを受けてもcanary.audit→trace.auditがROOT/evals/skills/schemas/decision.schema.jsonを再読するため、純関数の判定へ未束縛入力が入る。",
+            "downstreamFile": "evals/skills/routing/production_trace.py",
+            "downstreamLine": 328,
+            "file": "evals/skills/routing/production_primary_review.py",
+            "kind": "unbound_disk_schema_in_original_bytes_entry",
+            "line": 55,
+            "minimalRemediation": "canonical decision_schema_rawをprimary.native→canary.audit→trace.auditへ明示伝播し、新原bytes入口でdisk schemaを読まない。従来診断入口のNone fallbackは別に保持。",
+            "priority": "P2",
+            "rawEvidence": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-primary-review-f3c9c530/.venv/r04-primary-bytes-independent-01/unbound-schema-valid-reproduction.json",
+            "rawEvidenceSha256": "49a06b5868d38ddc114ba51723e5483bd420427d88fee945298d41bc2f6a62b6",
+            "reproduction": "同じimmutable MatrixCaptureは正常ROOTで通過、入力外の有効Draft202012 schema複製(type:string)をROOTへ指定するだけでValidationError。ROOT復元後同原再通過。Path.read_bytes監視は入力外schema1件。ソース編集0/fixture mocks無しの再現を保存。"
+          }
+        ],
+        "models": 0,
+        "previousStopClosure": {
+          "newTargetedIncludesTwoRestoreStopRegression": true,
+          "originalTwoP2Preserved": true,
+          "report": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-stop-review-b8aa4e77/.venv/r04-stop-closure-independent-01/report.json",
+          "reportSha256": "40f49faa6e6bd8a1f0f4c4d534a64863c13ef0b9d2cd3c1563cc1fcfa6430179",
+          "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c"
+        },
+        "realSharedLedgerWrites": 0,
+        "realSharedReservations": 0,
+        "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-primary-review-f3c9c530",
+        "scopeLimits": [
+          "Matrix v0.1.1新receipt・92slot・一次payloadを別に束縛。旧4枠canaryの予算/sourceを92へ偽装しない。wrapper合成互換は2case×2repの原条件を保持。",
+          "source guardの共有依存primary_reviewを含む37Git資源の実照合を確認。source/runtime現物・校正・CLI argv/config権限・実取得起動は認定しない。",
+          "正常結果はsourceRuntimeOnDiskVerified/launchEnvironmentVerified/independentReviewPerformed/ledgerFinalized/eligibleForMeasurement/certifiesSkillGate/certifiesRelease=falseを維持。",
+          "namespace stdout/stderr/config/invocationは原hash保全対象で、CLI起動権限や実environmentの認定には使っていない。",
+          "共通化・入力/RPC/Host/native/rollout/usage原bytes照合の部品範囲。全R04/Step/Gate/Phase/release/独立意味安全採点/台帳確定未認定。",
+          "原B8/63b/EA/実測共有台帳/paid原/approved意味は変更無し。"
+        ],
+        "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+        "sourceEdits": 0,
+        "status": "independent_original_bytes_component_review_completed_with_one_open_p2",
+        "targetSixGitBytesMatched": {
+          "evals/skills/routing/production_canary_evidence.py": "6a03171e302f6252d12f55422cbf06de0bf7ac64bfabfa6a7c3bd6972a4f99aa",
+          "evals/skills/routing/production_canary_review.py": "1a333d6695128fa70857bf382d57c829648965982f3f72d1c0b83339854959e2",
+          "evals/skills/routing/production_matrix_evidence.py": "b523354eae79e20acd2bc8190be5d4c1ac15a02d0648a8b0849b44defc3a73a7",
+          "evals/skills/routing/production_matrix_ledger.py": "3cfe0079bf21895e984255cae7ba8e2d51761439a3a324f381e638aaa532f033",
+          "evals/skills/routing/production_primary_review.py": "f827778486f6cc180086565018814eb6b1e6717a35d0e65d03d7d3d7ad9f7159",
+          "tests/skills/test_production_matrix_evidence.py": "34c149e6a40f32d86bf38d9c697b315ac430cfbe1a36867a34306498abce2b39"
+        },
+        "tests": {
+          "allNegativeRejected": true,
+          "independentNegativeCount": 49,
+          "initialProbeHarnessFailure": "source guard呼出しを公開fixture mock解除前に実行しexit1。原stdout/stderr/argvと途中49負例原を保持。別finalizationでmock解除後の実Git guard・wrapper互換を確認しexit0。",
+          "newMatrixTestsIncluded": 9,
+          "realGitAuditSourceCount": 37,
+          "realGitAuditSourceMatched": true,
+          "targeted": {
+            "count": 188,
+            "exitCode": 0,
+            "result": "OK",
+            "source": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+            "stderrSha256": "daabf142eda7a3118d87f0d68542d3ee67ce90b9d5445e60d955f7c195193355",
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "testSeconds": 29.762,
+            "wallSeconds": 30.020224868087098
+          }
+        }
+      }
+    },
+    {
+      "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+      "reportSha256": "a46aafeb61df321702437c56d6040a2d450bc722b2220acff5293c37d10562f6",
+      "inventorySha256": "4943588430218d6b92c6413c8d8bbf737791f56d0fe944c1c478869d79c998c5",
+      "parentRehashed": {
+        "originals": 194,
+        "sourceGit": 42,
+        "evidence": 34
+      },
+      "record": {
+        "cleanBeforeAndAfter": true,
+        "closure": {
+          "canonicalSchemaViolationRejected": true,
+          "filesAndLines": {
+            "evals/skills/routing/production_canary_trace.py": 95,
+            "evals/skills/routing/production_primary_review.py": 58,
+            "evals/skills/routing/production_trace.py": 328
+          },
+          "finding": "unbound_disk_schema_in_original_bytes_entry",
+          "fixtureMocksActive": false,
+          "legacyNoneFallbackReadCount": 1,
+          "pureResultUnchanged": true,
+          "result": "canonical decision_schema_rawをprimary.native→canary.audit→trace.auditへ明示伝播。旧と同じimmutable原、異なる有効/壊れた/存在しないROOTの3条件で原外read0・完全検査結果同一。",
+          "unboundReadCount": 0
+        },
+        "models": 0,
+        "newBlockingFindings": [],
+        "originalReview": {
+          "inventorySha256": "cebc9df419dc8cf0c2316b16c1da9b716330be1a62eac5175d5a2527f19dc68e",
+          "original188TestsAnd49NegativesAndHarnessFailurePreserved": true,
+          "originalFindingsPreserved": [
+            {
+              "cause": "nativeが明示schema_rawを受けてもcanary.audit→trace.auditがROOT/evals/skills/schemas/decision.schema.jsonを再読するため、純関数の判定へ未束縛入力が入る。",
+              "downstreamFile": "evals/skills/routing/production_trace.py",
+              "downstreamLine": 328,
+              "file": "evals/skills/routing/production_primary_review.py",
+              "kind": "unbound_disk_schema_in_original_bytes_entry",
+              "line": 55,
+              "minimalRemediation": "canonical decision_schema_rawをprimary.native→canary.audit→trace.auditへ明示伝播し、新原bytes入口でdisk schemaを読まない。従来診断入口のNone fallbackは別に保持。",
+              "priority": "P2",
+              "rawEvidence": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-primary-review-f3c9c530/.venv/r04-primary-bytes-independent-01/unbound-schema-valid-reproduction.json",
+              "rawEvidenceSha256": "49a06b5868d38ddc114ba51723e5483bd420427d88fee945298d41bc2f6a62b6",
+              "reproduction": "同じimmutable MatrixCaptureは正常ROOTで通過、入力外の有効Draft202012 schema複製(type:string)をROOTへ指定するだけでValidationError。ROOT復元後同原再通過。Path.read_bytes監視は入力外schema1件。ソース編集0/fixture mocks無しの再現を保存。"
+            }
+          ],
+          "report": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-primary-review-f3c9c530/.venv/r04-primary-bytes-independent-01/finalization-01/report.json",
+          "reportSha256": "c3acd04840ff779cbdca248f3436cb680cc4212d3e831080b76d667fe5398ad4",
+          "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa"
+        },
+        "previousStopClosure": {
+          "newTargetedIncludesPermanentStopRestoreTests": true,
+          "originalTwoP2AndRawRetained": true,
+          "reportSha256": "40f49faa6e6bd8a1f0f4c4d534a64863c13ef0b9d2cd3c1563cc1fcfa6430179",
+          "sourceCommit": "b8aa4e772602c581df4521ab5b6483019d3f830c"
+        },
+        "realSharedLedgerWrites": 0,
+        "realSharedReservations": 0,
+        "reviewWorktree": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/r04-schema-review-02bf679d",
+        "scopeLimits": [
+          "原bytes固定入力/slot/CWD/snapshot/schema/context/RPC/Host/native/rollout/usageの部品範囲でSchema再読P2を閉包。旧f3原測定を新ref成功へ上書きしない。",
+          "正常原は公開合成fixtureであり、実paid provider/native取得成功の証明ではない。元49負例も同じ保存bytesから独立再実行した。",
+          "実Git audit source37資源を確認したが、source/runtime実物全体・calibration・CLI argv/configの実起動権限・モデル取得・独立意味安全採点・製品入口・台帳確定は未認定。",
+          "sourceRuntimeOnDiskVerified/launchEnvironmentVerified/eligibleForMeasurement/independentReviewPerformed/ledgerFinalized/certifiesSkillGate/certifiesRelease=falseは維持。",
+          "Matrix v0.1.1の92枠と旧4枠Canaryは別契約。予算/model/cases期待/Core/approved意味を変更しない。",
+          "全回帰/監査は親の別測定であり本検分で新規実行していない。全R04/Step/Gate/Phase/release未認定。",
+          "旧63b/B8/f3/EA/paid原/共有実測台帳は変更なし。"
+        ],
+        "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+        "sourceEdits": 0,
+        "status": "original_bytes_schema_read_p2_independently_closed_within_component_scope",
+        "targetFourGitBytesMatched": {
+          "evals/skills/routing/production_canary_trace.py": "7a7efd2b67bffb7472729e872be2c174a9e273f45db95be6f425f9262ac58638",
+          "evals/skills/routing/production_primary_review.py": "7c44fd7bafd2c8dbf53f8ba8edc1a47d8c113c484572df161d83a3521eafc1df",
+          "evals/skills/routing/production_trace.py": "02535147cfdad6bbf235d3b2fd747a1addbf63b5a5ffdf28e1a8947bf74b654b",
+          "tests/skills/test_production_matrix_evidence.py": "01ec4419635d522f273a28b6f95a88e82aee657eaa566040cf181d7bc4ee1964"
+        },
+        "tests": {
+          "allSameOriginalNegativeRejected": true,
+          "independentClosureProbes": {
+            "allRejected": true,
+            "canonicalSchemaViolationRejected": true,
+            "fixtureMocksActive": false,
+            "legacyFallbackReadCount": 1,
+            "models": 0,
+            "negativeCount": 49,
+            "normalResultUnchanged": true,
+            "pureRootCases": 3,
+            "realSharedReservations": 0,
+            "sameOldOriginalsUsed": true,
+            "sharedLedgerWrites": 0,
+            "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+            "sourceGuardCount": 37,
+            "status": "unbound_schema_p2_closed_within_original_bytes_scope",
+            "unboundReadCount": 0
+          },
+          "newMatrixTestsIncluded": 10,
+          "sameOriginalNegativeCount": 49,
+          "targeted": {
+            "count": 236,
+            "exitCode": 0,
+            "result": "OK",
+            "source": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+            "stderrSha256": "ff37a7c9dec6e8aaeec29419fc7375342008b9b14f45ba50e0f8a3657c4df5f6",
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "testSeconds": 29.863,
+            "wallSeconds": 30.120903672999702
+          }
+        }
+      }
+    }
+  ],
+  "parentFullRegression": [
+    {
+      "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+      "results": [
+        {
+          "label": "unit",
+          "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+          "exitCode": 0,
+          "seconds": 103.94895386102144,
+          "testCount": 751,
+          "testSeconds": 103.536,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "ac6aeec1e6e3743c4c50705367d84184fdcb77bea6f2701dd375ad3d3f557d74",
+          "cleanAfter": true
+        },
+        {
+          "label": "audit",
+          "sourceCommit": "f3c9c5306a005f354bf84e5f6d5b29e796b263fa",
+          "exitCode": 0,
+          "seconds": 0.19656923902221024,
+          "testCount": null,
+          "testSeconds": null,
+          "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cleanAfter": true
+        }
+      ],
+      "modelsStarted": 0,
+      "certifiesSkillGate": false
+    },
+    {
+      "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+      "results": [
+        {
+          "label": "unit",
+          "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+          "exitCode": 0,
+          "seconds": 103.91556189605035,
+          "testCount": 752,
+          "testSeconds": 103.517,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "d5420aa6e275055acbda36e4ac4788e5a9187e3320c2368f74da55c31a54b7b4",
+          "cleanAfter": true
+        },
+        {
+          "label": "audit",
+          "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+          "exitCode": 0,
+          "seconds": 0.18263402301818132,
+          "testCount": null,
+          "testSeconds": null,
+          "stdoutSha256": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cleanAfter": true
+        }
+      ],
+      "modelsStarted": 0,
+      "certifiesSkillGate": false
+    }
+  ],
+  "readonlyDeploymentPreparation": {
+    "status": "selected_runtime_snapshot_and_92_inputs_verified_launch_not_enabled",
+    "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+    "actualDate": "2026-10-13",
+    "seconds": 1.066143210977316,
+    "sourceProof": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+      "observedHead": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_matrix_inputs.py": "dfbe11be8c65f782aefc0e77bf7a103a4b30fd4f9d08ad2e8d152dbf8d9dca77",
+        "evals/skills/routing/production_matrix_ledger.py": "3cfe0079bf21895e984255cae7ba8e2d51761439a3a324f381e638aaa532f033",
+        "evals/skills/routing/production_matrix_evidence.py": "b523354eae79e20acd2bc8190be5d4c1ac15a02d0648a8b0849b44defc3a73a7",
+        "evals/skills/routing/production_primary_review.py": "7c44fd7bafd2c8dbf53f8ba8edc1a47d8c113c484572df161d83a3521eafc1df",
+        "evals/skills/routing/production_canary_review.py": "1a333d6695128fa70857bf382d57c829648965982f3f72d1c0b83339854959e2",
+        "evals/skills/routing/production_canary_evidence.py": "6a03171e302f6252d12f55422cbf06de0bf7ac64bfabfa6a7c3bd6972a4f99aa",
+        "evals/skills/routing/production_canary_capture.py": "93550cce6eecc8677c7d7f072b160b11f7b69c7786481b76c9c99d0fb77beda5",
+        "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+        "evals/skills/routing/production_canary_calibration.py": "eb3c77ceea3af7a801a56868e6873f4f72d6f8b143d20ae8edfc397e851e8317",
+        "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+        "evals/skills/routing/production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd",
+        "evals/skills/routing/production_trace.py": "02535147cfdad6bbf235d3b2fd747a1addbf63b5a5ffdf28e1a8947bf74b654b",
+        "evals/skills/routing/production_canary_trace.py": "7a7efd2b67bffb7472729e872be2c174a9e273f45db95be6f425f9262ac58638"
+      }
+    },
+    "deploymentFieldsOnly": {
+      "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+      "codexVersion": "codex-cli 0.160.1",
+      "sdkRelativePath": ".venv/codex-python-sdk-deps",
+      "sdkVersion": "0.160.1",
+      "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+      "snapshotRelativePath": ".venv/matrix-routing-preparation-01/snapshot",
+      "manifestSha256": "04b3d5ed2d11d62b3edfd3b0bb7f7258ac39ccced43bd5c374edcdc19ed7f1c0",
+      "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "contextProfileSha256": "47924991f8d93264f3757672dcf9216dd85b7e4b76dc9aa1dbc751afc2eebe1b",
+      "calibrationManifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b"
+    },
+    "canaryBudgetReused": false,
+    "runtimeProof": {
+      "status": "fixed_runtime_bytes_match",
+      "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+      "files": 50
+    },
+    "calibrationProof": {
+      "status": "original_local_calibration_matches",
+      "calibrationManifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
+      "sourceCommit": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+      "requestSha256": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+      "receiptSha256": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+      "paidModelCalls": 0,
+      "primaryModelTrajectories": 0,
+      "certifiesProviderWireBodies": false
+    },
+    "calibrationSource": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+    "calibrationSnapshotSource": "old_original_calibration_retained_new_matrix_isolation_not_tested",
+    "newSnapshotSourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+    "newSnapshotManifestSha256": "04b3d5ed2d11d62b3edfd3b0bb7f7258ac39ccced43bd5c374edcdc19ed7f1c0",
+    "oldSnapshotManifestSha256": "c5cb450d1b1d81e4cfb38cf417af22491ea6ad9603a55525c9b8dd24c8ff9f3c",
+    "oldSnapshotUnchanged": true,
+    "publicResources": {
+      "resources/bitz-core/README.md": "6200400f97a9fe98e58dbc110f52f94ba534f5033ab74f6fae975f0a091db704",
+      "resources/bitz-core/plugin.json": "207495ffecbdd9ef12ba510d91ae513ba40b02971e7409b9910f4c90fad215be",
+      "resources/bitz-core/pyproject.toml": "2afe9d196391e6648722ef9aafe7e40f3aabf3ac690b5ede25723b2a24070b1d",
+      "resources/bitz-core/skills/bitz-core/SKILL.md": "758a53ed601402f706822e382f469eb17160ab8ba73135fa6353defe2bc367aa",
+      "resources/bitz-core/skills/bitz-core/references/operations.md": "e60e1aa9627cc58695d23436ff7d4ec6177a2b2dddff5742c3c32c8ad12cafcd",
+      "resources/bitz-core/skills/bitz-core/references/results.md": "7591c03063a1c17c20f8fc9c7de5fc5347c6925686d957ec8506796692601d7b",
+      "resources/bitz-core/skills/bitz-core/references/safety.md": "c4310f6066b6b2ea65c7cbbb0e9a3e266bd32942d6623a0ce49c00e3d6fb604a",
+      "resources/bitz-core/src/bitz/__init__.py": "22fa8fb0d650c135824f80e2440e9178b5d5cddf742be0c3f7714bd6f248cf6a",
+      "resources/bitz-core/src/bitz/basecompare.py": "8ad8db23441f26a1c25b30cb9bf89ff060e637e0f3104a5ac8c835892f973bfe",
+      "resources/bitz-core/src/bitz/check.py": "122513f7b8b94552d90cd87a20b0c5d6d8b09d164bccfa9e7b353c65229fe6f5",
+      "resources/bitz-core/src/bitz/cli.py": "c781170f92cdc02dbf2ffad014dbb825ecf305ae55c2134253c9e8386816b8ed",
+      "resources/bitz-core/src/bitz/cliargs.py": "587d76800587097dc3b849a0daa416a3f55c9d0a88b90e53e4e99f7625219247",
+      "resources/bitz-core/src/bitz/compat.py": "52714177067e15dfc370c8dd3f5f2a2717e963deedddd9439fcdffbe07f41853",
+      "resources/bitz-core/src/bitz/config.py": "0be9f752542502ce693b817b8cebceabab19bda956dd12ecde3e8dbba6b948b1",
+      "resources/bitz-core/src/bitz/context.py": "bc8d6a2c60a0c30e9363ecbf17e299fd081a604e3bc0e7da0cf69db704bce5e9",
+      "resources/bitz-core/src/bitz/contextrender.py": "86d4f625e468b9c5b0629f15506321d3ac4559e034318a314149f25ed420e305",
+      "resources/bitz-core/src/bitz/digest.py": "4cad49bcc8c9ef47c344f52038c820acc5d4175d469bc7233916debdcf6f3e2d",
+      "resources/bitz-core/src/bitz/doctor.py": "18d20ca0e2f1552e17e026b6f09f609c23593193181a644ef4fc248a0745a141",
+      "resources/bitz-core/src/bitz/document.py": "ed1f731ef74bea7f3c750acf6e70bb2130a441f51d03966225011832103b2a52",
+      "resources/bitz-core/src/bitz/earsai/__init__.py": "8d5d968bd2653b5eea0b22dbc930ab2316eac7249bf14e0af344c8e48665ca3e",
+      "resources/bitz-core/src/bitz/earsai/ir.py": "d2f14958ad6e672082e32fdb90da35a0657633d45c3406b959918fda8603331c",
+      "resources/bitz-core/src/bitz/earsai/lexer.py": "9330810cfd5689f1850f5c715aa5123f73e5fbff34b6a8541e456bf98a5d355b",
+      "resources/bitz-core/src/bitz/earsai/parser.py": "0c01e5a12b5dab80eff0e97c6cd0844e0623a350c1899a4d45c3b8b153a2191e",
+      "resources/bitz-core/src/bitz/earsai/scanner.py": "f9dba99f4558334b4d045e4124055a5fa2f1f28c53624825ab074b62607d74c9",
+      "resources/bitz-core/src/bitz/errors.py": "6c3ccec7f4a83003e204aef7828d259e744ec48575400ac5bed6de4af138ccab",
+      "resources/bitz-core/src/bitz/execfile.py": "2db01f5b4748633934ca826fcfff4d495728f88e797f109cadb0dc069ebef805",
+      "resources/bitz-core/src/bitz/frontmatter.py": "df05b645ab14aeeeb2721e1d3e15a993888d24560e94ed9bdd3d46f53ba1fec3",
+      "resources/bitz-core/src/bitz/gitutil.py": "0a8e99f74e5abf298e0320a4562ca95497183174f8e17e590d82c6a039931ff5",
+      "resources/bitz-core/src/bitz/lex.py": "4c4ff373316636bdae3dbfbdc361164f73a3d2feb1df48419a81b89c56d7f256",
+      "resources/bitz-core/src/bitz/messages.py": "903ff7ed1dc1bfcaf3b749e1d6376b08f400f186fce1129ffa489c9f869c8f02",
+      "resources/bitz-core/src/bitz/multirelate.py": "a341276dd97b97001a2e03a8b1bb24469b9d5b6a2bbf21c641a6b9a70cf39998",
+      "resources/bitz-core/src/bitz/multiws.py": "bb901b5df26a6d5e0ede100ba5966442e9f8b2db819564a5741956fcf606d358",
+      "resources/bitz-core/src/bitz/notimpl.py": "763be39b081269fbc969f85f19131e5ea6f921aea9960efdb889b4042613f6a2",
+      "resources/bitz-core/src/bitz/procrun.py": "149405e85c4d2df9289f7efbd01998b3db9a6792320e5c4d744378c38c42e976",
+      "resources/bitz-core/src/bitz/redact.py": "5024696824bb9f0aeb0cf069d9d84bbeb7e0ec481922e822992ac35869847c66",
+      "resources/bitz-core/src/bitz/relations.py": "c3b6ab42ba2cc48a0335748292e32cb9226db99a7e56499c555952e5d9eab069",
+      "resources/bitz-core/src/bitz/reportio.py": "58f40ee8546ace8970a82676122d5ceadfc189fe192ed75a4b17046f7ef54e45",
+      "resources/bitz-core/src/bitz/resultmodel.py": "e53bb67d3676ddfce0f61623b85aa9c21325efbe4fc546a52b344439a1121282",
+      "resources/bitz-core/src/bitz/targetexpand.py": "187f1af5a75340ca29f6a0ff4ff8def81c475b9d9324423817411a5cd9859be1",
+      "resources/bitz-core/src/bitz/textrender.py": "076ac35c367abd8d906d73cff4efc7c9b14b7aca7bb01e62df58f28c93a1881c",
+      "resources/bitz-core/src/bitz/textutil.py": "61a6a331d8d292068fdde5f40dc45cffde2459d1f344d15b5e8b0a3fc62fff40",
+      "resources/bitz-core/src/bitz/verify.py": "4979069b816275180dc1b4211c13853011bdc85351ec7e84c6e7ca6bfcff532f",
+      "resources/bitz-core/src/bitz/workspace.py": "89d0e0caa26c76c12a9e3cf7cb593ab98b01f95f369e45f3a69549b1bdf6b48e",
+      "resources/bitz-core/src/bitz/yamlsafe.py": "cd1d3d8ae1a91556e1d89882e836cf873d628aa922bc062b6e14971e5803c9c7",
+      "resources/bitz-core/uv.lock": "ec886b17057cb735c4b7469a26f952c1f91bf8a6590d5f540667036c49f17af1",
+      "resources/bitz-quality/README.md": "1139c5fe065a10300f16e740f926c7472be3f8f93bf2073810e548df226c3b4e",
+      "resources/bitz-quality/core-compatibility.json": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+      "resources/bitz-quality/examples/local-change-plan.json": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+      "resources/bitz-quality/examples/missing-evidence-review.json": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef",
+      "resources/bitz-quality/plugin.json": "39d81d8e3c8b947090b7e4942fb37551b438270df02975ba4ecf03399583ce06",
+      "resources/bitz-quality/schemas/core-observation.schema.json": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "resources/bitz-quality/schemas/quality-plan.schema.json": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "resources/bitz-quality/schemas/quality-review.schema.json": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "resources/bitz-quality/scripts/validate_quality.py": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634",
+      "resources/bitz-quality/skills/quality-plan/SKILL.md": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+      "resources/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+      "resources/bitz-quality/skills/quality-review/SKILL.md": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a",
+      "resources/bitz-quality/skills/quality-review/references/independence-and-evidence.md": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113",
+      "resources/bitz-sdd/README.md": "7ef28534e0eb298a0ba40937e266feec4630f69fa79f5731787c468c00f0e52c",
+      "resources/bitz-sdd/plugin.json": "60f1879d9389e786d3f8f7849758aad6c8ea8ba3d11048cb4555ab644cfca864",
+      "resources/bitz-sdd/skills/sdd-converge/SKILL.md": "c15811a734884db28858edf38faffc8eafe9633ff428093ec9c30310b23d2a58",
+      "resources/bitz-sdd/skills/sdd-converge/references/completion.md": "4e1d7bd631227ef0f2e538b8beb598b69d539ef4fdc0fcc210cdde993f9d4289",
+      "resources/bitz-sdd/skills/sdd-converge/references/evidence-record.md": "0bf8950c381737a23841bf11ab42db7ac4462493ac76880d656834a3a552c5e0",
+      "resources/bitz-sdd/skills/sdd-implement/SKILL.md": "e8a876b713bf6ec5bc317ded54c039aa4caf51eb93376ddaaab69600f290b373",
+      "resources/bitz-sdd/skills/sdd-implement/references/execution.md": "a91a74d4890a6e93398ad71d195e2fa15ebcc5f2b463d75286d5882adee50a15",
+      "resources/bitz-sdd/skills/sdd-implement/references/handoff.md": "00d310622e7248880bb297958420c7849366198e0b06953b49f59a548b958d4d",
+      "resources/bitz-sdd/skills/sdd-implement/references/safety-and-recovery.md": "b00d61bf8d7a64a06025dac88cdb753acc43617bc1de0a3de563801fa3735dbc",
+      "resources/bitz-sdd/skills/sdd-plan/SKILL.md": "0ff581ac94931851dc5efd1422980b8feae1a9e64687b15ea6b99783157d159e",
+      "resources/bitz-sdd/skills/sdd-plan/examples/REQ-001.md": "1d281cf1eea6f37496fd203a2d92b3208ad62f8f8fafdc72e80fa1361d4bc159",
+      "resources/bitz-sdd/skills/sdd-plan/examples/TASK-001.md": "afd919200d0c864b49560de3baa460ed95f178e6931dad45b5f58d40154c0374",
+      "resources/bitz-sdd/skills/sdd-plan/examples/registered-tests/REQ-001.md": "c95456f69424eccb5dcee8c35b17fa4c309daa969ff973e8c17e174306b3b55a",
+      "resources/bitz-sdd/skills/sdd-plan/references/planning.md": "ee943250dad8d0ef3d00cbee479165bd502707ab2e7a573356ab7baf7d06f41c"
+    },
+    "publicResourceCount": 72,
+    "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+    "inputContract": {
+      "version": "public-production-matrix-inputs-0.1.0",
+      "scope": "public-six-skill-input-binding-only",
+      "sourceCommit": "02bf679dbbbfcb728b9f4d8fdce726188f2d3254",
+      "model": "gpt-6.1-sol",
+      "repetitions": 2,
+      "budget": {
+        "primary": 92,
+        "independent": 92,
+        "automaticRetries": 0,
+        "delegations": 0
+      },
+      "inputSha256": {
+        "routing": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+        "behaviorSafety": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+        "protocol": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+        "catalog": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+        "instructions": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "caseSchema": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81"
+      },
+      "certifiesBehavior": false,
+      "certifiesSkillGate": false
+    },
+    "slots": [
+      {
+        "ordinal": 1,
+        "caseId": "SE-001",
+        "repetition": 1,
+        "payloadSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 2,
+        "caseId": "SE-001",
+        "repetition": 2,
+        "payloadSha256": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 3,
+        "caseId": "SE-002",
+        "repetition": 1,
+        "payloadSha256": "82d78a6233e9a2d2c97f0e2f7a34fbeac19f895e7a2646ec2cb3b38f5e07148f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 4,
+        "caseId": "SE-002",
+        "repetition": 2,
+        "payloadSha256": "82d78a6233e9a2d2c97f0e2f7a34fbeac19f895e7a2646ec2cb3b38f5e07148f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 5,
+        "caseId": "SE-003",
+        "repetition": 1,
+        "payloadSha256": "968ef1e650d5acdc92b4170fb36509d7668d8b8dfdcfbd80c087c348c09cf775",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 6,
+        "caseId": "SE-003",
+        "repetition": 2,
+        "payloadSha256": "968ef1e650d5acdc92b4170fb36509d7668d8b8dfdcfbd80c087c348c09cf775",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 7,
+        "caseId": "SE-004",
+        "repetition": 1,
+        "payloadSha256": "cc18f3c3681c94131111cdef8e8f914b53447c1a9839d59c17c3ed33ef227a2f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 8,
+        "caseId": "SE-004",
+        "repetition": 2,
+        "payloadSha256": "cc18f3c3681c94131111cdef8e8f914b53447c1a9839d59c17c3ed33ef227a2f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 9,
+        "caseId": "SE-005",
+        "repetition": 1,
+        "payloadSha256": "53bbfcce6034bfd69c4b677833ee1865681d9fecc04435fd39d925990506f9d3",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 10,
+        "caseId": "SE-005",
+        "repetition": 2,
+        "payloadSha256": "53bbfcce6034bfd69c4b677833ee1865681d9fecc04435fd39d925990506f9d3",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 11,
+        "caseId": "SE-006",
+        "repetition": 1,
+        "payloadSha256": "a51c6810a68119b48bd4584b19c03d88fd32c32100df48f5dd66b0629c08c682",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 12,
+        "caseId": "SE-006",
+        "repetition": 2,
+        "payloadSha256": "a51c6810a68119b48bd4584b19c03d88fd32c32100df48f5dd66b0629c08c682",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 13,
+        "caseId": "SE-007",
+        "repetition": 1,
+        "payloadSha256": "2842a6b78eedcb5286ae70025bbddc5a8fc1b3d749cec89ccb269631411a8eb6",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 14,
+        "caseId": "SE-007",
+        "repetition": 2,
+        "payloadSha256": "2842a6b78eedcb5286ae70025bbddc5a8fc1b3d749cec89ccb269631411a8eb6",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 15,
+        "caseId": "SE-008",
+        "repetition": 1,
+        "payloadSha256": "d9b4f32f3694749b24cc843e39208facb50915e48d98386e0af13ec8764bd11a",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 16,
+        "caseId": "SE-008",
+        "repetition": 2,
+        "payloadSha256": "d9b4f32f3694749b24cc843e39208facb50915e48d98386e0af13ec8764bd11a",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 17,
+        "caseId": "SE-009",
+        "repetition": 1,
+        "payloadSha256": "cb0e415516f950996b58b1bb77dc9beebeae034946bf75f49a6f0fabed9918e2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 18,
+        "caseId": "SE-009",
+        "repetition": 2,
+        "payloadSha256": "cb0e415516f950996b58b1bb77dc9beebeae034946bf75f49a6f0fabed9918e2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 19,
+        "caseId": "SE-010",
+        "repetition": 1,
+        "payloadSha256": "51d689796048e1ccd48cddefe07475c45875377983e33a676854dcd9ffd52ef9",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 20,
+        "caseId": "SE-010",
+        "repetition": 2,
+        "payloadSha256": "51d689796048e1ccd48cddefe07475c45875377983e33a676854dcd9ffd52ef9",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 21,
+        "caseId": "SE-011",
+        "repetition": 1,
+        "payloadSha256": "5a8d3641bb8c73b1ab773139541fe1b33e8779fc437bfad12ff832d566ddc07d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 22,
+        "caseId": "SE-011",
+        "repetition": 2,
+        "payloadSha256": "5a8d3641bb8c73b1ab773139541fe1b33e8779fc437bfad12ff832d566ddc07d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 23,
+        "caseId": "SE-012",
+        "repetition": 1,
+        "payloadSha256": "b4350aeaeeacfac92cbdcdf0b21dd9b40c35d27dcdf47c52370068ff95ee4ec2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 24,
+        "caseId": "SE-012",
+        "repetition": 2,
+        "payloadSha256": "b4350aeaeeacfac92cbdcdf0b21dd9b40c35d27dcdf47c52370068ff95ee4ec2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 25,
+        "caseId": "SE-013",
+        "repetition": 1,
+        "payloadSha256": "9c30e6e2126c8c9abf50508e161f89567293b9f8c068d6c6d02a3252411063c1",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 26,
+        "caseId": "SE-013",
+        "repetition": 2,
+        "payloadSha256": "9c30e6e2126c8c9abf50508e161f89567293b9f8c068d6c6d02a3252411063c1",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 27,
+        "caseId": "SE-014",
+        "repetition": 1,
+        "payloadSha256": "52daa8cc6fa8e071a59c39d744790fc59b73357918ecfba104f1f9deeb962da4",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 28,
+        "caseId": "SE-014",
+        "repetition": 2,
+        "payloadSha256": "52daa8cc6fa8e071a59c39d744790fc59b73357918ecfba104f1f9deeb962da4",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 29,
+        "caseId": "SE-015",
+        "repetition": 1,
+        "payloadSha256": "36a3f0405584c5dcc1887b8b706c6caebbe0e315e5ebe1ad6e1f349d42fc5e2f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 30,
+        "caseId": "SE-015",
+        "repetition": 2,
+        "payloadSha256": "36a3f0405584c5dcc1887b8b706c6caebbe0e315e5ebe1ad6e1f349d42fc5e2f",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 31,
+        "caseId": "SE-016",
+        "repetition": 1,
+        "payloadSha256": "ec6435ac7a896255a3f1773f59e7a06f9498749723b3875c1920f24fc333f84d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 32,
+        "caseId": "SE-016",
+        "repetition": 2,
+        "payloadSha256": "ec6435ac7a896255a3f1773f59e7a06f9498749723b3875c1920f24fc333f84d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 33,
+        "caseId": "SE-017",
+        "repetition": 1,
+        "payloadSha256": "515a5d7f166e9f1b5e9650cd6d5f50c8d7d248cfb8c95eb109479297912eb412",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 34,
+        "caseId": "SE-017",
+        "repetition": 2,
+        "payloadSha256": "515a5d7f166e9f1b5e9650cd6d5f50c8d7d248cfb8c95eb109479297912eb412",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 35,
+        "caseId": "SE-018",
+        "repetition": 1,
+        "payloadSha256": "31934a487275bd841c52f32971b9e287a3b5d19777629e98e94f8a14db4b2a01",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 36,
+        "caseId": "SE-018",
+        "repetition": 2,
+        "payloadSha256": "31934a487275bd841c52f32971b9e287a3b5d19777629e98e94f8a14db4b2a01",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 37,
+        "caseId": "SE-019",
+        "repetition": 1,
+        "payloadSha256": "b90f679c68530cccf5b0470b29b7655ff02a4cf7184abbeae428ac3568a780fd",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 38,
+        "caseId": "SE-019",
+        "repetition": 2,
+        "payloadSha256": "b90f679c68530cccf5b0470b29b7655ff02a4cf7184abbeae428ac3568a780fd",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 39,
+        "caseId": "SE-020",
+        "repetition": 1,
+        "payloadSha256": "8bc9a7f9b744e991f98b341ccf0e9de964b1edf28ee509fcb0edb82ef5c5cbd2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 40,
+        "caseId": "SE-020",
+        "repetition": 2,
+        "payloadSha256": "8bc9a7f9b744e991f98b341ccf0e9de964b1edf28ee509fcb0edb82ef5c5cbd2",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 41,
+        "caseId": "SE-021",
+        "repetition": 1,
+        "payloadSha256": "7d1f2bdd5c7fa96687ff7e4bc9d5ed8fb7530ca23df4561b44ee76c266cfedab",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 42,
+        "caseId": "SE-021",
+        "repetition": 2,
+        "payloadSha256": "7d1f2bdd5c7fa96687ff7e4bc9d5ed8fb7530ca23df4561b44ee76c266cfedab",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 43,
+        "caseId": "SE-022",
+        "repetition": 1,
+        "payloadSha256": "be2dc318ae13ebdd885861798e64964fac643ce0f043aedd5d9bd266b3d6605a",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 44,
+        "caseId": "SE-022",
+        "repetition": 2,
+        "payloadSha256": "be2dc318ae13ebdd885861798e64964fac643ce0f043aedd5d9bd266b3d6605a",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 45,
+        "caseId": "SE-023",
+        "repetition": 1,
+        "payloadSha256": "f415a5465eeb9a6ff2203cfbf22a9dfd2a2b46cb172060e07c426a386ffec7fd",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 46,
+        "caseId": "SE-023",
+        "repetition": 2,
+        "payloadSha256": "f415a5465eeb9a6ff2203cfbf22a9dfd2a2b46cb172060e07c426a386ffec7fd",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 47,
+        "caseId": "SE-024",
+        "repetition": 1,
+        "payloadSha256": "38025e28caf40fd7bd16e783852efe90277216e00df918754da3161d07efa934",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 48,
+        "caseId": "SE-024",
+        "repetition": 2,
+        "payloadSha256": "38025e28caf40fd7bd16e783852efe90277216e00df918754da3161d07efa934",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 49,
+        "caseId": "SE-025",
+        "repetition": 1,
+        "payloadSha256": "a62d5cb1acfa6696bada5fcdb5a316889b25164dde80a1368a3dd3bbac48b849",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 50,
+        "caseId": "SE-025",
+        "repetition": 2,
+        "payloadSha256": "a62d5cb1acfa6696bada5fcdb5a316889b25164dde80a1368a3dd3bbac48b849",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 51,
+        "caseId": "SE-026",
+        "repetition": 1,
+        "payloadSha256": "d3b773dda7f4b81bce87306a9bbe1de5f753e2db5679f2af2bf3c520e6383840",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 52,
+        "caseId": "SE-026",
+        "repetition": 2,
+        "payloadSha256": "d3b773dda7f4b81bce87306a9bbe1de5f753e2db5679f2af2bf3c520e6383840",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 53,
+        "caseId": "SE-027",
+        "repetition": 1,
+        "payloadSha256": "4459846cd0202360373f246fd845ff5bbc9cf4cfd8f345a061f21c675b231bdc",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 54,
+        "caseId": "SE-027",
+        "repetition": 2,
+        "payloadSha256": "4459846cd0202360373f246fd845ff5bbc9cf4cfd8f345a061f21c675b231bdc",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 55,
+        "caseId": "SE-028",
+        "repetition": 1,
+        "payloadSha256": "a0ab1a2a886d841718653c9f3d2ee582f6e14257cf894e5d5fd895cce3ff404d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 56,
+        "caseId": "SE-028",
+        "repetition": 2,
+        "payloadSha256": "a0ab1a2a886d841718653c9f3d2ee582f6e14257cf894e5d5fd895cce3ff404d",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 57,
+        "caseId": "SE-029",
+        "repetition": 1,
+        "payloadSha256": "c339b6fb23568e47f695916c63ca2facc35fc4bc60fe50319f740f42bd65563e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 58,
+        "caseId": "SE-029",
+        "repetition": 2,
+        "payloadSha256": "c339b6fb23568e47f695916c63ca2facc35fc4bc60fe50319f740f42bd65563e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 59,
+        "caseId": "SE-030",
+        "repetition": 1,
+        "payloadSha256": "50101174b6724cba27510ff0a3664027b730349066758fb95a90097f894db2a8",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 60,
+        "caseId": "SE-030",
+        "repetition": 2,
+        "payloadSha256": "50101174b6724cba27510ff0a3664027b730349066758fb95a90097f894db2a8",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 61,
+        "caseId": "SE-031",
+        "repetition": 1,
+        "payloadSha256": "0129908ed606e4bc42907c5c2046f4bafd04934609fe6a757bcbbd22f8678297",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 62,
+        "caseId": "SE-031",
+        "repetition": 2,
+        "payloadSha256": "0129908ed606e4bc42907c5c2046f4bafd04934609fe6a757bcbbd22f8678297",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 63,
+        "caseId": "SE-032",
+        "repetition": 1,
+        "payloadSha256": "59945b8e3f60f10bb96ab84d16f9bff2f2cee400b1cb18a3ba71fca65e08e148",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 64,
+        "caseId": "SE-032",
+        "repetition": 2,
+        "payloadSha256": "59945b8e3f60f10bb96ab84d16f9bff2f2cee400b1cb18a3ba71fca65e08e148",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 65,
+        "caseId": "SE-033",
+        "repetition": 1,
+        "payloadSha256": "ccd4bb4393c2a3a58807bdb769d05d77b7cb419b0c62d483a30a65e96c25761e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 66,
+        "caseId": "SE-033",
+        "repetition": 2,
+        "payloadSha256": "ccd4bb4393c2a3a58807bdb769d05d77b7cb419b0c62d483a30a65e96c25761e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 67,
+        "caseId": "SE-034",
+        "repetition": 1,
+        "payloadSha256": "8ff86542dd8fbee2073ade25df07521c70922fb685e5b9f31192ba6507d30a8e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 68,
+        "caseId": "SE-034",
+        "repetition": 2,
+        "payloadSha256": "8ff86542dd8fbee2073ade25df07521c70922fb685e5b9f31192ba6507d30a8e",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 69,
+        "caseId": "SE-035",
+        "repetition": 1,
+        "payloadSha256": "09a866954127410ce2d61bf85318f1196b60a000403d99851710f738fd775e44",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 70,
+        "caseId": "SE-035",
+        "repetition": 2,
+        "payloadSha256": "09a866954127410ce2d61bf85318f1196b60a000403d99851710f738fd775e44",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 71,
+        "caseId": "SE-036",
+        "repetition": 1,
+        "payloadSha256": "bf00cdfa1039f5b6a5eae4df353c29810b6d858e623f32b511e7a199ecb36261",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 72,
+        "caseId": "SE-036",
+        "repetition": 2,
+        "payloadSha256": "bf00cdfa1039f5b6a5eae4df353c29810b6d858e623f32b511e7a199ecb36261",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 73,
+        "caseId": "SE-037",
+        "repetition": 1,
+        "payloadSha256": "fdfb56bff1d41e560bd304a436ce3a51ab21e2e86215e69be846e44101a55dca",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 74,
+        "caseId": "SE-037",
+        "repetition": 2,
+        "payloadSha256": "fdfb56bff1d41e560bd304a436ce3a51ab21e2e86215e69be846e44101a55dca",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 75,
+        "caseId": "SE-038",
+        "repetition": 1,
+        "payloadSha256": "a6847839d0d10945845c397ada280dcfa074fc9f4f4b4a583f8f6f21372d6035",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 76,
+        "caseId": "SE-038",
+        "repetition": 2,
+        "payloadSha256": "a6847839d0d10945845c397ada280dcfa074fc9f4f4b4a583f8f6f21372d6035",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 77,
+        "caseId": "SE-039",
+        "repetition": 1,
+        "payloadSha256": "5a0766e0e349c4a3cc1867f359f1b654a435959e1901be5e39beb8fd40c4034c",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 78,
+        "caseId": "SE-039",
+        "repetition": 2,
+        "payloadSha256": "5a0766e0e349c4a3cc1867f359f1b654a435959e1901be5e39beb8fd40c4034c",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 79,
+        "caseId": "SE-040",
+        "repetition": 1,
+        "payloadSha256": "cca9b9d617ba48ec938da78097914970f39f70386dd79e70f941ac836d7347fe",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 80,
+        "caseId": "SE-040",
+        "repetition": 2,
+        "payloadSha256": "cca9b9d617ba48ec938da78097914970f39f70386dd79e70f941ac836d7347fe",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 81,
+        "caseId": "SE-041",
+        "repetition": 1,
+        "payloadSha256": "8813055512e8a3de84592cc24827fec060760984944586ed1a010d74e85576df",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 82,
+        "caseId": "SE-041",
+        "repetition": 2,
+        "payloadSha256": "8813055512e8a3de84592cc24827fec060760984944586ed1a010d74e85576df",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 83,
+        "caseId": "SE-042",
+        "repetition": 1,
+        "payloadSha256": "03a4b24e01293a3bbf4adc798d7ab81653949a71a8dd869585b0545aa0169d25",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 84,
+        "caseId": "SE-042",
+        "repetition": 2,
+        "payloadSha256": "03a4b24e01293a3bbf4adc798d7ab81653949a71a8dd869585b0545aa0169d25",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 85,
+        "caseId": "SE-043",
+        "repetition": 1,
+        "payloadSha256": "6f8434ee4219e6a6553e8d949ef9a92b0c0956dc9649b2c7154c7136aad03a13",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 86,
+        "caseId": "SE-043",
+        "repetition": 2,
+        "payloadSha256": "6f8434ee4219e6a6553e8d949ef9a92b0c0956dc9649b2c7154c7136aad03a13",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 87,
+        "caseId": "SE-044",
+        "repetition": 1,
+        "payloadSha256": "e961ada4862a5791a090a0c4945f610516db2672d3d9f5b712303182525eb3d9",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 88,
+        "caseId": "SE-044",
+        "repetition": 2,
+        "payloadSha256": "e961ada4862a5791a090a0c4945f610516db2672d3d9f5b712303182525eb3d9",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 89,
+        "caseId": "SE-045",
+        "repetition": 1,
+        "payloadSha256": "33e8ae3046a26330646af89621fde14de306dd6b688a64b0a57e450d2c6693fb",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 90,
+        "caseId": "SE-045",
+        "repetition": 2,
+        "payloadSha256": "33e8ae3046a26330646af89621fde14de306dd6b688a64b0a57e450d2c6693fb",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 91,
+        "caseId": "SE-046",
+        "repetition": 1,
+        "payloadSha256": "83a9fe4e147412ad4fe308beb6cbced8eb6c8a9a9c6f0f1f65220a9e733c12ae",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      },
+      {
+        "ordinal": 92,
+        "caseId": "SE-046",
+        "repetition": 2,
+        "payloadSha256": "83a9fe4e147412ad4fe308beb6cbced8eb6c8a9a9c6f0f1f65220a9e733c12ae",
+        "contractSha256": "e47b1dba5488fc6ab2f10f68f578533167275114fb2771c20232d5a14be8b175"
+      }
+    ],
+    "modelsStarted": 0,
+    "matrixReservations": 0,
+    "launchEnabled": false,
+    "physicalMatrixIsolationAndArgvTested": false,
+    "independentPrelaunchReviewPerformed": false,
+    "certifiesSkillGate": false,
+    "certifiesRelease": false,
+    "cleanAfter": true
+  },
+  "archive": {
+    "path": "evidence-r04-native-schema-closure.tar.gz",
+    "sha256": "ace5fd4df120c68c8dcb7a93f0cc97ebc10ed2cb32972b26e479406c478044bc",
+    "fileCount": 423,
+    "allMembersRehashed": true
+  },
+  "modelsStarted": 0,
+  "realMatrixReservations": 0,
+  "launchEnabled": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}

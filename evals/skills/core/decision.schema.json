@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selectedEntry", "operation", "outcome", "reportedStatus", "readyClaimed", "reason"],
+  "properties": {
+    "selectedEntry": {"enum": [null, "bitz-core"]},
+    "operation": {"enum": [null, "doctor", "context", "check", "verify"]},
+    "outcome": {"enum": ["proceed", "question", "stop", "not-applicable"]},
+    "reportedStatus": {"enum": [null, "passed", "passed_with_warnings", "failed", "blocked", "error"]},
+    "readyClaimed": {"type": "boolean"},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+  }
+}

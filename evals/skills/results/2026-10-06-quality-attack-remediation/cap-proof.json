@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "primaryAttempts": 4,
+  "additionalBackendCalls": 0,
+  "ledgerAndAttemptsUnchanged": true,
+  "oldEvidenceUnchanged": 19,
+  "reason": "global authorized trajectory budget exhausted",
+  "automaticRetry": false
+}

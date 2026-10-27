@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root:quality-review-remediation-2026-10-04",
+  "reviewRunId": "/root/sol_quality_prototype_review:quality-review-remediation",
+  "subjectCommit": "f61eac44fb240e47c13660506491a8e0146cb42e",
+  "model": "gpt-6.1-sol",
+  "independent": true,
+  "freshContextForThisReview": false,
+  "priorIndependentReviewsRetained": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": true,
+  "inputs": ["固定refの是正差分・正本・品質本文・Schema・helper・回帰試験", "原停止report/archiveと新pending protocol/approval", "原失敗箇所と是正内容・検分範囲・実行環境"],
+  "beginCommit": "f61eac44fb240e47c13660506491a8e0146cb42e",
+  "endCommit": "f61eac44fb240e47c13660506491a8e0146cb42e",
+  "beginClean": true,
+  "endClean": true,
+  "directChecks": [
+    "品質契約試験: Ran 32 tests in 0.388s / OK / exit 0",
+    "実行器試験: Ran 21 tests in 5.585s / OK / exit 0",
+    "quality-plan/review quick_validate: 各Skill is valid! / exit 0",
+    "原archive: archive independent audit: OK / exit 0、60 member / 40 file / 70151 bytes、SHA-256一致",
+    "両runのhash、stderrを除く各7artifact、receiptのrun hash一致",
+    "原失敗reportのref・リスク・不足証拠・使用量・実時間を原結果と照合",
+    "既知最低帯のnull化/降格とQ2/Q3の計画不足省略を拒否、重大事項not_readyでも不足保持",
+    "旧承認で別候補版を起動不可、新4件案pendingで起動前停止、原QRケース不変"
+  ],
+  "requiredCorrections": [],
+  "notRerun": [{"check": "是正候補のモデル実測", "reason": "追加承認待ち。新規モデル起動は0件"}],
+  "limits": ["宣言整合性の検査であり、最低帯の正しい導出や証拠・独立性の真実性は別途意味検分を要する", "モデル是正、比較優位、全帯、Phase3、Skill Gateを認定しない"]
+}

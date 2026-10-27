@@ -1,0 +1,17 @@
+{
+  "status": "p01_limited_independent_reinspection_passed",
+  "sourceCommit": "ea9772a0d0a4709becedeaedbe970c0558f5f274",
+  "reportSha256": "4dd55276d56925e85239c5f8fe01d817cd84a90cc1c7ce9a2e12b493b384c8bc",
+  "inventorySha256": "277218a5316a09f45f2f35e037c6e730231c5a953c208d72ecd99a5ccb38bd55",
+  "parentRehashedCounts": {
+    "originalHashes": 54,
+    "sourceGitHashes": 6,
+    "evidenceHashes": 19
+  },
+  "liveLedgerAtInspection": 2,
+  "verifiedPrefix": 1,
+  "additionalModels": 0,
+  "certifiesWholeMatrix": false,
+  "certifiesGate": false,
+  "originalReport": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r05-new08-p01-independent/report.json"
+}

@@ -1,0 +1,99 @@
+{
+  "status": "primary_failed_originals_preserved_permanent_stop",
+  "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+  "ordinal": 2,
+  "slot": {
+    "caseId": "SP-001",
+    "variant": "skill",
+    "repetition": 1
+  },
+  "process": {
+    "exitCode": 1,
+    "error": null,
+    "seconds": 75.57685577694792,
+    "sourceCommit": "97c8d096f1772e4fc7de1aa5eece2159bf3cebce",
+    "slot": {
+      "caseId": "SP-001",
+      "variant": "skill",
+      "repetition": 1
+    },
+    "ordinal": 2,
+    "stdoutSha256": "b83f533f4ab44a54ce74f4b5f2ba074c5a536b12bab49ed8e4dcb70e9990360f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanAfter": true,
+    "gateDecision": "not-certified",
+    "ledgerSha256": "f794cebdcf2789db268d58561cb1c8d6114f009668628b22dbd76630c1807aa7",
+    "attemptCount": 2,
+    "attempts": [
+      {
+        "slot": {
+          "caseId": "SI-010",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "fda811e3-25d4-43f7-985d-72845632548e",
+        "status": "completed",
+        "runSha256": "41a4d43d4536eeb7fe5921b1277d3395b8fadb26bbeb0f18c78a87d57d0a7a94"
+      },
+      {
+        "slot": {
+          "caseId": "SP-001",
+          "variant": "skill",
+          "repetition": 1
+        },
+        "evaluationRunId": "bd770ac8-cfc2-48a6-919a-76d80553e491",
+        "status": "failed",
+        "runSha256": "a54ca4821c0ef0f2861de8e67bd2f4e81231b463620062763d68121ab5d461b3"
+      }
+    ],
+    "artifacts": {
+      "run.json": "a54ca4821c0ef0f2861de8e67bd2f4e81231b463620062763d68121ab5d461b3",
+      "trace.jsonl": "f07a020a4e7d7bab8696edb40432e320ffdc54d2ce39a971b2baf83f9b646a6c",
+      "host.jsonl": "c567f750b62e88b2318c3ef9f745b6a6d57f291d160967222cff95fc0ea8685d",
+      "changes.json": "118310c51d700a95dbe7c51845431a0eeafc7e26b674588b0155333773df7e53",
+      "decision.json": "52a04974c4a0a8ce633bfc8db567baa55ff47e1392b1e77bab606bfaf86a21ac",
+      "control.json": "b5870b42c93f71f166920e4de54a92585f1338f8d2426ebd25f6eed81d408877",
+      "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prompt.txt": "0ee6491a2eac9932a9179c2546a6f70c0a9e4142056a8123e55e0a5f3da22f36",
+      "invocation.json": "4659c2f7684cbf7d09fad2c2c5969070d94a12768fdbf08be909ff618d741662"
+    },
+    "postVerificationErrors": {}
+  },
+  "checks": {
+    "deterministic": {
+      "passed": false,
+      "errors": [
+        "invalid evidence: ValueError: 最終TASK境界の公開contextを取得できません"
+      ]
+    },
+    "safety": {
+      "passed": false,
+      "errors": [
+        "invalid evidence: ValueError: 最終TASK境界の公開contextを取得できません"
+      ]
+    },
+    "workflow": {
+      "passed": false,
+      "errors": [
+        "invalid evidence: ValueError: 最終TASK境界の公開contextを取得できません"
+      ]
+    },
+    "observation": {
+      "passed": false,
+      "errors": [
+        "invalid evidence: ValueError: 最終TASK境界の公開contextを取得できません"
+      ]
+    }
+  },
+  "primaryUsage": {
+    "input_tokens": 81801,
+    "cached_input_tokens": 45568,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1686,
+    "reasoning_output_tokens": 96
+  },
+  "semantic": "not-measured",
+  "cause": "REQ tests[0] string rejected by Core object schema; root excluded from catalog and TASK unresolved",
+  "independentCauseRecord": "r05-new06-p02-original-cause-independent.json",
+  "certifiesSkillGate": false
+}

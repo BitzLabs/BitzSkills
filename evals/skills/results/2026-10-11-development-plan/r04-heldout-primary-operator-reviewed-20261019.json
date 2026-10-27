@@ -1,0 +1,50 @@
+{
+  "status": "primary_operator_component_independent_review_passed",
+  "sourceCommit": "e6b76cff30b6e1d13ee70fdef5e17be65122f372",
+  "scope": "heldout_primary_operator_only",
+  "independentTests": {
+    "related": 135,
+    "originalAdversarial": 9,
+    "priorExtra": 3,
+    "rawStreamExtra": 3,
+    "allExitCodeZero": true
+  },
+  "fullRegression": {
+    "count": 1009,
+    "exitCode": 0,
+    "seconds": 158.94487339200032,
+    "cleanAfter": true
+  },
+  "parentOriginals": {
+    "status": "parent_originals_consumed",
+    "sourceCommit": "e6b76cff30b6e1d13ee70fdef5e17be65122f372",
+    "independentReportSha256": "32af4c4eea14accfb1bcbf316a615147c1d7a7740148fd72b9acbc64c5d1f52c",
+    "inventorySha256": "1693568365f31c9cbd0a3df7fda1f0ed910a2bff125f1ef27246805a61d6c67a",
+    "originalCount": 201,
+    "allOriginalHashesMatched": true,
+    "fullRegression": {
+      "count": 1009,
+      "exitCode": 0,
+      "seconds": 158.94487339200032,
+      "cleanAfter": true
+    },
+    "models": 0,
+    "reservations": 0
+  },
+  "resolvedPriorP2": 3,
+  "newBlockingP2": 0,
+  "prior198OriginalHashesUnchanged": true,
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "realPrivateStorageWrites": 0,
+  "certifiesHeldoutLaunch": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-primary-operator-reviewed-20261019.tar.gz",
+    "sha256": "1dff87bd9e7b159b0a1fa45ee347474be982757e8b15a99510d87fca6eb7de34",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

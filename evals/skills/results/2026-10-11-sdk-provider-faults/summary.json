@@ -1,0 +1,18 @@
+{
+  "status": "local_provider_faults_captured",
+  "sourceCommit": "10926fe16ec838bce633bf12611cc74bb76090c6",
+  "contractPath": "evals/skills/routing/production-fault-probe-v0.1.json",
+  "outputRelativeRoot": ".venv/production-provider-faults-01",
+  "cases": [
+    {"case": "http-503-zero-retry", "receiptSha256": "321efa55ac75b8ee00a803c736935525946919e8a8c42dead68d2a447008f528", "requests": 1, "apiRequests": 1, "httpStatuses": [503]},
+    {"case": "http-503-one-retry-control", "receiptSha256": "db5c9412c9dfdec5d8333082bfcf6396daa9e6917075b0aa1f03b7ff531911b6", "requests": 2, "apiRequests": 2, "httpStatuses": [503, 503]},
+    {"case": "stream-cut-zero-retry", "receiptSha256": "0ffbaf68a3b5b68da92a12891efef9e854600c87b085b502770f1b6a7a72794e", "requests": 1, "apiRequests": 1, "httpStatuses": [200]},
+    {"case": "connection-zero-retry", "receiptSha256": "ca31ad0a6c79707c58694e80c9042fb3072a69f7955705a44806821ca6e86433", "requests": 0, "apiRequests": 1, "httpStatuses": [null]}
+  ],
+  "paidModelCalls": 0,
+  "primaryModelTrajectories": 0,
+  "certifiesAuthorizationRecovery": false,
+  "certifiesNativeProvider": false,
+  "eligibleForMeasurement": false,
+  "phaseComplete": false
+}

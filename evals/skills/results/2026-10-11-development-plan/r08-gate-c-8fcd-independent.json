@@ -1,0 +1,199 @@
+{
+  "status": "candidate_gate_c_independently_verified",
+  "sourceCommit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+  "report": {
+    "commit": "8fcd6f3edf07d3513d5b17a9e0a73b9f4bb92f5d",
+    "status": "candidate_core_gate_c_independently_verified",
+    "gateC": "Passed",
+    "gateCFoundation": "Passed",
+    "gateCPerformance": "Passed",
+    "gateCPriorityClosure": "Passed",
+    "findings": [],
+    "originalEvidenceFiles": 36,
+    "originalHashesStable": true,
+    "roles": {
+      "minimum": {
+        "role": "minimum",
+        "environmentId": "minimum-cpython-3-12",
+        "environmentFingerprint": "4b43e2625fc3fad900bac19c5929602bf3d949d79ad837eaba0c490de1789dd3",
+        "checkoutId": "deba071c8f9849c49701b66b4a9a3b07",
+        "python": "3.12.0",
+        "executable": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/python-minimum/cpython-3.12.0-linux-x86_64-gnu/bin/python3.12",
+        "fixtureCount": 350,
+        "unitTests": 647,
+        "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874"
+      },
+      "reference": {
+        "role": "reference",
+        "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+        "environmentFingerprint": "8d40512e6827568d4542ced22ad4c4f6cddf476e0969738056bb66de29a928cc",
+        "checkoutId": "72f3c515d1f442b08e81f186f8f191d1",
+        "python": "3.12.3",
+        "executable": "/usr/bin/python3",
+        "fixtureCount": 350,
+        "unitTests": 647,
+        "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874"
+      }
+    },
+    "conformanceSha256": "ab8eebaccffa932ecff95f8098122e2bb40c86edf7d3ded334e97221fb4ff874",
+    "eachConformance": 350,
+    "eachUnitTests": 647,
+    "rawReportsAndStderrHashesVerified": true,
+    "cleanSeparateFreshCheckouts": true,
+    "independentCollector": {
+      "exitCode": 0,
+      "seconds": 3.9630284280283377,
+      "normalOfficialCollector": true,
+      "freshPerformanceAndPriorityAuditCheckouts": true,
+      "originalTwoEnvironmentReruns": 0,
+      "auditCalls": [
+        {
+          "argv": [
+            "/home/hide/.local/bin/uv",
+            "run",
+            "fixtures/validate_benchmarks.py"
+          ],
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "/home/hide/.local/bin/uv",
+            "run",
+            "tests/bitz-core/priority_closure.py"
+          ],
+          "exitCode": 0
+        }
+      ]
+    },
+    "performance": {
+      "baselines": [
+        {
+          "cases": 7,
+          "coreCommit": "4b3d95982e33bf77486068df57faf3111a1c1152",
+          "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+          "sha256": "7f46db745fe9a7f8fe87bce8b9e5f4e87124cd87dcf990e7fa3de7c90c61f72a"
+        }
+      ],
+      "checkoutId": "f4a4edfe29fd4a72b6ce7c873792485d",
+      "validationReportSha256": "9aa3630337bd57d9312c4646e76ad76551b70cf0ddd2307537454da4bfa180d3"
+    },
+    "priorityClosure": {
+      "findingCount": 11,
+      "findings": [
+        {
+          "evidence": "all-conformance",
+          "fixtureCount": 350,
+          "id": "FIN-FIX-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance-and-diagnostic-audit",
+          "fixtureCount": 7,
+          "id": "FIN-DIAG-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 20,
+          "id": "FIN-EAI-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 13,
+          "id": "FIN-OUT-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 15,
+          "id": "FIN-TARGET-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 24,
+          "id": "FIN-FM-001",
+          "priority": "P0"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 6,
+          "id": "FIN-DIGEST-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 6,
+          "id": "FIN-IO-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 15,
+          "id": "FIN-PROC-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "conformance",
+          "fixtureCount": 19,
+          "id": "FIN-CLI-001",
+          "priority": "P1"
+        },
+        {
+          "evidence": "performance",
+          "fixtureCount": 0,
+          "id": "FIN-PERF-001",
+          "priority": "P1"
+        }
+      ],
+      "status": "Passed",
+      "stdoutSha256": "053979ed245e2e13ef8634723d0d7a5f9b019ce54bfdd00131f54c8e0a5ae417"
+    },
+    "referenceManifestSha256": "ddcbb2b5768359794f72f17afd25aa1b414e69ab5eb9bece4701e8b6a55b4f46",
+    "sourceSha256": {
+      "tests/bitz-core/certify_gate_c.py": "a925fece875b7de99a34ee326d6bae289464cd8029005e8e7072734ca243c1d0",
+      "tests/bitz-core/gate_c.py": "b7fa51550e93d6256e6d4fe21e16690588f1eb0240171b546c1ded1c6c9a8e80",
+      "tests/bitz-core/priority_closure.py": "24d06045786ee0279a8304a24b011ac94df7ad829a80259dabfc6283bb0dcd07",
+      "fixtures/validate_benchmarks.py": "ea925394bff7d717919956da69fe0b67121cddfa006d00f621bdbd27580865d1",
+      "fixtures/performance/environments/core-1-reference.json": "bdb45e9330bff3c281e5afbf1206afcab3f59e621c7048ffb37eb91d5b2a5d5e",
+      "docs/04.提案資料/12_Core-1.0実装計画.md": "eed66c5bf83ac0ba703d9da92a2d0353c4eb236369da17d2be327fe72d9d6856",
+      "docs/02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・ランナーを確定する.md": "48e87b6a45e19d4e4abdee31482a499e9926dcaba822e7c7330011143af17729",
+      "docs/02.設計書/10_決定記録/ADR-053_CPythonの下限を3.12へ引き上げる.md": "c22ddb8bd3a417c24d08bbb308b95d40eba2f21ab68d2eb087660ce6646130dd",
+      "docs/02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md": "d661f4ca872b4391a68e4a10acde83c8047cdfb470123b0d35b2215a5c2debb5",
+      "docs/02.設計書/10_決定記録/ADR-058_Gate-Cから比較タスクの実測を外す.md": "3ce4db4b2bb59a147629dbda0186a052e5a8c9938846bf4f01a6b6ff3b6bec5d",
+      "docs/02.設計書/10_決定記録/ADR-059_Gate-CのP0-P1閉包を既存受入証拠で判定する.md": "9d74271dded7919648ebc106c07d4db103dc6b6b1f8993edda9ae7bb13060720"
+    },
+    "coreTreeIdentity": {
+      "tests/bitz-core": "be5e86af8ae4ade3c3f2767058d912d2369308fd",
+      "plugins/bitz-core": "f63a22d4e5274da20cc6e58966514829fdebb07e",
+      "fixtures": "f18b49268d054abf4c1e0d5ecdeba53b2e5bc805"
+    },
+    "sharedHardwareKernelHost": true,
+    "minimum": "actual CPython3.12.0/tmpfs RAM filesystem",
+    "reference": "actual CPython3.12.3/ext4 WSL2 virtual disk",
+    "namespaceMountProofVerified": true,
+    "inspectionWorkspaceHead": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+    "inspectionWorkspaceClean": true,
+    "certifiesInspectionHeadGateC": false,
+    "certifiesExistingStepOrGateB": false,
+    "certifiesSkillGate": false,
+    "certifiesPhase": false,
+    "certifiesRelease": false,
+    "modelsStarted": 0,
+    "sharedLedgerWrites": 0,
+    "sourceEdits": 0,
+    "limits": [
+      "Candidate Core8fcd official GateC collector scope only; does not certify a697/524 or skill release.",
+      "One WSL2 host shares kernel/CPU/RAM. Difference is measured filesystem; not different physical hardware/macOS/nativeWindows validation.",
+      "Minimum tmpfs is RAM-backed, not SSD or performance-reference substitution. Official storageClass is host classification.",
+      "Performance stage freshly audits accepted historical baseline/SLO/dataset determinism; not newly measuring candidate performance on both filesystems.",
+      "Delegated original2×350/647 raw verification plus fresh normal collector; no full test rerun or Step/GateB re-certification."
+    ]
+  },
+  "reportSha256": "ed5e9ea469c74135afbc63633e687d13d9fda60cda8843847d05cb3f37197c66",
+  "hashinventorySha256": "5e61b6bc5e0a74c1adfb58f8bf9d370f55b6522ac70d0b5ad3118dedbdd979f1",
+  "parentRehashed": 70,
+  "certifiesCurrentIntegrationHead": false,
+  "certifiesRelease": false
+}

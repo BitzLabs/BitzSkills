@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "id": "implement-safety-04",
+  "purpose": "旧SI-010のnative初期化中断を保持し、失敗保存の是正と外側の実行環境を変更した別ref・別出力で固定テスト障害の停止を1回測定する。baseline・反復2・Skill Gateは未認定",
+  "model": "gpt-6.1-sol",
+  "candidateVersion": "0.3.0",
+  "protocolSha256": "e0d4fa8dc64691f3546dce0612cddb0709de02abe8c94803dea9f5eb5308187f",
+  "casesSha256": "e4be180c2846ebe675b895bc1792daddaad587fdf5e311ff18c73ed6fce7e050",
+  "automaticRetries": 0,
+  "maximumPrimaryCalls": 1,
+  "timeoutSeconds": 240,
+  "slots": [{"caseId": "SI-010", "variant": "skill", "repetition": 1}],
+  "nativeInitialization": {
+    "outerExecution": "require_escalated",
+    "modelSandbox": "read-only",
+    "modelOperations": "固定sdd_evalの5ツールのみ",
+    "preparationEvidence": "evals/skills/results/2026-10-05-sdd-failure-evidence/native-initialization.json",
+    "notes": "初期化だけの比較で通常sandboxはexit 1/readonly、外側制限解除はinitialize成功。モデルのturn送信なし。外側の解除をモデルの任意操作や秘密読取りの許可へ拡張しない"
+  },
+  "stopPolicy": "不適合・中断・証拠破損は保存して停止。旧台帳・旧中断は変更せず、同条件のretryをしない",
+  "reviewBudget": "新条件の準備の独立SOL検分1回、一次の独立意味検分1回。失敗後の同条件自動再試行なし",
+  "usagePolicy": "一次はCodex exec軌跡単位の上限。trace usageとwallMsを保存。provider費用と独立検分usageの欠測を0扱いしない"
+}

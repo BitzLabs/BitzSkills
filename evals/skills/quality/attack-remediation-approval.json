@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "approved",
+  "approvedBy": "user",
+  "approvedAt": "2026-10-04",
+  "preparedAt": "2026-10-06",
+  "authorization": "../sol-authorization.json",
+  "userInstruction": "SOLでの評価は、すべて許可します。",
+  "pluginVersion": "0.1.3",
+  "evaluationSetVersion": "quality-attack-remediation-0.1.0",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 4,
+  "protocolSha256": "0ee7a737d70218553afd27321970746d7942e64a630dce31920b085f85c38fa4",
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseOriginalBudget": false,
+  "reuseExpansionBudget": false,
+  "reuseNormalBudget": false,
+  "reuseSddBudget": false,
+  "notes": "SOL包括承認に基づく別source・別公開形式の是正比較4軌跡。QR-006の入力とdiffを据え置く。独立性申告の境界と全ケース共通のリスク帯定義を両側へ同じ資料で公開。原baseline失敗・skill receipt・境界unknown・残2枠不使用を保持。準備独立1回と軌跡独立最大4回は別有限集計し、全Gateを認定しない。失敗時停止・同条件自動再試行0、料金不明。",
+  "reuseAttackBudget": false
+}

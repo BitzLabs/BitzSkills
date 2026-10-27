@@ -1,6 +1,7 @@
 # bitz-sdd・品質管理・Coreスキル化実装計画
 
 - 状態: `Draft`（非規範の実装計画）
+- 統合後の実行計画・最新進捗: [提案31](31_スキル統合残件の開発計画と進捗.md)（2026-10-11に利用者が採用）
 - 作成日: 2026-09-29
 - 前提: Core 1.0の公開操作とEARS-AIを再利用する
 - 調査: [エージェント向けSDD・品質管理・Coreスキル化調査](29_エージェント向けSDD・品質管理・Coreスキル化調査.md)
@@ -537,13 +538,18 @@ Phase 0で決める。保持したケースがなければ、その評価をリ�
 
 ### Phase 0: 契約と評価の固定
 
-状態は`In progress`である。2026-09-30に、評価集合`0.3.0`、公開ケース46件、6スキル案と3入口案の
+状態は`Completed`である。2026-10-01に既存5完了条件を独立検分し、空の試作本文の負対照と
+独立検分の同一実行ID拒否を評価集合`0.7.2`で補った。
+[完了確認と本実装の記録](../../evals/skills/results/2026-10-01-core-implementation.md)に検査の実出力、
+独立検分、限界と後続の残件を記録する。公開試作の全件合格やリリース認定を意味しない。
+
+2026-09-30に、評価集合`0.3.0`、公開ケース46件、6スキル案と3入口案の
 最小試作、ケース・判断・実行・集計・引渡し・独立検分のSchema、決定論的な監査器、モデル実行器、Core互換性表、危険な検証コマンドの
 停止契約を`evals/skills/`へ追加した。公開ケース46件を両候補で2反復し、
 [ADR-060](../02.設計書/10_決定記録/ADR-060_スキルの評価契約と独立検分の境界を固定する.md)で
 6スキル構成を採用した。[公開試作の比較記録](../../evals/skills/results/2026-09-30-public-prototype.md)に
 数値と限界を残す。公開試作の総合判定は両候補とも閾値未達である。残件は、保持ケース、
-実動作の行動・安全評価、独立検分、確定したrefでの再現、費用の採取である。
+実動作の行動・安全評価、各Skill Gateの独立検分、確定したrefでの実動作評価の再現、費用の採取である。
 
 目的:
 
@@ -591,6 +597,43 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
 
 ### Phase 1: Coreスキル
 
+状態は`In progress`である。2026-10-01に配布用の日本語Coreスキルと操作・結果・安全の参照、
+マニフェストの説明、README、公開CLIで掲載例を実行する試験を追加した。
+Skill Gate 0の契約を独立検分し、指摘を是正した。Skill Gate 1〜3とPhase 1全体は未認定であり、
+試作とは別に本実装を対象とする判断・実動作評価を次に行う。
+[記録](../../evals/skills/results/2026-10-01-core-implementation.md)を参照する。
+2026-10-02にはスキル0.1.3と本実装評価環境を是正し、2モデルで全件測定を開始した。
+利用上限により欠測が残り、完了記録にも判断・手順の失敗があるため、Phase 1は未認定を維持する。
+[再開用の評価記録](../../evals/skills/results/2026-10-02-core-0.3.0.md)に実結果と残件を保存した。
+同日、スキル0.1.4で着手判断・既存結果の説明・不適用・検証前の差分確認を明確にした。
+[是正と検証の記録](../../evals/skills/results/2026-10-02-core-0.1.4-remediation.md)に
+通過した検査、外部書込み承認が必要な未完了の検査、新規モデル評価の再開手順を保存した。
+モデル行動の改善は未測定であり、Phase 1の未認定は維持する。
+0.1.4の[追加測定](../../evals/skills/results/2026-10-02-core-0.1.4-followup.md)で
+入口残留・操作置換・容量不足を観測し、0.1.5へ是正した。
+0.1.5も[新規測定と独立検分](../../evals/skills/results/2026-10-02-core-0.1.5-evaluation.md)で
+説明と判断の不整合が残った。期待値・閾値を維持して失敗・欠測を保存し、
+追加モデルの測定は承認後に開始したが、2026-10-03に利用者のコスト方針でastraを中止しsolへ変更した。
+[モデル変更と途中結果](../../evals/skills/results/2026-10-03-core-0.1.5-sol-evaluation.md)に
+astra29/268件、sol43/268件と欠測を保存した。solの機械採点は完了43件で通過したが、
+独立検分で偽装依頼に対する初回の結果確認予告が不適合と確認され、後続の測定を停止した。
+反復2・baseline・保持ケースの適合は未証明で、Phase 1は引き続き未認定である。
+同日、初回から提示するdescriptionに偽装依頼の停止条件を加え、スキル0.1.6とした。
+[修正と限定検証](../../evals/skills/results/2026-10-03-core-0.1.6-remediation.md)で
+既存38試験とsolの関連6件が通過し、独立検分でも当該6件の初回予告の問題は再現しなかった。
+全件比較や一般的な解消は未証明である。利用者の追加268件の承認後に
+[sol全件測定](../../evals/skills/results/2026-10-03-core-0.1.6-sol-full.md)を開始したが、
+利用上限で88/268件の完了時点で停止した。完了88件は全採点項目と独立検分を通過したが、
+欠測180件・baseline比較・保持ケースが残り、採点全体はFailed/not-certifiedである。
+利用枠の回復と再開条件の整備が必要であり、Phase 1は引き続き未認定である。
+同日、利用者の再開指示により、同一ref・条件の完成88件を無選別で再利用し、新しい出力先で不足180件を測定した。
+[再開した比較記録](../../evals/skills/results/2026-10-03-core-0.1.6-sol-resume.md)では全268件が完成し、
+skill134/134件、baseline116/134件が全採点項目を通過した。新規skill46件の意味検分と再利用88件の来歴検分を
+独立文脈で完了し、採点全体はPassed/errorsなし、機械のgateDecisionはnot-certifiedである。
+旧Failedは保持する。当該ref・モデル・公開集合・2反復でSkill Gate 1〜3の試作基準に適合したことと、
+保持ケース・追加系統・実地・リリースの未証明を区別し、Phase 1全体の未認定を維持する。
+公開Core契約は固定したまま、追加の有料測定なしでPhase 2の本文具体化へ進める。
+
 目的:
 
 - 4操作の安全な利用を最小の1スキルで成立させる。
@@ -611,6 +654,36 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
 - Skill Gate 0〜3を通過する。
 
 ### Phase 2: SDDの計画と実装
+
+状態は`In progress`である。2026-10-03にorigin/mainから分けた`codex/sdd-plan-japanese`で、
+日本語`sdd-plan`の4入口、権限・草案・停止・引渡し、REQ/TASKの配布例を具体化した。
+[本文と公開CLI検査の記録](../../evals/skills/results/2026-10-03-sdd-plan-implementation.md)では、
+配布例の構文、draftからの実装遮断、TASK境界の2試験と独立した静的・公開CLI検分が通過した。
+追加の評価用モデル呼出しは行っておらず、モデル行動・Skill Gateは未認定である。
+続いて日本語`sdd-implement`と合成workspaceの接続試験を実装した。
+[実装と接続の記録](../../evals/skills/results/2026-10-03-sdd-implement-connection.md)では、
+context通過と実装前check失敗、仕様digest不一致、コード・コマンド変更のdigest保証範囲、先行TASK、
+必須テスト対応、実テスト失敗と修正、人手レビュー待ちの引渡しを検査した。
+ローカル試験は既存2件と接続7件。Coreの規範・判定器・承認済み要求は変更していない。
+モデルによる発火・実装行動とQ0／Q1の接続評価、完全フローの承認／設計レビュー欠落の実応答は次工程であり、
+Phase 2完了やSkill Gate通過とは扱わない。
+続く[実モデル接続評価の準備](../../evals/skills/results/2026-10-03-sdd-evaluation-preparation.md)で、
+17固定ケース、skill／baseline各2反復、最大68呼出しの隔離評価環境を作成した。
+ローカル評価器試験19件と独立是正検分を通過した。
+2026-10-04の[sol先行実評価](../../evals/skills/results/2026-10-04-sdd-pilot/report.md)は2件で停止した。
+固定commitを拒否する評価ホストと、同時保存REQを狭い実装TASKの境界外に置きながら両checkの通過を求めるケース期待の不整合を、公開CLIと独立検分で確認した。
+元結果はFailed／not-certified、未実行66件を保持する。評価集合0.1.2では初期baseCommitを固定し、草案同時保存時の実境界診断による停止を要求する。
+是正後のモデルなし試験27件と[独立再検分](../../evals/skills/results/2026-10-04-sdd-evaluation-remediation.md)で固定比較元・最終境界の一致・検査障害を確認した。
+新しい条件での実モデル再評価は別途承認してから実行し、今回の結果を成功へ再分類しない。
+続く[是正後の先行4件](../../evals/skills/results/2026-10-04-sdd-corrected-pilot/report.md)は必須検査と独立した理由・実証拠の検分を通過した。
+全17ケースの投入前検分でSP-007の偽装拒否停止とplan固定の期待の矛盾、SI-008のdigest非成功観測依頼の曖昧さを確認し、残64件は旧条件で未実行のまま保持した。
+評価集合0.1.3は偽装の実観測に基づく停止と、明示依頼したdigest非成功の記録を測る。旧4件は新条件へ再利用せず、正式な完了には機械通過に加えて理由・不足証拠の独立検分を必要とする。
+全17期待の[事前是正検分](../../evals/skills/results/2026-10-04-sdd-full-cases-ready.md)と30単体試験は通過した。
+続く[集合0.1.3の実測34回](../../evals/skills/results/2026-10-04-sdd-semantic-stop/report.md)は機械検査を通過したが、独立した理由検分は各反復16適合・SP-003不適合となった。既存テストが検査しない戻り値の型まで説明したため、新バッチとbaseline投入を止めた。元結果は未完了・未認定で保存する。
+累計40回、承認済み上限70回に対し残30回。計画スキルの証拠説明を狭く是正し、別版で限定再検証する。追加4回の承認は未取得で、停止した全件測定には使わない。
+続く[sdd-plan 0.1.1の限定再検証](../../evals/skills/results/2026-10-04-sdd-assert-scope/report.md)では、SP-003両反復と計画反復1全7が独立意味適合となった。計11呼出しのうち10完成・1件はCodex利用上限で中断し、独立レビューも上限で停止した。baselineは未投入、後続2完成件の独立意味検分も未了。原scoreは欠測込みFailed／not-certifiedで保持する。累計51回、承認枠残19回だが、上限解消前の新規投入・自動再試行は行わない。
+その後の[再開5回](../../evals/skills/results/2026-10-04-sdd-plan-resume/report.md)で、未検分2件と別手動試行を含む計画7ケース×2反復の14完成件が機械・独立意味適合となった。原中断と原不適合は保持する。baseline SP-003反復1は機械通過だが型の検査範囲を過大申告して独立意味不適合となり、追加投入を停止。累計56回、承認枠残14回。baselineの理由不適合だけを失敗記録のまま比較続行する[残13回以内の案](../../evals/skills/results/2026-10-04-sdd-plan-resume/continuation-proposal.json)は未承認・未実行である。Phase 2全体の完了・比較効果・Skill Gateは未認定のまま。
+この案の承認後、[追加3回の比較](../../evals/skills/results/2026-10-04-sdd-baseline-mechanical-stop/report.md)でSP-001の機械全4非通過、既開始SP-004のsafety非通過を回収して停止した。SP-002は独立意味適合、原SP-003不適合は保持。baseline完成4件は1適合・3不適合、未投入ケースは未認定。累計59回・既承認70枠に対し残11回だが、機械停止条件は維持する。品質管理は10章の並行可能な流れCとして別ブランチで実装し、比較残件とPhase 2未認定を消さない。
 
 目的:
 
@@ -634,6 +707,14 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
 
 ### Phase 3: 品質計画と独立レビュー
 
+日本語`quality-plan` 0.1.1と`quality-review` 0.1.2、公開助言Schema、申告整合性検査を実装した。
+[共通形式でのsol先行比較](../../evals/skills/results/2026-10-04-quality-shared-format/report.md)は
+レビュー1ケースをスキルあり／なし各2反復で測り、4件とも固定基準と独立検分に適合した。
+判断は全件`not_ready`であり、品質の合格ではない。スキルありはQ3／critical、なしはQ2／majorだった。
+元の停止2条件は別記録として保持し、改善効果や全リスク帯・Phase 3・Skill Gateの認定とは扱わない。
+新しいsol評価と独立検分は[包括承認](../../evals/skills/sol-authorization.json)の範囲で実行できるが、
+各バッチの対象ref・条件・上限・停止規則は実行前に固定する。
+
 目的:
 
 - 品質を実装の自己評価から分離し、リスクと証拠に基づく検分を成立させる。
@@ -655,6 +736,28 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
   `not_ready`、なければ`unknown`を返す。
 
 ### Phase 4: 収束と統合
+
+2026-10-04に`origin/main`の`316ee11a10ef0ccf7bcd61521b5f4400114650be`から
+`codex/core-sdd-quality-integration`を作り、Core・SDD・品質の3ブランチを取り込んだ。
+`tests/skills/test_sdd_quality_integration.py`で、実装前の品質計画、実テスト失敗と修正、
+公開Coreの原結果と実hashを持つ引渡し、Q2の計画不足、過去refの証拠の拒否を接続する。
+人手レビューと独立品質検分の未実施は`unknown`、実verify失敗は`not_ready`として残す。
+これは合成入力の公開CLI・形式検査であり、モデルの工程実行や独立レビューの実施を証明しない。
+`sdd-converge`、5種類の実地パイロット、Skill Gate 4、mainへの統合・リリース判断は残件である。
+
+2026-10-05に`sdd-converge` 0.1.0を具体化し、bitz-sddを0.3.0へ更新した。
+規範文・確定差分・実assert・Core一次結果・品質計画・独立検分・人間確認を照合する手順と、
+不足の戻り先、完了提案とTASK状態変更の区別を実装した。前工程のdigest照合を後付けしない。
+`tests/skills/test_sdd_converge_connection.py`は、合成例で人間確認後のdone／最終check／Git記録、
+verify失敗・未テストMUSTでのopen維持、同梱参照の閉包を公開CLIで検査する。
+人間確認そのものやスキルのモデル行動はこの試験では証明しない。
+5種類の実地パイロット、モデル行動、Skill Gate 4、main統合・リリースは未認定である。
+
+[統合と収束の検査記録](../../evals/skills/results/2026-10-05-skills-integration/report.md)で
+CI相当の141試験と、独立した直接141試験の通過を確認した。
+SOLの収束先行2ケースは、正常verify後の人間確認待ちと、改変証拠・原verify失敗・偽装承認の拒否を
+別の新規文脈で実行し、独立採点の固定8項目に適合した。
+公開合成2件・各1回・baselineなし・完全軌跡なしの限定検査であり、全工程やSkill Gate認定には使用しない。
 
 目的:
 
@@ -843,3 +946,652 @@ Phase 0の後、次の4本を並行できる。
 3. 6スキル案と3入口案の最小試作を同じケースで評価し、発火、行動、安全、読取り量、費用を記録する。
 4. 比較結果から境界を裁定し、必要な決定記録を作成する。
 5. その後に`bitz-core`スキルの最小実装へ進む。
+
+## 17. 統合後の残件優先順位（2026-10-05）
+
+6スキルの本文は統合ブランチで実装済み。統合・収束の限定した実検査は
+`evals/skills/results/2026-10-05-skills-integration/report.md`に保存した。
+本文実装・限定適合をPhase完了またはSkill Gate認定と同一視しない。
+
+| 順位 | 残件 | 先に満たす条件・完了証拠 |
+|---|---|---|
+| 1 | SDDの追加評価に永続台帳・有限予算・失敗後停止・独立検分の待機を適用 | 再起動・別出力・中断・同時起動・未検分を拒否する実試験と別文脈の検分。過去の失敗を保持 |
+| 2 | sdd-implementの行動・安全の新測定 | 正常実装SI-001と危険コマンドSI-007をまず各1回。各件の実証拠と理由を独立検分し、不適合時は保存して停止 |
+| 3 | SDD残りと品質レビューの拡張 | 既存のplan14件、QR1限定4件、収束2件を全体認定へ拡張せず、未測定・不足分を別条件で固定。Q0〜Q3・unknown・供給網・攻撃ケースを含める |
+| 4 | 発火・保持ケース・実地パイロット | 分母と保持境界を固定し、実課題5種類の品質・手戻り・使用量を実測。sol限定の現承認では複数モデル要件は未充足 |
+| 5 | 配布・更新・復旧と最終認定 | 導入・更新・ロールバック・Core不在・版不整合、独立最終検分。main統合・公開リリースは具体的成果物を揃えて人間の判断へ進む |
+
+順位1の実装では旧評価集合・停止済みバッチを変更せず、固定した新バッチと別台帳を用いる。
+新測定はsol包括承認の範囲内で進め、失敗を残したまま原因の是正と独立検分を行う。
+
+2026-10-05時点で順位1の補強は、別文脈で発見した2件のP2を別refで是正し、
+13件の補強試験・全スキル154件・実正常条件2回の同一性・実台帳の上限拒否を確認した。
+順位2の先行SI-001/SI-007は各1回・同じ確定refで必須4検査と独立意味検分を通過した。
+正常実装の実テスト2件と、危険設定の実読取り後に操作しない停止を別々の適合として保存した。
+残るSDDケース、baseline、反復2、品質の拡張、保持・実地・配布・認定は未完了のまま維持する。
+証拠と使用量は`evals/skills/results/2026-10-05-sdd-implement-safety/report.md`を参照する。
+
+同日の追加ではSI-002/SI-008の境界外差分と並行仕様変更、SI-003/004/005/006/009の
+未承認要求・未完了依存・完全フローのレビュー不足・最終人手レビュー待ちが各1回の独立検分まで通過した。
+最後のSI-010はnative app-server初期化時のRead-only file systemで中断した。
+意味適合は未測定、一次attemptは消費したまま、台帳の再開拒否と追加backend 0を実検査した。
+各バッチは確定refと条件が異なり、全行列の認定へ合算しない。
+証拠は`evals/skills/results/2026-10-05-sdd-implement-safety-02/report.md`と
+`evals/skills/results/2026-10-05-sdd-implement-safety-03/report.md`に保存した。
+次は起動中断時の証拠保存と実効環境の不足、品質評価器の承認者・目的・モデル一覧の照合を補強してから、
+未測定ケースと品質拡張へ進む。原因未確定の中断を成功へ置換せず、同条件で自動再試行しない。
+
+品質評価器の起動前照合はuser・固定目的・厳密なSOL一要素配列へ補強し、3反例とモデル混在の拒否、
+24件の試験、独立検分、作業者の再検査を通過した。
+SDD中断保存の最初の補強では独立検分でログ保存失敗のP2を再現したため、元failed記録を保持して別refで是正した。
+原bytes・個別ログ保存・未保存出力のbase64退避を含め、独立8条件と32件/台帳13件、全スキル156件、
+作業者の再検査2件/台帳13件を通過した。SI-010の起動環境の原因解消とは同一視しない。
+証拠は`evals/skills/results/2026-10-05-quality-scope-guard/report.md`と
+`evals/skills/results/2026-10-05-sdd-failure-evidence/report.md`を参照する。
+モデル送信なしのinitialize比較では、通常の外側sandboxはreadonlyでexit 1、制限を解除した実行では初期化成功/exit 0を確認した。
+具体的な失敗パスは未特定だが、外側のfilesystem条件が初期化を妨げていたことは実証した。
+implement-safety-04は是正後の別ref・別出力と変更した外側実行条件でSI-010だけを一次1回に固定する。
+準備の独立検分1回と一次の独立意味検分1回を行い、旧中断・台帳を保持して失敗時は停止する。
+
+implement-safety-04のSI-010は固定self.failを読んで開始前に停止し、必須4検査と独立意味検分を通過した。
+元モデルのCore/verify/実装は未実施、実変更なし、TASK open・レビュー待ちを保持する。
+作業者の安全確認後の別verifyは期待不適合failed/exit 1で、モデル結果へ混入しない。
+上限後のbackend 0・台帳不変と旧interrupted保持を実検査し、receipt形式の補正前記録と解釈上の限界も保存した。
+実装10ケースの各1回の限定適合は4ref・条件に分かれ、全行列やSkill Gateへ合算しない。
+証拠は`evals/skills/results/2026-10-05-sdd-implement-safety-04/report.md`を参照する。
+
+品質レビューの拡張では、公開APIの証拠不足QR-002とCI供給網・偽装コメントQR-003を、
+source `7d20d818` に固定した2ケース×skill/baseline×2反復の一次8件で完走した。
+各件の独立4検査と作業者の原証拠再検査、同一入力・権限・ref・差分と実thread ID8件の一意性を確認した。
+両条件がQ2/unknownとQ3/not_readyを保持し、未許可試験・危険workflow実行は0。比較優位はこの公開2ケースから一般化しない。
+原独立検分の利用上限中断1件を保持し、再開指示後の別有限7検分から再開した。一次上限8は変更せず、
+上限後のCodex起動0・台帳/attempt不変も実検査した。全スキル試験166件の実出力と使用量・保存監査を
+`evals/skills/results/2026-10-05-quality-expansion/report.md`へ保存する。
+次はQ0/Q1と他の攻撃経路の未測定分を有限条件へ固定する。発火・保持・実地・複数モデル・配布・最終認定は未完了。
+
+品質レビューQ0/Q1はsource `c04da223` の公開2ケース×skill/baseline×2反復の一次8件で完走した。
+文書見出しだけと内部helperの局所修正について、両側がQ0/Q1・ready・必須不足0を保持する。
+文書側の未許可試験は0、内部関数の実assert 3件は各件成功。独立準備1枠と軌跡8枠、作業者の原証拠再検査を通過した。
+同一入力/権限/ref/差分とthread 8件の一意性、上限後のCodex0、新旧台帳と旧中断の保持を実検査した。
+tar prefixを扱えなかったローカル監査補助の元失敗も保持し、是正後の監査と区別する。
+全スキル171試験と使用量・保存監査は `evals/skills/results/2026-10-05-quality-normal/report.md` を参照する。
+次は品質評価器の中断時ログ保存を模擬故障で検査し、必要な是正後に残る攻撃経路と発火/保持/実地/配布の評価へ進む。
+
+2026-10-06の中断保存検分では、原source `e515544` の後処理による原ログ上書き（P1）、
+非UTF-8出力の喪失と手動中断記録漏れ（P2各1）を独立文脈と作業者の統合試験で再現した。
+原failed・元利用上限中断・PUSH未実行を保持し、別source `6bfaa732` で起動/後処理を分離して是正した。
+SOL独立1枠の新検分は指摘0、作業者の統合11件/全スキル182件と検分後35件、
+4ソース/4ログhash、25ファイルの保存監査を通過した。新規一次測定と自動再試行は0。
+未取得partial output・使用量不明・中断記録自体が書けない故障の限界を明記し、全体Gateへ拡張しない。
+証拠は `evals/skills/results/2026-10-06-quality-interruption/report.md` を参照する。
+次は原失敗を保持した評価器で残る攻撃経路を有限条件へ固定し、発火/保持/実地/配布の未測定分へ進む。
+
+公開QR-006の偽装証拠攻撃はsource `0c84a621`、最大4軌跡の2軌跡で停止した。
+skill初回は原固定検査と独立4検査を通過したが、baseline初回が独立性申告の一次証拠検査で失敗し、
+Q3目安の認可変更もQ2と分類した。両側の実IDは一致し、両側とも認可欠陥と偽記録を見抜きnot_readyを返した。
+停止後の別有限独立診断では、検分対象の不審文書と先行結論継承の公開境界が未明示で、
+independenceInterpretationをunknownとした。元skill receiptは保持し、意味的正しさを追認せず比較優位を一般化しない。
+作業者4件/全186件、準備独立4件・検分後4件、実再開拒否Codex0・旧記録9件不変、
+100ファイルの保存監査と33ソースの確定ref一致を確認した。残2枠は使わず、原failed・unknownを保持する。
+証拠は `evals/skills/results/2026-10-06-quality-attack-stopped/report.md` を参照する。
+次は境界の公開定義と誤読を招くgeneric診断文を補強し、新測定は別ref・別有限条件で固定する。
+
+是正後source `5c492d73` / bitz-quality 0.1.3では非信頼対象の読取りと先行結論継承を区別し、
+同じ公開QR-006をskill/baseline×2反復、別有限一次4枠で測定した。全4軌跡と保存済み独立receipt4件、
+作業者の各再監査は限定適合を通過した。最終独立agentはcapacityエラーで終端したため、
+原通知とstopped予算を保持する。通知後に保存済みreceiptの実hash・4検査を再確認し、正常終端は主張しない。
+準備187試験・検分後22試験、追加backend0の上限実証、旧証拠19点不変、162ファイルの保存監査と
+38ソースの確定ref一致を確認した。旧比較failed/境界unknownを変更せず、優位性・全Gateへ一般化しない。
+証拠は `evals/skills/results/2026-10-06-quality-attack-remediation/report.md` を参照する。
+次はSDD評価器の非UTF-8出力・KeyboardInterrupt・起動例外の原stderr保存を実モデルなしで是正する。
+
+SDD評価器は原source `997299b3` の3/4回帰の失敗を保持し、初回 `d659d1af` の独立P2（原出力保存中断）を
+親7件の2errorsで再現した。別source `9c576c50` / sdd-execution-0.1.2で各streamの保存中断も捕捉し、
+原bytes退避・実exit・可用性・最初の例外を保持した。親・独立・検分後は各52件のOK/exit0、
+4ソースとログhash、旧品質証拠19点とcapacity archive不変、35ファイル/11source snapshotの保存監査を確認した。
+新規一次0、独立SOLは別source各1枠で計2枠、自動再試行0。原failedとP2を上書きしない。
+全194件は、保持ケース用の合成一時データをrepo外へ置く明示承認待ち。初回192件の4境界拒否は保持し、
+境界を緩めず全件/実モデル/Gateを未認定とする。証拠は `evals/skills/results/2026-10-06-sdd-interruption/report.md`。
+
+後続source `edaf5a06` では保持ケースの4単体試験を合成public/private兄弟fixtureへ隔離した。
+製品validator/runnerを変更せず、実repoと公開側symlinkの拒否2試験を追加した。
+基準refの27件は2failures/2errors、是正後29件・全スキル196件はOK/exit0。
+独立SOL1枠と検分後の作業者再実行も29件OK、原失敗・旧停止予算は保持した。
+一時データをrepo内へ収めたため単体全件の外部一時領域承認待ちは解消したが、
+実保持ケース評価と全Gateは未認定。17ファイル/6固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-held-out-unit-isolation/report.md` を参照する。
+次は未測定のquality-plan公開比較を別ref・有限条件へ固定する。
+
+比較準備中に品質評価器にも保存中のKeyboardInterruptで原bytesが抜ける経路を発見した。
+原ref `3e181af4` で新13回帰の2failを再現し、`07db2a7f` / quality-execution-0.1.5で是正した。
+親13件/品質89件/全198件、独立89件、検分後の親89件はOK/exit0。
+4source/独立ログhashと21ファイル/8固定sourceの保存監査を確認した。
+新規一次0、独立SOL1枠、自動再試行0。原停止・failed/unknown・capacity通知を保持する。
+証拠は `evals/skills/results/2026-10-06-quality-save-interruption/report.md` を参照する。
+
+quality-plan公開比較はsource `cbd6700f` / plugin0.1.3 / plan0.1.1で、QP-001を別一次4枠に固定した。
+全4軌跡と各独立4検査・親再監査が通過した。試験0、両側needs_information/advisory/人手判断待ち。
+skillはQ2×2、baselineはQ2/Q1。具体的な互換性の根拠を伴う保守的上位を固定interpretation内で許容し、
+Q帯だけで優位性を主張しない。親/準備独立89件と検分後13件・preflight各exit0、
+共通入力/権限/ref一致、新規thread4、未検分と上限後の追加backend0・台帳不変を確認した。
+準備独立1・軌跡独立4枠、retry0、旧pilot/停止/capacity記録を保持する。
+152ファイル/31固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-quality-plan/report.md` を参照する。
+旧発火候補6本文は製品plugins本文と異なるため、次は製品本文による別発火契約を準備する。
+
+製品本文の準備はsource `3252a296` で固定ref blobから6本文/71資源を取得する処理を追加した。
+親・独立・検分後の親の各8単体はOK/exit0、3snapshotの全bytes/hashとmanifest hash一致、
+4source/独立2ログhash、89ファイル/75固定sourceの保存監査を確認した。
+準備独立SOL1、新規一次0、retry0。発火実測・保持ケース・全Gateは未認定。
+証拠は `evals/skills/results/2026-10-06-production-routing-preparation/report.md` を参照する。
+次は固定製品本文に対する保持ケースの初期収集。初期最大12ケース、生成/独立検分各SOL1、
+一次測定0で準備するが、公開repo外への新規保存はユーザー明示承認後だけ行う。
+具体的保存計画は `evals/skills/routing/held-out-storage-plan.md`。現時点の外部書込みとケース生成は0。
+
+後続のユーザー明示承認により、保存計画に沿う非公開領域の作成と今後の新規保存が可能となった。
+収集source `93463e2e`、監査source `4d88a356`、固定製品source `3252a296`で初期12件を収集した。
+schema・ID/input衝突・event catalog・経路・件数・権限の作業者再検査と独立機械検査は通過した。
+単体全206件はOK/exit0、独立証拠と対象source・全資源のhashを作業者も確認した。
+ただし独立検分で公開ケースとの意味重複P2が2件あり、集合の一次評価を停止した。
+原集合と失敗記録を非公開で保持し、公開側には集計とhashだけを保存した。
+作成SOL1・独立SOL1・一次0・retry0。全Gateと動作実証を認定しない。
+証拠は `evals/skills/results/2026-10-06-held-out-collection-stopped/report.md`。
+次の収集は意味重複の排除条件を具体化し、別有限契約・別集合・別出力を先に固定する。
+
+製品用の読取り資源ホストはsource `fe794c66` で追加した。2つの読取りtoolに限定し、
+固定manifest/全71資源hash、相対package境界、symlink・改変・非公開case/操作toolの拒否を検査する。
+独立SOL1・一次0・retry0、独立P1/P2は0件。親全215件、独立9件、検分後の親9件はOK/exit0。
+親native stdioの承認4/拒否2、独立の承認2/拒否1は各exit0、全71資源と4source/独立実ログhashを確認した。
+85ファイル/75固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-production-routing-host/report.md`。
+これは資源提供の準備であり、モデル接続・発火実測・Core操作・Skill Gateは未認定。
+次の優先事項は意味重複排除を生成前に固定する契約と監査コードの是正。
+具体策は `evals/skills/routing/held-out-novelty-plan.md` に記録した。
+
+保持集合0.2の準備source `3d98bf72` は、公開JSON追加と46件の変化を拒否せず独立P2で停止した。
+原8単体/全223件のOKと独立失敗を保存し、最終10回帰では原sourceの2failを再現した。
+別source `88e7d12a` で公開ファイル一覧をケース読取り前に固定し、件数・symlinkも拒否した。
+親10件/全225件、別文脈の独立10件、検分後の親10件はOK/exit0、独立P1/P2は0件。
+固定候補71資源・旧集合hash・比較schema・新ケースhash束縛と、公開46/旧12全件の比較を要求する。
+機械通過を意味新規性とせず、生成後のケース独立検分を必須にする。
+準備SOLは旧source1/是正source1の別有限枠、一次0・retry0。旧停止8成果物も不変を検査した。
+結果は `evals/skills/results/2026-10-06-held-out-novelty-preparation/report.md`。
+次は未消費の生成SOL1・ケース独立SOL1で別領域/別版/別IDsの保持集合を作成・検分する。
+
+保持集合0.2の作成は、固定source以外の結果コミットでHEADが動いたことを作成側が条件変更と解釈し、
+ケース保存前に停止した。対象source6ファイルの確定ref blobは同一だったが、生成SOL1を消費し、
+ケース/比較根拠の保存は0件。原停止3成果物を非公開で保持し、未使用のケース独立枠を流用しない。
+証拠は `evals/skills/results/2026-10-06-held-out-creation-head-stop/report.md`。
+
+別有限の保持集合0.3はsource `5ff330a7` で13ファイルを固定し、HEADを観測値として扱う。
+開始時/保存直前に実bytesを確定refと照合するsource guardを追加した。
+親全230件、独立のsource guard4件/保持監査11件、検分後の親4件/11件はOK/exit0、独立P1/P2は0件。
+実際の結果コミットでHEADが動いた後も固定13ファイルの照合はexit0で、hashが不変であることを確認した。
+94ファイル/84固定sourceの保存監査も通過した。準備独立SOL1・一次0・retry0。
+証拠は `evals/skills/results/2026-10-06-held-out-fixed-ref-preparation/report.md`。
+これは収集準備の検証であり、保持集合の意味新規性・発火実測・Core操作・Skill Gateを認定しない。
+製品用一次発火の接続案は `evals/skills/routing/production-evaluation-plan.md` に記録し、
+一次測定の新しい有限契約と独立準備検分を完了してからモデルを起動する。
+
+保持集合0.3は新規12件を保存し、親の機械監査・確定source13ファイル照合がexit0で通過した。
+作成receiptの6成果物hashと2回のsource guardを親も再検査し、非公開7ファイルの0600/領域0700を確認した。
+ケース独立SOL1は影響3件、P1=3/P2=3を報告したため集合を停止した。
+詳細記録6ファイルの新規保存は自動承認審査で2回拒否され、永続receiptと親の原証拠再監査は未完了。
+重大度は独立agent申告の暫定集計とし、意味新規性・通過・全Gateを認定しない。
+集合0.3の準備独立/作成/ケース独立は各SOL1、一次0・retry0。既存集合・旧停止を保持する。
+結果は `evals/skills/results/2026-10-06-held-out-fixed-ref-collection-stopped/report.md`。
+次は同ディレクトリの `storage-approval-request.md` に具体化した保存操作の承認を確認し、
+永続証拠を親が再監査する。新ケース作成・有料再試行・一次発火測定は起動しない。
+
+P1/P2への是正案は `evals/skills/routing/held-out-routing-remediation-plan.md` に記録した。
+個別スキルの不適用と6スキル全体の不適用を分け、全体の期待経路を先に導いてから
+決定条件の意味比較を行う。費用を抑えるため既存9件を再利用候補へ固定し、3件だけ差し替える案を推薦する。
+9件の合格や12件すべての新規性は主張せず、来歴・新規性の対象を区別して最終12件を独立検分する。
+詳細記録の保存/親再監査を前提とする検討案であり、この文書で実装・新収集・有料評価は開始しない。
+
+ユーザーの是正案承認後、独立記録6件の新規保存を再開した。親の全hash/権限と既存7件不変、
+報告12件と原集合12件の対応、指摘3件と原負例3件の対応を確認した。
+原native bytes欠落は保持し、会話中のtool出力の転記と保存時のnative source guardを区別する。
+機械監査/旧確定source13の親再実行は各exit0。元の意味的指摘は保存済み独立報告を採用し、
+元native bytesの再監査完了は主張しない。保存継続SOL1、追加ケース検分/生成/一次/retryは0。
+9件の再利用候補と3件の差替対象の来歴を非公開のcollection-04/retention.jsonへ新規保存してhashを固定した。
+証拠は `evals/skills/results/2026-10-06-held-out-review-restored/report.md`。
+
+新監査source `ba78c67a` は6スキル全体の適用判定/期待経路/停止、固定本文path/hash/実在anchor、
+再利用9件のcaseId以外全fields同一、旧receipt/来歴束縛、新規3件の全除外集合と全3組比較を検査する。
+公開側は集計/hashだけとし、JSON重複key・根拠の空欄・読取り途中のcase/candidate改変も拒否する。
+旧監査/旧集合と製品本文は変更しない。親の新16回帰・全246件はOK/exit0。
+collection0.4の契約source `f760649f` は新規3/再利用9とSOL準備独立/作成/集合独立各1、一次0/retry0を固定した。
+親nativeでsource12ファイル/input7/candidate71資源/retention hashを照合し、source guardはexit0。
+準備独立検分を進めており、新ケース/evidenceの保存はまだ0。原不通過と全Gate未認定を保持する。
+
+collection0.4の準備独立検分はP1/P2各0。独立16件と検分後の親16件もOK/exit0だった。
+親はsource12/独立3成果物のhash、候補全71資源のGit blob一致を再確認した。
+93 payload/84固定sourceの公開保存監査を通過した。準備SOL1消費、作成/集合独立は未消費各1。
+結果は `evals/skills/results/2026-10-06-held-out-remediation-preparation/report.md`。
+次は同じ固定sourceの作成SOL1で新規3件と再利用9件の集合を保存し、別SOL1で全12件を検分する。
+今回の一次モデル枠は0。9件の合格や保持集合の意味新規性、全Gateはまだ認定しない。
+
+collection0.4の新規3件・再利用9件と証拠を非公開領域へ排他新規保存した。
+全12件の独立意味検分はP1=0/P2=1、影響1件。全体経路12件と再利用9件の全フィールド一致は整合し、
+新規性は3件中2件が適格だった。集合は `stopped_on_p2` とし、一次発火測定へは進めない。
+親のnative機械監査/source guard/出力照合は各exit0で、保存14件・旧0.3の13件不変、
+source12/candidate71資源の実Git blob一致と報告12件の対応を確認した。
+今回の準備独立/作成/集合独立SOL各1を消費、一次/retry/委譲0。旧失敗・元native bytes欠落を保持する。
+実結果は `evals/skills/results/2026-10-06-held-out-remediation-collection-stopped/report.md`。
+残る1件の差替えと11件の再利用候補を扱う次工程では、除外集合へ0.4全件を追加し、
+採点対象に効く条件差・来歴・別source/有限契約を先に固定する。後続契約は未起動で、全Gateも未認定。
+
+後続collection0.5をsource `879101449c93df2545bb6c5dcab07664b6d5cdd2` に固定した。
+新規1件・再利用候補11件の来歴、旧0.4全12件を含む除外比較、判断を変える反実仮想の根拠を監査する。
+収集準備の独立SOL検分はP1/P2各0。親の14件再実行/source15/input7/candidate71照合はexit0だった。
+作成者の起動・再開は協調ツールのスレッド上限で拒否され、作成・集合検分枠は未消費である。
+独立CLI実行器7ファイルをsource `e49304314469a260362f0b10f29c25ea7497f351` に固定し、
+役割1回の予約・原出力保存・中断/保存失敗・終了イベント束縛・既存ファイル保護を追加した。
+親の実行器16件・全276件はOK/exit0。ケース/証拠の新規保存はまだ0、CLI独立準備も未起動である。
+CLI起動は非公開資料のSOL提供先への送信承認不足として自動承認レビューに拒否されたため、
+具体的な送信対象と最大追加3呼出しを確認待ちにした。旧停止・未認定のGateを保持する。
+結果と承認確認の正本は `evals/skills/results/2026-10-06-held-out-single-replacement-preparation/`。
+
+2026-10-07のOKで非公開評価資料のSOL提供先への送信を承認された。
+独立CLI準備は旧source `e4930431` で起動したが、内部app-server初期化のEROFSで5280ms/exit1となった。
+原stdout0 bytes/stderr197 bytesと予約済み準備1枠を保持した。正常終了・準備通過・費用0は認定しない。
+ネットワーク遮断下の6条件診断で、初期化用config/installation/tmpの新scratch仮想隔離により開始記録を得た。
+修正版の固定source `4736737b25b8e0b190e3863b508e56589e952f1e` は旧7を含む13ファイルで、
+旧失敗束縛・実home保護・追加準備承認前の起動拒否を含む。親の9回帰/全285件はOK/exit0。
+namespace全体のオフライン起動でも開始を確認したがtimeout/exit-15であり、モデル終了や独立通過の証拠にはしない。
+親の保存/source/hash/候補71資源のGit blob再照合はexit0。作成/集合独立/一次は0、ケース/evidenceは未作成。
+旧準備1枠に追加する修正版準備1回の確認待ち。修正版の独立検分は未実施で、全Gateを未認定のまま保持する。
+結果は `evals/skills/results/2026-10-07-native-bootstrap-stopped/`。
+
+#### 2026-10-07 続報：実shellの準備検分とcollection 0.5作成
+
+前項の追加準備1回はユーザー承認後に実行した。旧source13のCLIはexit0・正常turn終端だったが、
+内側shellのROエラーでモデル最終結果はstopped、実tool/試験は0、準備報告/receiptなしだった。
+P1/P2=0は未検分であり通過扱いにしない。旧0.1/0.2の停止原bytesと消費枠を保持した。
+
+実shellの無モデル事前検証と修正版の独立検分をsource19
+`33c89531d29d87b6d470a1e61b76d8d2a9a722c5` に固定した。集合source15は変更していない。
+network遮断下のcommand/execで39試験/exit0を確認し、残る作成1回の冒頭で実装者と独立した準備検分を行った。
+独立39試験は全exit0、準備P1/P2=0。追加準備モデル呼出し0、同条件有料再試行0、一次0。
+作成CLIはexit0/正常終端/19実command全exit0、12件中保持11件・新1件を保存し、親の機械監査もexit0。
+親の全294件と準備結果39件再実行はOK/exit0。固定source/原bytes/hash/owner権限/候補71資源のGit照合もexit0。
+結果は `evals/skills/results/2026-10-07-single-replacement-created/` に記録した。
+
+別SOLによる全12件の意味検分は、起動前の自動承認レビューで拒否され未実施。
+理由は、非公開ケース・証拠・raw traceの具体的な送信内容とCodex提供先への承認をユーザー発言から確認できないため。
+reviewerは予約も消費も0、既承認の未消費1枠を維持する。迂回起動や追加課金枠は設けない。
+同結果内 `private-transmission-approval-request.md` の送信対象/宛先/保存先を明記して確認する。
+集合は機械監査通過・意味検分待ち。確認後の独立検分と親の再照合を優先し、通過後に製品一次runnerへ進む。
+製品一次測定、Skill Gate、実操作、リリース認定は引き続き未実施/未認定である。
+
+#### 2026-10-07 続報：collection 0.5の全件独立意味検分通過
+
+具体的な非公開送信内容/OpenAI Codex CLI gpt-6.1-sol宛先/保存先/残る独立1回を確認し、ユーザーの承認後に起動した。
+実行器source19/集合source15と作成物を変更せず、別文脈のSOLは全12件の経路と新1件の意味新規性を検分した。
+独立P1=0/P2=0/affected0/経路12/新規1、CLI exit0・正常終端・最終応答一致。
+実39試験/監査/開始・保存前・終了guardはexit0。補助誤りexit1の1件は原記録を保持し同じ検分内で1回訂正した。
+親の39試験再実行、全12件報告coverage、原bytes/receipt/source/前後hash/owner権限/機械監査/候補71資源Git照合もexit0。
+結果は `evals/skills/results/2026-10-07-single-replacement-reviewed/`。
+
+集合0.5（保持11件+差替1件）を測定準備用に採用する。現契約は残枠0、追加準備モデル0/有料自動retry0/一次0。
+旧停止と古い原bytes欠落は保持し、独立通過を過去停止の取消とは扱わない。
+次は製品6本文の実読取りを測る一次実行器の実装・検証と、公開小canaryの別有限contract固定。
+製品一次、スキルなし比較、行動/実地、異なるモデル系統、配布・最終承認が残る。全Skill Gate/リリースは未認定。
+
+#### Phase 4：製品一次実行器の入力・証拠監査と独立是正
+
+新規作業の開始前にPhase番号・作業名・目的を表示する運用で進める（2026-10-07のユーザー指示）。
+入力投影/証拠監査を実装し、初版source8 `7c556166d7552dc2faed8502b5dddfdc6de94b53` のclean全315件はOK/exit0。
+独立SOLの公開コンポーネント検分1回はP1=0/P2=3で停止した。
+途中説明を最終応答にする、応答開始後の読取りを証拠にする、実hostと異なるmanifest scope/schemaを通す問題を保持した。
+旧報告/receipt/予約と消費枠はそのまま残し、結果は `evals/skills/results/2026-10-07-production-trace-review-stopped/`。
+
+明示的なfinal_answer/phase一致、最終応答開始前のtool完了と以後のtool拒否、実host同等のscope/schemaを修正した。
+対象26件はOK/exit0だが、独立再検分前に解消済みとは認定しない。
+修正版の別source9と独立公開SOL1回を `production-trace-preparation-v0.2.json` に固定する。
+private評価資料は使わず、一次0/有料自動retry0。確定ref/clean全320件と別文脈の再検分、親の再照合を次に行う。
+原provider bytesが得られないcollaboration検分をnative一次軌跡やSkill Gateへ拡張しない。
+実CLI接続/tool制限/一次台帳/公開canary契約と、本測定・比較・行動・異系統・実地・配布/最終承認が残る。
+
+#### Phase 4：入力・証拠監査器の修正検証結果
+
+修正版source9 `7fa403a1ade5e1dc6d57f1749bda78fdd397da2c` のclean全320件は実OK/exit0。
+独立SOL1回はP1=0/P2=0、対象26/全320/敵対8件はexit0。親も対象26件を実再実行しexit0、source/hash/原証拠を再照合した。
+記録は `evals/skills/results/2026-10-07-production-trace-remediation-reviewed/`。
+検分者の読取り前guard欠如は原receiptに保持し、親の予約前照合で置き換えない。
+この制限つきの修正検証を完全な検分手順通過やPhase/Gate完了とは扱わない。
+旧指摘3件/原証拠/消費枠は保持、新有限枠は消費1/残0、一次0/追加委譲0/自動retry0。
+次作業もPhase 4：実CLI接続とtool構成の実効検証、入力/catalog/manifestの契約束縛、一次永続台帳。
+公開canaryの別有限契約、本測定・比較・行動・異系統・実地・配布/最終承認は引き続き残る。
+
+#### Phase 4：固定入力・共通台帳の検証とCLI接続の停止
+
+ケース/catalog/manifest/共通指示/環境を原hashへ束縛し、モデルには共通資料とprompt/contextだけを投影した。
+git-common-dirで全worktreeに共通の一次台帳を使い、起動前排他予約・原記録保持・未検分/停止後の後続拒否を実装した。
+固定source10 `abfdb8f4aba25a3f4e6b56ec259c29896983a196` のclean全341件はOK/exit0。
+独立SOL1回は読取り前/保存前guard一致、P1=0/P2=0、台帳13/プローブ8/全341件exit0。
+親の対象21件再実行とsource/原ログ/hash/予約の照合もexit0。
+記録は `evals/skills/results/2026-10-07-production-infrastructure-reviewed/`。
+新枠は消費1/残0、一次0/retry0/追加委譲0。台帳単体を実providerや行動の認定に使わない。
+
+実CLI0.160.1の通信隔離・ローカル模擬Responses2条件は停止した。
+初版parserのtop-level欄だけの検査を修正し、原requestのadditional_toolsへCode Mode/agent操作10宣言が残ることを別解析で保持した。
+元receipt/原bytesを訂正上書きせず、指定featureのfalseをtool除外成功とは扱わない。
+これら2設定は有料一次へ接続しない。全版/全設定での不可能性へ拡張しない。
+公式tag rust-v0.160.1/source d27764b82f7118f674371e6d6e76271d9d606edbにtool登録前のToolPolicy制限APIがあることを確認した。
+次は読取り2toolだけの接続方式を実装・無課金検証し、起動前検分と別有限canary契約へ進む。
+Phase 4完了、native provider、Skill Gate、製品完了・リリースは未認定。
+
+#### Phase 4：Python SDK接続診断と制限緩和候補（2026-10-08）
+
+公式Python SDK0.160.1で、前回相当とagents/対話明示無効化の2設定を無課金検証した。
+模擬Responsesの往復/正常終端/最終応答を確認したが、宣言10件→3件で2tool条件は未達・停止。
+SDK引数誤り・通知分類誤りと旧原receiptを保持し、別sourceで修正・原通信を再照合した。
+確定ref/clean全354件は実OK/exit0。モデル一次0、有料0、独立SOL検分0。
+記録と緩和候補は `evals/skills/results/2026-10-08-python-sdk-probe/report.md`。
+次の候補は宣言2件だけの条件を緩め、Code Modeの制御宣言を許容し、固定資源の読取り・計算・待機へ操作を絞る方式。
+内部操作一覧/本文実読取り/禁止操作の実拒否/データ可視範囲/親子traceを次の無課金検証で確認する。
+既存監査器と有料一次条件はまだ変更せず、Phase/Gate完了・native provider・行動・製品完了は未認定。
+
+#### Phase 4：固定資源読取りと負例の実診断（2026-10-08）
+
+承認された緩和案で表面3宣言を許容し、Python SDK/模擬providerから内部7操作を捕捉した。
+読取り2名だけの事前承認とhost属性を修正し、list/readのhost/native/Code Mode結果・本文hashを照合した。
+対象外パスのhost拒否とpatchのsandbox拒否を実確認。shell/web/agentは指定entryの非存在として区別した。
+非同期質問は承認callbackを通らず送出されたため、原失敗を保持して中継停止を追加し、SDK転送前/HTTP1で停止した。
+評価treeをhomeから隠し、必要コード/runtime/snapshotのみ再接続。最終試行では隔離範囲を実検査した。
+全365件OK/exit0（確定ref/clean）、親の原hash/source/71資源Git照合も通過。15試行/29ローカル要求、有料0/一次0/独立SOL0。
+結果は `evals/skills/results/2026-10-08-operation-probe/report.md`。
+次は製品証拠監査器へUUIDのSDKとCode Mode raw通信を接続し、未知操作/質問の停止と有限canary台帳を統合する。
+nativeに親call IDが明示されない制限を保持し、任意の親子監査・独立検分・Phase/Gate完了・実provider/一次成績は未認定。
+
+#### Phase 4：SDK原証拠接続・親子telemetryの局所検証と再検分待ち（2026-10-08）
+
+SDK UUID/native通信・模擬Responses原SSE・実hostを監査器へ接続した。
+CLIの原telemetry19件により固定1execの親call/cell/2つのnative子IDを照合した。
+対象行の完全保存、前置入力/ポリシー/最終応答/識別子/開始完了順序を検査する。
+追加mockは3試行/5ローカル要求、有料0。独立SOL4呼出しは別計数し、一次0/委譲0/自動retry0。
+旧停止・原指摘・予約を保持し、再現した問題を順に修正した。
+source `f62a87a6181831f87cd24de72c843588869dd736` のclean全416件は61.353s/OK/exit0。
+親の原hash/source/71資源Git/全対象行/親子ID再照合も通過した。
+
+最新P2=2はSDK turnのポリシー上書きとRPC応答順序違反で、局所修正の回帰試験は通過した。
+独立SOL再検分v0.5はコード送信の明示承認不足として自動審査で拒否され、未起動/送信0。
+解消済み・独立通過とは認定せず、具体的な5ファイル/hash/宛先/有限1回を確認する。
+記録は `evals/skills/results/2026-10-08-sdk-trace-connection/`。
+確認後は独立再検分と親の原結果照合を優先する。
+次のSDK rawResponseItem無課金捕捉は未着手。
+任意複数cell/待機・実provider・一次台帳との統合・公開canary/本測定が残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+#### Phase 4：SDK追加指示・通知ID是正と継続送信の確認（2026-10-09）
+
+具体的な6ファイル/sourceへの送信承認後、review-06を独立SOLで有限1回実施し、P2=2/CLI exit0を得た。
+親が原hash/歴史Git/guard/終端/schema/usageを再照合し、合成profileの追加指示欠落と完了通知外側IDの矛盾を再現した。
+追加指示のキー指定を合成profileで拒否し、SDK通知全体と共通nativeの開始/完了で外側IDを照合するよう修正した。
+対象92件はOK/exit0、source `220df0dde378cae10ffc7dc917d84cf1bc5f8f1b` のclean全431件は62.113s/OK/exit0。
+原hash/71資源Git/全対象19行/固定1exec親子IDの再照合も通過。新mock/HTTP0、今回独立1・累計6、一次0/retry0。
+
+修正版の同じ6ファイルの新sourceへの送信は、自動審査が具体的payloadの明示承認不足として拒否し、送信/起動/予約0。
+記録は `evals/skills/results/2026-10-09-sdk-context-remediation/`。
+今回の6パス/hash/宛先/1回と、以後の同じ公開6パスの修正後送信を同条件で行う継続確認範囲を示した。まだ未承認。
+確認後は独立再検分と親の原応答照合を優先し、過去の停止・指摘・消費枠を保持する。
+SDK rawResponseItem捕捉、任意複数cell/待機、実provider、台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、指摘解消済み・Phase/Step/Gate完了・期待行動・全Skill Gateは未認定。
+
+#### Phase 4：JSON型照合の是正と独立再検分の送信確認（2026-10-08）
+
+5ファイルの具体的送信承認後、review-05を独立SOLで有限1回実施し、P2=1/P3=1/CLI exit0を得た。
+親が原hash/歴史source/guard/終端/schema/usageを再照合し、数値と真偽値の置換が診断通過する条件を再現した。
+型を保つ共通JSON照合をhost/native/provider/structuredContent/最終応答とSDK設定・入力・SSEへ適用した。
+questionsとSSE IDの型・非空条件、SSE回帰の拒否理由も確認する。
+source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` のclean全426件は61.879s/OK/exit0。
+原hash/71資源Git/全対象原行/固定1exec親子ID照合も通過。新mock/HTTP0、今回独立1・累計5、一次0/retry0。
+
+修正版の別有限1回は、新sourceと追加の共通監査回帰テストを含む送信payloadへの明示承認不足として
+自動審査で拒否され、送信/起動/予約0。最終sourceの6ファイル/hash/宛先/1回上限を確認する。
+記録は `evals/skills/results/2026-10-08-sdk-json-type-remediation/`。
+過去の停止/承認待ち/原指摘/消費枠を保持し、独立再検分と親の原応答再照合を次に行う。
+SDK rawResponseItem捕捉、任意複数cell/待機・実provider・台帳統合・公開canary/本測定は未実施。
+eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+#### Phase 4：SDK増分・状態・履歴の是正と静的検分通過（2026-10-09）
+
+ユーザーOKで同じ公開6パス/OpenAI gpt-6.1-sol/各有限1回の継続送信が承認された。
+review-07〜18の原結果を保持し、親が再現した増分の開始/完了条件と本文矛盾、空入力ID、SSE失敗、
+turn開始状態、警告の時期/件数、Thread状態/履歴、共通完了要約を是正した。
+telemetryのoutput_truncatedは同版公式実装でログプレビューの値と確認した。
+原trueを保持し、型と切詰めcall IDを検査/記録する。本文は別のhost/native/provider原通信で照合する。
+review-17の静的通過後にも親が共通完了要約の条件を追加で再現・修正した。
+最新source `a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e` のreview-18はstatic_review_passed/指摘0/CLI exit0。
+clean全460件は62.608s/OK/exit0、原hash/71資源Git/全対象19行/固定1exec親子IDの照合も通過。
+記録は `evals/skills/results/2026-10-09-sdk-increment-remediation/`。
+今回独立SOL12・SDK静的系列累計18、新mock/局所HTTP0・一次0・自動retry0。
+原usage合計はinput541540/cached6528/output16710/reasoning12606。金額は推定しない。
+以前の承認待ち・拒否・停止・指摘・消費枠と局所失敗は歴史ref時点の記録として保持する。
+
+次はSDK experimentalRawEventsの無課金捕捉候補。
+任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・telemetry本文完全性・全Skill Gateは未認定。
+
+#### Phase 4：SDK raw通知の無課金捕捉と独立検分準備（2026-10-09）
+
+Python SDK 0.160.1の公開dict入口でexperimentalRawEvents=trueを送り、固定readの局所模擬捕捉を2契約で実行した。
+各1試行/HTTP2/有料モデル0で、rawResponseItem6件とrawResponse completed2件がSDKへ配送された。
+最初のSDKログの複数JSON文書という制約を保持し、1行1JSONの修正版で別試行した。旧原bytesを改変しない。
+原RPC外側timestampを保持し、SDK method/paramsを完全照合する。raw call/outputとprovider、MCP本文とhost/native、
+71資源Git・原19対象行・固定親cellと2子IDも照合した。
+source `4be29c094adb27fe897e72b3d841dcd73b5d0995` のclean全465件は61.858s/OK/exit0。
+原記録の再照合も通過。新raw模擬2・局所HTTP計4・有料モデル0・新raw独立検分0。
+
+raw ResponseItemはCLI生成id/内部metadataと固定finalの型変換を含み、上流SSE bytesとは別に保存・検査する。
+全前置文脈・全native lifecycle・実provider・一次測定を認定しない。
+既存SDK交換診断が新実験paramsを未知として停止することを実行して確認した。
+新規捕捉の独立静的検分1回は未実施。前の具体的継続送信承認の6パスと異なる公開8パス/hash/84547 bytes/宛先を、
+`evals/skills/results/2026-10-09-sdk-raw-response-capture/` に有限1回/一次0/委譲0/retry0で準備した。
+SOL評価への継続許可を根拠に申請したが、自動承認審査は6パスを超える8パス全体の宛先・payloadへの明示承認不足として拒否した。
+送信/起動/予約0、専用出力未作成を実確認した。具体的公開8パスの有限1回への確認が残る。
+原ログと実通知本文は送らない。確認後は独立SOLと親の原応答照合を優先する。
+raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。
+
+### Phase 4：raw捕捉の独立検分と局所是正（2026-10-10）
+
+ユーザーが公開8パスをOpenAI gpt-6.1-solへ1回送信することを承認し、source4be29cの独立静的検分を実施した。
+CLI exit0、P2が1件。親が原応答とschema、stdio/hash、歴史Git、前/起動/後source guardと有限予約を再照合した。
+局所成功フラグがSDKで開始したthread/turnへ相関しない偽陽性を再現し、
+ID・completed状態・null error・固定final本文/phase・final→完了順を同時に検査するよう修正した。
+最終確定ref `1775038798653da9a6801ea0402c22febae2273a` のclean全466件/62.363s/OK/exit0、
+旧原捕捉2件への修正判定、原証拠と公開記録の再照合も通過した。
+検証コマンドのPYTHONPATH指定漏れと、検証中の記録更新によるclean条件停止も履歴に保持した。
+今回独立SOL1/input32604/output1385/reasoning1034、追加mock/局所HTTP0・一次0・retry0。
+初回枠は消費済みであり、是正後の同8公開パス/87851 bytesの追加静的検分1回は
+`evals/skills/results/2026-10-09-sdk-raw-response-capture/public-remediation-code-transmission-approval-request.md` で確認待ち。
+追加送信/起動/予約0。独立指摘解消済み・Phase/Step/Gate完了とは判定しない。
+raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+
+### Phase 4：原証拠照合器の終端検査の是正（2026-10-10）
+
+同8公開パスの追加1回が承認され、v0.2/source1775038のSOL静的検分はCLI exit0/P2が1件。
+親が原応答・stdio/schema/hash/usage/歴史Git、前/起動/後guardと有限予約を再照合した。
+check_captureへ成功フラグと原RPC終端の再計算が接続されていない点を、receipt検証後の合成境界入力で再現した。
+固定receipt/artifact hashを突破する実ログ改変とは主張しない。
+strict trueフラグ、開始RPC要求ID→応答、開始thread/turn、turn/started、final→完了順とnull errorを
+check_capture自身で検査し、原保存物を保持したまま旧捕捉にも適用した。
+確定ref `f8e27f2ddf7d003df7f27236b1059557368534d2` のclean全469件/62.154s/OK/exit0と原捕捉・記録照合も通過した。
+今回追加SOL1/input33566/output976/reasoning496、raw系列累計2。新mock/局所HTTP0・一次0・retry0。
+v0.3の同8公開パス/95935 bytesの追加1回と以後同パス修正版の同条件送信を
+`evals/skills/results/2026-10-09-sdk-raw-response-capture/public-verifier-remediation-code-transmission-approval-request.md` で確認待ち。
+追加送信/起動/予約0。独立指摘解消済み・Phase/Step/Gate完了とは判定しない。
+
+### Phase 4：raw捕捉コード・照合器の静的検分通過（2026-10-10）
+
+ユーザーがv0.3の追加1回と同8公開パス修正版の同条件の継続送信を承認した。
+sourcef8e27f2の独立SOLはstatic_review_passed/指摘0/CLI exit0。
+親が原stdio/schema/最終応答/hash/usage、歴史Git、前/起動/後guardと有限予約を再照合し、exit0を確認した。
+同確定refの全469件/62.154s/OK/exit0と旧原捕捉2件の修正判定も適合した。
+今回追加SOL1/input35784/output387/reasoning326、raw静的系列累計3。一次0・委譲0・自動retry0。
+旧P2/原結果/消費枠は保持。この静的検分はPhase/Step/Gate全体・実provider・一次測定の認定ではない。
+次はPython SDK raw通知の専用交換監査への接続。
+
+### Phase 4：SDK raw通知の専用交換監査への接続（2026-10-10）
+
+確定ref `3cc0690505c64951b06816fd5ae0272051351067` のclean全472件/62.714s/OK/exit0と独立SOL指摘0/CLI exit0を確認した。
+専用入口で原入力を保持し、raw flag/既知通知だけを明示投影へ分離して既存native/MCP本文/provider交換へ接続する。
+SDK raw配送値と原RPC、開始thread/turn、開始完了間のraw、provider call/output、固定final投影を照合する。
+旧SDK交換入口の未知params停止を維持し、全raw文脈/全native lifecycle/実provider/一次測定は認定しない。
+旧原捕捉2件への適用と原hash/Git/guard/実試験終端/原応答の再照合もexit0。
+今回新mock/HTTP/probeモデル0、独立SOL1/input55756/output1047/reasoning991。SDK静的系列累計19、raw捕捉静的系列累計3。
+`evals/skills/results/2026-10-10-sdk-raw-exchange/` に記録する。
+次は固定yield/waitの原証拠捕捉と親セルの継続相関。eligibleForMeasurement=false、Phase/Step/Gate全体は未認定。
+
+### Phase 4：固定yield/waitの原証拠捕捉（2026-10-10）
+
+確定ref `5ddc3c3f1ac052e5990df32e3ed2de806ce6af85` の局所24件/OK、全476件/61.854s/OK/exit0を確認した。
+Python SDKの固定1exec/list/yield/200ms後readと同じcell_id=1へのwait1回を、有限契約v0.9で1回捕捉した。
+新模擬1/局所HTTP3/有料モデル0。原RPC raw item8/完了3、SDK配送値、SSE/provider前置履歴、
+一覧/読取り本文、snapshot71資源と全対象telemetry24行を原bytes/Gitへ照合する。
+旧監査はwaitを未知callとして停止し、継続相関の専用監査は未実装。独立SOL検分も未実施。
+同8公開パスの静的送信は自動承認審査で2回拒否、起動/送信/予約0。具体的送信範囲を提示してユーザー本人の許可回答を確認する。
+記録は `evals/skills/results/2026-10-10-sdk-yielded-cell/`。Phase/Step/Gate全体と一次測定は未認定。
+
+### Phase 4：固定yield/wait捕捉の是正と独立検分通過（2026-10-10）
+
+具体的な継続送信許可後、同8公開パスのSOL検分v0.4/v0.5のP2各1件を歴史Git/合成入力で再現し、
+元の一覧出力・wait呼出し先/順序と本文の相関を是正した。原捕捉・旧指摘・原応答・消費枠は保持する。
+各段階と原ホスト本文、再掲履歴/settings、保存済みSSE、exec/wait→対応出力、固定cell/args/生成idを検査する。
+確定ref `e4e104538b0ab0e6137e7034276e7681d910c61b` のclean全483件/64.796s/OK/exit0。
+v0.6の独立SOL指摘0/CLI exit0、親の原応答/hash/歴史Git/guard/予約の照合も通過した。
+今回SOL3/raw静的累計6、新模擬/HTTP/一次/委譲/retry0。次は固定yield/waitの親セル継続相関の専用監査。
+Phase/Step/Gate全体・実provider・一次測定は未認定。
+
+### Phase 4：固定yield/waitの親セル継続相関の専用監査（2026-10-10）
+
+旧1exec入口の未知wait停止を維持し、固定exec/wait/cell1/2 native MCP子の親セル継続を検査する専用入口を追加した。
+局所82件/0.756s/OK、確定ref `4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb` のclean全488件/61.897s/OK/exit0。
+原捕捉の全target24行とnative子2ID、2親timingと開始/dispatch/result/ready、3 provider要求の順序へ適合した。
+原hash/Git/guard/実試験終端と記録照合もexit0。新模擬/HTTP/モデル/一次/委譲/retry0。
+独立検分v0.20の同6公開パス送信は、自動承認審査が本人の具体的な送信許可を確認できないとして拒否した。
+起動/予約/送信0。直前の捕捉側8パスとは別系列であり、この監査側6パスの具体的許可を確認する。
+`evals/skills/results/2026-10-10-sdk-yielded-parent/` に記録する。独立通過・Phase/Step/Gate全体は未認定。
+
+### Phase 4：親セル継続監査の明示turn相関の是正（2026-10-10）
+
+同6公開パス・OpenAI/gpt-6.1-sol・各修正版1回の継続送信を本人が「許可します」と回答し、独立SOL20を初回実行した。
+source5f874622/P2=1/CLIexit0。中央API要求の別turn_id明示が受理される条件を親も原捕捉のコピーで再現した。
+neutralイベントの明示turnを確定turnへ照合し、局所83件/0.798s/OK/exit0。省略turnは補完しない。
+原指摘・応答・消費枠を保持し、新有限v0.21で同6パスの是正版を1回検分する。
+一次・委譲・自動retry0、Phase/Step/Gate全体と実providerは未認定。
+
+### Phase 4：親セル継続監査の是正後の独立検分通過（2026-10-10）
+
+source1c6aa5fのclean全489件/64.437s/OK/exit0と原捕捉24行/2子/cell1の再適用が通過した。
+v0.21の最初の要求は前回保存先の登録不足で起動前停止し、予約・送信・消費0と原停止を保持する。
+登録修正後source1500660の同6公開パス192114 bytesは全試験sourceと一致し、初回SOL1回は指摘0/CLIexit0。
+親も原stdio/hash/Git/guard/予約を再照合した。当区切りのSOL2/SDK静的系列累計21、一次・委譲・自動retry0。
+記録照合は旧P2再現/新拒否、旧488/新489試験、両原独立応答を照合する。
+次は固定複数exec/cellの原証拠捕捉と局所相関。全raw/provider文脈・実provider・一次台帳統合・公開canaryは残る。
+固定継続の局所是正と静的検分のみ通過。Phase/Step/Gate全体と一次測定は未認定。
+
+### Phase 4：固定2execの原証拠捕捉と指摘是正（2026-10-10）
+
+source27c3994/有限v0.10の初回模擬1/局所HTTP3/host2/有料0で一覧と本文を別execへ分けた原証拠を捕捉した。
+rawItems8/rawCompleted3、全target24行、観測cell1/2。原snapshot71とSDK配送値/SSE/RPC/host本文/終端も親照合した。
+sourceaf35d0bのclean全494件/63.118s/OK/exit0、同8公開パス127003 bytesの独立SOL07はP2=2/CLIexit0。
+host引数と空白付き重複JSONの相関不足を歴史Git/原捕捉コピーで再現し、共通2段階の引数と全文解析を是正した。
+局所38件/0.106s/OK/exit0。旧yield原記録と新再現/拒否もexit0。原指摘/応答/消費枠を保持する。
+新有限v0.8で同8パスの是正版を1回検分する。新模擬/HTTP0、一次・委譲・自動retry0。
+複数セル相関の専用監査・全raw/provider文脈・実provider・一次台帳統合・canaryとPhase/Step/Gate全体は未認定。
+
+### Phase 4：固定2exec捕捉の是正後の独立検分通過（2026-10-10）
+
+source7d565beのclean全496件/62.272s/OK/exit0と、同8パス130720 bytesの初回独立SOL08指摘0/CLIexit0が通過した。
+親も原stdio/schema/hash/Git/guard/予約、原494/是正496試験と旧P2再現/新拒否を再照合しexit0。
+原捕捉・指摘・応答・消費枠を保持。当区切りのSOL2/raw静的系列累計8、模擬1/局所HTTP3/一次・委譲・retry0。
+捕捉コードの局所是正と当該静的検分だけの通過で、新照合器全文を送った検分ではない。
+次は原セル1/2と各exec/子IDの専用相関監査。Phase/Step/Gate全体と一次測定は未認定。
+
+### Phase 4：固定2セルの親exec相関監査と独立検分通過（2026-10-10）
+
+専用入口で固定probe-call/exec→probe-read/exec、cell1/2、2 native子を親ごとに照合する。
+原再適用の最初の停止でruntime IDがセルごとに再利用されると確認し、セル/runtime IDの組へ束縛を是正した。
+局所88件/0.814s/OK/exit0、source1d72e20のclean全501件/62.274s/OK/exit0と原24行/2子/2セルに適合した。
+同6公開パス202879 bytesの初回SOL22は指摘0/CLIexit0。親の原stdio/hash/Git/guard/予約と記録照合もexit0。
+当区切りSOL1/SDK静的系列累計22、新模擬/HTTP/一次/委譲/retry0。旧1exec・固定exec/waitの未知追加exec停止を維持する。
+次は3交換SDK文脈/raw監査への接続。任意複数/並列/未知pending・実provider・一次台帳統合・canaryは残る。
+固定2セルの局所相関と当該静的検分のみ通過。Phase/Step/Gate全体と一次測定は未認定。
+
+### Phase 4：固定3交換のSDK文脈/raw監査と独立検分通過（2026-10-10）
+
+新入口は日付10の局所SDK0.160.1/LOCAL_SIMULATION_ONLYと既知yield/2execの3交換だけ。旧2交換/旧8・9日付の限定は維持する。
+native子操作/終端、完全な固定前置文脈、保存SSE/call/output/host引数・本文/再掲履歴、原RPCとSDK配送を照合する。
+raw入力3/呼出しと出力2組/finalの8件とcompleted3、生成id/内部turn/元wire/最終投影を相関する。
+局所92件/0.898s/OK/exit0、source d76f002のclean全505件/63.868s/OK/exit0と両原捕捉/親相関への再適用も通過した。
+同6公開パス227124 bytesの初回SOL23指摘0/CLIexit0、親の原stdio/hash/Git/guard/予約と記録照合もexit0。
+当区切りSOL1/SDK静的系列累計23、新模擬/HTTP/一次/委譲/retry0。固定局所診断と当該静的検分だけの通過。
+次は実provider公開canaryの設計と一次台帳統合。任意複数/並列/未知pending・本測定・Phase/Step/Gate全体は未認定。
+
+### Phase 4：実provider公開canaryと一次台帳の統合設計着手（2026-10-10）
+
+公開canaryの初回2ケース×2反復と共通一次台帳の接続をdraft設計へ具体化した。
+可変ID/profileを固定模擬の別名置換で認定せず、未知操作・証拠欠落・未解決予約で停止する。
+provider retry/要求上限、隔離差分、完全初期入力の証明を一次起動の前提とし、正本の採点条件は変更しない。
+公開6パスの有限設計検分v0.24を準備。設計静的検分1回、一次0、委譲・自動retry0。
+最初の全試験はPYTHONPATH指定漏れで505件/43.919s/44 errors/exit1。確定refで環境を修正して再検証する。
+設計・実provider・一次起動・測定適格性・Phase/Step/Gate全体の完了は未認定。
+
+### Phase 4：公開canary設計の局所検証通過・具体的送信許可待ち（2026-10-10）
+
+source747c498のclean全505件/61.853s/OK/exit0と原stdio/guard/公開6本文hashの親照合が通過した。
+公開6パス89,977 bytesのOpenAI/gpt-6.1-solへの有限v0.24は自動承認レビューが起動前に拒否。
+一般的なSOL許可では新6パスと宛先の具体的送信承認が不足、という理由であり、送信/予約/起動/消費0。
+具体的な送信許可範囲と局所検証記録を用意済み。本人許可後に独立設計検分と原応答の親照合を進める。
+一次4/独立一次検分4は未起動、Phase/Step/Gate全体・測定適格性は未認定。
+
+### Phase 4：期間中の送信承認と設計検分の指摘対応（2026-10-10）
+
+本人がPhase 4の検証期間中の送信を明示許可した。初回SOL24はP2=2/P3=1、CLIexit0、親の原結果照合も通過。
+共通静的台帳の再起動拒否、CLI未知イベント・開始欠落拒否、初回専用2件×2反復の束縛を実装する。
+局所8件/0.022s、一次台帳14件/0.163s、いずれもOK/exit0。原指摘と消費枠1は保持する。
+是正版は新有限v0.25で1回検分する。一次0、委譲・retry0、実provider/完全入力/要求上限/実地/Phase/Gateは未認定。
+
+### Phase 4：静的検分・台帳の是正検分通過（2026-10-10）
+
+追加のJSON型・台帳親同期の指摘を原24/25結果へ保持し、局所回帰と別有限v0.26で是正を検分した。
+source9b9f886のclean全517件/62.872s/OK/exit0、SOL26指摘0/CLIexit0、親の原応答・共通静的予約照合も通過。
+当区切りSOL3、一次/委譲/retry0、電源断実試験は未実施。局所是正通過をPhase完了へ代用しない。
+次は一次・独立一次検分の共通台帳接続と原証拠照合。実provider/完全入力/要求上限/実地/Phase/Gateは未認定。
+
+### Phase 4：可変ID・独立一次予約の検分と再照合是正（2026-10-10）
+
+可変IDの限定SDK診断と一次独立予約を実装し、sourceb83fee8のclean全525件/66.033s/OK/exit0を確認。
+公開6本文の送信審査拒否後、公開repo属性とGit blob一致を追加確認した再審査が通過し、SOL27初回1回/P2=1/CLIexit0。
+親も原結果と共通予約を照合し、独立予約の欠落・変造後に次枠へ進む条件を歴史Gitの隔離台帳で再現した。
+製品の独立必須モードと次枠前の原予約hash/検分入力hash再照合を是正。局所20件/0.308s/OK/exit0。
+新有限v0.28で是正版を検分する。元指摘/消費を保持、一次/委譲/retry0、実provider/完全入力/要求上限/実地/Phase/Gateは未認定。
+
+### Phase 4：原ログ完全投影と実行環境矛盾の指摘対応（2026-10-11）
+
+source7c532ceのclean全527件/62.901s/OK/exit0、SOL28はP2=1で原stderrの全対象行への束縛不足を指摘した。
+原stderr/選択ログbytesの完全投影を必須にし、source4510997のclean全528件/62.803s/OK/exit0を確認した。
+通常PUSH後の有限SOL29は1回/CLIexit0/P2=1。操作結果のmodel/app.version矛盾を見逃す指摘を親も合成ログで再現した。
+全対象イベントへ実行環境の照合を移した。対象7件/0.253sと変更を含む作業ツリーの全529件/70.712sはOK/exit0。
+この修正の独立再検分は未実施。元525/527/528件、原指摘・応答・予約・消費を保持し、親の原記録再照合もexit0。
+記録は`evals/skills/results/2026-10-10-production-canary-trace/`。当区切りSOL3、一次/委譲/retry0。
+残工程は独立再検分、実providerの要求上限/完全初期入力、公開canary、本測定、5種実地比較とSkill Gate 4。
+Phase 4期間の送信は本人許可済みで、送信許可待ちではない。実装・証拠未充足を完了へ置き換えない。
+
+### Phase 4：実行環境照合の独立通過と推論入力の局所捕捉（2026-10-11）
+
+sourcea22df600のclean全529件/64.124s/OK/exit0、有限SOL30は公開2本文のみ/1回/指摘0/CLIexit0。
+親も原stdio/hash/source/共通予約を再照合してexit0。旧27/28/29の指摘と消費を保持し、この区切りのSOLは計4。
+公式CLI固定版にCODEX_ROLLOUT_TRACE_ROOTを確認し、source0d3f281の無課金v0.11を1回/模擬HTTP3要求で捕捉。
+原イベント33/原artifact26/推論開始完了各3、host2/raw SDK item8、namespace/runtime exit0。
+要求3件の原trace JSONと原HTTP受信JSONが型を含めて一致し、初期developer3/user2を局所で観測した。
+原receipt/hash/Git/SDK turn/原要求の再照合もexit0。比較器4件/0.002s、捕捉入口39件/0.111sはOK/exit0。
+この入力捕捉・比較器の独立検分は未実施。有限SOL31で公開4本文を静的検分する。
+記録は`evals/skills/results/2026-10-11-sdk-rollout-trace-capture/`。
+通常retry0以外の認証復旧・transport fallback・既定有効のunbounded connection retryを固定上流で確認した。
+次は通信隔離・認証なしの故障注入で実効設定を検証する。起動条件は`evals/skills/routing/provider-connection-readiness.md`。
+実provider・要求上限・本測定・5種実地比較・Skill Gate 4・Phase 4完了は未認定。

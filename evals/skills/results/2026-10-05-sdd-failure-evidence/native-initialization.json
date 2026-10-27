@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "sourceCommit": "2f774b47d9a9e952f10861da71369c941e45417b",
+  "diagnosticKind": "local-app-server-initialize-only",
+  "primaryTrajectories": 0,
+  "requestsSentPerProbe": [{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "bitz-local-init-probe", "version": "0.1.0"}, "capabilities": {"experimentalApi": false}}}],
+  "threadRequestsSent": 0,
+  "turnRequestsSent": 0,
+  "argvTemplate": ["codex", "app-server", "--stdio", "-c", "sqlite_home=<repo>/.venv/sdd-native-init-probe/<label>/state", "-c", "log_dir=<repo>/.venv/sdd-native-init-probe/<label>/logs", "-c", "apps._default.enabled=false", "-c", "features.plugins=false", "-c", "features.remote_plugin=false", "-c", "features.apps=false", "-c", "analytics.enabled=false"],
+  "probes": [
+    {"probe": "sandboxed", "outerExecution": "use_default", "handshakeReturned": false, "handshakeError": null, "exitCode": 1, "wallMs": 4031, "initializationErrors": ["WARNING: proceeding, even though we could not create PATH aliases: Read-only file system (os error 30)", "Error: Read-only file system (os error 30)"]},
+    {"probe": "unsandboxed", "outerExecution": "require_escalated", "handshakeReturned": true, "handshakeError": null, "replyResultKeys": ["userAgent", "codexHome", "platformFamily", "platformOs"], "exitCode": 0, "wallMs": 4080, "initializationErrors": []}
+  ],
+  "conclusion": "外側のfilesystem制限の変更でローカル初期化が成功する実証。具体的なreadonly失敗パスは未特定。一次モデル処理の成功や外部通信全般の不在を証明しない",
+  "secretsReadOrPrinted": false,
+  "gateDecision": "not-certified"
+}

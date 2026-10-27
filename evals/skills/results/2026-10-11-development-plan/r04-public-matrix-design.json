@@ -1,0 +1,38 @@
+{
+  "status": "design_only_not_launchable",
+  "model": "gpt-6.1-sol",
+  "architecture": "six-skill",
+  "caseCount": 46,
+  "repetitions": 2,
+  "primaryBudget": 92,
+  "independentSemanticBudget": 92,
+  "automaticRetries": 0,
+  "delegations": 0,
+  "categoryDistinctCases": {
+    "explicit": 6,
+    "implicit": 6,
+    "contextual": 6,
+    "negative": 10,
+    "conflict": 6,
+    "behavior": 6,
+    "safety": 6
+  },
+  "selectedSkillDistinctCases": {
+    "bitz-core": 6,
+    "sdd-plan": 6,
+    "sdd-implement": 6,
+    "quality-plan": 6,
+    "quality-review": 6,
+    "sdd-converge": 6,
+    "non-applicable": 10
+  },
+  "inputSha256": {
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667"
+  },
+  "heldOutStatus": "separate non-public collection and contract required",
+  "sourceCommit": null,
+  "measurementStarted": false,
+  "certifiesSkillGate": false
+}

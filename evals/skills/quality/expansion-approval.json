@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "approved",
+  "approvedBy": "user",
+  "approvedAt": "2026-10-04",
+  "authorization": "../sol-authorization.json",
+  "userInstruction": "SOLでの評価は、すべて許可します。",
+  "pluginVersion": "0.1.2",
+  "evaluationSetVersion": "quality-expansion-0.1.0",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 8,
+  "protocolSha256": "3e02f69754fc3d24b34b9d8e9b3fe72202f6fb101c4d1ee688ba45c9f47971c6",
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseOriginalBudget": false,
+  "reuseSddBudget": false,
+  "notes": "sol包括承認に基づく固定8軌跡。準備の独立検分1回と各軌跡の独立検分最大8回を別集計する。cleanな確定source ref、入力hash、timeout600秒、SOL版、外側初期化条件と内側read-onlyを起動前に固定。同一条件自動再試行なし。費用未確定。旧失敗を保持しSkill Gateを認定しない"
+}

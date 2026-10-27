@@ -1,0 +1,58 @@
+{
+  "recordedAt": "2026-10-14T12:21:34.494478+09:00",
+  "status": "current_public_index_trace_path_labels_redacted",
+  "scope": "two public index archives produced in this work; no raw/model/auth/opaque/heldout reread",
+  "records": [
+    {
+      "archive": "evidence-r04-new02-contract-remediation-20261014.tar.gz",
+      "record": "r04-new02-contract-remediation-independent-20261014.json",
+      "originalArchiveSha256": "3ba623cd6f49bb1576fd4fde9c85ebe64d324ffbe9255b50cf07199e9e2ceb69",
+      "publicArchiveSha256": "1eb430232fc7f40d6b280be80a7375fdd998c492845e67cf015aa21466ca06da",
+      "regularMembers": 153,
+      "allMemberBytesCompared": true,
+      "gitSourceMembersUnchanged": 49,
+      "changedMembers": [
+        {
+          "member": "local/.venv/r04-matrix-score-review-44dc36fa/.venv/r04-operational-new02-first-stop-independent-20261014-01/hashinventory.json",
+          "originalSha256": "c9641259b1baad5119dab901889b107c24540dfcc27809841a47bb334095fbc1",
+          "publicRedactedSha256": "19cb854ae62dadfd9de14e1ce6ced3213f0e8d44d284f51345f0c5b9dcb58c72",
+          "traceGroupReferences": 50
+        },
+        {
+          "member": "local/.venv/r04-operational-new02-stop-parent-consumption-20261014-01/selected-index.json",
+          "originalSha256": "e70d052f638bb9c5144c955f4f8211bc012648b16c2705a311ac6b87123dec55",
+          "publicRedactedSha256": "e17c4c4a39a07ffc6d70d337e72a4ba3e52b7a39bf9e62acfdcef233ee89be53",
+          "traceGroupReferences": 25
+        }
+      ]
+    },
+    {
+      "archive": "evidence-r04-operational-new03-progress-0006-20261014.tar.gz",
+      "record": "r04-operational-new03-progress-0006-20261014.json",
+      "originalArchiveSha256": "9d43342ca51bad5cc08456b3770fb4bf65eea63bcc4ec9566c3b84469bd4ac47",
+      "publicArchiveSha256": "597a1fb3c629a5d3ab8ac13f55c93eb743b69155ed89285db198e7dea0f7d207",
+      "regularMembers": 68,
+      "allMemberBytesCompared": true,
+      "gitSourceMembersUnchanged": 49,
+      "changedMembers": [
+        {
+          "member": "local/.venv/r04-new02-contract-review-b409f654/.venv/r04-operational-new03-first-slot-independent-20261014-01/hashinventory.json",
+          "originalSha256": "594da3d0743a3eea5a16d13d54fc7ff06845b5270c357505e74f15111d6e6741",
+          "publicRedactedSha256": "e11618466b2b25e12177f0e02897c59ba425b241857fe396593764f3fec24d5f",
+          "traceGroupReferences": 50
+        },
+        {
+          "member": "local/.venv/r04-operational-new03-first-slot-parent-consumption-20261014-01/selected-index.json",
+          "originalSha256": "daf326583a2d07bc5f15fcb1d904f105ad9154231a90b210fa6ee63cd203dc33",
+          "publicRedactedSha256": "a9c52598ac39d0ba5b7235e06624654dfe43117384f2f64e0a8e687e7829c38e",
+          "traceGroupReferences": 25
+        }
+      ]
+    }
+  ],
+  "unredactedArchivesAndInventoriesPreservedLocally": true,
+  "existingGitHistoryUnchanged": true,
+  "measurementsLedgerAndStopsUnchanged": true,
+  "modelsAdded": 0,
+  "reservationsAdded": 0
+}

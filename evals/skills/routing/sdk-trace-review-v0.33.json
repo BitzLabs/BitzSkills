@@ -1,0 +1,61 @@
+{
+  "version": "sdk-trace-review-0.33.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "bounded-fault-records-and-public-provider-connection-diagnostic",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-33",
+  "payloadFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_fault_probe.py",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.1.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_fault_probe.py",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/summary.json",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.33.json"
+  ],
+  "constraints": [
+    "Phase 4期間の送信とSOL評価は本人許可済み。提示する公開6本文のみを静的検分する。SOL1回/300秒、一次/追加モデル/委譲/自動retry0。",
+    "新接続診断はgpt-6.1-sol/OpenAIによる公開固定prompt/base/developer/constant JSON schemaの1 logical SDK turn/60秒。共通repository台帳の別paidConnectionDiagnostic roleを1枠予約し、停止/失敗も返金しない。",
+    "connection contractはversion production-connection-probe-0.1.0、phase4、scope public-provider-connection-diagnostic-only、model gpt-6.1-sol、最大起動1/logical turn1/timeout60/retry0/primary0/expectedObservedApiRequests1、SDK/CLI0.160.1固定。",
+    "通常/stream retry0、WebSocket/無制限接続retry/system proxy fallbackを無効化。認証復旧0回やHTTP要求数の事前hard capは保証しない。API1件は観測期待値であり超過時は不適合として保持する。予約は実診断1枠で、今回静的検分の予約とは別。",
+    "標準CLI認証のread-only bindは許可済み。コードはauth内容を読取/コピー/出力せず、home/保持評価資料を隠す。実通信時だけnetwork隔離を外す。proxyは原stdio保存のみで認証headerを中継しない。",
+    "collectorのcapturedは原記録の取得であり成功の認定ではない。parent evaluateと後続rollout/RPC/API原照合が必要。原client request JSONの捕捉をwire bytes/全応答/server内部入力へ広げない。一次・実地・Gate・Phaseは未認定。",
+    "故障診断は有料0の原4条件/局所HTTP4/API5を親が再照合した。静的検分者へ私的原証拠を渡さず、原証拠を自ら検分済みと主張しない。",
+    "rollout原verifierの前回P3は未知role stringの受入れ。今回はdeveloper/user、custom_tool_call/custom_tool_call_outputだけを明示許可する。前回指摘/消費は保持する。",
+    "非提示依存は未読として扱う。提示本文の具体的な相関/有限枠/停止/偽認定を検分する。保持入力/原RPC/stdio/bundle/HTTP/SSE/認証内容を送らない。tool/ファイル読取り/試験実行は禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "24a7a9874fa1bd3e2e666f41080395920440a579",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-32",
+    "receiptSha256": "0c13426a0024fd993796b0ee1b9b2c92782a7e94185bdf3bafd6cbe8cc392f7d",
+    "responseSha256": "db7d72fe5453df001306ec86689fd06b8ba4ba9723fc0b3aa211bc7229e2edf6",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

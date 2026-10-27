@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_p1_p2_reported_private_receipt_not_saved",
+  "sourceCommit": "5ff330a73de281be8708cba4083e1235c2ad8fca",
+  "contractSha256": "cb74a7c9f522762f3935e9148b13610a55fdd983d4658ca11752d84d8577d136",
+  "heldOut": {
+    "setVersion": "production-routing-held-out-0.3.0",
+    "caseCount": 12,
+    "sha256": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9"
+  },
+  "novelty": {
+    "noveltySha256": "2c9facb05d501130253eabf9c7e4c0ecfd7f97c4e88da634075cd364128f6860",
+    "publicExclusionCount": 46,
+    "previousExclusionCount": 12,
+    "comparisonCount": 12,
+    "semanticNovelty": "requires_independent_review"
+  },
+  "parentMechanicalChecks": {
+    "status": "mechanical_checks_passed",
+    "auditExitCode": 0,
+    "sourceGuardExitCode": 0,
+    "sourceFileCount": 13,
+    "headIsCondition": false,
+    "creatorArtifactsVerified": 6,
+    "creatorAuditMatchesParent": true,
+    "privateSavedFileCount": 7,
+    "privateDirectoryMode": "0700",
+    "privateFileMode": "0600"
+  },
+  "independentReview": {
+    "agent": "/root/sol_held_out_collection_review_03",
+    "model": "gpt-6.1-sol",
+    "reportedStatus": "stopped_on_p1_p2",
+    "reportedSeverityCounts": {
+      "P1": 3,
+      "P2": 3
+    },
+    "reportedAffectedCaseCount": 3,
+    "reportedCasesWithoutMajorFindings": 9,
+    "reportedCorrectAuditExitCode": 0,
+    "reportedFinalSourceGuardExitCode": 0,
+    "evidenceStatus": "agent_report_only_private_receipt_not_saved",
+    "parentRawEvidenceRecheckCompleted": false,
+    "savedArtifactCount": 0,
+    "reportedNativeInvocationErrorExitCode": 2,
+    "correctedWithinSamePaidTurn": true
+  },
+  "storageBlock": {
+    "status": "blocked_by_automatic_approval_review",
+    "reportedRejections": 2,
+    "reason": "Explicit user authorization for repository-external writes could not be verified by automatic approval review.",
+    "scope": "Six new owner-only independent-review evidence files under approved collection-03; no overwrite, deletion, publication or transmission.",
+    "expectedNewFiles": [
+      "independent-review.md",
+      "independent-receipt.json",
+      "independent-audit.json",
+      "independent-audit.log",
+      "independent-invocation-error.json",
+      "independent-source-guard.json"
+    ]
+  },
+  "budgetConsumed": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "certifiesSemanticNovelty": false,
+  "certifiesSkillGate": false,
+  "behaviorEvidence": false,
+  "usage": "unknown",
+  "costUsd": null,
+  "privateArtifactSha256": {
+    "cases.json": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9",
+    "creation-audit.json": "e9ddb313da1cdcb5d651064bc64f0d83a5ca1901f621259c2be108371b6ced56",
+    "creation-notes.md": "13b0c499a37260e0de7f0eeffecce9a2fe147f883895d46afbb0232bf9e76439",
+    "creation-receipt.json": "5100c60d2055a6a96ac5a85691834c2c912fb911e852f28b1fd9124986b23fda",
+    "novelty.json": "2c9facb05d501130253eabf9c7e4c0ecfd7f97c4e88da634075cd364128f6860",
+    "source-guard-presave.json": "3bf797a7b730bacccea28c2eaebfc7e2aa34105a2accbe1699b5225a3e7339da",
+    "source-guard-start.json": "3bf797a7b730bacccea28c2eaebfc7e2aa34105a2accbe1699b5225a3e7339da"
+  },
+  "publicArtifactSha256": {
+    "parent-collection-audit-post.json": "d97f21ad2c143f93cabc47444f50d6bc0e3781c7690ff0509af76c901abf942a",
+    "parent-collection-source-guard-post.json": "e50de88030381c780cdd9d383063301b8e8cefe506669d534f37e0ce312c7825"
+  },
+  "previousFailuresPreserved": true
+}

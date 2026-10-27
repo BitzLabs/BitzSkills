@@ -1,0 +1,75 @@
+{
+  "status": "input_component_reviewed_not_launchable",
+  "scope": "heldout_input_preparation_only",
+  "sourceCommit": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
+  "setVersion": "production-routing-held-out-0.5.0",
+  "caseCount": 12,
+  "repetitions": 2,
+  "primaryBudget": 24,
+  "independentBudget": 24,
+  "casesSha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+  "inputContractSha256": "2e4bdbccf8a48674ee398781584587988e7ee0a858d8a59bb0d8d70fd3bf6945",
+  "independentReview": {
+    "blockingFindings": 0,
+    "relatedTests": 20,
+    "adversarialTests": 5,
+    "reportSha256": "1aabc1ab652e1415345ea300799cab0c1d31bf9a40340d9d14e4f831a5b7a2ed",
+    "inventorySha256": "338db49e28a6cda42516933bd144fb379708b3938147e3280e4693d0bc7ba917",
+    "parentOriginalHashesMatched": 31,
+    "originalP2Preserved": true,
+    "originalP2IndependentlyResolved": true
+  },
+  "fullRegression": {
+    "cleanBeforeAfter": true,
+    "count": 924,
+    "exitCode": 0,
+    "seconds": 133.174,
+    "stderrSha256": "77ffa2e8fde83a642e9f56401200fb81183a6c67ef32ab611e26f293e39a1d04",
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "resourceAssessment": {
+    "baselineSourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "certifiesHeldoutLaunch": false,
+    "models": 0,
+    "observedSourceCommit": "adff35960f7193ecf95ab00319dba815e9a8cfe9",
+    "privateCaseReads": 0,
+    "productResourcesGitMatched": 72,
+    "reservations": 0,
+    "resourceProofSha256": "c4e25f5ce82e174b1784c41e9c1ef159eb629b8b7e4a485f9bbc24d4452f1e66",
+    "sameAsFinalPublicProof": true,
+    "status": "public_evaluation_resources_unchanged"
+  },
+  "cliMetadata": {
+    "observedAt": "2026-10-16T22:39:14.060157+09:00",
+    "accountReadOk": true,
+    "rateLimitReadOk": true,
+    "fiveHourUsedPercent": 18,
+    "weeklyUsedPercent": 79,
+    "reached": null,
+    "sameFixedCliAndOpaqueAuthMount": true,
+    "requiresUnsandboxedMetadataProcess": true,
+    "agentCredentialContentsRead": false,
+    "priorSandboxedRpcFailuresPreserved": true,
+    "claimsAllPriorFailuresCausedBySandbox": false
+  },
+  "actualHeldoutModels": 0,
+  "actualHeldoutReservations": 0,
+  "privateContentsPublished": false,
+  "remaining": [
+    "private durable ledger",
+    "isolated primary capture, independent semantic scoring and parent evidence verification",
+    "fixed finite execution contract and independent concrete prelaunch review",
+    "24 heldout attempts with original failures retained",
+    "failure countermeasures and total-context reduction after all evaluations"
+  ],
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false,
+  "evidence": {
+    "archive": "evidence-r04-heldout-input-reviewed-20261016.tar.gz",
+    "sha256": "dee740012e26df65316b5fb8e64076961323da73fdfdb3a2bcc6fd91f5f6c76e",
+    "members": 4,
+    "allMemberBytesCompared": true,
+    "privateContentsIncluded": false
+  }
+}

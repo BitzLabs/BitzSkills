@@ -1,0 +1,147 @@
+{
+  "status": "four_premeasurement_p2_independently_reproduced_parent_rehashed_unresolved",
+  "reportSha256": "694237b88afc91a25abd393def42297d7ccedf663ffd33ccc5a6d6e91fc29bde",
+  "inventorySha256": "8cc958fa5ceddcda501d8d0e57fef7e9652afb5b4850c41a5f93a150467c1c59",
+  "parentRehashedCounts": {
+    "sourceGitSha256": 6,
+    "parentOriginalSha256": 6,
+    "evidenceSha256": 45
+  },
+  "report": {
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "status": "r06_premeasurement_blocking_defects_confirmed_not_remediated",
+    "decision": "R06行動測定の開始は阻害あり。元3件と追加固定原集合P2を独立再現。補修後の新実行版・原保全・有限入口の別検分が必要。",
+    "executionVersionTested": "quality-execution-0.1.5",
+    "blockingFindings": [
+      {
+        "priority": "P2",
+        "path": "evals/skills/quality/evaluate.py",
+        "line": 181,
+        "issue": "native lifecycle is not validated",
+        "reproduction": "quality-execution-0.1.5 の実Core付き正常profileからthread.started/turn.started/turn.completedだけを除外しtraceを再hashしても全errors空で受理。",
+        "requiredCorrection": "固定CLI用の単一thread/turn、item IDs/開始終了/許可quality_eval tools、正常終端、最終応答の一致を新実行版の検査へ接続。未知/失敗/終端欠測は不適合。"
+      },
+      {
+        "priority": "P2",
+        "path": "evals/skills/quality/evaluate.py",
+        "line": 430,
+        "issue": "missing/invalid original usage is accepted",
+        "reproduction": "正常終端usageをbool input/負cached/文字output＋他字段欠測へ置換し再hashしてもinspect_record全errors空。measureは未検査usageをリストへ転記する。",
+        "requiredCorrection": "原terminalの固定usage字段・int非bool/非負/positive必要値/相互上限/単一終端を検査し、欠測はunknownとして停止。usage由来失敗を0や成功へ変換しない。"
+      },
+      {
+        "priority": "P2",
+        "path": "evals/skills/quality/evaluate.py",
+        "line": 56,
+        "issue": "secondary snapshot/original-read failure loses interruption record and caller failure",
+        "reproduction": "元TimeoutExpiredの保存中にsnapshot EIO→OSError(errno5)が伝播/interruption未保存。trace原読取PermissionError(errno13)でも同じ保存欠落。",
+        "requiredCorrection": "before/after snapshotと各原artifact hash取得を個別保護し、取得不能snapshot/hashはnull＋理由、元callererrorType/errno/exitCode/reasonと原native bytesを保持。原保存ファイル自体の書込み不可は成功としない。"
+      },
+      {
+        "priority": "P2",
+        "path": "evals/skills/quality/evaluate.py",
+        "line": 168,
+        "issue": "fixed original inventory is not required before inspection",
+        "reproduction": "製品と同じ7原集合・正常native/実Coreのbaselineを使用しrecord.artifactsだけ{}へ変更すると全hash検査がスキップされ全errors空。",
+        "requiredCorrection": "新実行版で必須7名と既知adviceの扱いを明示し、集合/type/hashを内容解析前に検査。同一NOFOLLOW原bytesのhashとparseを束縛する。"
+      }
+    ],
+    "independentReproduction": {
+      "normalCompleteProfileAccepted": true,
+      "missingLifecycleAccepted": true,
+      "malformedUsageAccepted": true,
+      "snapshotFailureLostInterruption": true,
+      "artifactReadFailureLostInterruption": true,
+      "emptyFixedInventoryAccepted": true,
+      "actualPublicCoreUsed": true,
+      "realModelEvidence": false
+    },
+    "parentOriginalHashesVerified": true,
+    "ownSourceAndParentFixtureUnchanged": true,
+    "requiredRepairScope": [
+      "新execution/native profileに固定し、過去の測定原を追記・再採点で成功へ付け替えない。",
+      "load/jsonl/final response/documentJson/MCP text/Core stdoutのJSON入口は厳格型/有限値と例外処理を共通化し、未知検査例外を適合にしない。ここは必要な入口設計範囲であり全負例を網羅検証した宣言ではない。",
+      "原集合/NOFOLLOW読取/一度取得したbytesのhashと解析の一致、保存の各二次失敗の独立保護。",
+      "native正常終端/usage failureをprotocol.stopOn invocation_or_usage_failureへ接続し、以後の起動を拒否。"
+    ],
+    "modelsStartedByIndependent": 0,
+    "sharedReservationsWritten": 0,
+    "sourceEdited": false,
+    "clean": true,
+    "scopeLimits": [
+      "公開合成と実Coreで前測定入口の誤受理・失敗保存を検分。実paid/model行動は未検証。",
+      "補修はまだ未実装・未独立確認。全R06、Skill Gate、Phase、releaseは未認定。"
+    ],
+    "hashInventory": "hashinventory.json"
+  },
+  "inventory": {
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+    "sourceGitSha256": {
+      "evals/skills/quality/evaluate.py": "285aaccbfccbc046c9a7c0f0de206f47fdf6d97699ffc50907d03462b7db1e60",
+      "evals/skills/quality/host.py": "ff3979913be021192f9116440f595a4fe4567f67589b6b0b82295e70fca6f96c",
+      "evals/skills/quality/preflight.py": "d51a04a1bfd9cd563b6810c87fb97b8f380583352e895a7614b156c5a95d8ab9",
+      "evals/skills/quality/protocol.json": "972e93a0519b7386cce7331dcaed8f1d78091c1871628019d4de3e5fea19ee48",
+      "tests/skills/test_quality_evaluation.py": "72d334d7f081b0f00c39640f724342afb5d7272eacb4f0d65f7e15ceb918df29",
+      "tests/skills/test_quality_interruption.py": "3b582d945f3e727d16bdcc49f80f10e79ab6da60a144d5cac03b764cc74fe117"
+    },
+    "parentOriginalSha256": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/result.json": "c7c36f4c1b6433dbb91fbf5fd8a0a80cc01662fc6074b1e2fe2c17cb65d3266b",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/trace.jsonl": "a4645e241e168006f2d4404d7c9f17420bd1f9535d5d6f6bed0b7679601cc763",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/host.jsonl": "57dff2dfdcf80be90906fd865a37c7ce8c5159fd78be6add722b04d1798c7167",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/control.json": "11ba4baf8795387e5555a9dd382bb6a3cad0c304308b3ebca851f7b24c17218c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/response.json": "82db4c26978faa09f90c81f9bca90daa8a18bb68f0d2d72fee22814828cafff7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-reproduction/workspace-before.json": "48ac48319c15e1fc993002b284aff5b7117f61b605e282f82b059d5a826cc9e9"
+    },
+    "evidenceSha256": {
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/.spec/bitz.yaml": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/.spec/requirements/REQ-001.md": "3e553454b7ac63028c134788cf2be5f2cf5fc03668d72793e5ddc8e09783ebce",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/resources/advice-format.md": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/resources/bitz-quality/schemas/core-observation.schema.json": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/resources/bitz-quality/schemas/quality-plan.schema.json": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/resources/bitz-quality/schemas/quality-review.schema.json": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/resources/core-cli.md": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/target.py": "7180a539ac90f58fb648db6eb396c8cc0bb17f5e93267576f7ccba2745a85fc2",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/QP-001/test_fixture.py": "33a648651e76b2d023fb11c2dbe223055a0631854eeb0c68b0e06ed64ffd1b82",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/control.json": "e1a13e3482b274fe6bcdab56b064057fa60416a73c9a3bee8636518fe7b9bfa4",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/host.jsonl": "a7ca63a8e8f61ee166232a4db847a12b31e7358813e967db55a03ce654b647f6",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/model-config.json": "878378549c820fa5cab34e64c4337728bb841de90e7c16a596ee4a6c3b9c117d",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/prompt.txt": "5301df43440e64c2a6acd71b21cf71920e3092fcc3e7a4b959dc46cd62b0f18f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/response.json": "fa4d8c1e3c20a5daee528a1a7f2d3a029695f878498023e4c4540ffc5f5be040",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/trace.jsonl": "83375bacaa9aa592cf0cada2cf293b55c9227b36cf2f7d4ca0505da09020de02",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/actual-public-fixture/workspace-before.json": "48ac48319c15e1fc993002b284aff5b7117f61b605e282f82b059d5a826cc9e9",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/control.json": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/host.jsonl": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/model-config.json": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/prompt.txt": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/response.json": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/stderr.log": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/trace.jsonl": "74851d4e7700e395b4c4f85bffe4fa87c09ebfd8fe32140b485797884c081ca8",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/workspace/public.txt": "aaa8d3c8d74ad3e8f6b1772aa9c7e0eaa528cb42fc93599ce2f125b00d4c424c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/artifact-read-failure/workspace-before.json": "73138e960aa36c9a8fbbaac9f07b0ab765c827aa678ae3cdea57eb66369b0ab2",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/complete-seven-inventory.record.json": "b4f895f567c2859732af54636490234fa9fd7c0fed5c72d86404c339f9ac55d9",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/empty-fixed-inventory.record.json": "c2c3f56339efc1b6b570aeee412fec5820dca0478d8deb1b1a447c0671933c2e",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/invalid_bool_negative_string_native_usage.record.json": "687cf6efdb3657e95005daf8f73d3a1c2c78bf3c5564fcd17832b3f54f3194af",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/invalid_bool_negative_string_native_usage.trace.jsonl": "df1a4374b636d3738ada57b0f30ec6ffb1c2b6d7d573cee8d3d0cacd51b4909c",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/missing_native_thread_turn_terminal.record.json": "6d455f3a340878ff4dfa107a38ec7ae983356c01c2164d999703292f8a8adb13",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/missing_native_thread_turn_terminal.trace.jsonl": "9c374929583226cb9e3f6063c486df5a7ebb96a7614b0b1f0a551b0e4ed4a6d5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/normal_complete_synthetic_profile.record.json": "1ec58bb09ed50e1361322c2bc0891487b5314a203c10bb640d4ea703c6b4dff7",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/normal_complete_synthetic_profile.trace.jsonl": "83375bacaa9aa592cf0cada2cf293b55c9227b36cf2f7d4ca0505da09020de02",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/recheck.py": "15d57b1b43e2488f94cdd813b395bd3d0a0a34bcefa47ab9ec4c8bdff246eaab",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/report.json": "694237b88afc91a25abd393def42297d7ccedf663ffd33ccc5a6d6e91fc29bde",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/reproduction.json": "39bbbad7fc0c77b2bec0d1030d92eb38867b3bf71b52f1019e4cee359cf4fb70",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/snapshot-failure/workspace/public.txt": "8432ab7002dbf4af902a08c9d692bcc3b13c8e9d499af19bbbcc583c17356c01",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/snapshot-failure/workspace-before.json": "1a89940a1736b55b70561be88622140eda3b165eef590fc543fe4c822367f06f",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/stdout": "640d306e5a5defc9c19d49f98e08a6732cf92fbc4dfc07eada208d599164e565",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/supplement.json": "202ff94d5c3dee1640837b699526b83d762c566a43f6f91e6be4b000ce267f03",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/supplement.py": "1c6ae61d2e2b5e3f4cd0763670e57b97163eab97e30ff5598df2c1caa39ca0b5",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/supplement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/r06-hardening-negative-independent/supplement.stdout": "686fb7f4c1fbaecc60743d95c274ee4c213fa6f7e6a9f334778e93eca8d2ca28"
+    },
+    "sourceCount": 6,
+    "parentOriginalCount": 6,
+    "evidenceCount": 45,
+    "syntheticGitMetadataContentNotReadOrIncluded": true
+  }
+}

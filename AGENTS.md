@@ -30,16 +30,28 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 
 ### 禁止（実行しない）
 
-- `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo`
-- `main` への直接コミット（変更時は必ずブランチを切る）
+- `rm -rf` / `git push --force`（`--force-with-lease`・`+refspec`を含む） / `git reset --hard` / `git clean -f` / `sudo`
+- `main` への直接コミットと直接push（変更時は必ずブランチを切る）
+- リモートのブランチ・タグの削除、push済みの履歴の書換え
 - 認証情報・トークン類（`~/.claude/.credentials.json`・`.env` 等）の読み取り・出力
 
 ### 事前確認が必要（ユーザーの明示承認なしに実行しない）
 
 - リポジトリ外への書き込み・上書き・削除
-- `git push`（外部公開）
 - 承認済み（`approved`）のREQまたはTECHの意味の変更。ユーザーの明示承認を得てから、
   `docs/02.設計書/03_SDDフロー.md`に従い、変更と同じ作業で先に`draft`または`outdated`へ戻す
+
+### Git操作の承認
+
+次はユーザーが許可済みで、都度の確認は不要とする。上の「禁止」に当たる操作は含まない。
+
+- 作業ブランチの作成、add / commit / merge、まだpushしていないコミットのrebase
+- fetch / pull
+- 作業ブランチを同じ名前のリモートへ送るpush（`git push`、`git push origin HEAD`、`git push -u origin HEAD`）
+
+`.claude/settings.json`は、上のpushの3つの形だけを完全一致で許可し、それ以外のpushは確認を求める。
+規則はコマンドの先頭の文字列で照合されるので、オプションの順序や`+refspec`による抜け道を`deny`だけでは
+塞げない。`main`の保護はGitHubのブランチ保護でも強制する。
 
 ### 検証義務
 
@@ -77,5 +89,7 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 - **コミットタイトル**: `<type>: <説明>`。type は `feat` / `fix` / `spec` / `test` / `docs` / `chore`
   （`spec` は規範文書・ADR の変更）。説明は日本語で、何をするかを文で書く
 - **fixture の変更と Core の実装は別コミットにする**
-- **PR の統合は rebase merge**。squash merge は上の規則を崩すため使わない
+- **PR の統合は rebase merge**。squash merge は上の規則を崩すため使わない。
+  ただし、他のブランチの作業を取り込んだ長いブランチなど、push済みの履歴を書き換えずに rebase できない PR は、
+  マージコミットで統合してよい
 - **1 PR = 1 関心事**。PR 本文には目的・変更点・検証結果（上記コマンドの実出力）を含める

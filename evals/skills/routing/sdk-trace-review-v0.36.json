@@ -1,0 +1,52 @@
+{
+  "version": "sdk-trace-review-0.36.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "rpc-active-item-delta-and-thread-start-order-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-36",
+  "payloadFiles": [
+    "evals/skills/routing/production_rpc_capture.py",
+    "tests/skills/test_production_connection_probe.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/production_connection_probe.py",
+    "tests/skills/test_production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.1.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_fault_probe.py",
+    "evals/skills/routing/production-fault-probe-v0.1.json",
+    "evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.36.json"
+  ],
+  "constraints": [
+    "Phase 4期間の本人送信・SOL許可内。公開2本文のみ、SOL1回/300秒/一次0/retry0の独立静的検分。v33/v34/v35の原指摘/消費を保持する。",
+    "v35 P2=2はghost/完了済み/別型itemへのdeltaとturn開始後のthread開始。親もghostとlate-threadの修正前受入れを再現した。今回active item/型/必須payload/summary partを照合し、thread開始をturn開始より前へ束縛。agentのdeltaがある場合は完了textとの一致も照合。",
+    "correlateは公式SDK0.160.1の単一・無操作診断のcaller/reply/通知相関だけ。未知profileは拒否し、任意SDK互換性/全trace/HTTP wire/上流入力/Gate/Phaseを認定しない。接続と故障の両callerで共通使用する。非提示依存の全動作を検分済みとしない。",
+    "次の実接続collectorは最大起動1/SDK turn1/60秒/retry0の別予約。collector capturedは原取得であり診断passではない。API1は観測期待で事前hard capを保証しない。後続に原rollout/RPC/API照合と独立検分が必要。",
+    "私的原stdio/RPC/bundle/HTTP/SSE/保持期待値/認証内容は送らない。tool/ファイル読取り/試験実行/追加モデル/委譲を禁止する。"
+  ],
+  "previousReview": {
+    "sourceCommit": "6d32a56210e7a282d35455e0cfc09969906137ce",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-35",
+    "receiptSha256": "790cd737de9c224a9c898c229e8d6c6d7b23dfdcf7bdc58ee3658a5a997adb19",
+    "responseSha256": "55cc9c1e2f554a15c781909363c592d98d70ad27cc2d75ad0235940bcfee78aa",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

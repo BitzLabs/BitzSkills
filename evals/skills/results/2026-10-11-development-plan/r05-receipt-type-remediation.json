@@ -1,0 +1,33 @@
+{
+  "status": "original_receipt_type_closure_independently_verified_new03_preparation_stopped",
+  "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+  "relatedTests": {
+    "count": 19,
+    "seconds": 0.171,
+    "exitCode": 0
+  },
+  "fullTests": {
+    "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+    "exitCode": 0,
+    "seconds": 73.17165740591008,
+    "testCount": 692,
+    "testSeconds": 72.746,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "fa85beb953ef3441bd9099d52a03992c92d91dae4eb955736e740e587d44b20d"
+  },
+  "oldConditions": {
+    "01": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    },
+    "02": {
+      "preparationConsumed": 1,
+      "primaryConsumed": 0
+    }
+  },
+  "newCondition": "03 primary68 semantic68 preparation1 retry0",
+  "newPrimary": 0,
+  "certifiesSkillGate": false,
+  "independentRecord": "r05-receipt-type-independent.json"
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "sdd-0.1.4",
+  "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+  "sourceSha256": "560ba39d6ada7b6227c2193f862e8fa58cfbf318083f6660dbb1208bb94875df",
+  "model": "gpt-6.1-sol",
+  "modelVersion": "unversioned-alias-observed-2026-10-04",
+  "plannedLimitedCalls": 28,
+  "attemptedCalls": 11,
+  "completedCalls": 10,
+  "interruptedCalls": 1,
+  "automaticRetries": 0,
+  "baselineCalls": 0,
+  "cumulativeEvaluationCalls": 51,
+  "authorizedCumulativeMaximum": 70,
+  "remainingAuthorizedCalls": 19,
+  "independentSemanticPassed": 8,
+  "completedWithoutIndependentSemanticReview": ["skill/repetition-2/SP-001", "skill/repetition-2/SP-002"],
+  "interruption": {
+    "case": "skill/repetition-2/SP-004",
+    "processExitCode": 1,
+    "reason": "Codex usage limit",
+    "traceTypes": ["error", "turn.failed"],
+    "hostReadCalls": 9,
+    "hostWriteCalls": 0,
+    "hostCoreCalls": 0,
+    "decisionPresent": false,
+    "artifactSha256": {
+      "control.json": "d0d8a6dd3f101c237af9bffdb66a18a439e0b38249fb6dbb346f02156043bd16",
+      "trace.jsonl": "abf3040525266f7ebb52939f7015870bcab85ba3139f7c41302225796e75c2ad",
+      "host.jsonl": "5d0283e6cb742616ff9253b621f229c3d7b0d9845a852c559acb06e05ca126bc"
+    }
+  },
+  "machineScoreStatus": "Failed",
+  "completionAllowed": false,
+  "gateDecision": "not-certified"
+}

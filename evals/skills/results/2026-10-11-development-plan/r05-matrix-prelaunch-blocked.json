@@ -1,0 +1,120 @@
+{
+  "status": "prelaunch_blocked_two_P2_originals_verified",
+  "sourceCommit": "ca372f676c414ef56af6fdae57c68be03b665bc0",
+  "report": {
+    "sourceCommit": "ca372f676c414ef56af6fdae57c68be03b665bc0",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "status": "R05_launch_blocked_pending_two_remediations",
+    "r05StartAllowed": false,
+    "findings": [
+      {
+        "priority": "P2",
+        "id": "R05-independent-failure-not-durable",
+        "file": "evals/skills/sdd/batch.py",
+        "line": 158,
+        "title": "独立検分失敗が同条件の恒久停止として保存されない",
+        "evidence": "negative-probes.json.independentFailureRestore",
+        "observed": "failed/semantic-failed receiptを検査した呼出しはValueErrorで拒否しattemptCount1を維持。しかし同receiptを元passedへ復元すると次fake一次SI-007を起動しattemptCount2。実モデル0・実台帳0の公開合成。",
+        "risk": "新manifest stopPolicyは独立意味不適合で残枠永久停止を要求するが、現在の台帳は前件completedのままで失敗の観測/hashを保持しない。",
+        "minimumFix": "未到着reviewのpending拒否と独立失敗/原不整合を区別し、同ロック内に永続stopと失敗原hashを保存。毎回stopを予約前に検査し、receipt復元・別output/refでも同条件を再開しない。"
+      },
+      {
+        "priority": "P2",
+        "id": "R05-native-unknown-failure-accepted",
+        "file": "evals/skills/sdd/evaluate.py",
+        "line": 322,
+        "title": "失敗終端・未知native event/itemを受理する",
+        "evidence": "negative-probes.json.nativeUnknownTerminal",
+        "observed": "正常SI-010合成traceへ末尾turn.failed、未知item type unrecognized_external_action、未知top-level unknown.future.tool_eventを各追加し対応hashを更新。3負例ともdeterministic/safety/workflow/observation全passed。合成モデル0。",
+        "risk": "最終agent_messageと限定forbidden item listだけを確認するため、未知操作・失敗終端・欠測normal terminalが機械完了へなり得る。次枠条件の原整合/safe-stopを満たさない。",
+        "minimumFix": "固定CLIの実原event形を基準に有限native lifecycle/closed event+item/ID/order/正常終端/usageを照合し、未知/failed/error/終端欠測と終端後イベントを拒否。合成fixtureも実原形へ揃え、未知を単に捨てない。"
+      }
+    ],
+    "targetedTests": {
+      "finalCount": 75,
+      "finalStatus": "OK",
+      "finalSeconds": 30.486,
+      "initialCount": 75,
+      "initialFailures": 23,
+      "initialCause": "Independent harness incorrectly put tests/skills before fixed CoreSRC in PYTHONPATH; safety guard correctly refused. First raw/script preserved; v2 places CoreSRC first."
+    },
+    "r04": {
+      "status": "pure_input_binding_and_six_regressions_verified",
+      "cases": 46,
+      "slots": 92,
+      "payloadFields": [
+        "instructions",
+        "eventCatalog",
+        "case.prompt",
+        "case.context"
+      ],
+      "acquisitionConnected": false,
+      "ledgerConnected": false,
+      "gateConnected": false
+    },
+    "r05Preflight": {
+      "status": "actual_batch_plan_passed",
+      "coreDoctorStatus": "passed",
+      "coreDoctorExitCode": 0,
+      "codexVersion": "codex-cli 0.160.1",
+      "runtimeKnownFilesVerified": 50,
+      "python": "/usr/bin/python3 3.12.3",
+      "jsonschema": "/usr/lib/python3/dist-packages/jsonschema/__init__.py",
+      "ruamel": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/.venv/lib/python3.12/site-packages/ruamel/yaml/__init__.py",
+      "slots": 68,
+      "distinctCases": 17,
+      "planCases": 7,
+      "implementCases": 10,
+      "variants": [
+        "skill",
+        "baseline"
+      ],
+      "repetitions": 2,
+      "timeoutSeconds": 240,
+      "retries": 0,
+      "semanticIndependentMaximum": 68,
+      "maximumPerPrimary": 1,
+      "preparationIndependentMaximum": 1,
+      "reviewBudgetEnforcement": "One-per-primary/semantic total and independence truth require external operational accounting; current batch validates independent receipt before next primary. Not a reviewer launcher.",
+      "outputCreated": false,
+      "ledgerCreated": false,
+      "modelsStarted": 0
+    },
+    "oldEvidence": {
+      "si010ArchiveSha256": "51eb4613b1ff6c89bcbf4e415d40f4e57b2d793ef3eec21e98d2372897d43c5b",
+      "interruptionArchiveSha256": "92551b18c1736a6b27a12d1467eeadb60e7a01ea85fbc358f5a8d897a29e5705",
+      "interruptionMemberHashesVerified": 35,
+      "historicalGitFilesMatched": 11,
+      "si010OriginalNotReused": true,
+      "originalPublicHashesStable": true,
+      "scope": "SI010 original run/receipt/artifact hashes and preserved public interruption regressions/archive; no hidden runtime/private directories."
+    },
+    "r08": {
+      "original01Finding": "Inherited VFS-rw /run/user, /run/docker/netns/... and Docker overlay merged mounts were not covered by one EROFS probe.",
+      "corrected04": "Original statx effective mount IDs975/976 correlate inherited3 lower records to private RO /run and /var/lib/docker overlays; private proc RO/PID2; visible writable mounts limited to authorized scratch/private dev.",
+      "python": "3.12.0",
+      "binarySha256": "bf4365ac4b40ee622ad61129b98359129e8219bd5d4b16db03394045ae8b8f04",
+      "rawStdoutSha256": "3c156dd7ae79da393b353c62b478cbd8164692ba36833bf6660fd3913aa64943",
+      "namespaceRunsByIndependentReviewer": 0,
+      "boundaryScope": "Read-only verification of parent original observer/static argv/ABI; does not independently rerun namespace or formal conformance.",
+      "formalTwoEnvironmentCollected": false,
+      "gateCertified": false,
+      "remaining": "Formal runner needs these exact covers, namespace/config/cache/temp constraints and effective-mount check; same final clean source ref two fresh raw350+unit collections/fingerprints, honest same-host/shared OS/kernel/CPU and RAM tmpfs scope, formal adjudication remains."
+    },
+    "modelsStarted": 0,
+    "newPrimaryStarted": 0,
+    "reservations": 0,
+    "sharedLedgerWrites": 0,
+    "sourceEdits": 0,
+    "refChanges": 0,
+    "certifiesSkillGate": false,
+    "certifiesBehavior": false,
+    "certifiesPhase": false,
+    "certifiesRelease": false
+  },
+  "inventorySha256": "11241041720efd1894d4215cf7c481ae1fa6c47c5fdbba02fbd04eb266514201",
+  "parentRecheckedHashes": 85,
+  "newPrimary": 0,
+  "certifiesSkillGate": false
+}

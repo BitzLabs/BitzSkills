@@ -1,0 +1,56 @@
+{
+  "status": "public_quality_preflight_passed_independent_pending",
+  "sourceCommit": "63b05dae22dce98e945c5fa7a09036b171481f7b",
+  "checks": [
+    {
+      "protocol": "plan-protocol.json",
+      "exitCode": 0,
+      "seconds": 0.5043946800287813,
+      "stdoutSha256": "cd79dd171c4ead62a0b52c3a8baf7a61a575788a647538eda7d60ec131dc383c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "shared-format-protocol.json",
+      "exitCode": 0,
+      "seconds": 0.5519588519819081,
+      "stdoutSha256": "9d880448221e890a59c021e543e1a89180bcc81cf12eeb1fc22ce8f9a899927d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "expansion-cases.json",
+      "exitCode": 0,
+      "seconds": 0.8425731708994135,
+      "stdoutSha256": "14a36e8abc6faa4ac653b8ef85f36b7a56e1cbe70b0aeb9f0dd0e5c53636f46f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "normal-cases.json",
+      "exitCode": 0,
+      "seconds": 0.849734491086565,
+      "stdoutSha256": "dd03ef893bc5de0f73b6487518b2ff644a2861c5e4dfeede621f121f82a60e31",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "protocol": "attack-cases.json",
+      "exitCode": 0,
+      "seconds": 0.5346966979559511,
+      "stdoutSha256": "ddb37eec4b1bfcebd04ffedb289034409e9d2f6061315b2cf4fd015ee414c8e5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "distinctCaseIds": [
+    "QP-001",
+    "QR-001",
+    "QR-002",
+    "QR-003",
+    "QR-004",
+    "QR-005",
+    "QR-006"
+  ],
+  "caseCount": 7,
+  "newModelsStarted": 0,
+  "newReservations": 0,
+  "independentReview": "pending_provider_usage_limit",
+  "treeCleanAfter": true,
+  "certifiesSkillGate": false
+}

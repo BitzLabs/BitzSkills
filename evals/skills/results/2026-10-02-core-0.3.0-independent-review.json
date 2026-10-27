@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "subjectCommit": "43c5d4a3be79a6eb3d36f706421dad02cd0bb4c0",
+  "skillVersion": "0.1.3",
+  "evaluationSetVersion": "core-0.3.0",
+  "phase1": "In progress",
+  "gate0": {
+    "result": "Passed",
+    "reviewer": "/root/core_skill_review",
+    "context": "既存の独立検分コンテキストで確定refの本文・参照と契約差分を直接確認",
+    "directChecks": [
+      "公開操作・結果契約と本文・参照の照合",
+      "workspace ID/pathとdoctorの設定診断の区別",
+      "偽装要求の起動前停止と未依頼の代替操作禁止",
+      "停止後の修正先・再開条件",
+      "明示reportとverifyテストの副作用の区別"
+    ],
+    "excluded": ["モデル実行行動", "Skill Gate 1〜3", "Phase 1全体", "リリース認定"]
+  },
+  "routingReview": {
+    "reviewer": "/root/phase1_case_review",
+    "observations": ["gpt-6-luna skill routing repetition-1 CR-003"],
+    "finding": "工程着手をCLI実行可否へ置き換えたモデル逸脱。semantic=falseを維持",
+    "expectedValuesChanged": false,
+    "thresholdsChanged": false
+  },
+  "actionReasonReview": {
+    "reviewer": "/root/core_eval_review",
+    "model": "gpt-6-luna",
+    "variant": "skill",
+    "completedReasons": 27,
+    "scope": ["repetition-1 CA-001〜CA-013", "repetition-2 CA-001〜CA-014"],
+    "directChecks": ["状態・範囲・診断・未証明事項の実記録照合", "report保存先とhost・changesの一致", "CA-006 r2の事前差分未読", "CA-013両反復・CA-014 r2の修正先と再開条件"],
+    "finding": "検分範囲の理由は実結果と整合。CA-006 r2の行動不合格は維持",
+    "interruption": "独立検分エージェントもモデルサービスの利用上限に到達",
+    "complete": false
+  },
+  "gate1": "not-certified",
+  "gate2": "not-certified",
+  "gate3": "not-certified",
+  "limitations": [
+    "2モデルとも全件測定に欠測がある",
+    "理由全件の独立検分は未完了",
+    "共有補助ツールの物理的除去や外部候補取得能力の完全除去は未証明",
+    "別モデルの限定通過によるPhase判定は実施していない",
+    "保持ケース・複数系統のリリース認定を含まない"
+  ]
+}

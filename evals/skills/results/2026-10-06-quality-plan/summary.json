@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "status": "limited_plan_comparison_passed",
+  "sourceCommit": "cbd6700fb6f205f50eafe3dcd4b155da2b3508df",
+  "evaluationSetVersion": "quality-plan-comparison-0.1.0",
+  "pluginVersion": "0.1.3",
+  "skillVersion": "0.1.1",
+  "executionVersion": "quality-execution-0.1.5",
+  "model": "gpt-6.1-sol",
+  "primaryTrajectories": 4,
+  "independentPreparationCalls": 1,
+  "independentTrajectoryCalls": 4,
+  "automaticRetries": 0,
+  "testCalls": 0,
+  "uniqueNativeThreads": 4,
+  "certifiesSkillGate": false,
+  "establishesComparativeSuperiority": false,
+  "estimatedCostUsd": null,
+  "historicalFailureRecordsPreserved": true
+}

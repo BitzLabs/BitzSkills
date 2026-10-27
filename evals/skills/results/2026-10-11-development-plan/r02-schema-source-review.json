@@ -1,0 +1,100 @@
+{
+  "status": "source_and_schema_remediation_independently_verified_day_calibration_pending",
+  "sourceCommit": "e0263f9d8116f909409c832c7a653387a8ee86a4",
+  "originalFindings": {
+    "P2": 1,
+    "kind": "duplicate composed real Git source paths",
+    "originalReviewSha256": "9c81f242edca481e5e141cd848f42ced9878d878f19e44c8e9b4cecd910a2bf2"
+  },
+  "fullTests": {
+    "sourceCommit": "e0263f9d8116f909409c832c7a653387a8ee86a4",
+    "exitCode": 0,
+    "seconds": 76.95340500504244,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "61e04e5f03c09a0cdaf30e8f42a422c20bc3826532fbe86838acbe288d7f9eb7",
+    "testCount": 647,
+    "testSeconds": 76.547
+  },
+  "oldCompletionCorrected": true,
+  "oldPrimaryConsumed": 1,
+  "newPrimaryInvocations": 0,
+  "newIndependentInvocations": 0,
+  "oldStopPreserved": true,
+  "calibrationExpired": true,
+  "certifiesSkillGate": false,
+  "independentReview": {
+    "verification": {
+      "ref": "e0263f9d8116f909409c832c7a653387a8ee86a4",
+      "cleanBefore": true,
+      "cleanAfter": true,
+      "sourceFileSha256": {
+        "evals/skills/routing/production-canary-score-v0.1.json": "20d3151ab0fb692e000975434b7c72cdaf220d8aa41b15c3387f0600835b2232",
+        "evals/skills/routing/production-canary-v0.1.json": "7738a4b6e5ae3d2a206ffec09b4d9ed93ac05c734c2ded93a1e0fc5ea1313a2e",
+        "evals/skills/routing/production_canary_campaign.py": "11102453d83961d2f3ddc949f09879f85a67ae56ab5534e6bf9750cd94dffc22",
+        "evals/skills/routing/production_canary_capture.py": "09c6aa37edfcd0970c9c77fcfabcc9f304165fe07b5580db4f04b72ecc52f75c",
+        "evals/skills/routing/production_canary_evidence.py": "2b395b569101f79fea6f2e2c575ca9d1e1a9fdc037cf32ae300cfcd6c2c9b8ba",
+        "evals/skills/routing/production_canary_review.py": "fde90ff1995592c0eecdd38d75a5268f35507313dde58ecf24eda63804706091",
+        "evals/skills/routing/production_canary_score.py": "8f133b083afcbc3fd81e3718bd6354b358d1d226c0c753f788cb748c94446345",
+        "evals/skills/routing/production_ledger.py": "75b19cdf88aa052d06cf1ef22ad6bdd77ae4a2f4ccc6206ad16137d5f66755f5",
+        "tests/skills/test_production_canary_campaign.py": "a4ebd6bcf0e2d2871fa62a46729842067eb7499b46c6c929925fde14647fa95b",
+        "tests/skills/test_production_canary_capture.py": "e0fbc3d84f1e05ef06ba2f180949294df78d85d82e113fdd42bc2b516bd02557",
+        "tests/skills/test_production_canary_evidence.py": "445a489dc66a647166f4b313c16cd274d8b62eba39ce2a733a7efb14ec3c0f1a",
+        "tests/skills/test_production_canary_review.py": "154473780866b88218f5625e32ed213c9413a3fa26732321c238f63613bbd484",
+        "tests/skills/test_production_canary_score.py": "56a91a763cc9d0beb3164a0a65cc79c85dfb3c50fa9d165f3b5e9128ae569fec",
+        "tests/skills/test_production_ledger.py": "39901314f631d2126fd2524be58c3e0a4fd09f21bbdfbc6ddaf37b71eab37a4c",
+        "tests/skills/test_production_source_integration.py": "a669c87af3b6b8d173d84fdfe2738c83dec53b2447a2894c64987ca4f5d9d599"
+      },
+      "environment": {
+        "PYTHONPATH": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/plugins/bitz-core/src",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TMPDIR": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/development-review-20261011/.venv/test-temp"
+      },
+      "results": {
+        "canary": {
+          "exitCode": 0,
+          "elapsedSeconds": 5.09726376994513,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "c7c4aa586cd5d311c6ae9a8a494d3ae0abebe979591aef05b042d601084ec4fd"
+        },
+        "ledger": {
+          "exitCode": 0,
+          "elapsedSeconds": 0.7477524599526078,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "33eb7316c4832569978d806ba8349f2cc9956b089e4913b962f3596dfce05efa"
+        },
+        "source-real-git": {
+          "exitCode": 0,
+          "elapsedSeconds": 0.4392145280726254,
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "7283d24ffe3dced5ee7114ac20729af77f13436b5a1dc343888c009d5b4c5cfb"
+        }
+      },
+      "realModelsOrClisStarted": 0,
+      "realSharedLedgerWrites": 0,
+      "priorAutomaticApprovalFailure": "usage limit; attempted tests not executed"
+    },
+    "evidenceHashes": {
+      "ref": "e0263f9d8116f909409c832c7a653387a8ee86a4",
+      "cleanAfter": true,
+      "oldBytesUnchanged": true,
+      "sha256": {
+        "actual-fixed-integration.argv.json": "f4f27f9d88e241b1f1fdbe0fc06dd6bc9caade52d8f251b662cfde53ffe940b7",
+        "actual-fixed-integration.json": "461101d8ea8e8b43a4f60d24524f779d3057abb5ed4edce10f30c9c4023b0d29",
+        "actual-fixed-integration.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "actual-fixed-integration.stdout": "26cc5522e208cfb5ab58fabdc24de9e5c752ac7cf1ea4679924c908089668122",
+        "canary.argv.json": "448b70c05836e2d488f2a3ad2b81922582553f0bacf2b1c04e59640c4f756f3b",
+        "canary.stderr": "c7c4aa586cd5d311c6ae9a8a494d3ae0abebe979591aef05b042d601084ec4fd",
+        "canary.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ledger.argv.json": "c77180464edee8c7057d7973cb099b34874eb00bf911a9a19d6de0ca5597adcf",
+        "ledger.stderr": "33eb7316c4832569978d806ba8349f2cc9956b089e4913b962f3596dfce05efa",
+        "ledger.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "review.md": "2f6ffa1830b782d3a9d05a6536498345ef68fcda6dac590e4dcfa8dd91d7f693",
+        "source-real-git.argv.json": "3a409daea446ea08badb215eab04b7b0da73138267581285200645c683d3f94a",
+        "source-real-git.stderr": "7283d24ffe3dced5ee7114ac20729af77f13436b5a1dc343888c009d5b4c5cfb",
+        "source-real-git.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verification.json": "6a37daed92641b7fe28fa7a4dfc7d9952e8bd062665e6b75365c835913a0b130"
+      }
+    }
+  }
+}

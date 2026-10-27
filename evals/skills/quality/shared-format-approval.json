@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "approved",
+  "approvedBy": "user",
+  "approvedAt": "2026-10-04",
+  "authorization": "../sol-authorization.json",
+  "userInstruction": "SOLでの評価は、すべて許可します。",
+  "pluginVersion": "0.1.2",
+  "evaluationSetVersion": "quality-pilot-0.1.2",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 4,
+  "protocolSha256": "1b9d3905dbc258121d8629ec465d6935f0ab789ebf534b7a81353cb5e1f3b83c",
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseOriginalBudget": false,
+  "reuseSddBudget": false,
+  "notes": "sol包括承認に基づく固定4軌跡。形式規則を両側へ共通配布して別条件/出力/台帳で測定し、原二測定の失敗を保持。新規起動前に局所試験と独立準備検分を行う。金額未確定。Skill Gateを認定しない"
+}

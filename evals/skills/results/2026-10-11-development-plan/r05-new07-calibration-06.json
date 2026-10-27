@@ -1,0 +1,54 @@
+{
+  "status": "new_local_calibration_originals_verified",
+  "calibrationSource": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+  "finalEvaluationSource": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30",
+  "date": "2026-10-13",
+  "artifactCount": 12,
+  "profile": {
+    "version": "primary-client-context-0.1.0",
+    "calibrationSource": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+    "calibrationRequestSha256": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+    "calibrationReceiptSha256": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+    "sdkVersion": "0.160.1",
+    "codexVersion": "codex-cli 0.160.1",
+    "date": "2026-10-13",
+    "toolsValueSha256": "d3ba928b8cb4b51fa55b403a74ec96eac5b967d9d9b257485d2eb203ec404316",
+    "supplementValueSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d",
+    "primaryModelTrajectories": 0,
+    "paidModelCalls": 0,
+    "certifiesProviderWireBodies": false,
+    "certifiesSkillGate": false,
+    "limitations": [
+      "Four bundled system skills are explicitly disabled. The fixed CLI exec helper declaration is hashed in full; calls outside the read-only host and exec/wait are forbidden and stop the canary.",
+      "Loopback scripted response calibrates client context only; it is not primary evidence, actual-provider behavior or usage certification."
+    ],
+    "supplementBlockCount": 2,
+    "systemSkillsDisabled": true
+  },
+  "manifestSha256": "f1eb591ab21da6ab9e381e33f213c23b6d84e23ab65b62036b7fbfc53a37dd9b",
+  "manifest": {
+    "version": "primary-client-calibration-originals-0.1.2",
+    "sourceCommit": "2967d68a84295349f4ecd8890d6b53b90eb82a92",
+    "artifactSha256": {
+      "config.json": "fd39bf0294e6a5cba9caee1a1fb3dbb19e8dbe0de498f1412f38c6448e9674b1",
+      "contract.json": "eb4b7d6a3623f74eaf5ff21a075c8656b0a5d5e3a5bdfc1bd2122061918bf63f",
+      "decision-schema.json": "5bb090d59c2dc7d000815515ff906893559b2c6d413b80f15a4ccd8f06bdf2e3",
+      "invocation.json": "cc45d9bb0dff6655b99fe322503401a89fd8d0428ec0ae1b60ccb7dac3643847",
+      "isolated-result.json": "ee1f95b3d363cb73ae1a2ebc73b0c98d97a55d69084c8367b6bf2095ee473d8a",
+      "model-input.json": "3b9077ed439847ebb71c21fc0f1558ea0fca32947b69bef5f6ab963900ab7279",
+      "receipt.json": "56a6e8ed6bdd1320c971fea25ecd9538416beb3bb27048fcb63cd32ebe57d6ad",
+      "request-1.json": "e4a142c8eb946221880882cec15f6a06625bfb9ddd8c3c38debc63e619c22d4f",
+      "rpc-in.jsonl": "590b4008c61f8e4db9931e24846db3333053332de8c2c91fe9f117adf8c725fd",
+      "rpc-out.jsonl": "bca27e2f5dba43c971038797d30db5819250c95d7aa9370a41da21409b39854f",
+      "runtime-result.json": "28b5c6f075b67543cac8b1d207294f74cf54d959b1c83ae23cec2f4b4480dacd",
+      "version.stdout": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
+    }
+  },
+  "paidModelCalls": 0,
+  "maximumLocalRequests": 1,
+  "snapshotSource": "131b857f83633b27addc64bb40eb9dc19775be7a",
+  "snapshotResources": 72,
+  "snapshotSkills": 6,
+  "snapshotManifestSha256": "c5cb450d1b1d81e4cfb38cf417af22491ea6ad9603a55525c9b8dd24c8ff9f3c",
+  "certifiesSkillGate": false
+}

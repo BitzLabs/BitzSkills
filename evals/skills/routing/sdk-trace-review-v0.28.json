@@ -1,0 +1,62 @@
+{
+  "version": "sdk-trace-review-0.28.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "public-canary-independent-reservation-recheck-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-28",
+  "payloadFiles": [
+    "evals/skills/routing/production_canary_trace.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_ledger.py",
+    "tests/skills/test_production_canary_trace.py",
+    "tests/skills/test_production_ledger.py",
+    "evals/skills/routing/production-canary-integration-design.md"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_canary_trace.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_ledger.py",
+    "tests/skills/test_production_canary_trace.py",
+    "tests/skills/test_production_ledger.py",
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/schemas/decision.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.28.json",
+    "tests/skills/test_production_sdk_trace.py",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_routing_host.py"
+  ],
+  "constraints": [
+    "Phase 4期間中の送信は本人が明示許可済み。列挙した公開6本文だけを静的SOL1回/300秒で検分。一次・委譲・自動retry0。",
+    "一次台帳に独立検分の予約と製品向けrecord_verified_reviewを追加。未完了/停止/孤立/同枠入力差替え/将来試行を拒否し、起動前に検分入力hashを固定する。原証拠の親照合をこの台帳のhash形式検査だけで認定しない。",
+    "新SDK軌跡入口は単一モデルgpt-6.1-sol/openai、既知SDK0.160.1の固定caller入力、最大2親/2子、no-exec/single-exec/two-exec/exec-waitだけ。任意並列や未解決pendingは許可しない。ID/cellを原値で照合し固定probeへ別名置換しない。",
+    "negativeは本文読取り0で無操作または一覧のみ。positiveは選択本文の実読取りを要求する。原SDK入力/終端、host引数と全文/hash、全target親子telemetry/API順序を照合する。",
+    "共通private親監査をauth_attachedと子数の限定引数で共通化し、旧公開固定診断の既定False/2子・未知追加停止を維持する。新入口のauthTrue観測を上流wire本文取得と扱わない。",
+    "新入口は常にeligibleForMeasurement=false。provider wire/raw全payload/完全初期入力/実provider互換性/一次採点/行動/実地/Phase/Gateを未認定とする。局所合成試験を実provider実測に代用しない。",
+    "新依存production_traceの全文は今回のpayloadにない。既存独立検分があるが、今回の読取済みコードへ代用せず、この境界の矛盾だけを指摘する。",
+    "保持入力・原捕捉・原ログ・認証内容を送らない。tool・追加モデル・委譲・私的領域読取りは禁止。",
+    "前回P2=1は次試行前の独立予約hash/検分入力hashの再照合不足。新製品open_ledgerは独立必須モードをcampaignへ固定し、合成record_reviewを禁止する。予約の欠落/変造/モード切替は次枠前に拒否する。"
+  ],
+  "previousReview": {
+    "sourceCommit": "b83fee8609f28daf4bab967598b8310f9a55ce04",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-27",
+    "receiptSha256": "45a5e16df97972886070ee57b49871e11559cac00a3b0c6d4b307cd10a6b846b",
+    "responseSha256": "3818e578d1b226007133c7fa2578898ff0682a3399dec9f6078087f7bd411320",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

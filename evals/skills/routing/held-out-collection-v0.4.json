@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0",
+  "collectionVersion": "production-routing-held-out-collection-0.4.0",
+  "status": "authorized-before-collection",
+  "model": "gpt-6.1-sol",
+  "solAuthorization": "ユーザーの全SOL評価継続承認と『提案内容で、進めましょう』によるP1/P2是正案の明示承認",
+  "storageAuthorization": {
+    "approvedBy": "user",
+    "approvedAt": "2026-10-06",
+    "userInstruction": "提案内容で、進めましょう",
+    "previousOngoingInstruction": "OK、以後も許可します",
+    "root": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-04",
+    "scope": "既存9件の候補来歴固定、新規3件への差し替え集合・適用根拠/来歴/意味比較・検分証拠の所有者限定・排他新規保存",
+    "ongoing": true,
+    "excluded": [
+      "既存ファイルの上書き",
+      "削除",
+      "非公開本文/期待値/個別比較の公開",
+      "外部送信",
+      "他の外部領域への書込み"
+    ]
+  },
+  "candidate": {
+    "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+    "candidateVersion": "production-six-skill-routing-0.1.0",
+    "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+    "skillCount": 6,
+    "resourceCount": 71,
+    "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot"
+  },
+  "inputSha256": {
+    "evals/skills/routing/remediation-evidence.schema.json": "9bf7675e7c2a301a93dd530315209cded0183686d4bda5241711a7af4197d795",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1"
+  },
+  "sourceFiles": [
+    "evals/skills/cases/behavior-safety.json",
+    "evals/skills/cases/routing.json",
+    "evals/skills/event-catalog.json",
+    "evals/skills/protocol.json",
+    "evals/skills/routing/audit_held_out.py",
+    "evals/skills/routing/audit_remediated_held_out.py",
+    "evals/skills/routing/held-out-collection-v0.4.json",
+    "evals/skills/routing/remediation-evidence.schema.json",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/schemas/case.schema.json",
+    "evals/skills/validate.py",
+    "tests/skills/test_held_out_remediation.py"
+  ],
+  "setVersion": "production-routing-held-out-0.4.0",
+  "denominator": {
+    "maxCases": 12,
+    "newCases": 3,
+    "retainedCases": 9,
+    "caseIds": "SE-1100 through SE-1111",
+    "positiveCases": 6,
+    "negativeOrStopCases": 6,
+    "categoryCounts": {
+      "explicit": 2,
+      "implicit": 2,
+      "contextual": 2,
+      "negative": 3,
+      "safety": 3
+    },
+    "perCapability": "1正例と1全体負例または停止境界。負例は対象だけの不適用から導かず全6スキルの不適用根拠を要する",
+    "repetitions": 0
+  },
+  "budget": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "retention": {
+    "sha256": "3a9007b4c1925cefe4b213426895a7ef79ffd520eceb5f5a799f22bebffc18fa",
+    "independentReceiptSha256": "a8602a8afcd4f85d235cd1e199b3ae767771e916d3d76c4c74ebea9dbbaa06d7",
+    "policy": "retention.jsonの固定9件だけを、入力/期待値含む全case fieldsをcaseId以外同一で保持する。9件の合格・新規性を認定せず最終全12件を独立検分する",
+    "onChange": "再利用候補の修正が必要なら当該契約を停止する。無断で新規枠へ付け替えない"
+  },
+  "excludedSets": {
+    "production-routing-held-out-0.1.0": {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json",
+      "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+      "caseCount": 12
+    },
+    "production-routing-held-out-0.3.0": {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-03/cases.json",
+      "sha256": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9",
+      "caseCount": 12
+    }
+  },
+  "noveltyConditions": {
+    "publicCases": 46,
+    "newComparisons": 3,
+    "newPairComparisons": 3,
+    "coverage": "新規3件を公開46/旧0.1の12/旧0.3の12/新規候補同士へ照合する。各新規の最近傍は両旧集合を含み、全比較対象のID一覧を記録する",
+    "decision": "6スキル全体の期待経路/outcomeと決定前提から比較する。対象ラベル・名前・数値・説明量の変更では新規としない",
+    "counterfactual": "近い旧条件へ差を戻すと適用/範囲/質問/停止判断のどこに影響するか示し、一次発火評価で測る範囲へ差を結び付ける",
+    "evidence": "別ファイルevidence.jsonをcase bytes hashへ束縛する。routing全12、lineage全12、noveltyComparisons新規3、newCasePairs全3組",
+    "semanticGate": "機械通過を意味的合格としない。固定本文に照合する独立検分と親による保存証拠再監査を必須とする",
+    "candidatePolicy": "保持内容を製品候補の最適化へ戻さない"
+  },
+  "sourcePolicy": "CLI --sourceの確定refから契約を読む。開始/完了と作成保存直前にsourceFilesの実bytesを照合する。HEADは観測値で停止条件にしない。確定source/入力を変更して同条件の有料枠を再使用しない",
+  "stopOn": [
+    "準備独立P1/P2",
+    "必須ケース不足",
+    "全体経路不整合または未確定",
+    "新規3件の意味重複",
+    "再利用9件の入力/期待値変更",
+    "source/入力/candidate/旧集合/retention hash不一致",
+    "保存失敗/中断/利用上限",
+    "ケース独立P1/P2"
+  ],
+  "privacy": "公開側は版/件数/hash/集計だけ。prompt/context/期待値/個別比較/詳細報告/生ログは承認済み非公開領域の新規ファイルへ保存する。モデル一次の入力への期待値/control提供は行わず、この契約では一次0",
+  "limits": [
+    "新規作成の候補は最大3件。分母不足を低品質ケースで埋めない",
+    "重大指摘なし9件も再利用候補であり合格済みではない",
+    "同条件の有料再試行0。失敗は別source/条件/有限枠を固定してから扱う",
+    "原native bytes欠落と旧自動承認拒否/不通過を保持する",
+    "Core操作/全Skill Gate/異なるモデル系統/実地/配布を認定しない"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "jsonschema": "4.23.0",
+    "ruamelYaml": "0.19.1"
+  },
+  "previousCollection": {
+    "setVersion": "production-routing-held-out-0.3.0",
+    "status": "stopped_on_p1_p2_private_receipt_restored",
+    "severityCounts": {
+      "P1": 3,
+      "P2": 3
+    },
+    "affectedCaseCount": 3,
+    "storageContinuationSolConsumed": 1,
+    "originalNativeBytes": "unavailable",
+    "previousBudgetRemainsConsumed": true
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "status": "first_primary_globally_stopped_no_independent_or_parent_finalization",
+  "sourceCommit": "a7cd00a357a084dfab859eed4736d882e9faedc0",
+  "executionSha256": "51b42237df30f4f69c80ccca4fcceb7a32bfd215c7e12e621ef88e7ed0191846",
+  "conditionSha256": "af2aa663eeaf1ac19df6a8d65e96cb1a36ced79f9916926328af37ce4d934af8",
+  "summary": {
+    "certifiesSkillGate": false,
+    "correct": 0,
+    "evaluationFailed": 0,
+    "incorrect": 0,
+    "independentLaunchMarked": 0,
+    "independentReserved": 0,
+    "parentVerified": 0,
+    "pending": 1,
+    "primaryLaunchMarked": 1,
+    "primaryReserved": 1,
+    "status": "stopped",
+    "terminalSlots": 0,
+    "unattempted": 23
+  },
+  "publicAggregateSha256": "f07e1f5b654bee430d3c2e6fb6eb07b662d33a1a90c64b84ea6452a073928a4c",
+  "privateBatchReportSha256": "f9b171e2772fa1226c3d8638705b24c95d91d9ffe0525692b1cf9285c1ca7a63",
+  "privateReceiptSha256": "c3c298b63fcdeb151377d57b5a7a6d26c1f466880384be1b86a1c19e660fb6e5",
+  "primaryNamespace": {
+    "exitCode": 0,
+    "timedOut": false,
+    "elapsedSeconds": 17.58799146299134,
+    "sdkErrorType": null,
+    "captureIntegrity": true
+  },
+  "firstObservedRejection": {
+    "publicErrorConstant": "native action not allowed",
+    "method": "turn/moderationMetadata",
+    "observedCount": 3,
+    "fixedSdkVersion": "0.160.1",
+    "sdkDefinition": "TurnModerationMetadataNotification.metadata: Any",
+    "parameterShapeVerified": true,
+    "metadataSemanticsOrSafetyInterpreted": false,
+    "independentForensicReviewPending": false,
+    "additionalRolloutIntegrityDiagnosisPending": false
+  },
+  "earlierStartupRejection": {
+    "errorType": "ValueError",
+    "beforeAnyPrivateStorageOrModels": true,
+    "exactCauseReproduced": false,
+    "paidRetryPerformed": false
+  },
+  "continuation": {
+    "oldGlobalStopImmutable": true,
+    "oldCasePaidRetryPlanned": false,
+    "remainingOriginalOrdinals": 23,
+    "designOnly": true,
+    "newModelsOrReservations": 0,
+    "cumulativePrimaryLimit": 24,
+    "cumulativeIndependentLimit": 24
+  },
+  "automaticRetries": 0,
+  "actualPrimaryLogicalLaunches": 1,
+  "actualIndependentLogicalLaunches": 0,
+  "providerWireInvocationCountCertified": false,
+  "measurementEligible": false,
+  "certifiesFullR04": false,
+  "certifiesSkillGate": false,
+  "privateBodiesOrArtifactListsPublished": false,
+  "originalFailurePreserved": true,
+  "followOnRejection": {
+    "fixedPublicErrorConstant": "fixed caller and SDK supplement",
+    "callerBaseMatches": true,
+    "callerDeveloperMatches": true,
+    "profileSupplementBlockCount": 2,
+    "actualDeveloperBlockCount": 3,
+    "supplementHashMatches": false,
+    "metadataFixAloneSufficient": false,
+    "publicSyntheticNoModelClassificationPending": true
+  },
+  "independentReview": {
+    "status": "stop_and_follow_on_integrity_rejection_reproduced",
+    "reportSha256": "fb2c2664d175b2d82e8be4b351f758a139575b7e044aa70e1622f6cccca9a76b",
+    "inventorySha256": "5c888a2685e594a5e83f32ec44cea6165824d0842d3cc30a56cf4ac25aaa4c0e",
+    "parentPublicOrReviewerOriginalsCompared": 219,
+    "parentPrivateOriginalsCompared": 59,
+    "parentGitBlobsCompared": 57,
+    "oldOriginalsUnchanged": true
+  },
+  "observedAggregateUsage": {
+    "inputTokens": 20228,
+    "outputTokens": 338,
+    "totalTokens": 20566,
+    "cachedInputTokens": 10240,
+    "costUsd": null,
+    "costStatus": "unknown_not_zero"
+  },
+  "observedApi": {
+    "modelsRequests": 2,
+    "responsesRequests": 3,
+    "attempt": 0,
+    "providerWireBodiesCertified": false
+  },
+  "evidence": {
+    "archive": "evidence-r04-heldout-first-stop-reviewed-20261020.tar.gz",
+    "sha256": "73d0815f8673e9262860175eea7a7f900ec70ceaf29892ac8ef242164f98033f",
+    "members": 3,
+    "allMemberBytesCompared": true,
+    "privateBodiesOrPrivateSourceInventoryIncluded": false
+  }
+}

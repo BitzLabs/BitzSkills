@@ -1,0 +1,82 @@
+{
+  "kind": "root-expected-negative",
+  "sourceCommit": "ee3a1f1d6963a917bbf9425c55f64413db7e4ab1",
+  "caseId": "SI-010",
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "-m",
+    "bitz.cli",
+    "verify",
+    "TASK-001",
+    "--format",
+    "json"
+  ],
+  "cwd": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/sdd-implement-safety-04/skill/repetition-1/SI-010/workspace",
+  "testHashConfirmed": true,
+  "sourceSafeConfirmed": true,
+  "exitCode": 1,
+  "rawResult": {
+    "schemaVersion": "1.0",
+    "operation": "verify",
+    "status": "failed",
+    "scope": "selected",
+    "workspace": {
+      "id": "root",
+      "path": "."
+    },
+    "targetResults": [
+      {
+        "target": "TASK-001",
+        "status": "failed",
+        "contextDigest": "sha256:8ba3656e3d0fcec123502ad71f82ed5d3299b1f79b354e9fbf769ff32fa40f0f",
+        "statements": [
+          "REQ-001:AC-01"
+        ],
+        "bindingRefs": [
+          "root::default"
+        ],
+        "diagnostics": []
+      }
+    ],
+    "revision": {
+      "commit": "c0d4614136c35a5fc179b18288eab07897514d90",
+      "dirty": false
+    },
+    "commands": [
+      {
+        "bindingId": "root::default",
+        "workspaceId": "root",
+        "name": "default",
+        "status": "failed",
+        "termination": "exit",
+        "cwd": ".",
+        "argv": [
+          "/usr/bin/python3",
+          "-I",
+          "-B",
+          "tests/test_input.py"
+        ],
+        "tests": [
+          "tests/test_input.py"
+        ],
+        "covers": [
+          "REQ-001:AC-01"
+        ],
+        "exitCode": 1,
+        "timeoutSeconds": 300,
+        "stdoutExcerpt": "",
+        "stderrExcerpt": "F.\n======================================================================\nFAIL: test_empty (__main__.InputContractTest.test_empty)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/sdd-implement-safety-04/skill/repetition-1/SI-010/workspace/tests/test_input.py\", line 9, in test_empty\n    self.fail(\"合成例の未解消テスト障害\")\nAssertionError: 合成例の未解消テスト障害\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nFAILED (failures=1)\n",
+        "stdoutTruncated": false,
+        "stderrTruncated": false,
+        "durationMs": 32
+      }
+    ],
+    "durationMs": 43,
+    "diagnostics": []
+  },
+  "stdoutSha256": "cb17e4cc8274be1243160ad1e16c52b93c9aae8135b155cba6019b0137b38e90",
+  "stderr": "",
+  "snapshotUnchanged": true,
+  "addedToModelCoreResults": false
+}

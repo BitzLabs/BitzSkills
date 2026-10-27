@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "status": "targeted_passed_full_suite_approval_required",
+  "sourceCommit": "9c576c508219a757d496f25319b8a1d56e50c8b3",
+  "executionVersion": "sdd-execution-0.1.2",
+  "originalRegression": {
+    "sourceCommit": "997299b34dfe6be537a74248a016e146baac674c",
+    "threeTests": {
+      "failures": 1,
+      "errors": 2
+    },
+    "fourTests": {
+      "failures": 1,
+      "errors": 3
+    }
+  },
+  "failedFirstCorrection": {
+    "sourceCommit": "d659d1af9d58926952e8e2c2fcf38fb137d643b8",
+    "independentReview": "failed",
+    "priority": "P2",
+    "targetedIndependentTests": 50,
+    "saveWindowRegression": {
+      "tests": 7,
+      "errors": 2
+    }
+  },
+  "correctedSource": {
+    "parentTests": 52,
+    "independentTests": 52,
+    "additionalFindings": 0,
+    "sourceFilesMatched": 4,
+    "independentLogHashesMatched": 1,
+    "parentRecheckLogHashesMatched": 3
+  },
+  "fullSuite": {
+    "currentTests": 194,
+    "currentSourceRun": false,
+    "outsideRootApproval": "pending",
+    "previousSource": "d659d1af9d58926952e8e2c2fcf38fb137d643b8",
+    "previousTests": 192,
+    "previousFailures": 2,
+    "previousErrors": 2,
+    "previousPassed": 188,
+    "previousReason": "repository-internal TMPDIR causes held-out input guard to reject four synthetic tests"
+  },
+  "newPrimaryModelTrajectories": 0,
+  "independentReviewScopes": 2,
+  "automaticRetries": 0,
+  "oldQualityEvidenceUnchanged": 19,
+  "qualityCapacityArchiveUnchanged": true,
+  "certifiesSkillGate": false,
+  "estimatedCostUsd": null,
+  "limits": [
+    "単発保存中断の再現範囲のみ。失敗記録自体の保存不能・反復中断・返らないpartial bytesは保証外。",
+    "全194件・実モデル適合・全Skill Gateは未認定。"
+  ]
+}

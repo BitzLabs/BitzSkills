@@ -1,0 +1,289 @@
+{
+  "version": "sdk-trace-connection-0.1.0",
+  "phase": 4,
+  "status": "local_verified_independent_review_approval_pending",
+  "sourceCommit": "f62a87a6181831f87cd24de72c843588869dd736",
+  "artifactVerification": {
+    "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-05",
+    "summarySha256": "ec692d4e72cfc86d8ea52b538dd0992769dfe5f8f00e1f1139f6f83e3361be89",
+    "status": "sdk_parent_links_artifacts_rechecked",
+    "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+    "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+    "snapshotResourceCount": 71,
+    "originalHashesChecked": true,
+    "allTargetTraceRowsPreserved": true,
+    "sourceGuardsEqual": true,
+    "parentLinks": {
+      "status": "scripted_parent_cell_child_ids_matched",
+      "scope": "one-scripted-exec-two-mcp-calls",
+      "parentCallId": "probe-call",
+      "cellId": "1",
+      "nativeChildIds": [
+        "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+        "exec-36439273-97f9-4060-9031-434414328c02"
+      ],
+      "traceEventCount": 19,
+      "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+      "certifiesMultipleOrYieldedCells": false,
+      "eligibleForMeasurement": false
+    },
+    "tests": {
+      "count": 416,
+      "seconds": 61.353,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "1478ed8425215afe63cb81188db7e56c37f753b26e5fe459e300233545c04460"
+    }
+  },
+  "mockTrials": [
+    {
+      "outputRelativeRoot": ".venv/production-operation-read-05",
+      "receiptSha256": "b972df9d4199c61ea4cd8849f0cc4d64d560a5fdc33fce88f1e87f6902716865",
+      "sourceCommit": "e903ef14f6729e979ae1a961eadf1a7517320912",
+      "scenario": "read",
+      "localHttpRequestCount": 2,
+      "hostEventCount": 2,
+      "mockTurnCompleted": true,
+      "mockFinalMatched": true,
+      "sdkErrorType": null,
+      "dialogueStoppedBeforeSdk": false,
+      "namespaceExitCode": 0,
+      "runtime": {
+        "exitCode": 0,
+        "forcedShutdown": false
+      },
+      "isolationChecks": {
+        ".git": true,
+        ".spec": true,
+        "tests": true,
+        "docs": true,
+        "evals/skills/results": true
+      },
+      "paidModelCalls": 0
+    },
+    {
+      "outputRelativeRoot": ".venv/production-operation-user-input-stop-05",
+      "receiptSha256": "d45f309f28b20590e8bb8a3665d93fe9fdef58aa6216cb9ad21eb03e31c7016d",
+      "sourceCommit": "e903ef14f6729e979ae1a961eadf1a7517320912",
+      "scenario": "user-input-stop",
+      "localHttpRequestCount": 1,
+      "hostEventCount": 0,
+      "mockTurnCompleted": false,
+      "mockFinalMatched": false,
+      "sdkErrorType": "TransportClosedError",
+      "dialogueStoppedBeforeSdk": true,
+      "namespaceExitCode": 0,
+      "runtime": {
+        "exitCode": 0,
+        "forcedShutdown": false
+      },
+      "isolationChecks": {
+        ".git": true,
+        ".spec": true,
+        "tests": true,
+        "docs": true,
+        "evals/skills/results": true
+      },
+      "paidModelCalls": 0
+    },
+    {
+      "outputRelativeRoot": ".venv/production-operation-read-06",
+      "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+      "sourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+      "scenario": "read",
+      "localHttpRequestCount": 2,
+      "hostEventCount": 2,
+      "mockTurnCompleted": true,
+      "mockFinalMatched": true,
+      "sdkErrorType": null,
+      "dialogueStoppedBeforeSdk": false,
+      "namespaceExitCode": 0,
+      "runtime": {
+        "exitCode": 0,
+        "forcedShutdown": false
+      },
+      "isolationChecks": {
+        ".git": true,
+        ".spec": true,
+        "tests": true,
+        "docs": true,
+        "evals/skills/results": true
+      },
+      "paidModelCalls": 0
+    }
+  ],
+  "independentReviews": [
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-01",
+      "receiptSha256": "8000a7fc987215908f1475359ada0c9f399b596f1f42108b23969b3e45f95028",
+      "responseSha256": "c274ae37371a09fcc6c894ebb2a567518b3f2ee156e786209819583bfc05128d",
+      "status": "review_stopped",
+      "sourceCommit": "2ce51de64a7721ab08f4c7a431563c477f4382a4",
+      "model": "gpt-6.1-sol",
+      "exitCode": 0,
+      "timedOut": false,
+      "independentReviewerSolInvocations": 1,
+      "primaryModelTrajectories": 0,
+      "automaticRetries": 0,
+      "rawResponseFindingCounts": {
+        "P1": 0,
+        "P2": 2,
+        "P3": 1
+      },
+      "usageFromRawTrace": {
+        "input_tokens": 25636,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2138,
+        "reasoning_output_tokens": 1248
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-02",
+      "receiptSha256": "652a7ff6ba2562bbc221c8d451b4007aab03312dd574592284f0acc6e06ffd70",
+      "responseSha256": "90a37acfd040f3141e0d7206b16281551d0312b41d89c426dc7a09d66db222cc",
+      "status": "review_findings",
+      "sourceCommit": "55bd64eb55baaf00d0ba8b366b5fbc7fd7cec0e7",
+      "model": "gpt-6.1-sol",
+      "exitCode": 0,
+      "timedOut": false,
+      "independentReviewerSolInvocations": 1,
+      "primaryModelTrajectories": 0,
+      "automaticRetries": 0,
+      "rawResponseFindingCounts": {
+        "P1": 0,
+        "P2": 4,
+        "P3": 0
+      },
+      "usageFromRawTrace": {
+        "input_tokens": 27262,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2483,
+        "reasoning_output_tokens": 1316
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-03",
+      "receiptSha256": "b21fc8f7be4c92e5d22f8288836e2e668988f0af6e6abb39a844b6f2099bb49e",
+      "responseSha256": "7e1a7ea9f8729914ca658542447f02b0592c5dde1716ab0d2bfc2016f19b5613",
+      "status": "review_findings",
+      "sourceCommit": "f530be22340d7e9bd26dc524dce993ef31a1ac7e",
+      "model": "gpt-6.1-sol",
+      "exitCode": 0,
+      "timedOut": false,
+      "independentReviewerSolInvocations": 1,
+      "primaryModelTrajectories": 0,
+      "automaticRetries": 0,
+      "rawResponseFindingCounts": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 0
+      },
+      "usageFromRawTrace": {
+        "input_tokens": 30117,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2347,
+        "reasoning_output_tokens": 1911
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-04",
+      "receiptSha256": "0e6531ab00d8a8dd57181dfb0939631d2ffebf66607b68c35ea8bf0308256ec0",
+      "responseSha256": "5e6a46bb58c6b494acd363760c1f34af7228e58d36baaeb48b9f4a7a02894488",
+      "status": "review_findings",
+      "sourceCommit": "09875b5cd948ab1d9e6253ae15cc8a247aaed727",
+      "model": "gpt-6.1-sol",
+      "exitCode": 0,
+      "timedOut": false,
+      "independentReviewerSolInvocations": 1,
+      "primaryModelTrajectories": 0,
+      "automaticRetries": 0,
+      "rawResponseFindingCounts": {
+        "P1": 0,
+        "P2": 2,
+        "P3": 0
+      },
+      "usageFromRawTrace": {
+        "input_tokens": 30623,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2074,
+        "reasoning_output_tokens": 1402
+      }
+    }
+  ],
+  "pendingReview": {
+    "status": "auto_approval_rejected_before_invocation",
+    "sourceCommit": "f62a87a6181831f87cd24de72c843588869dd736",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.5.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-05",
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "outputDirectoryExists": false,
+    "reason": "送信対象コードと外部CLI/model宛先への明示的な機密データ送信承認が不足しているとして自動承認審査が拒否した。",
+    "destination": "OpenAI Codex CLI / gpt-6.1-sol",
+    "payloadFiles": [
+      {
+        "path": "evals/skills/routing/production_sdk_trace.py",
+        "bytes": 35036,
+        "sha256": "f8e0e0834b41e5406021aeea746ebf7cb1dc8907012f9b24e9d1ff08ed321dc9"
+      },
+      {
+        "path": "evals/skills/routing/production_trace.py",
+        "bytes": 13298,
+        "sha256": "2227bf73b6ca1e76831afa70a39ff8d380a084169575f82a97bec0e3bbcb4642"
+      },
+      {
+        "path": "tests/skills/test_production_sdk_trace.py",
+        "bytes": 29486,
+        "sha256": "328a5fa1ca7d93c87770f244df9e5f6ae7b96f207bcaa27f8db54d3122a17832"
+      },
+      {
+        "path": "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+        "bytes": 4868,
+        "sha256": "7aa6aae048eeed5a1eaf9754537624cc99b1e7e19f3895fc382cbb95402a6555"
+      },
+      {
+        "path": "evals/skills/routing/sdk-trace-review-remediation.md",
+        "bytes": 3831,
+        "sha256": "a85c7c3f7bebf088ffe84d2761596c5059af108d30f83eead249b60aebf1fa81"
+      }
+    ],
+    "payloadBytes": 86519,
+    "additionalPayload": "固定静的検分指示・確定source ID・各行番号/hash・公開JSON応答schema（922 bytes）"
+  },
+  "newMockTrials": 3,
+  "newLocalHttpRequests": 5,
+  "mockPaidModelCalls": 0,
+  "independentReviewerSolInvocations": 4,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "independentRemediationReviewPassed": false,
+  "eligibleForMeasurement": false,
+  "certifiesExpectedBehavior": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

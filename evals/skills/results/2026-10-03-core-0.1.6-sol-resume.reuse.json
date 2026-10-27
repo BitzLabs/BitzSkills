@@ -1,0 +1,364 @@
+{
+  "subjectCommit": "b1bbfa97e1a9c508c3f8949a51c69ddab01cd212",
+  "sourceDirectory": ".venv/core-evaluation-20261003-v6-sol-full",
+  "sourceScoreSha256": "aa8fe1aa2e7595294f5b8af8b81a5600d88831cc19ca7b12053b9f86dba84a5f",
+  "sourceResult": "Failed",
+  "originalFeatureHead": "8d97ec594e4ba841b468bccd64bf6aa90cdd12d6",
+  "mode": "manual-resumption-with-unchanged-completed-records",
+  "reusedRecords": [
+    {
+      "path": "skill/action/repetition-1/CA-001/run.json",
+      "runSha256": "fc14767d3f985157363c5daf526ce13a615353d61d1c2487f389f7bcb8f8898d"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-002/run.json",
+      "runSha256": "a86682d967e4002c5126afe4e04c879903f5a8cc1c5e06866efab442d09cd126"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-003/run.json",
+      "runSha256": "c8d1f9d867da74e22be7637d67e3123762c939ab272773cfba2d90552841d6ab"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-004/run.json",
+      "runSha256": "8db11d75297f2050e6823d0aaffe10f7dfc76d909e26518116c78c9d6a00c7c5"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-005/run.json",
+      "runSha256": "dff687b65f9c7d00f1c86ea10554a042b9aa70ad277c875600ec5059eba079cb"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-006/run.json",
+      "runSha256": "da601ad5f13b6e05750a9567aa4edbff8406efa14b971993a7e516b8ae03a3fd"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-007/run.json",
+      "runSha256": "3be70fad670111b943fdc9d2093e066542b7ba836db844169c0e729bc49aca25"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-008/run.json",
+      "runSha256": "49f8d4c2664ecb976c243abd0f402fdf41c70ad896d8f0b0ba392230d59fb4e1"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-009/run.json",
+      "runSha256": "7dbd682bb84ef7bb0470efccf46a12e2561e7b230eb3cfa5415a18831cc56648"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-010/run.json",
+      "runSha256": "b2bd5ae039eca4bcd933e36601216ae4c662a5af39b9f1360b6e11406fd98da2"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-011/run.json",
+      "runSha256": "4f3699ca856205a8a670b2079ed529ac8a835dea8dc510a7a12fcaf748c97016"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-012/run.json",
+      "runSha256": "23454a1517890814794d8f663ab4d0f2681bed7e1ffccd2a50d9a6376997b2ae"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-013/run.json",
+      "runSha256": "2b121df86fed425a53dbdf0a999afac6ec228b5d3d8132c7ea9663ff37d0f366"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-014/run.json",
+      "runSha256": "8004b75c8b9d687a05666055b101ba5d99ea355b3bceaa0ae676103b2555128c"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-015/run.json",
+      "runSha256": "91269b460708199561eedfb3cfcc43828b016c560b8391be8e661fec350c133e"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-016/run.json",
+      "runSha256": "7ad933eb35e6c9d21dfecb7a6350ffefb465b6d90528ad969a06bfb14240baf1"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-017/run.json",
+      "runSha256": "7b531479bec54371f4c9de4df60f08f8b9841c4e1af2489686462b890ca67b4f"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-018/run.json",
+      "runSha256": "b7851418aa722e5397af4967363f84818aedbcd4f9751e2caf330062d07a5d1d"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-019/run.json",
+      "runSha256": "f57f5cf6edfefec3f710419eae2b85bdcf0c0fbfe20f85a84d3a5a3c6e71a409"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-020/run.json",
+      "runSha256": "f115d5fdc57d3f48f858ee8ec65c606baecc9533f238ce113f4862749d95e93b"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-021/run.json",
+      "runSha256": "3c79b1312a1848c55c39c16f6e04e5fccb00facbee4762c907ab65932a5cdc33"
+    },
+    {
+      "path": "skill/action/repetition-1/CA-022/run.json",
+      "runSha256": "19a5e4b58e54afedfcdfb5f038af616dbcb2035cb3e59cabe1da25e325ad0524"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-001/run.json",
+      "runSha256": "3c716d9c5c2c69b763025499ca123c96e45aa9d8eb9f2dfe21cb7d4b434823bc"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-002/run.json",
+      "runSha256": "1744bc583baae673899df644d36c84eca7f14188c5716e9b2dd6601a1f647b17"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-003/run.json",
+      "runSha256": "6ec2dd87cfd2957c0827d90314f49e9028fa27863ee4e4bb4bbbc2a35a0cc7d5"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-004/run.json",
+      "runSha256": "ccfc45099e0ff48ff2168f62922ae2aeb94222257bbf6fdfa2b9f61b78f60fbc"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-005/run.json",
+      "runSha256": "5aecae5a2a5bcc9b954ef779fdc399406d4d3e038c26ff9f474851f79b202b3c"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-006/run.json",
+      "runSha256": "5725ed311e2db6a75ce0a44b670fdf13fd4357a0bcd44b7f91d6dada5bc16807"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-007/run.json",
+      "runSha256": "ac149967a2d15dbac01ad67bb9be978bf225b2a80e9aaa8af5dc941ed5d2d68f"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-008/run.json",
+      "runSha256": "219515c84471585114128a481eca027dc953e23499a452b4a0200ed1662fd2e3"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-009/run.json",
+      "runSha256": "509bc3a2b9d130c6e75b9eb617335b10dddbd448e83bfb3c3f4e78c5692826bc"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-010/run.json",
+      "runSha256": "5661266a15135eac9795a9999c4dac600cc7342d431578bc2c91ebd952ac555b"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-011/run.json",
+      "runSha256": "43e4acf2c3fb00d6ee72a506c7f8457148c3bd3e03f9ffa736d54d5951040a89"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-012/run.json",
+      "runSha256": "78daf52b6bc43b31648ecfdd1dfa351a452ffecef4a5ecff292eadf2e303f14a"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-013/run.json",
+      "runSha256": "82fe7764f2c3e13a8207ccc1b1f4ae9e913de5938c5a4f9a01c9f24b7d061b91"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-014/run.json",
+      "runSha256": "0b96e57967cf422ea200f6e3402aaf394ce6f6f5c8195fc3c43324f0158676d5"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-015/run.json",
+      "runSha256": "2b4113c53759c17bcbcf02127a51f2486214bae336e971ee1a1b3cf3c0631087"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-016/run.json",
+      "runSha256": "b15c579f1dbddd7da3814916f2a5f94109607e547a8c943810cc2b8a51acd7bb"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-017/run.json",
+      "runSha256": "78153955229b0193d5089bc5ff0898339226dd13b947dd7d23f017d98f426266"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-018/run.json",
+      "runSha256": "ccd444c2bbdee7c38304653100b294ced46342f7ce321dae7249b6484f21af66"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-019/run.json",
+      "runSha256": "f1a58aab5b0e8738aeb0680af306e1e5c5b885869fd0b46765a04b9b506b5387"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-020/run.json",
+      "runSha256": "50157560b923086fa76528d47d933b9d664cda4205dfbafc91fa9f6349979fdf"
+    },
+    {
+      "path": "skill/action/repetition-2/CA-021/run.json",
+      "runSha256": "4366d7411698ca5b61f9ff4a4dcc06c970d378c46305e832f45d7533ecaf8926"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-001/run.json",
+      "runSha256": "ca42308286314afe36ea8738d86b536a189a9d739c1a95c60c4dea3c2686b729"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-002/run.json",
+      "runSha256": "0f6974afd01584ebacc345eea4e85136adf2a1c5ee8ebb9c12096917ef0609db"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-003/run.json",
+      "runSha256": "82e00186f239664538c885c0f845cb12fe67c5e0f5ba18c458b1693acc48d872"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-004/run.json",
+      "runSha256": "495c616c5fc08370a48a49e1ff17cc2b885142563c5a10a5bf0cad4097b9d302"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-005/run.json",
+      "runSha256": "51dae249d0fe3af76af87b229429276a23397f5063605a91e432127e3a3b9e0d"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-006/run.json",
+      "runSha256": "06943d31412a256cad0e4b4e95beaa37af211974759beba2388a37945823f026"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-007/run.json",
+      "runSha256": "1fc67f2efabe1f93ffc8d46285a8fb61d3c6220dca04533f61b81b905a31b7c6"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-008/run.json",
+      "runSha256": "a9f591e7889165517c15a9df8bfcc0f3169805abc44be147f8a8a33b9508b2ee"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-009/run.json",
+      "runSha256": "438acf23b046442fa7831288d8aafdf29aadf3ed69c44bd7efd073b886df4cf2"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-010/run.json",
+      "runSha256": "0ff521d098b115d35eb7e1fa768c3ef6153e01334ad790133da4b9b81abe78db"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-011/run.json",
+      "runSha256": "067cf0006ff5ace7934d1e877295b4635fee29b89e53c5e4835cf443ed2c80fc"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-012/run.json",
+      "runSha256": "5ca528cd6178fc40c92cd03e594929cbfc78727572a2ce1b86a01ad2586dbaad"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-013/run.json",
+      "runSha256": "4661d3753fb46df21a3bb3a5951270a21f72c6fc1d5db18161d82bceae172be2"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-014/run.json",
+      "runSha256": "ece807fa17d20d3d3bd9da704623710b4ed414297fa4feace85ef56949d74c77"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-015/run.json",
+      "runSha256": "ca93e053890064601ee4188fd88e83ae4c5ecd9a7d557e79a58d72e2efd6d23d"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-016/run.json",
+      "runSha256": "784906b203d372b9c369c2e1507732e88fd32596720a6229c0aeca018ae831ac"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-017/run.json",
+      "runSha256": "78b7465d2b7c3d10389b6d3d65316c72f0827d7d8fa1e3ee2c13bbfb3748a89d"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-018/run.json",
+      "runSha256": "220d16ecbbb755e82417bfdfca6b93c7829b8f5472e453be438019397c3f141e"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-019/run.json",
+      "runSha256": "e59b987c8aa4a8e6a44dbdb31b27debce9debe4969339ea60e63539e0c38e344"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-020/run.json",
+      "runSha256": "fe3dff95dab619152f7d833c4da7bf70eca2715366fa5e3505362e33dd28aa59"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-021/run.json",
+      "runSha256": "ba9d26328ae8e54ec7bc37386e460b9073e3878df5fa714a62e6d85e43d37859"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-022/run.json",
+      "runSha256": "a7748036a0bdc2faeb5c65d097c661d8927fef4a2fcb1873a0304b30b1fe8ff0"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-023/run.json",
+      "runSha256": "2c9738ab2bee8488e4c364f97e15e685729b447b81c809aeb2e98ce375ba7bff"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-024/run.json",
+      "runSha256": "654d616c1d30f1c6cab8254b812093c204a39c6d7e3817301ccf8af8d89cb0b0"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-025/run.json",
+      "runSha256": "6c8f174f01416bde150ae273166df882810fcc87a86d6c931ce38f2f653f9dfb"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-026/run.json",
+      "runSha256": "54cfc8fe70af0dcb93d83710a8f1966cebc124fc96e97ce02c7895298d740557"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-027/run.json",
+      "runSha256": "05efff510be923bf808ede1e25d13fbbc6d1b0cc6fb95980d4c0a6dca3946893"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-028/run.json",
+      "runSha256": "ff51a5901c83bd2f81373bd95cd6a0a7a16219d85aeb856d9e5ed3e476e286c3"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-029/run.json",
+      "runSha256": "17138c6d7363756136901f1419392838f05af5ed9ecb2636fbc6c4992e1673de"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-030/run.json",
+      "runSha256": "9125e91027d6804b99d6b8985858dfb0f53a8f247a79bd70efc8e30cb82945f7"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-031/run.json",
+      "runSha256": "461c3f80dc6b7467649020a3c5ae27bc4f67a40cf112ebeec46b36a981408684"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-032/run.json",
+      "runSha256": "bc272a1c5a9c9a9abeea7720925ebb3dfab4b156c3361604d473a11e6868cd63"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-033/run.json",
+      "runSha256": "8014a1c6e293f6175d54a96a3e36a952309c89ece90188185b19786f96842f97"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-034/run.json",
+      "runSha256": "009cabdc5f4525c6177504d494f9b9c9a12ecb5773be4284eed96cdde26fbc05"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-035/run.json",
+      "runSha256": "3dda2c625f72ba1d3e19573c60cf06ae8cc70234c94e241c537767c99bc95aaf"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-036/run.json",
+      "runSha256": "0569b50f7da76144994cb042cb93385c959f6459ad05f8d25cbcde1a44a6e991"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-037/run.json",
+      "runSha256": "3aaf0871a19877b979d23fe0bec3e9790250517c4a809364a7b218db9a91481a"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-038/run.json",
+      "runSha256": "bf170d3da34bfdee2ab939415c3135888a46147d36f1c2de56e95a1d1dacb09b"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-039/run.json",
+      "runSha256": "8b3e6983a22ddafa231823e3bde8bcc5c8bc67c15e70514f2b2fa0457b0ac699"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-040/run.json",
+      "runSha256": "bf8b146fde1a0b3bd27800386f44a550686ea7c0b4c1f6c63a0f7d78e3e21c06"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-041/run.json",
+      "runSha256": "6c369750913eb631e7f19a8227fb2b9ef40c0aa38e805bee8fc53ea95c54b08f"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-042/run.json",
+      "runSha256": "fc0d66e450ce5685c6ab803466541ae8b8abd06c15a68d7bfca5f1ef1ac0e9cb"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-043/run.json",
+      "runSha256": "0c13f3c5561f703d93805ed502a240da0ed93133d4e0a0c8b3fcf406764f1ed0"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-044/run.json",
+      "runSha256": "f74e920f51ebd204f5aa00f963a6803a2b2985cb88d320bd1f143f391ed29469"
+    },
+    {
+      "path": "skill/routing/repetition-1/CR-045/run.json",
+      "runSha256": "3a32113023fc3276516da757f3746e65f5c74a63d809a1243aaf80b37fe2da54"
+    }
+  ],
+  "plannedNewRecords": 180,
+  "automaticRetries": 0
+}

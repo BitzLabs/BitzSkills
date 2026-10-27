@@ -1,0 +1,81 @@
+{
+  "version": "heldout-sdk-context-diagnosis-1",
+  "status": "feature_effective_but_supplement_selection_unresolved",
+  "notificationFixCommit": "8b3c718eb85a286056b53186f004e444cbc4dfe5",
+  "relatedTests": {
+    "count": 144,
+    "passed": true,
+    "independentRemediationReviewPending": false,
+    "fullRegressionPending": false
+  },
+  "originalSurvey": {
+    "primaryReserved": 1,
+    "primaryLaunchMarked": 1,
+    "independentReserved": 0,
+    "parentVerified": 0,
+    "pending": 1,
+    "unattempted": 23,
+    "globalStopPreserved": true
+  },
+  "supplement": {
+    "referenceBytes": 920,
+    "actualBytes": 1056,
+    "singlePublicConstantInsertionBytes": 136,
+    "publicConstantSha256": "a5a6e6c3c42f7099c67db3610c74ca8ac7ecf798e70608b32f90f1154689d876",
+    "independentOriginalsParentCompared": 309,
+    "gitBlobsParentCompared": 57,
+    "archive": "evidence-r04-heldout-supplement-reviewed-20261020.tar.gz",
+    "archiveSha256": "9f6a5822b7f70156a806042f794a81e2d6cee9d55facbd55c249a6e6af672850"
+  },
+  "syntheticFactor": {
+    "variants": 3,
+    "eachRequestCount": 1,
+    "eachSupplementBytes": [
+      341,
+      920
+    ],
+    "defaultConstantPresent": false,
+    "sdkError": "TransportClosedError",
+    "reason": "existing guard rejected auth-free diagnostic telemetry",
+    "calibrationCertified": false,
+    "archive": "evidence-r04-heldout-public-factor-reviewed-20261020.tar.gz",
+    "archiveSha256": "248a1fa9271b5a963ed43adbe01deb9f2403ef72340588594f85935aeb9b3785",
+    "parentPublicOriginalsCompared": 274,
+    "parentGitBlobsCompared": 57
+  },
+  "featureMetadata": {
+    "namespaceExitCode": 0,
+    "seconds": 1.9934147510211915,
+    "variants": [
+      {
+        "variant": "unforced",
+        "featureBefore": false,
+        "featureAfter": false,
+        "errorType": null
+      },
+      {
+        "variant": "false",
+        "featureBefore": false,
+        "featureAfter": false,
+        "errorType": null
+      },
+      {
+        "variant": "true",
+        "featureBefore": true,
+        "featureAfter": true,
+        "errorType": null
+      }
+    ],
+    "turnStarts": 0,
+    "models": 0,
+    "reservations": 0,
+    "realCredentialsMounted": false,
+    "externalNetworkIsolated": true,
+    "resultSha256": "83d5310bd4953049eb881aae928eeed1abb396c32715c23f6d72f975ded85f13",
+    "independentlyReviewed": false
+  },
+  "next": "Classify public model/catalog/template selection; preserve old stopped slot and continue only remaining23 after independent closure",
+  "certifiesR04Complete": false,
+  "certifiesGate": false,
+  "followUpRecord": "r04-heldout-catalog-connection-progress-20261021.json"
+}

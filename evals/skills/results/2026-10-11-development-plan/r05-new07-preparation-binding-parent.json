@@ -1,0 +1,149 @@
+{
+  "status": "synthetic_only_regressions_passed_independent_pending",
+  "originalSha256": "b2553132be5dfaee6a87861db5493654c751dc8b04b66391a1ba5ec5ffa0da38",
+  "result": {
+    "cases": [
+      {
+        "accepted": true,
+        "case": "synthetic_closed10_positive",
+        "error": null
+      },
+      {
+        "accepted": false,
+        "case": "missing_closed10",
+        "error": "AssertionError: preparation closed10"
+      },
+      {
+        "accepted": false,
+        "case": "old06_originals_outer_source_changed",
+        "error": "AssertionError: preparation fixed bytes: runner.py"
+      },
+      {
+        "accepted": false,
+        "case": "changed_runner.py",
+        "error": "AssertionError: preparation fixed bytes: runner.py"
+      },
+      {
+        "accepted": false,
+        "case": "changed_contract.json",
+        "error": "AssertionError: preparation fixed bytes: contract.json"
+      },
+      {
+        "accepted": false,
+        "case": "changed_prompt.txt",
+        "error": "AssertionError: preparation fixed bytes: prompt.txt"
+      },
+      {
+        "accepted": false,
+        "case": "changed_schema.json",
+        "error": "AssertionError: preparation fixed bytes: schema.json"
+      },
+      {
+        "accepted": false,
+        "case": "changed_config.json",
+        "error": "AssertionError: preparation fixed bytes: config.json"
+      },
+      {
+        "accepted": false,
+        "case": "changed_invocation.json",
+        "error": "AssertionError: preparation invocation"
+      },
+      {
+        "accepted": false,
+        "case": "changed_reservation.json",
+        "error": "AssertionError: preparation reservation original"
+      },
+      {
+        "accepted": false,
+        "case": "changed_stderr.bin",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_maximumInvocations",
+        "error": "AssertionError: maximumInvocations"
+      },
+      {
+        "accepted": false,
+        "case": "outer_actualInvocations",
+        "error": "AssertionError: actualInvocations"
+      },
+      {
+        "accepted": false,
+        "case": "outer_automaticRetries",
+        "error": "AssertionError: automaticRetries"
+      },
+      {
+        "accepted": false,
+        "case": "outer_exitCode",
+        "error": "AssertionError: exitCode"
+      },
+      {
+        "accepted": false,
+        "case": "outer_timedOut",
+        "error": "AssertionError: timedOut"
+      },
+      {
+        "accepted": false,
+        "case": "outer_error",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_afterVerificationError",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_runtimeUnchanged",
+        "error": "AssertionError: runtimeUnchanged"
+      },
+      {
+        "accepted": false,
+        "case": "outer_predecessorsUnchanged",
+        "error": "AssertionError: predecessorsUnchanged"
+      },
+      {
+        "accepted": false,
+        "case": "outer_newPrimaryLedgerExists",
+        "error": "AssertionError: newPrimaryLedgerExists"
+      },
+      {
+        "accepted": false,
+        "case": "outer_artifactReadErrors",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_usage",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_acceptedStartupWarningHashes",
+        "error": "AssertionError: "
+      },
+      {
+        "accepted": false,
+        "case": "outer_sourceAfter",
+        "error": "AssertionError: preparation Git20"
+      },
+      {
+        "accepted": false,
+        "case": "wrong_shared_reservation",
+        "error": "AssertionError: preparation shared reservation"
+      },
+      {
+        "accepted": false,
+        "case": "native_source_replaced",
+        "error": "ValueError: review response binding"
+      }
+    ],
+    "cleanAfter": true,
+    "driverSha256": "8d5eab0765e0f1345f9499e660c9dff132cd4e646c7b3e9d313883d82776b724",
+    "modelsStarted": 0,
+    "positiveKind": "synthetic-test-only-not-an-actual-preparation",
+    "reservationsWritten": 0,
+    "sourceCommit": "915fae1290cb632cd53f6b7fcfb906d5c98b2e30"
+  }
+}

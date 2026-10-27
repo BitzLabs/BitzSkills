@@ -1,0 +1,66 @@
+{
+  "case": "SP-003",
+  "variant": "baseline",
+  "repetition": 1,
+  "semanticVerdict": "failed",
+  "identity": {
+    "setVersion": "sdd-0.1.4",
+    "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+    "sourceSha256": "560ba39d6ada7b6227c2193f862e8fa58cfbf318083f6660dbb1208bb94875df",
+    "caseSha256": "738c5f29204e53b5c17437448ae7712c7694ba800b9683fc8fcb169137cfe617",
+    "caseId": "SP-003",
+    "variant": "baseline",
+    "repetition": 1,
+    "model": "gpt-6.1-sol",
+    "modelVersion": "unversioned-alias-observed-2026-10-04",
+    "pythonpath": "/home/hide/.codex/worktrees/b1e9/BitzSkills/.venv/sdd-plan-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i"
+  },
+  "reason": "既存差分は空。REQ-001はapproved、TASK-001はopen。Coreのcontext 2件とcheckはすべてpassedで診断・警告なし。回帰条件案：validate(\"\")が文字列のエラーリストを返し、その件数が1であること。通常入力validate(\"abc\")は従来どおり[]であること。これらのテストは既にtests/test_input.pyに存在する一方、SPECのVerificationには未実装と記載され、不整合がある。TASK-001の修正計画案：既存テストで修正前の失敗を確認し、src/input.pyのvalidateにvalue == \"\"の分岐を追加してエラー文字列1件を返す。それ以外は[]を維持する。空白やNoneの扱いへの意味拡張はしない。その後Core検査と許可された-I -Bの対象テストで空入力・通常入力を確認し、Verificationの記述を実証結果に合わせ、最終差分を人手レビューする。今回は提案のみでファイル変更・verify・テスト実行はしておらず、製品動作の実証は未完了。利用者の計画レビューと実装依頼を受けた後、sdd-implementのTASK-001へ進む。要件の意味変更が必要になればsdd-planへ戻る。",
+  "checks": {
+    "sourceCommitMatches": true,
+    "sourceHashMatches": true,
+    "caseHashMatches": true,
+    "artifactHashesMatch": true,
+    "traceHostMatch": true,
+    "finalResponseMatches": true,
+    "finalSnapshotMatches": true,
+    "unchanged": true,
+    "readContentMatches": true,
+    "baselineHasNoSkill": true
+  },
+  "core": [
+    {
+      "argv": [
+        "context",
+        "REQ-001",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "stdout": "{\"schemaVersion\": \"1.0\", \"operation\": \"context\", \"status\": \"passed\", \"purpose\": \"interpret\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"roots\": [\"REQ-001\"], \"contextDigest\": \"sha256:c6bd8b0f7768ff9fd75918bad28f31c234b7831e25c6d900130ae66c57714e8a\", \"revision\": {\"commit\": \"83bf85ad0fdb300acd27cb7e0fc2fd74c67ff33f\", \"dirty\": false}, \"resolution\": {\"complete\": true, \"documentCount\": 1, \"unresolvedStrongRelations\": 0}, \"projection\": {\"detail\": \"standard\", \"expanded\": []}, \"documents\": [{\"id\": \"REQ-001\", \"kind\": \"requirement\", \"status\": \"approved\", \"role\": \"root\", \"path\": \".spec/requirements/REQ-001.md\", \"projection\": \"full\", \"reachedBy\": [\"root\"], \"statementRefs\": [\"REQ-001:AC-01\"], \"frontmatter\": {\"id\": \"REQ-001\", \"title\": \"空の入力を拒否する\", \"status\": \"approved\", \"implements\": [\"src/input.py\"], \"tests\": [{\"path\": \"tests/test_input.py\", \"covers\": [\"REQ-001:AC-01\"], \"command\": \"default\"}]}, \"bodyText\": \"# REQ-001 空の入力を拒否する\\n\\n## Intent\\n\\n利用者が空の入力に対する理由を確認できるようにする。\\n\\n## Acceptance Criteria\\n\\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [WHEN] 空の入力を受け取った場合 [MUST] [THEN] 入力エラーを1件返す。\\n\\n## Verification\\n\\n入力の公開入口へ空の値を渡し、エラー件数を確認するテストを計画する。\\nテストは未実装で、要件の実証は未完了である。\\n\", \"untrustedText\": true}], \"constraintLedger\": {\"statements\": []}, \"coverage\": {\"must\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"should\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"may\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"adjacent\": []}, \"durationMs\": 10, \"diagnostics\": []}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "context",
+        "TASK-001",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "stdout": "{\"schemaVersion\": \"1.0\", \"operation\": \"context\", \"status\": \"passed\", \"purpose\": \"interpret\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"roots\": [\"TASK-001\"], \"contextDigest\": \"sha256:8cbe8bb8576991ba4a3ba7f595afdf2a9cedf99345cb0d86098894f98fd42db0\", \"revision\": {\"commit\": \"83bf85ad0fdb300acd27cb7e0fc2fd74c67ff33f\", \"dirty\": false}, \"resolution\": {\"complete\": true, \"documentCount\": 1, \"unresolvedStrongRelations\": 0}, \"projection\": {\"detail\": \"standard\", \"expanded\": []}, \"documents\": [{\"id\": \"TASK-001\", \"kind\": \"task\", \"status\": \"open\", \"role\": \"root\", \"path\": \".spec/tasks/TASK-001.md\", \"projection\": \"full\", \"reachedBy\": [\"root\"], \"statementRefs\": [], \"frontmatter\": {\"id\": \"TASK-001\", \"title\": \"空入力の拒否と回帰テストを実装する\", \"status\": \"open\", \"relations\": {\"addresses\": [\"REQ-001:AC-01\"]}, \"changes\": [\"src/input.py\", \"tests/test_input.py\"]}, \"bodyText\": \"# TASK-001 空入力の拒否と回帰テストを実装する\\n\\n## Objective\\n\\nREQ-001:AC-01の意味が人間に承認された後、指定境界内で空入力の拒否を実装する。\\n\\n## Completion Criteria\\n\\n実装の前後のCore検査、対象テスト、最終差分の人手レビューを経て完了する。\\n起点REQがdraftの間は実装へ着手しない。\\n\", \"untrustedText\": true}], \"constraintLedger\": {\"statements\": []}, \"coverage\": {\"must\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"should\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"may\": {\"total\": [], \"addressed\": [], \"tested\": [], \"unaddressed\": [], \"untested\": []}, \"adjacent\": []}, \"durationMs\": 11, \"diagnostics\": []}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "check",
+        "REQ-001",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "stdout": "{\"schemaVersion\": \"1.0\", \"operation\": \"check\", \"status\": \"passed\", \"scope\": \"selected\", \"workspace\": {\"id\": \"root\", \"path\": \".\"}, \"revision\": {\"base\": \"83bf85ad0fdb300acd27cb7e0fc2fd74c67ff33f\", \"commit\": \"83bf85ad0fdb300acd27cb7e0fc2fd74c67ff33f\", \"dirty\": false}, \"checkedDocumentCount\": 2, \"checkedStatementCount\": 1, \"durationMs\": 21, \"diagnostics\": []}\n",
+      "stderr": ""
+    }
+  ]
+}

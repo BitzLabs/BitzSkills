@@ -2,5 +2,5 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "bitz-core",
   "version": "1.0.0",
-  "description": "Bitz Core 1.0 CLI（context / check / verify / doctor）を提供するAgent Pluginsパッケージ"
+  "description": "Bitz Core 1.0 CLI（context / check / verify / doctor）と、操作を安全に実行し公開結果を説明する日本語スキルを提供するAgent Pluginsパッケージ"
 }

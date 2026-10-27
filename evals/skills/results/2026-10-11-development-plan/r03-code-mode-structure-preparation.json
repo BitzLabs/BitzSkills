@@ -1,0 +1,134 @@
+{
+  "status": "parent_and_independent_static_prelaunch_checked",
+  "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+  "fullTests": {
+    "count": 659,
+    "testSeconds": 71.548,
+    "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+    "exitCode": 0,
+    "seconds": 71.98337593500037,
+    "cleanAfter": true,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "120b339e3e4ae474d08fe369f980ba81aebe1806bc893bcaf38ead560eca2262"
+  },
+  "parentPrelaunch": {
+    "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+    "status": "parent_prelaunch_checked",
+    "boundContractSha256": "9149e0cb649578e105aba0598639405e55572f7cac9ab934daf14e0471ae4c0f",
+    "sourceGuard": {
+      "status": "fixed_source_matches",
+      "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+      "observedHead": "647bf43d7cc5b63538f5f554543178647d40d96c",
+      "headIsCondition": false,
+      "sourceSha256": {
+        "evals/skills/routing/production_canary_capture.py": "f1080acdcb6ed761fbbd7722c233f6c12d03b75b164eff701154baac0456bf10",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production-canary-v0.1.json": "2df78038b02524a1433a8e6aadf846e2d66f78079f8fc4c77edf9c26d9cd72b1",
+        "evals/skills/routing/production-canary-cases-v0.1.json": "4af9b5c4c512f842100b32559280e558121b48fc4f6e908e4d972563395f5ce6",
+        "evals/skills/routing/production-canary-instructions-v0.1.txt": "ed4bde475ccbfece830cd366ab6cce18f857a96bf0e60064fef13429aca92d24",
+        "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+        "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_sdk_probe.py": "236f43a438fe30d63ef81b1705cfe836d0cc4a778a2c02b7b187c2c423673f91",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_ledger.py": "fcfde7d6c6a833d703abe3afe65213161891ce3e41d50d3abe187ad22724fd03",
+        "evals/skills/routing/production_trace.py": "18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "tests/skills/test_production_canary_capture.py": "313c08698ff7303073fcfc4d63d01f0805e693206f14e4145df375b4dedbe624",
+        "evals/skills/routing/production-canary-context-v0.1.json": "d0b72f85991f5273615d9286adea2a2ca27b603cfcfcde213755feda0d2227f4",
+        "evals/skills/routing/production_canary_review.py": "fde90ff1995592c0eecdd38d75a5268f35507313dde58ecf24eda63804706091",
+        "evals/skills/routing/production_canary_rollout.py": "78578401476e4a2d79c69e93241b5ec4bbe32dd00ecb35b878c648340dfe0687",
+        "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+        "evals/skills/routing/production_canary_trace.py": "062c0892fccde6e6bf1387a2419fc3279dd2007b914a525ea529d76a47de5af1",
+        "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+        "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "evals/skills/routing/production_canary_evidence.py": "2b395b569101f79fea6f2e2c575ca9d1e1a9fdc037cf32ae300cfcd6c2c9b8ba",
+        "tests/skills/test_production_canary_runtime.py": "c20c45fce3a7a717738df128b15e148bf4a7bb6f0299848039bf781081ff992d",
+        "evals/skills/routing/production_canary_calibration.py": "58f3734c581542d36641ed4599efbe72f89694b7c22127571634565ef1c1a814",
+        "evals/skills/routing/production-canary-calibration-v0.1.json": "15e4520beb03347006f3497afe8ca95d51651b13bddd94517d909f96ca7f3e97",
+        "tests/skills/test_production_canary_calibration.py": "8a337795ec077811b4d27f4e035a37700c1466a5c719782c2946d4b6772d6d29",
+        "evals/skills/routing/production_canary_score.py": "92f9c564c50895f9148c1346b879d9bfb211b22fe0740122a76d961244772124",
+        "evals/skills/routing/production-canary-score-v0.1.json": "772e5809adb6253973745869f5209d7545cff2010460dba4df2df35f26fa583e",
+        "evals/skills/routing/production-canary-score.schema.json": "f509b3c8dab5282e7f1ec4428581582190d6ef77aafcbc5ccc53a65ad6180664",
+        "tests/skills/test_production_canary_score.py": "56a91a763cc9d0beb3164a0a65cc79c85dfb3c50fa9d165f3b5e9128ae569fec",
+        "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+        "evals/skills/routing/production_canary_campaign.py": "b48647318b19b5d572b62802ac414a9ffb46536dc19a9ca7a47884156e4fc7dd",
+        "tests/skills/test_production_canary_campaign.py": "dadabe7064391e3a2b3dba3e876d9098d5faa002870346b9e74e5dedbbdad497",
+        "tests/skills/test_production_source_integration.py": "a669c87af3b6b8d173d84fdfe2738c83dec53b2447a2894c64987ca4f5d9d599"
+      }
+    },
+    "predecessors": {
+      "status": "two_original_stopped_campaigns_preserved",
+      "predecessors": [
+        {
+          "status": "original_stopped_campaign_preserved",
+          "campaignId": "public-initial-canary",
+          "primaryReservationsConsumed": 1,
+          "independentReservationsConsumed": 0,
+          "primaryReceiptSha256": "196f403e519ee33f1258507ce4601dd266686e315b1af69c875236a47a4212cc",
+          "usage": null,
+          "automaticRetry": false
+        },
+        {
+          "campaignId": "public-schema-projection-01",
+          "primaryReservationsConsumed": 1,
+          "independentReservationsConsumed": 0,
+          "primaryReceiptSha256": "ce2b05ecb8d12f4606995b13bc925b6fdf7280b364647c46eb868f13ce5a1671",
+          "accepted": false
+        }
+      ],
+      "primaryReservationsConsumed": 2,
+      "independentReservationsConsumed": 0,
+      "automaticRetry": false
+    },
+    "primaryCampaign": "public-code-mode-structure-01",
+    "budget": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "independentReviewerSol": 4,
+      "primaryModelTrajectories": 4
+    },
+    "newLedgerExists": false,
+    "modelsStarted": 0,
+    "ledgerWrites": 0
+  },
+  "oldPrimaryConsumed": 2,
+  "newMaximumPrimary": 4,
+  "cumulativeMaximumPrimary": 6,
+  "newPrimaryStarted": 0,
+  "preparationReviewMaximum": 1,
+  "semanticReviewMaximum": 4,
+  "automaticRetries": 0,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "independentStaticReview": {
+    "receiptSha256": "253fa7bf73f0ad9215c4b3992e40203ac6470e40b3a284ba2b995edfde6f9c2a",
+    "status": "static_prelaunch_review_passed",
+    "sourceCommit": "647bf43d7cc5b63538f5f554543178647d40d96c",
+    "artifactSha256": {
+      "config.json": "9cc3957e9bec8641d34edb0c2334f4137cdac5e90f2ce1c019206c8b4ce55e19",
+      "contract.json": "53b25b04cfd4863191fc33ccf50588852fbdeb0ce4c10558450bf9e116502b03",
+      "invocation.json": "35a7337e53bebbe34f0b0df12d1ba552aa96d86909286d3cb18c67c0f1d97b93",
+      "prompt.txt": "4807b984e022c80ef61e1ec57eba21073542cd6758f793af3ee70ff7e090bed3",
+      "reservation.json": "310cd64126ccce47a35158bb0eeeeee3be0fd40b944f8f315841fc3b100cefa1",
+      "response.json": "16a80b06e37ea2007092bb053e7cd84afe9792175de6c32d92fce30bb8cde8c0",
+      "runner.py": "1ded44add8bbc7b7808eeb9b8e0655cb6a843dd69d4fe19ee61deeadeffb1a69",
+      "schema.json": "e427e05660f23001eae4eeb45709ee9c09b14621e0502f199d03591cec9d2e69",
+      "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "trace.jsonl": "32a2ef62130a45de91e357e337fca1faaf29b78f852db7ff897421c8d5ac1f5c"
+    },
+    "usage": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 42276,
+      "output_tokens": 170,
+      "reasoning_output_tokens": 111
+    },
+    "elapsedSeconds": 7.6051685370039195,
+    "consumedReservations": 1,
+    "actualInvocations": 1,
+    "automaticRetries": 0,
+    "scope": "public-static-prelaunch-only"
+  }
+}

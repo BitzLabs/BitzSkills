@@ -1,0 +1,39 @@
+{
+  "version": "production-connection-probe-0.1.0",
+  "phase": 4,
+  "scope": "public-provider-connection-diagnostic-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "sourceFiles": [
+    "evals/skills/routing/production_connection_probe.py",
+    "evals/skills/routing/production-connection-probe-v0.1.json",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_rpc_capture.py",
+    "evals/skills/routing/source_guard.py",
+    "tests/skills/test_production_connection_probe.py"
+  ],
+  "outputRelativeRoot": ".venv/production-provider-connection-01",
+  "maximumInvocations": 1,
+  "maximumLogicalTurns": 1,
+  "timeoutSeconds": 60,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "expectedObservedApiRequests": 1,
+  "diagnosticTracing": {"format": "json", "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"},
+  "limitations": [
+    "本人のPhase 4期間中送信許可内の公開固定入力による接続診断。routing一次評価・行動評価・Gate認定ではない。",
+    "共通repository台帳の別roleを起動前に1枠予約する。失敗/unknown/timeoutも返金せず、同予約を再起動しない。",
+    "通常/stream retry0、WebSocket/無制限接続retry/system proxy fallbackは無効。認証復旧経路の0回は保証しない。",
+    "SDK logical turn1と60秒停止を強制する。API要求1件は観測期待値であり、事前hard capではない。超過は不適合として保持する。",
+    "標準CLIだけが認証を内部使用する。認証ファイルの内容を読取り/コピー/出力せず、CLIへread-onlyでbindする。",
+    "homeと評価資料を隠し、必要source/SDK/runtimeだけread-only。実通信のためnetwork名前空間の隔離は外す。tool操作/質問/未知server要求は停止する。",
+    "原SDK RPC/stdio/rollout traceは私的領域へ保存。client-visible入力JSONの捕捉はHTTP/SSE全bytesやserver内部入力の認定ではない。"
+  ]
+}

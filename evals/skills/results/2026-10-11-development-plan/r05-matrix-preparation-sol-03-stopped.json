@@ -1,0 +1,89 @@
+{
+  "status": "new03_preparation_stopped_original_verified",
+  "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+  "receiptSha256": "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+  "preparationIndependentSolConsumed": 1,
+  "primaryConsumed": 0,
+  "automaticRetries": 0,
+  "findings": [
+    {
+      "line": 458,
+      "message": "P2: Core stdoutが配列・真偽値・数値・文字列のJSONの場合、result.getでAttributeErrorが発生します。inspectとbatch.runの前件検査はこの例外を捕捉しないため、原証拠不整合を検出しても恒久stopを保存せず、原bytesを復元すると次枠を起動できます。receiptのdict検査だけではこの迂回が残ります。",
+      "path": "evals/skills/sdd/evaluate.py",
+      "priority": "P2",
+      "reproduction": "静的に導出した手順（未実行）: run_bitzを含む正常完了済みのfresh合成台帳と正常receiptを用意する。run.jsonは変更せず、host.jsonlのaccepted=trueのrun_bitz結果のstdoutだけを文字列「[]」へ変更する。次枠を要求すると、artifact hash不一致とtrace/host不一致はerrorsへ追加されるものの検査は継続し、458行でAttributeErrorになる。batch.py:175の捕捉対象にAttributeErrorがないためstopは保存されない。host.jsonlを元のbytesへ復元して再要求すると前件検査を通過し、次枠へ進める。",
+      "suggestion": "core_resultsまたは結果照合の入口で、parse_jsonの戻り値がdictでなければValueErrorを投げるか不正Core結果として扱ってください。非object Core stdoutと原証拠復元後の再要求をfresh合成台帳で回帰し、同ロック内でstopが保存されることを確認してください。"
+    }
+  ],
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 44966,
+    "output_tokens": 712,
+    "reasoning_output_tokens": 270
+  },
+  "elapsedSeconds": 29.059781835996546,
+  "originalReproduction": {
+    "sourceCommit": "52421d33a751d807ec1f6d8b4d662a09d46012c0",
+    "preparationReceiptSha256": "0fb1c0f5fff5c58476f54fb8300eb51449d47287ec4a43bfa61ea2140d11cd88",
+    "nativeResponseRechecked": true,
+    "primaryCalls": 0,
+    "syntheticReproductions": [
+      {
+        "invalidCoreResult": [],
+        "errorType": "AttributeError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidCoreResult": true,
+        "errorType": "AttributeError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidCoreResult": 1,
+        "errorType": "AttributeError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidCoreResult": "bad",
+        "errorType": "AttributeError",
+        "stopSaved": false,
+        "restoredResumed": true,
+        "restoredResult": 0,
+        "syntheticCalls": [
+          "SI-001",
+          "SI-007"
+        ]
+      },
+      {
+        "invalidCoreResult": null,
+        "errorType": "ValueError",
+        "stopSaved": true,
+        "restoredResumed": false,
+        "restoredResult": "ValueError",
+        "syntheticCalls": [
+          "SI-001"
+        ]
+      }
+    ]
+  },
+  "certifiesSkillGate": false
+}

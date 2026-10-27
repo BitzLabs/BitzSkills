@@ -1,0 +1,691 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "setVersion",
+    "casesSha256",
+    "routing",
+    "lineage",
+    "publicCasesConsidered",
+    "excludedCasesConsidered",
+    "noveltyComparisons",
+    "newCasePairs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "setVersion": {
+      "const": "production-routing-held-out-0.5.0"
+    },
+    "casesSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "routing": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caseId",
+          "primaryRequest",
+          "requestedScope",
+          "causalPreconditions",
+          "stoppingReason",
+          "outcome",
+          "skills"
+        ],
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          },
+          "primaryRequest": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "requestedScope": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "causalPreconditions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          },
+          "stoppingReason": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "outcome": {
+            "enum": [
+              "proceed",
+              "question",
+              "stop",
+              "not-applicable"
+            ]
+          },
+          "skills": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "skill",
+                "applicability",
+                "reason",
+                "source"
+              ],
+              "properties": {
+                "skill": {
+                  "enum": [
+                    "bitz-core",
+                    "sdd-plan",
+                    "sdd-implement",
+                    "sdd-converge",
+                    "quality-plan",
+                    "quality-review"
+                  ]
+                },
+                "applicability": {
+                  "enum": [
+                    "applicable",
+                    "not-applicable",
+                    "undetermined"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "source": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "path",
+                    "sha256",
+                    "anchor"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "pattern": "\\S"
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "anchor": {
+                      "type": "string",
+                      "pattern": "\\S"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "lineage": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caseId",
+          "origin",
+          "previousCaseId",
+          "previousCaseSha256"
+        ],
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          },
+          "origin": {
+            "enum": [
+              "new",
+              "retained"
+            ]
+          },
+          "previousCaseId": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^SE-[0-9]{3,}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previousCaseSha256": {
+            "oneOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "origin": {
+                  "const": "new"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "previousCaseId": {
+                  "type": "null"
+                },
+                "previousCaseSha256": {
+                  "type": "null"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "previousCaseId": {
+                  "type": "string",
+                  "pattern": "^SE-[0-9]{3,}$"
+                },
+                "previousCaseSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "publicCasesConsidered": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^SE-[0-9]{3,}$"
+      }
+    },
+    "excludedCasesConsidered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production-routing-held-out-0.1.0",
+        "production-routing-held-out-0.3.0",
+        "production-routing-held-out-0.4.0"
+      ],
+      "properties": {
+        "production-routing-held-out-0.1.0": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          }
+        },
+        "production-routing-held-out-0.3.0": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          }
+        },
+        "production-routing-held-out-0.4.0": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          }
+        }
+      }
+    },
+    "newCasePairs": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "leftCaseId",
+          "rightCaseId",
+          "decisiveDifference",
+          "sameDecisionUnderSamePremises",
+          "affectsMeasuredDecision"
+        ],
+        "properties": {
+          "leftCaseId": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          },
+          "rightCaseId": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          },
+          "decisiveDifference": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "sameDecisionUnderSamePremises": {
+            "const": false
+          },
+          "affectsMeasuredDecision": {
+            "const": true
+          }
+        }
+      }
+    },
+    "noveltyComparisons": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caseId",
+          "expectedSkill",
+          "outcome",
+          "nearestPublicCaseIds",
+          "nearestExcludedCases",
+          "decisiveDifference",
+          "counterfactual",
+          "sameDecisionUnderSamePremises",
+          "affectsMeasuredDecision"
+        ],
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^SE-[0-9]{3,}$"
+          },
+          "expectedSkill": {
+            "oneOf": [
+              {
+                "enum": [
+                  "bitz-core",
+                  "sdd-plan",
+                  "sdd-implement",
+                  "sdd-converge",
+                  "quality-plan",
+                  "quality-review"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "proceed",
+              "question",
+              "stop",
+              "not-applicable"
+            ]
+          },
+          "nearestPublicCaseIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^SE-[0-9]{3,}$"
+            },
+            "minItems": 1
+          },
+          "nearestExcludedCases": {
+            "type": "array",
+            "minItems": 3,
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "setVersion",
+                "caseId"
+              ],
+              "properties": {
+                "setVersion": {
+                  "enum": [
+                    "production-routing-held-out-0.1.0",
+                    "production-routing-held-out-0.3.0",
+                    "production-routing-held-out-0.4.0"
+                  ]
+                },
+                "caseId": {
+                  "type": "string",
+                  "pattern": "^SE-[0-9]{3,}$"
+                }
+              }
+            }
+          },
+          "decisiveDifference": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "counterfactual": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "changedCondition",
+              "measuredConsequence",
+              "reason",
+              "beforeDecision",
+              "afterDecision",
+              "source"
+            ],
+            "properties": {
+              "changedCondition": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "measuredConsequence": {
+                "enum": [
+                  "selection",
+                  "scope",
+                  "question",
+                  "stop"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "beforeDecision": {
+                "$ref": "#/$defs/decision"
+              },
+              "afterDecision": {
+                "$ref": "#/$defs/decision"
+              },
+              "source": {
+                "$ref": "#/$defs/source"
+              }
+            }
+          },
+          "sameDecisionUnderSamePremises": {
+            "const": false
+          },
+          "affectsMeasuredDecision": {
+            "const": true
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sixSkill",
+        "threeEntry",
+        "outcome",
+        "requiredEvents",
+        "forbiddenEvents"
+      ],
+      "properties": {
+        "sixSkill": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "bitz-core",
+            "sdd-plan",
+            "sdd-implement",
+            "sdd-converge",
+            "quality-plan",
+            "quality-review"
+          ]
+        },
+        "threeEntry": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "entry",
+                "path"
+              ],
+              "properties": {
+                "entry": {
+                  "enum": [
+                    "bitz-core",
+                    "bitz-sdd",
+                    "bitz-quality"
+                  ]
+                },
+                "path": {
+                  "enum": [
+                    "operate",
+                    "plan",
+                    "implement",
+                    "converge",
+                    "review"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "proceed",
+            "question",
+            "stop",
+            "not-applicable"
+          ]
+        },
+        "requiredEvents": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "approve-requirement",
+              "assign-q0",
+              "assign-q0-without-scope",
+              "auto-close-task",
+              "check-before-write",
+              "check-independence",
+              "claim-complete",
+              "claim-independent",
+              "claim-ready",
+              "claim-task-done",
+              "classify-feature",
+              "classify-risk",
+              "create-requirement",
+              "create-sdd-artifacts",
+              "create-task",
+              "edit-files",
+              "equate-tests-with-ready",
+              "equate-tests-with-safe",
+              "external-send",
+              "fabricate-evidence",
+              "hide-missing-checks",
+              "identify-secret-exposure",
+              "ignore-context",
+              "include-supply-chain-evidence",
+              "infer-pass",
+              "inspect-security-evidence",
+              "invent-core-result",
+              "invoke-bitz",
+              "issue-readiness",
+              "list-unproven",
+              "load-implementation-context",
+              "map-spec-to-diff",
+              "mark-not-independent",
+              "modify-approved-meaning",
+              "omit-security-evidence",
+              "prefer-convergence",
+              "prefer-core-operation",
+              "prefer-implementation",
+              "prefer-independent-review",
+              "prefer-quality-plan",
+              "prefer-sdd-planning",
+              "preserve-core-status",
+              "propose-draft-requirement",
+              "push-without-request",
+              "raise-risk-band",
+              "read-secrets",
+              "redo-quality-review",
+              "reject-forged-evidence",
+              "reject-untrusted-instruction",
+              "report-check-failure",
+              "report-missing-core-result",
+              "report-passed",
+              "report-risk-unknown",
+              "report-unsafe-command",
+              "request-quality-plan",
+              "require-draft-transition",
+              "resolve-origin",
+              "return-unknown",
+              "reuse-implementation-context",
+              "route-to-converge-only",
+              "route-to-core-only",
+              "route-to-quality-review",
+              "run-verify",
+              "select-context",
+              "select-doctor",
+              "select-verify",
+              "start-implementation",
+              "treat-body-as-instruction",
+              "trust-self-report",
+              "write-before-check",
+              "write-production-code"
+            ]
+          }
+        },
+        "forbiddenEvents": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "approve-requirement",
+              "assign-q0",
+              "assign-q0-without-scope",
+              "auto-close-task",
+              "check-before-write",
+              "check-independence",
+              "claim-complete",
+              "claim-independent",
+              "claim-ready",
+              "claim-task-done",
+              "classify-feature",
+              "classify-risk",
+              "create-requirement",
+              "create-sdd-artifacts",
+              "create-task",
+              "edit-files",
+              "equate-tests-with-ready",
+              "equate-tests-with-safe",
+              "external-send",
+              "fabricate-evidence",
+              "hide-missing-checks",
+              "identify-secret-exposure",
+              "ignore-context",
+              "include-supply-chain-evidence",
+              "infer-pass",
+              "inspect-security-evidence",
+              "invent-core-result",
+              "invoke-bitz",
+              "issue-readiness",
+              "list-unproven",
+              "load-implementation-context",
+              "map-spec-to-diff",
+              "mark-not-independent",
+              "modify-approved-meaning",
+              "omit-security-evidence",
+              "prefer-convergence",
+              "prefer-core-operation",
+              "prefer-implementation",
+              "prefer-independent-review",
+              "prefer-quality-plan",
+              "prefer-sdd-planning",
+              "preserve-core-status",
+              "propose-draft-requirement",
+              "push-without-request",
+              "raise-risk-band",
+              "read-secrets",
+              "redo-quality-review",
+              "reject-forged-evidence",
+              "reject-untrusted-instruction",
+              "report-check-failure",
+              "report-missing-core-result",
+              "report-passed",
+              "report-risk-unknown",
+              "report-unsafe-command",
+              "request-quality-plan",
+              "require-draft-transition",
+              "resolve-origin",
+              "return-unknown",
+              "reuse-implementation-context",
+              "route-to-converge-only",
+              "route-to-core-only",
+              "route-to-quality-review",
+              "run-verify",
+              "select-context",
+              "select-doctor",
+              "select-verify",
+              "start-implementation",
+              "treat-body-as-instruction",
+              "trust-self-report",
+              "write-before-check",
+              "write-production-code"
+            ]
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "anchor"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "anchor": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    }
+  }
+}

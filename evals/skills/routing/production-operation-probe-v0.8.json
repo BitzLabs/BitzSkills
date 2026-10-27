@@ -1,0 +1,90 @@
+{
+  "version": "production-operation-probe-0.8.0",
+  "phase": 4,
+  "scope": "isolated-scripted-sdk-raw-response-notification-capture-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "sdkWheelSha256": "930e46e2153c00d76ff4e88e14eb7f694949244fb4be47d84394d736709e022e",
+  "pythonDependencies": {
+    "openai-codex": "0.160.1",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "packaging": "26.3",
+    "typing_extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "annotated-types": "0.8.0"
+  },
+  "candidateSource": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot",
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production-sdk-probe-v0.1.json",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/host.py",
+    "tests/skills/test_production_sdk_probe.py",
+    "evals/skills/routing/production_operation_probe.py",
+    "tests/skills/test_production_operation_probe.py",
+    "evals/skills/routing/production-operation-probe-v0.5.json",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-artifacts.py",
+    "evals/skills/routing/production-operation-probe-v0.6.json",
+    "evals/skills/routing/production-operation-probe-v0.7.json",
+    "evals/skills/routing/production-operation-probe-v0.8.json"
+  ],
+  "allowedTools": [
+    "mcp__production_routing__list_resources",
+    "mcp__production_routing__read_resource"
+  ],
+  "allowedSurfaceTools": [
+    "functions.exec",
+    "functions.wait",
+    "functions.request_user_input_async"
+  ],
+  "codeModeHostEnabled": true,
+  "outputLabels": {
+    "read": "production-operation-read-08"
+  },
+  "maximumScenarios": 1,
+  "maximumLocalHttpRequestsPerScenario": 2,
+  "paidModelCalls": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 0,
+  "automaticPaidRetries": 0,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "limitations": [
+    "固定1exec/2読取りの無課金模擬Responsesだけ。実provider・一次測定・Phase完了を認定しない。",
+    "原SSE/RPC/stdioはproxyで原bytes保存する。SDK配送値は別の側記録で、原RPC bytesと混同しない。",
+    "experimentalRawEventsをSDKの公開dict入口で指定する。同版公式sourceで字段を確認したが、捕捉成功は未確認。",
+    "旧read-06は変更しない。新raw通知は既存のSDK診断で未知扱いのまま保持する。"
+  ],
+  "diagnosticTracing": {
+    "format": "json",
+    "rustLog": "codex_otel.trace_safe=info,codex_code_mode::timing=info"
+  },
+  "experimentalRawEvents": true,
+  "upstreamReference": {
+    "commit": "d27764b82f7118f674371e6d6e76271d9d606edb",
+    "threadStart": "codex-rs/app-server-protocol/src/protocol/v2/thread.rs",
+    "notification": "codex-rs/app-server-protocol/src/protocol/common.rs"
+  },
+  "sdkNotificationFormat": "one-json-object-per-line",
+  "previousCapture": {
+    "sourceCommit": "c026dabede3e40bc010f895a431050ccdae47a9c",
+    "outputRelativeRoot": ".venv/production-operation-read-07",
+    "receiptSha256": "6436ca1ec70adc74a9a3da6b4a54d0a04aaf57ab09f8f1e7ec5b24ce99ac72e3",
+    "status": "operation_diagnostic_captured",
+    "limitation": "SDK side record used pretty multi-document JSON despite .jsonl name; raw RPC/SSE retained unchanged",
+    "consumedScenarios": 1,
+    "remainingScenarios": 0
+  }
+}

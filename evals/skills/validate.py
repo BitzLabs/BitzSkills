@@ -134,6 +134,14 @@ def load_held_out_cases(path: Path):
     return cases, metadata
 
 
+def independent_review_errors(record):
+    errors = [error.message for error in validators()["independent-review"].iter_errors(record)]
+    if isinstance(record, dict) and record.get("independent") is True:
+        if record.get("implementationRunId") == record.get("reviewRunId"):
+            errors.append("独立検分には実装と異なるreviewRunIdが必要です")
+    return errors
+
+
 def audit():
     errors = []
     checked_schemas = validators()
@@ -600,6 +608,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("audit")
+    reviewer = subparsers.add_parser("review")
+    reviewer.add_argument("--input", type=Path, required=True)
     scorer = subparsers.add_parser("score")
     scorer.add_argument("--stage", choices=("prototype", "release"), required=True)
     scorer.add_argument("--input", type=Path, action="append", required=True)
@@ -609,7 +619,13 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     try:
-        report = audit() if args.command == "audit" else score(args.input, args.stage, args.held_out_cases, args.trace_root)
+        if args.command == "audit":
+            report = audit()
+        elif args.command == "review":
+            errors = independent_review_errors(load_json(args.input))
+            report = {"status": "Failed" if errors else "Passed", "errors": errors}
+        else:
+            report = score(args.input, args.stage, args.held_out_cases, args.trace_root)
     except (OSError, ValueError) as error:
         report = {"status": "Failed", "errors": [str(error)]}
     serialized = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

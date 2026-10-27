@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_preparation_review_p2",
+  "reviewerRole": "preparationReviewerSol",
+  "independentContext": true,
+  "sourceCommit": "3d98bf728498d6fa511cf53a454a587fc75be00a",
+  "sourceSha256": {
+    "evals/skills/routing/audit_held_out.py": "72ee9c5f6c22596c440b6c0c3148d71ab1e55859a1838eed8fec4a3fc4be40ce",
+    "evals/skills/routing/novelty.schema.json": "24bb25a6c522035193d52a7897bf0768ccfc3f07878e2c41254a8d9263244eae",
+    "evals/skills/routing/held-out-collection-v0.2.json": "0053ab9e24f3a11b8fae462a97f44a08bb44d7cf4724eb363d0e43dce866c990",
+    "evals/skills/routing/README.md": "f818eb7ee72d373a11079c322a4077cb8b83f0f18ada8fd769dfc9e50b3b8a4a",
+    "tests/skills/test_held_out_novelty.py": "40cf7d78bfd566b4a303d092c15cd69a69467391ebe1c9aa6778c235eb386223"
+  },
+  "budgetConsumed": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 0,
+    "independentReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "severityCounts": {
+    "P1": 0,
+    "P2": 1
+  },
+  "findings": [
+    {
+      "id": "PREP-02-P2-001",
+      "severity": "P2",
+      "title": "公開除外集合の有限入力境界が固定されていない",
+      "location": "evals/skills/routing/audit_held_out.py:audit_novelty / evals/skills/validate.py:load_cases",
+      "evidence": "auditはinputSha256記載の2公開JSONをhash照合するが、load_casesはcases/*.json全件を列挙する。audit_noveltyはpublicCasesConsideredをこの実行時集合と比較するだけで、contract.noveltyConditions.publicCases=46の件数も公開ファイル集合も検査しない。第三のJSON追加で固定公開集合が拡張されても既存2ファイルのhashは不変であり、新しいIDを比較欄へ含めればcoverage判定を通過し得る。",
+      "impact": "確定sourceとhashに束縛した全46公開ケースという有限生成・検分条件を機械検査が保証せず、未束縛の入力を除外根拠へ取り込める。",
+      "recommendation": "公開入力の許可ファイル集合を固定して追加JSONを拒否し、実公開件数をcontractの46と照合する。修正後は別有限contract・別確定refで独立検分する。"
+    }
+  ],
+  "verified": {
+    "sourceFilesMatchPinnedRef": true,
+    "unit": {
+      "command": "/home/hide/.cache/uv/environments-v2/run-conformance-3a9acb64608185bd/bin/python -B -W ignore::DeprecationWarning -m unittest discover -s tests/skills -p test_held_out_novelty.py",
+      "exitCode": 0,
+      "actualOutput": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.809s\n\nOK\n",
+      "logSha256": "d0eeb2ded44a39ca21dd26cefe769a697a85fe1f0da9a3e4aa2a48688574827d"
+    },
+    "legacy": {
+      "auditExitCode": 0,
+      "caseCount": 12,
+      "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+      "fileMode": "0600",
+      "rootMode": "0700",
+      "logSha256": "3eaa16ed53fe6c96e5b2ce9ae86a666f1f412e764c5fa8a99907e55f0b7f194c",
+      "semanticStatus": "旧意味重複P2 2件による停止を維持"
+    },
+    "candidate": {
+      "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+      "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+      "skillCount": 6,
+      "resourceCount": 71,
+      "allResourceHashesVerified": true
+    },
+    "currentPublicCount": 46,
+    "privateBodyExported": false
+  },
+  "checksReviewed": [
+    "private0600/root0700、symlink、公開領域・指定パス拒否",
+    "CLI例外本文とtracebackのredaction",
+    "NFKC/casefold/空白圧縮/context順序正規化と衝突拒否",
+    "旧集合bytes hash・version・12件固定",
+    "新ID SE-900..911・categories・capabilities・期待経路・登録event・矛盾拒否",
+    "novelty schema・新ケースbytes束縛・全件comparisons対応・近傍ID存在",
+    "候補manifest/source/version/6skills/71resources hash固定",
+    "意味新規性は生成後の別独立直接照合が必要であることをcontractとREADMEに明記"
+  ],
+  "limitations": [
+    "意味新規性を認定しない。ケース生成も意味検分も未実行。",
+    "旧privateケース本文を検分者は読んでいない。監査CLI内部読取りのみ。",
+    "8unitは合成構造試験であり、現P2の追加公開JSON境界を試験していない。",
+    "公開入力境界の問題は静的経路検分で特定し、追加試験・再試行を行っていない。",
+    "Gate、一次評価、モデル接続、全分母、releaseを認定しない。",
+    "コード変更なし。collection-02領域作成なし。"
+  ],
+  "usage": {
+    "tokenUsage": "unknown",
+    "modelConnectionUsage": "unknown"
+  }
+}

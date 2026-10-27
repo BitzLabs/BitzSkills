@@ -1,0 +1,283 @@
+{
+  "recordedAt": "2026-10-16T01:10:30.035641+09:00",
+  "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+  "campaignId": "public-matrix-survey-20261016-01",
+  "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+  "status": "public_evaluation_in_progress",
+  "ledgerSummary": {
+    "carriedSlots": 20,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 26,
+    "evaluationFailed": 2,
+    "independentReserved": 24,
+    "maximumPrimary": 92,
+    "measuredCorrect": 22,
+    "measuredIncorrect": 2,
+    "missingMeasurements": 68,
+    "parentVerified": 24,
+    "pendingSlots": 0,
+    "primaryCompleted": 24,
+    "primaryLaunchMarked": 26,
+    "primaryReserved": 26,
+    "status": "in_progress",
+    "unattemptedSlots": 66
+  },
+  "remainingHeldout": 24,
+  "productRemediationDeferredUntilAllEvaluation": true,
+  "independentReport": {
+    "aggregate": {
+      "carriedSlots": 20,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 26,
+      "evaluationFailed": 2,
+      "independentReserved": 24,
+      "maximumPrimary": 92,
+      "measuredCorrect": 22,
+      "measuredIncorrect": 2,
+      "missingMeasurements": 68,
+      "parentVerified": 24,
+      "pendingSlots": 0,
+      "primaryCompleted": 24,
+      "primaryLaunchMarked": 26,
+      "primaryReserved": 26,
+      "status": "in_progress",
+      "unattemptedSlots": 66
+    },
+    "allObservedStageGapsAtLeast60": true,
+    "blockingFindings": [],
+    "campaignId": "public-matrix-survey-20261016-01",
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "45a9d8195897afea589364566e2cfcfd4471b88cf3b412398d65522f76f1360e",
+    "credentialReads": 0,
+    "elapsedSeconds": 15.588866017998953,
+    "findings": [],
+    "independentContext": true,
+    "inherited20AllLineagePinsReverified": true,
+    "inventorySha256": "6685e1dfff2ca349aa3a3cb28f32041ef10b50db00cb3ee7712b5267a41c7538",
+    "later27Through92Unexecuted": true,
+    "limitations": [
+      "Only coverage26 with direct new21..26 audit and historical20 pin recheck; no full92, heldout, permanentquota recovery or release certification.",
+      "Raw original paths stay local inventory; public export must redact raw trace identifiers."
+    ],
+    "modelsExecuted": 0,
+    "newNamespaceInvocations": 0,
+    "newReservations": 0,
+    "newRows": [
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 26055,
+          "output_tokens": 578,
+          "reasoning_output_tokens": 19
+        },
+        "ordinal": 21,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18861,
+          "outputTokens": 358,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19219
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26109,
+          "output_tokens": 536,
+          "reasoning_output_tokens": 29
+        },
+        "ordinal": 22,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18873,
+          "outputTokens": 377,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19250
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25509,
+          "output_tokens": 629,
+          "reasoning_output_tokens": 30
+        },
+        "ordinal": 23,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18924
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 6656,
+          "input_tokens": 25589,
+          "output_tokens": 559,
+          "reasoning_output_tokens": 17
+        },
+        "ordinal": 24,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18554,
+          "outputTokens": 382,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 18936
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26644,
+          "output_tokens": 542,
+          "reasoning_output_tokens": 43
+        },
+        "ordinal": 25,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 19233,
+          "outputTokens": 368,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19601
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      },
+      {
+        "independentUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26902,
+          "output_tokens": 537,
+          "reasoning_output_tokens": 26
+        },
+        "ordinal": 26,
+        "primaryUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 6144,
+          "inputTokens": 19233,
+          "outputTokens": 401,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19634
+        },
+        "provenanceMatched": true,
+        "status": "measured_correct"
+      }
+    ],
+    "oldStop18Unchanged": true,
+    "originalCount": 465,
+    "pacingGapsSeconds": [
+      60.002553328999056,
+      60.000091496000096,
+      60.000154520999786,
+      78.76884007400076,
+      60.00115757800086,
+      60.00058168000032,
+      60.0001286839979,
+      82.28957645600167,
+      60.00063617699925,
+      60.00009891300215,
+      60.000376017000235
+    ],
+    "rawSdkNativeOpaqueCopiesOrDisplays": 0,
+    "sharedLedgerMutations": 0,
+    "sourceCommit": "b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3",
+    "status": "survey_26_coverage_independently_verified",
+    "version": "independent-review-1"
+  },
+  "parentVerification": {
+    "reportSha256": "6998d23495a6a3105c0a0115a57b940735e16b0e7b0885e27beffae41c252f19",
+    "inventorySha256": "6685e1dfff2ca349aa3a3cb28f32041ef10b50db00cb3ee7712b5267a41c7538",
+    "allOriginalHashesCompared": true,
+    "counts": {
+      "originals": 465
+    },
+    "extraModels": 0,
+    "newReservations": 0
+  },
+  "quotaMetadata": {
+    "accountPresent": true,
+    "accountReadOk": true,
+    "authenticationContentsReadByAgent": false,
+    "authenticationType": "chatgpt",
+    "automaticRetries": 0,
+    "certifiesSkillGate": false,
+    "codexBucket": {
+      "primary": {
+        "resetsAt": 1792096411,
+        "usedPercent": 44,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 23,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "codexBucketPresent": true,
+    "declaresStop12Resolved": false,
+    "elapsedSeconds": 1.2934511489984288,
+    "modelGenerations": 0,
+    "notificationCount": 2,
+    "observedAt": "2026-10-16T01:10:02.471936+09:00",
+    "processExitCode": 0,
+    "rateLimitReadOk": true,
+    "rateLimits": {
+      "primary": {
+        "resetsAt": 1792096411,
+        "usedPercent": 44,
+        "windowDurationMins": 300
+      },
+      "rateLimitReachedType": null,
+      "secondary": {
+        "resetsAt": 1792664459,
+        "usedPercent": 23,
+        "windowDurationMins": 10080
+      },
+      "spendControlReached": false
+    },
+    "rawResponsesSavedOrDisplayed": false,
+    "sameCliRuntimeAndAuthMountAsStoppedIndependent": true,
+    "status": "metadata_diagnostic_completed",
+    "stderrBytes": 0,
+    "threadStarts": 0,
+    "turnStarts": 0,
+    "unexpectedServerRequests": 0
+  },
+  "archive": {
+    "path": "evidence-r04-survey-progress26-20261016.tar.gz",
+    "sha256": "fb4b5458308cb0afd4d4c9f0ebb8b6a9337bbfc329106398b216b7068e23689a",
+    "bytes": 38714,
+    "regularMembers": 12,
+    "allMemberBytesCompared": true,
+    "rawSdkNativeOpaqueExcluded": true,
+    "originalPathLabelsHashed": true
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
