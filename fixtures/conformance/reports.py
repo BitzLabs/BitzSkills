@@ -1,6 +1,20 @@
 """分割した適合レポートを、全件の厳密な網羅を確認して統合する。"""
 
 
+def environment_differences(reports):
+    """分割ごとに値が違った項目を、分割の番号（1から）と値で示す。値はツールのバージョンだけである。"""
+    environments = [r["environment"] if isinstance(r, dict) and isinstance(r.get("environment"), dict) else {}
+                    for r in reports]
+    keys = sorted(set().union(*environments))
+    parts = []
+    for key in keys:
+        values = [environment.get(key) for environment in environments]
+        if len(set(map(repr, values))) > 1:
+            shards = "、".join(f"分割{index}: {value}" for index, value in enumerate(values, 1))
+            parts.append(f"{key}（{shards}）")
+    return "; ".join(parts)
+
+
 def merge_reports(reports, groups, identifiers):
     if len(reports) != len(groups):
         raise ValueError("分割したレポートの件数が一致しません")
@@ -14,7 +28,7 @@ def merge_reports(reports, groups, identifiers):
         if environment is None:
             environment = report["environment"]
         elif environment != report["environment"]:
-            raise ValueError("分割間で実行環境が一致しません")
+            raise ValueError("分割間で実行環境が一致しません: " + environment_differences(reports))
         entries = report["fixtures"]
         if not isinstance(entries, list) or [row.get("id") for row in entries] != group:
             raise ValueError("分割内のfixture IDまたは順序が計画と一致しません")
