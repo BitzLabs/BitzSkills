@@ -46,9 +46,12 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 次はユーザーが許可済みで、都度の確認は不要とする。上の「禁止」に当たる操作は含まない。
 
 - 作業ブランチの作成、add / commit / merge、まだpushしていないコミットのrebase
-- fetch / pull、作業ブランチへのpush
+- fetch / pull
+- 作業ブランチを同じ名前のリモートへ送るpush（`git push`、`git push origin HEAD`、`git push -u origin HEAD`）
 
-`.claude/settings.json`の`allow`と`deny`はこの区分に合わせる。`main`の保護はGitHubのブランチ保護でも強制する。
+`.claude/settings.json`は、上のpushの3つの形だけを完全一致で許可し、それ以外のpushは確認を求める。
+規則はコマンドの先頭の文字列で照合されるので、オプションの順序や`+refspec`による抜け道を`deny`だけでは
+塞げない。`main`の保護はGitHubのブランチ保護でも強制する。
 
 ### 検証義務
 
@@ -86,5 +89,7 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 - **コミットタイトル**: `<type>: <説明>`。type は `feat` / `fix` / `spec` / `test` / `docs` / `chore`
   （`spec` は規範文書・ADR の変更）。説明は日本語で、何をするかを文で書く
 - **fixture の変更と Core の実装は別コミットにする**
-- **PR の統合は rebase merge**。squash merge は上の規則を崩すため使わない
+- **PR の統合は rebase merge**。squash merge は上の規則を崩すため使わない。
+  ただし、他のブランチの作業を取り込んだ長いブランチなど、push済みの履歴を書き換えずに rebase できない PR は、
+  マージコミットで統合してよい
 - **1 PR = 1 関心事**。PR 本文には目的・変更点・検証結果（上記コマンドの実出力）を含める
