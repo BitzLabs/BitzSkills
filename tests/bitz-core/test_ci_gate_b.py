@@ -168,6 +168,15 @@ class CollectionTests(unittest.TestCase):
                 rows[index]["conformance"]["report"]["environment"]["python"] = "3.13.0"
             with self.assertRaises(ValueError): collect(rows)
 
+    def test_environment_mismatch_names_the_item_and_values_per_shard(self):
+        rows = evidence_set()
+        rows[0]["conformance"]["report"]["environment"]["git"] = "git version 2.56.0"
+        for row in rows[1:4]:
+            row["conformance"]["report"]["environment"]["git"] = "git version 2.55.0"
+        with self.assertRaises(ValueError) as caught: collect(rows)
+        self.assertEqual("分割間で実行環境が一致しません: git（分割1: git version 2.56.0、分割2: git version 2.55.0、"
+                         "分割3: git version 2.55.0、分割4: git version 2.55.0）", str(caught.exception))
+
     def test_parser_missing_failed_wrong_location_and_mismatch_rejected(self):
         for mode in ("missing", "failed", "mismatch", "wrong-location", "empty"):
             with self.subTest(mode=mode):
