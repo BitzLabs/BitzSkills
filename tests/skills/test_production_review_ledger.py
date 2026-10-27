@@ -8,6 +8,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+# 新しいcheckoutにも一時領域を用意する。
+(ROOT / '.venv/test-temp').mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_ledger as primary
 import production_review_ledger as ledger

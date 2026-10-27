@@ -5,6 +5,8 @@ from pathlib import Path
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
+# 新しいcheckoutにも一時領域を用意する。
+(ROOT/'.venv/test-temp').mkdir(parents=True,exist_ok=True)
 spec=importlib.util.spec_from_file_location('sdd_native_completion_eval',ROOT/'evals/skills/sdd/evaluate.py')
 evaluation=importlib.util.module_from_spec(spec);spec.loader.exec_module(evaluation)
 

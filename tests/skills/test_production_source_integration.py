@@ -7,6 +7,8 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
+# 新しいcheckoutにも一時領域を用意する。
+(ROOT/'.venv/test-temp').mkdir(parents=True,exist_ok=True)
 sys.path.insert(0,str(ROOT/'evals/skills/routing'))
 import production_canary_evidence as evidence
 import production_canary_score as score

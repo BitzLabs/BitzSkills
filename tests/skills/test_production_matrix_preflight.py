@@ -10,6 +10,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+# 新しいcheckoutにも一時領域を用意する。
+(ROOT / '.venv/test-temp').mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(ROOT/'evals/skills/routing'))
 import production_matrix_preflight as preflight
 import test_production_matrix_inputs as inputs_fixture
