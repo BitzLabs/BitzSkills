@@ -32,7 +32,7 @@ CASES = {
         "SPEC-PATH-INVALID-001", "implements", "状態draftの実装パスは未作成です", "passed_with_warnings", 1, None),
     "SINGLE-026": ("tests:\n  - path: tests/test_contract.py\n    covers: [REQ-001:AC-99]\n    command: default\n",
         {"tests": [{"path": "tests/test_contract.py", "covers": ["REQ-001:AC-99"], "command": "default"}]},
-        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "フィールドcoversが存在しない規範文を参照しています", "failed", 1,
+        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "フィールドcoversの参照先が存在しないか、対応できません", "failed", 1,
         "REQ-001:AC-99"),
     # 同じ`source.key`（`relations.requires`）の下に独立した参照切れが2件ある場合、
     # `workspace`／`path`／`line`／`column`／`code`／`specRefs`がすべて同一でも、`evidence`で区別できることを固定する

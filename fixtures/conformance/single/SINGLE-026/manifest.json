@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-026",
-  "description": "フィールドcoversが存在しない規範文を参照しています",
+  "description": "フィールドcoversの参照先が存在しないか、対応できません",
   "setup": {
     "git": true,
     "baseCommit": {

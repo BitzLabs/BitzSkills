@@ -1868,3 +1868,17 @@ commit `eed31f8cfc13a391745c35b3a94b4a65e001fd69`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-27: `SPEC-TEST-COVERAGE-001`の文言の拡張に伴う`SINGLE-026`と`MULTI-046-03`の期待値の訂正
+
+`SPEC-TEST-COVERAGE-001`（`TRACE-COVERAGE-INVALID`）の`summary`を、参照先が存在しない場合だけでなく、実在するが`covers`に指定できない参照にも合う文言に広げた
+（実装の確認事項C67。2026-10-26に管理者が承認した文言、ADR-062 Decision 2）。旧い「フィールドcoversが存在しない規範文を参照しています」を、
+新しい「フィールドcoversの参照先が存在しないか、対応できません」に直した。これに合わせ、ADR-062とADR-051の期待値の訂正として、次の2件の期待値を変えた。
+
+- `SINGLE-026`: `expected/check.json`の`summary`と`manifest.json`の`description`。
+- `MULTI-046-03`: `expected/check.json`の`diagnostics`の2件の`summary`。
+
+入力、状態、終了コード、`source`、`evidence`は変えていない。生成器`trace_fixtures.py`と`multi_self_qualified_covers_fixtures.py`、適合fixture仕様の`MULTI-046-03`の行、
+複合ワークスペースの自ワークスペースを修飾したcoversのレビュー記録を合わせた。値は管理者が承認した文字列であり、規範文から導いたものでも、Coreの観測出力でもない。
+理由、承認、固定しているfixtureは[Coreの出力文言のレビュー記録](Coreの出力文言のレビュー記録.md)に記録した。
+fixtureの総数（521件）とStep 5の件数（207件）は変わらない。この訂正の後のGate Aの再認定は、別に記録する。
