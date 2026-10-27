@@ -881,3 +881,22 @@ Core固有の単体試験は1053件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1057件がすべて成功した。
+
+## 2026-10-27: SPEC-TEST-COVERAGE-001の文言を広げた後のStep 1〜5の再判定
+
+`messages.py`の`SPEC-TEST-COVERAGE-001`の`summary`を、管理者が承認した「フィールドcoversの参照先が存在しないか、対応できません」へ広げた（実装の確認事項C67）。
+これに合わせて`SINGLE-026`と`MULTI-046-03`（Step 5）の期待値を訂正した。修正前のCore（コミット`953c8c25`の版）では、訂正した2件だけが非成功（`failed` 2件）となり、
+ほかの519件はすべて通過することを確かめた。修正後のCoreでは521件すべてが`passed`となる。
+
+コミット`2b6b807d7f4a1eb3a52d914458570b9ad07fe987`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 521件（訂正した`SINGLE-026`と`MULTI-046-03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`d50508dfa7f5e956c0ec78c11d97596a864bf9d2150898173b1d6b1f8f49adbd`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1057件がすべて成功した。
