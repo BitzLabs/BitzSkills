@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -273,6 +274,7 @@ class QualityEvaluationTests(unittest.TestCase):
                 with evaluate.authorization_lock(self.directory / "replacement", approval):
                     self.fail("must not permit another budget")
 
+    @unittest.skipUnless(shutil.which("codex"), "Codex CLIがない環境では接続設定のnative検査を省略")
     def test_native_codex_disables_extra_tool_surfaces_without_a_model_call(self):
         configs = evaluate.model_configs(self.directory, self.directory)
         command = ["codex", "features", "list"]
