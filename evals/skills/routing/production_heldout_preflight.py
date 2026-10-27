@@ -17,6 +17,9 @@ PROOF_KEYS = {'status', 'sourceCommit', 'executionSha256', 'deploymentSha256', '
 SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_ledger.py',
     'evals/skills/routing/production_heldout_continuation.py',
+    'evals/skills/routing/production_heldout_phases.py',
+    'evals/skills/routing/production_heldout_successor.py',
+    'evals/skills/routing/production_stop_policy.py',
     'evals/skills/routing/production-heldout-prior-stop-v0.1.json',
     'evals/skills/routing/production_heldout_execution.py',
     'evals/skills/routing/production_heldout_preflight.py',
@@ -54,6 +57,10 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     context = public.capture.context_profile(context_raw, d)
     require(context['date'] == datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat(),
         'heldout current calibration date required')
+    if c['version'] == execution.SUCCESSOR_VERSION:
+        # 日付ごとに校正し直しても、日付の項目以外のコンテキストは条件として固定する。
+        require(execution.condition_context_sha256(context) == c['conditionContextSha256'],
+            'heldout condition context drift')
     runtime_raw = originals[public.capture.fixed_runtime.MANIFEST]
     runtime_spec = public.capture.fixed_runtime.specification(runtime_raw, d)
     require(runtime_spec['files'][public.capture.fixed_runtime.VENDOR+'bin/codex'] == c['pins']['cli'],

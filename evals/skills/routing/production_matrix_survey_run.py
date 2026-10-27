@@ -5,6 +5,7 @@ import datetime
 import math
 import time
 
+import production_failure_streak as streak
 import production_matrix_capture as capture
 import production_matrix_score as score
 import production_matrix_survey as survey
@@ -82,6 +83,17 @@ def pace(root,bound,policy,condition,ordinal,role,result,prior_state=None):
     result['launchEvidence'][role]=io.sha(raw)
 
 
+def failure_guard(root,ordinal):
+    """ADR-068 D4: 直前の枠が同じ型で続けて評価失敗していれば、確認記録なしに予約しない。"""
+    items=[]
+    for previous in range(max(1,ordinal-streak.LIMIT),ordinal):
+        path=root/f'actual-slot-{previous:04d}.json'
+        if p.matrix.present(path):items.append((previous,streak.survey_signature(p.trace.strict_json(io.read_regular(path)))))
+        else:items=[]
+    acknowledgement=root/f'failure-acknowledgement-{ordinal:04d}.json'
+    return streak.guard(items,ordinal,io.read_regular(acknowledgement) if p.matrix.present(acknowledgement) else None)
+
+
 def seal_failure(repository,instance,root,bound,ordinal,phase,proof,result):
     d_raw=io.read_regular(root/'deployment.json');sdk_raw=io.read_regular(root/'sdk-manifest.json')
     require(p.verify_resources(repository,bound,d_raw,sdk_raw)==proof,'survey current resources drift')
@@ -130,6 +142,7 @@ def run(repository,root,ordinal):
     schema=p.decision_schema(p.guard.git(repository,'show',bound.contract['sourceCommit']+':'+p.inventory.SCHEMA))
     context=p.guard.git(repository,'show',bound.contract['sourceCommit']+':'+p.inventory.CONTEXT)
     record=root/f'actual-slot-{ordinal:04d}.json';require(not p.matrix.present(record),'survey operator observation already exists')
+    failure_guard(root,ordinal)
     result=dict(sourceCommit=bound.contract['sourceCommit'],campaignId=bound.contract['campaignId'],conditionSha256=condition,
         ordinal=ordinal,caseId=bound.slot(ordinal)['caseId'],repetition=bound.slot(ordinal)['repetition'],
         status='pending',launchEvidence={},primary=None,independent=None,parent=None,failurePhase=None,

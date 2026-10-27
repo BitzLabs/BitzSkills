@@ -5,11 +5,20 @@ import re
 
 import production_heldout_inputs as inputs
 import production_heldout_ledger as ledger
+import production_heldout_successor as successor
 import production_matrix_preflight as public
 
 io, require, trace = inputs.io, inputs.require, inputs.trace
 VERSION = 'heldout-production-matrix-execution-0.1.0'
 PHASE_VERSION = 'heldout-production-matrix-execution-0.2.0'
+# ADR-068 D3: 後継台帳を使い、日付で変わる値を台帳の条件から外す。
+SUCCESSOR_VERSION = 'heldout-production-matrix-execution-0.3.0'
+CONDITION_VERSION = 'heldout-matrix-condition-0.1.0'
+DAILY_PROOF_KEYS = frozenset({'status', 'sourceCommit', 'executionSha256', 'deploymentSha256',
+    'inputContractSha256', 'snapshotManifestSha256', 'contextProfileSha256', 'contextDate',
+    'originalCalibration', 'sourceSha256'})
+DAILY_PINS = frozenset({'snapshotManifest', 'contextProfile', 'calibrationManifest'})
+CONTEXT_DATE_FIELDS = frozenset({'date', 'calibrationSource', 'calibrationRequestSha256', 'calibrationReceiptSha256'})
 DEPLOYMENT_VERSION = 'heldout-matrix-deployment-resources-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'sdk', 'cli',
     'contextProfile', 'decisionSchema'}
@@ -21,11 +30,13 @@ def execution_contract(raw):
     c = inputs.parse(raw)
     require(isinstance(c, dict), 'heldout execution object')
     phased = c.get('version') == PHASE_VERSION
+    succeeding = c.get('version') == SUCCESSOR_VERSION
     require(set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
         'inputContractSha256', 'deploymentSha256', 'outputRelativeRoot', 'pins', 'budget',
-        'timeoutSeconds', 'cliVersion', 'certifiesSkillGate'} | ({'conditionPhase'} if phased else set()),
+        'timeoutSeconds', 'cliVersion', 'certifiesSkillGate'} | ({'conditionPhase'} if phased else set())
+        | ({'ledger', 'conditionContextSha256'} if succeeding else set()),
         'heldout execution inventory')
-    require((c['version'] == VERSION or c['version'] == PHASE_VERSION) and isinstance(c['campaignId'], str)
+    require(c['version'] in {VERSION, PHASE_VERSION, SUCCESSOR_VERSION} and isinstance(c['campaignId'], str)
         and re.fullmatch(r'heldout-matrix-[a-z0-9]+(?:-[a-z0-9]+)*', c['campaignId']) is not None
         and isinstance(c['sourceCommit'], str) and re.fullmatch(r'[0-9a-f]{40}', c['sourceCommit']) is not None
         and c['model'] == 'gpt-6.1-sol' and c['cliVersion'] == '0.160.1'
@@ -39,6 +50,12 @@ def execution_contract(raw):
     require(isinstance(c['pins'], dict) and set(c['pins']) == PINS, 'heldout execution pin inventory')
     for value in [c['inputContractSha256'], c['deploymentSha256'], *c['pins'].values()]:
         io.pin(value)
+    if succeeding:
+        require(isinstance(c['ledger'], dict) and set(c['ledger']) == {'harnessRetries', 'predecessor'}
+            and type(c['ledger']['harnessRetries']) is int and 0 <= c['ledger']['harnessRetries'] <= 24,
+            'heldout execution successor ledger')
+        successor.predecessor_spec(c['ledger']['predecessor'], c['campaignId'])
+        io.pin(c['conditionContextSha256'])
     if phased:
         from production_heldout_phases import phase_header, continuation
         require(c['campaignId'] == continuation.CAMPAIGN, 'heldout phase fixed campaign')
@@ -109,6 +126,13 @@ class BoundExecution:
             and proof.get('executionSha256') == io.sha(self.execution_raw)
             and proof.get('inputContractSha256') == io.sha(self.input_contract_raw), 'heldout resource proof identity')
         c = self.contract
+        if c['version'] == SUCCESSOR_VERSION:
+            raw = io.encoded(dict(version=successor.VERSION, campaignId=c['campaignId'],
+                conditionSha256=self.condition_sha256(proof), model=c['model'], setVersion=inputs.SET_VERSION,
+                budget=dict(c['budget'], harnessRetries=c['ledger']['harnessRetries']),
+                timeoutSeconds=c['timeoutSeconds'], predecessor=c['ledger']['predecessor'], certifiesSkillGate=False))
+            successor.contract(raw)
+            return raw
         raw = io.encoded(dict(version=ledger.VERSION, campaignId=c['campaignId'], sourceCommit=c['sourceCommit'],
             inputContractSha256=c['inputContractSha256'], resourceProofSha256=io.sha(resource_proof_raw),
             model=c['model'], setVersion=inputs.SET_VERSION, budget=c['budget'],
@@ -118,6 +142,28 @@ class BoundExecution:
             from production_heldout_continuation import contract_from_base
             return contract_from_base(raw)
         return raw
+
+
+    def condition_sha256(self, proof):
+        """評価の意味を決める値だけのhash。当日のsource・校正・配置・日付は含めない。"""
+        c = self.contract
+        require(c['version'] == SUCCESSOR_VERSION and isinstance(proof, dict)
+            and isinstance(proof.get('sourceSha256'), dict), 'heldout condition inputs')
+        daily = {public.inventory.CONTEXT, public.capture.calibration.MANIFEST}
+        value = dict(version=CONDITION_VERSION,
+            proof={key: proof[key] for key in sorted(proof) if key not in DAILY_PROOF_KEYS},
+            sourceSha256={key: value for key, value in sorted(proof['sourceSha256'].items()) if key not in daily},
+            inputSha256=inputs.parse(self.input_contract_raw)['inputSha256'],
+            contextSha256=c['conditionContextSha256'],
+            execution=dict(model=c['model'], cliVersion=c['cliVersion'], budget=c['budget'],
+                timeoutSeconds=c['timeoutSeconds'], harnessRetries=c['ledger']['harnessRetries'],
+                pins={key: value for key, value in sorted(c['pins'].items()) if key not in DAILY_PINS}))
+        return io.sha(io.encoded(value))
+
+
+def condition_context_sha256(context):
+    require(isinstance(context, dict) and 'date' in context, 'heldout condition context fields')
+    return io.sha(io.encoded({key: value for key, value in context.items() if key not in CONTEXT_DATE_FIELDS}))
 
 
 def bind(execution_raw, deployment_raw, input_contract_raw, **raw_inputs):

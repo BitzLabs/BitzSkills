@@ -8,9 +8,11 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
+import production_failure_streak as streak
 import production_heldout_score as score
 
 operator, x, io = score.operator, score.x, score.io
+policy = operator.policy
 launch, preflight, require = score.launch, score.preflight, score.require
 VERSION = 'heldout-finite-batch-0.1.0'
 ROOT = Path(__file__).resolve().parents[3]
@@ -66,13 +68,47 @@ def checkpoint(bundle,proof):
 
 def next_stage(rows,summary):
     if summary['status']=='stopped':return None,'stopped'
+    if summary.get('pendingRetry') is not None:return summary['pendingRetry'],'primary'
     if summary.get('accountedSlots',summary['terminalSlots'])==24:return None,'complete'
     if not rows or rows[-1]['stage'] in x.ledger.TERMINALS:
-        return summary['primaryReserved']+1,'primary'
+        ordinal=summary.get('nextOrdinal',summary['primaryReserved']+1)
+        return (ordinal,'primary') if ordinal is not None else (None,'awaiting_retry')
     stage=rows[-1]['stage'];ordinal=rows[-1]['ordinal']
     if stage=='primary_captured':return ordinal,'independent'
     if stage=='independent_captured':return ordinal,'parent'
     return ordinal,'ambiguous'
+
+
+def failure_blocked(bundle,rows,ordinal):
+    """ADR-068 D4: 同じ型の評価失敗が続いたら、確認記録なしに次の枠を予約しない。台帳へ書かない。"""
+    control=operator.control_root(bundle.bound,ordinal);name='failure-acknowledgement.json'
+    raw=operator.read_control(control,name) if (control/name).exists() else None
+    try:streak.guard(streak.ledger_terminals(rows),ordinal,raw)
+    except ValueError:return True
+    return False
+
+
+def authorize_retry(bundle,ordinal,*,stop_reason,prior_artifact_sha256,evidence_sha256,reason,
+                    independent_review_raw=None):
+    """ADR-068 D2: 前のcampaignで評価失敗または中断した枠を、承認記録を残して1回だけ再試行可能にする。"""
+    proof=resources(bundle);ledger=ledger_for(bundle,proof)
+    require(operator.successor_ledger(ledger),'heldout retry requires a successor ledger')
+    with batch_lock(bundle),ledger.locked():
+        require(ordinal in ledger.summary()['retryEligible'],'heldout retry ordinal not eligible')
+        outcome=ledger._state['attempts'][ordinal][-1]['outcome']
+        role={'primary_failed':'primary','independent_failed':'independent'}.get(outcome,'interrupted')
+        raw=io.encoded(dict(version=policy.AUTHORIZATION_VERSION,contractSha256=ledger.digest,ordinal=ordinal,
+            failedRole=role,stopReason=stop_reason,causeClass=policy.classify(stop_reason),
+            priorArtifactSha256=prior_artifact_sha256,evidenceSha256=list(evidence_sha256),
+            independentReviewSha256=None if independent_review_raw is None else io.sha(independent_review_raw),
+            reason=reason,automaticRetry=False))
+        policy.authorization(raw,contract_sha256=ledger.digest,ordinal=ordinal)
+        control=operator.control_root(bundle.bound,ordinal);operator.create_directory(control)
+        if independent_review_raw is not None:operator.save(control,'retry-review.json',independent_review_raw)
+        operator.save(control,'retry-authorization.json',raw)
+        ledger.append(ordinal,'retry_authorized',io.sha(raw),stop_reason=stop_reason)
+    return dict(version=VERSION,status='heldout_retry_authorized',ordinal=ordinal,authorizationSha256=io.sha(raw),
+        modelLaunches=0,reservations=0,automaticRetries=0,certifiesSkillGate=False)
 
 
 def args(bundle,ordinal):
@@ -128,7 +164,10 @@ def _run_locked(bundle,proof,maximum_slots):
     results=[];interruption=None
     for _ in range(maximum_slots):
         rows,summary=checkpoint(bundle,proof);ordinal,stage=next_stage(rows,summary)
-        if stage in {'stopped','complete'}:break
+        if stage in {'stopped','complete','awaiting_retry'}:break
+        if stage=='primary' and summary.get('pendingRetry') is None and failure_blocked(bundle,rows,ordinal):
+            results.append(dict(ordinal=ordinal,status='blocked_consecutive_failures'))
+            break
         try:
             if stage=='ambiguous':
                 stop(bundle,proof,ordinal,'unfinished_prior_launch_no_retry')

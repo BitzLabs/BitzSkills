@@ -190,10 +190,10 @@ def run_independent(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isola
             'heldout independent requires pending primary')
         try:
             prepared=primary(repository,bound,ordinal,ledger)
-            ledger.append(ordinal,'independent_reserved')
+            ledger.append(ordinal,'independent_reserved',resource_proof_sha256=operator.daily_proof(ledger,before))
             return _reserved(prepared,sdk_raw,before,ledger)
         except BaseException as exc:
-            stop(ledger,bound,ordinal,exc,'operator_interrupted' if not isinstance(exc,Exception) else 'evidence_invalid')
+            stop(ledger,bound,ordinal,exc,operator.stop_reason(ledger,exc))
             raise
 
 
@@ -210,8 +210,8 @@ def _reserved(prepared,sdk_raw,before,ledger):
     operator.pace(bound,ordinal,'independent',ledger)
     pacing_sha=io.sha(operator.verify_pacing(bound,ordinal,'independent'))
     invoke=preflight.verify_resources(repository,bound,sdk_raw)
-    require(trace.json_equal(invoke,before),'heldout independent pre-invocation resource drift')
-    launch.model_catalog.verify(read(base,launch.model_catalog.FILE))
+    operator.same_resources(before,invoke,'heldout independent pre-invocation resource drift')
+    operator.harness_check('provider_drift',launch.model_catalog.verify,read(base,launch.model_catalog.FILE))
     require(all(read(base,name) == raw for name,raw in expected_inputs.items()),
         'heldout independent input changed before launch')
     ledger.append(ordinal,'independent_started');begin=time.monotonic()
@@ -220,10 +220,10 @@ def _reserved(prepared,sdk_raw,before,ledger):
     save(base,'trace.jsonl',stdout);save(base,'stderr.bin',stderr)
     after=preflight.verify_resources(repository,bound,sdk_raw)
     save(base,'resource-guards.json',io.encoded(dict(before=before,invoke=invoke,after=after)))
-    require(trace.json_equal(after,before),'heldout independent after resource drift')
+    operator.same_resources(before,after,'heldout independent after resource drift')
     operator.verify_pacing(bound,ordinal,'independent',expected_sha256=pacing_sha)
     values=collect(base,complete=exit_code==0 and not timed_out)
-    launch.model_catalog.verify(values.get(launch.model_catalog.FILE))
+    operator.harness_check('provider_drift',launch.model_catalog.verify,values.get(launch.model_catalog.FILE))
     require(all(values.get(name) == raw for name,raw in expected_inputs.items()),
         'heldout independent input changed during process')
     audit_originals(values)
@@ -291,5 +291,5 @@ def finalize(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_ra
             return dict(version=VERSION,status=status,ordinal=ordinal,ledgerFinalized=True,
                 eligibleForMeasurement=True,independentOriginalResponseVerified=True,certifiesSkillGate=False)
         except BaseException as exc:
-            stop(ledger,bound,ordinal,exc)
+            stop(ledger,bound,ordinal,exc,operator.stop_reason(ledger,exc))
             raise

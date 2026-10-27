@@ -9,12 +9,14 @@ import subprocess
 import time
 
 import production_heldout_originals as originals
+import production_stop_policy as policy
 
 x, evidence = originals.x, originals.evidence
 launch, preflight = evidence.launch, evidence.preflight
 io, require, trace = x.io, x.require, x.trace
 VERSION = 'heldout-primary-operator-0.1.0'
-CONTROL_FILES = {'pacing.json', 'primary-result.json', 'failure.json', 'global-stop.json', 'independent-pacing.json'}
+CONTROL_FILES = {'pacing.json', 'primary-result.json', 'failure.json', 'global-stop.json', 'independent-pacing.json',
+    'failure-acknowledgement.json', 'retry-authorization.json', 'retry-review.json'}
 
 
 def check_directory(base, fd):
@@ -86,6 +88,36 @@ def auth_metadata():
             'heldout standard CLI auth metadata unavailable')
 
 
+def successor_ledger(ledger):
+    return getattr(ledger, 'records_daily_proof', False)
+
+
+def stop_reason(ledger, error):
+    # 版0.1/0.2の台帳は従来の2理由だけを受ける。区分は後継台帳だけに記録する（ADR-068 D1）。
+    if successor_ledger(ledger):
+        return policy.stop_reason(error)
+    return 'operator_interrupted' if not isinstance(error, Exception) else 'evidence_invalid'
+
+
+def daily_proof(ledger, proof):
+    return io.sha(io.encoded(proof)) if successor_ledger(ledger) else None
+
+
+def harness_check(reason, check, *args):
+    """評価環境の変化と判定できる検査の失敗だけを、評価基盤の障害として型付けする。"""
+    try:
+        return check(*args)
+    except policy.HarnessFault:
+        raise
+    except ValueError as exc:
+        raise policy.HarnessFault(reason, str(exc)) from None
+
+
+def same_resources(before, current, message):
+    if not trace.json_equal(before, current):
+        raise policy.HarnessFault('resource_drift', message)
+
+
 def control_root(bound, ordinal):
     bound.slot(ordinal)
     return x.inputs.PRIVATE_CASES.parent/bound.contract['outputRelativeRoot']/'controls'/f'attempt-{ordinal:04d}'
@@ -136,8 +168,10 @@ def pace(bound, ordinal, role, ledger):
     if started:
         last=started[-1];previous_role=last['stage'].removesuffix('_started')
         require(previous_role in {'primary','independent'}, 'heldout prior launch role')
+        # 後継台帳は再試行の枠を番号順の外で予約する。順序は台帳の遷移規則が検査する。
         require((role=='independent' and previous_role=='primary' and last['ordinal']==ordinal)
-            or (role=='primary' and last['ordinal']==ordinal-1), 'heldout previous pacing stage order')
+            or (role=='primary' and (successor_ledger(ledger) or last['ordinal']==ordinal-1)),
+            'heldout previous pacing stage order')
         name='pacing.json' if previous_role=='primary' else 'independent-pacing.json'
         raw=read_control(control_root(bound,last['ordinal']),name);previous_sha=io.sha(raw)
         previous=launch.pacing(bound.execution_raw,launch.primary_identity(bound,last['ordinal']),raw,role=previous_role)
@@ -154,7 +188,11 @@ def pace(bound, ordinal, role, ledger):
             and originals.read_original(previous_base,'logical-pacing.json')==raw, 'heldout prior pacing receipt binding')
     else:
         from production_heldout_continuation import ContinuationLedger, prior_pacing, ANCHOR_SHA256
-        if isinstance(ledger, ContinuationLedger):
+        if successor_ledger(ledger):
+            # campaignの最初の起動は、前のcampaignの原を参照せず、新しい時計で必ず60秒待つ。
+            require(role == 'primary', 'heldout successor first launch')
+            previous = dict(monotonicSeconds=time.monotonic(), wallSeconds=time.time())
+        elif isinstance(ledger, ContinuationLedger):
             require(role == 'primary' and ordinal == 2, 'heldout continuation first launch')
             old, previous_sha = prior_pacing()
             require(time.time() >= old['wallSeconds'], 'heldout prior wall clock drift')
@@ -168,12 +206,12 @@ def pace(bound, ordinal, role, ledger):
     if previous is not None:
         elapsed=now-previous['monotonicSeconds']
         require(elapsed>=0 and wall>=previous['wallSeconds'], 'heldout pacing clock drift')
-        delay=60.0 if handoff is not None else max(0.0,60-elapsed)
+        delay=60.0 if handoff is not None or previous_sha is None else max(0.0,60-elapsed)
         if delay:time.sleep(delay)
         require(time.monotonic()-previous['monotonicSeconds']>=60, 'heldout minimum logical launch interval')
         if handoff is not None:
             require(prior_pacing()[1] == previous_sha, 'heldout prior stop changed during handoff')
-        else:
+        elif previous_sha is not None:
             require(io.sha(read_control(control_root(bound,last['ordinal']),name))==previous_sha, 'heldout previous pacing drift')
     value=dict(version=launch.PACING_VERSION,sourceCommit=bound.contract['sourceCommit'],executionSha256=io.sha(bound.execution_raw),
         ordinal=ordinal,role=role,monotonicSeconds=time.monotonic(),wallSeconds=time.time(),waitedSeconds=delay,
@@ -344,7 +382,7 @@ def run_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, iso
     auth_metadata()
     ledger = x.ledger.open_shared(bound.ledger_contract(io.encoded(before)))
     with ledger.locked():
-        ledger.append(ordinal, 'primary_reserved')
+        ledger.append(ordinal, 'primary_reserved', resource_proof_sha256=daily_proof(ledger, before))
         try:return _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, isolation_raw, before, ledger)
         except BaseException as exc:
             error_raw=io.encoded(dict(version=VERSION,status='globally_stopped',ordinal=ordinal,errorType=type(exc).__name__))
@@ -352,8 +390,7 @@ def run_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, iso
                 create_directory(control_root(bound,ordinal));save(control_root(bound,ordinal),'global-stop.json',error_raw)
             except (OSError,ValueError):pass
             # started前の保存失敗や不明な状態も次枠へ進ませず、消費を返さない。
-            ledger.append(None, 'global_stop', io.sha(error_raw),
-                stop_reason='operator_interrupted' if not isinstance(exc, Exception) else 'evidence_invalid')
+            ledger.append(None, 'global_stop', io.sha(error_raw), stop_reason=stop_reason(ledger, exc))
             raise
 
 
@@ -371,8 +408,8 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     pace(bound,ordinal,'primary',ledger)
     pacing_sha = io.sha(verify_pacing(bound,ordinal,'primary'))
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
-    require(trace.json_equal(before,invoke), 'heldout resources changed before primary launch')
-    launch.model_catalog.verify(originals.read_original(base, launch.model_catalog.FILE))
+    same_resources(before, invoke, 'heldout resources changed before primary launch')
+    harness_check('provider_drift', launch.model_catalog.verify, originals.read_original(base, launch.model_catalog.FILE))
     require(all(originals.read_original(base,name) == raw for name,raw in expected_inputs.items()),
         'heldout primary input changed before launch')
     ledger.append(ordinal,'primary_started')
@@ -384,11 +421,11 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     after = preflight.verify_resources(repository,bound,sdk_raw)
     guards = dict(before=before,invoke=invoke,after=after)
     save(base,'resource-guards.json',io.encoded(guards))
-    require(trace.json_equal(before,after), 'heldout resources changed after primary launch')
+    same_resources(before, after, 'heldout resources changed after primary launch')
     verify_pacing(bound,ordinal,'primary',expected_sha256=pacing_sha)
     # 途中原でも未知名/stop markerを先に拒否し、通常終端を自己申告だけで扱わない。
     partial = collect_partial(base)
-    launch.model_catalog.verify(partial.get(launch.model_catalog.FILE))
+    harness_check('provider_drift', launch.model_catalog.verify, partial.get(launch.model_catalog.FILE))
     require(all(partial.get(name) == raw for name,raw in expected_inputs.items()),
         'heldout primary input changed during process')
     sdk_terminal = x.inputs.parse(partial['isolated-result.json']) if 'isolated-result.json' in partial else None
