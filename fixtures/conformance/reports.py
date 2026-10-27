@@ -1,17 +1,18 @@
 """分割した適合レポートを、全件の厳密な網羅を確認して統合する。"""
 
 
-def environment_differences(reports):
-    """分割ごとに値が違った項目を、分割の番号（1から）と値で示す。値はツールのバージョンだけである。"""
+def environment_differences(reports, label="分割"):
+    """値が違った項目を、`label`の番号（1から）と値で示す。値はツールのバージョンだけである。項目のない側は「（なし）」と示す。"""
     environments = [r["environment"] if isinstance(r, dict) and isinstance(r.get("environment"), dict) else {}
                     for r in reports]
-    keys = sorted(set().union(*environments))
+    missing = object()
     parts = []
-    for key in keys:
-        values = [environment.get(key) for environment in environments]
-        if len(set(map(repr, values))) > 1:
-            shards = "、".join(f"分割{index}: {value}" for index, value in enumerate(values, 1))
-            parts.append(f"{key}（{shards}）")
+    for key in sorted(set().union(*environments), key=str):
+        values = [environment.get(key, missing) for environment in environments]
+        if len({"（なし）" if value is missing else repr(value) for value in values}) > 1:
+            shown = "、".join(f"{label}{index}: {'（なし）' if value is missing else value}"
+                             for index, value in enumerate(values, 1))
+            parts.append(f"{key}（{shown}）")
     return "; ".join(parts)
 
 
