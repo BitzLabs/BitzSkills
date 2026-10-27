@@ -1916,3 +1916,12 @@ commit `af38883cf2db9be32c30c0f8ebeab664d70b84fd`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-27: 監査試験の子プロセスの時間上限を広げた
+
+監査試験（`fixtures/test_conformance_audit.py`）は、fixtureの群の追加とともに増えた。2026-10-27には、他の負荷をかけない状態でも約171秒（`main`の`98bdb96d`）から約176秒
+（`MULTI-048`の追加の作業中のブランチ）かかり、`validate_conformance.py`の子プロセスの時間上限180秒に余裕がなかった。負荷が高い状態では上限を超え、監査自体が例外で止まった
+（実装の確認事項C70）。そこで上限を600秒へ広げた。試験の内容、件数、合否の判定は変えていない。試験の分割や並列化による短縮は、別に検討する。
+commit `a3ff5a1a493bb21ded161695b2a8f2712a09f049`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、`gateA: "Allowed"`、エラー0件を得た。
+2つのクローンでReport SHA-256が両方`850fce93aa584246c44eca52c1b51aa0fda9664b9f9ca7c7e39179d975300ef4`（変更前と同じ）、規模の検証は28件すべて`Passed`で結果のSHA-256は両方
+`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（変更前と同じ）。fixtureとCoreは変えていないので、Gate Bは判定し直さない。
