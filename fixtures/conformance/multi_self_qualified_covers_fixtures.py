@@ -59,7 +59,7 @@ WORKSPACE_PATHS = {"platform": ".", "web": "apps/web", "api": "services/api"}
 COMMANDS = {"platform": "platform", "web": "frontend", "api": "backend"}
 KIND_DIRECTORY = {"REQ": "requirements", "TECH": "technical"}
 TEST_BYTES = b"def test_ok():\n    assert True\n"
-SUMMARY = "フィールドcoversが存在しない規範文を参照しています"
+SUMMARY = "フィールドcoversの参照先が存在しないか、対応できません"
 
 # id: コーパス, 実行ディレクトリ, 引数列の残り, 状態, 終了コード, 説明。
 CASES = {
