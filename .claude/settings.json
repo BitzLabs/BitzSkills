@@ -14,7 +14,9 @@
       "Bash(git merge:*)",
       "Bash(git checkout -b:*)",
       "Bash(git switch -c:*)",
-      "Bash(git push:*)",
+      "Bash(git push)",
+      "Bash(git push origin HEAD)",
+      "Bash(git push -u origin HEAD)",
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
@@ -42,11 +44,18 @@
       "Bash(git push origin --delete:*)",
       "Bash(git push -d:*)",
       "Bash(git push origin -d:*)",
+      "Bash(git push --mirror:*)",
+      "Bash(git add -A:*)",
+      "Bash(git add --all:*)",
+      "Bash(git add .:*)",
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",
       "Read(~/.claude/.credentials.json)",
       "Read(.env)",
       "Read(.env.*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
     ]
   }
 }
