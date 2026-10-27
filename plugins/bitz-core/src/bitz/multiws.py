@@ -377,9 +377,15 @@ def valid_exclude_parts(root_config: dict) -> list[tuple[str, ...]] | None:
 
 
 def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tuple[Diagnostic | None, list[tuple[str, str]] | None]:
-    mw = root_config.get("multiWorkspace")
-    if mw is None:
+    if "multiWorkspace" not in root_config:
         return None, []
+    mw = root_config["multiWorkspace"]
+    if mw is None:
+        # 宣言はキーの有無で判定する（複合ワークスペース仕様 §2.1）。値が空の宣言はメンバーが0件で、設定不適合とする（§2。確認事項C58）。
+        return _diag(
+            "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_MEMBERS_REQUIRED,
+            _root_source(root_id, "multiWorkspace.members"),
+        ), None
     if not isinstance(mw, dict):
         return _diag(
             "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_NOT_MAP,
@@ -465,7 +471,8 @@ def _member_config_check(
             "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_ID_MISMATCH,
             _root_source(root_id, "multiWorkspace.members"),
         ), None
-    if m_outcome.config.get("multiWorkspace") is not None:
+    # 宣言はキーの有無で判定する（複合ワークスペース仕様 §2.1）。値が空でもメンバーは宣言できない（確認事項C63）。
+    if "multiWorkspace" in m_outcome.config:
         return _diag(
             "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_NESTED_MULTIWORKSPACE,
             _root_source(root_id, "multiWorkspace.members"),
