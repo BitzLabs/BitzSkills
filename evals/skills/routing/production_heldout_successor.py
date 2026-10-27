@@ -103,14 +103,15 @@ def fold(state, rows, campaign_id, *, segment=True):
             attempts[-1]['outcome'] = 'correct' if row['measuredCorrect'] else 'incorrect'
             state['parentVerified'] += 1
         elif stage in FAILURES.values():
-            attempts[-1]['outcome'] = stage
+            attempts[-1].update(outcome=stage, artifactSha256=row.get('artifactSha256'))
         elif stage == 'retry_authorized':
             state['retriesUsed'] += 1
             attempts[-1]['retryReason'] = row['stopReason']
         elif stage == 'global_stop':
             for values in state['attempts'].values():
                 if values and values[-1]['outcome'] == 'pending':
-                    values[-1].update(outcome='interrupted', stopReason=row['stopReason'])
+                    values[-1].update(outcome='interrupted', stopReason=row['stopReason'],
+                        artifactSha256=row.get('artifactSha256'))
     return state
 
 
@@ -194,6 +195,8 @@ class SuccessorLedger(legacy.HeldoutLedger):
             return fold(empty_state(), [], self.contract['campaignId'])
         expected = io.sha(io.encoded(seal_value(spec, self.raw)))
         base, _ = predecessor_state(spec, seal_sha256=expected, depth=self.depth)
+        # 古いcampaignのIDを再利用すると、出力rootと再試行の判定が前の試行と混ざる。
+        require(self.contract['campaignId'] not in base['campaigns'], 'heldout successor campaign reused in chain')
         return fold(base, [], self.contract['campaignId'])
 
     @contextmanager
@@ -240,7 +243,9 @@ class SuccessorLedger(legacy.HeldoutLedger):
                 require(phases._read(root, SEAL_NAME, directory=directory) == raw,
                     'heldout successor predecessor already sealed')
             else:
-                predecessor_state(spec, directory=directory, depth=self.depth)
+                state, _ = predecessor_state(spec, directory=directory, depth=self.depth)
+                # 不正な後継が前の台帳へ印を置いて塞がないよう、印の前に検査する。
+                require(self.contract['campaignId'] not in state['campaigns'], 'heldout successor campaign reused in chain')
                 fd = os.open(SEAL_NAME, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                     0o600, dir_fd=directory)
                 try:
@@ -346,9 +351,9 @@ class SuccessorLedger(legacy.HeldoutLedger):
         else:
             require(value['dailyProofSha256'] is None, 'heldout successor unexpected daily proof')
 
-    def append(self, ordinal, stage, artifact_sha256=None, *, resource_proof_sha256=None,
-               measured_correct=None, stop_reason=None):
-        """resource_proof_sha256は当日の資源証明として予約と評価失敗のeventへ記録する。"""
+    def candidate(self, ordinal, stage, artifact_sha256=None, *, resource_proof_sha256=None,
+                  measured_correct=None, stop_reason=None):
+        """追記と同じ検査だけを行う。原を保存する前の事前確認に使い、台帳へは書かない。"""
         rows, previous = self._history()
         require(not self.sealed, 'heldout successor ledger sealed by its successor')
         require(stage in EVENT_STAGES, 'heldout successor stage')
@@ -356,6 +361,13 @@ class SuccessorLedger(legacy.HeldoutLedger):
             previousSha256=previous, ordinal=ordinal, stage=stage, artifactSha256=artifact_sha256,
             dailyProofSha256=resource_proof_sha256, measuredCorrect=measured_correct, stopReason=stop_reason)
         self._check(self._state, rows, value)
+        return rows, value
+
+    def append(self, ordinal, stage, artifact_sha256=None, *, resource_proof_sha256=None,
+               measured_correct=None, stop_reason=None):
+        """resource_proof_sha256は当日の資源証明として予約と評価失敗のeventへ記録する。"""
+        rows, value = self.candidate(ordinal, stage, artifact_sha256, resource_proof_sha256=resource_proof_sha256,
+            measured_correct=measured_correct, stop_reason=stop_reason)
         raw = io.encoded(value)
         self._write(f'event-{len(rows)+1:04d}.json', raw)
         return dict(sequence=len(rows)+1, sha256=io.sha(raw))
@@ -369,7 +381,9 @@ class SuccessorLedger(legacy.HeldoutLedger):
         failed, interrupted, pending = count(*FAILURES.values()), count('interrupted'), count('pending')
         accounted = correct+incorrect+failed+interrupted
         stopped = bool(rows and rows[-1]['stage'] == 'global_stop')
-        eligible = sorted(n for n, values in state['attempts'].items() if len(values) == 1
+        remaining = self.contract['budget']['harnessRetries']-state['retriesUsed']
+        eligible = [] if remaining <= 0 or pending or (rows and rows[-1]['stage'] not in TERMINALS) else sorted(
+            n for n, values in state['attempts'].items() if len(values) == 1
             and values[-1]['outcome'] in RETRYABLE and values[-1]['campaignId'] != self.contract['campaignId']
             and (values[-1]['outcome'] != 'interrupted' or policy.classify(values[-1]['stopReason']) != 'safety'))
         return dict(status='stopped' if stopped else 'attempts_recorded' if accounted == SLOTS and not pending
@@ -379,6 +393,6 @@ class SuccessorLedger(legacy.HeldoutLedger):
             correct=correct, incorrect=incorrect, evaluationFailed=failed, interruptedSlots=interrupted,
             terminalSlots=correct+incorrect+failed, accountedSlots=accounted, pending=pending,
             unattempted=SLOTS-len(final), nextOrdinal=next_fresh(state), retriesUsed=state['retriesUsed'],
-            retriesRemaining=self.contract['budget']['harnessRetries']-state['retriesUsed'],
+            retriesRemaining=remaining,
             retryEligible=eligible, pendingRetry=rows[-1]['ordinal'] if rows and rows[-1]['stage'] == 'retry_authorized'
             else None, campaigns=list(state['campaigns']), certifiesSkillGate=False)

@@ -95,14 +95,17 @@ def authorize_retry(bundle,ordinal,*,stop_reason,prior_artifact_sha256,evidence_
     require(operator.successor_ledger(ledger),'heldout retry requires a successor ledger')
     with batch_lock(bundle),ledger.locked():
         require(ordinal in ledger.summary()['retryEligible'],'heldout retry ordinal not eligible')
-        outcome=ledger._state['attempts'][ordinal][-1]['outcome']
-        role={'primary_failed':'primary','independent_failed':'independent'}.get(outcome,'interrupted')
+        attempt=ledger._state['attempts'][ordinal][-1]
+        require(attempt.get('artifactSha256')==prior_artifact_sha256,'heldout retry prior artifact binding')
+        role={'primary_failed':'primary','independent_failed':'independent'}.get(attempt['outcome'],'interrupted')
         raw=io.encoded(dict(version=policy.AUTHORIZATION_VERSION,contractSha256=ledger.digest,ordinal=ordinal,
             failedRole=role,stopReason=stop_reason,causeClass=policy.classify(stop_reason),
             priorArtifactSha256=prior_artifact_sha256,evidenceSha256=list(evidence_sha256),
             independentReviewSha256=None if independent_review_raw is None else io.sha(independent_review_raw),
             reason=reason,automaticRetry=False))
         policy.authorization(raw,contract_sha256=ledger.digest,ordinal=ordinal)
+        # 保存したEXCLの原が残って同じ枠の承認を塞がないよう、台帳の検査を先に通す。
+        ledger.candidate(ordinal,'retry_authorized',io.sha(raw),stop_reason=stop_reason)
         control=operator.control_root(bundle.bound,ordinal);operator.create_directory(control)
         if independent_review_raw is not None:operator.save(control,'retry-review.json',independent_review_raw)
         operator.save(control,'retry-authorization.json',raw)
@@ -115,11 +118,13 @@ def args(bundle,ordinal):
     return bundle.repository,bundle.bound,ordinal,bundle.sdk_raw,bundle.review_raw,bundle.report_raw,bundle.isolation_raw
 
 
-def stop(bundle,proof,ordinal,reason):
+def stop(bundle,proof,ordinal,reason,*,unsealed=False):
     ledger=ledger_for(bundle,proof)
     with ledger.locked():
         if ledger.summary()['status']!='stopped':
-            score.stop(ledger,bundle.bound,ordinal,ValueError(reason),reason='operator_interrupted')
+            # 封印されていない起動が残る枠は、後継台帳では独立検分なしに再試行させない。
+            code='evidence_invalid' if unsealed and operator.successor_ledger(ledger) else 'operator_interrupted'
+            score.stop(ledger,bundle.bound,ordinal,ValueError(reason),reason=code)
 
 
 def preflight_only(bundle):
@@ -170,7 +175,7 @@ def _run_locked(bundle,proof,maximum_slots):
             break
         try:
             if stage=='ambiguous':
-                stop(bundle,proof,ordinal,'unfinished_prior_launch_no_retry')
+                stop(bundle,proof,ordinal,'unfinished_prior_launch_no_retry',unsealed=True)
                 results.append(dict(ordinal=ordinal,status='globally_stopped',reason='unfinished_prior_launch_no_retry'))
                 break
             if stage=='primary':

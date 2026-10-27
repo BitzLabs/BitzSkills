@@ -103,17 +103,17 @@ def daily_proof(ledger, proof):
     return io.sha(io.encoded(proof)) if successor_ledger(ledger) else None
 
 
-def harness_check(reason, check, *args):
-    """評価環境の変化と判定できる検査の失敗だけを、評価基盤の障害として型付けする。"""
-    try:
-        return check(*args)
-    except policy.HarnessFault:
-        raise
-    except ValueError as exc:
-        raise policy.HarnessFault(reason, str(exc)) from None
+def same_execution_slot(bound, ledger, ordinal):
+    """後継台帳で、1枠の途中に実行契約（日付）が替わったら評価環境の変化として止める。"""
+    if not successor_ledger(ledger):
+        return
+    old = x.inputs.parse(read_control(control_root(bound, ordinal), 'pacing.json'))
+    if not isinstance(old, dict) or old.get('executionSha256') != io.sha(bound.execution_raw):
+        raise policy.HarnessFault('source_drift', 'heldout execution changed inside one slot')
 
 
 def same_resources(before, current, message):
+    """起動前の資源の変化だけを評価基盤の障害として型付けする。起動後の変化は型付けしない。"""
     if not trace.json_equal(before, current):
         raise policy.HarnessFault('resource_drift', message)
 
@@ -173,7 +173,20 @@ def pace(bound, ordinal, role, ledger):
             or (role=='primary' and (successor_ledger(ledger) or last['ordinal']==ordinal-1)),
             'heldout previous pacing stage order')
         name='pacing.json' if previous_role=='primary' else 'independent-pacing.json'
-        raw=read_control(control_root(bound,last['ordinal']),name);previous_sha=io.sha(raw)
+        raw=read_control(control_root(bound,last['ordinal']),name)
+        old=x.inputs.parse(raw)
+        day_boundary=(successor_ledger(ledger) and isinstance(old,dict)
+            and old.get('executionSha256')!=io.sha(bound.execution_raw))
+    if started and day_boundary:
+        # 日付が変わると実行契約も替わり、前日の原は今日の契約で検証できない（ADR-068 D3）。
+        # 前の枠が終端した境界だけで、前日の原を参照せず新しい時計で必ず60秒待つ。
+        if role!='primary':
+            raise policy.HarnessFault('source_drift', 'heldout execution changed inside one slot')
+        require(type(old.get('wallSeconds')) in {int,float} and time.time()>=old['wallSeconds'],
+            'heldout pacing clock drift')
+        previous=dict(monotonicSeconds=time.monotonic(),wallSeconds=time.time())
+    elif started:
+        previous_sha=io.sha(raw)
         previous=launch.pacing(bound.execution_raw,launch.primary_identity(bound,last['ordinal']),raw,role=previous_role)
         anchors=[row for row in rows if row['ordinal']==last['ordinal']
             and row['stage'] in {previous_role+'_captured',previous_role+'_failed'}]
@@ -409,7 +422,7 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     pacing_sha = io.sha(verify_pacing(bound,ordinal,'primary'))
     invoke = preflight.verify_resources(repository,bound,sdk_raw)
     same_resources(before, invoke, 'heldout resources changed before primary launch')
-    harness_check('provider_drift', launch.model_catalog.verify, originals.read_original(base, launch.model_catalog.FILE))
+    launch.model_catalog.verify(originals.read_original(base, launch.model_catalog.FILE))
     require(all(originals.read_original(base,name) == raw for name,raw in expected_inputs.items()),
         'heldout primary input changed before launch')
     ledger.append(ordinal,'primary_started')
@@ -421,11 +434,12 @@ def _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_ra
     after = preflight.verify_resources(repository,bound,sdk_raw)
     guards = dict(before=before,invoke=invoke,after=after)
     save(base,'resource-guards.json',io.encoded(guards))
-    same_resources(before, after, 'heldout resources changed after primary launch')
+    # 起動後の変化は評価対象の操作を否定できないので、評価基盤の障害として型付けしない。
+    require(trace.json_equal(before,after), 'heldout resources changed after primary launch')
     verify_pacing(bound,ordinal,'primary',expected_sha256=pacing_sha)
     # 途中原でも未知名/stop markerを先に拒否し、通常終端を自己申告だけで扱わない。
     partial = collect_partial(base)
-    harness_check('provider_drift', launch.model_catalog.verify, partial.get(launch.model_catalog.FILE))
+    launch.model_catalog.verify(partial.get(launch.model_catalog.FILE))
     require(all(partial.get(name) == raw for name,raw in expected_inputs.items()),
         'heldout primary input changed during process')
     sdk_terminal = x.inputs.parse(partial['isolated-result.json']) if 'isolated-result.json' in partial else None

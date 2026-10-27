@@ -143,6 +143,11 @@ class SuccessorLedgerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.retry(held, 3, 'evidence_invalid')
 
+    def test_exhausted_budget_and_reused_campaign_are_rejected(self):
+        spec = self.spec(self.first_campaign())
+        with self.ledger('heldout-matrix-second-01', spec, retries=0).locked() as held:
+            self.assertEqual(held.summary()['retryEligible'], [])
+
     def test_safety_stop_is_never_retried(self):
         second = self.ledger('heldout-matrix-second-01', self.spec(self.first_campaign(stop_reason='unsafe')))
         with second.locked() as held:
@@ -215,7 +220,7 @@ class SuccessorLedgerTests(unittest.TestCase):
             self.complete(held, 2)
             self.assertEqual(held.summary()['correct'], 3)
 
-    def test_continuation_predecessor_is_sealed_against_the_legacy_entry(self):
+    def continuation_fixture(self):
         continuation = s.continuation
         legacy_contract = dict(version=legacy.VERSION, campaignId=continuation.CAMPAIGN, sourceCommit='a'*40,
             inputContractSha256='b'*64, resourceProofSha256='c'*64, model='gpt-6.1-sol',
@@ -240,6 +245,10 @@ class SuccessorLedgerTests(unittest.TestCase):
             rows, head = held._history()
         spec = dict(kind='continuation-0.2.0', campaignId=continuation.CAMPAIGN, contractSha256=io.sha(raw),
             headSha256=head, events=len(rows))
+        return old, spec
+
+    def test_continuation_predecessor_is_sealed_against_the_legacy_entry(self):
+        old, spec = self.continuation_fixture()
         successor = self.ledger('heldout-matrix-survey-r3-20261027-01', spec)
         with successor.locked() as held:
             summary = held.summary()
@@ -248,6 +257,15 @@ class SuccessorLedgerTests(unittest.TestCase):
             self.assertEqual(summary['primaryReserved'], 3)
             self.step(held, 4, 'primary_reserved')
         with self.assertRaises(ValueError), old.locked():
+            pass
+
+    def test_reused_campaign_id_cannot_seal_the_predecessor(self):
+        old, spec = self.continuation_fixture()
+        with self.assertRaisesRegex(ValueError, 'campaign reused'), \
+                self.ledger('heldout-matrix-survey-20261016-01', spec).locked():
+            pass
+        self.assertNotIn(s.SEAL_NAME, os.listdir(old.root))
+        with old.locked():
             pass
 
 

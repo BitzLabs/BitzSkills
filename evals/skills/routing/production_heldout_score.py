@@ -189,6 +189,7 @@ def run_independent(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isola
         require(rows and rows[-1]['ordinal']==ordinal and rows[-1]['stage']=='primary_captured',
             'heldout independent requires pending primary')
         try:
+            operator.same_execution_slot(bound,ledger,ordinal)
             prepared=primary(repository,bound,ordinal,ledger)
             ledger.append(ordinal,'independent_reserved',resource_proof_sha256=operator.daily_proof(ledger,before))
             return _reserved(prepared,sdk_raw,before,ledger)
@@ -211,7 +212,7 @@ def _reserved(prepared,sdk_raw,before,ledger):
     pacing_sha=io.sha(operator.verify_pacing(bound,ordinal,'independent'))
     invoke=preflight.verify_resources(repository,bound,sdk_raw)
     operator.same_resources(before,invoke,'heldout independent pre-invocation resource drift')
-    operator.harness_check('provider_drift',launch.model_catalog.verify,read(base,launch.model_catalog.FILE))
+    launch.model_catalog.verify(read(base,launch.model_catalog.FILE))
     require(all(read(base,name) == raw for name,raw in expected_inputs.items()),
         'heldout independent input changed before launch')
     ledger.append(ordinal,'independent_started');begin=time.monotonic()
@@ -220,10 +221,10 @@ def _reserved(prepared,sdk_raw,before,ledger):
     save(base,'trace.jsonl',stdout);save(base,'stderr.bin',stderr)
     after=preflight.verify_resources(repository,bound,sdk_raw)
     save(base,'resource-guards.json',io.encoded(dict(before=before,invoke=invoke,after=after)))
-    operator.same_resources(before,after,'heldout independent after resource drift')
+    require(trace.json_equal(after,before),'heldout independent after resource drift')
     operator.verify_pacing(bound,ordinal,'independent',expected_sha256=pacing_sha)
     values=collect(base,complete=exit_code==0 and not timed_out)
-    operator.harness_check('provider_drift',launch.model_catalog.verify,values.get(launch.model_catalog.FILE))
+    launch.model_catalog.verify(values.get(launch.model_catalog.FILE))
     require(all(values.get(name) == raw for name,raw in expected_inputs.items()),
         'heldout independent input changed during process')
     audit_originals(values)
@@ -272,6 +273,7 @@ def finalize(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isolation_ra
         require(rows and rows[-1]['ordinal']==ordinal and rows[-1]['stage']=='independent_captured',
             'heldout parent requires pending independent')
         try:
+            operator.same_execution_slot(bound,ledger,ordinal)
             context=operator.originals.load(bound,ordinal,source_repository=repository)
             anchors=[row for row in rows if row['ordinal']==ordinal and row['stage']=='primary_captured']
             require(len(anchors)==1 and io.sha(context.receipt_raw)==anchors[0]['artifactSha256'],

@@ -84,9 +84,6 @@ class SuccessorWiringTests(unittest.TestCase):
         self.assertEqual(operator.daily_proof(new, dict(a=1)), io.sha(io.encoded(dict(a=1))))
         self.assertIsNone(operator.daily_proof(old, dict(a=1)))
         with self.assertRaises(policy.HarnessFault) as caught:
-            operator.harness_check('provider_drift', run.require, False, 'catalog changed')
-        self.assertEqual(caught.exception.reason, 'provider_drift')
-        with self.assertRaises(policy.HarnessFault) as caught:
             operator.same_resources(dict(a=1), dict(a=2), 'resources changed')
         self.assertEqual(caught.exception.reason, 'resource_drift')
 
@@ -136,6 +133,13 @@ class SuccessorWiringTests(unittest.TestCase):
         proof = self.proof()
         bundle = self.bundle()
         self.f.patch(run, 'resources', return_value=proof)
+        control = operator.control_root(bundle.bound, 1)
+        # 承認の原は台帳の検査を通った後だけ保存し、拒否された呼出しが同じ枠を塞がない。
+        for stop_reason, prior in [('provider_drift', 'a'*64), ('unsafe', 'd'*64)]:
+            with self.subTest(stop_reason=stop_reason), self.assertRaises(ValueError):
+                run.authorize_retry(bundle, 1, stop_reason=stop_reason, prior_artifact_sha256=prior,
+                    evidence_sha256=['e'*64], reason='検査')
+            self.assertFalse((control/'retry-authorization.json').exists())
         with self.assertRaises(ValueError):
             run.authorize_retry(bundle, 1, stop_reason='evidence_invalid', prior_artifact_sha256='d'*64,
                 evidence_sha256=['e'*64], reason='独立検分がない')
@@ -153,6 +157,49 @@ class SuccessorWiringTests(unittest.TestCase):
         rows, summary = run.checkpoint(bundle, proof)
         self.assertEqual((rows[-1]['stage'], summary['pendingRetry'], summary['retriesUsed']), ('retry_authorized', 1, 1))
         self.assertEqual(run.next_stage(rows, summary), (1, 'primary'))
+
+
+class SuccessorPacingTests(unittest.TestCase):
+    """日付の変わり目では前日の原を検証せず、新しい時計で60秒待つ。1枠の途中の変更は止める。"""
+    def setUp(self):
+        self.w = SuccessorWiringTests(methodName='runTest')
+        self.w.setUp()
+        self.addCleanup(self.w.doCleanups)
+        self.bound = self.w.f.bind()
+        self.ledger = x.ledger.open_shared(self.bound.ledger_contract(io.encoded(self.w.proof())))
+        clock = iter(range(1000, 100000, 61))
+        self.w.f.patch(operator, 'time', new=SimpleNamespace(monotonic=lambda: next(clock),
+            time=lambda: 2000000000.0, sleep=lambda seconds: None))
+
+    def previous_day(self, ordinal, role='primary'):
+        control = operator.control_root(self.bound, ordinal)
+        operator.create_directory(control)
+        operator.save(control, 'pacing.json', io.encoded(dict(executionSha256='0'*64, wallSeconds=1900000000.0)))
+
+    def test_new_day_first_launch_waits_without_reading_previous_originals(self):
+        with self.ledger.locked() as held:
+            for stage in ['primary_reserved', 'primary_started']:
+                held.append(1, stage, resource_proof_sha256='1'*64 if stage.endswith('_reserved') else None)
+            held.append(1, 'primary_failed', 'd'*64, resource_proof_sha256='1'*64)
+            self.previous_day(1)
+            held.append(2, 'primary_reserved', resource_proof_sha256='2'*64)
+            operator.create_directory(self.bound.stage_root(2, 'primary'))
+            operator.create_directory(operator.control_root(self.bound, 2))
+            operator.pace(self.bound, 2, 'primary', held)
+            value = x.inputs.parse(operator.read_control(operator.control_root(self.bound, 2), 'pacing.json'))
+        self.assertEqual((value['previousSha256'], value['waitedSeconds'], value['ordinal']), (None, 60.0, 2))
+        self.assertEqual(value['executionSha256'], io.sha(self.bound.execution_raw))
+
+    def test_execution_change_inside_one_slot_is_a_harness_fault(self):
+        with self.ledger.locked() as held:
+            for stage in ['primary_reserved', 'primary_started']:
+                held.append(1, stage, resource_proof_sha256='1'*64 if stage.endswith('_reserved') else None)
+            self.previous_day(1)
+            with self.assertRaises(policy.HarnessFault) as caught:
+                operator.pace(self.bound, 1, 'independent', held)
+            self.assertEqual(caught.exception.reason, 'source_drift')
+            with self.assertRaises(policy.HarnessFault):
+                operator.same_execution_slot(self.bound, held, 1)
 
 
 class SurveyFailureGuardTests(unittest.TestCase):
