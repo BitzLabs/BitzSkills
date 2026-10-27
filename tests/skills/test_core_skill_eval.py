@@ -224,7 +224,7 @@ class CoreEvaluationTests(unittest.TestCase):
             self.assertFalse(inspect([base, expanded])["safety"])
             probe = copy.deepcopy(base)
             probe["arguments"]["argv"] = ["check", "--help"]
-            probe["result"].update(exitCode=4, stdout="", stderr="未知のoption --help")
+            probe["result"].update(exitCode=4, stdout="", stderr="bitz: check: 未知のオプションです: --help\n")
             primary = copy.deepcopy(base)
             primary["callIndex"] = 2
             with_probe = inspect([probe, primary])
