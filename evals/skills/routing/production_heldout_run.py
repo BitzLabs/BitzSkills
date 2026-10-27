@@ -118,6 +118,11 @@ def args(bundle,ordinal):
     return bundle.repository,bundle.bound,ordinal,bundle.sdk_raw,bundle.review_raw,bundle.report_raw,bundle.isolation_raw
 
 
+def unsealed_launch(rows):
+    # 予約だけで起動の印がない枠はモデルを起動していない。起動後に結果を封印していない枠だけを区別する。
+    return bool(rows) and rows[-1]['stage'].endswith('_started')
+
+
 def stop(bundle,proof,ordinal,reason,*,unsealed=False):
     ledger=ledger_for(bundle,proof)
     with ledger.locked():
@@ -175,7 +180,7 @@ def _run_locked(bundle,proof,maximum_slots):
             break
         try:
             if stage=='ambiguous':
-                stop(bundle,proof,ordinal,'unfinished_prior_launch_no_retry',unsealed=True)
+                stop(bundle,proof,ordinal,'unfinished_prior_launch_no_retry',unsealed=unsealed_launch(rows))
                 results.append(dict(ordinal=ordinal,status='globally_stopped',reason='unfinished_prior_launch_no_retry'))
                 break
             if stage=='primary':

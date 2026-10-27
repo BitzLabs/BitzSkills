@@ -98,6 +98,14 @@ class SuccessorWiringTests(unittest.TestCase):
         self.assertEqual(run.next_stage(terminal, dict(status='in_progress', terminalSlots=1, primaryReserved=1)),
             (2, 'primary'))
 
+    def test_only_a_started_launch_counts_as_unsealed(self):
+        self.assertTrue(run.unsealed_launch([dict(ordinal=1, stage='primary_reserved'),
+            dict(ordinal=1, stage='primary_started')]))
+        self.assertTrue(run.unsealed_launch([dict(ordinal=1, stage='independent_started')]))
+        for rows in [[], [dict(ordinal=1, stage='primary_reserved')], [dict(ordinal=1, stage='independent_reserved')]]:
+            with self.subTest(rows=rows):
+                self.assertFalse(run.unsealed_launch(rows))
+
     def bundle(self):
         return SimpleNamespace(bound=self.f.bind())
 
