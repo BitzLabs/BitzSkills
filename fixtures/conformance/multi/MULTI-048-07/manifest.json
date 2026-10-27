@@ -1,0 +1,45 @@
+{
+  "fixtureId": "MULTI-048-07",
+  "description": "基準版のルートの値が空のmultiWorkspaceの宣言は宣言ありなので、省略したIDをrootから写像せず、旧ワークスペースの削除として検査する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/bitz.yaml"
+      },
+      {
+        "op": "create",
+        "path": "apps/web/.spec/bitz.yaml",
+        "source": "changes/web.yaml"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
