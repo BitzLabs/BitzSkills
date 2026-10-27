@@ -1,0 +1,52 @@
+# 適合試験の分割と集約に使うCI用のイメージを作る（ADR-069）。
+# PR では build と版の確認だけを行い、main への push と手動では GHCR へ push して digest を出力する。
+# ci.yml はここで出力した digest を参照する。digest の更新は別の PR で行う。
+name: CI image
+
+on:
+  pull_request:
+    paths:
+      - .github/ci-image/**
+      - .github/workflows/ci-image.yml
+  push:
+    branches: [main]
+    paths:
+      - .github/ci-image/**
+      - .github/workflows/ci-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/bitzlabs/bitzskills-ci
+
+jobs:
+  build:
+    name: CI用イメージのbuild
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: build
+        run: |
+          docker build --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            -t "$IMAGE:sha-${GITHUB_SHA}" .github/ci-image
+      - name: 版の確認
+        run: |
+          docker run --rm "$IMAGE:sha-${GITHUB_SHA}" sh -c \
+            'git --version && uv --version && uv run --no-project python --version'
+      - name: GHCR への push と digest の出力
+        if: github.event_name != 'pull_request'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:sha-${GITHUB_SHA}"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:sha-${GITHUB_SHA}")
+          echo "$digest"
+          echo "ci.yml に書く参照: \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
