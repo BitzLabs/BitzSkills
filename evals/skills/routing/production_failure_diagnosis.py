@@ -118,7 +118,10 @@ def _entry(path):
     if os.path.islink(path):
         return entry + (os.readlink(path),)
     if os.path.isfile(path):
-        return entry + (io.sha(io.read_regular(Path(path).absolute())),)
+        # 作業用のディレクトリにはhardlinkがありうるので、単一linkは求めない。symlinkは辿らない。
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, 'rb') as stream:
+            return entry + (io.sha(stream.read()),)
     return entry
 
 
