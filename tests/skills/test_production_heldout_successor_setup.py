@@ -45,6 +45,8 @@ class PredecessorSetupTests(unittest.TestCase):
         result = setup.predecessor('successor-0.3.0', 'heldout-matrix-first-01')
         self.assertEqual(self.f.spec(first), result['predecessor'])
         self.assertEqual(result['carry']['retryCandidates'], [2, 3])
+        # 評価失敗はreceiptのhash、中断は停止の記録のhashを、再試行の承認に渡す値として出す。
+        self.assertEqual({'2': 'd'*64, '3': 'e'*64}, result['carry']['retryPriorArtifacts'])
         with self.assertRaises((ValueError, OSError)):
             setup.predecessor('successor-0.3.0', 'heldout-matrix-missing-01')
 
@@ -80,6 +82,9 @@ class SuccessorExecutionSetupTests(unittest.TestCase):
         self.assertEqual(self.spec, ledger['predecessor'])
         with self.assertRaises(ValueError):
             self.build(campaign=successor.continuation.CAMPAIGN)
+        self.spec = None
+        with self.assertRaisesRegex(ValueError, 'requires a predecessor'):
+            self.build()
 
     def test_cli_writes_a_new_file_only(self):
         directory = Path(self.w.private)
@@ -102,6 +107,18 @@ class SuccessorExecutionSetupTests(unittest.TestCase):
 
 
 class AuthorizeRetryCliTests(unittest.TestCase):
+    def test_retry_options_need_the_retry_entry_and_no_preflight(self):
+        base = ['--bundle', '.venv/heldout-bound-synthetic']
+        for extra in [['--stop-reason', 'provider_drift'], ['--evidence', 'e'*64], ['--reason', 'x'],
+                ['--authorize-retry', '1', '--preflight-only']]:
+            with self.subTest(extra=extra), patch.object(run, 'load') as load, \
+                    patch.object(run, 'run') as batch, self.assertRaises(SystemExit) as caught, \
+                    redirect_stdout(stream.StringIO()), patch('sys.stderr', stream.StringIO()):
+                run.main(base+extra)
+            self.assertEqual(2, caught.exception.code)
+            load.assert_not_called()
+            batch.assert_not_called()
+
     def test_cli_records_the_authorization(self):
         w = wiring_fixture.SuccessorWiringTests(methodName='runTest')
         w.setUp()

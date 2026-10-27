@@ -224,6 +224,11 @@ def main(argv=None):
     parser.add_argument('--prior-artifact');parser.add_argument('--evidence',action='append',default=[])
     parser.add_argument('--reason');parser.add_argument('--independent-review',type=Path)
     args_value=parser.parse_args(argv)
+    retry_options=[args_value.stop_reason,args_value.prior_artifact,args_value.reason,args_value.independent_review]
+    if args_value.authorize_retry is None and (any(x is not None for x in retry_options) or args_value.evidence):
+        parser.error('retry options require --authorize-retry')
+    if args_value.authorize_retry is not None and args_value.preflight_only:
+        parser.error('--authorize-retry writes the ledger and cannot be combined with --preflight-only')
     try:
         bundle=load(ROOT,args_value.bundle)
         if args_value.authorize_retry is not None:
