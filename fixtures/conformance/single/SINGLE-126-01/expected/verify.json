@@ -16,7 +16,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "argvの要素はstringで指定してください",
+      "summary": "argvの要素は文字列で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": null,

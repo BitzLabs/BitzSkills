@@ -20,7 +20,7 @@
       "code": "SPEC-STYLE-H1-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "H1がFrontmatterと一致しません",
+      "summary": "H1がフロントマターと一致しません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

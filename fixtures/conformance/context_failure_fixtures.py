@@ -1,5 +1,9 @@
 """`context`が非成功になる場合を固定するレビュー済みの入力と期待値（本番のコンテキスト解決器やハッシュ値の計算はない）。
 
+`SINGLE-159`は、状態が`done`のTASKを目的`implement`の起点にした場合を固定する。`done`のTASKは`verify`の再実行と`interpret`を許し、
+目的が`implement`で起点にした場合は`blocked`とする（文書・フロントマター・状態仕様 §7）。診断は起点が目的に適用できない`CTX-STATE-001`の1件で、
+先行TASKがないので`CTX-TASK-DEPENDENCY-001`は返さない（実装の確認事項C13）。
+
 `SINGLE-147`と`SINGLE-148`は、状態が`accepted`でないADR（`proposed`）への`requires`を固定する。参照先の型の組が表
 （関係・トレースモデル §4）を満たさないので、状態の検査（`CTX-STATE-001`、`blocked`）ではなく型制約の
 `CTX-RELATION-TYPE-001`（`failed`）で返す。診断の発生元は関係を宣言した文書（`relations.requires`）である。
@@ -23,15 +27,20 @@ from .expansion_fixtures import requirement
 HERE = Path(__file__).resolve().parent
 CASES = {
     "SINGLE-050": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
-    "SINGLE-051": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
-    "SINGLE-144": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
-    "SINGLE-147": ("TASK-001", "implement", "failed", "CTX-RELATION-TYPE-001", "TASKからADRへのrequiresは許可されません"),
-    "SINGLE-148": ("REQ-001", "implement", "failed", "CTX-RELATION-TYPE-001", "REQからADRへのrequiresは許可されません"),
+    "SINGLE-051": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行するTASK-002が状態openで、状態doneではありません"),
+    "SINGLE-144": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行するTASK-002が状態cancelledで、状態doneではありません"),
+    "SINGLE-159": ("TASK-001", "implement", "blocked", "CTX-STATE-001", "TASK-001は状態doneのため目的implementに適用できません"),
+    "SINGLE-147": ("TASK-001", "implement", "failed", "CTX-RELATION-TYPE-001", "TASKから状態proposedのADRへの関係型requiresは許可されません"),
+    "SINGLE-148": ("REQ-001", "implement", "failed", "CTX-RELATION-TYPE-001", "REQから状態proposedのADRへの関係型requiresは許可されません"),
     "SINGLE-052-01": ("TECH-001", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "起点TECH-001はTECH-002に置換されています"),
     "SINGLE-052-02": ("TECH-003", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "依存先TECH-001はTECH-002に置換されています"),
     "SINGLE-053": ("TECH-001", "implement", "failed", "CTX-STATE-SUPERSEDED-002", "TECH-001の有効な後継が複数存在します"),
     "SINGLE-127-13": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
 }
+# `CTX-TASK-DEPENDENCY-001`の`suggestedAction`（表記規則 §3.5の7、ADR-062 Decision 2で管理者が承認した文言）。先行TASKはどちらもTASK-002。
+DEPENDENCY_SUGGESTED_ACTION = "先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
+# 診断の要約と異なる、検査する論点の1行要約（既存の件は診断の要約を説明に使う）。
+DESCRIPTIONS = {"SINGLE-159": "状態doneのTASKを目的implementの起点にするとCTX-STATE-001でblockedにし、先行TASKの診断を返さない"}
 TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# TASK-001 先行作業の確認\n\n## Objective\n\n先行作業の完了を確認する。\n"
 
 
@@ -41,6 +50,15 @@ CANCELLED_PREREQUISITE_REQ = requirement(
     "REQ-001", "先行TASKが取消済みの起点の対象要求", [("REQ-001:AC-01", "入力を検証する")],
     verification="テスト対応は宣言しない。")
 CANCELLED_PREREQUISITE_REQ_PATH = ".spec/requirements/REQ-001.md"
+
+
+# `SINGLE-159`: 状態`done`のTASK-001が、状態`approved`のREQ-001:AC-01を`addresses`する。先行TASKはなく、`requires`も宣言しない
+# （`CTX-TASK-DEPENDENCY-001`を混ぜない）。REQ-001は有効で、起点のTASKの状態だけが唯一の原因である。
+DONE_ROOT_REQ = requirement(
+    "REQ-001", "完了したTASKが対応する対象要求", [("REQ-001:AC-01", "入力を検証する")],
+    verification="テスト対応は宣言しない。")
+DONE_ROOT_REQ_PATH = ".spec/requirements/REQ-001.md"
+DONE_ROOT_TITLE = "完了した作業"
 
 
 # `SINGLE-147`と`SINGLE-148`: 状態が`proposed`のADR-001。`requires`の参照先の型は、`accepted`のADRだけを許す。
@@ -101,6 +119,17 @@ def reviewed_documents(identifier):
             CANCELLED_PREREQUISITE_REQ_PATH: (head + "\n" + body, {"id": "REQ-001", "title": "先行TASKが取消済みの起点の対象要求",
                                                                   "status": "approved"}),
         }
+    if identifier == "SINGLE-159":
+        head, body = DONE_ROOT_REQ
+        root = TASK.replace("先行作業の確認", DONE_ROOT_TITLE).replace(
+            "status: open\n---", "status: done\nrelations:\n  addresses: [REQ-001:AC-01]\n---", 1).replace(
+            "先行作業の完了を確認する。", "対象要求に対応する作業を完了した。", 1)
+        return {
+            TASK_PATH: (root, {"id": "TASK-001", "title": DONE_ROOT_TITLE, "status": "done",
+                               "relations": {"addresses": ["REQ-001:AC-01"]}}),
+            DONE_ROOT_REQ_PATH: (head + "\n" + body, {"id": "REQ-001", "title": "完了したTASKが対応する対象要求",
+                                                      "status": "approved"}),
+        }
     # YAMLと値の組を固定する。関係の意味はレビュー済みで、ここでは推測しない。
     if identifier == "SINGLE-051":
         root = TASK.replace("status: open\n---", "status: open\nrelations:\n  requires: [TASK-002]\n---", 1)
@@ -125,7 +154,7 @@ def reviewed_inputs(identifier):
 
 def reviewed_manifest(identifier):
     root, purpose, status, _, description = CASES[identifier]
-    return {"fixtureId": identifier, "description": description, "setup": {"git": True, "operations": []},
+    return {"fixtureId": identifier, "description": DESCRIPTIONS.get(identifier, description), "setup": {"git": True, "operations": []},
         "invocation": {"runner": "bitz", "cwd": ".", "argv": ["context", root, "--purpose", purpose, "--format", "json"], "env": {}},
         "expect": {"status": status, "exitCode": 1 if status == "failed" else 2,
             "stdout": "json", "resultFile": "expected/context.json", "reportFileCount": 0}}
@@ -147,13 +176,16 @@ def reviewed_result(identifier):
             # 独立した別の原因。状態`draft`のREQ-002は目的`implement`に適用できない。発生元は適用できない文書のファイル。
             # 診断の順序は`path`の辞書順（REQ-001.md < REQ-002.md）なので、型制約の診断が先になる。
             diagnostics.append({"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
-                                "summary": "REQ-002は現在のpurposeに適用できません",
+                                "summary": "REQ-002は状態draftのため目的implementに適用できません",
                                 "source": {"kind": "file", "workspaceId": "root", "path": DRAFT_REQ_PATH}})
         source = None
     elif identifier in {"SINGLE-050", "SINGLE-127-13"}:
         source = {"kind": "invocation", "argument": "TECH-999"}
     elif identifier in {"SINGLE-051", "SINGLE-144"}:
         source = {"kind": "file", "workspaceId": "root", "path": TASK_PATH, "key": "relations.requires"}
+    elif identifier == "SINGLE-159":
+        # 起点のTASK自身が目的に適用できないので、発生元は起点のTASKのファイルである（`SINGLE-148`のREQ-002、`SINGLE-067`のTASK-001と同じ形で、`key`は付けない）。
+        source = {"kind": "file", "workspaceId": "root", "path": TASK_PATH}
     else:
         source = {"kind": "file", "workspaceId": "root", "path": TECH_PATH}
     return {"schemaVersion": "1.0", "operation": "context", "status": status, "purpose": purpose,
@@ -164,7 +196,8 @@ def reviewed_result(identifier):
                        for modality in ("must", "should", "may")}, "adjacent": []},
         "durationMs": 0,
         "diagnostics": diagnostics if diagnostics is not None else
-        [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source}]}
+        [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source,
+          **({"suggestedAction": DEPENDENCY_SUGGESTED_ACTION} if code == "CTX-TASK-DEPENDENCY-001" else {})}]}
 
 
 def check_cancelled_prerequisite(result):
@@ -176,6 +209,35 @@ def check_cancelled_prerequisite(result):
     source = result["diagnostics"][0]["source"]
     if source.get("path") != TASK_PATH or source.get("key") != "relations.requires":
         raise ValueError("診断の発生元は起点のTASKの`relations.requires`である必要があります")
+
+
+def check_done_root(result):
+    """`SINGLE-159`: 状態`done`のTASKを目的`implement`の起点にすると、`CTX-STATE-001`（`blocked`）の1件だけを返す
+    （文書・フロントマター・状態仕様 §7、診断レジストリ`CTX-STATE-INAPPLICABLE`）。先行TASKはなく、`CTX-TASK-DEPENDENCY-001`は返さない。
+    発生元は起点のTASKのファイルで、強い関係の未解決はない。"""
+    diagnostics = result["diagnostics"]
+    if [item["code"] for item in diagnostics] != ["CTX-STATE-001"]:
+        raise ValueError("`done`のTASKを`implement`の起点にした結果は、`CTX-STATE-001`の1件だけを返す必要があります")
+    primary = diagnostics[0]
+    if primary["resultStatus"] != "blocked" or primary["severity"] != "error" or result["status"] != "blocked":
+        raise ValueError("`CTX-STATE-001`は`blocked`である必要があります")
+    if primary["source"] != {"kind": "file", "workspaceId": "root", "path": TASK_PATH}:
+        raise ValueError("診断の発生元は起点のTASKのファイルである必要があります")
+    if result["roots"] != ["TASK-001"] or result["purpose"] != "implement" or result["contextDigest"] is not None:
+        raise ValueError("起点はTASK-001、目的は`implement`で、ハッシュ値は計算しない必要があります")
+    if result["resolution"] != {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 0} or result["documents"]:
+        raise ValueError("強い関係の未解決はなく、コンテキストの文書を返してはいけません")
+
+
+def check_done_root_inputs(documents):
+    """原因は、起点のTASK-001の状態が`done`であることだけである。先行TASKも`requires`も置かず、`addresses`する先は有効なREQである。"""
+    task, requirement_ = documents[TASK_PATH][1], documents[DONE_ROOT_REQ_PATH][1]
+    if set(documents) != {TASK_PATH, DONE_ROOT_REQ_PATH}:
+        raise ValueError("`done`のTASKのcorpusは、TASK-001とREQ-001だけを置く必要があります")
+    if task["status"] != "done" or task["relations"] != {"addresses": ["REQ-001:AC-01"]}:
+        raise ValueError("起点のTASK-001は状態`done`で、`requires`を持たず`addresses`だけを宣言する必要があります")
+    if requirement_["status"] != "approved":
+        raise ValueError("`addresses`する先のREQ-001は状態`approved`である必要があります")
 
 
 def check_type_constraint(identifier, result):
@@ -234,6 +296,35 @@ def check_unborn(repository, identifier):
         raise ValueError("`context`操作のfixtureの作業ツリーがレビュー済みの入力と異なります")
 
 
+def _dump(value):
+    return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+
+
+def generate(root=HERE, identifiers=None):
+    """レビュー済みの入力と期待値からfixtureを書き出す。副作用の期待値は、隔離した準備手順の観測で作る（Coreは実行しない）。"""
+    for identifier in CASES:
+        if identifiers is not None and identifier not in identifiers:
+            continue
+        fixture = root / "single" / identifier
+        manifest = reviewed_manifest(identifier)
+        for name, content in reviewed_inputs(identifier).items():
+            path = fixture / "repo" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        (fixture / "expected").mkdir(parents=True, exist_ok=True)
+        (fixture / "manifest.json").write_text(_dump(manifest))
+        (fixture / "expected/context.json").write_text(_dump(reviewed_result(identifier)))
+        with tempfile.TemporaryDirectory(prefix="bitz-context-failure-") as temporary:
+            sandbox = Path(temporary)
+            repository = setup(fixture, manifest, sandbox / "repo")
+            external = {name: sandbox / name for name in ("home", "cache", "temporary")}
+            for path in external.values():
+                path.mkdir()
+            state = observe(repository, external)
+        (fixture / "side-effects.json").write_text(
+            _dump({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+
+
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
     validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
@@ -253,6 +344,9 @@ def validate(root=HERE, identifiers=None):
                 raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             if identifier == "SINGLE-144":
                 check_cancelled_prerequisite(result)
+            elif identifier == "SINGLE-159":
+                check_done_root(result)
+                check_done_root_inputs(reviewed_documents(identifier))
             elif identifier in TYPE_REQUIRES:
                 check_type_constraint(identifier, result)
                 check_type_inputs(identifier, reviewed_documents(identifier))

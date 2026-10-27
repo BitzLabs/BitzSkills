@@ -63,18 +63,18 @@ CASES = {
     "SINGLE-090": {
         "operation": "check", "status": "passed_with_warnings", "git": True, "workspace": "root",
         "documents": 1, "statements": 1, "code": "SPEC-RELATION-ADVISORY-MISSING-001",
-        "summary": "relatedの参照先が存在しません", "evidence": MISSING_TARGET,
+        "summary": "関係型relatedの参照先が存在しません", "evidence": MISSING_TARGET,
         "source": file_source(REQ_PATH, "root", key="relations.related"),
         "description": "不在のrelatedを警告し文書の検査を続ける"},
     "SINGLE-091": {
         "operation": "check", "status": "error", "git": True, "workspace": None,
         "documents": 0, "statements": 0, "code": "SPEC-CONFIG-SCHEMA-001",
-        "summary": "設定YAMLのanchorは禁止です", "config": ANCHOR_CONFIG,
+        "summary": "設定YAMLのアンカーは禁止です", "config": ANCHOR_CONFIG,
         "source": file_source(CONFIG_PATH, None, key="language"),
         "description": "設定の禁止YAML構文で読取りを止める"},
     "SINGLE-092": {
         "operation": "doctor", "status": "error", "git": True, "workspace": None,
-        "code": "SPEC-CONFIG-SCHEMA-001", "summary": "languageはstringで指定してください",
+        "code": "SPEC-CONFIG-SCHEMA-001", "summary": "設定キーlanguageは文字列で指定してください",
         "config": CONFIGS["SINGLE-004-01"], "source": file_source(CONFIG_PATH, None, key="language"),
         "checks": doctor_checks({"config": {"status": "error"}}, ("core", "workspace", "config", "git")),
         "description": "doctorの設定型不正をconfig checkと共通codeで返す"},
@@ -83,6 +83,7 @@ CASES = {
         "code": "SPEC-DOCTOR-GIT-001",
         "summary": "Git不在のため差分に依存する保証を提供できません",
         "source": {"kind": "environment", "component": "git", "identifier": "git"},
+        "suggestedAction": "Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください",
         "checks": doctor_checks({"git": {"status": "warning", "lostGuarantees": LOST_GUARANTEES}}),
         "description": "Git不在の単一workspace doctorを警告で継続する"},
     "SINGLE-094": {
@@ -94,7 +95,7 @@ CASES = {
     "SINGLE-095": {
         "operation": "check", "status": "blocked", "git": True, "workspace": "root",
         "documents": 0, "statements": 0, "code": "SPEC-EARS-VERSION-001",
-        "summary": "未対応のEARS-AI majorです", "config": EARS_MAJOR_CONFIG,
+        "summary": "未対応のEARS-AIのメジャーバージョンです", "config": EARS_MAJOR_CONFIG,
         "source": file_source(CONFIG_PATH, "root", key="earsAi"),
         "description": "未知EARS-AI majorで読取りを止める"},
 }
@@ -138,7 +139,8 @@ def reviewed_result(identifier):
               "diagnostics": [{"code": case["code"],
                                "severity": "warning" if status == "passed_with_warnings" else "error",
                                "resultStatus": status, "summary": case["summary"], "source": case["source"],
-                               **({"evidence": case["evidence"]} if "evidence" in case else {})}]}
+                               **({"evidence": case["evidence"]} if "evidence" in case else {}),
+                               **({"suggestedAction": case["suggestedAction"]} if "suggestedAction" in case else {})}]}
     if case["operation"] == "doctor":
         result["core"] = CORE
         result["checks"] = case["checks"]

@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-034-01",
+  "description": "メンバーの中の`verify TECH-010`が、非修飾のIDを最寄りの設定のメンバーで解決する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "verify",
+      "TECH-010",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

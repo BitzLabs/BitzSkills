@@ -21,6 +21,7 @@ import os
 import time
 from collections.abc import Callable
 
+from . import activews
 from . import basecompare
 from . import config as config_mod
 from . import document as document_mod
@@ -36,7 +37,7 @@ from .config import Diagnostic
 from .document import DocEntry
 from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
-from .workspace import WorkspaceLocation, locate_workspace
+from .workspace import locate_workspace
 
 
 def _resolve_target(
@@ -593,8 +594,8 @@ def _run_all_workspaces_members(
     if "--report" in parsed.flags:
         failure = reportio.write_report(pre.repo_root, pre.root_id, "check", result)
         if failure is not None:
-            diags_top = list(result["diagnostics"])
-            diags_top.append(failure.to_dict())
+            # レポートの書き込みの失敗も、ほかの診断と同じく結果・診断・終了コード §7の順に並べる（`verify`と同じ）。
+            diags_top = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
             result["diagnostics"] = diags_top
             overall_status = worst_status([w["status"] for w in ws_results] + [status_from_diagnostics(diags_top)])
             result["status"] = overall_status
@@ -628,7 +629,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     extra_revs = [resolved_base] if resolved_base is not None else []
     pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs)
     if pre.discovery_failed:
-        raise CliArgError("check", "複合workspaceのroot設定を発見できません")
+        raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     if pre.ok:
         return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
@@ -646,7 +647,44 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
         "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
         "diagnostics": diagnostics,
     }
-    return result, EXIT_CODE_BY_STATUS[status]
+    if "--report" in parsed.flags:
+        activews.save_all_workspaces_report(pre, "check", result)
+    return result, EXIT_CODE_BY_STATUS[result["status"]]
+
+
+def _stopped_result(
+    stop: activews.StoppedSelection, scope: str, revision: dict | None, want_report: bool, started: int
+) -> tuple[dict, int]:
+    """複合ワークスペースの単独の`check`が全体事前検査で停止した結果（複合ワークスペース仕様 §7、ADR-063）。
+
+    作業ワークスペースの処理を始めていないため、件数はすべて0にする。Gitの境界を確定できずに停止したときは
+    `revision`を`null`にし、`scope: changed`は基準版を必要とするため`full`にする（結果・診断・終了コード §2）。
+    """
+
+    if stop.git_boundary_unknown:
+        revision = None
+        if scope == "changed":
+            scope = "full"
+    diagnostics = sort_diagnostics(stop.diagnostics)
+    status = status_from_diagnostics(diagnostics)
+    result: dict = {
+        "schemaVersion": "1.0",
+        "operation": "check",
+        "status": status,
+        "scope": scope,
+        "workspace": {"id": stop.workspace_id, "path": stop.rel_path},
+        "revision": revision,
+    }
+    if scope == "changed":
+        result["selection"] = {"changedPathCount": 0, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0}
+    else:
+        result["checkedDocumentCount"] = 0
+        result["checkedStatementCount"] = 0
+    result["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+    result["diagnostics"] = diagnostics
+    if want_report:
+        activews.save_stop_report(stop, "check", result)
+    return result, EXIT_CODE_BY_STATUS[result["status"]]
 
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
@@ -706,44 +744,15 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # --- 作業ワークスペースの決定（複合ワークスペース仕様 §3）。--------------------------------------------
     # リポジトリのルートが複合ワークスペースを宣言している場合は、修飾IDの起点の有無によらず事前検査を行い、
     # 作業ワークスペースを (a) 修飾IDの起点の所有ワークスペース、(b) `--workspace`、(c) 現在のディレクトリの
-    # 最寄りの設定のワークスペース、の順で決める（`context`と同じ。(a)と(b)が食い違えば引数不正＝終了コード4）。
+    # 最寄りの設定のワークスペース、の順で決める（`activews.select_active`。(a)と(b)が食い違えば引数不正＝終了コード4）。
     # 単一ワークスペースは軽量な従来の経路のまま、事前検査を行わない。`--all-workspaces`は別の経路
     # （`_run_all_workspaces`）が処理するためここには来ない。
-    multi_pre: multiws.PrecheckResult | None = (
-        multiws.precheck(cwd, git, env, extra_config_revs=[base_commit] if base_commit is not None else [])
-        if multiws.is_declared(cwd, git, env)
-        else None
-    )
-    workspace_rel_path = "."
-    qualified_prefixes = {
-        q[0] for t in parsed.positionals if (q := multirelate.parse_qualified(t)) is not None
-    }
-    if qualified_prefixes:
-        if len(qualified_prefixes) > 1:
-            raise CliArgError("check", "複数の起点が異なるworkspaceに属しています")
-        target_ws_id = next(iter(qualified_prefixes))
-        if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("check", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
-    else:
-        target_ws_id = requested_workspace
-
-    if multi_pre is not None and multi_pre.ok:
-        if target_ws_id is None and loc.config_path is not None:
-            target_ws_id = config_mod.read_config(loc.config_path).workspace_id
-        if target_ws_id == multi_pre.root_id:
-            assert multi_pre.repo_root is not None
-            loc = WorkspaceLocation(
-                root=multi_pre.repo_root,
-                config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml"),
-            )
-            workspace_rel_path = "."
-        else:
-            member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-            if member is not None:
-                loc = WorkspaceLocation(
-                    root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                )
-                workspace_rel_path = member.path
+    sel = activews.select_active("check", parsed.positionals, requested_workspace, cwd, git, env, loc)
+    if sel.stop is not None:
+        return _stopped_result(sel.stop, scope, revision, want_report, started)
+    multi_pre = sel.pre
+    loc = sel.loc
+    workspace_rel_path = sel.rel_path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
@@ -752,7 +761,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("check", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("check", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     diagnostics: list[dict] = []
     workspace_id: str | None
@@ -1084,8 +1093,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         write_workspace_root = loc.root if loc.root is not None else cwd
         failure = reportio.write_report(write_workspace_root, workspace_id, "check", result)
         if failure is not None:
-            diagnostics = list(result["diagnostics"])
-            diagnostics.append(failure.to_dict())
+            # レポートの書き込みの失敗も、ほかの診断と同じく結果・診断・終了コード §7の順に並べる（`verify`と同じ）。
+            diagnostics = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
             result["diagnostics"] = diagnostics
             status = status_from_diagnostics(diagnostics)
             result["status"] = status

@@ -37,24 +37,24 @@ CASES = {
         ["--expect-digest", WRONG_DIGEST], "", digest_reference.REQ_BODY,
         "blocked", 2, True, 2, GOLDEN, "CTX-STALE-001",
         {"kind": "invocation", "argument": "--expect-digest"},
-        "期待Digestが現在のContext Digestと一致しません"),
+        "期待したハッシュ値が現在のコンテキストのハッシュ値と一致しません"),
     "SINGLE-047": (
         ["--expand", "ADR-001"], "", digest_reference.REQ_BODY,
         "failed", 1, True, 2, GOLDEN, "CTX-PROJECTION-001",
         {"kind": "invocation", "argument": "ADR-001"},
-        "expand対象ADR-001は完全解決集合にありません"),
+        "展開指定の対象ADR-001は完全解決した集合にありません"),
     "SINGLE-048-01": (
         [], "context:\n  maxDocuments: 1\n", digest_reference.REQ_BODY,
         "blocked", 2, False, 0, None, "CTX-LIMIT-001",
         {"kind": "file", "workspaceId": "root", "path": ROOT_DOCUMENT},
-        "完全Context閉包が文書数上限を超過しました"),
+        "コンテキストの完全な閉包が文書数上限を超過しました"),
     "SINGLE-048-02": (
         [], "context:\n  maxBytes: 4096\n",
         digest_reference.REQ_BODY.replace(
             "Digest goldenの固定要求を定義する。\n", "Digest goldenの固定要求を定義する。\n\n" + PADDING, 1),
         "blocked", 2, False, 0, None, "CTX-LIMIT-001",
         {"kind": "file", "workspaceId": "root", "path": ROOT_DOCUMENT},
-        "完全Context閉包がbyte上限を超過しました"),
+        "コンテキストの完全な閉包がバイト数上限を超過しました"),
 }
 DESCRIPTIONS = {
     "SINGLE-046": "expect-digest不一致でstaleを検出し新しい仕様を暗黙受諾しない",

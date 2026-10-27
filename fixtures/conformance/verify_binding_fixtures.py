@@ -175,7 +175,7 @@ def reviewed_result(identifier):
                 "bindingRefs": [] if blocked else ["root::default"],
                 "diagnostics": [{
                     "code": "CTX-COVERAGE-TEST-001", "severity": "error", "resultStatus": "blocked",
-                    "summary": f"対象MUST {root}:AC-01にtest対応がありません",
+                    "summary": f"対象規範文MUST {root}:AC-01にテスト対応がありません",
                     "source": {"kind": "file", "workspaceId": "root",
                                "path": f".spec/requirements/{root}.md"}}] if blocked else [],
             })

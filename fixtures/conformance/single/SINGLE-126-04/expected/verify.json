@@ -16,7 +16,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "argv templateは256要素以下で指定してください",
+      "summary": "引数列テンプレートは256要素以下で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": null,

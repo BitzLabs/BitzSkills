@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "failed",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-PLUGIN-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "プラグインの要求が不完全です",
+      "source": {
+        "kind": "environment",
+        "component": "plugin",
+        "identifier": "bitz-sdd"
+      },
+      "evidence": {
+        "missing": [
+          "--plugin-version",
+          "--require-core-api"
+        ]
+      },
+      "suggestedAction": "--plugin、--plugin-version、--require-core-apiを同時に指定してください"
+    }
+  ],
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "plugin",
+      "status": "failed"
+    },
+    {
+      "name": "workspace",
+      "status": "passed"
+    },
+    {
+      "name": "config",
+      "status": "passed"
+    },
+    {
+      "name": "schema",
+      "status": "passed"
+    },
+    {
+      "name": "ears",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "command",
+      "status": "passed"
+    },
+    {
+      "name": "impact",
+      "status": "info"
+    }
+  ]
+}

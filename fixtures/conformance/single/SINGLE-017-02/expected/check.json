@@ -20,7 +20,7 @@
       "code": "SPEC-STYLE-SECTION-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "REQ必須section Verificationがありません",
+      "summary": "REQの必須の節Verificationがありません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

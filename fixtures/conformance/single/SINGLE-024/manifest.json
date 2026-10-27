@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-024",
-  "description": "実装pathが存在しません",
+  "description": "実装パスが存在しません",
   "setup": {
     "git": true,
     "baseCommit": {

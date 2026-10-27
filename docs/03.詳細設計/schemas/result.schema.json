@@ -376,7 +376,7 @@
         {"$ref": "#/$defs/baseResult"},
         {"type": "object", "required": ["scope", "multiWorkspace", "workspaces", "revision"], "properties": {
           "operation": {"const": "check"}, "scope": {"const": "all-workspaces"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
-          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/checkWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCheck"}
+          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/checkWorkspace"}}, "revision": {"oneOf": [{"$ref": "#/$defs/revisionCheck"}, {"type": "null"}]}
         }}
       ],
       "unevaluatedProperties": false
@@ -459,7 +459,7 @@
         {"$ref": "#/$defs/baseResult"},
         {"type": "object", "required": ["scope", "multiWorkspace", "workspaces", "revision"], "properties": {
           "operation": {"const": "verify"}, "scope": {"const": "all-workspaces"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
-          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/verifyWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCurrent"}
+          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/verifyWorkspace"}}, "revision": {"oneOf": [{"$ref": "#/$defs/revisionCurrent"}, {"type": "null"}]}
         }}
       ],
       "unevaluatedProperties": false

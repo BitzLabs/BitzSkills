@@ -23,7 +23,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator
 
-from . import multi_crosscheck, multi_generator, multi_limit_fixtures
+from . import multi_crosscheck, multi_generator, multi_limit_fixtures, multi_single_verify_limit_fixtures
 from .harness import setup, snapshot
 from .runner import default_python_minor
 from .schemas import schema_path
@@ -174,6 +174,8 @@ def _expected_generate_result(identifier, entries, repository):
 
     (fixtureのharness側の参照実装。Coreの実装ではない。`validate_scale.py`の`expected_result`と同じ規則)。
     """
+    if identifier in multi_single_verify_limit_fixtures.CASES:
+        return multi_single_verify_limit_fixtures.expected_body(identifier, entries, repository)
     dimension, _value, crosses = multi_limit_fixtures.CASES[identifier]
     if crosses:
         return multi_limit_fixtures.blocked_result(identifier)

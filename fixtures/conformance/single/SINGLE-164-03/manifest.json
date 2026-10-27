@@ -1,0 +1,31 @@
+{
+  "fixtureId": "SINGLE-164-03",
+  "description": "対応機能名のバージョンが0を拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--plugin",
+      "bitz-sdd",
+      "--plugin-version",
+      "1.2.0",
+      "--require-core-api",
+      "^1.0",
+      "--require-capability",
+      "context.v0",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

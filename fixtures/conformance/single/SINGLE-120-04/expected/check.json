@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatter changesはstringの配列が必要です",
+      "summary": "フロントマターのフィールドchangesは文字列の配列が必要です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

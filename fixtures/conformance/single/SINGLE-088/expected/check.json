@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatter titleはstringが必要です",
+      "summary": "フロントマターのフィールドtitleは文字列が必要です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

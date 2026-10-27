@@ -454,3 +454,468 @@ Core固有の単体試験は627件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は647件がすべて成功した。
+
+## 2026-10-11: Gitの呼び出しを現在のディレクトリによらずリポジトリ全体に対して行うようにした後のStep 1〜5の再判定
+
+`gitutil.py`のGitの呼び出しを現在のディレクトリによらずリポジトリ全体に対して行うようにし、これを固定する`SINGLE-158`（Step 3）と`MULTI-030-01`、`02`（Step 5）を追加した。
+修正の前後で、既存の350件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`2baa0b79`の版）では3件とも失敗し、
+修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`a15fcb036089d15da0f21d2e9877c90abb418aa6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 353件（`SINGLE-158`、`MULTI-030-01`、`02`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`97a8701b896e12ffc9a1b0e0051b05fbd49400982e2306ae69bf53d96ce1ae52` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は661件がすべて成功した。
+
+## 2026-10-11: `--workspace`でルートを選ぶ場合とdoneのTASKをimplementの起点にする場合のfixtureを追加した後のStep 1〜5の再判定
+
+Coreを変えずに、`MULTI-031-01`、`02`（Step 5）と`SINGLE-159`（Step 3）を追加した。現行のCoreで3件とも`passed`となり、Coreのコピーに要点を壊す変異を入れると
+失敗することを確かめた。
+
+コミット`71243ffc71a09e8e25fa06bdaf44d85ef4bc58f6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 356件（`MULTI-031-01`、`02`、`SINGLE-159`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`27306d9b39bac4b3b222a87be2f51b35abaa8b0c668aa521676ce4719e6a30a0` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は661件がすべて成功した。
+
+## 2026-10-12: doctorでプラグインの要求のCore APIの範囲と対応機能を判定するようにした後のStep 1〜5の再判定
+
+`doctor`のプラグインの要求の判定（ADR-061）を実装し（`cliargs.py`、`doctor.py`、`messages.py`）、これを固定する`SINGLE-160`〜`164`（Step 1。`164`は`01`〜`08`）と
+`MULTI-032`（Step 5）を追加した。修正の前後で、既存の356件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`5927890b`の版）では
+13件とも失敗し、修正後のCoreでは13件とも`passed`となることを確かめた。
+
+コミット`9ee8a756d03b5cb57bdbdbcd0fc8a5c0338607cf`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件（`SINGLE-160`〜`164`、`MULTI-032`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は705件がすべて成功した。
+
+## 2026-10-12: Coreの出力文言を書き換えた後のStep 1〜5の再判定
+
+Coreの出力文言の英語の一般語を日本語にし（ADR-062、表記規則 §3.5）、管理者が承認した対応表の文言で140件のfixtureの期待値を訂正した。
+修正前のCore（コミット`a5d4229e`の版）では、期待値を訂正した140件だけが失敗し、ほかの229件は通過することを確かめた。修正後のCoreでは369件すべてが`passed`となる。
+この記録の過去の節に書いた診断の要約の文言（「tagが不正です」など）は、認定した時点の記録として当時の文言のままとする。
+
+コミット`5db2711417c177167be360434292699058ad0af9`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6`（前回と同じ。結果は各fixtureの判定を記録し、期待値の文言を含まない） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は705件がすべて成功した。
+
+## 2026-10-12: 同じ条件の診断の文言をそろえた後のStep 1〜5の再判定
+
+`CTX-STATE-001`、`CTX-COVERAGE-TEST-001`、承認されていないADRへの`requires`の`CTX-RELATION-TYPE-001`、`CTX-TASK-DEPENDENCY-001`の文言を、管理者が承認した文型にそろえ
+（ADR-062、表記規則 §3.5の7）、16件のfixtureの期待値を訂正した。修正前のCore（コミット`1141b313`の版）では、期待値を訂正した16件だけが失敗し、ほかの353件は
+通過することを確かめた。修正後のCoreでは369件すべてが`passed`となる。
+
+コミット`6f4be139fbf61c01d6e8432cba5e388cf9c47333`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は721件がすべて成功した。
+
+## 2026-10-12: doctorの診断に修復手順を付けた後のStep 1〜5の再判定
+
+`doctor`の診断に、管理者が承認した修復手順（`suggestedAction`）を付け（`doctor` §8、ADR-062、実装の確認事項C29）、9件のfixtureの期待値を訂正した。
+修正前のCore（コミット`414c0de0`の版）では、期待値を訂正した9件だけが失敗し、ほかの360件は通過することを確かめた。修正後のCoreでは369件すべてが`passed`となる。
+
+コミット`aac53402e52f000f1370a55744666afeda1688ad`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 369件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0394df8d30077b941c1f757a189bad7f964559685ddfbadcf3339179ba37cdd6`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は733件がすべて成功した。
+
+## 2026-10-12: doctor --all-workspacesのルートのEARS-AIの非互換をdoctorの診断コードで返すようにした後のStep 1〜5の再判定
+
+全体事前検査が`doctor`の`SPEC-DOCTOR-EARS-001`を返すようにし、ルートの設定の版が非対応で止まったときに`catalog`を`blocked`で置くようにした（`multiws.py`、`doctor.py`）。
+これを固定する`MULTI-033`（Step 5）を追加した。修正の前後で、既存の369件の期待値はすべて変わらないことを確かめた。修正前のCore（コミット`f5de9a43`の版）と、
+カタログの検査項目の修正の直前のCore（コミット`bff2f546`の`multiws.py`）では`MULTI-033`が失敗し、修正後のCoreでは`passed`となることを確かめた。
+
+コミット`6c4b36907a654d2e20d51e37312c34cffaad00a2`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 370件（`MULTI-033`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0965316ad03cc61b7b5c37e4ed230d63efdfa5fb1c250a1382ad8c15a0484eab` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は735件がすべて成功した。
+
+## 2026-10-17: 複合ワークスペースの単独のverifyとdoctorで作業ワークスペースを選ぶようにした後のStep 1〜5の再判定
+
+単独の操作で作業ワークスペースを選ぶ処理を`activews.py`にまとめ、`check`、`context`、`verify`、`doctor`から使うようにした（実装の確認事項C24・C38）。
+複合ワークスペース内の単独の`doctor`は、全体事前検査に成功したときに`catalog`を`passed`で置く。これを固定する`MULTI-034-01`〜`MULTI-034-06`と
+`MULTI-035-01`〜`MULTI-035-03`（Step 5）を追加した。修正前のCore（コミット`0cf697eb`の版）では、追加した9件だけが非成功（`failed` 5件、`error` 4件）となり、
+既存の370件はすべて通過することを確かめた。修正後のCoreでは379件すべてが`passed`となる。
+
+コミット`6f4f33755e97d9a405c8d21b685390938e60aa24`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 379件（`MULTI-034-01`〜`MULTI-034-06`、`MULTI-035-01`〜`MULTI-035-03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`dbf720e2aade08ad6be8ee3589c24001511a06241ff6d22a867a5b843e7f3b2b` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は761件がすべて成功した。
+
+## 2026-10-18: 複合ワークスペースの単独操作が全体事前検査で停止するようにした後のStep 1〜5の再判定
+
+単独の`context`、`check`、`verify`、`doctor`が、複合ワークスペースの全体事前検査が非成功なら診断を返して止めるようにした（`activews.py`、`multiws.py`、
+`config.py`、各操作。実装の確認事項C27、ADR-063）。これを固定する`MULTI-036-01`〜`MULTI-036-13`（Step 5）を追加した。修正前のCore（コミット`60d00bff`の版）では、
+追加した13件のうち11件が非成功（`failed` 9件、`error` 2件）となり、止まらない境界の`MULTI-036-06`と`MULTI-036-08`は通過し、既存の379件はすべて通過することを確かめた。
+修正後のCoreでは392件すべてが`passed`となる。
+
+コミット`3ab3a48132686358d19a7478c8b35b07ca622f67`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 392件（`MULTI-036-01`〜`MULTI-036-13`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`1f384998396080013c29069634f2568b59a85bc433f3227b26ed0a3561a82803` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は807件がすべて成功した。
+
+## 2026-10-18: 複合ワークスペースの除外の指定と入れ子の複合ワークスペースを実装した後のStep 1〜5の再判定
+
+`multiWorkspace.exclude`の検証、除外した範囲の効果、除外した範囲の中の単一ワークスペースと入れ子の複合ワークスペースの決定、Gitのパスの写像を実装した
+（`multiws.py`、`gitutil.py`、`messages.py`。ADR-064）。これを固定する`MULTI-037-01`〜`MULTI-037-27`（Step 5）を追加した。除外を実装する前のCore（コミット`cbbb57d9`の版）では、
+追加した27件のうち21件が非成功（`failed` 21件）となり、境界の対照の`MULTI-037-20`、`-21`、`-24`〜`-27`は通過し、既存の392件はすべて通過することを確かめた。
+除外を実装した直後のCore（コミット`f87ed4f3`の版）では、`multiWorkspace`が設定不適合なら除外を信用しない規則を固定する`MULTI-037-24`〜`-27`の4件だけが非成功となることを確かめた。
+修正後のCoreでは419件すべてが`passed`となる。
+
+コミット`a6dbed8d2ed7bf5be2964dbc0adb86c6354806f8`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 419件（`MULTI-037-01`〜`MULTI-037-27`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`1279bf69335b702ed3f92416c5188f118c44d9d06934e5c447574a009474cd9f` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は881件がすべて成功した。
+
+## 2026-10-19: 複合ワークスペースの閉包の循環、別名の二重収録、evidenceの修飾、interpretのADRの検出を直した後のStep 1〜5の再判定
+
+`context.py`、`verify.py`、`relations.py`、`targetexpand.py`、`multirelate.py`、`document.py`を直した（実装の確認事項C18・C21・C19・D7）。
+これを固定する`MULTI-038-01`〜`MULTI-038-22`（Step 5）を追加した。修正前のCore（コミット`ccaa660b`の版）では、追加した22件のうち17件が非成功（`failed` 17件）となり、
+対照の`MULTI-038-02`、`-05`、`-06`、`-10`、`-14`は通過し、既存の419件はすべて通過することを確かめた。修正後のCoreでは441件すべてが`passed`となる。
+修正の途中で`verify --all-workspaces`が約40%遅くなったが、正規の文書の一覧を対象展開ごとに1回だけ作るように直し、修正前と同じ所要時間に戻したことを独立レビューで測った。
+
+コミット`291ea55ab603df07fd4f42f35a20939757b730c6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 441件（`MULTI-038-01`〜`MULTI-038-22`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`bb4fd6f37b262bc466300d2985e050cff91b93ca28b39ea8330d4cccdb4edfbe` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は916件がすべて成功した。
+
+## 2026-10-20: verifyのテスト割当ての欠落の重複を所有ワークスペースで区別した後のStep 1〜5の再判定
+
+`verify.py`の`_process_single_target`で、テスト割当ての欠落の診断の重複を除くキーに所有ワークスペースを加えた（実装の確認事項C23）。これを固定する
+`MULTI-039-01`〜`MULTI-039-04`（Step 5）を追加した。修正前のCore（コミット`f92a46ef`の版）では、追加した4件のうち3件が非成功（`failed` 3件）となり、
+単一ワークスペースの対照の`MULTI-039-04`と既存の441件はすべて通過することを確かめた。修正後のCoreでは445件すべてが`passed`となる。
+
+コミット`ada931f306445f3fcc9f2089b57b44a55872f61b`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 445件（`MULTI-039-01`〜`MULTI-039-04`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`4f121f19ae8fb777c5eeab1ba415865c6728f9652fcc51f842d097730196c9e5` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は926件がすべて成功した。
+
+## 2026-10-20: doctorでGitの不在と設定の停止を独立した原因として返すようにした後のStep 1〜5の再判定
+
+`multiws.precheck`に、ルートの設定で停止したときもGitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加える引数を足し、`doctor`（`--all-workspaces`と単独の
+`doctor`）だけが使うようにした（実装の確認事項C33、ADR-065）。これを固定する`MULTI-040-01`〜`MULTI-040-10`（Step 5）を追加した。修正前のCore（コミット`c0cdcc4e`の版）では、
+追加した10件のうち5件が非成功（`failed` 5件）となり、ほかの操作とGitがある場合の対照の5件と既存の445件はすべて通過することを確かめた。修正後のCoreでは455件すべてが`passed`となる。
+
+コミット`5a8913a84d4112d73aeaf3d864c0501aa7918b08`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 455件（`MULTI-040-01`〜`MULTI-040-10`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`c51a86243b02af22eb7879b17d2b0dabaefe9d71fbb26bacaa06c4553fd7b10f` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は937件がすべて成功した。
+
+## 2026-10-21: verifyの早期に返す結果のrevisionと--reportを直した後のStep 1〜5の再判定
+
+`verify.py`で、`revision`の算出を早期に返す処理より前へ移し、`--report`が指定されていれば状態にかかわらずレポートを保存するようにした（実装の確認事項C41）。
+これを固定する`SINGLE-165-01`〜`SINGLE-165-07`（Step 4）を追加した。修正前のCore（コミット`e04b03cb`の版）では、追加した7件がすべて非成功（`failed` 7件）となり、
+既存の455件はすべて通過することを確かめた。修正後のCoreでは462件すべてが`passed`となる。`.spec/`のないリポジトリの`verify --report`は、`check --report`と同じく
+`SPEC-REPORT-WRITE-001`が加わり、`blocked`／2から`error`／3に変わる。
+
+コミット`30c340e6fbd05b7c489f226cc967e120bb52319c`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 462件（`SINGLE-165-01`〜`SINGLE-165-07`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0b3690cd1013bf193eaae4563bd85c7a1c4242d82438b04e81f348c207547db8` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は959件がすべて成功した。
+
+## 2026-10-24: 単独のverifyの上限を実行計画の確定後に判定するようにした後のStep 1〜5の再判定
+
+`activews.select_active`に`skip_limit_dimensions`を足し、`verify.py`で`--all-workspaces`の上限の判定を共通化して、複合ワークスペースの単独の`verify`も
+`commandDefinitionCount`を実行計画を確定した後に`verifyBindingCount`と合わせて判定するようにした（実装の確認事項C40、ADR-066）。これを固定する
+`MULTI-041-01`〜`MULTI-041-04`（Step 5）を追加した。修正前のCore（コミット`d3c1e052`の版）では、追加した4件のうち2件（`-01`の優先、`-04`の終了コード）が非成功
+（`failed` 2件）となり、対照の`-02`、`-03`と既存の462件はすべて通過することを確かめた。修正後のCoreでは466件すべてが`passed`となる。
+
+コミット`be741ca5e1297f769cc664f80a86b35e6ad53e3c`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 466件（`MULTI-041-01`〜`MULTI-041-04`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`c03ec02a32596ed176c44723aa31832460c6a0c80c8a8390179cf40c728741ee` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は975件がすべて成功した。
+
+## 2026-10-24: 単一ワークスペースのcontextの早期に返す結果のrevisionを直した後のStep 1〜5の再判定
+
+`context.py`の`_empty_bundle`に`revision`を渡し、単一ワークスペースの`context`の早期に返す9か所の結果でも、求めた`revision`を返すようにした（実装の確認事項C45）。
+これを固定する`SINGLE-166-01`〜`SINGLE-166-11`（Step 3）を追加した。修正前のCore（コミット`c3110be3`の版）では、追加した11件のうち9件が非成功（`failed` 9件）となり、
+`revision: null`が正しい対照の`-10`、`-11`と既存の466件はすべて通過することを確かめた。修正後のCoreでは477件すべてが`passed`となる。
+
+コミット`81d09c51ce7bf4867d3dffdb4fcf4bad00fbf477`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 477件（`SINGLE-166-01`〜`SINGLE-166-11`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`64c75c62dd431b1df042d2972e2e447d1f61b6ca5380a07282fa1e68e82e2074` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は991件がすべて成功した。
+
+## 2026-10-25: 複合ワークスペースのcontextの並びを修飾IDで比べるようにした後のStep 1〜5の再判定
+
+`context.py`の`documents`の並べ替えと、規範文の並び（`_merge_expansions`）で、複合ワークスペースのときだけ出力する修飾IDで比べるようにした（実装の確認事項C46）。
+これを固定する`MULTI-042-01`〜`MULTI-042-03`（Step 5）を追加した。修正前のCore（コミット`a2ca532b`の版）では、追加した3件のうち2件が非成功（`failed` 2件）となり、
+単一ワークスペースの対照の`-03`と既存の477件はすべて通過することを確かめた。修正後のCoreでは480件すべてが`passed`となる。
+
+コミット`2ffe7183b98055cc270e377489a8edba6f6b1452`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 480件（`MULTI-042-01`〜`MULTI-042-03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`fb6b05a70ed9c8632f764d89eb8c777d7e10df5d295748267caea87a1d52d84b` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1007件がすべて成功した。
+
+## 2026-10-25: 複合ワークスペースのルートとメンバーのworkspace.idの省略を通さないようにした後のStep 1〜5の再判定
+
+`multiws.py`の全体事前検査で、複合ワークスペースのルートの設定が有効な`workspace.id`を明示しなければ`SPEC-MULTI-CONFIG-001`の1件だけで止め、
+版の非対応やGitの境界で止まるときもルートの同一性を`null`にした。メンバーの省略は、カタログの`id`が`root`でもカタログとの不一致とする（実装の確認事項C42）。
+これを固定する`MULTI-043-01`〜`MULTI-043-18`（Step 5）を追加した。修正前のCore（コミット`b50d1596`の版）では、追加した18件のうち17件が非成功（`failed` 17件）となり、
+ルートが`root`を明示する対照の`-12`と既存の480件はすべて通過することを確かめた。修正の途中のCore（コミット`8040e4ab`の版）では、版の非対応と空の`multiWorkspace`の
+`-13`〜`-18`の6件だけが非成功となった。修正後のCoreでは498件すべてが`passed`となる。
+
+コミット`38a6cb0caa9b15578d85237bf0b6b1be86577e68`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 498件（`MULTI-043-01`〜`MULTI-043-18`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`14c5e8fac5aeb5b48af3b27db442440ff6295358e32223e3a169b7f645a84404` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1026件がすべて成功した。
+
+## 2026-10-25: checkのレポートの保存の失敗の診断を§7の順に並べるようにした後のStep 1〜5の再判定
+
+`check.py`で、`--report`の保存の失敗の診断`SPEC-REPORT-WRITE-001`を、単独の`check`と`--all-workspaces`の両方で、ほかの診断と同じ結果・診断・終了コード §7の順に並べるようにした
+（実装の確認事項C51。`verify`は並べ直していた）。これに合わせて`SINGLE-072`と`SINGLE-125-06`（Step 5）の期待値を訂正した。修正前のCore（コミット`921230ea`の版）では、
+訂正した2件だけが非成功（`failed` 2件）となり、ほかの496件はすべて通過することを確かめた。修正後のCoreでは498件すべてが`passed`となる。
+
+コミット`68184d289d440ee119d26fcc45c16814b546f3eb`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 498件（訂正した`SINGLE-072`と`SINGLE-125-06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`14c5e8fac5aeb5b48af3b27db442440ff6295358e32223e3a169b7f645a84404`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1033件がすべて成功した。
+
+## 2026-10-25: verifyの規範文とコンテキストのハッシュ値の材料の規範文をIDの辞書順に並べるようにした後のStep 1〜5の再判定
+
+`verify.py`で`targetResults[].statements`を出力するIDの重複なし辞書順にし（実装の確認事項C52）、`context.py`と`verify.py`でコンテキストのハッシュ値の材料の
+`documents[].statements`を`id`のコードポイント辞書順に置くようにした（実装の確認事項C60）。これを固定する`MULTI-044-01`〜`MULTI-044-05`（Step 5）を追加した。
+修正前のCore（コミット`5312f867`の版）では、追加した5件のうち4件（`-01`、`-02`、`-03`、`-05`）が非成功となり、対照の`-04`と既存の498件はすべて通過することを確かめた。
+C52だけを直した時点のCore（コミット`df26cb1e`の版）では、ハッシュ値の差だけで`-01`と`-05`の2件が非成功となった。修正後のCoreでは503件すべてが`passed`となる。
+
+コミット`04c214d11502f24d563a2fcfdb22356a6a014dc1`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 503件（`MULTI-044-01`〜`MULTI-044-05`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`23f5f4887d99320e44b512f46b6fe15c85669fe87d2bad1d85f8e47820b90582` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1042件がすべて成功した。
+
+## 2026-10-26: --all-workspacesの早期の結果のレポートを保存するようにした後のStep 1〜5の再判定
+
+`activews.py`、`check.py`、`verify.py`で、`check --all-workspaces`と`verify --all-workspaces`の全体事前検査の停止と、`verify`の実行計画の上限超過の結果を、
+`--report`のときルートワークスペースの`.spec/reports/`へ保存するようにした（実装の確認事項C53）。これを固定する`MULTI-045-01`〜`MULTI-045-14`（Step 5）を追加した。
+修正前のCore（コミット`2032e47a`の版）では、追加した14件のうち12件が非成功となり、`--report`を指定しない対照の`-09`、`-10`と既存の503件はすべて通過することを確かめた。
+保存の失敗の診断を並べ替えずに末尾に足す変異体では、`-11`、`-12`の2件だけが非成功となった。修正後のCoreでは517件すべてが`passed`となる。
+
+コミット`d7f8951ce15418eea9d0f09797419170221dea66`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 517件（`MULTI-045-01`〜`MULTI-045-14`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`176d569f237999dcee5209e45c59bf3a49aec12adb1e9809ad01c85cf1ba01b9` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1053件がすべて成功した。
+
+## 2026-10-26: checkが自ワークスペースを修飾したcoversを非修飾形式と同じに扱うようにした後のStep 1〜5の再判定
+
+`multirelate.py`の`tests[].covers`の検査で、自ワークスペースを自身のIDで修飾した参照を非修飾形式へそろえて比べるようにした（実装の確認事項C56）。
+これを固定する`MULTI-046-01`〜`MULTI-046-04`（Step 5）を追加した。修正前のCore（コミット`1bc00199`の版）では、追加した4件のうち3件（`-01`、`-02`、`-03`）が非成功となり、
+非修飾の対照の`-04`と既存の517件はすべて通過することを確かめた。修正後のCoreでは521件すべてが`passed`となる。
+
+コミット`eed31f8cfc13a391745c35b3a94b4a65e001fd69`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 521件（`MULTI-046-01`〜`MULTI-046-04`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`d50508dfa7f5e956c0ec78c11d97596a864bf9d2150898173b1d6b1f8f49adbd` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1057件がすべて成功した。
+
+## 2026-10-27: SPEC-TEST-COVERAGE-001の文言を広げた後のStep 1〜5の再判定
+
+`messages.py`の`SPEC-TEST-COVERAGE-001`の`summary`を、管理者が承認した「フィールドcoversの参照先が存在しないか、対応できません」へ広げた（実装の確認事項C67）。
+これに合わせて`SINGLE-026`と`MULTI-046-03`（Step 5）の期待値を訂正した。修正前のCore（コミット`953c8c25`の版）では、訂正した2件だけが非成功（`failed` 2件）となり、
+ほかの519件はすべて通過することを確かめた。修正後のCoreでは521件すべてが`passed`となる。
+
+コミット`2b6b807d7f4a1eb3a52d914458570b9ad07fe987`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 521件（訂正した`SINGLE-026`と`MULTI-046-03`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`d50508dfa7f5e956c0ec78c11d97596a864bf9d2150898173b1d6b1f8f49adbd`（前回と同じ） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1057件がすべて成功した。
+
+## 2026-10-27: 複合ワークスペースの診断の文言で作業ワークスペースのIDも修飾するようにした後のStep 1〜5の再判定
+
+`targetexpand.py`と`context.py`で、複合ワークスペースの状態、TASKの依存、カバレッジの診断の`summary`（TASKの依存は`suggestedAction`も）に差し込む作業ワークスペースの
+文書IDと規範文IDを修飾するようにした（実装の確認事項C47・C65）。これを固定する`MULTI-047-01`〜`MULTI-047-05`（Step 5）を追加した。修正前のCore（コミット`7fca47d3`の版）では、
+追加した5件がすべて非成功となり、既存の521件はすべて通過することを確かめた。修正後のCoreでは526件すべてが`passed`となる。
+
+コミット`af38883cf2db9be32c30c0f8ebeab664d70b84fd`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 526件（`MULTI-047-01`〜`MULTI-047-05`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`14468f1288036d7a5573f5e238774347f2d3bc8973e52bbfbde8224d0111f48e` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1068件がすべて成功した。

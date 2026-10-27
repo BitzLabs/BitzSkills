@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67b7b8dd10b84a8afcb4a5ffdfd9ebc36ec499d1471be855d8cc04f3c6d19136"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b66364bddd80b8a9e202a5ae52b9e84bd9324782d51cc410a147c2d4bbc6e7fe"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-020.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "52107c48335108f606fd29cb4d71eea09f93640c344c14e29b5479b2f71f0ae0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/decisions/ADR-001.md\nA  .spec/requirements/REQ-001.md\nA  .spec/technical/TECH-020.md\n",
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 6aa4ebe511f34a0dce802a6100596700354e92ab 0\t.spec/decisions/ADR-001.md\n100644 d6be0ba01c74a0876ec6dd8919699c82daa092d6 0\t.spec/requirements/REQ-001.md\n100644 186126414f71babc6fb378fe3d75f37dcf207267 0\t.spec/technical/TECH-020.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67b7b8dd10b84a8afcb4a5ffdfd9ebc36ec499d1471be855d8cc04f3c6d19136"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b66364bddd80b8a9e202a5ae52b9e84bd9324782d51cc410a147c2d4bbc6e7fe"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-020.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "52107c48335108f606fd29cb4d71eea09f93640c344c14e29b5479b2f71f0ae0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/decisions/ADR-001.md\nA  .spec/requirements/REQ-001.md\nA  .spec/technical/TECH-020.md\n",
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 6aa4ebe511f34a0dce802a6100596700354e92ab 0\t.spec/decisions/ADR-001.md\n100644 d6be0ba01c74a0876ec6dd8919699c82daa092d6 0\t.spec/requirements/REQ-001.md\n100644 186126414f71babc6fb378fe3d75f37dcf207267 0\t.spec/technical/TECH-020.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

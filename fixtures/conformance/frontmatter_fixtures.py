@@ -15,17 +15,17 @@ HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
 # ID: タイトルの行の置換え, 診断コード, 発生元のキー, 人向けの理由
 CASES = {
-    "SINGLE-081": (None, "SPEC-INPUT-BOM-001", None, "設定file先頭のBOMを除いて解析を続行します"),
-    "SINGLE-082": (None, "SPEC-INPUT-BOM-001", None, "SPEC file先頭のBOMを除いて解析を続行します"),
-    "SINGLE-084": ("title: 文書の検査\nchanges: [src/ignored.py]", "SPEC-FM-UNAVAILABLE-001", "changes", "REQではchangesを使用できません"),
-    "SINGLE-085": ("title: 文書の検査\nfutureOption: true", "SPEC-FM-UNKNOWN-001", "futureOption", "未知のFrontmatter fieldを無視します"),
-    "SINGLE-086": ("title: [文書の検査", "SPEC-FM-SCHEMA-001", "title", "Frontmatter YAMLの構文が不正です"),
-    "SINGLE-087-01": ("title: !custom 文書の検査", "SPEC-FM-SCHEMA-001", "title", "Frontmatterのcustom tagは禁止です"),
-    "SINGLE-087-02": ("title: &label 文書の検査", "SPEC-FM-SCHEMA-001", "title", "Frontmatterのanchorは禁止です"),
-    "SINGLE-087-03": ("title: *label", "SPEC-FM-SCHEMA-001", "title", "Frontmatterのaliasは禁止です"),
-    "SINGLE-087-04": ("title: 文書の検査\n<<: {}", "SPEC-FM-SCHEMA-001", "<<", "Frontmatterのmerge keyは禁止です"),
-    "SINGLE-087-05": ("title: 文書の検査\ntitle: 文書の検査", "SPEC-FM-SCHEMA-001", "title", "Frontmatterの重複mapping keyは禁止です"),
-    "SINGLE-088": ("title: 42", "SPEC-FM-SCHEMA-001", "title", "Frontmatter titleはstringが必要です"),
+    "SINGLE-081": (None, "SPEC-INPUT-BOM-001", None, "設定ファイル先頭のBOMを除いて解析を続行します"),
+    "SINGLE-082": (None, "SPEC-INPUT-BOM-001", None, "仕様文書のファイル先頭のBOMを除いて解析を続行します"),
+    "SINGLE-084": ("title: 文書の検査\nchanges: [src/ignored.py]", "SPEC-FM-UNAVAILABLE-001", "changes", "REQではフィールドchangesを使用できません"),
+    "SINGLE-085": ("title: 文書の検査\nfutureOption: true", "SPEC-FM-UNKNOWN-001", "futureOption", "未知のフロントマターのフィールドを無視します"),
+    "SINGLE-086": ("title: [文書の検査", "SPEC-FM-SCHEMA-001", "title", "フロントマターのYAMLの構文が不正です"),
+    "SINGLE-087-01": ("title: !custom 文書の検査", "SPEC-FM-SCHEMA-001", "title", "フロントマターのカスタムタグは禁止です"),
+    "SINGLE-087-02": ("title: &label 文書の検査", "SPEC-FM-SCHEMA-001", "title", "フロントマターのアンカーは禁止です"),
+    "SINGLE-087-03": ("title: *label", "SPEC-FM-SCHEMA-001", "title", "フロントマターのエイリアスは禁止です"),
+    "SINGLE-087-04": ("title: 文書の検査\n<<: {}", "SPEC-FM-SCHEMA-001", "<<", "フロントマターのマージキーは禁止です"),
+    "SINGLE-087-05": ("title: 文書の検査\ntitle: 文書の検査", "SPEC-FM-SCHEMA-001", "title", "フロントマターの重複したマッピングのキーは禁止です"),
+    "SINGLE-088": ("title: 42", "SPEC-FM-SCHEMA-001", "title", "フロントマターのフィールドtitleは文字列が必要です"),
 }
 WARNING = {"SINGLE-081", "SINGLE-082", "SINGLE-084", "SINGLE-085"}
 

@@ -1,0 +1,29 @@
+{
+  "fixtureId": "MULTI-045-14",
+  "description": "Git不在でルートの同一性を構成できないverify --all-workspacesの停止の結果も、ルートの候補へ--reportを保存する",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json",
+      "--report"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 1
+  }
+}

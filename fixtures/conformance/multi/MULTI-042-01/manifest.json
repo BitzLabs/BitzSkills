@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-042-01",
+  "description": "複合ワークスペースのinterpretのdocumentsは、同じ距離・同じ種別の文書を修飾IDの辞書順に並べる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "platform::REQ-001",
+      "--purpose",
+      "interpret",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

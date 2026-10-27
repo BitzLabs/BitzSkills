@@ -17,7 +17,8 @@
         "kind": "environment",
         "component": "git",
         "identifier": "git"
-      }
+      },
+      "suggestedAction": "Git 2.30以上をインストールし、ワークスペースをGitのリポジトリで管理してください"
     }
   ],
   "core": {

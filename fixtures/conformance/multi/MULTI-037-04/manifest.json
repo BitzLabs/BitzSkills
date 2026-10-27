@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-037-04",
+  "description": "除外した範囲の中の単一ワークスペースでは、`--all-workspaces`が複合ワークスペースを発見できず引数不正になる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "cases/single",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

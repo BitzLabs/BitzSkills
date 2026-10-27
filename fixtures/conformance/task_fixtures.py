@@ -46,7 +46,7 @@ def reviewed_result(identifier):
         result.update(checkedDocumentCount=1, checkedStatementCount=0)
     if identifier == "SINGLE-034":
         result["diagnostics"] = [{"code": "SPEC-TASK-BOUNDARY-001", "severity": "error", "resultStatus": "failed",
-            "summary": "src2/outside.pyはTASK-001の許可変更path外です",
+            "summary": "パスsrc2/outside.pyはTASK-001の変更許可パスの外です",
             "source": {"kind": "file", "workspaceId": "root", "path": "src2/outside.py"}}]
     return result
 

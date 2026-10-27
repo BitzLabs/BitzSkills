@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67b7b8dd10b84a8afcb4a5ffdfd9ebc36ec499d1471be855d8cc04f3c6d19136"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3cd14068239c03f3bba1e061bbea19eb99c395d13766295cd0714505f218fdf3"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dbe16003f7aa717d2a6bd7a59fd07b432a095a048a0ea184c97585184c9d617c"
+      },
+      ".spec/technical/TECH-011.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4e6ec52c509a4cd8c4085c61adfe8520dd23aacc5bf9a907b16f192c05baa49d"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_login.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 197679ccb1b385c88e010f62f4a4d53fe139f803 0\t.spec/requirements/REQ-001.md\n100644 b691eff6d8edc925eada3400f3f1525032efc9f9 0\t.spec/technical/TECH-010.md\n100644 277f11c855fdbb52ff93a038f2acc5e82c043620 0\t.spec/technical/TECH-011.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "67b7b8dd10b84a8afcb4a5ffdfd9ebc36ec499d1471be855d8cc04f3c6d19136"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3cd14068239c03f3bba1e061bbea19eb99c395d13766295cd0714505f218fdf3"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dbe16003f7aa717d2a6bd7a59fd07b432a095a048a0ea184c97585184c9d617c"
+      },
+      ".spec/technical/TECH-011.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4e6ec52c509a4cd8c4085c61adfe8520dd23aacc5bf9a907b16f192c05baa49d"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_login.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 197679ccb1b385c88e010f62f4a4d53fe139f803 0\t.spec/requirements/REQ-001.md\n100644 b691eff6d8edc925eada3400f3f1525032efc9f9 0\t.spec/technical/TECH-010.md\n100644 277f11c855fdbb52ff93a038f2acc5e82c043620 0\t.spec/technical/TECH-011.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

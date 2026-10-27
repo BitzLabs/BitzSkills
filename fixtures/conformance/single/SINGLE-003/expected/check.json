@@ -12,7 +12,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "未対応のSchema majorです",
+      "summary": "未対応のスキーマのメジャーバージョンです",
       "source": {
         "kind": "file",
         "workspaceId": "root",

@@ -37,11 +37,11 @@ class NullAndTypeTests(unittest.TestCase):
 
     def test_title_wrong_type(self):
         outcome = fm.validate(_base(title=42), "REQ")
-        self.assertEqual(outcome.hard[0].summary, "Frontmatter titleはstringが必要です")
+        self.assertEqual(outcome.hard[0].summary, "フロントマターのフィールドtitleは文字列が必要です")
 
     def test_changes_wrong_type(self):
         outcome = fm.validate(_base(changes=42), "REQ")
-        self.assertEqual(outcome.hard[0].summary, "Frontmatter changesはstringの配列が必要です")
+        self.assertEqual(outcome.hard[0].summary, "フロントマターのフィールドchangesは文字列の配列が必要です")
 
 
 class TitleLengthTests(unittest.TestCase):
@@ -124,7 +124,7 @@ class UnavailableFieldTests(unittest.TestCase):
         outcome = fm.validate(_base(changes=["src/a.py"]), "REQ")
         self.assertEqual(outcome.hard, [])
         self.assertEqual(outcome.soft[0].code, "SPEC-FM-UNAVAILABLE-001")
-        self.assertEqual(outcome.soft[0].summary, "REQではchangesを使用できません")
+        self.assertEqual(outcome.soft[0].summary, "REQではフィールドchangesを使用できません")
 
     def test_type_error_precedes_unavailable_warning(self):
         # 型が不正なフィールドは`SCHEMA-001`だけを返し、`UNAVAILABLE`の警告を重ねない。
@@ -141,7 +141,7 @@ class UnavailableFieldTests(unittest.TestCase):
     def test_adr_implements_is_unavailable(self):
         value = {"id": "ADR-001", "title": "件名", "status": "accepted", "implements": ["src/a.py"]}
         outcome = fm.validate(value, "ADR")
-        self.assertEqual(outcome.soft[0].summary, "ADRではimplementsを使用できません")
+        self.assertEqual(outcome.soft[0].summary, "ADRではフィールドimplementsを使用できません")
 
 
 class ArrayCountLimitTests(unittest.TestCase):
@@ -257,7 +257,7 @@ class VerifyCommandNameTests(unittest.TestCase):
     def test_verify_pattern_mismatch_message_differs_from_empty(self):
         outcome = fm.validate(_base(verify="Not Valid"), "REQ")
         self.assertNotIn("空文字列", outcome.hard[0].summary)
-        self.assertEqual(outcome.hard[0].summary, "Frontmatter verifyはcommand名が必要です")
+        self.assertEqual(outcome.hard[0].summary, "フロントマターのフィールドverifyはコマンド名が必要です")
 
 
 if __name__ == "__main__":  # pragma: no cover

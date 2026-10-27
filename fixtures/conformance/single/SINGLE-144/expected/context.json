@@ -55,13 +55,14 @@
       "code": "CTX-TASK-DEPENDENCY-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "先行TASK-002が完了していません",
+      "summary": "先行するTASK-002が状態cancelledで、状態doneではありません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
         "path": ".spec/tasks/TASK-001.md",
         "key": "relations.requires"
-      }
+      },
+      "suggestedAction": "先行するTASK-002を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
     }
   ]
 }

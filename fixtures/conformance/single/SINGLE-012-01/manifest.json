@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-012-01",
-  "description": "tagが閉じられていません",
+  "description": "タグが閉じられていません",
   "setup": {
     "git": true,
     "baseCommit": {

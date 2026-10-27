@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-027",
-  "description": "done TASKをopenへ戻すことはできません",
+  "description": "状態doneのTASKを状態openへ戻すことはできません",
   "setup": {
     "git": true,
     "baseCommit": {

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-012-02",
-  "description": "code spanが閉じられていません",
+  "description": "コードスパンが閉じられていません",
   "setup": {
     "git": true,
     "baseCommit": {

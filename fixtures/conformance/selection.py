@@ -31,6 +31,15 @@ SCALE_SECONDS = {
     (True, "commandDefinitionCount"): 2.64,
     (True, "memberCount"): 0.70,
 }
+# 単独の`verify`の上限の群（`MULTI-041-*`）。入力を生成するので`scale`に含める。GitHub Actionsの実行40084509890
+# （コミットde912ede、CPython 3.12、ubuntu-24.04。PRの実行のため1組）の各fixtureの`durationMs`。`MODEL_SOURCE`の実行には含まれないため、
+# 同じ実行で測り直すときに中央値へ置き換える。
+SINGLE_VERIFY_LIMIT_SECONDS = {
+    "MULTI-041-01": 12.15,
+    "MULTI-041-02": 8.20,
+    "MULTI-041-03": 25.87,
+    "MULTI-041-04": 1.66,
+}
 STANDARD_SECONDS = {
     "SINGLE-126-12": 6.12,
     "SINGLE-126-13": 3.13,
@@ -55,11 +64,13 @@ def step_ids(step):
 
 
 def is_scale(identifier):
-    return identifier.startswith(("MULTI-020-", "MULTI-021-"))
+    return identifier.startswith(("MULTI-020-", "MULTI-021-", "MULTI-041-"))
 
 
 def estimated_seconds(identifier):
     """直近のCI実測からfixtureの所要時間を予測する。性能SLOや合否には使わない。"""
+    if identifier in SINGLE_VERIFY_LIMIT_SECONDS:
+        return SINGLE_VERIFY_LIMIT_SECONDS[identifier]
     if is_scale(identifier):
         path = ROOT / "multi" / identifier / "dataset.json"
         if not path.is_file():

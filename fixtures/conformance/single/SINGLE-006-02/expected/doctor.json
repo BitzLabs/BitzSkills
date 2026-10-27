@@ -12,13 +12,14 @@
       "code": "SPEC-DOCTOR-COMMAND-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "command cwdを解決できません",
+      "summary": "コマンドの作業ディレクトリを解決できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
         "path": ".spec/bitz.yaml",
         "key": "verify.commands.default.cwd"
-      }
+      },
+      "suggestedAction": "設定キーverify.commands.default.cwdのディレクトリを作成するか、正しいパスを指定してください"
     }
   ],
   "core": {

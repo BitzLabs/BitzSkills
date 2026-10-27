@@ -20,7 +20,7 @@
       "code": "SPEC-PATH-INVALID-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "実装pathが存在しません",
+      "summary": "実装パスが存在しません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

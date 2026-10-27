@@ -22,7 +22,7 @@
           "code": "CTX-COVERAGE-TEST-001",
           "severity": "error",
           "resultStatus": "blocked",
-          "summary": "対象MUST REQ-001:AC-01にtest対応がありません",
+          "summary": "対象規範文MUST REQ-001:AC-01にテスト対応がありません",
           "source": {
             "kind": "file",
             "workspaceId": "root",

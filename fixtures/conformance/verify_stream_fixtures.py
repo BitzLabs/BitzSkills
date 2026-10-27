@@ -28,7 +28,7 @@ STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
 BASE_ARGV = '"/bin/true", "{tests}"'
 LIMIT = 65536
 REDACTED = "[REDACTED]"
-TIMEOUT_SUMMARY = "commandが実効timeout 1秒で終了しませんでした"
+TIMEOUT_SUMMARY = "コマンドが実効タイムアウト1秒で終了しませんでした"
 
 ORPHAN_READY = "orphan-ready"
 # 直接のプロセスは`TERM`で終了するが、`setsid`で別のセッションへ移った子孫が`TERM`を無視し、

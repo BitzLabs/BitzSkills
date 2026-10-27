@@ -12,13 +12,14 @@
       "code": "SPEC-DOCTOR-COMMAND-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "command実行fileを解決できません",
+      "summary": "コマンドの実行可能ファイルを解決できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",
         "path": ".spec/bitz.yaml",
         "key": "verify.commands.default.argv"
-      }
+      },
+      "suggestedAction": "設定キーverify.commands.default.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください"
     }
   ],
   "core": {

@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::REQ-001"
+  ],
+  "contextDigest": "sha256:ffc6b81e850c7b304a260a5d20ebc1c0205565b217ddd681c67693c3ad73b634",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 7,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      },
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "refines",
+        "source": "api::TECH-010",
+        "target": "platform::REQ-001:AC-01"
+      },
+      {
+        "relation": "refines",
+        "source": "api::TECH-020",
+        "target": "platform::TECH-005:C-01"
+      },
+      {
+        "relation": "requires",
+        "source": "platform::REQ-001",
+        "target": "web::REQ-003"
+      },
+      {
+        "relation": "refines",
+        "source": "web::TECH-010",
+        "target": "platform::REQ-001:AC-01"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "platform::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::REQ-003",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-003.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:platform::REQ-001"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:api::TECH-010"
+      ],
+      "workspaceId": "api",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "platform::TECH-005",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-005.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:platform::TECH-005"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:web::TECH-010"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-020",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-020.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:api::TECH-020"
+      ],
+      "workspaceId": "api",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "platform::TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:platform::TECH-002"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

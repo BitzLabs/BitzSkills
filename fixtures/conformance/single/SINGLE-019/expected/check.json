@@ -20,7 +20,7 @@
       "code": "SPEC-INPUT-READ-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "SPEC fileをUTF-8として復号できません",
+      "summary": "仕様文書のファイルをUTF-8として復号できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

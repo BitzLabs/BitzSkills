@@ -1,0 +1,308 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eba60b64dc62c09d5ef63f12c8e189588335162c339af4388ee88c52f49d3d24"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6594af958cd5a985373e12d8f2a8db32ac71fa045095e8af3d3e75b253d8a692"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2a8c142caf56a50e635df58dfa79277522fda0268e592040e1e5c218d119a93f"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "60142209b9d3ca493d5b5954e544527c7af975239e4df6cf3ec038f305213847"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1c65709df11ea4544d906dc98d975b13b05bd36bf1b79043eb87b93440df08de"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "81546bca40d2dd1968ad6e70d0ae8d1b1d516758cfd347c690920460d006ad2f"
+      },
+      "apps/web/.spec/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f4c022f9f2049a5f7d28ff1178977b6091f5e8a0ccf89dffbf64e4ad74e0f953"
+      },
+      "apps/web/.spec/technical": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a8688a75de3de4578c4a63f2169930368891d08f3787b8b51f9296369b8b3f01"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "apps/web/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff4269b4ad6ecf586c4d69f9c737b2233c061ac1e0b54656d5fb49eccd37bb59"
+      },
+      "services/api/.spec/tasks": {
+        "kind": "directory"
+      },
+      "services/api/.spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "46c40479b2d461e9a98a81111d084506a6eba4a3c2242334dc6be255425c682a"
+      },
+      "services/api/.spec/technical": {
+        "kind": "directory"
+      },
+      "services/api/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "165f69cbf1a752010d0d3a037dc2b4f4e7eebd79c7aa5280687f2c5d7f0161ce"
+      },
+      "services/api/.spec/technical/TECH-020.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9f0e7792f9e96f4971e9a2aa411997b934830e7c3f72a88708e1e7039b4ee9fb"
+      },
+      "services/api/tests": {
+        "kind": "directory"
+      },
+      "services/api/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "services/api/tests/test_tech_020.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_req_001.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests/test_tech_002.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests/test_tech_005.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 7fe1be4fc15cd3891393c984418f84869f02b9c2 0\t.spec/bitz.yaml\n100644 7e23e0d66ea8d61e45b580f77d7b447f4f69cf02 0\t.spec/requirements/REQ-001.md\n100644 d624453967304df202f8ef252f0bbc72aa1ed1dc 0\t.spec/tasks/TASK-001.md\n100644 c26f14aba0984c34019e6bba1efe3dd75a9cc30e 0\t.spec/technical/TECH-002.md\n100644 480c71d84e1d6862b19f24ba1d3b2f945b7de3de 0\t.spec/technical/TECH-005.md\n100644 ac059808f07e3c1b7d7b0c9f03b3d835290d952c 0\tapps/web/.spec/bitz.yaml\n100644 2f143b08aaeaa1f457d4ba3d4384445ed856bae0 0\tapps/web/.spec/requirements/REQ-003.md\n100644 b19c2459c1fa3fac782a4f39653ceadc169e8448 0\tapps/web/.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tapps/web/tests/test_tech_010.py\n100644 aaa6fde1e7d9db687f11c4fade42da21dc134c22 0\tservices/api/.spec/bitz.yaml\n100644 8ef681e2181ac1309716db796b8b183bc6bc82e2 0\tservices/api/.spec/tasks/TASK-001.md\n100644 20432c7acae125f41105cfa83a4f40c715cb9fb0 0\tservices/api/.spec/technical/TECH-010.md\n100644 eb131a7653498590d6ccf65afca0fc4128d3478f 0\tservices/api/.spec/technical/TECH-020.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_010.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_020.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_req_001.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_tech_002.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_tech_005.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eba60b64dc62c09d5ef63f12c8e189588335162c339af4388ee88c52f49d3d24"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6594af958cd5a985373e12d8f2a8db32ac71fa045095e8af3d3e75b253d8a692"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2a8c142caf56a50e635df58dfa79277522fda0268e592040e1e5c218d119a93f"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "60142209b9d3ca493d5b5954e544527c7af975239e4df6cf3ec038f305213847"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1c65709df11ea4544d906dc98d975b13b05bd36bf1b79043eb87b93440df08de"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "81546bca40d2dd1968ad6e70d0ae8d1b1d516758cfd347c690920460d006ad2f"
+      },
+      "apps/web/.spec/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f4c022f9f2049a5f7d28ff1178977b6091f5e8a0ccf89dffbf64e4ad74e0f953"
+      },
+      "apps/web/.spec/technical": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a8688a75de3de4578c4a63f2169930368891d08f3787b8b51f9296369b8b3f01"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "apps/web/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ff4269b4ad6ecf586c4d69f9c737b2233c061ac1e0b54656d5fb49eccd37bb59"
+      },
+      "services/api/.spec/tasks": {
+        "kind": "directory"
+      },
+      "services/api/.spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "46c40479b2d461e9a98a81111d084506a6eba4a3c2242334dc6be255425c682a"
+      },
+      "services/api/.spec/technical": {
+        "kind": "directory"
+      },
+      "services/api/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "165f69cbf1a752010d0d3a037dc2b4f4e7eebd79c7aa5280687f2c5d7f0161ce"
+      },
+      "services/api/.spec/technical/TECH-020.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9f0e7792f9e96f4971e9a2aa411997b934830e7c3f72a88708e1e7039b4ee9fb"
+      },
+      "services/api/tests": {
+        "kind": "directory"
+      },
+      "services/api/tests/test_tech_010.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "services/api/tests/test_tech_020.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_req_001.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests/test_tech_002.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests/test_tech_005.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 7fe1be4fc15cd3891393c984418f84869f02b9c2 0\t.spec/bitz.yaml\n100644 7e23e0d66ea8d61e45b580f77d7b447f4f69cf02 0\t.spec/requirements/REQ-001.md\n100644 d624453967304df202f8ef252f0bbc72aa1ed1dc 0\t.spec/tasks/TASK-001.md\n100644 c26f14aba0984c34019e6bba1efe3dd75a9cc30e 0\t.spec/technical/TECH-002.md\n100644 480c71d84e1d6862b19f24ba1d3b2f945b7de3de 0\t.spec/technical/TECH-005.md\n100644 ac059808f07e3c1b7d7b0c9f03b3d835290d952c 0\tapps/web/.spec/bitz.yaml\n100644 2f143b08aaeaa1f457d4ba3d4384445ed856bae0 0\tapps/web/.spec/requirements/REQ-003.md\n100644 b19c2459c1fa3fac782a4f39653ceadc169e8448 0\tapps/web/.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tapps/web/tests/test_tech_010.py\n100644 aaa6fde1e7d9db687f11c4fade42da21dc134c22 0\tservices/api/.spec/bitz.yaml\n100644 8ef681e2181ac1309716db796b8b183bc6bc82e2 0\tservices/api/.spec/tasks/TASK-001.md\n100644 20432c7acae125f41105cfa83a4f40c715cb9fb0 0\tservices/api/.spec/technical/TECH-010.md\n100644 eb131a7653498590d6ccf65afca0fc4128d3478f 0\tservices/api/.spec/technical/TECH-020.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_010.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tservices/api/tests/test_tech_020.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_req_001.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_tech_002.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_tech_005.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

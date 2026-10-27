@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-025",
-  "description": "draftの実装pathは未作成です",
+  "description": "状態draftの実装パスは未作成です",
   "setup": {
     "git": true,
     "baseCommit": {

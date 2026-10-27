@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "plugin",
+      "status": "blocked"
+    },
+    {
+      "name": "capability",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "catalog",
+      "status": "passed"
+    }
+  ],
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "workspace",
+          "status": "passed"
+        },
+        {
+          "name": "config",
+          "status": "passed"
+        },
+        {
+          "name": "schema",
+          "status": "passed"
+        },
+        {
+          "name": "ears",
+          "status": "passed"
+        },
+        {
+          "name": "command",
+          "status": "passed"
+        },
+        {
+          "name": "impact",
+          "status": "info"
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "workspace",
+          "status": "passed"
+        },
+        {
+          "name": "config",
+          "status": "passed"
+        },
+        {
+          "name": "schema",
+          "status": "passed"
+        },
+        {
+          "name": "ears",
+          "status": "passed"
+        },
+        {
+          "name": "command",
+          "status": "passed"
+        },
+        {
+          "name": "impact",
+          "status": "info"
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "workspace",
+          "status": "passed"
+        },
+        {
+          "name": "config",
+          "status": "passed"
+        },
+        {
+          "name": "schema",
+          "status": "passed"
+        },
+        {
+          "name": "ears",
+          "status": "passed"
+        },
+        {
+          "name": "command",
+          "status": "passed"
+        },
+        {
+          "name": "impact",
+          "status": "info"
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-API-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "CoreのAPIのバージョンがプラグインの要求する範囲を満たしません",
+      "source": {
+        "kind": "environment",
+        "component": "plugin",
+        "identifier": "bitz-sdd"
+      },
+      "evidence": {
+        "coreApi": "1.0",
+        "required": "^2.0"
+      },
+      "suggestedAction": "範囲^2.0を満たすCoreへ更新するか、Core APIのバージョン1.0に対応するプラグインを使ってください"
+    }
+  ]
+}

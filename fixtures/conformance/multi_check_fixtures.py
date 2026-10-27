@@ -134,7 +134,7 @@ def reviewed_manifest(identifier):
 def missing(evidence, key, workspace_id, path):
     return {
         "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-        "summary": "strong relationの参照先が存在しません", "evidence": evidence,
+        "summary": "強い関係の参照先が存在しません", "evidence": evidence,
         "source": {"kind": "file", "workspaceId": workspace_id, "path": path, "key": key},
     }
 

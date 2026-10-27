@@ -70,8 +70,26 @@ from conformance.multi_verify_fixtures import validate as validate_multi_verify_
 from conformance.multi_report_fixtures import validate as validate_multi_report_fixtures
 from conformance.multi_compat_fixtures import validate as validate_multi_compat_fixtures
 from conformance.multi_limit_fixtures import validate as validate_multi_limit_fixtures
+from conformance.multi_single_verify_limit_fixtures import validate as validate_multi_single_verify_limit_fixtures
 from conformance.multi_relation_type_fixtures import validate as validate_multi_relation_type_fixtures
 from conformance.multi_check_fixtures import validate as validate_multi_check_fixtures
+from conformance.repo_root_fixtures import validate as validate_repo_root_fixtures
+from conformance.multi_workspace_option_fixtures import validate as validate_multi_workspace_option_fixtures
+from conformance.multi_active_workspace_fixtures import validate as validate_multi_active_workspace_fixtures
+from conformance.multi_single_precheck_fixtures import validate as validate_multi_single_precheck_fixtures
+from conformance.multi_exclude_fixtures import validate as validate_multi_exclude_fixtures
+from conformance.multi_closure_alias_fixtures import validate as validate_multi_closure_alias_fixtures
+from conformance.multi_binding_missing_fixtures import validate as validate_multi_binding_missing_fixtures
+from conformance.multi_doctor_git_fixtures import validate as validate_multi_doctor_git_fixtures
+from conformance.doctor_plugin_fixtures import validate as validate_doctor_plugin_fixtures
+from conformance.verify_stop_revision_fixtures import validate as validate_verify_stop_revision_fixtures
+from conformance.context_stop_revision_fixtures import validate as validate_context_stop_revision_fixtures
+from conformance.multi_context_order_fixtures import validate as validate_multi_context_order_fixtures
+from conformance.multi_verify_order_fixtures import validate as validate_multi_verify_order_fixtures
+from conformance.multi_early_report_fixtures import validate as validate_multi_early_report_fixtures
+from conformance.multi_workspace_id_fixtures import validate as validate_multi_workspace_id_fixtures
+from conformance.multi_self_qualified_covers_fixtures import validate as validate_multi_self_qualified_covers_fixtures
+from conformance.multi_qualified_summary_fixtures import validate as validate_multi_qualified_summary_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -346,8 +364,26 @@ def main():
     checks["multi_report_fixtures"] = validate_multi_report_fixtures()
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
+    checks["multi_single_verify_limit_fixtures"] = validate_multi_single_verify_limit_fixtures()
     checks["multi_relation_type_fixtures"] = validate_multi_relation_type_fixtures()
     checks["multi_check_fixtures"] = validate_multi_check_fixtures()
+    checks["repo_root_fixtures"] = validate_repo_root_fixtures()
+    checks["multi_workspace_option_fixtures"] = validate_multi_workspace_option_fixtures()
+    checks["multi_active_workspace_fixtures"] = validate_multi_active_workspace_fixtures()
+    checks["multi_single_precheck_fixtures"] = validate_multi_single_precheck_fixtures()
+    checks["multi_exclude_fixtures"] = validate_multi_exclude_fixtures()
+    checks["multi_closure_alias_fixtures"] = validate_multi_closure_alias_fixtures()
+    checks["multi_binding_missing_fixtures"] = validate_multi_binding_missing_fixtures()
+    checks["multi_doctor_git_fixtures"] = validate_multi_doctor_git_fixtures()
+    checks["doctor_plugin_fixtures"] = validate_doctor_plugin_fixtures()
+    checks["verify_stop_revision_fixtures"] = validate_verify_stop_revision_fixtures()
+    checks["context_stop_revision_fixtures"] = validate_context_stop_revision_fixtures()
+    checks["multi_context_order_fixtures"] = validate_multi_context_order_fixtures()
+    checks["multi_verify_order_fixtures"] = validate_multi_verify_order_fixtures()
+    checks["multi_early_report_fixtures"] = validate_multi_early_report_fixtures()
+    checks["multi_workspace_id_fixtures"] = validate_multi_workspace_id_fixtures()
+    checks["multi_self_qualified_covers_fixtures"] = validate_multi_self_qualified_covers_fixtures()
+    checks["multi_qualified_summary_fixtures"] = validate_multi_qualified_summary_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

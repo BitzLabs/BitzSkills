@@ -55,7 +55,7 @@
       "code": "CTX-PROJECTION-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "expand対象ADR-001は完全解決集合にありません",
+      "summary": "展開指定の対象ADR-001は完全解決した集合にありません",
       "source": {
         "kind": "invocation",
         "argument": "ADR-001"

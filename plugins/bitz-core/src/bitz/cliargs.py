@@ -18,6 +18,19 @@ OPERATIONS = ("context", "check", "verify", "doctor")
 _TIMEOUT_RE = re.compile(r"^[1-9][0-9]{0,3}$")
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
+# `doctor`のプラグインの要求の字句（ADR-061 Decision 1）。`$`は末尾の改行に一致するため、
+# 検査には`fullmatch`だけを使う。数字は`\d`（Unicodeの数字を含む）ではなく`[0-9]`で書く。
+_PLUGIN_ID_RE = re.compile(r"[a-z][a-z0-9]*(-[a-z0-9]+)*")
+_PLUGIN_ID_MAX_LENGTH = 64
+_NUMERIC_ID = r"(?:0|[1-9][0-9]*)"
+_SEMVER_RE = re.compile(
+    rf"{_NUMERIC_ID}\.{_NUMERIC_ID}\.{_NUMERIC_ID}"
+    rf"(?:-(?:{_NUMERIC_ID}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:{_NUMERIC_ID}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?"
+    r"(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?"
+)
+_API_COMPARATOR_RE = re.compile(rf"(>=|>|<=|<|=|\^)?({_NUMERIC_ID})\.({_NUMERIC_ID})")
+_CAPABILITY_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9]*\.v[1-9][0-9]*")
+
 
 @dataclass
 class ParsedArgs:
@@ -40,7 +53,7 @@ def _tokenize(op: str, rest: list[str], flags: set[str], single: set[str], repea
         if tok.startswith("--"):
             name = tok
             if "=" in name:
-                raise CliArgError(op, f"未知のoption形式です: {name}")
+                raise CliArgError(op, f"未知のオプション形式です: {name}")
             if name in flags:
                 if name in seen_flags:
                     raise CliArgError(op, f"{name}が重複しています")
@@ -69,7 +82,7 @@ def _tokenize(op: str, rest: list[str], flags: set[str], single: set[str], repea
                     bucket.append(value)
                 i += 2
                 continue
-            raise CliArgError(op, f"未知のoptionです: {name}")
+            raise CliArgError(op, f"未知のオプションです: {name}")
         if tok == "":
             raise CliArgError(op, "空文字列の位置引数は許可されません")
         positionals.append(tok)
@@ -95,6 +108,68 @@ def _check_workspace_value(op: str, value: str) -> None:
         raise CliArgError(op, f"--workspaceの値が不正です: {value}")
 
 
+def is_valid_plugin_id(value: str) -> bool:
+    return len(value) <= _PLUGIN_ID_MAX_LENGTH and _PLUGIN_ID_RE.fullmatch(value) is not None
+
+
+def is_valid_semver(value: str) -> bool:
+    return _SEMVER_RE.fullmatch(value) is not None
+
+
+DecimalKey = tuple[int, str]
+ApiVersionKey = tuple[DecimalKey, DecimalKey]
+
+
+def decimal_key(digits: str) -> DecimalKey:
+    """先頭に`0`を含まない十進の非負整数（`0`は可）の大小を、`int`へ変換せずに比べるためのキー。
+
+    CPythonは4300桁を超える文字列を`int`へ変換すると`ValueError`を送出するため、桁数と文字列の組で比べる。
+    """
+    return (len(digits), digits)
+
+
+def api_version_key(major: str, minor: str) -> ApiVersionKey:
+    return (decimal_key(major), decimal_key(minor))
+
+
+def _increment_decimal(digits: str) -> str:
+    """十進の非負整数の文字列に1を足す（桁数の上限なし）。"""
+    out = list(digits)
+    i = len(out) - 1
+    while i >= 0:
+        if out[i] != "9":
+            out[i] = chr(ord(out[i]) + 1)
+            return "".join(out)
+        out[i] = "0"
+        i -= 1
+    return "1" + "".join(out)
+
+
+def parse_core_api_range(value: str) -> list[tuple[str, ApiVersionKey]] | None:
+    """`--require-core-api`の範囲を(演算子, バージョンのキー)の列へ分解する。字句の不一致は`None`。
+
+    `^M.N`は`>=M.N`と`<(M+1).0`の2件へ展開する。比較子は空白1文字で区切る。バージョンのキーは
+    :func:`api_version_key`で作り、桁数の上限なしに(MAJOR, MINOR)の数値の大小で比べられる。
+    """
+    comparators: list[tuple[str, ApiVersionKey]] = []
+    for token in value.split(" "):
+        m = _API_COMPARATOR_RE.fullmatch(token)
+        if m is None:
+            return None
+        op = m.group(1) or "="
+        major, minor = m.group(2), m.group(3)
+        if op == "^":
+            comparators.append((">=", api_version_key(major, minor)))
+            comparators.append(("<", api_version_key(_increment_decimal(major), "0")))
+        else:
+            comparators.append((op, api_version_key(major, minor)))
+    return comparators
+
+
+def is_valid_capability_name(value: str) -> bool:
+    return _CAPABILITY_RE.fullmatch(value) is not None
+
+
 def parse_doctor(rest: list[str]) -> ParsedArgs:
     op = "doctor"
     parsed = _tokenize(
@@ -111,6 +186,18 @@ def parse_doctor(rest: list[str]) -> ParsedArgs:
     if "--workspace" in parsed.single:
         _check_workspace_value(op, parsed.single["--workspace"])
     _check_format(op, parsed, ("text", "json"), "text")
+    plugin = parsed.single.get("--plugin")
+    if plugin is not None and not is_valid_plugin_id(plugin):
+        raise CliArgError(op, f"--pluginの値が不正です: {plugin}")
+    plugin_version = parsed.single.get("--plugin-version")
+    if plugin_version is not None and not is_valid_semver(plugin_version):
+        raise CliArgError(op, f"--plugin-versionの値が不正です: {plugin_version}")
+    core_api = parsed.single.get("--require-core-api")
+    if core_api is not None and parse_core_api_range(core_api) is None:
+        raise CliArgError(op, f"--require-core-apiの値が不正です: {core_api}")
+    for capability in parsed.repeat.get("--require-capability", []):
+        if not is_valid_capability_name(capability):
+            raise CliArgError(op, f"--require-capabilityの値が不正です: {capability}")
     return parsed
 
 
@@ -126,7 +213,7 @@ def parse_check(rest: list[str]) -> ParsedArgs:
     explicit_targets = bool(parsed.positionals)
     for t in parsed.positionals:
         if not lex.is_valid_target(t, DOCUMENT_ID_ALL, allow_path=True):
-            raise CliArgError(op, f"targetの構文が不正です: {t}")
+            raise CliArgError(op, f"明示対象の構文が不正です: {t}")
     if explicit_targets and "--full" in parsed.flags:
         raise CliArgError(op, "明示対象と--fullは排他です")
     if "--all-workspaces" in parsed.flags and (
@@ -152,7 +239,7 @@ def parse_verify(rest: list[str]) -> ParsedArgs:
     verify_kinds = frozenset({"REQ", "TECH", "TASK"})
     for t in parsed.positionals:
         if not lex.is_valid_target(t, verify_kinds, allow_path=True):
-            raise CliArgError(op, f"targetの構文が不正です: {t}")
+            raise CliArgError(op, f"明示対象の構文が不正です: {t}")
     if "--all-workspaces" in parsed.flags and (
         explicit_targets or "--workspace" in parsed.single
     ):
@@ -187,7 +274,7 @@ def parse_context(rest: list[str]) -> ParsedArgs:
     if purpose != "interpret":
         for t in parsed.positionals:
             if lex.is_document_id(t, frozenset({"ADR"})) or lex.is_statement_id(t, frozenset({"ADR"})):
-                raise CliArgError(op, f"ADR起点にpurpose={purpose}は指定できません: {t}")
+                raise CliArgError(op, f"ADR起点に目的{purpose}は指定できません: {t}")
     detail = parsed.single.get("--detail", "standard")
     if detail not in ("compact", "standard", "full"):
         raise CliArgError(op, f"--detailの値が不正です: {detail}")
@@ -206,10 +293,10 @@ def parse_context(rest: list[str]) -> ParsedArgs:
 
 def parse_argv(argv: list[str]) -> ParsedArgs:
     if not argv:
-        raise CliArgError("(no-operation)", "operationを指定してください")
+        raise CliArgError("(no-operation)", "操作を指定してください")
     op = argv[0]
     if op not in OPERATIONS:
-        raise CliArgError("(no-operation)", f"未知のoperationです: {op}")
+        raise CliArgError("(no-operation)", f"未知の操作です: {op}")
     rest = argv[1:]
     if op == "doctor":
         return parse_doctor(rest)

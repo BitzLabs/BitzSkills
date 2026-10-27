@@ -21,12 +21,12 @@ CHANGE = "changes/document.md"
 # id: (基準版の文書のパス, 基準版のバイト列, 操作, 現在のバイト列, 状態, 診断コード, キー, 要約)
 CASES = {
     "SINGLE-027": (TASK_PATH, TASK, "update", TASK.replace("status: done", "status: open"), "failed",
-        "SPEC-STATE-TRANSITION-001", "status", "done TASKをopenへ戻すことはできません"),
+        "SPEC-STATE-TRANSITION-001", "status", "状態doneのTASKを状態openへ戻すことはできません"),
     "SINGLE-028": (TASK_PATH, None, "create", TASK, "passed", None, None, None),
-    "SINGLE-029": (TECH_PATH, TECH, "delete", None, "failed", "SPEC-STATE-TRANSITION-001", None, "管理済みSPECが削除されています"),
+    "SINGLE-029": (TECH_PATH, TECH, "delete", None, "failed", "SPEC-STATE-TRANSITION-001", None, "管理済みの仕様文書が削除されています"),
     "SINGLE-030": (TECH_PATH, TECH, "rename", TECH, "passed", None, None, None),
     "SINGLE-031": (REQ_PATH, DOCUMENT, "update", DOCUMENT.replace("文書の検査", "変更後の文書検査"), "failed",
-        "SPEC-SAFETY-APPROVED-001", "title", "approved REQの意味変更時にstatusが戻されていません"),
+        "SPEC-SAFETY-APPROVED-001", "title", "状態approvedのREQの意味変更時に文書の状態が戻されていません"),
 }
 EXEMPT_FIELDS = {
     "SINGLE-032-01": ("implements: [src/contract.py]\n", {"implements": ["src/contract.py"]}),

@@ -20,7 +20,7 @@
       "code": "SPEC-TEST-COVERAGE-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "coversが存在しない規範文を参照しています",
+      "summary": "フィールドcoversの参照先が存在しないか、対応できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

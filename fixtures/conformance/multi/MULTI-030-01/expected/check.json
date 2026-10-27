@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-SAFETY-APPROVED-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "状態approvedのREQの意味変更時に文書の状態が戻されていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/requirements/REQ-010.md",
+        "key": "title"
+      }
+    },
+    {
+      "code": "SPEC-STATE-TRANSITION-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "管理済みの仕様文書が削除されています",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/requirements/REQ-011.md"
+      }
+    }
+  ]
+}

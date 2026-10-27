@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-014",
-  "description": "file名IDとFrontmatter IDが一致しません",
+  "description": "ファイル名のIDとフロントマターのIDが一致しません",
   "setup": {
     "git": true,
     "baseCommit": {

@@ -71,7 +71,7 @@ class TransitionMatrixTests(unittest.TestCase):
         current_by_id = {"TASK-001": _entry("TASK-001", "TASK", "open")}
         diags = basecompare.state_transition_diagnostics(base_by_id, current_by_id, "root")
         self.assertEqual(len(diags), 1)
-        self.assertEqual(diags[0].summary, "done TASKをopenへ戻すことはできません")
+        self.assertEqual(diags[0].summary, "状態doneのTASKを状態openへ戻すことはできません")
 
     def test_new_document_not_in_base_is_not_diagnosed(self):
         # 基準版に存在しない新規文書は比較対象外（過去の状態を推測しない）。
@@ -92,7 +92,7 @@ class TransitionMatrixTests(unittest.TestCase):
         diags = basecompare.state_transition_diagnostics(base_by_id, current_by_id, "root")
         self.assertEqual(len(diags), 1)
         self.assertEqual(diags[0].code, "SPEC-STATE-TRANSITION-001")
-        self.assertEqual(diags[0].summary, "管理済みSPECが削除されています")
+        self.assertEqual(diags[0].summary, "管理済みの仕様文書が削除されています")
         self.assertNotIn("key", diags[0].source)
         self.assertEqual(diags[0].source["path"], ".spec/tech/TECH-001.md")
 

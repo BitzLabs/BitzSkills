@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-UNREGISTERED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "Gitが認識する設定ファイルがカタログに登録されていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": "tools/x/.spec/bitz.yaml"
+      }
+    }
+  ]
+}

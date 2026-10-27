@@ -55,7 +55,7 @@
       "code": "SPEC-CONFIG-SCHEMA-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "context.maxBytesは4096〜1048576のintegerで指定してください",
+      "summary": "設定キーcontext.maxBytesは4096〜1048576の整数で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": null,

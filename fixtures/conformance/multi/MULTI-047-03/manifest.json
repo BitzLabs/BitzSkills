@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-047-03",
+  "description": "複合ワークスペースのCTX-COVERAGE-TASK-001とCTX-COVERAGE-TEST-001のsummaryは、作業ワークスペースの規範文IDも修飾する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-050",
+      "--purpose",
+      "implement",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

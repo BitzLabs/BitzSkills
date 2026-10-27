@@ -34,6 +34,14 @@ LABELS = {
     "traceEntryCount": "trace項目数", "commandDefinitionCount": "command定義数",
     "verifyBindingCount": "verify binding数",
 }
+# 診断の`summary`に出す次元の名前。承認済みの対応表（Coreの出力文言のレビュー記録）の文言で固定する。
+# `LABELS`はfixtureの`description`用で、Coreの出力ではない。
+SUMMARY_LABELS = {
+    "memberCount": "メンバー数", "specFileCount": "仕様文書のファイル数", "inputBytes": "入力バイト数",
+    "statementCount": "規範文数", "relationEdgeCount": "関係のエッジ数",
+    "traceEntryCount": "トレースのエントリ数", "commandDefinitionCount": "コマンド定義数",
+    "verifyBindingCount": "テスト割当て数",
+}
 
 
 def cases():
@@ -96,7 +104,7 @@ def reviewed_manifest(identifier, tree_digest, result_digest):
 def limit_diagnostic(dimension, value):
     return {
         "code": "SPEC-MULTI-LIMIT-001", "severity": "error", "resultStatus": "blocked",
-        "summary": f"{LABELS[dimension]}が上限{LIMITS[dimension]:,}を超過しました",
+        "summary": f"{SUMMARY_LABELS[dimension]}が上限{LIMITS[dimension]:,}を超過しました",
         "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml"},
         # 早期停止のため正確な総数を求めない。越えたことがわかる最小の値を記録する。
         "evidence": {"dimension": dimension, "limit": LIMITS[dimension], "observedAtLeast": value},

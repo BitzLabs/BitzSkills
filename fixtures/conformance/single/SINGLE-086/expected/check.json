@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Frontmatter YAMLの構文が不正です",
+      "summary": "フロントマターのYAMLの構文が不正です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

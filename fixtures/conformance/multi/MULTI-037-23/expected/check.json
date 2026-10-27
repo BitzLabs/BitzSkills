@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed",
+  "scope": "changed",
+  "workspace": {
+    "id": "nested",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "selection": {
+    "changedPathCount": 2,
+    "targetDocumentCount": 1,
+    "excludedCodeTestPathCount": 1
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

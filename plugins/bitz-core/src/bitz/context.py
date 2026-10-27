@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 import time
 
+from . import activews
 from . import config as config_mod
 from . import digest as digest_mod
 from . import document as document_mod
@@ -36,7 +37,7 @@ from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
-from .workspace import WorkspaceLocation, locate_workspace
+from .workspace import locate_workspace
 
 _KIND_RANK = {"REQ": 0, "TECH": 1, "ADR": 2, "TASK": 3}
 _KIND_LABEL = {"REQ": "requirement", "TECH": "technical", "ADR": "decision", "TASK": "task"}
@@ -231,7 +232,12 @@ def _file_diag(code: str, severity: str, status: str, summary: str, workspace_id
     return {"code": code, "severity": severity, "resultStatus": status, "summary": summary, "source": src}
 
 
-def _empty_bundle(purpose: str, detail: str, workspace_id, workspace_path: str, roots: list[str]) -> dict:
+def _empty_bundle(
+    purpose: str, detail: str, workspace_id, workspace_path: str, roots: list[str], revision: dict | None = None
+) -> dict:
+    """早期に返すコンテキスト一式。`revision`は呼出し側が求めた値で、単一ワークスペースではGit不在とコミットのない
+    リポジトリだけ`null`とする（結果・診断・終了コード §2）。"""
+
     empty_bucket = {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []}
     return {
         "schemaVersion": "1.0",
@@ -241,7 +247,7 @@ def _empty_bundle(purpose: str, detail: str, workspace_id, workspace_path: str, 
         "workspace": {"id": workspace_id, "path": workspace_path},
         "roots": roots,
         "contextDigest": None,
-        "revision": None,
+        "revision": revision,
         "resolution": {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 0},
         "projection": {"detail": detail, "expanded": []},
         "documents": [],
@@ -317,13 +323,14 @@ def digest_command_materials(doc_ids, id_index: dict[str, DocEntry], owner_of, r
 
 
 def _merge_expansions(
-    expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
+    expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict], active_ws_id: str | None = None
 ):
     """複数の起点の`TargetExpansionResult`を和集合へ統合する（関係・トレースモデル §6.4末尾）。
 
     重複排除した後の各結果を統合し、`targetStatements`／`adjacentStatements`は
     `contextDocuments`の順（距離・種別の順REQ/TECH/ADR/TASK・ID辞書順）、行番号、IDの順で
-    同じ順序規則を再適用する。1つの起点だけの呼び出しでも同じ経路を通る。
+    同じ順序規則を再適用する。1つの起点だけの呼び出しでも同じ経路を通る。複合ワークスペース（``active_ws_id``あり）では、
+    IDの辞書順を出力と同じ修飾IDで比べる（関係・トレースモデル §7、複合ワークスペース仕様 §6）。
     """
 
     root_documents: set[str] = set()
@@ -369,6 +376,8 @@ def _merge_expansions(
         dist = document_distance.get(doc_id, 0)
         kind_rank = _KIND_RANK[id_index[doc_id].kind]
         line = stmt.get("source", {}).get("line", 0)
+        if active_ws_id is not None:
+            return (dist, kind_rank, _canon(doc_id, active_ws_id), line, _canon(stmt_id, active_ws_id))
         return (dist, kind_rank, doc_id, line, stmt_id)
 
     target_statements.sort(key=_sort_key)
@@ -414,41 +423,21 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     # --- ワークスペースの決定（複合ワークスペース仕様 §3）。 ---------------------------------
     # 複合ワークスペースでは作業ワークスペースの非修飾IDも受け付けるため、修飾IDの起点がある
-    # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う。
+    # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う（`activews.select_active`）。
     # 単一ワークスペースは従来の軽量な経路のままとする。
-    multi_pre: multiws.PrecheckResult | None = (
-        multiws.precheck(cwd, git, env) if multiws.is_declared(cwd, git, env) else None
-    )
-    workspace_path = "."
-    qualified_prefixes = {
-        q[0] for r in roots_raw if (q := multirelate.parse_qualified(r)) is not None
-    }
-    if qualified_prefixes:
-        if len(qualified_prefixes) > 1:
-            raise CliArgError("context", "複数の起点が異なるworkspaceに属しています")
-        target_ws_id = next(iter(qualified_prefixes))
-        if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("context", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
-    else:
-        target_ws_id = requested_workspace
-
-    if multi_pre is not None and multi_pre.ok:
-        if target_ws_id is None and loc.config_path is not None:
-            active_outcome = config_mod.read_config(loc.config_path)
-            target_ws_id = active_outcome.workspace_id
-        if target_ws_id == multi_pre.root_id:
-            assert multi_pre.repo_root is not None
-            loc = WorkspaceLocation(
-                root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
-            )
-            workspace_path = "."
-        else:
-            member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-            if member is not None:
-                loc = WorkspaceLocation(
-                    root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                )
-                workspace_path = member.path
+    sel = activews.select_active("context", roots_raw, requested_workspace, cwd, git, env, loc)
+    if sel.stop is not None:
+        # 全体事前検査が非成功なら、到達ワークスペースを確定せず、単独の形（複合ワークスペース固有のフィールドなし）で返す。
+        diags = sort_diagnostics(sel.stop.diagnostics)
+        bundle = _empty_bundle(purpose, detail, sel.stop.workspace_id, sel.stop.rel_path, roots_raw)
+        bundle["status"] = status_from_diagnostics(diags)
+        bundle["revision"] = activews.current_revision(git, cwd, env, sel.stop)
+        bundle["diagnostics"] = diags
+        bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+        return bundle, EXIT_CODE_BY_STATUS[bundle["status"]]
+    multi_pre = sel.pre
+    loc = sel.loc
+    workspace_path = sel.rel_path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
@@ -457,7 +446,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("context", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("context", f"指定したワークスペースが見つかりません: {requested_workspace}")
 
     # 設定がない、または不適合で同一性が確定しない場合は null（結果・診断・終了コード §2。`check`、`verify`と同じ）。
     workspace_id = outcome.workspace_id if outcome is not None else None
@@ -472,7 +461,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     if loc.config_path is None or outcome is None:
         # 設定ファイルがない（診断レジストリ`WORKSPACE-CONFIG-MISSING`。発生元は`environment`）。
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw, revision=revision)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
             {
@@ -492,7 +481,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         # ハッシュ値を計算する前に停止し、設定の検査の診断と警告をそのまま返す。
         diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
         worst = status_from_diagnostics(diags) if diags else "error"
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         if multi_active:
@@ -552,7 +541,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     # --- 起点の解決 ---------------------------------------------------------
     missing = [r for r in roots_raw if _lookup_key(r) not in id_index and _lookup_key(r) not in statement_index]
     if missing:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["diagnostics"] = [
             _invocation_diag(
@@ -573,7 +562,9 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     all_errors: list[dict] = []
     for r in roots_raw:
         key = _lookup_key(r)
-        exp = targetexpand.target_expansion(key, purpose, id_index, statement_index)
+        exp = targetexpand.target_expansion(
+            key, purpose, id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+        )
         if exp is None:
             # `missing`で存在確認済みのため通常到達しないが、念のため同じ診断コードで扱う。
             all_errors.append(
@@ -609,11 +600,15 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 raw.extend(
                     multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                 )
+            # 循環は横断するエッジも含めたグラフ全体で判定し（関係・トレースモデル §4）、返す診断は閉包の文書
+            # （``scoped_entries``）が宣言する辺に絞る（単一ワークスペースの`check_relations(source_ids=...)`と同じ。
+            # `context` §3「対象展開で完全解決する文書について検査する」。閉包の外の循環でコンテキストを失敗させない）。
             cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
+            scoped_paths = {e.path for e in scoped_entries}
             raw.extend(
                 d
                 for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-                if d.source.get("workspaceId") == workspace_id
+                if d.source.get("workspaceId") == workspace_id and d.source.get("path") in scoped_paths
             )
         else:
             raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
@@ -642,9 +637,11 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 )
                 if err.get("evidence") is not None:
                     diag["evidence"] = err["evidence"]
+                if err.get("suggestedAction") is not None:
+                    diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
         worst = status_from_diagnostics(diags)
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
@@ -653,14 +650,16 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS[worst]
 
-    expansion = _merge_expansions(expansions, id_index, statement_index)
+    expansion = _merge_expansions(
+        expansions, id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+    )
     context_documents = expansion.context_documents
 
     relation_error_diags = _relation_errors(relation_scope_ids | set(context_documents))
     if relation_error_diags:
         diags = [d.to_dict() for d in relation_error_diags]
         worst = status_from_diagnostics(diags)
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
         bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
@@ -748,7 +747,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         summary = messages.CTX_LIMIT_DOCUMENTS if len(context_documents) > max_documents else messages.CTX_LIMIT_BYTES
         root_owner = _owner_of(expansion.root_documents[0], workspace_id) if multi_active else workspace_id
         root_path = id_index[expansion.root_documents[0]].path
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
             _file_diag("CTX-LIMIT-001", "error", "blocked", summary, root_owner, root_path)
@@ -820,6 +819,11 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         "adjacent": list(expansion.adjacent_statements),
     }
 
+    def _summary_stmt_id(stmt_id: str) -> str:
+        """診断の`summary`に差し込む規範文ID。複合ワークスペースでは作業ワークスペースの規範文も修飾する（`coverage`の出力と同じ形）。"""
+
+        return _canon(stmt_id, workspace_id) if multi_active else stmt_id
+
     def _stmt_source(stmt_id: str) -> dict:
         doc_id = statement_index[stmt_id]["documentId"]
         owner = _owner_of(doc_id, workspace_id) if multi_active else workspace_id
@@ -834,7 +838,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                         "code": "CTX-COVERAGE-TASK-001",
                         "severity": "warning",
                         "resultStatus": "passed_with_warnings",
-                        "summary": messages.coverage_task_unaddressed(modality_label, stmt_id),
+                        "summary": messages.coverage_task_unaddressed(modality_label, _summary_stmt_id(stmt_id)),
                         "source": _stmt_source(stmt_id),
                     }
                 )
@@ -844,7 +848,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("MUST", stmt_id),
+                    "summary": messages.coverage_test_untested("MUST", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -854,7 +858,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("SHOULD", stmt_id),
+                    "summary": messages.coverage_test_untested("SHOULD", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -865,7 +869,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "error",
                     "resultStatus": "blocked",
-                    "summary": messages.coverage_test_untested("MUST", stmt_id),
+                    "summary": messages.coverage_test_untested("MUST", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -875,7 +879,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                     "code": "CTX-COVERAGE-TEST-001",
                     "severity": "warning",
                     "resultStatus": "passed_with_warnings",
-                    "summary": messages.coverage_test_untested("SHOULD", stmt_id),
+                    "summary": messages.coverage_test_untested("SHOULD", _summary_stmt_id(stmt_id)),
                     "source": _stmt_source(stmt_id),
                 }
             )
@@ -997,9 +1001,11 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 "applicability": roles.get(d) if roles.get(d) in ("advisory", "replacement") else "applicable",
                 "frontmatter": norm_frontmatters[d],
                 "bodyText": body_texts[d],
-                "statements": [
-                    _digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements
-                ],
+                # 材料の規範文は、文書に書いた順ではなく`id`のコードポイント辞書順にする（コンテキストのハッシュ値の正規化仕様 §3）。
+                "statements": sorted(
+                    (_digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements),
+                    key=lambda stmt: stmt["id"],
+                ),
                 "strongRelations": _strong_relations(
                     entry, id_index, statement_index, owner_ws_id=(owner if multi_active else None)
                 ),
@@ -1028,7 +1034,10 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     documents_sorted = sorted(
         context_documents,
-        key=lambda d: (expansion.document_distance.get(d, 0), _KIND_RANK[id_index[d].kind], d),
+        # 複合ワークスペースでは、IDの辞書順を出力と同じ修飾IDで比べる（関係・トレースモデル §7、複合ワークスペース仕様 §6）。
+        key=lambda d: (
+            expansion.document_distance.get(d, 0), _KIND_RANK[id_index[d].kind], _canon(d, workspace_id) if multi_active else d,
+        ),
     )
 
     # --- 提示形式（`projection`）の割当て（§5） ------------------------------------------------
@@ -1037,7 +1046,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     expand_lookup = {_lookup_key(e): e for e in expand_ids} if multi_active else {e: e for e in expand_ids}
     bad_expand = [expand_lookup[k] for k in expand_lookup if k not in set(context_documents)]
     if bad_expand:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {
@@ -1063,7 +1072,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         len(body_texts[d].encode("utf-8")) for d in context_documents if projections[d] == "full"
     )
     if presented_bytes > PROJECTION_HARD_LIMIT_BYTES:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {
@@ -1082,7 +1091,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         return bundle, EXIT_CODE_BY_STATUS["failed"]
 
     if expect_digest is not None and expect_digest != context_digest:
-        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "blocked"
         bundle["contextDigest"] = context_digest
         bundle["resolution"] = {

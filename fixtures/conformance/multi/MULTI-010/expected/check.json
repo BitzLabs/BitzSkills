@@ -20,7 +20,7 @@
       "code": "SPEC-MULTI-OWNERSHIP-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "src/linkの基準版のsymlinkがwebの所有範囲外を指します",
+      "summary": "パスsrc/linkの基準版のシンボリックリンクがワークスペースwebの所有領域の外を指します",
       "source": {
         "kind": "file",
         "workspaceId": "web",

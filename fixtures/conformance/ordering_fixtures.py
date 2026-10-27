@@ -148,7 +148,7 @@ def unknown_extension_diagnostics():
         column = line.index(token + "]", cursor) + 1
         cursor = column
         diagnostics.append({"code": "EAI-EXT-UNKNOWN-001", "severity": "warning",
-                            "resultStatus": "passed_with_warnings", "summary": "未知namespaceのextensionを保持します",
+                            "resultStatus": "passed_with_warnings", "summary": "未知の名前空間の拡張タグを保持します",
                             "source": {"kind": "file", "workspaceId": "root", "path": REQ_PATH,
                                        "line": number, "column": column}})
     return diagnostics

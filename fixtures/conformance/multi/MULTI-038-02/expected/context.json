@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "failed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-CYCLE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "関係型requiresに禁止された循環があります",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/technical/TECH-010.md",
+        "key": "relations.requires"
+      }
+    },
+    {
+      "code": "CTX-CYCLE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "関係型requiresに禁止された循環があります",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/technical/TECH-011.md",
+        "key": "relations.requires"
+      }
+    }
+  ]
+}

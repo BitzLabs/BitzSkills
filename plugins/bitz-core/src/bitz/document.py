@@ -113,6 +113,9 @@ class DocEntry:
     warnings: list[Diagnostic] = field(default_factory=list)
     hard: list[Diagnostic] | None = None  # `None`でない＝この文書は`skip-document`
     duplicate: bool = False  # `True`＝IDの重複により`skip-document`（フェーズCの関係・パスの解決の索引から除く）
+    #: 複合ワークスペースの他のメンバーの文書を作業ワークスペースの視点で修飾したビュー（`multirelate._qualified_relations_view`）が、
+    #: 修飾する前の`relations.requires`の宣言どおりの綴りを保持する（診断の`evidence`は宣言どおりに返す）。ビューでなければ``None``。
+    declared_requires: list[str] | None = None
 
 
 @dataclass

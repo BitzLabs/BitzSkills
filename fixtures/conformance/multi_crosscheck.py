@@ -138,8 +138,9 @@ def closure(documents, root):
     return sorted(reached), owned
 
 
-def build(repository, root="platform::REQ-001", purpose="verify"):
-    root_id, workspaces, documents = load_workspaces(repository)
+def build(repository, root="platform::REQ-001", purpose="verify", loaded=None):
+    """`loaded`は`load_workspaces(repository)`の結果。多数の検証対象について同じ木構造を読み直さないために渡せる。"""
+    root_id, workspaces, documents = loaded if loaded is not None else load_workspaces(repository)
     request = root.partition("::")[0]
     if request not in workspaces:
         raise ValueError("起点ワークスペースがカタログにありません")

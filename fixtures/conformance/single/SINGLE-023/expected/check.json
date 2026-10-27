@@ -20,7 +20,7 @@
       "code": "SPEC-RELATION-LEGACY-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "旧refs fieldは使用できません",
+      "summary": "旧フィールドrefsは使用できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

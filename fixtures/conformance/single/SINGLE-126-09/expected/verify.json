@@ -28,7 +28,7 @@
       "code": "SPEC-VERIFY-BLOCKED-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "command実行fileをPATHから解決できません",
+      "summary": "コマンドの実行可能ファイルを環境変数PATHから解決できません",
       "source": {
         "kind": "environment",
         "component": "command",

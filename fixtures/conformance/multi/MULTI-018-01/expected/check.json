@@ -47,7 +47,7 @@
       "code": "SPEC-STATE-TRANSITION-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "管理済みSPECが削除されています",
+      "summary": "管理済みの仕様文書が削除されています",
       "source": {
         "kind": "file",
         "workspaceId": "web",

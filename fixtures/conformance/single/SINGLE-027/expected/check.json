@@ -20,7 +20,7 @@
       "code": "SPEC-STATE-TRANSITION-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "done TASKをopenへ戻すことはできません",
+      "summary": "状態doneのTASKを状態openへ戻すことはできません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

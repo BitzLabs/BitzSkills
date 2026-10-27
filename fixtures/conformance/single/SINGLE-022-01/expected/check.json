@@ -20,7 +20,7 @@
       "code": "CTX-CYCLE-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "requiresに禁止循環があります",
+      "summary": "関係型requiresに禁止された循環があります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

@@ -3,7 +3,7 @@
   "expect": {
     "exitCode": 2,
     "reportFileCount": 0,
-    "resultDigest": "sha256:3403e03d2f03281b28969007ebe5e66a16909ea9faa7047bc5fc0c9755b99188",
+    "resultDigest": "sha256:ae3fb5d400831f027ebd1c76b16123b65301b2f848230e930a16fbeb8bf633bb",
     "status": "blocked",
     "stdout": "json"
   },

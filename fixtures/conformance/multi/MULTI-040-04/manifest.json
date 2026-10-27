@@ -1,0 +1,27 @@
+{
+  "fixtureId": "MULTI-040-04",
+  "description": "Git不在で、ルートのEARS-AIのメジャーバージョンが非対応のとき、単独のdoctorもGitの不在と設定の診断の両方を返す",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

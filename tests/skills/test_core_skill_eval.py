@@ -136,7 +136,7 @@ class CoreEvaluationTests(unittest.TestCase):
             result = evaluation.read_jsonl(root / "log.jsonl")[-1]["result"]
             self.assertEqual(4, result["exitCode"])
             self.assertEqual("", result["stdout"])
-            self.assertIn("未知のoption", result["stderr"])
+            self.assertIn("未知のオプションです: --help", result["stderr"])
             decision = dict(case["expected"], reportedStatus=None, readyClaimed=False, reason="外部送信を制約できず未実行。")
             events = [{"type": "turn.started"}, {"type": "item.completed", "item": {
                 "id": "help", "type": "mcp_tool_call", "server": "core_eval", "tool": "run_bitz",

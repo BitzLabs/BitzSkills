@@ -15,21 +15,21 @@ from .initial_fixtures import observe, compare_state
 HERE = Path(__file__).resolve().parent
 CASES = {"SINGLE-075-01": "SINGLE-070-01", "SINGLE-075-02": "SINGLE-070-02", "SINGLE-076": "SINGLE-070-02", "SINGLE-077": "SINGLE-070-02"}
 CONTROL_PATH = ".spec/technical/TECH-001-\x1b[31m\t\x7f\x85.md"
-CONTROL_SUMMARY = "参照元" + CONTROL_PATH + "のstrong relation参照先が存在しません"
+CONTROL_SUMMARY = "参照元" + CONTROL_PATH + "の強い関係の参照先が存在しません"
 TEXT = {
     "SINGLE-075-01": "check passed scope=full targets=3 diagnostics=0 (0ms)\n",
     "SINGLE-075-02": "check failed scope=full targets=3 diagnostics=1 (0ms)\n"
                      "root:.spec/technical/TECH-001.md::: error: SPEC-RELATION-MISSING-001: "
-                     "strong relationの参照先が存在しません\n",
+                     "強い関係の参照先が存在しません\n",
 }
 TEXT["SINGLE-076"] = (
     "check failed scope=full targets=3 diagnostics=1 (0ms)\n"
     "root:.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.md::: error: SPEC-RELATION-MISSING-001: "
-    "参照元.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.mdのstrong relation参照先が存在しません\n"
+    "参照元.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.mdの強い関係の参照先が存在しません\n"
 )
 ORDER_IDS = ("TECH-001", "TECH-002", "TECH-010")
 TEXT["SINGLE-077"] = "check failed scope=full targets=5 diagnostics=3 (0ms)\n" + "".join(
-    f"root:.spec/technical/{identifier}.md::: error: SPEC-RELATION-MISSING-001: strong relationの参照先が存在しません\n"
+    f"root:.spec/technical/{identifier}.md::: error: SPEC-RELATION-MISSING-001: 強い関係の参照先が存在しません\n"
     for identifier in ORDER_IDS)
 
 

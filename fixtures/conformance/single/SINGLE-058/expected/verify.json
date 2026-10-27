@@ -59,7 +59,7 @@
       "code": "SPEC-VERIFY-COMMAND-001",
       "severity": "error",
       "resultStatus": "error",
-      "summary": "commandがsignalで終了しました",
+      "summary": "コマンドがシグナルで終了しました",
       "source": {
         "kind": "environment",
         "component": "command",

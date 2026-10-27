@@ -55,7 +55,7 @@ class SchemaMajorOrderingTests(unittest.TestCase):
         self.assertEqual(len(outcome.diagnostics), 1)
         self.assertEqual(outcome.diagnostics[0].code, "SPEC-CONFIG-SCHEMA-001")
         self.assertEqual(outcome.diagnostics[0].resultStatus, "blocked")
-        self.assertEqual(outcome.diagnostics[0].summary, "未対応のSchema majorです")
+        self.assertEqual(outcome.diagnostics[0].summary, "未対応のスキーマのメジャーバージョンです")
 
     def test_schema_version_type_error_wins_over_major_check(self):
         # `schemaVersion`自体の型が不正なら、`major`の検討に進まず`schemaVersion`の型のエラーを返す。
@@ -64,7 +64,7 @@ class SchemaMajorOrderingTests(unittest.TestCase):
         self.assertTrue(outcome.stop)
         self.assertEqual(outcome.stop_stage, "config")
         self.assertEqual(len(outcome.diagnostics), 1)
-        self.assertEqual(outcome.diagnostics[0].summary, "schemaVersionはstringで指定してください")
+        self.assertEqual(outcome.diagnostics[0].summary, "設定キーschemaVersionは文字列で指定してください")
 
 
 class IndependentHardErrorsTests(unittest.TestCase):
@@ -76,7 +76,7 @@ class IndependentHardErrorsTests(unittest.TestCase):
         summaries = sorted(d.summary for d in outcome.diagnostics)
         self.assertEqual(
             summaries,
-            ["earsAiはstringで指定してください", "languageはstringで指定してください"],
+            ["設定キーearsAiは文字列で指定してください", "設定キーlanguageは文字列で指定してください"],
         )
         for d in outcome.diagnostics:
             self.assertIsNone(d.source["workspaceId"])

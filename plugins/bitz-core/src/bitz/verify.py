@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import time
 
+from . import activews
 from . import config as config_mod
 from . import context as context_mod
 from . import digest as digest_mod
@@ -36,7 +37,7 @@ from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
-from .workspace import WorkspaceLocation, locate_workspace
+from .workspace import locate_workspace
 
 _ARGV_ELEMENT_LIMIT = 32 * 1024
 _ARGV_TOTAL_LIMIT = 1024 * 1024
@@ -92,6 +93,16 @@ def _resolve_target(
     if lookup in statement_index:
         return lookup
     return path_index.get(lookup)
+
+
+def _is_id_target(raw: str) -> bool:
+    """``raw``が文書IDまたは規範文IDの字句であれば真（パスの入力は含まない）。複合ワークスペースでは存在しない対象も修飾IDで返すために使う。
+
+    CLIの解析（``cliargs``の``lex.is_valid_target``）を通った入力は、文書ID、規範文ID、``.spec/``配下の``.md``のパスに限られるため、
+    この文字列の判定はIDの字句規則と同じ結果になる。
+    """
+
+    return "/" not in raw and not raw.endswith(".md")
 
 
 def _default_roots(id_index: dict[str, DocEntry]) -> list[str]:
@@ -150,6 +161,33 @@ def _total_command_definition_count(config_by_ws: dict[str, dict], workspaces) -
         if isinstance(commands, dict):
             total += len(commands)
     return total
+
+
+def _plan_limit_diagnostic(
+    binding_count: int, config_by_ws: dict[str, dict], workspaces, root_id: str | None
+) -> dict | None:
+    """実行計画を確定した後の上限の判定（複合ワークスペース仕様 §10、ADR-066）。超過がなければ``None``。
+
+    ``verifyBindingCount``（この実行計画のテスト割当ての数）、``commandDefinitionCount``（全ワークスペースのコマンド定義数）の順で判定し、
+    両方が超過していれば``verifyBindingCount``だけを返す。`--all-workspaces`と複合ワークスペースの単独の`verify`が共有する。
+    コマンドを1件も起動する前に呼び出す。
+    """
+
+    if binding_count > _VERIFY_BINDING_LIMIT:
+        dimension, limit, observed = "verifyBindingCount", _VERIFY_BINDING_LIMIT, binding_count
+    else:
+        # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、ここで自分で判定する。
+        # `verifyBindingCount`が超過していなければ、`commandDefinitionCount`だけの超過をそのまま報告する。
+        dimension, limit = "commandDefinitionCount", multiws.HARD_LIMITS["commandDefinitionCount"]
+        observed = _total_command_definition_count(config_by_ws, workspaces)
+        if observed <= limit:
+            return None
+    diag = _file_diag(
+        "SPEC-MULTI-LIMIT-001", "error", "blocked", messages.multi_limit_exceeded(dimension, limit),
+        root_id, config_mod.CONFIG_PATH,
+    )
+    diag["evidence"] = {"dimension": dimension, "limit": limit, "observedAtLeast": observed}
+    return diag
 
 
 def _hard_entry_target_result(entry: DocEntry, key: str) -> dict:
@@ -220,6 +258,27 @@ def _make_covering_tests(context_documents, id_index: dict[str, DocEntry], works
     return _covering_tests
 
 
+def _cycle_diagnostics_provider(entries_by_ws: dict[str, list[DocEntry]]):
+    """複合ワークスペース全体の循環の診断を1度だけ計算し、ワークスペースID別に返す関数を返す。
+
+    循環は横断するエッジも含めたグラフ全体で判定する（関係・トレースモデル §4）。グラフは検証対象に依らないため、
+    検証対象ごとに計算し直さず、最初に必要になったときに1度だけ計算する（`--all-workspaces`の全対象で共有する）。
+    戻り値の関数は``workspace_id``が宣言した辺の循環の診断を返す。
+    """
+
+    by_ws: dict[str, list] | None = None
+
+    def for_workspace(workspace_id: str) -> list:
+        nonlocal by_ws
+        if by_ws is None:
+            by_ws = {}
+            for d in multirelate.global_cycle_diagnostics(entries_by_ws):
+                by_ws.setdefault(d.source.get("workspaceId"), []).append(d)
+        return by_ws.get(workspace_id, [])
+
+    return for_workspace
+
+
 def _relation_check_diagnostics(
     context_documents,
     workspace_id: str,
@@ -228,10 +287,14 @@ def _relation_check_diagnostics(
     local_stmt_indices: dict[str, dict[str, dict]],
     known_ws_ids: set[str],
     multi_active: bool,
+    cycle_diagnostics_for=None,
 ):
     """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
 
     コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
+    複合ワークスペースでは、閉包の文書（``context_documents``のうち起点ワークスペース自身が所有するもの）が宣言する辺の
+    循環も返す（`cycle_diagnostics_for`は``workspace_id``が宣言した辺の循環の診断を返す関数。単一ワークスペースの
+    `check_relations(source_ids=...)`と同じく、閉包の外の循環は返さない）。
     """
 
     if multi_active:
@@ -241,6 +304,9 @@ def _relation_check_diagnostics(
             diags.extend(
                 multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
             )
+        if cycle_diagnostics_for is not None:
+            scoped_paths = {e.path for e in scoped_entries}
+            diags.extend(d for d in cycle_diagnostics_for(workspace_id) if d.source.get("path") in scoped_paths)
         return diags
     id_index = local_id_indices[workspace_id]
     statement_index = local_stmt_indices[workspace_id]
@@ -365,10 +431,11 @@ def _compute_verify_digest(
                 "applicability": "applicable",
                 "frontmatter": norm_frontmatters[d],
                 "bodyText": body_texts[d],
-                "statements": [
-                    context_mod._digest_statement(s, owner_ws_id=(owner if multi_active else None))
-                    for s in entry.statements
-                ],
+                # 材料の規範文は`id`のコードポイント辞書順にする（コンテキストのハッシュ値の正規化仕様 §3。`context`と同じ）。
+                "statements": sorted(
+                    (context_mod._digest_statement(s, owner_ws_id=(owner if multi_active else None)) for s in entry.statements),
+                    key=lambda stmt: stmt["id"],
+                ),
                 "strongRelations": context_mod._strong_relations(
                     entry, id_index, statement_index, owner_ws_id=(owner if multi_active else None)
                 ),
@@ -429,6 +496,7 @@ def _process_single_target(
     invalid_by_ws: dict[str, set[str]] | None,
     digest_fn,
     resolved_commands_for,
+    cycle_diagnostics_for=None,
 ) -> tuple[dict, list[tuple[str, str, str, str]]]:
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
@@ -457,7 +525,9 @@ def _process_single_target(
         entry_out["status"] = "failed"
         return entry_out, needed_pairs
 
-    expansion = targetexpand.target_expansion(root_id, "verify", id_index, statement_index)
+    expansion = targetexpand.target_expansion(
+        root_id, "verify", id_index, statement_index, active_ws_id=workspace_id if multi_active else None
+    )
     if expansion is None:
         entry_out["diagnostics"] = [_invocation_diag("CTX-ROOT-MISSING-001", "error", "failed", messages.root_missing_explicit(raw), raw)]
         entry_out["status"] = "failed"
@@ -471,7 +541,8 @@ def _process_single_target(
         return [
             d.to_dict()
             for d in _relation_check_diagnostics(
-                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
+                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active,
+                cycle_diagnostics_for,
             )
             if d.severity == "error"
         ]
@@ -490,6 +561,8 @@ def _process_single_target(
                 diag = _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
                 if err.get("evidence") is not None:
                     diag["evidence"] = err["evidence"]
+                if err.get("suggestedAction") is not None:
+                    diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
         entry_out["diagnostics"] = sort_diagnostics(diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in diags])
@@ -545,7 +618,8 @@ def _process_single_target(
 
     context_digest = digest_fn(expansion)
     entry_out["contextDigest"] = context_digest
-    entry_out["statements"] = [_canon_id(s) for s in target_statements]
+    # 検証証跡の規範文は、出力するIDで重複なし辞書順にする（verify §8）。コンテキストの規範文の並び（文書順、行番号）とは別。
+    entry_out["statements"] = sorted({_canon_id(s) for s in target_statements})
 
     if must_untested:
         entry_out["diagnostics"] = sort_diagnostics(coverage_diags)
@@ -572,12 +646,12 @@ def _process_single_target(
 
     # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
     # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
-    # 複数の規範文が指しても、同じ元の原因（同じ`path`／`key`）へは1件に畳む）。
+    # 複数の規範文が指しても、同じ元の原因（同じ所有ワークスペースの`path`／`key`）へは1件に畳む）。
     binding_missing_diags: list[dict] = []
-    seen_missing_keys: set[tuple[str, str]] = set()
+    seen_missing_keys: set[tuple[str, str, str]] = set()
 
     def _add_binding_missing(owner: str, path: str, idx: int, name: str | None) -> None:
-        seen_key = (path, f"tests[{idx}].command")
+        seen_key = (owner, path, f"tests[{idx}].command")
         if seen_key in seen_missing_keys:
             return
         seen_missing_keys.add(seen_key)
@@ -807,32 +881,36 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
 
-    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。修飾した検証対象の所有ワークスペースを作業ワークスペースにする。 ---
-    multi_pre: multiws.PrecheckResult | None = None
-    workspace_path = "."
-    qualified_prefixes = {
-        q[0] for t in parsed.positionals if (q := multirelate.parse_qualified(t)) is not None
-    }
-    if qualified_prefixes:
-        if len(qualified_prefixes) > 1:
-            raise CliArgError("verify", "複数の対象が異なるworkspaceに属しています")
-        target_ws_id = next(iter(qualified_prefixes))
-        if requested_workspace is not None and requested_workspace != target_ws_id:
-            raise CliArgError("verify", f"対象のworkspaceと--workspaceが一致しません: {target_ws_id}")
-        multi_pre = multiws.precheck(cwd, git, env)
-        if multi_pre.ok:
-            if target_ws_id == multi_pre.root_id:
-                loc = WorkspaceLocation(
-                    root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
-                )
-                workspace_path = "."
-            else:
-                member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-                if member is not None:
-                    loc = WorkspaceLocation(
-                        root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                    )
-                    workspace_path = member.path
+    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。`activews.select_active`が、修飾した検証対象の所有ワークスペース、
+    # `--workspace`、最寄りの設定の順で作業ワークスペースを決める（複合ワークスペースを宣言していれば、修飾IDのない対象や引数なしも同じ）。 ---
+    # `commandDefinitionCount`は全体事前検査では判定せず、実行計画を確定した後に`verifyBindingCount`と合わせて判定する
+    # （`--all-workspaces`と同じ。複合ワークスペース仕様 §7・§10、ADR-066）。ほかの次元は今どおり全体事前検査で判定する。
+    sel = activews.select_active(
+        "verify", parsed.positionals, requested_workspace, cwd, git, env, loc, subject="対象",
+        skip_limit_dimensions=frozenset({"commandDefinitionCount"}),
+    )
+    if sel.stop is not None:
+        # 全体事前検査が非成功なら、作業ワークスペースの処理もテストコマンドの実行も始めない（複合ワークスペース仕様 §7）。
+        stop_diagnostics = sort_diagnostics(sel.stop.diagnostics)
+        stop_status = status_from_diagnostics(stop_diagnostics)
+        stop_result: dict = {
+            "schemaVersion": "1.0",
+            "operation": "verify",
+            "status": stop_status,
+            "scope": scope,
+            "workspace": {"id": sel.stop.workspace_id, "path": sel.stop.rel_path},
+            "targetResults": [],
+            "revision": activews.current_revision(git, cwd, env, sel.stop),
+            "commands": [],
+            "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
+            "diagnostics": stop_diagnostics,
+        }
+        if want_report:
+            activews.save_stop_report(sel.stop, "verify", stop_result)
+        return stop_result, EXIT_CODE_BY_STATUS[stop_result["status"]]
+    multi_pre = sel.pre
+    loc = sel.loc
+    workspace_path = sel.rel_path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:
@@ -841,7 +919,15 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if requested_workspace is not None:
         effective_id = outcome.workspace_id if outcome is not None else None
         if effective_id != requested_workspace:
-            raise CliArgError("verify", f"指定したworkspaceが見つかりません: {requested_workspace}")
+            raise CliArgError("verify", f"指定したワークスペースが見つかりません: {requested_workspace}")
+
+    # 単一ワークスペースの`revision`は、Git不在とコミットのないリポジトリだけ`null`とする（結果・診断・終了コード §2）。
+    # 早期に返す結果（設定がない、設定の停止、対象が0件）も同じ規則に従うため、最初に求める。
+    revision = None
+    if git.available and git.executable:
+        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
+        if head_commit is not None:
+            revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
     def _empty(workspace_id, status: str, diagnostics: list[dict]) -> tuple[dict, int]:
         result = {
@@ -851,12 +937,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             "scope": scope,
             "workspace": {"id": workspace_id, "path": workspace_path},
             "targetResults": [],
-            "revision": None,
+            "revision": revision,
             "commands": [],
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": sort_diagnostics(diagnostics),
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if want_report:
+            # `--report`は状態にかかわらず保存する（結果・診断・終了コード §8）。`check`と同じく、設定がなければ現在のディレクトリへ試みる。
+            failure = reportio.write_report(loc.root if loc.root is not None else cwd, workspace_id, "verify", result)
+            if failure is not None:
+                result["diagnostics"] = sort_diagnostics(list(result["diagnostics"]) + [failure.to_dict()])
+                result["status"] = worst_status([status, failure.resultStatus])
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     if loc.config_path is None:
         return _empty(
@@ -881,12 +973,6 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     config_raw = outcome.config
     assert loc.root is not None
     workspace_root = loc.root
-
-    revision = None
-    if git.available and git.executable:
-        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
-        if head_commit is not None:
-            revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
     multi_active = multi_pre is not None and multi_pre.ok
 
@@ -961,22 +1047,55 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             root_id = _resolve_target(
                 raw, id_index, statement_index, path_index, active_ws_id=(workspace_id if multi_active else None)
             )
-            key = context_mod._canon(root_id, workspace_id) if (root_id is not None and multi_active) else (root_id if root_id is not None else raw)
+            key = context_mod._canon(root_id if root_id is not None else raw, workspace_id) if multi_active and (
+                root_id is not None or _is_id_target(raw)
+            ) else (root_id if root_id is not None else raw)
             if key in seen_keys:
                 continue
             seen_keys.add(key)
             pending.append((key, root_id, raw))
         pending.sort(key=lambda item: item[0])
     else:
-        pending = [(doc_id, doc_id, doc_id) for doc_id in _default_roots(id_index)]
+        if multi_active:
+            # 統合索引は修飾の別名と他のワークスペースの文書を含むため、起点ワークスペースのローカル索引から列挙し、修飾IDで持つ。
+            pending = [
+                (context_mod._canon(doc_id, workspace_id), doc_id, doc_id)
+                for doc_id in _default_roots(local_id_indices[workspace_id])
+            ]
+        else:
+            pending = [(doc_id, doc_id, doc_id) for doc_id in _default_roots(id_index)]
+
+    def _plan_limit_stop(binding_count: int) -> tuple[dict, int] | None:
+        """複合ワークスペースの実行計画の上限（`verifyBindingCount`、`commandDefinitionCount`）を超過していれば停止結果を返す。"""
+
+        if not multi_active:
+            return None
+        assert multi_pre is not None
+        configs = {multi_pre.root_id: multi_pre.root_config or {}}
+        configs.update({m.id: m.config for m in multi_pre.members})
+        limit_diag = _plan_limit_diagnostic(
+            binding_count, configs, multiws.ordered_workspaces(multi_pre), multi_pre.root_id
+        )
+        if limit_diag is None:
+            return None
+        return _empty(workspace_id, "blocked", [limit_diag])
 
     if not pending:
+        # 実行計画が空でも`commandDefinitionCount`は判定する（`--all-workspaces`が対象0件でも上限を先に判定するのと同じ）。
+        limit_stop = _plan_limit_stop(0)
+        if limit_stop is not None:
+            return limit_stop
         diag = _invocation_diag("SPEC-VERIFY-BLOCKED-002", "error", "blocked", messages.VERIFY_TARGETS_EMPTY)
         return _empty(workspace_id, "blocked", [diag] + config_warning_diags)
 
     top_diagnostics: list[dict] = list(config_warning_diags)
     target_entries: list[dict] = []
     needs: dict[tuple[str, str], dict] = {}
+    cycle_diagnostics_for = (
+        _cycle_diagnostics_provider({wid: list(idx.values()) for wid, idx in local_id_indices.items()})
+        if multi_active
+        else None
+    )
 
     for key, root_id, raw in pending:
         def digest_fn(exp, _root_id=root_id):
@@ -993,12 +1112,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
             multi_active=multi_active, invalid_by_ws=None,
             digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+            cycle_diagnostics_for=cycle_diagnostics_for,
         )
         target_entries.append(entry_out)
         for ws_id, name, path, cover in needed_pairs:
             bucket = needs.setdefault((ws_id, name), {"tests": set(), "covers": set()})
             bucket["tests"].add(path)
             bucket["covers"].add(cover)
+
+    # 対象展開とテスト割当ての重複排除が終わった実行計画を確定した後、コマンドを1件も起動する前に上限を判定する。
+    limit_stop = _plan_limit_stop(len(needs))
+    if limit_stop is not None:
+        return limit_stop
 
     commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
@@ -1054,7 +1179,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     # `_run_all_workspaces_members`自身のテスト割当ての計画の集計に委ねる（複合ワークスペース仕様 §10）。
     pre = multiws.precheck(cwd, git, env, skip_limit_dimensions=frozenset({"commandDefinitionCount"}))
     if pre.discovery_failed:
-        raise CliArgError("verify", "複合workspaceのroot設定を発見できません")
+        raise CliArgError("verify", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     if not pre.ok:
         diagnostics = sort_diagnostics([d.to_dict() for d in pre.diagnostics])
@@ -1070,7 +1195,9 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": diagnostics,
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if "--report" in parsed.flags:
+            activews.save_all_workspaces_report(pre, "verify", result)
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, started)
 
@@ -1124,7 +1251,7 @@ def _run_all_workspaces_members(
     per_ws_extra_diags: dict[str, list[dict]] = {wid: [] for wid, _, _ in workspaces}
     needs: dict[tuple[str, str], dict] = {}
     any_targets = False
-    limit_diag: dict | None = None
+    cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
 
     for wid, root, _rel in workspaces:
         id_index, statement_index, local_id_indices, local_stmt_indices, known_ws_ids = multirelate.merge_indices(
@@ -1165,6 +1292,7 @@ def _run_all_workspaces_members(
                 local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
                 multi_active=True, invalid_by_ws=invalid_by_ws,
                 digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+                cycle_diagnostics_for=cycle_diagnostics_for,
             )
             per_ws_target_entries[wid].append(entry_out)
             for cws, name, path, cover in needed_pairs:
@@ -1172,32 +1300,8 @@ def _run_all_workspaces_members(
                 bucket["tests"].add(path)
                 bucket["covers"].add(cover)
 
-    binding_count = len(needs)
-    if binding_count > _VERIFY_BINDING_LIMIT:
-        limit_diag = _file_diag(
-            "SPEC-MULTI-LIMIT-001", "error", "blocked",
-            messages.multi_limit_exceeded("verifyBindingCount", _VERIFY_BINDING_LIMIT),
-            pre.root_id, config_mod.CONFIG_PATH,
-        )
-        limit_diag["evidence"] = {"dimension": "verifyBindingCount", "limit": _VERIFY_BINDING_LIMIT, "observedAtLeast": binding_count}
-    else:
-        # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、
-        # ここで実行計画を確定した後に自分で判定する。`verifyBindingCount`が超過していなければ、
-        # `commandDefinitionCount`だけの超過をここで遮断する（複合ワークスペース仕様 §10「複数の次元が同時に
-        # 超過する場合は、`verify`実行計画の次元を優先して報告する」の裏を返せば、`verifyBindingCount`が超過しない
-        # 限り`commandDefinitionCount`の超過はそのまま報告する）。コマンドを1件も起動する前
-        # （`_plan_and_run_bindings`より前）に判定する。
-        command_definition_count = _total_command_definition_count(config_by_ws, workspaces)
-        limit = multiws.HARD_LIMITS["commandDefinitionCount"]
-        if command_definition_count > limit:
-            limit_diag = _file_diag(
-                "SPEC-MULTI-LIMIT-001", "error", "blocked",
-                messages.multi_limit_exceeded("commandDefinitionCount", limit),
-                pre.root_id, config_mod.CONFIG_PATH,
-            )
-            limit_diag["evidence"] = {
-                "dimension": "commandDefinitionCount", "limit": limit, "observedAtLeast": command_definition_count,
-            }
+    # 実行計画（`needs`）を確定した後、コマンドを1件も起動する前（`_plan_and_run_bindings`より前）に上限を判定する。
+    limit_diag = _plan_limit_diagnostic(len(needs), config_by_ws, workspaces, pre.root_id)
 
     if limit_diag is not None:
         diagnostics = sort_diagnostics([limit_diag])
@@ -1213,7 +1317,9 @@ def _run_all_workspaces_members(
             "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
             "diagnostics": diagnostics,
         }
-        return result, EXIT_CODE_BY_STATUS[status]
+        if want_report:
+            activews.save_all_workspaces_report(pre, "verify", result)
+        return result, EXIT_CODE_BY_STATUS[result["status"]]
 
     if not any_targets:
         top_diagnostics.append(

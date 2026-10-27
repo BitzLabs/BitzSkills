@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-038-07",
+  "description": "起点ワークスペースの文書を非修飾と修飾の両方で参照しても、contextは1件だけ収録する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "web::REQ-001",
+      "--purpose",
+      "interpret",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

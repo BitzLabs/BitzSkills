@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-086",
-  "description": "Frontmatter YAMLの構文が不正です",
+  "description": "フロントマターのYAMLの構文が不正です",
   "setup": {
     "git": true,
     "baseCommit": {

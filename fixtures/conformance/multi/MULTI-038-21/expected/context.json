@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": "sha256:3834b2f0d770cadb36ae08bec8d18fda7e73d6e6859c5c55a5aa3e8b0eebe79f",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "refines",
+        "source": "api::TECH-040",
+        "target": "web::REQ-001"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "statementRefs": [
+        "web::REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "web::REQ-001",
+        "title": "認証の基準",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 認証の基準\n\n## Intent\n\n認証の基準の規範を定める。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\nwebのtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-040",
+      "kind": "technical",
+      "status": "draft",
+      "role": "advisory",
+      "path": ".spec/technical/TECH-040.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:api::TECH-040"
+      ],
+      "workspaceId": "api",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

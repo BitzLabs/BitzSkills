@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-085",
-  "description": "未知のFrontmatter fieldを無視します",
+  "description": "未知のフロントマターのフィールドを無視します",
   "setup": {
     "git": true,
     "baseCommit": {

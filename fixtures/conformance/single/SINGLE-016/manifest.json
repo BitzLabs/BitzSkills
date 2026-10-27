@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-016",
-  "description": "approved REQに妥当な規範文がありません",
+  "description": "状態approvedのREQに妥当な規範文がありません",
   "setup": {
     "git": true,
     "baseCommit": {

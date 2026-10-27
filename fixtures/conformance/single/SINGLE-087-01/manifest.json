@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-087-01",
-  "description": "Frontmatterのcustom tagは禁止です",
+  "description": "フロントマターのカスタムタグは禁止です",
   "setup": {
     "git": true,
     "baseCommit": {
