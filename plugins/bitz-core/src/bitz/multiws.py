@@ -1048,6 +1048,10 @@ def _workspace_map(value: dict, current_root_id: str | None = None) -> dict[str,
     """基準版のルートの設定（YAMLとして読めた値）から :func:`base_workspace_map` の対応表を求める。"""
 
     mw = value.get("multiWorkspace")
+    if "multiWorkspace" in value and mw is None:
+        # 宣言はキーの有無で判定する（複合ワークスペース仕様 §2.1）。値が空の宣言は現在版と同じく`members: []`として扱い、
+        # ルートだけのカタログにする（確認事項C58、ユーザーの決定）。§4.1の写像（`multiWorkspace`がない基準版）にも当たらない。
+        mw = {"members": []}
     if not isinstance(mw, dict):
         if current_root_id is not None:
             ws_block = value.get("workspace")
