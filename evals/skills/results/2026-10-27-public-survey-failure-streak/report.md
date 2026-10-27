@@ -62,17 +62,25 @@ uv run --project plugins/bitz-core --with jsonschema==4.23.0 python \
 
 ## 原記録を持つ環境での確認方法
 
-取込み処理は拒否の型だけを残し、文言を保存していない。原記録を持つ作業ツリーのルートで次を実行すると、
-取込み後の検査を原記録に対して読取り専用でやり直し、拒否した検査の固定の文言と発生箇所を枠ごとにまとめる。
+取込み処理は拒否の型だけを残し、文言を保存していない。`production_failure_diagnosis.py` は、取込み後の検査を、
+調査を実行したときのsource（`b00589ba`）のコードで原記録に対してやり直し、拒否した検査の固定の文言と発生箇所を
+枠ごとにまとめる。このファイルはそのsourceにないので、空のディレクトリへ複写してから、作業ツリーを切り替えて実行する。
 `--bundle` には、公開調査で `production_matrix_survey_run.py` に渡した bundle のディレクトリを指定する。
 
 ```text
+mkdir -p ~/diagnosis && cp evals/skills/routing/production_failure_diagnosis.py ~/diagnosis/
+git switch --detach b00589ba
 uv run --project plugins/bitz-core --with jsonschema==4.23.0 python \
-  evals/skills/routing/production_failure_diagnosis.py --bundle .venv/<公開調査のbundle> --ordinals 58-92
+  ~/diagnosis/production_failure_diagnosis.py --bundle .venv/<公開調査のbundle> --ordinals 58-92
+git switch -
 ```
 
-- 書込み系の操作（ファイルの作成・変更・削除、git の書込み系の副コマンド、git 以外の子プロセス）は
-  プロセス内で遮断し、前後で原記録の属性と hash が変わらないことを確かめる。
+- 作業ツリーが調査のsourceCommitにあり、検査のコードに変更がないことを確かめてから実行する。いまのコードは
+  `turn/moderationMetadata` を受け入れるので、いまのコードで検査すると当時の拒否が見えなくなる。
+- 失敗の後に取込み処理が書いた停止の印（`capture-stop.json`）は、検査の間だけ原記録のディレクトリの一覧から除く。
+  除かないと、全枠が同じ `primary stop marker` で拒否され、本来の拒否に届かない。
+- 主な書込みの経路（ファイルの作成・変更・削除、git の書込み系の副コマンドと出力先の指定、git 以外の子プロセス）は
+  プロセス内で遮断し、原記録の変化は前後の属性と hash の照合で検出する。
 - 出力は、例外の型、評価基盤のコードに文字列リテラルとして書かれた拒否の文言、評価基盤のコード内の発生箇所だけである。
   値を埋め込んだ文言、ケース本文、応答、原記録の内容は出さない。
 - 結果の `groups` が1種類にまとまり、その文言が 2026-10-20 の保持評価の停止と同じ検査なら、原因は同じと判断できる。
