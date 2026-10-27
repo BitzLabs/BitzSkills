@@ -1,5 +1,5 @@
 # 適合試験の分割と集約に使うCI用のイメージを作る（ADR-069）。
-# PR では build と版の確認だけを行い、main への push と手動では GHCR へ push して digest を出力する。
+# PR では build と版の判定だけを行い、main への push と main での手動実行では GHCR へ push して digest を出力する。
 # ci.yml はここで出力した digest を参照する。digest の更新は別の PR で行う。
 name: CI image
 
@@ -20,10 +20,29 @@ permissions:
 
 env:
   IMAGE: ghcr.io/bitzlabs/bitzskills-ci
+  # 版の判定。Dockerfile の固定値と、Core が求める Git の下限（gitutil.MIN_GIT_MINOR）。
+  EXPECTED_UV: "uv 0.11.28"
+  EXPECTED_PYTHON: "Python 3.12.13"
+  MIN_GIT: "2.30"
 
 jobs:
   build:
     name: CI用イメージのbuild
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: build
+        run: docker build -t ci-image .github/ci-image
+      - name: 版の判定
+        run: docker run --rm -e EXPECTED_UV -e EXPECTED_PYTHON -e MIN_GIT -v "$PWD/.github/ci-image:/check:ro" ci-image sh /check/check-versions.sh
+
+  push:
+    name: CI用イメージのbuildとpush
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -31,17 +50,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
       - name: build
         run: |
           docker build --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
             --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
             -t "$IMAGE:sha-${GITHUB_SHA}" .github/ci-image
-      - name: 版の確認
-        run: |
-          docker run --rm "$IMAGE:sha-${GITHUB_SHA}" sh -c \
-            'git --version && uv --version && uv run --no-project python --version'
+      - name: 版の判定
+        run: docker run --rm -e EXPECTED_UV -e EXPECTED_PYTHON -e MIN_GIT -v "$PWD/.github/ci-image:/check:ro" "$IMAGE:sha-${GITHUB_SHA}" sh /check/check-versions.sh
       - name: GHCR への push と digest の出力
-        if: github.event_name != 'pull_request'
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
