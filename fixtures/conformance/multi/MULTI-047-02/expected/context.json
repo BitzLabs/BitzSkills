@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "blocked",
+  "purpose": "implement",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::TASK-002"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-TASK-DEPENDENCY-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "先行するplatform::TASK-001が状態openで、状態doneではありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/tasks/TASK-002.md",
+        "key": "relations.requires"
+      },
+      "suggestedAction": "先行するplatform::TASK-001を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
+    },
+    {
+      "code": "CTX-TASK-DEPENDENCY-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "先行するapi::TASK-100が状態openで、状態doneではありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/tasks/TASK-002.md",
+        "key": "relations.requires"
+      },
+      "suggestedAction": "先行するapi::TASK-100を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください"
+    }
+  ]
+}

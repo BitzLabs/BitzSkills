@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "blocked",
+  "purpose": "implement",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::REQ-001"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-STATE-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "platform::REQ-001は状態draftのため目的implementに適用できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/requirements/REQ-001.md"
+      }
+    }
+  ]
+}
