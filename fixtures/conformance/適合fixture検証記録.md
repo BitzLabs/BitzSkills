@@ -1925,3 +1925,21 @@ Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051に�
 commit `a3ff5a1a493bb21ded161695b2a8f2712a09f049`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、`gateA: "Allowed"`、エラー0件を得た。
 2つのクローンでReport SHA-256が両方`850fce93aa584246c44eca52c1b51aa0fda9664b9f9ca7c7e39179d975300ef4`（変更前と同じ）、規模の検証は28件すべて`Passed`で結果のSHA-256は両方
 `b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（変更前と同じ）。fixtureとCoreは変えていないので、Gate Bは判定し直さない。
+
+## 2026-10-27: `MULTI-048`を追加した後のGate Aの再認定
+
+ルートの設定の値が空の`multiWorkspace:`の宣言を、メンバー0件の複合ワークスペースとして通していた欠陥（実装の確認事項C58）と、メンバーの設定の値が空の宣言を
+「メンバーは宣言できない」の診断にしていなかった欠陥（C63）を直した。宣言はキーの有無で判定し（複合ワークスペース仕様 §2.1）、値が空の宣言は`members: []`と同じに扱う
+（ユーザーの決定。基準版の比較も同じ）。これを固定する`MULTI-048-01`〜`MULTI-048-09`を追加した（ADR-051の追加、群`multi_null_declaration_fixtures`と
+`multi_null_base_fixtures`）。matrix、Step 5の割当て、実装計画の完了条件を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `c5a0f8b0c9ed4669b99051dd86e1fd40db973535`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`e517419f7a3be997469c8c42ee1ab4c2eaac9d6a857f82577e343eb2839285d3`。前回から変わったのは次の値だけである: 9件の追加によるmatrixと網羅の件数（526件→535件）、Step 5の件数（212件→221件）、群`multi_null_declaration_fixtures`と`multi_null_base_fixtures`の追加、実行ビットを確かめたファイル数（2993件→3015件）、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
