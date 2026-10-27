@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "035776afe06ad301e9a15c2e1be57eb5ffd53dda1003c929203bbeb7731b4d0e"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a4a37588020cda8befcbce47a7336f0e8374dd3efcd4d331a02d45d1e83cc0b"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dd9eac9446fb19085a7ac2e83c2c62c31a9b479a0f0f0da970a511ea2641d329"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 c69f66d56c07e45821e3bcc6419785c56bbbbc2a 0\t.spec/bitz.yaml\n100644 ced9b064b42bdce5d5d8514af6b19d789fa1332b 0\t.spec/requirements/REQ-001.md\n100644 cf3323c8919ac5bf0ccb77e37baddfda9deb1046 0\tapps/web/.spec/bitz.yaml\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "035776afe06ad301e9a15c2e1be57eb5ffd53dda1003c929203bbeb7731b4d0e"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a4a37588020cda8befcbce47a7336f0e8374dd3efcd4d331a02d45d1e83cc0b"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dd9eac9446fb19085a7ac2e83c2c62c31a9b479a0f0f0da970a511ea2641d329"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 c69f66d56c07e45821e3bcc6419785c56bbbbc2a 0\t.spec/bitz.yaml\n100644 ced9b064b42bdce5d5d8514af6b19d789fa1332b 0\t.spec/requirements/REQ-001.md\n100644 cf3323c8919ac5bf0ccb77e37baddfda9deb1046 0\tapps/web/.spec/bitz.yaml\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
