@@ -23,10 +23,12 @@ def carry_summary(state):
     eligible = sorted(n for n, values in state['attempts'].items() if len(values) == 1
         and values[-1]['outcome'] in successor.RETRYABLE
         and (values[-1]['outcome'] != 'interrupted' or successor.policy.classify(values[-1]['stopReason']) != 'safety'))
+    # 再試行の承認に渡す前の試行の原のhash（評価失敗のreceiptまたは停止の記録）。内容は含まない。
+    artifacts = {str(n): state['attempts'][n][-1].get('artifactSha256') for n in eligible}
     return dict(correct=count('correct'), incorrect=count('incorrect'),
         evaluationFailed=count(*successor.FAILURES.values()), interruptedSlots=count('interrupted'),
         pending=count('pending'), nextOrdinal=successor.next_fresh(state), retriesUsed=state['retriesUsed'],
-        retryCandidates=eligible, primaryReserved=state['primaryReserved'], campaigns=list(state['campaigns']))
+        retryCandidates=eligible, retryPriorArtifacts=artifacts, primaryReserved=state['primaryReserved'], campaigns=list(state['campaigns']))
 
 
 def predecessor(kind, campaign_id=None):
@@ -55,6 +57,8 @@ def predecessor(kind, campaign_id=None):
 
 def execution(execution_raw, deployment_raw, repository, *, campaign_id, harness_retries, predecessor_value):
     """いまの実行契約の値を引き継ぎ、campaign・出力先・台帳の設定だけを替えた実行契約0.3.0を作る。"""
+    # 移行のための入口なので、前の台帳の指定がない（新しい集計の始まりになる）契約は作らない。
+    require(predecessor_value is not None, 'heldout successor setup requires a predecessor')
     c = x.execution_contract(execution_raw)
     d = x.deployment_for_execution(execution_raw, deployment_raw)
     context_raw = public.guard.git(repository, 'show', c['sourceCommit']+':'+public.inventory.CONTEXT)
