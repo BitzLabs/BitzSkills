@@ -1882,3 +1882,19 @@ Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051に�
 複合ワークスペースの自ワークスペースを修飾したcoversのレビュー記録を合わせた。値は管理者が承認した文字列であり、規範文から導いたものでも、Coreの観測出力でもない。
 理由、承認、固定しているfixtureは[Coreの出力文言のレビュー記録](Coreの出力文言のレビュー記録.md)に記録した。
 fixtureの総数（521件）とStep 5の件数（207件）は変わらない。この訂正の後のGate Aの再認定は、別に記録する。
+
+## 2026-10-27: `SINGLE-026`と`MULTI-046-03`の期待値を訂正した後のGate Aの再認定
+
+上の訂正（実装の確認事項C67。`SPEC-TEST-COVERAGE-001`の文言の拡張）の後、独立レビューの指摘で群のレビュー記録を合わせた。fixtureの件数と入力は変えていない。
+診断レジストリの`TRACE-COVERAGE-INVALID`の条件の説明に「対応できない参照」を加え、網羅表が固定する`05_診断レジストリ.md`のハッシュ値を更新した。
+
+commit `2b6b807d7f4a1eb3a52d914458570b9ad07fe987`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`7e1df8087f407d72e0e39de1b5ccf0d8f6640c1384cdfac6d80782eb475eff01`（前回と同じ。件数とStepの割当ては変わらない） |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
