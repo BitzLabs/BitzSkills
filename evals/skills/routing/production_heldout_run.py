@@ -218,7 +218,7 @@ def _run_locked(bundle,proof,maximum_slots):
 
 def main(argv=None):
     parser=argparse.ArgumentParser();parser.add_argument('--bundle',required=True,type=Path)
-    parser.add_argument('--maximum-slots',type=int,choices=[1,2],default=2);parser.add_argument('--preflight-only',action='store_true')
+    parser.add_argument('--maximum-slots',type=int,choices=[1,2]);parser.add_argument('--preflight-only',action='store_true')
     # ADR-068 D2: 前のcampaignで失敗または中断した枠の再試行を承認する。モデルは起動しない。
     parser.add_argument('--authorize-retry',type=int,metavar='ORDINAL');parser.add_argument('--stop-reason')
     parser.add_argument('--prior-artifact');parser.add_argument('--evidence',action='append',default=[])
@@ -229,6 +229,8 @@ def main(argv=None):
         parser.error('retry options require --authorize-retry')
     if args_value.authorize_retry is not None and args_value.preflight_only:
         parser.error('--authorize-retry writes the ledger and cannot be combined with --preflight-only')
+    if args_value.maximum_slots is not None and (args_value.authorize_retry is not None or args_value.preflight_only):
+        parser.error('--maximum-slots applies only to evaluation runs')
     try:
         bundle=load(ROOT,args_value.bundle)
         if args_value.authorize_retry is not None:
@@ -238,7 +240,7 @@ def main(argv=None):
                 reason=args_value.reason,independent_review_raw=review)
             print(io.encoded(result).decode())
             return 0
-        result=preflight_only(bundle) if args_value.preflight_only else run(bundle,maximum_slots=args_value.maximum_slots)
+        result=preflight_only(bundle) if args_value.preflight_only else run(bundle,maximum_slots=args_value.maximum_slots or 2)
         print(io.encoded(result).decode())
         return 1 if result['status']=='heldout_globally_stopped' else 0
     except BaseException as exc:
