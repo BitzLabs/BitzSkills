@@ -389,7 +389,8 @@ def main():
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
-    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=180)
+    # 監査試験は群の追加とともに増え、2026-10-27には負荷なしで約170秒かかったため、上限を600秒へ広げた（確認事項C70）。
+    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=600)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     checks["fixture_coverage"] = fixture_coverage(checks)
     checks["step_assignment"] = validate_step_assignment()
