@@ -12,7 +12,8 @@
 - `summary`のIDの形は規範文で1つに決まらないため、`CTX-STATE-SUPERSEDED-*`と`verify`の先例にそろえる（ユーザーの決定 2026-10-26）。
 
 この試験の対象:
-1. 作業ワークスペースの文書・規範文のIDも、他のメンバーのIDと同じく修飾する（起点、依存先、先行するTASK、テスト対応、TASK対応）。
+1. 作業ワークスペースの文書・規範文のIDも、他のメンバーのIDと同じく修飾する（起点、依存先、先行するTASK、`cancelled`と`done`のTASKの起点、
+   MUSTとSHOULDのテスト対応、TASK対応）。
 2. 他のメンバーを作業ワークスペースにしたときは、そのメンバーのIDで修飾する。
 3. 対照: 単一ワークスペースでは修飾しない。
 4. 結果は`result.schema.json`に適合する。
@@ -58,12 +59,14 @@ def _statement(stmt_id: str, modality: str = "MUST") -> str:
     return f"- [{stmt_id}] [ACTOR:TargetSystem] [ALWAYS] [{modality}] [CONSTRAINT] {stmt_id}を守る。\n"
 
 
-def _req(doc_id: str, status: str = "approved", *, requires: list[str] | None = None, tested: bool = True) -> str:
+def _req(
+    doc_id: str, status: str = "approved", *, requires: list[str] | None = None, tested: bool = True, modality: str = "MUST"
+) -> str:
     relations = f"relations:\n  requires: [{', '.join(requires)}]\n" if requires else ""
     tests = f"tests:\n  - path: tests/t.py\n    covers: [{doc_id}:AC-01]\n    command: t\n" if tested else ""
     return (
         f"---\nid: {doc_id}\ntitle: {doc_id}の文書\nstatus: {status}\n{relations}{tests}---\n\n"
-        f"# {doc_id} {doc_id}の文書\n\n## Intent\n\n意図。\n\n## Acceptance Criteria\n\n{_statement(f'{doc_id}:AC-01')}\n"
+        f"# {doc_id} {doc_id}の文書\n\n## Intent\n\n意図。\n\n## Acceptance Criteria\n\n{_statement(f'{doc_id}:AC-01', modality)}\n"
         "## Verification\n\n未証明。\n"
     )
 
@@ -129,6 +132,9 @@ class _Base(unittest.TestCase):
         _write(self.root, f"{spec}/REQ-050.md", _req("REQ-050", tested=False))
         _write(self.root, ".spec/tasks/TASK-001.md", _task("TASK-001", "open", "REQ-050:AC-01"))
         _write(self.root, ".spec/tasks/TASK-002.md", _task("TASK-002", "open", "REQ-050:AC-01", requires=["TASK-001"]))
+        _write(self.root, f"{spec}/REQ-060.md", _req("REQ-060", tested=False, modality="SHOULD"))
+        _write(self.root, ".spec/tasks/TASK-003.md", _task("TASK-003", "cancelled", "REQ-050:AC-01"))
+        _write(self.root, ".spec/tasks/TASK-004.md", _task("TASK-004", "done", "REQ-050:AC-01"))
         if self.multi:
             _write(self.root, f"{spec}/REQ-004.md", _req("REQ-004", requires=["api::REQ-100"]))
             api = "services/api/.spec"
@@ -188,6 +194,22 @@ class StateSummaryTests(_Base):
         )
 
 
+class TaskStateSummaryTests(_Base):
+    """TASKを起点にした`CTX-STATE-001`（`cancelled`、目的`implement`の起点の`done`）。"""
+
+    def test_cancelled_task_is_qualified(self):
+        result, _ = self.context("TASK-003", "--purpose", "implement")
+        self.assertEqual(
+            self.summaries(result, "CTX-STATE-001"), ["platform::TASK-003は状態cancelledのため目的implementに適用できません"]
+        )
+
+    def test_done_task_as_the_implement_origin_is_qualified(self):
+        result, _ = self.context("TASK-004", "--purpose", "implement")
+        self.assertEqual(
+            self.summaries(result, "CTX-STATE-001"), ["platform::TASK-004は状態doneのため目的implementに適用できません"]
+        )
+
+
 class TaskDependencySummaryTests(_Base):
     def test_prerequisite_of_the_active_workspace_is_qualified(self):
         result, _ = self.context("TASK-002", "--purpose", "implement")
@@ -211,6 +233,20 @@ class CoverageSummaryTests(_Base):
         result, _ = self.context("REQ-050", "--purpose", "implement")
         self.assertEqual(
             self.summaries(result, "CTX-COVERAGE-TEST-001"), ["対象規範文MUST platform::REQ-050:AC-01にテスト対応がありません"]
+        )
+
+    def test_should_coverage_summaries_are_qualified(self):
+        for purpose in ("implement", "verify"):
+            result, _ = self.context("REQ-060", "--purpose", purpose)
+            self.assertEqual(
+                self.summaries(result, "CTX-COVERAGE-TEST-001"),
+                ["対象規範文SHOULD platform::REQ-060:AC-01にテスト対応がありません"],
+                purpose,
+            )
+        result, _ = self.context("REQ-060", "--purpose", "implement")
+        self.assertEqual(
+            self.summaries(result, "CTX-COVERAGE-TASK-001"),
+            ["目的implementの対象規範文SHOULD platform::REQ-060:AC-01を実装するTASKがありません"],
         )
 
     def test_verify_purpose_coverage_summary_matches_verify(self):
