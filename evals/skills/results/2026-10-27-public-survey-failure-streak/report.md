@@ -60,6 +60,23 @@ uv run --project plugins/bitz-core --with jsonschema==4.23.0 python \
 - 35枠の `ValueError` の文言と、拒否した検査の名前（非公開の原記録にあり、公開 archive には含まれない）
 - 58枠目の直前に catalog または通知が変わった時刻
 
+## 原記録を持つ環境での確認方法
+
+取込み処理は拒否の型だけを残し、文言を保存していない。原記録を持つ作業ツリーのルートで次を実行すると、
+取込み後の検査を原記録に対して読取り専用でやり直し、拒否した検査の固定の文言と発生箇所を枠ごとにまとめる。
+`--bundle` には、公開調査で `production_matrix_survey_run.py` に渡した bundle のディレクトリを指定する。
+
+```text
+uv run --project plugins/bitz-core --with jsonschema==4.23.0 python \
+  evals/skills/routing/production_failure_diagnosis.py --bundle .venv/<公開調査のbundle> --ordinals 58-92
+```
+
+- 書込み系の操作（ファイルの作成・変更・削除、git の書込み系の副コマンド、git 以外の子プロセス）は
+  プロセス内で遮断し、前後で原記録の属性と hash が変わらないことを確かめる。
+- 出力は、例外の型、評価基盤のコードに文字列リテラルとして書かれた拒否の文言、評価基盤のコード内の発生箇所だけである。
+  値を埋め込んだ文言、ケース本文、応答、原記録の内容は出さない。
+- 結果の `groups` が1種類にまとまり、その文言が 2026-10-20 の保持評価の停止と同じ検査なら、原因は同じと判断できる。
+
 ## 判断と今後の扱い
 
 - 35枠は**スキルの発火を測っていない**。Skill Gate 1 の判断材料に使わない。分母から除くのではなく、
