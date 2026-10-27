@@ -110,7 +110,8 @@ class AuthorizeRetryCliTests(unittest.TestCase):
     def test_retry_options_need_the_retry_entry_and_no_preflight(self):
         base = ['--bundle', '.venv/heldout-bound-synthetic']
         for extra in [['--stop-reason', 'provider_drift'], ['--evidence', 'e'*64], ['--reason', 'x'],
-                ['--authorize-retry', '1', '--preflight-only']]:
+                ['--authorize-retry', '1', '--preflight-only'], ['--authorize-retry', '1', '--maximum-slots', '1'],
+                ['--preflight-only', '--maximum-slots', '1']]:
             with self.subTest(extra=extra), patch.object(run, 'load') as load, \
                     patch.object(run, 'run') as batch, self.assertRaises(SystemExit) as caught, \
                     redirect_stdout(stream.StringIO()), patch('sys.stderr', stream.StringIO()):
