@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "fixtures"))
 sys.path.insert(0, str(ROOT / "tests/bitz-core"))
 from conformance.selection import partition, step_ids
-from conformance.reports import merge_reports
+from conformance.reports import environment_differences, merge_reports
 import certify_gate_b as certification
 
 
@@ -118,7 +118,11 @@ def collect(evidences, *, step, shards, replicas, commit, run_id):
     reports, parsers = [], []
     for replica in range(1, replicas + 1):
         workers = [indexed[(replica, shard)] for shard in range(1, shards + 1)]
-        report = merge_reports([w["conformance"]["report"] for w in workers], groups, identifiers)
+        try:
+            report = merge_reports([w["conformance"]["report"] for w in workers], groups, identifiers)
+        except ValueError as error:
+            # 独立2組のときは、どちらの組で起きたかを示す。
+            raise ValueError(f"組{replica}: {error}" if replicas > 1 else str(error)) from error
         if report["allPassed"] is not True:
             raise ValueError("全fixtureが`passed`ではありません")
         reports.append(report)
@@ -131,6 +135,8 @@ def collect(evidences, *, step, shards, replicas, commit, run_id):
                 parsers.append({"exitCode": 0, "stdout": parser["stdout"].encode(), "error": None})
             elif parser is not None:
                 raise ValueError("構文解析器のアダプターの実行位置が不正です")
+    if any(report["environment"] != reports[0]["environment"] for report in reports[1:]):
+        raise ValueError("独立した組の間で実行環境が一致しません: " + environment_differences(reports, label="組"))
     result = {"commit": commit, "step": step, "replicas": replicas, "shards": shards,
               "fixtureCount": len(identifiers), "result": "Passed", "errors": [],
               "reports": [certification._conformance_digest(json.dumps(r).encode()) for r in reports]}

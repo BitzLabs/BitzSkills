@@ -174,8 +174,24 @@ class CollectionTests(unittest.TestCase):
         for row in rows[1:4]:
             row["conformance"]["report"]["environment"]["git"] = "git version 2.55.0"
         with self.assertRaises(ValueError) as caught: collect(rows)
-        self.assertEqual("分割間で実行環境が一致しません: git（分割1: git version 2.56.0、分割2: git version 2.55.0、"
+        self.assertEqual("組1: 分割間で実行環境が一致しません: git（分割1: git version 2.56.0、分割2: git version 2.55.0、"
                          "分割3: git version 2.55.0、分割4: git version 2.55.0）", str(caught.exception))
+
+    def test_environment_mismatch_names_the_replica_and_missing_items(self):
+        rows = evidence_set()
+        for row in rows[4:]:
+            row["conformance"]["report"]["environment"]["python"] = "3.12.4"
+        with self.assertRaises(ValueError) as caught: collect(rows)
+        self.assertEqual("独立した組の間で実行環境が一致しません: python（組1: 3.12.3、組2: 3.12.4）", str(caught.exception))
+        rows = evidence_set()
+        rows[5]["conformance"]["report"]["environment"]["git"] = None
+        with self.assertRaises(ValueError) as caught: collect(rows)
+        self.assertEqual("組2: 分割間で実行環境が一致しません: git（分割1: （なし）、分割2: None、分割3: （なし）、"
+                         "分割4: （なし））", str(caught.exception))
+        single = evidence_set(replicas=1)
+        single[0]["conformance"]["report"]["environment"]["python"] = "3.12.4"
+        with self.assertRaises(ValueError) as caught: collect(single, replicas=1)
+        self.assertTrue(str(caught.exception).startswith("分割間で実行環境が一致しません: python（分割1: 3.12.4、"))
 
     def test_parser_missing_failed_wrong_location_and_mismatch_rejected(self):
         for mode in ("missing", "failed", "mismatch", "wrong-location", "empty"):
