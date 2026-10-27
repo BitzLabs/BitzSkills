@@ -193,7 +193,8 @@ IMPLEMENTS_PATH_DRAFT = "状態draftの実装パスは未作成です"
 TEST_PATH_MISSING = "テストのパスが存在しません"
 TEST_PATH_DRAFT = "状態draftのテストのパスは未作成です"
 
-TEST_COVERAGE_INVALID = "フィールドcoversが存在しない規範文を参照しています"
+# 参照先の不在と、対応できない参照（`refines`していない規範文など）の両方に使う（C67。2026-10-26に管理者が承認。一字も変えない）。
+TEST_COVERAGE_INVALID = "フィールドcoversの参照先が存在しないか、対応できません"
 
 
 # --- TASK境界（`CHECK-TASK-*`） -----------------------------------------------
