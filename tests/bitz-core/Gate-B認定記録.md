@@ -900,3 +900,22 @@ Core固有の単体試験は1057件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1057件がすべて成功した。
+
+## 2026-10-27: 複合ワークスペースの診断の文言で作業ワークスペースのIDも修飾するようにした後のStep 1〜5の再判定
+
+`targetexpand.py`と`context.py`で、複合ワークスペースの状態、TASKの依存、カバレッジの診断の`summary`（TASKの依存は`suggestedAction`も）に差し込む作業ワークスペースの
+文書IDと規範文IDを修飾するようにした（実装の確認事項C47・C65）。これを固定する`MULTI-047-01`〜`MULTI-047-05`（Step 5）を追加した。修正前のCore（コミット`7fca47d3`の版）では、
+追加した5件がすべて非成功となり、既存の521件はすべて通過することを確かめた。修正後のCoreでは526件すべてが`passed`となる。
+
+コミット`af38883cf2db9be32c30c0f8ebeab664d70b84fd`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 526件（`MULTI-047-01`〜`MULTI-047-05`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`14468f1288036d7a5573f5e238774347f2d3bc8973e52bbfbde8224d0111f48e` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1068件がすべて成功した。
