@@ -12,12 +12,14 @@
 - ユーザーの決定（2026-10-26）: 値が空の宣言は`members: []`と同じ「設定キーmultiWorkspace.membersは1件以上指定してください」で止める。
 
 この試験の対象:
-1. ルートの空の宣言は、全体操作と単独操作のすべてで`SPEC-MULTI-CONFIG-001`の1件だけで止め、`members: []`と同じ結果になる。`doctor`の`catalog`は`failed`。
+1. ルートの空の宣言は、全体操作と単独操作（`check`、`verify`、`doctor`、`context`）のすべてで`SPEC-MULTI-CONFIG-001`の1件だけで止め、`members: []`と同じ結果になる。`doctor`の`catalog`は`failed`。
 2. 未登録のメンバーの設定があっても、設定不適合（900）が未登録（960）より先に1件だけ返る。
 3. ルートが`workspace.id`も省略していれば、ルートのIDの省略（C42）で止まる（先に判定する）。
 4. メンバーの空の宣言は`SPEC-MULTI-MEMBER-001`（メンバーは宣言できない）。
 5. 対照: キー`multiWorkspace`のない設定は単一ワークスペースとして動く。
-6. 結果は`result.schema.json`に適合する。
+6. 基準版（`--base`）のルートの設定の値が空の宣言も、現在版と同じく`members: []`と同じに扱う（基準版の未登録の比較、§4.1の写像に当たらないこと）。
+7. 入れ子の複合ワークスペース（外側の除外した範囲の中）の値が空の宣言も、メンバー0件の設定不適合。
+8. 結果は`result.schema.json`に適合する。
 """
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ import unittest
 from pathlib import Path
 
 from bitz import check as check_mod
+from bitz import context as context_mod
 from bitz import doctor as doctor_mod
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
@@ -123,6 +126,7 @@ class _Base(unittest.TestCase):
             ("check", self.run_op(check_mod, "check", cwd, "--full")),
             ("verify", self.run_op(verify_mod, "verify", cwd)),
             ("doctor", self.run_op(doctor_mod, "doctor", cwd)),
+            ("context", self.run_op(context_mod, "context", cwd, "REQ-001", "--purpose", "implement")),
         )
 
     @staticmethod
@@ -192,6 +196,82 @@ class NoDeclarationControlTests(_Base):
         self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
         self.assertEqual(result["workspace"], {"id": "platform", "path": "."})
         self.assertNotIn("multiWorkspace", result)
+
+
+class BaseNullDeclarationTests(unittest.TestCase):
+    """基準版のルートの設定が値の空の宣言を持つとき、`members: []`の基準版と同じ結果になる（基準版の比較、§2.1・§4.1・§8）。"""
+
+    def setUp(self):
+        self.results: list[dict] = []
+
+    def tearDown(self):
+        if self.results:
+            _validate_against_schema(self.results)
+
+    def build(self, base_root_yaml: str, base_files: dict[str, str]) -> Path:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        _write(root, ".spec/bitz.yaml", base_root_yaml)
+        _write(root, "tests/t.py", "def test_t():\n    assert True\n")
+        for rel, content in base_files.items():
+            _write(root, rel, content)
+        _git(root, "init", "-q", "--initial-branch=main")
+        _git(root, "add", ".")
+        _git(root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base")
+        _write(
+            root, ".spec/bitz.yaml",
+            CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n" + VERIFY,
+        )
+        _write(root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
+        _git(root, "add", ".")
+        _git(root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "current")
+        return root
+
+    def check_base(self, root: Path):
+        parsed = parse_argv(["check", "--all-workspaces", "--base", "HEAD~1", "--format", "json"])
+        result, code = check_mod.run(parsed, str(root), dict(os.environ))
+        self.results.append(result)
+        return result["status"], code, [(d["code"], d["source"].get("path")) for d in result["diagnostics"]]
+
+    def compare(self, base_head: str, base_files: dict[str, str]):
+        null_root = self.build(base_head + "multiWorkspace:\n" + VERIFY, base_files)
+        empty_root = self.build(base_head + "multiWorkspace:\n  members: []\n" + VERIFY, base_files)
+        return self.check_base(null_root), self.check_base(empty_root)
+
+    def test_unregistered_config_in_the_base_is_compared(self):
+        null_result, empty_result = self.compare(
+            CONFIG + "workspace:\n  id: platform\n",
+            {".spec/requirements/REQ-001.md": REQ, "apps/web/.spec/bitz.yaml": CONFIG + "workspace:\n  id: web\n"},
+        )
+        self.assertEqual(null_result, empty_result)
+        self.assertEqual(null_result[:2], ("blocked", 2))
+        self.assertIn(("SPEC-MULTI-UNREGISTERED-001", "apps/web/.spec/bitz.yaml"), null_result[2])
+
+    def test_base_without_root_id_is_not_mapped_as_a_single_workspace(self):
+        null_result, empty_result = self.compare(CONFIG, {".spec/requirements/REQ-001.md": REQ})
+        self.assertEqual(null_result, empty_result)
+        self.assertEqual(null_result[:2], ("failed", 1))
+        self.assertIn("SPEC-STATE-TRANSITION-001", [code for code, _path in null_result[2]])
+
+
+class NestedNullDeclarationTests(_Base):
+    """外側の除外した範囲の中の入れ子の複合ワークスペースの値が空の宣言（複合ワークスペース仕様 §2.1）。"""
+
+    root_yaml = (
+        CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"
+        + "  exclude:\n    - vendor\n" + VERIFY
+    )
+    extra = {
+        "apps/web/.spec/bitz.yaml": CONFIG + "workspace:\n  id: web\n",
+        "vendor/.spec/bitz.yaml": CONFIG + "workspace:\n  id: vend\nmultiWorkspace:\n",
+    }
+
+    def test_nested_null_declaration_stops_with_members_required(self):
+        result, code = self.run_op(check_mod, "check", self.root / "vendor", "--all-workspaces")
+        self.assertEqual((result["status"], code), ("failed", 1), result["diagnostics"])
+        self.assertEqual(self.diags(result), [("SPEC-MULTI-CONFIG-001", MEMBERS_REQUIRED, "multiWorkspace.members")])
+        self.assertEqual(result["diagnostics"][0]["source"]["workspaceId"], "vend")
 
 
 if __name__ == "__main__":
