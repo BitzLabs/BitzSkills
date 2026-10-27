@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'evals/skills/routing'))
@@ -17,6 +18,10 @@ import production_matrix_evidence as matrix_evidence
 
 class FailureDiagnosisTests(unittest.TestCase):
     def setUp(self):
+        # 検査のコードの場所は実行時のcwdで決まる。試験はcwdによらずこのリポジトリのコードを見る。
+        routing = patch.object(diagnosis, 'CHECK_ROUTING', (ROOT/'evals/skills/routing').resolve())
+        routing.start()
+        self.addCleanup(routing.stop)
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.base = Path(temp.name)/'attempt-0058'
@@ -119,6 +124,10 @@ class FailureDiagnosisTests(unittest.TestCase):
         (base/'capture-stop.json').write_bytes(b'{"reason":"primary-capture-rejected","errorType":"ValueError"}')
         return base
 
+    def test_fingerprint_reads_hardlinked_work_files(self):
+        os.link(self.base/'rpc-out.jsonl', self.base/'work'/'linked')
+        self.assertEqual('reverified', diagnosis.recheck(self.base, lambda: None)['status'])
+
     def test_stop_marker_is_hidden_only_from_the_attempt_listing(self):
         base = self.full_attempt()
         check = lambda: canary_evidence.artifact_names(base, additional_artifacts=matrix_evidence.PROVIDER_ARTIFACTS)
@@ -139,8 +148,9 @@ class FailureDiagnosisTests(unittest.TestCase):
             diagnosis.check_source(ROOT, '0'*40)
         status = subprocess.run(['git', 'status', '--porcelain', '--', 'evals/skills/routing'], cwd=ROOT,
             capture_output=True, text=True).stdout
-        if status == '' and diagnosis.CHECK_ROUTING == (ROOT/'evals/skills/routing').resolve():
-            diagnosis.check_source(ROOT, head)
+        if status != '':
+            self.skipTest('evals/skills/routing has local changes')
+        diagnosis.check_source(ROOT, head)
 
     def test_stop_summary_reads_only_content_free_fields(self):
         summary = diagnosis.stop_summary(self.base)
