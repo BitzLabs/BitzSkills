@@ -484,3 +484,42 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 ### 固定しない範囲
 
 - 「参照先が存在しない」場合と「対応できない」場合の`summary`を、別の文言に分けることは固定しない。この2つは同じ条件IDなので、同じ文型の1つの文言で扱う。
+
+## 2026-10-26（2026-10-27 適用）: 複合ワークスペースの診断の文言の作業ワークスペースのIDの修飾（C47・C65）
+
+### 変更の理由
+
+- 実装の確認事項C47・C65。複合ワークスペースの次の`summary`と`suggestedAction`は、作業ワークスペースの文書IDと規範文IDを修飾せず、他のメンバーのIDだけを修飾していた。
+  同じ出力の中で修飾の有無が混在し、すでに修飾している`CTX-STATE-SUPERSEDED-*`（`MULTI-038-20`）や、`verify`の`CTX-COVERAGE-TEST-001`とも食い違った。
+  - `CTX-STATE-001`（目的に適用できない状態）の`summary`
+  - `CTX-TASK-DEPENDENCY-001`（先行するTASKが未完了）の`summary`と`suggestedAction`
+  - `context`の`CTX-COVERAGE-TASK-001`と`CTX-COVERAGE-TEST-001`の`summary`
+- 複合ワークスペース仕様 §4・§6は、複合ワークスペース内で実行したCore操作の文書`id`、規範文ID、`roots`を複合ワークスペースの正規形式（修飾ID）で返すと定める。
+  表記規則 §3.5の6・7は、差し込む値をそのまま差し込み、同じ条件IDの診断は操作によらず同じ文型にすると定める。
+  ただし、`summary`の中のIDの形を規範文は1つに定めない。
+
+### 管理者の決定
+
+- 2026-10-26、人間の管理者（ユーザー）が、次の形を決定した（ADR-062 Decision 2）。適用は2026-10-27である。
+- **この形は、規範文から一意に導いた値ではなく、管理者が決定した値である。**
+  すでに修飾している`CTX-STATE-SUPERSEDED-*`と`verify`の`CTX-COVERAGE-TEST-001`にそろえ、作業ワークスペースのIDも`<ワークスペース>::`で修飾する。
+- **文型（文言のひな形、`messages.py`）は変えない。** 差し込む値の形だけが変わる。単一ワークスペースの出力は変わらない（IDを修飾しない）。
+
+| 診断 | 複合ワークスペースの文言（作業ワークスペースが`platform`のとき） | 旧い書き方（修正前のCore） | 固定しているfixture |
+|---|---|---|---|
+| `CTX-STATE-001`の`summary` | `platform::REQ-001は状態draftのため目的implementに適用できません` | `REQ-001は状態draftのため目的implementに適用できません` | `MULTI-047-01`、`MULTI-047-04` |
+| `CTX-TASK-DEPENDENCY-001`の`summary` | `先行するplatform::TASK-001が状態openで、状態doneではありません` | `先行するTASK-001が状態openで、状態doneではありません` | `MULTI-047-02`、`MULTI-047-05` |
+| `CTX-TASK-DEPENDENCY-001`の`suggestedAction` | `先行するplatform::TASK-001を完了して状態doneにするか、起点のTASKのフィールドrequiresから外してください` | `先行するTASK-001を完了して…`（同じ文型） | `MULTI-047-02`、`MULTI-047-05` |
+| `CTX-COVERAGE-TASK-001`の`summary` | `目的implementの対象規範文MUST platform::REQ-050:AC-01を実装するTASKがありません` | `…MUST REQ-050:AC-01を…` | `MULTI-047-03` |
+| `CTX-COVERAGE-TEST-001`の`summary`（`context`） | `対象規範文MUST platform::REQ-050:AC-01にテスト対応がありません` | `…MUST REQ-050:AC-01に…` | `MULTI-047-03` |
+
+- 固定するfixtureは`MULTI-047-01`〜`05`の5件で、生成器・監査は`multi_qualified_summary_fixtures.py`である（[レビュー記録](multi/複合ワークスペースの診断のsummaryの修飾のレビュー記録.md)）。
+  作業ワークスペースがルート以外のとき（`MULTI-047-05`）は、そのメンバーのID（`api::TASK-100`）で修飾する。
+- 既存のfixtureの期待値は変えない。既存の複合ワークスペースのfixtureで、この4つの診断を期待値に持つものはなかった（複合ワークスペースの`context`の警告・状態の診断は、
+  `MULTI-038-20`の`CTX-STATE-SUPERSEDED-001`だけが固定していた）。単一ワークスペースの`SINGLE-051`、`SINGLE-144`、`SINGLE-159`、`SINGLE-142`などは、修飾しない形のまま通る。
+
+### 固定しない範囲
+
+- `verify`の`CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`（検証対象の`diagnostics`）の複合ワークスペースでの修飾。この群は`context`だけを固定する。`verify`の修飾は単体試験で固定している
+  （`tests/bitz-core/test_multi_summary_qualified_ids.py`）。
+- 状態の診断で止まった結果の`resolution.workspaces`と`crossWorkspaceEdges`。規範が定めていないので、強い関係の失敗（`MULTI-038-08`、`MULTI-027-01`）と同じ、起点ワークスペースだけ・横断するエッジなしを置いた。

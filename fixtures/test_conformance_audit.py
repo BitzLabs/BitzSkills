@@ -2,6 +2,7 @@
 import json
 import copy
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -83,6 +84,7 @@ from conformance import doctor_plugin_fixtures
 from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
+from conformance import multi_qualified_summary_fixtures
 from conformance import multi_verify_order_fixtures
 from conformance import multi_early_report_fixtures
 from conformance import multi_workspace_id_fixtures
@@ -4483,6 +4485,262 @@ class AuditTests(unittest.TestCase):
                 # 対照に拒否する`covers`を持ち込む。
                 (web + "TECH-010.md", "covers: [REQ-001:AC-01, TECH-010:C-01]", "covers: [REQ-001:AC-01, TECH-010:C-01, REQ-002:AC-01]"),
             ],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe(repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_qualified_summary_fixtures(self):
+        """`MULTI-047-01`〜`05`: 複合ワークスペースの診断のsummaryが作業ワークスペースのIDも修飾することを固定する（確認事項C47・C65）。"""
+        module = multi_qualified_summary_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-047-{number:02d}" for number in range(1, 6)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_qualified_summary_reference_rules(self):
+        """状態・先行TASK・カバレッジの診断の参照計算（関係・トレースモデル §6.2、結果・診断・終了コード §7）と、修正前の書き方の再現。"""
+        module = multi_qualified_summary_fixtures
+
+        def document(workspace, identifier, kind, status, body="", **relations):
+            return {"workspaceId": workspace, "kind": kind, "body": body, "path": f".spec/{identifier}.md",
+                    "frontmatter": {"id": identifier, "title": "t", "status": status, "relations": dict(relations)}}
+
+        def statement(identifier):
+            return f"- [{identifier}:AC-01] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n"
+
+        documents = {
+            "platform::TASK-002": document("platform", "TASK-002", "task", "open", requires=["TASK-001", "api::TASK-100", "api::TASK-101"]),
+            "platform::TASK-001": document("platform", "TASK-001", "task", "cancelled"),
+            "api::TASK-100": document("api", "TASK-100", "task", "done"),
+            "api::TASK-101": document("api", "TASK-101", "task", "open"),
+            "platform::REQ-001": document("platform", "REQ-001", "requirement", "approved", statement("REQ-001"), requires=["REQ-002", "api::REQ-003"]),
+            "platform::REQ-002": document("platform", "REQ-002", "requirement", "approved", statement("REQ-002"), requires=["api::REQ-003"]),
+            "api::REQ-003": document("api", "REQ-003", "requirement", "outdated", statement("REQ-003")),
+        }
+        # 先行TASKは、状態doneでないもの（cancelledとopen）だけを、宣言の順に返す。doneは返さない。
+        found = module.reference_blocked(documents, "platform::TASK-002", "implement")
+        self.assertEqual([item["summary"] for item in found], [
+            "先行するplatform::TASK-001が状態cancelledで、状態doneではありません",
+            "先行するapi::TASK-101が状態openで、状態doneではありません"])
+        self.assertEqual([item["code"] for item in found], ["CTX-TASK-DEPENDENCY-001"] * 2)
+        # 起点がTASKで状態openでなければ、先行TASKを検査せず、起点のCTX-STATE-001だけを返す（SINGLE-159と同じ）。
+        documents["platform::TASK-002"]["frontmatter"]["status"] = "done"
+        found = module.reference_blocked(documents, "platform::TASK-002", "implement")
+        self.assertEqual([item["summary"] for item in found], ["platform::TASK-002は状態doneのため目的implementに適用できません"])
+        # 起点がTASKでなければ、requiresで到達した文書のうち状態approvedでないもの（1回だけ）を、発生元のワークスペースIDの辞書順に返す。
+        found = module.reference_blocked(documents, "platform::REQ-001", "implement")
+        self.assertEqual([item["summary"] for item in found], ["api::REQ-003は状態outdatedのため目的implementに適用できません"])
+        # 修正前の書き方は、作業ワークスペースの文書だけ修飾しない。
+        documents["platform::REQ-002"]["frontmatter"]["status"] = "draft"
+        wanted = ["api::REQ-003は状態outdatedのため目的implementに適用できません", "platform::REQ-002は状態draftのため目的implementに適用できません"]
+        self.assertEqual([item["summary"] for item in module.reference_blocked(documents, "platform::REQ-001", "implement")], wanted)
+        self.assertEqual([item["summary"] for item in module.reference_blocked(documents, "platform::REQ-001", "implement", qualify_active=False)],
+                         [wanted[0], "REQ-002は状態draftのため目的implementに適用できません"])
+        # カバレッジの診断: 未対応と未テストをそれぞれ返し、発生元のワークスペースID、path、codeの順に並べる。規範強度は規範文から読む。
+        targets = ["platform::REQ-001:AC-01", "api::REQ-003:AC-01"]
+        found = module.reference_coverage_diagnostics(documents, targets, ["api::REQ-003:AC-01"], ["platform::REQ-001:AC-01"])
+        self.assertEqual([(item["source"]["workspaceId"], item["code"], item["summary"]) for item in found], [
+            ("api", "CTX-COVERAGE-TEST-001", "対象規範文MUST api::REQ-003:AC-01にテスト対応がありません"),
+            ("platform", "CTX-COVERAGE-TASK-001", "目的implementの対象規範文MUST platform::REQ-001:AC-01を実装するTASKがありません")])
+        found = module.reference_coverage_diagnostics(documents, targets, [], [], qualify_active=False)
+        self.assertEqual([item["summary"] for item in found], [
+            "目的implementの対象規範文MUST api::REQ-003:AC-01を実装するTASKがありません", "対象規範文MUST api::REQ-003:AC-01にテスト対応がありません",
+            "目的implementの対象規範文MUST REQ-001:AC-01を実装するTASKがありません", "対象規範文MUST REQ-001:AC-01にテスト対応がありません"])
+
+    def test_multi_qualified_summary_expected_diagnostics_distinguish_the_defect(self):
+        """リテラルの期待する診断は、修正前の書き方（作業ワークスペースのIDを修飾しない）の診断と異なり、作業ワークスペースと他のメンバーのIDが同じ出力に出る。"""
+        module = multi_qualified_summary_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                single, _, _, documents = module.alias.load_tree(audit.FIXTURES / "multi" / identifier / "repo")
+                self.assertFalse(single)
+                active = case["workspace"]
+                if case["outcome"] == "blocked":
+                    defective = module.reference_blocked(documents, case["root"], "implement", qualify_active=False, active=active)
+                else:
+                    ordered, edges, _ = module.order.reference_order(documents, case["root"], "implement")
+                    targets = module.order.reference_targets(documents, ordered, edges, case["root"])
+                    addressed, tested, _, _ = module.order.reference_coverage(documents, ordered, targets)
+                    defective = module.reference_coverage_diagnostics(documents, targets, addressed, tested, qualify_active=False, active=active)
+                expected = module.EXPECTED_DIAGNOSTICS[identifier]
+                self.assertEqual(len(defective), len(expected))
+                self.assertNotEqual([item["summary"] for item in defective], [item["summary"] for item in expected])
+                # 修正前の書き方では、作業ワークスペースのIDだけが修飾されない。他のメンバーのIDは変わらない。
+                changed = [(old["summary"], new["summary"]) for old, new in zip(defective, expected) if old["summary"] != new["summary"]]
+                for old, new in changed:
+                    self.assertEqual(old, new.replace(f"{active}::", "", 1))
+                unchanged = [new for old, new in zip(defective, expected) if old["summary"] == new["summary"]]
+                self.assertEqual(bool(unchanged), identifier != "MULTI-047-01")
+                # 期待するsummaryに現れるIDは、すべて修飾している（`<ワークスペース>::`のないREQ-/TECH-/TASK-のIDがない）。
+                for item in expected:
+                    for text in (item["summary"], item.get("suggestedAction", "")):
+                        self.assertFalse(re.search(r"(?<![:A-Za-z0-9_-])(REQ|TECH|TASK)-[0-9]+", text), text)
+        # 順序: 発生元のワークスペースID、path、codeの辞書順（01〜05の期待値の並びがこの規則に従う）。
+        for identifier, expected in module.EXPECTED_DIAGNOSTICS.items():
+            if identifier == "MULTI-047-02" or identifier == "MULTI-047-05":
+                continue  # 同じ発生元・同じコードなので宣言の順
+            with self.subTest(order=identifier):
+                keys = [(item["source"]["workspaceId"], item["source"]["path"], item["code"]) for item in expected]
+                self.assertEqual(keys, sorted(keys))
+
+    def test_multi_qualified_summary_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_qualified_summary_fixtures
+
+        def unqualify(value):
+            active = value["workspace"]["id"]
+            for item in value["diagnostics"]:
+                for key in ("summary", "suggestedAction"):
+                    if key in item:
+                        item[key] = item[key].replace(f"{active}::", "", 1)
+
+        def swap(values, first, second):
+            values[first], values[second] = values[second], values[first]
+
+        results = {
+            "status": lambda v: v.update(status="failed"),
+            "status-passed": lambda v: v.update(status="passed"),
+            "unqualify-active": lambda v: unqualify(v),
+            "summary-other-unqualified": lambda v: v["diagnostics"][-1].update(summary=v["diagnostics"][-1]["summary"].replace("api::", "").replace("platform::", "")),
+            "summary-first": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"].replace("::", "-")),
+            "action-unqualified": lambda v: v["diagnostics"][0].update(suggestedAction=v["diagnostics"][0]["suggestedAction"].replace("::", "")),
+            "action-drop": lambda v: v["diagnostics"][0].pop("suggestedAction"),
+            "action-add": lambda v: v["diagnostics"][0].update(suggestedAction="修正してください"),
+            "diagnostics-drop": lambda v: v["diagnostics"].pop(),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-reverse": lambda v: v["diagnostics"].reverse(),
+            "diagnostics-duplicate": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "diagnostics-extra": lambda v: v["diagnostics"].append({"code": "CTX-STATE-001"}),
+            "code": lambda v: v["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="failed"),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            "source-null": lambda v: v["diagnostics"][0]["source"].update(workspaceId=None),
+            "source-path": lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-999.md"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="relations.refines"),
+            "source-line": lambda v: v["diagnostics"][0]["source"].update(line=1),
+            "evidence": lambda v: v["diagnostics"][0].update(evidence="TASK-001"),
+            "digest": lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+            "digest-set": lambda v: v.update(contextDigest="sha256:" + "1" * 64) if v["contextDigest"] is None else v.update(contextDigest=None),
+            "resolution-complete": lambda v: v["resolution"].update(complete=not v["resolution"]["complete"]),
+            "resolution-unresolved": lambda v: v["resolution"].update(unresolvedStrongRelations=1),
+            "resolution-workspaces": lambda v: v["resolution"]["workspaces"].append({"id": "web", "path": "apps/web"}),
+            "resolution-edges": lambda v: v["resolution"]["crossWorkspaceEdges"].append(
+                {"relation": "requires", "source": "api::REQ-001", "target": "platform::REQ-001"}),
+            "documents-add": lambda v: v["documents"].append(copy.deepcopy(v["documents"][0])) if v["documents"] else v["documents"].append({}),
+            "documents-reverse": lambda v: v["documents"].reverse(),
+            "ledger-clear": lambda v: v["constraintLedger"]["statements"].clear() if v["constraintLedger"]["statements"] else v["constraintLedger"]["statements"].append({}),
+            "coverage-total": lambda v: v["coverage"]["must"]["total"].append("platform::REQ-001:AC-01"),
+            "coverage-unaddressed-drop": lambda v: v["coverage"]["must"]["unaddressed"].pop(),
+            "coverage-untested-reverse": lambda v: v["coverage"]["must"]["untested"].reverse(),
+            "coverage-should": lambda v: v["coverage"]["should"]["total"].append("platform::REQ-001:AC-01"),
+            "coverage-adjacent": lambda v: v["coverage"]["adjacent"].append("platform::REQ-001:AC-01"),
+            "workspace": lambda v: v["workspace"].update(id="web"),
+            "workspace-path": lambda v: v["workspace"].update(path="apps/web"),
+            "roots-unqualified": lambda v: v["roots"].__setitem__(0, v["roots"][0].partition("::")[2]),
+            "roots-add": lambda v: v["roots"].append("platform::REQ-002"),
+            "revision": lambda v: v.update(revision=None),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "detail": lambda v: v["projection"].update(detail="full"),
+            "purpose": lambda v: v.update(purpose="verify"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=1),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "purpose": lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("--purpose") + 1, "verify"),
+            "root": lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-002"),
+            "root-qualified": lambda v: v["invocation"]["argv"].__setitem__(1, "platform::" + v["invocation"]["argv"][1]),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-format": lambda v: v["invocation"]["argv"].__setitem__(-1, "markdown"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "no-base-commit": lambda v: v["setup"].pop("baseCommit"),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            mutations += [(identifier, "expected/context.json", name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 150)
+
+    def test_multi_qualified_summary_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、欠陥を検出する構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_qualified_summary_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        edits = {
+            "MULTI-047-01": [(".spec/requirements/REQ-001.md", "status: draft", "status: approved")],
+            # 作業ワークスペースの先行TASKを完了にする（診断が1件に減る）、他のメンバーの先行TASKを完了にする（作業ワークスペースだけが残る）。
+            "MULTI-047-02": [(".spec/tasks/TASK-001.md", "status: open", "status: done"),
+                             ("services/api/.spec/tasks/TASK-100.md", "status: open", "status: done"),
+                             (".spec/tasks/TASK-002.md", "requires: [TASK-001, api::TASK-100]", "requires: [api::TASK-100, TASK-001]")],
+            # 具体化文書を状態draftにする、具体化の関係をrelatedに替える（どちらも閉包から外れ、対象規範文が1件に減る）。
+            "MULTI-047-03": [("services/api/.spec/technical/TECH-100.md", "status: approved", "status: draft"),
+                             ("services/api/.spec/technical/TECH-100.md", "refines: [platform::REQ-050:AC-01]", "related: [platform::REQ-050]")],
+            "MULTI-047-04": [(".spec/requirements/REQ-003.md", "status: draft", "status: approved"),
+                             ("services/api/.spec/requirements/REQ-100.md", "status: draft", "status: approved")],
+            "MULTI-047-05": [("services/api/.spec/tasks/TASK-100.md", "status: open", "status: done"),
+                             (".spec/tasks/TASK-001.md", "status: open", "status: done")],
         }
         byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
         for identifier, changes in edits.items():
