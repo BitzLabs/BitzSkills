@@ -126,7 +126,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      # コンテナはrootで動き、作業ツリーとその.gitはrunnerの利用者が所有するので、Gitの所有者の検査を外す。
+      # コンテナはrootで動き、作業ツリーの最上位のディレクトリはrunnerの利用者が所有するので、Gitの所有者の検査を外す。
       # fixtureはHOMEを分離して実行するので、この設定はfixtureに届かない。
       - name: Gitの所有者の検査の設定
         run: git config --global --add safe.directory '*'
@@ -180,7 +180,8 @@ jobs:
           merge-multiple: true
       # 集約は作業ツリーがcleanであることを確かめるので、受け取った結果を作業ツリーの外へ移す。
       - name: 分割結果を作業ツリーの外へ移す
-        run: mv ci-artifact "$RUNNER_TEMP/conformance"
+        # 分割が全滅して何も受け取れなかったときは、次の手順の`WORKERS_RESULT`の判定で止める。
+        run: if [ -d ci-artifact ]; then mv ci-artifact "$RUNNER_TEMP/conformance"; fi
       - name: 全件の網羅と独立実行の一致を判定
         env:
           STEP: ${{ needs.plan.outputs.step }}
