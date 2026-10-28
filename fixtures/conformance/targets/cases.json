@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "contractSha256": "94b57cab985927eb62b4f62e9218c6407ed815ea16ea58af2154592e75da71ea",
+  "contractSha256": "69225bd90bea09ef079dd1edfd89a9670008ca7b7283ee92e92bc534e10da216",
   "cases": [
     {
       "id": "BASIC-REQ-interpret",
