@@ -4,7 +4,7 @@
   "status": "failed",
   "scope": "full",
   "workspace": {
-    "id": "root",
+    "id": null,
     "path": "."
   },
   "revision": {
@@ -23,7 +23,7 @@
       "summary": "設定ファイルが64 KiB上限を超過しました",
       "source": {
         "kind": "file",
-        "workspaceId": "root",
+        "workspaceId": null,
         "path": ".spec/bitz.yaml"
       }
     }

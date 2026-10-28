@@ -515,7 +515,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
-| `SINGLE-078` | `bitz.yaml` 64 KiB超 | check | failed／1 | `SPEC-INPUT-LIMIT-001`、読取りを続けない |
+| `SINGLE-078` | `bitz.yaml` 64 KiB超 | check | failed／1 | `SPEC-INPUT-LIMIT-001`、読取りを続けない。設定を読めないので明示したIDも分からず、既定値`root`を補わない。`workspace.id`と`source.workspaceId`は`null`、`path`は`.`（結果・診断・終了コード §2・§5、確認事項C59。修正前のCoreは`root`を補う） |
 | `SINGLE-079-01` | SPEC Markdown 1 MiB超 | check | failed／1 | `SPEC-INPUT-LIMIT-001` |
 | `SINGLE-079-02` | フロントマター32 KiB超 | check | failed／1 | `SPEC-INPUT-LIMIT-001` |
 | `SINGLE-080-01` | 1文書の規範文と関係配列が`limit` | check | passed／0 | 境界内を誤遮断しない |

@@ -55,6 +55,8 @@ CASES = {
     "SINGLE-083": ("SPEC-WORKSPACE-UNKNOWN-001", UNKNOWN_PATH, None, ".spec/内の未知のファイルを仕様文書として読みません",
                    "passed_with_warnings", 1, 1, ".spec/内の未知fileを警告しSPECとして読まない"),
 }
+# 設定を読めずに止まる（同一性を構成する前に止まる）fixture。
+CONFIG_UNREADABLE = {"SINGLE-078"}
 # 各fixtureが越えてよいレビュー済みの次元。それ以外はすべて上限内に収める。
 CROSSED = {"SINGLE-078": {"config"}, "SINGLE-079-01": {"spec"}, "SINGLE-079-02": {"frontmatter"},
            "SINGLE-080-01": set(), "SINGLE-080-02": {"statements"}, "SINGLE-080-03": {"covers"},
@@ -167,15 +169,18 @@ def reviewed_manifest(identifier):
 
 def reviewed_result(identifier):
     code, path, key, summary, status, documents, statements, _ = CASES[identifier]
+    # 設定を読めずに止まった結果は、既定値`root`を補わず、ワークスペースの同一性を`null`にする
+    # （結果・診断・終了コード §2・§5、確認事項C59。ユーザーの決定 2026-10-26）。文書の上限は設定を読んだ後なので`root`のまま。
+    identity = None if identifier in CONFIG_UNREADABLE else "root"
     diagnostics = []
     if code is not None:
-        source = {"kind": "file", "workspaceId": "root", "path": path}
+        source = {"kind": "file", "workspaceId": identity, "path": path}
         if key is not None:
             source["key"] = key
         diagnostics.append({"code": code, "severity": "warning" if status == "passed_with_warnings" else "error",
                             "resultStatus": status, "summary": summary, "source": source})
     return {"schemaVersion": "1.0", "operation": "check", "status": status, "scope": "full",
-            "workspace": {"id": "root", "path": "."},
+            "workspace": {"id": identity, "path": "."},
             "revision": {"base": "0" * 40, "commit": "0" * 40, "dirty": False},
             "checkedDocumentCount": documents, "checkedStatementCount": statements, "durationMs": 0,
             "diagnostics": diagnostics}
