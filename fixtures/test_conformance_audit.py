@@ -86,6 +86,7 @@ from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
 from conformance import multi_qualified_summary_fixtures
 from conformance import multi_null_declaration_fixtures
+from conformance import multi_unreadable_config_fixtures
 from conformance import multi_null_base_fixtures
 from conformance import multi_verify_order_fixtures
 from conformance import multi_early_report_fixtures
@@ -4955,6 +4956,193 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in (
                         "入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_unreadable_config_fixtures(self):
+        """`MULTI-049-01`〜`02`: 設定が64 KiBを超えて止まる結果の同一性を`null`に固定する（確認事項C59）。"""
+        module = multi_unreadable_config_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["MULTI-049-01", "MULTI-049-02"])
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_unreadable_config_reference_rules(self):
+        """参照計算（診断レジストリ`INPUT-LIMIT-CONFIG`、結果・診断・終了コード §2・§5、複合ワークスペース仕様 §9）と、修正前の読み方の再現。"""
+        module = multi_unreadable_config_fixtures
+
+        def decide(identifier, function="reference_decision", edits=()):
+            with tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary)
+                for name, data in module.reviewed_inputs(identifier).items():
+                    (repository / name).parent.mkdir(parents=True, exist_ok=True)
+                    (repository / name).write_bytes(data)
+                for relative, data in edits:
+                    (repository / relative).write_bytes(data)
+                return getattr(module, function)(repository)
+
+        # ルートの設定を読めなければ、ルートのIDを構成できない。メンバーの設定を読めなくても、ルートのIDは確定している。
+        self.assertEqual(decide("MULTI-049-01"), {"cause": "root-limit", "multiWorkspaceId": None, "sourceWorkspaceId": None})
+        self.assertEqual(decide("MULTI-049-02"), {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": None})
+        # 修正前の読み方は、読めない設定の同一性に既定値`root`を補う。メンバーの場合、`multiWorkspace.id`は変わらない。
+        self.assertEqual(decide("MULTI-049-01", "defective_decision"), {"cause": "root-limit", "multiWorkspaceId": "root", "sourceWorkspaceId": "root"})
+        self.assertEqual(decide("MULTI-049-02", "defective_decision"),
+                         {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": "root"})
+        # 上限ちょうど（64 KiB）は超過ではない。1バイト足すと超過する（境界の対照）。
+        root_config = module.multi_reference.root_config((("web", "apps/web"),), root_id="platform").encode()
+        padding = b"#" * (module.CONFIG_LIMIT - len(root_config) - 1) + b"\n"
+        exact = root_config + padding
+        self.assertEqual(len(exact), module.CONFIG_LIMIT)
+        self.assertIsNone(decide("MULTI-049-01", edits=[(module.ROOT_CONFIG_PATH, exact)])["cause"])
+        self.assertEqual(decide("MULTI-049-01", edits=[(module.ROOT_CONFIG_PATH, exact + b"#")])["cause"], "root-limit")
+        # 上限内にすると、原因はなくなり、欠陥の再現も同じ（検出できない入力）になる。
+        for identifier, relative in (("MULTI-049-01", module.ROOT_CONFIG_PATH), ("MULTI-049-02", module.WEB_CONFIG_PATH)):
+            fitted = module.reviewed_inputs(identifier)[relative][:-len(module.repeat(module.COMMENT_LINE, module.CONFIG_LIMIT).encode())]
+            self.assertEqual(decide(identifier, edits=[(relative, fitted)])["cause"], None, identifier)
+            self.assertEqual(decide(identifier, "defective_decision", edits=[(relative, fitted)]),
+                             decide(identifier, edits=[(relative, fitted)]), identifier)
+        # ルートが先: 両方が超過すれば、原因はルートの設定の超過。
+        both = module.reviewed_inputs("MULTI-049-01")[module.WEB_CONFIG_PATH] + module.repeat(module.COMMENT_LINE, module.CONFIG_LIMIT).encode()
+        self.assertEqual(decide("MULTI-049-01", edits=[(module.WEB_CONFIG_PATH, both)])["cause"], "root-limit")
+
+    def test_multi_unreadable_config_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_unreadable_config_fixtures
+
+        results = {
+            "status": lambda v: v.update(status="blocked"),
+            "status-error": lambda v: v.update(status="error"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code-read": lambda v: v["diagnostics"][0].update(code="SPEC-INPUT-READ-001"),
+            "code-schema": lambda v: v["diagnostics"][0].update(code="SPEC-CONFIG-SCHEMA-001"),
+            "code-member": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="設定ファイルを読み取れません"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="error"),
+            # 修正前のCoreの出力（既定値`root`を同一性に補う）と、取り違えやすい値。
+            "source-workspace-root": lambda v: v["diagnostics"][0]["source"].update(workspaceId="root"),
+            "source-workspace-platform": lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+            "source-workspace-web": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            "source-path-member": lambda v: v["diagnostics"][0]["source"].update(path="apps/web/.spec/bitz.yaml"),
+            "source-path-other": lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="workspace.id"),
+            "multi-id-root": lambda v: v["multiWorkspace"].update(id="root"),
+            "multi-id-platform": lambda v: v["multiWorkspace"].update(id="platform"),
+            "multi-id-null": lambda v: v["multiWorkspace"].update(id=None),
+            "multi-path": lambda v: v["multiWorkspace"].update(path="apps/web"),
+            "workspaces-fill": lambda v: v["workspaces"].append({"id": "platform", "path": ".", "status": "passed", "durationMs": 0, "diagnostics": []}),
+            "workspace-add": lambda v: v.update(workspace={"id": None, "path": "."}),
+            "scope": lambda v: v.update(scope="full"),
+            "revision-null": lambda v: v.update(revision=None),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="blocked"),
+            "exit-code": lambda v: v["expect"].update(exitCode=2),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--full"),
+            "argv-single": lambda v: v["invocation"]["argv"].remove("--all-workspaces"),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "doctor"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            mutations += [(identifier, "expected/check.json", name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 50)
+
+    def test_multi_unreadable_config_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因の構成を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_unreadable_config_fixtures
+        for identifier in module.CASES:
+            for name in [*(f"repo/{name}" for name in sorted(module.reviewed_inputs(identifier))), "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す、または別の原因を重ねる書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、
+        # 副作用の期待値を作り直す）、参照計算と原因の構成の検査が拒否することを確かめる（バイト列の照合で先に拒否される空振りを避ける）。
+        block = module.repeat(module.COMMENT_LINE, module.CONFIG_LIMIT)
+        edits = {
+            "MULTI-049-01": [
+                # 超過のコメントを消す、または短いコメントだけにして、上限内にする。
+                (".spec/bitz.yaml", block, ""),
+                (".spec/bitz.yaml", block, module.COMMENT_LINE),
+                # 超過の設定の中身に、上限以外の原因（構文の不正、メンバーの不一致）を重ねる。
+                (".spec/bitz.yaml", "      path: apps/web\n", "      path: apps/web\n    - id: api\n      path: services/api\n"),
+                (".spec/bitz.yaml", "  id: platform\n", ""),
+                # 超過の後ろに、コメント以外の行を足す。
+                (".spec/bitz.yaml", block, block + "extra: 1\n"),
+                # メンバー`web`の設定にも原因を重ねる。
+                ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: web\nmultiWorkspace:\n"),
+                ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: frontend\n"),
+            ],
+            "MULTI-049-02": [
+                ("apps/web/.spec/bitz.yaml", block, ""),
+                ("apps/web/.spec/bitz.yaml", block, block + "extra: 1\n"),
+                ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: frontend\n"),
+                ("apps/web/.spec/bitz.yaml", "  id: web\n", "  id: web\nmultiWorkspace:\n"),
+                (".spec/bitz.yaml", "      path: apps/web\n", "      path: apps/web\n    - id: api\n      path: services/api\n"),
+                (".spec/bitz.yaml", "  id: platform\n", ""),
+            ],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old[:30], new=new[:30]), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    text = path.read_text()
+                    self.assertIn(old, text)
+                    path.write_text(text.replace(old, new, 1))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir(parents=True)
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_null_base_fixtures(self):
