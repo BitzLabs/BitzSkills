@@ -341,12 +341,13 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
                 severity="error",
                 resultStatus="failed",
                 summary="設定ファイルが64 KiB上限を超過しました",
-                source={"kind": "file", "workspaceId": DEFAULT_WORKSPACE_ID, "path": CONFIG_PATH},
+                # 設定を読めないので明示したIDも分からない。既定値`root`を補わず、同一性を構成しない（結果・診断・終了コード §2・§5。確認事項C59）。
+                source={"kind": "file", "workspaceId": None, "path": CONFIG_PATH},
             )
         )
         outcome.stop = True
         outcome.stop_stage = "config"
-        outcome.workspace_id = DEFAULT_WORKSPACE_ID
+        outcome.workspace_id = None
         return outcome
 
     # BOMの警告は`continue`継続単位のため、即座に`outcome.diagnostics`へ入れず、最終的な
@@ -542,11 +543,12 @@ def read_config(path, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> Co
                 severity="error",
                 resultStatus="error",
                 summary="設定ファイルを読み取れません",
-                source={"kind": "file", "workspaceId": DEFAULT_WORKSPACE_ID, "path": CONFIG_PATH},
+                # 上限の超過と同じく、読めない設定から同一性を構成しない（確認事項C59）。
+                source={"kind": "file", "workspaceId": None, "path": CONFIG_PATH},
             )
         )
         outcome.stop = True
         outcome.stop_stage = "config"
-        outcome.workspace_id = DEFAULT_WORKSPACE_ID
+        outcome.workspace_id = None
         return outcome
     return load_config(raw, ears_version_code=ears_version_code)
