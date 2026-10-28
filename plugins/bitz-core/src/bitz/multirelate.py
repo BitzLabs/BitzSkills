@@ -305,6 +305,27 @@ def _cyclic_edge_diagnostics(
     return diags
 
 
+def closure_paths_by_workspace(
+    active_ws_id: str,
+    active_entries,
+    doc_ids,
+    local_id_indices: dict[str, dict[str, DocEntry]],
+) -> dict[str, set[str]]:
+    """閉包の文書のパスをワークスペースID別に返す。循環の診断を、閉包の文書が宣言する辺に絞るために使う。
+
+    ``active_entries``は作業ワークスペースの閉包の文書、``doc_ids``は閉包の文書のID（他のメンバーの文書は修飾ID）。
+    他のメンバーの文書も含めるのは、`check`の完全検査と同じく、閉包に入ったどのワークスペースの文書が宣言する辺の循環も
+    報告するためである（関係・トレースモデル §6.3、確認事項C44）。
+    """
+
+    paths: dict[str, set[str]] = {active_ws_id: {e.path for e in active_entries}}
+    for did in doc_ids:
+        q = parse_qualified(did)
+        if q is not None and q[1] in local_id_indices.get(q[0], {}):
+            paths.setdefault(q[0], set()).add(local_id_indices[q[0]][q[1]].path)
+    return paths
+
+
 def global_cycle_diagnostics(entries_by_ws: dict[str, list[DocEntry]]) -> list[Diagnostic]:
     """複合ワークスペース全体で、横断するエッジ（修飾IDで解決したエッジ）も含めたグラフの循環を検出する。
 
