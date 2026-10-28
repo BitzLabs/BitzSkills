@@ -751,6 +751,9 @@ class AuditTests(unittest.TestCase):
     def test_input_limit_audit_rejects_changed_expectations(self):
         mutations = [
             ("SINGLE-078", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            # 設定を読めずに止まる結果は、既定値`root`を同一性に補わず`null`にする（確認事項C59）。
+            ("SINGLE-078", "expected/check.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-078", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(workspaceId="root")),
             ("SINGLE-079-01", "expected/check.json",
              lambda v: v["diagnostics"][0]["source"].update(path=".spec/bitz.yaml")),
             ("SINGLE-079-02", "expected/check.json",
