@@ -289,7 +289,7 @@ def _relation_check_diagnostics(
     multi_active: bool,
     cycle_diagnostics_for=None,
 ):
-    """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
+    """``context_documents``の関係の診断（起点ワークスペース自身が所有する文書の関係と、閉包の文書が宣言する辺の循環）を返す。
 
     コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
     複合ワークスペースでは、閉包の文書（``context_documents``。閉包に入った他のメンバーの文書を含む）が宣言する辺の
