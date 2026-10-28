@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-050-03",
+  "description": "閉包に入った他のメンバーの中だけで閉じる循環を、verifyは検証対象のdiagnosticsにCTX-CYCLE-001で報告する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-040",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

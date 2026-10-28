@@ -84,6 +84,7 @@ from conformance import doctor_plugin_fixtures
 from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
+from conformance import multi_cross_cycle_fixtures
 from conformance import multi_qualified_summary_fixtures
 from conformance import multi_null_declaration_fixtures
 from conformance import multi_unreadable_config_fixtures
@@ -5327,6 +5328,196 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in (
                         "入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_cross_cycle_fixtures(self):
+        """`MULTI-050-01`〜`06`: 閉包に入った他のワークスペースの文書が宣言する辺の循環も報告する（確認事項C44）。"""
+        module = multi_cross_cycle_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-050-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_cross_cycle_reference_rules(self):
+        """報告の範囲の参照計算（関係・トレースモデル §6.3）と、修正前の範囲の再現。ハッシュ値の材料の強い関係は解決できたものだけ（正規化仕様 §3）。"""
+        module = multi_cross_cycle_fixtures
+
+        def document(workspace, identifier, requires):
+            return {"workspaceId": workspace, "kind": "requirement", "body": f"- [{identifier}:AC-01] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n",
+                    "path": f"{identifier}.md", "frontmatter": {"id": identifier, "title": "t", "status": "approved", "relations": {"requires": requires}}}
+
+        documents = {
+            "platform::REQ-1": document("platform", "REQ-1", ["api::REQ-2"]),
+            "api::REQ-2": document("api", "REQ-2", ["platform::REQ-1", "REQ-9"]),
+        }
+        closure = ["platform::REQ-1", "api::REQ-2"]
+        declared = lambda items: [(item["code"], item["source"]["workspaceId"]) for item in items]
+        # 報告は両側の辺。参照切れ（api::REQ-9）は他のワークスペースの文書では報告しない。
+        self.assertEqual(declared(module.reference_diagnostics(documents, closure, "platform")),
+                         [("CTX-CYCLE-001", "api"), ("CTX-CYCLE-001", "platform")])
+        # 修正前の範囲は作業ワークスペースの辺だけ。
+        self.assertEqual(declared(module.defective_diagnostics(documents, closure, "platform")), [("CTX-CYCLE-001", "platform")])
+        # 作業ワークスペースの文書の参照切れは報告する。
+        documents["platform::REQ-1"]["frontmatter"]["relations"]["requires"].append("REQ-8")
+        self.assertIn(("SPEC-RELATION-MISSING-001", "platform"), declared(module.reference_diagnostics(documents, closure, "platform")))
+        # `strongRelations`は参照先を解決できた関係だけ（文書IDと規範文ID。存在しない規範文は解決できない）。
+        index = {"api::REQ-2": documents["api::REQ-2"]}
+        self.assertTrue(module.multi_crosscheck.resolves(index, "api::REQ-2"))
+        self.assertTrue(module.multi_crosscheck.resolves(index, "api::REQ-2:AC-01"))
+        self.assertFalse(module.multi_crosscheck.resolves(index, "api::REQ-2:AC-02"))
+        self.assertFalse(module.multi_crosscheck.resolves(index, "api::REQ-9"))
+        self.assertFalse(module.multi_crosscheck.resolves(index, "web::REQ-2"))
+        self.assertTrue(digest_crosscheck.resolves({"REQ-2": documents["api::REQ-2"]}, "REQ-2:AC-01"))
+        self.assertFalse(digest_crosscheck.resolves({"REQ-2": documents["api::REQ-2"]}, "REQ-3"))
+        # リテラルのAは、解決できない`REQ-999`を`frontmatter`に残し`strongRelations`から外す。
+        material = {item["id"]: item for item in module.reviewed_digest_input("MULTI-050-04")["documents"]}["api::REQ-150"]
+        self.assertEqual(material["frontmatter"]["relations"]["requires"], ["api::REQ-999"])
+        self.assertEqual(material["strongRelations"], [])
+
+    def test_multi_cross_cycle_expected_reports_distinguish_the_defect(self):
+        """リテラルの期待する報告は、修正前の範囲の報告と異なる（失敗する4件）。対照の2件は同じ（空）。"""
+        module = multi_cross_cycle_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                _, _, _, documents = module.alias.load_tree(audit.FIXTURES / "multi" / identifier / "repo")
+                order, _, _ = module.alias.interpret_closure(documents, case["root"], "interpret")
+                correct = module.reference_diagnostics(documents, order, "platform")
+                old = module.defective_diagnostics(documents, order, "platform")
+                if case["outcome"] == "failed":
+                    self.assertGreater(len(correct), len(old))
+                    self.assertEqual(len(correct), len(module.CYCLE_DECLARERS[case["corpus"]]))
+                else:
+                    self.assertEqual((correct, old), ([], []))
+
+    def test_multi_cross_cycle_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変を拒否する。"""
+        module = multi_cross_cycle_fixtures
+
+        results = {
+            "status": lambda v: v.update(status="passed" if v.get("status") != "passed" else "failed"),
+            "diagnostics-drop": lambda v: v["diagnostics"].pop(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "diagnostics-reverse": lambda v: v["diagnostics"].reverse(),
+            "diagnostics-code": lambda v: v["diagnostics"][0].update(code="SPEC-RELATION-MISSING-001"),
+            "diagnostics-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
+            "diagnostics-path": lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-999.md"),
+            "diagnostics-key": lambda v: v["diagnostics"][0]["source"].update(key="relations.refines"),
+            "digest": lambda v: v.update(contextDigest="sha256:" + "0" * 64),
+            "digest-null": lambda v: v.update(contextDigest=None),
+            "documents-drop": lambda v: v["documents"].pop(),
+            "documents-add": lambda v: v["documents"].append(copy.deepcopy(v["documents"][0])),
+            "document-role": lambda v: v["documents"][0].update(role="advisory"),
+            "document-reached-by": lambda v: v["documents"][-1]["reachedBy"].append("requires:platform::REQ-001"),
+            "resolution-complete": lambda v: v["resolution"].update(complete=not v["resolution"]["complete"]),
+            "resolution-count": lambda v: v["resolution"].update(documentCount=v["resolution"]["documentCount"] + 1),
+            "unresolved": lambda v: v["resolution"].update(unresolvedStrongRelations=1),
+            "workspaces-add": lambda v: v["resolution"]["workspaces"].append({"id": "web", "path": "apps/web"}),
+            "cross-edges-add": lambda v: v["resolution"]["crossWorkspaceEdges"].append(
+                {"relation": "requires", "source": "platform::REQ-001", "target": "api::REQ-001"}),
+            "workspace": lambda v: v["workspace"].update(id="api"),
+            "roots": lambda v: v["roots"].append("platform::REQ-002"),
+            "revision": lambda v: v.update(revision=None),
+            "detail": lambda v: v["projection"].update(detail="full"),
+            "target-status": lambda v: v["targetResults"][0].update(status="passed"),
+            "target-diagnostics-drop": lambda v: v["targetResults"][0]["diagnostics"].pop(),
+            "target-digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            "target-statements": lambda v: v["targetResults"][0]["statements"].append("platform::REQ-040:AC-01"),
+            "commands": lambda v: v["commands"].append({"name": "frontend"}),
+            "scope": lambda v: v.update(scope="all-workspaces"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed" if v["expect"]["status"] == "passed" else "passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=2),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "root": lambda v: v["invocation"]["argv"].__setitem__(1, "api::REQ-001"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            mutations += [(identifier, module.RESULT_FILES[module.CASES[identifier]["op"]], name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 100)
+
+    def test_multi_cross_cycle_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_cross_cycle_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith(".md") or name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で、参照計算と原因の構成の検査が拒否することを確かめる。
+        edits = {
+            # 循環の一方の辺を消す（循環でなくなる）。
+            "MULTI-050-01": [("services/api/.spec/requirements/REQ-130.md", "requires: [platform::REQ-030]", "requires: []")],
+            "MULTI-050-02": [("services/api/.spec/requirements/REQ-141.md", "requires: [REQ-140]", "requires: []"),
+                             # 循環を作業ワークスペースの辺へ変える（修正前の範囲でも報告できる入力になる）。
+                             ("services/api/.spec/requirements/REQ-141.md", "requires: [REQ-140]", "requires: [platform::REQ-040]")],
+            "MULTI-050-03": [("services/api/.spec/requirements/REQ-140.md", "requires: [REQ-141]", "requires: []")],
+            # 参照切れを消す（他のメンバーの参照切れを報告しないことの対照でなくなる）。
+            "MULTI-050-04": [("services/api/.spec/requirements/REQ-150.md", "requires: [REQ-999]", "requires: []")],
+            "MULTI-050-05": [("apps/web/.spec/requirements/REQ-260.md", "requires: [platform::REQ-060]", "requires: []")],
+            # 他のメンバーの循環を閉包に入れる（対照でなくなる）。
+            "MULTI-050-06": [(".spec/requirements/REQ-001.md", "---\n\n# REQ-001", "relations:\n  requires: [api::REQ-170]\n---\n\n# REQ-001")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, new=new), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new, 1))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir(parents=True)
+                    state = module.observe(repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_binding_missing_fixtures(self):
