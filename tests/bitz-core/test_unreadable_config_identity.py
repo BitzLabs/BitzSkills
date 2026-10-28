@@ -11,7 +11,7 @@
 この試験の対象:
 1. 単一ワークスペースの上限の超過と読取りの失敗で、単独操作の`workspace.id`と`source.workspaceId`が`null`（`workspace.id`を明示していても）。
 2. 複合ワークスペースのルートの上限の超過で、全体操作の`multiWorkspace.id`と`source.workspaceId`が`null`。
-3. メンバーの設定の上限の超過と読取りの失敗で、メンバーの設定の診断の`source.workspaceId`が`null`（全体操作と、メンバーで実行する単独操作）。
+3. メンバーの設定の上限の超過と読取りの失敗で、メンバーの設定の診断の`source.workspaceId`が`null`（全体操作。上限の超過は、メンバーで実行する単独操作も）。
    ルートの設定の読取りの失敗でも、全体操作の`multiWorkspace.id`が`null`。
 4. 対照: 上限ちょうどの設定は読めて、明示したIDを使う。構文の誤りは今までどおり`null`。
 5. 結果は`result.schema.json`に適合する。
