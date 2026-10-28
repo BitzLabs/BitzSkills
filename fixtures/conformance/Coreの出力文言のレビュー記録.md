@@ -107,7 +107,7 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 | 74 | summary | SPEC-INPUT-BOM-001<br>（INPUT-BOM-CONFIG） | config.py:359 | `設定file先頭のBOMを除いて解析を続行します` | `設定ファイル先頭のBOMを除いて解析を続行します` | §4.1: file=ファイル | 1件（SINGLE-081）；生成器・監査1 |
 | 75 | summary | SPEC-INPUT-BOM-001<br>（INPUT-BOM-SPEC） | messages.py:30（document.py:346） | `SPEC file先頭のBOMを除いて解析を続行します` | `仕様文書のファイル先頭のBOMを除いて解析を続行します` | §3.5の1: SPEC=仕様文書、file=ファイル。BOMは§3.3 | 1件（SINGLE-082）；生成器・監査1 |
 | 76 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-ARRAY-COUNT） | messages.py:27（frontmatter.py:175、251、272、304、354） | `1文書の関係・path配列の項目数が1,000上限を超過しました` | `1文書の関係・パスの配列の項目数が1,000上限を超過しました` | §4.1: path=パス。「パスの配列」は診断レジストリの書き方 | 1件（SINGLE-080-03）；生成器・監査1 |
-| 77 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-CONFIG） | config.py:339 | `設定fileが64 KiB上限を超過しました` | `設定ファイルが64 KiB上限を超過しました` | §4.1: file=ファイル | 1件（SINGLE-078）；生成器・監査1 |
+| 77 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-CONFIG） | config.py:339 | `設定fileが64 KiB上限を超過しました` | `設定ファイルが64 KiB上限を超過しました` | §4.1: file=ファイル | 3件（SINGLE-078、MULTI-049-01〜02）；生成器・監査2 |
 | 78 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-FRONTMATTER） | messages.py:18（document.py:364） | `Frontmatterが32 KiB上限を超過しました` | `フロントマターが32 KiB上限を超過しました` | §3.5の1: Frontmatter=フロントマター（用語集 §4） | 1件（SINGLE-079-02）；生成器・監査1 |
 | 79 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-SPEC） | messages.py:17（document.py:341） | `SPEC Markdownが1 MiB上限を超過しました` | `仕様文書のMarkdownが1 MiB上限を超過しました` | §3.5の1: SPEC=仕様文書。Markdown・MiBは§3.3 | 1件（SINGLE-079-01）；生成器・監査1 |
 | 80 | summary | SPEC-INPUT-LIMIT-001<br>（INPUT-LIMIT-SPEC-COUNT） | messages.py:23（document.py:534） | `SPEC fileが{limit}件上限を超過しました` | `仕様文書のファイルが{limit}件上限を超過しました` | §3.5の1: SPEC=仕様文書、file=ファイル。{limit}は3桁区切りの数（10,000） | 0件；単体試験1 |
@@ -541,3 +541,16 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
   （[レビュー記録](multi/複合ワークスペースの値が空の宣言のレビュー記録.md)）。新しい文言の承認ではない。
 - 基準版の値が空の宣言を固定する`MULTI-048-06`〜`09`も、既存の承認済みの文言（`MULTI-018-01`の「管理済みの仕様文書が削除されています」、`MULTI-030-02`の「Gitが認識する設定ファイルがカタログに登録されていません」）を使う。新しい文言の承認ではない。
 - 既存のfixtureの期待値は変えない。
+
+## 2026-10-28: 設定の上限の超過の文言の再利用（C59）
+
+### 追加の理由
+
+- 実装の確認事項C59の修正で、設定が64 KiBの上限を超えて止まる結果の`workspace.id`、`multiWorkspace.id`、診断の`source.workspaceId`を、既定値`root`ではなく`null`にした
+  （ユーザーの決定、2026-10-26）。
+
+### 新しい文言はない
+
+- `SPEC-INPUT-LIMIT-001`（`INPUT-LIMIT-CONFIG`）の`summary`は、行#77「設定ファイルが64 KiB上限を超過しました」を再利用する。変えたのは`source.workspaceId`と同一性だけで、文言は変えていない。
+- `SINGLE-078`の期待値を訂正し、複合ワークスペースの`MULTI-049-01`〜`02`を足した
+  （[単一のレビュー記録](single/上限と未知のエントリのレビュー記録.md)、[複合のレビュー記録](multi/複合ワークスペースの設定を読めない場合の同一性のレビュー記録.md)）。新しい文言の承認ではない。

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": null,
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-INPUT-LIMIT-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "設定ファイルが64 KiB上限を超過しました",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml"
+      }
+    }
+  ]
+}
