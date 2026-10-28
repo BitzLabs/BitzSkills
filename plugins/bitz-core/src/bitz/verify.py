@@ -263,20 +263,20 @@ def _cycle_diagnostics_provider(entries_by_ws: dict[str, list[DocEntry]]):
 
     循環は横断するエッジも含めたグラフ全体で判定する（関係・トレースモデル §4）。グラフは検証対象に依らないため、
     検証対象ごとに計算し直さず、最初に必要になったときに1度だけ計算する（`--all-workspaces`の全対象で共有する）。
-    戻り値の関数は``workspace_id``が宣言した辺の循環の診断を返す。
+    戻り値の関数は、``workspace_ids``のワークスペースが宣言した辺の循環の診断を、ワークスペースIDの順に返す。
     """
 
     by_ws: dict[str, list] | None = None
 
-    def for_workspace(workspace_id: str) -> list:
+    def for_workspaces(workspace_ids) -> list:
         nonlocal by_ws
         if by_ws is None:
             by_ws = {}
             for d in multirelate.global_cycle_diagnostics(entries_by_ws):
                 by_ws.setdefault(d.source.get("workspaceId"), []).append(d)
-        return by_ws.get(workspace_id, [])
+        return [d for ws in sorted(workspace_ids) for d in by_ws.get(ws, [])]
 
-    return for_workspace
+    return for_workspaces
 
 
 def _relation_check_diagnostics(
@@ -292,9 +292,9 @@ def _relation_check_diagnostics(
     """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
 
     コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
-    複合ワークスペースでは、閉包の文書（``context_documents``のうち起点ワークスペース自身が所有するもの）が宣言する辺の
-    循環も返す（`cycle_diagnostics_for`は``workspace_id``が宣言した辺の循環の診断を返す関数。単一ワークスペースの
-    `check_relations(source_ids=...)`と同じく、閉包の外の循環は返さない）。
+    複合ワークスペースでは、閉包の文書（``context_documents``。閉包に入った他のメンバーの文書を含む）が宣言する辺の
+    循環も返す（`cycle_diagnostics_for`は指定したワークスペースが宣言した辺の循環の診断を返す関数。閉包の外の循環は返さない。
+    他のメンバーの文書の辺を含めるのは`check`の完全検査と同じ範囲にするため。関係・トレースモデル §6.3、確認事項C44）。
     """
 
     if multi_active:
@@ -305,8 +305,14 @@ def _relation_check_diagnostics(
                 multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
             )
         if cycle_diagnostics_for is not None:
-            scoped_paths = {e.path for e in scoped_entries}
-            diags.extend(d for d in cycle_diagnostics_for(workspace_id) if d.source.get("path") in scoped_paths)
+            scoped_paths = multirelate.closure_paths_by_workspace(
+                workspace_id, scoped_entries, context_documents, local_id_indices
+            )
+            diags.extend(
+                d
+                for d in cycle_diagnostics_for(scoped_paths)
+                if d.source.get("path") in scoped_paths.get(d.source.get("workspaceId"), set())
+            )
         return diags
     id_index = local_id_indices[workspace_id]
     statement_index = local_stmt_indices[workspace_id]
