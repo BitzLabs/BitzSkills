@@ -11,7 +11,8 @@
 この試験の対象:
 1. 単一ワークスペースの上限の超過と読取りの失敗で、単独操作の`workspace.id`と`source.workspaceId`が`null`（`workspace.id`を明示していても）。
 2. 複合ワークスペースのルートの上限の超過で、全体操作の`multiWorkspace.id`と`source.workspaceId`が`null`。
-3. メンバーの設定の上限の超過で、メンバーの設定の診断の`source.workspaceId`が`null`。
+3. メンバーの設定の上限の超過と読取りの失敗で、メンバーの設定の診断の`source.workspaceId`が`null`（全体操作と、メンバーで実行する単独操作）。
+   ルートの設定の読取りの失敗でも、全体操作の`multiWorkspace.id`が`null`。
 4. 対照: 上限ちょうどの設定は読めて、明示したIDを使う。構文の誤りは今までどおり`null`。
 5. 結果は`result.schema.json`に適合する。
 """
@@ -175,12 +176,53 @@ class MultiWorkspaceLimitTests(_Base):
             sources = [d["source"] for d in result["diagnostics"] if d["code"] == "SPEC-INPUT-LIMIT-001"]
             self.assertEqual([src["workspaceId"] for src in sources], [None], (name, result["diagnostics"]))
 
+    def test_oversized_member_config_in_single_operations_of_the_member(self):
+        _write(self.root, ".spec/bitz.yaml", self.ROOT)
+        _write(self.root, "apps/web/.spec/bitz.yaml", _padded(self.WEB, config_mod.CONFIG_LIMIT_BYTES + 1))
+        _write(self.root, "apps/web/.spec/requirements/REQ-001.md", REQ)
+        self.commit()
+        for name, (result, _code) in self.single_runs(self.root / "apps" / "web"):
+            self.assertEqual(result["workspace"], {"id": None, "path": "apps/web"}, name)
+            sources = [d["source"] for d in result["diagnostics"] if d["code"] == "SPEC-INPUT-LIMIT-001"]
+            self.assertEqual([src["workspaceId"] for src in sources], [None], (name, result["diagnostics"]))
+
     def test_oversized_member_config_has_null_source_workspace_id(self):
         _write(self.root, ".spec/bitz.yaml", self.ROOT)
         _write(self.root, "apps/web/.spec/bitz.yaml", _padded(self.WEB, config_mod.CONFIG_LIMIT_BYTES + 1))
         self.commit()
         result, _ = self.run_op(check_mod, "check", self.root, "--all-workspaces")
         sources = [d["source"] for d in result["diagnostics"] if d["code"] == "SPEC-INPUT-LIMIT-001"]
+        self.assertEqual([src["workspaceId"] for src in sources], [None], result["diagnostics"])
+
+
+@unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "rootでは読取り権限を外せない")
+class MultiWorkspaceReadErrorTests(_Base):
+    ROOT = MultiWorkspaceLimitTests.ROOT
+    WEB = MultiWorkspaceLimitTests.WEB
+
+    def unreadable(self, rel: str) -> None:
+        path = self.root / rel
+        path.chmod(0)
+        self.addCleanup(path.chmod, 0o644)
+
+    def test_unreadable_root_config_has_null_multi_workspace_id(self):
+        _write(self.root, ".spec/bitz.yaml", self.ROOT)
+        _write(self.root, "apps/web/.spec/bitz.yaml", self.WEB)
+        self.commit()
+        self.unreadable(".spec/bitz.yaml")
+        result, _ = self.run_op(check_mod, "check", self.root, "--all-workspaces")
+        self.assertEqual(result["multiWorkspace"], {"id": None, "path": "."})
+        sources = [d["source"] for d in result["diagnostics"] if d["code"] == "SPEC-INPUT-READ-001"]
+        self.assertEqual([src["workspaceId"] for src in sources], [None], result["diagnostics"])
+
+    def test_unreadable_member_config_has_null_source_workspace_id(self):
+        _write(self.root, ".spec/bitz.yaml", self.ROOT)
+        _write(self.root, "apps/web/.spec/bitz.yaml", self.WEB)
+        self.commit()
+        self.unreadable("apps/web/.spec/bitz.yaml")
+        result, _ = self.run_op(check_mod, "check", self.root, "--all-workspaces")
+        self.assertEqual(result["multiWorkspace"], {"id": "platform", "path": "."})
+        sources = [d["source"] for d in result["diagnostics"] if d["code"] == "SPEC-INPUT-READ-001"]
         self.assertEqual([src["workspaceId"] for src in sources], [None], result["diagnostics"])
 
 
