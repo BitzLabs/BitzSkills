@@ -200,7 +200,7 @@ class ClosureCycleCompositeTests(_Base):
     REQ-001  閉包の外から切り離された起点（循環なし）
     REQ-010 <-> REQ-011   起点から到達しない循環（閉包の外）
     REQ-020 <-> REQ-021   起点REQ-020の閉包の内側の循環
-    REQ-030 -> api::REQ-130 -> platform::REQ-030   ワークスペースをまたぐ循環（起点ワークスペースが宣言する辺は REQ-030 の1本）
+    REQ-030 -> api::REQ-130 -> platform::REQ-030   ワークスペースをまたぐ循環（両方の辺を報告する。確認事項C44）
     ```
     """
 
@@ -237,12 +237,16 @@ class ClosureCycleCompositeTests(_Base):
             ],
         )
 
-    def test_context_reports_only_edges_declared_by_the_active_workspace_for_a_cross_workspace_cycle(self):
+    def test_context_reports_the_edges_of_every_workspace_in_a_cross_workspace_cycle(self):
+        # 閉包に入った他のメンバーの文書が宣言する辺も報告する（関係・トレースモデル §6.3、`check`と同じ範囲。確認事項C44）。
         result, code = self.context("REQ-030")
         self.assertEqual((result["status"], code), ("failed", 1))
         self.assertEqual(
             [(d["code"], d["source"]["workspaceId"], d["source"]["path"]) for d in result["diagnostics"]],
-            [("CTX-CYCLE-001", "platform", ".spec/requirements/REQ-030.md")],
+            [
+                ("CTX-CYCLE-001", "api", ".spec/requirements/REQ-130.md"),
+                ("CTX-CYCLE-001", "platform", ".spec/requirements/REQ-030.md"),
+            ],
         )
 
     def test_check_with_an_explicit_target_keeps_returning_the_cycle_edges_of_the_closure(self):
@@ -285,6 +289,98 @@ class ClosureCycleCompositeTests(_Base):
     def test_output_is_independent_of_hash_seed(self):
         cases = [("context", "REQ-020"), ("context", "REQ-001"), ("verify", "REQ-020"), ("verify", "--all-workspaces")]
         for argv in cases:
+            outputs = {seed: _run_cli(self.root, seed, *argv) for seed in ("0", "1", "12345")}
+            with self.subTest(argv=argv):
+                self.assertEqual(len(set(outputs.values())), 1, outputs)
+
+
+class CrossWorkspaceCycleTests(_Base):
+    """C44: 閉包に入った他のメンバーの文書が宣言する辺の循環も、`check`と同じ範囲で報告する（関係・トレースモデル §6.3）。
+
+    ```
+    REQ-040 -> api::REQ-140 <-> api::REQ-141            他のメンバーの中だけで閉じる循環（閉包に入る）
+    REQ-050 -> api::REQ-150 -> api::REQ-999（不在）      他のメンバーの参照切れ（D7のまま検査しない。対照）
+    REQ-060 -> api::REQ-160 -> web::REQ-260 -> platform::REQ-060   3つのワークスペースをまたぐ循環
+    REQ-001  api::REQ-170 <-> api::REQ-171 は閉包の外（対照）
+    ```
+    """
+
+    def build(self) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", _root_yaml("platform", [("api", "apps/api"), ("web", "apps/web")]))
+        _member_tree(r, "api", "apps/api")
+        _member_tree(r, "web", "apps/web")
+        for base in ("", "apps/api/", "apps/web/"):
+            _write(r, f"{base}tests/t.py", "x\n")
+        _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001", covers_test=True))
+        _write(r, ".spec/requirements/REQ-040.md", _req("REQ-040", requires=["api::REQ-140"], covers_test=True))
+        _write(r, ".spec/requirements/REQ-050.md", _req("REQ-050", requires=["api::REQ-150"], covers_test=True))
+        _write(r, ".spec/requirements/REQ-060.md", _req("REQ-060", requires=["api::REQ-160"], covers_test=True))
+        api = "apps/api/.spec/requirements"
+        _write(r, f"{api}/REQ-140.md", _req("REQ-140", requires=["REQ-141"], covers_test=True))
+        _write(r, f"{api}/REQ-141.md", _req("REQ-141", requires=["REQ-140"], covers_test=True))
+        _write(r, f"{api}/REQ-150.md", _req("REQ-150", requires=["REQ-999"], covers_test=True))
+        _write(r, f"{api}/REQ-160.md", _req("REQ-160", requires=["web::REQ-260"], covers_test=True))
+        _write(r, f"{api}/REQ-170.md", _req("REQ-170", requires=["REQ-171"], covers_test=True))
+        _write(r, f"{api}/REQ-171.md", _req("REQ-171", requires=["REQ-170"], covers_test=True))
+        _write(r, "apps/web/.spec/requirements/REQ-260.md", _req("REQ-260", requires=["platform::REQ-060"], covers_test=True))
+
+    @staticmethod
+    def cycle_sources(diagnostics) -> list[tuple[str, str]]:
+        return [(d["source"]["workspaceId"], d["source"]["path"]) for d in diagnostics if d["code"] == "CTX-CYCLE-001"]
+
+    API_CYCLE = [("api", ".spec/requirements/REQ-140.md"), ("api", ".spec/requirements/REQ-141.md")]
+    THREE_WAY = [
+        ("api", ".spec/requirements/REQ-160.md"),
+        ("platform", ".spec/requirements/REQ-060.md"),
+        ("web", ".spec/requirements/REQ-260.md"),
+    ]
+
+    def test_context_fails_on_a_cycle_inside_another_member_of_the_closure(self):
+        for purpose in ("interpret", "implement", "verify"):
+            with self.subTest(purpose=purpose):
+                result, code = self.context("REQ-040", "--purpose", purpose)
+                self.assertEqual((result["status"], code), ("failed", 1), result["diagnostics"])
+                self.assertEqual(self.cycle_sources(result["diagnostics"]), self.API_CYCLE)
+                self.assertIsNone(result["contextDigest"])
+
+    def test_context_reports_every_edge_of_a_three_workspace_cycle(self):
+        result, code = self.context("REQ-060")
+        self.assertEqual((result["status"], code), ("failed", 1))
+        self.assertEqual(self.cycle_sources(result["diagnostics"]), self.THREE_WAY)
+
+    def test_check_and_context_report_the_same_cycle_edges(self):
+        for target, expected in (("REQ-040", self.API_CYCLE), ("REQ-060", self.THREE_WAY)):
+            check_result, _ = self.check(target)
+            context_result, _ = self.context(target)
+            self.assertEqual(sorted(self.cycle_sources(check_result["diagnostics"])), expected, target)
+            self.assertEqual(self.cycle_sources(context_result["diagnostics"]), expected, target)
+
+    def test_verify_targets_report_the_cycle_of_their_closure(self):
+        result, code = self.verify("REQ-040", "REQ-060")
+        self.assertEqual(code, 1)
+        by_target = {t["target"]: t for t in result["targetResults"]}
+        self.assertEqual(self.cycle_sources(by_target["platform::REQ-040"]["diagnostics"]), self.API_CYCLE)
+        self.assertEqual(self.cycle_sources(by_target["platform::REQ-060"]["diagnostics"]), self.THREE_WAY)
+        all_result, _ = self.verify("--all-workspaces")
+        (platform,) = [w for w in all_result["workspaces"] if w["id"] == "platform"]
+        all_by_target = {t["target"]: t for t in platform["targetResults"]}
+        self.assertEqual(self.cycle_sources(all_by_target["platform::REQ-040"]["diagnostics"]), self.API_CYCLE)
+
+    def test_broken_reference_inside_another_member_is_still_not_checked(self):
+        # 参照先の不在などは、これまでどおり他のメンバーの文書では検査しない（§6.3、D7）。
+        result, code = self.context("REQ-050")
+        self.assertNotIn("SPEC-RELATION-MISSING-001", self.codes(result), result["diagnostics"])
+        self.assertIn(result["status"], ("passed", "passed_with_warnings"))
+        self.assertEqual(code, 0)
+
+    def test_cycle_in_another_member_outside_the_closure_is_ignored(self):
+        result, code = self.context("REQ-001")
+        self.assertNotIn("CTX-CYCLE-001", self.codes(result), result["diagnostics"])
+        self.assertEqual(code, 0)
+
+    def test_output_is_independent_of_hash_seed(self):
+        for argv in (("context", "REQ-060"), ("verify", "REQ-040", "REQ-060")):
             outputs = {seed: _run_cli(self.root, seed, *argv) for seed in ("0", "1", "12345")}
             with self.subTest(argv=argv):
                 self.assertEqual(len(set(outputs.values())), 1, outputs)
