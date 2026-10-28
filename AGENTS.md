@@ -71,7 +71,8 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 
 - CI（`.github/workflows/ci.yml`）は PR と main への push で監査・単体試験・適合試験を、
   main への push・週次・手動で Gate A / Gate B 認定を実行する。適合試験は4分割し、main等では独立2組の
-  全件結果とParser出力を集約してGate Bを判定する（ADR-056）。CI の通過はローカル検証の代わりにならない
+  全件結果とParser出力を集約してGate Bを判定する（ADR-056）。適合試験の分割と集約は、digestで固定した
+  CI用のコンテナで実行する（ADR-069）。CI の通過はローカル検証の代わりにならない
 - fixture を変更したら Gate A を再認定する（ADR-051）
 - 対象環境は Linux / macOS、CPython 3.12 以上（ADR-053 / ADR-055）
 
