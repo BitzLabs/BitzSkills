@@ -409,7 +409,8 @@ def derived_material(repository, documents, workspaces, root):
             "statements": sorted((digest_crosscheck._sorted_extensions(dict(item, id=f"{document['workspaceId']}::{item['id']}"))
                                   for item in read_statements(document["body"])), key=lambda item: item["id"]),
             "strongRelations": [{"relation": key, "target": target} for key, target in
-                                sorted({(key, target) for key in digest_crosscheck.STRONG for target in relations[key]})],
+                                sorted({(key, target) for key in digest_crosscheck.STRONG for target in relations[key]
+                                        if digest_crosscheck.resolves(documents, target)})],
         })
     payload["documents"].sort(key=lambda item: item["id"])
     payload["crossWorkspaceEdges"] = [{"relation": key, "source": source, "target": target} for source, key, target in sorted(cross)]

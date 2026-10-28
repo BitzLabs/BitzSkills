@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::REQ-050"
+  ],
+  "contextDigest": "sha256:5868516192a822c491bcab87417b9a8a775da6f845f8fd670126936971f551ef",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "requires",
+        "source": "platform::REQ-050",
+        "target": "api::REQ-150"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "platform::REQ-050",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-050.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "api::REQ-150",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-150.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:platform::REQ-050"
+      ],
+      "workspaceId": "api",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

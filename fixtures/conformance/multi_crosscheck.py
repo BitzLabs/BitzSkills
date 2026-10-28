@@ -7,7 +7,7 @@ RFC 8785の直列化処理は単一ワークスペースの参照計算Bと同�
 """
 from .digest_crosscheck import (KIND_BY_DIRECTORY, RELATION_KEYS, STRONG, APPLICABLE_STATUS,
                                 canonical_bytes, digest, normalize_body, normalize_strings,
-                                read_statements, read_yaml, split_document, _sorted_extensions)
+                                read_statements, read_yaml, resolves, split_document, _sorted_extensions)
 
 APPLICABLE = APPLICABLE_STATUS
 
@@ -202,7 +202,7 @@ def build(repository, root="platform::REQ-001", purpose="verify", loaded=None):
         document = documents[identifier]
         workspace_id = document["workspaceId"]
         declared = relations(document)
-        strong = sorted({(key, target) for key in STRONG for target in declared[key]})
+        strong = sorted({(key, target) for key in STRONG for target in declared[key] if resolves(documents, target)})
         for key in RELATION_KEYS:
             for target in declared[key]:
                 if target.partition("::")[0] != workspace_id:

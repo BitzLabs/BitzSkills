@@ -160,6 +160,17 @@ def read_extensions(raw):
     return entries
 
 
+def resolves(documents, reference):
+    """強い関係の参照先を解決できるか。参照先は文書ID、または文書IDと規範文ID（複合ワークスペースでは修飾ID）で、
+    `documents`は文書IDを鍵とする索引である。解決できない関係はハッシュ値の材料の`strongRelations`へ含めない（正規化仕様 §3）。"""
+    workspace, separator, local = reference.rpartition("::")
+    document, _, statement = local.partition(":")
+    found = documents.get(workspace + separator + document)
+    if found is None:
+        return False
+    return not statement or f"{document}:{statement}" in {item["id"] for item in read_statements(found["body"])}
+
+
 def read_statements(body):
     statements = []
     for line in body.split("\n"):
@@ -434,7 +445,7 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
         document = documents[identifier]
         frontmatter = document["frontmatter"]
         relations = _relations(frontmatter)
-        strong = sorted({(key, target) for key in STRONG for target in relations[key]})
+        strong = sorted({(key, target) for key in STRONG for target in relations[key] if resolves(documents, target)})
         payload["documents"].append({
             "id": identifier,
             "workspaceId": workspace_id,
