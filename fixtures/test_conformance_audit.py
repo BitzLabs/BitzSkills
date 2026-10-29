@@ -5331,11 +5331,11 @@ class AuditTests(unittest.TestCase):
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_cross_cycle_fixtures(self):
-        """`MULTI-050-01`〜`06`: 閉包に入った他のワークスペースの文書が宣言する辺の循環も報告する（確認事項C44）。"""
+        """`MULTI-050-01`〜`07`: 閉包に入った他のワークスペースの文書が宣言する辺の循環も報告する（確認事項C44）。"""
         module = multi_cross_cycle_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-050-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["prepared"], [f"MULTI-050-{number:02d}" for number in range(1, 8)])
         self.assertEqual(result["references"], 2)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -5379,6 +5379,48 @@ class AuditTests(unittest.TestCase):
         material = {item["id"]: item for item in module.reviewed_digest_input("MULTI-050-04")["documents"]}["api::REQ-150"]
         self.assertEqual(material["frontmatter"]["relations"]["requires"], ["api::REQ-999"])
         self.assertEqual(material["strongRelations"], [])
+
+    def test_multi_cross_cycle_digest_material_excludes_unresolved_cross_edges(self):
+        """参照計算Bの横断のエッジは、参照先を解決できたものだけ（複合ワークスペース仕様 §6、正規化仕様 §3.2）。解決できないエッジを含む入力で、リテラルAと一致する。"""
+        module = multi_cross_cycle_fixtures
+        alias = module.alias
+        base = audit.FIXTURES / "multi" / "MULTI-050-04" / "repo"
+        edge = {"relation": "requires", "source": "platform::REQ-050", "target": "api::REQ-150"}
+        cases = {
+            # 他のメンバーの文書が、別のワークスペースの不在の文書を`requires`する。
+            "member-cross-missing": [("services/api/.spec/requirements/REQ-150.md", "requires: [REQ-999]", "requires: [REQ-999, web::REQ-404]")],
+            # 作業ワークスペースの文書が、別のワークスペースの不在の文書を`related`にする（弱い関係。横断のエッジは収録しない）。
+            "work-related-missing": [(".spec/requirements/REQ-050.md", "requires: [api::REQ-150]", "requires: [api::REQ-150]\n  related: [web::REQ-404]")],
+        }
+        for name, edits in cases.items():
+            with self.subTest(name), tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary) / "repo"
+                shutil.copytree(base, repository)
+                for relative, old, new in edits:
+                    path = repository / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new, 1))
+                derived = alias.derived_material(repository, "platform::REQ-050", "interpret")
+                self.assertEqual(derived["crossWorkspaceEdges"], [edge])
+                # 独立に書いたA: 宣言は`frontmatter.relations`に残り、`strongRelations`と`crossWorkspaceEdges`は解決できたものだけ。
+                literal = module.reviewed_digest_input("MULTI-050-04")
+                documents = {item["id"]: item for item in literal["documents"]}
+                if name == "member-cross-missing":
+                    documents["api::REQ-150"]["frontmatter"]["relations"]["requires"] = ["api::REQ-999", "web::REQ-404"]
+                else:
+                    documents["platform::REQ-050"]["frontmatter"]["relations"]["related"] = ["web::REQ-404"]
+                self.assertEqual(module.multi_crosscheck.canonical_bytes(derived), module.digest_reference.canonical_bytes(literal))
+                # 複合ワークスペース全体の参照計算（`multi_crosscheck.build`）も同じ規則。
+                built = module.multi_crosscheck.build(repository, "platform::REQ-050", "interpret")
+                self.assertEqual(built["crossWorkspaceEdges"], [edge])
+        # 解決の判定を外す（修正前の読み）と、横断のエッジが増えてAと一致しなくなる（陰性対照）。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "repo"
+            shutil.copytree(base, repository)
+            path = repository / "services/api/.spec/requirements/REQ-150.md"
+            path.write_text(path.read_text().replace("requires: [REQ-999]", "requires: [REQ-999, web::REQ-404]", 1))
+            with patch.object(digest_crosscheck, "resolves", lambda documents, reference: True):
+                self.assertEqual(len(alias.derived_material(repository, "platform::REQ-050", "interpret")["crossWorkspaceEdges"]), 2)
 
     def test_multi_cross_cycle_expected_reports_distinguish_the_defect(self):
         """リテラルの期待する報告は、修正前の範囲の報告と異なる（失敗する4件）。対照の2件は同じ（空）。"""
@@ -5491,6 +5533,8 @@ class AuditTests(unittest.TestCase):
             "MULTI-050-03": [("services/api/.spec/requirements/REQ-140.md", "requires: [REQ-141]", "requires: []")],
             # 参照切れを消す（他のメンバーの参照切れを報告しないことの対照でなくなる）。
             "MULTI-050-04": [("services/api/.spec/requirements/REQ-150.md", "requires: [REQ-999]", "requires: []")],
+            # 解決できない横断のエッジを消す（対照でなくなる）。
+            "MULTI-050-07": [("services/api/.spec/requirements/REQ-150.md", "requires: [REQ-999, web::REQ-404]", "requires: [REQ-999]")],
             "MULTI-050-05": [("apps/web/.spec/requirements/REQ-260.md", "requires: [platform::REQ-060]", "requires: []")],
             # 他のメンバーの循環を閉包に入れる（対照でなくなる）。
             "MULTI-050-06": [(".spec/requirements/REQ-001.md", "---\n\n# REQ-001", "relations:\n  requires: [api::REQ-170]\n---\n\n# REQ-001")],

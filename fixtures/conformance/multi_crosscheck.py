@@ -113,6 +113,8 @@ def closure(documents, root):
         for key in ("requires", "refines"):
             for target in edges[key]:
                 accounted.add((current, key, target))
+                if owner(target) not in documents:
+                    continue  # 参照先を解決できない関係は閉包へ加えない（検査しない他のワークスペースの文書の参照切れなど）
                 if owner(target) not in reached:
                     reached[owner(target)] = reached[current] + 1
                     frontier.append(owner(target))
@@ -205,7 +207,7 @@ def build(repository, root="platform::REQ-001", purpose="verify", loaded=None):
         strong = sorted({(key, target) for key in STRONG for target in declared[key] if resolves(documents, target)})
         for key in RELATION_KEYS:
             for target in declared[key]:
-                if target.partition("::")[0] != workspace_id:
+                if target.partition("::")[0] != workspace_id and resolves(documents, target):
                     edges.add((identifier, key, target))
         payload["documents"].append({
             "id": identifier,

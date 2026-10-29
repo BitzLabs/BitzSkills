@@ -797,7 +797,8 @@ def derived_material(repository, root, purpose):
         declared = multi_crosscheck.relations(document)
         role = role_of(documents, root, name, edges)
         for relation in digest_crosscheck.RELATION_KEYS:
-            cross |= {(name, relation, target) for target in declared[relation] if target.partition("::")[0] != document["workspaceId"]}
+            cross |= {(name, relation, target) for target in declared[relation]
+                       if target.partition("::")[0] != document["workspaceId"] and digest_crosscheck.resolves(documents, target)}
         payload["documents"].append({
             "id": name, "workspaceId": document["workspaceId"], "kind": document["kind"],
             "status": document["frontmatter"]["status"],
@@ -1017,12 +1018,13 @@ def reference_context(documents, workspaces, request, root, purpose="interpret")
         entries.append({"id": identifier, "workspaceId": document["workspaceId"], "kind": document["kind"], "role": role,
                         "path": document["path"], "reachedBy": reached, "statementRefs": statement_ids(documents, identifier)})
     reached_workspaces = {documents[item]["workspaceId"] for item in order}
-    # 横断するエッジは、閉包の文書が宣言する強い関係のうち、参照先が別のワークスペースのもの（複合ワークスペース仕様 §6）。
+    # 横断するエッジは、閉包の文書が宣言する強い関係のうち、参照先が別のワークスペースにあり、解決できたもの（複合ワークスペース仕様 §6）。
     cross = sorted((identifier, relation, multi_crosscheck.qualify(documents[identifier]["workspaceId"], text))
                    for identifier in order for relation in ("requires", "refines", "addresses", "supersedes")
                    for text in documents[identifier]["frontmatter"].get("relations", {}).get(relation, [])
                    if multi_crosscheck.qualify(documents[identifier]["workspaceId"], text).partition("::")[0]
-                   != documents[identifier]["workspaceId"])
+                   != documents[identifier]["workspaceId"]
+                   and digest_crosscheck.resolves(documents, multi_crosscheck.qualify(documents[identifier]["workspaceId"], text)))
     return {"documents": entries,
             "workspaces": [{"id": request, "path": workspaces[request]["path"]}] + [
                 {"id": item, "path": workspaces[item]["path"]} for item in sorted(reached_workspaces - {request})],
