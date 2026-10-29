@@ -397,7 +397,8 @@ def derived_material(repository, documents, workspaces, root):
         document = documents[name]
         relations = multi_crosscheck.relations(document)
         for key in digest_crosscheck.RELATION_KEYS:
-            cross |= {(name, key, target) for target in relations[key] if target.partition("::")[0] != document["workspaceId"]}
+            cross |= {(name, key, target) for target in relations[key]
+                       if target.partition("::")[0] != document["workspaceId"] and digest_crosscheck.resolves(documents, target)}
         payload["documents"].append({
             "id": name, "workspaceId": document["workspaceId"], "kind": document["kind"],
             "status": document["frontmatter"]["status"], "applicability": "applicable",

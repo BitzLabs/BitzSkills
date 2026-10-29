@@ -19,6 +19,7 @@
 | `MULTI-050-04` | `context REQ-050 --purpose interpret --detail compact`、`.` | 対照: 他のメンバーの文書の参照切れ（存在しない`REQ-999`）は検査しないので成功する |
 | `MULTI-050-05` | `context REQ-060 --purpose interpret`、`.` | 3つのワークスペースをまたぐ循環。`CTX-CYCLE-001`が3件（`api`、`platform`、`web`の順） |
 | `MULTI-050-06` | `context REQ-001 --purpose interpret --detail compact`、`.` | 対照: 他のメンバーの循環が閉包の外にあれば報告しない |
+| `MULTI-050-07` | `context REQ-050 --purpose interpret --detail compact`、`.` | 対照: `MULTI-050-04`に加えて、`api::REQ-150`が不在の`web::REQ-404`も`requires`する。解決できない横断のエッジは収録しない |
 
 基本のリポジトリは、ルート`platform`（`.`）、メンバー`web`（`apps/web`）と`api`（`services/api`）で、すべてコミットする。fixtureごとに必要な文書だけを置く。
 `platform`だけがテスト対応のコマンドを持つ。
@@ -30,10 +31,13 @@
   参照先の不在などそれ以外の関係は検査しない。
 - 同 §6: 型、状態、循環、上限を満たさない場合は閉包の全体を非成功とする。§7: 循環を隠さない。§4: 禁止された循環に参加するエッジを宣言した文書ごとに診断する。
 - 診断レジストリの`RELATION-CYCLE`（`CTX-CYCLE-001`）。結果・診断・終了コード §7: 診断はワークスペースID、`path`の辞書順に並べる。
-- `context` §3: 強い関係の一部を解決できない（禁止された循環を含む）コンテキスト一式を成功にしない。`verify` §9: 検証対象ごとに目的`verify`のコンテキストを
+- `context` §3: 強い関係の一部を解決できない（禁止された循環を含む）コンテキスト一式を成功にしない。ただし、関係・トレースモデル §6.3が検査しないとする
+  複合ワークスペースの他のワークスペースの文書の関係（参照先の不在など）は、この判定に含めない。§6.3の検査の範囲は目的によらず同じなので、目的`interpret`にも適用する。`verify` §9: 検証対象ごとに目的`verify`のコンテキストを
   完全解決するので、`CTX-CYCLE-001`を検証対象の`diagnostics`へ返す。
+- 複合ワークスペース仕様 §6: 参照先を解決できない横断のエッジ（§6.3が検査しないとする他のワークスペースの文書の参照切れなど）は、`resolution.crossWorkspaceEdges`に収録しない。
+  正規化仕様 §3.2は「§6と同じ内容」なので、ハッシュ値の材料の`crossWorkspaceEdges`も同じ扱いになる（`MULTI-050-07`）。
 - コンテキストのハッシュ値の正規化仕様 §3: 閉包の文書ごとの材料。`strongRelations`は参照先を解決できた強い関係だけを持ち、参照先を解決できない関係
-  （`MULTI-050-04`の`api::REQ-150`の`REQ-999`）は含めない（宣言は`frontmatter.relations`に残る。ユーザーの決定2026-10-28）。ハッシュ値は、独立に書いた2系統の参照計算（このモジュールのリテラルA、入力の木構造から導出するB）の
+  （`MULTI-050-04`の`api::REQ-150`の`REQ-999`、`MULTI-050-07`の`web::REQ-404`）は含めない（宣言は`frontmatter.relations`に残る。ユーザーの決定2026-10-28）。ハッシュ値は、独立に書いた2系統の参照計算（このモジュールのリテラルA、入力の木構造から導出するB）の
   バイト列の一致を要求する。
 
 参照計算は`multi_closure_alias_fixtures`の閉包・循環の参照計算を再利用し、報告の範囲だけをこの群で定める。
@@ -80,12 +84,16 @@ CASES = {
     "MULTI-050-06": dict(op="context", cwd=".", argv=["context", "REQ-001", "--purpose", "interpret", "--detail", "compact"], corpus="member-outside",
                          root="platform::REQ-001", outcome="passed",
                          description="他のメンバーの循環が閉包の外にあるとき、contextは報告せず成功する"),
+    "MULTI-050-07": dict(op="context", cwd=".", argv=["context", "REQ-050", "--purpose", "interpret", "--detail", "compact"],
+                         corpus="member-missing-cross", root="platform::REQ-050", outcome="passed",
+                         description="他のメンバーの文書が別のワークスペースの不在の文書をrequiresするとき、その横断のエッジは収録せずcontextは成功する"),
 }
 RESULT_FILES = alias.RESULT_FILES
 
 # --- 入力 -------------------------------------------------------------------------------
 
 # corpus: 文書の表。キーは(ワークスペース, ローカルID)、値は(題名, `requires`の宣言)。`tests`はテスト対応を持つ文書。
+MISSING_CORPORA = ("member-missing", "member-missing-cross")
 DOCUMENTS = {
     "cross": {("platform", "REQ-030"): ("起点側の循環の一方", ["api::REQ-130"]),
               ("api", "REQ-130"): ("API側の循環の他方", ["platform::REQ-030"])},
@@ -97,6 +105,8 @@ DOCUMENTS = {
     "three-way": {("platform", "REQ-060"): ("起点側の循環の一部", ["api::REQ-160"]),
                   ("api", "REQ-160"): ("API側の循環の一部", ["web::REQ-260"]),
                   ("web", "REQ-260"): ("Web側の循環の一部", ["platform::REQ-060"])},
+    "member-missing-cross": {("platform", "REQ-050"): ("起点側の基準", ["api::REQ-150"]),
+                            ("api", "REQ-150"): ("API側の参照切れを持つ基準", ["REQ-999", "web::REQ-404"])},
     "member-outside": {("platform", "REQ-001"): ("起点側の基準", []),
                        ("api", "REQ-170"): ("閉包の外の循環の一方", ["REQ-171"]),
                        ("api", "REQ-171"): ("閉包の外の循環の他方", ["REQ-170"])},
@@ -196,13 +206,15 @@ def failed_verify_result(identifier):
 def passed_context_result(identifier, context_digest):
     """詳細度`compact`の成功する結果。起点（役割`root`）と、`requires`で到達した他のメンバーの文書（役割`requirement`）だけを持つ。"""
     case = CASES[identifier]
-    if case["corpus"] == "member-missing":
+    if case["corpus"] in MISSING_CORPORA:
         documents = [
             alias.bundle_document("platform::REQ-050", "platform", "requirement", "root", f"{REQ_DIR}/REQ-050.md", ["root"], "reference"),
             alias.bundle_document("api::REQ-150", "api", "requirement", "requirement", f"{REQ_DIR}/REQ-150.md",
                                   ["requires:platform::REQ-050"], "reference"),
         ]
-        # `api::REQ-150`の`REQ-999`の参照切れは検査しないので、`unresolvedStrongRelations`は0、解決は完了とする。
+        # `api::REQ-150`の参照切れ（`REQ-999`、`web::REQ-404`）は検査しないので、`unresolvedStrongRelations`は0、解決は完了とする
+        # （context §3: 関係・トレースモデル §6.3が検査しないとする他のワークスペースの文書の関係は、完全解決の判定に含めない）。
+        # 参照先を解決できない横断のエッジ（`api::REQ-150` → `web::REQ-404`）は、`crossWorkspaceEdges`に収録しない（複合ワークスペース仕様 §6）。
         resolution = {"complete": True, "documentCount": 2, "unresolvedStrongRelations": 0,
                       "workspaces": [{"id": "platform", "path": "."}, {"id": "api", "path": "services/api"}],
                       "crossWorkspaceEdges": [{"relation": "requires", "source": "platform::REQ-050", "target": "api::REQ-150"}]}
@@ -232,7 +244,7 @@ def _requirement_material(workspace, local, title, requires, existing=()):
     qualified = [multi_crosscheck.qualify(workspace, text) for text in requires]
     document = verify_fixtures.document_material(
         None, f"{workspace}::{local}", workspace, "requirement", title, alias.requirement(local, title, requires)[1],
-        relations={"requires": qualified} if requires else None,
+        relations={"requires": sorted(qualified)} if requires else None,
         statements=[verify_fixtures.statement_material(f"{workspace}::{local}:AC-01", REQ_TEXT)])
     document["strongRelations"] = [item for item in document["strongRelations"] if item["target"] in existing]
     return document
@@ -241,7 +253,7 @@ def _requirement_material(workspace, local, title, requires, existing=()):
 def reviewed_digest_input(identifier):
     """目的`interpret`のレビュー済みのハッシュ値の材料（参照計算A）。到達ワークスペースの閉包の文書だけを置く。"""
     corpus = CASES[identifier]["corpus"]
-    if corpus == "member-missing":
+    if corpus in MISSING_CORPORA:
         existing = {f"{workspace}::{local}" for workspace, local in DOCUMENTS[corpus]}
         documents = [_requirement_material("platform", "REQ-050", *DOCUMENTS[corpus][("platform", "REQ-050")], existing=existing),
                      _requirement_material("api", "REQ-150", *DOCUMENTS[corpus][("api", "REQ-150")], existing=existing)]
@@ -354,13 +366,15 @@ def check_conditions(identifier, repository):
             raise ValueError("修正前の範囲では報告が空になる必要があります")
         if case["op"] == "verify" and (repository / TEST_PATH).read_bytes() != TEST_BYTES:
             raise ValueError("起点はテスト対応が通る入力である必要があります")
-    elif corpus == "member-missing":
-        # 他のメンバーの文書の参照切れ。循環はなく、全文書の辺を検査する参照計算なら参照切れを1件導く（それを報告しないことが期待）。
-        if cyclic or "api::REQ-999" in documents or set(order) != {"platform::REQ-050", "api::REQ-150"}:
-            raise ValueError("循環はなく、`api::REQ-150`が存在しない`REQ-999`を`requires`する必要があります")
+    elif corpus in MISSING_CORPORA:
+        # 他のメンバーの文書の参照切れ。循環はなく、全文書の辺を検査する参照計算なら参照切れを導く（それを報告しないことが期待）。
+        missing = ["REQ-999"] + (["web::REQ-404"] if corpus == "member-missing-cross" else [])
+        if cyclic or {"api::REQ-999", "web::REQ-404"} & set(documents) or set(order) != {"platform::REQ-050", "api::REQ-150"}:
+            raise ValueError("循環はなく、`api::REQ-150`が存在しない文書を`requires`する必要があります")
         every = alias.reference_diagnostics(documents, order)
-        if [(item["code"], item["source"]["workspaceId"], item["evidence"]) for item in every] != [("SPEC-RELATION-MISSING-001", "api", "REQ-999")]:
-            raise ValueError("全文書を検査すれば他のメンバーの参照切れが1件導かれる入力である必要があります")
+        if [(item["code"], item["source"]["workspaceId"], item["evidence"]) for item in every] != [
+                ("SPEC-RELATION-MISSING-001", "api", text) for text in missing]:
+            raise ValueError("全文書を検査すれば他のメンバーの参照切れが導かれる入力である必要があります")
         if correct or old:
             raise ValueError("参照切れは他のワークスペースの文書では検査しない")
     elif corpus == "member-outside":
