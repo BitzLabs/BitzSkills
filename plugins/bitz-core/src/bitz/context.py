@@ -596,7 +596,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         """閉包の文書が宣言する関係の診断を、エラーと警告に分けて返す。
 
         警告は`related`の参照切れ（`SPEC-RELATION-ADVISORY-MISSING-001`、継続単位`skip-edge`）だけで、閉包を増やさないので
-        コンテキストを失敗させず、成功・失敗のどちらの結果にも加える（関係・トレースモデル §3、診断レジストリ。確認事項C78）。
+        コンテキストを失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える（関係・トレースモデル §3、診断レジストリ。確認事項C78）。
         """
         if multi_active:
             scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in scope_ids]
