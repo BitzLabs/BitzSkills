@@ -28,7 +28,7 @@ bitz doctor [--format text|json]
 | 2 | 呼び出したプラグインとCore API | `blocked` |
 | 3 | 要求する対応機能 | `blocked` |
 | 4 | `.spec/bitz.yaml`の存在 | `blocked` |
-| 5 | 設定の構文、型、必須フィールド | `SPEC-CONFIG-SCHEMA-001`／`error` |
+| 5 | 設定の構文、型、必須フィールド | `SPEC-CONFIG-SCHEMA-001`／`error`。不適合がなく設定の警告（`INPUT-BOM-CONFIG`、`CONFIG-SCHEMA-MINOR-NEWER`、`CONFIG-KEY-PROFILES`、`CONFIG-KEY-UNKNOWN`）だけがある場合は`warning` |
 | 6 | 複合ワークスペースのカタログ、メンバー、パスの所有 | `failed`／`blocked` |
 | 7 | スキーマのメジャーバージョン | `blocked` |
 | 8 | EARS-AIのメジャーバージョン | `blocked` |
