@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cb9ce9addd2cbe95e9819fc52d0886839a4cec291f49ec84fd3a9211c4865c06"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ecc1bfb4f473804613d052ee74767edcca8027166ce69443abea7fb0cc03048d"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b5cc7a2ad1c3425aca9f077c35ba776b1f837b20af0518d0920dab98464db49d"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ac823f56c466b5936f32173d8f8b7fe226ce58e6e124018056fae33b50fe9dc0"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_req.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b1776280eb748a4007002d066af7648273a2303e592a0a7dbea37a3cf42211c1"
+      },
+      "tests/test_tech1.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e085e16afe1c82a8e4f096c211a274362455aba6deffc1d7741889f0383a6a93"
+      },
+      "tests/test_tech2.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3e9e9547fa118b35a216032929fdce2e33244e11e65357d29d6b3480902a0ce9"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/technical/TECH-001.md\n?? .spec/technical/TECH-002.md\n?? .spec/technical/TECH-003.md\n?? tests/test_req.py\n?? tests/test_tech1.py\n?? tests/test_tech2.py\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cb9ce9addd2cbe95e9819fc52d0886839a4cec291f49ec84fd3a9211c4865c06"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ecc1bfb4f473804613d052ee74767edcca8027166ce69443abea7fb0cc03048d"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b5cc7a2ad1c3425aca9f077c35ba776b1f837b20af0518d0920dab98464db49d"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ac823f56c466b5936f32173d8f8b7fe226ce58e6e124018056fae33b50fe9dc0"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_req.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b1776280eb748a4007002d066af7648273a2303e592a0a7dbea37a3cf42211c1"
+      },
+      "tests/test_tech1.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e085e16afe1c82a8e4f096c211a274362455aba6deffc1d7741889f0383a6a93"
+      },
+      "tests/test_tech2.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3e9e9547fa118b35a216032929fdce2e33244e11e65357d29d6b3480902a0ce9"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/technical/TECH-001.md\n?? .spec/technical/TECH-002.md\n?? .spec/technical/TECH-003.md\n?? tests/test_req.py\n?? tests/test_tech1.py\n?? tests/test_tech2.py\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

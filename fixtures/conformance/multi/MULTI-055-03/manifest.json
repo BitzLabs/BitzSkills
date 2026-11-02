@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-055-03",
+  "description": "対照: 規範文を起点にしたverifyは、文書IDでrefinesする別のワークスペースの文書の規範文を対象にしない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "platform::REQ-001:AC-01",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

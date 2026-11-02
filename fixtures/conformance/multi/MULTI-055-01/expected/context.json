@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::REQ-001"
+  ],
+  "contextDigest": "sha256:3099f9e35c40c5ca13f0b280c6ebe12d3840b5d5f361307ac8dd94c2cd91e406",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      },
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "refines",
+        "source": "web::TECH-010",
+        "target": "platform::REQ-001"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "platform::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "web::TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:web::TECH-010"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "platform::REQ-001:AC-01",
+        "documentId": "platform::REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "秘密情報を出力しない"
+        }
+      },
+      {
+        "id": "web::TECH-010:C-01",
+        "documentId": "web::TECH-010",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "画面に利用者のIDを表示しない"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "platform::REQ-001:AC-01",
+        "web::TECH-010:C-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "platform::REQ-001:AC-01",
+        "web::TECH-010:C-01"
+      ],
+      "unaddressed": [
+        "platform::REQ-001:AC-01",
+        "web::TECH-010:C-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:d4b4ae61f0d16b86ef2c51c77670428d44ec6714ad0b919c11902a88b72c8ea2",
+      "statements": [
+        "platform::REQ-001:AC-01",
+        "web::TECH-010:C-01"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-COVERAGE-TEST-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "対象規範文MUST web::TECH-010:C-01にテスト対応がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-010.md"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

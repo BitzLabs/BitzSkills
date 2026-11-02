@@ -97,6 +97,7 @@ from conformance import multi_self_qualified_covers_fixtures
 from conformance import multi_binding_order_fixtures
 from conformance import multi_config_warning_fixtures
 from conformance import related_advisory_fixtures, multi_related_advisory_fixtures
+from conformance import document_refines_fixtures, multi_document_refines_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -7152,6 +7153,152 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(outcome["status"], "Failed")
             self.assertEqual(len(outcome["errors"]), 1)
             self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+
+    def document_refines_modules(self):
+        return ((document_refines_fixtures, "single", self.copy_single_fixture), (multi_document_refines_fixtures, "multi", self.copy_multi_fixture))
+
+    def test_document_refines_fixtures(self):
+        """`SINGLE-169-01`〜`06`と`MULTI-055-01`〜`04`: 起点の文書を文書IDで`refines`する文書の規範文も対象規範文に含める（確認事項C54）。"""
+        for module, kind, copy_fixture in self.document_refines_modules():
+            result = module.validate()
+            self.assertEqual(result["errors"], [])
+            expected = [f"SINGLE-169-{number:02d}" for number in range(1, 7)] if kind == "single" else [f"MULTI-055-{number:02d}" for number in range(1, 5)]
+            self.assertEqual(result["prepared"], expected)
+            self.assertEqual(result["references"], 2)
+            self.assertEqual(result["core_execution"], "Not run")
+            # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+            for identifier in module.CASES:
+                with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = copy_fixture(temporary, identifier)
+                    self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_document_refines_expected_results_include_the_refining_statements(self):
+        """欠陥のケースは対象規範文を文書IDの`refines`の規範文だけ多く持ち、対照（規範文を起点にした場合、`draft`の文書）は起点の規範文だけを持つ。"""
+        single, multi = document_refines_fixtures, multi_document_refines_fixtures
+        for module, kind in ((single, "single"), (multi, "multi")):
+            for identifier, case in module.CASES.items():
+                with self.subTest(identifier=identifier):
+                    result = json.loads((audit.FIXTURES / kind / identifier / f"expected/{case['op']}.json").read_text())
+                    targets = module.result_targets(result)
+                    self.assertEqual(len(set(targets)), len(targets))
+                    root_statements = 1
+                    self.assertEqual(len(targets) > root_statements, case["defect"])
+                    if case["op"] == "verify":
+                        self.assertEqual(targets, sorted(targets))
+        read = lambda identifier: json.loads((audit.FIXTURES / "single" / identifier / f"expected/{single.CASES[identifier]['op']}.json").read_text())
+        # 鎖: 文書ID2段と規範文ID1段で4件。距離2以上の2文書は`normative`で、本文とフロントマターを持たない。
+        chain = read("SINGLE-169-03")
+        self.assertEqual([item["id"] for item in chain["constraintLedger"]["statements"]],
+                         ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01", "TECH-003:C-01"])
+        self.assertEqual([(item["id"], item["role"], item["projection"]) for item in chain["documents"]],
+                         [("REQ-001", "root", "full"), ("TECH-001", "refinement", "full"),
+                          ("TECH-002", "refinement", "normative"), ("TECH-003", "refinement", "normative")])
+        self.assertTrue(all("bodyText" not in item and "frontmatter" not in item for item in chain["documents"][2:]))
+        # `blocked`の`verify`はテストを開始しない。未テストなのは、鎖の末尾だけ。
+        for identifier, untested in (("SINGLE-169-02", "TECH-001:C-01"), ("SINGLE-169-04", "TECH-003:C-01")):
+            result = read(identifier)
+            self.assertEqual((result["status"], result["commands"], result["targetResults"][0]["bindingRefs"]), ("blocked", [], []))
+            self.assertEqual([item["summary"] for item in result["targetResults"][0]["diagnostics"]],
+                             [f"対象規範文MUST {untested}にテスト対応がありません"])
+        # 複合ワークスペース: 修飾IDで入り、横断のエッジは`refines`の1件。テスト割当てはルートが先頭。
+        context = json.loads((audit.FIXTURES / "multi/MULTI-055-01/expected/context.json").read_text())
+        self.assertEqual([item["id"] for item in context["constraintLedger"]["statements"]], ["platform::REQ-001:AC-01", "web::TECH-010:C-01"])
+        self.assertEqual(context["resolution"]["crossWorkspaceEdges"], [{"relation": "refines", "source": "web::TECH-010", "target": "platform::REQ-001"}])
+        verify = json.loads((audit.FIXTURES / "multi/MULTI-055-04/expected/verify.json").read_text())
+        self.assertEqual([command["bindingId"] for command in verify["commands"]], ["platform::p", "web::t"])
+        self.assertEqual(verify["targetResults"][0]["bindingRefs"], ["platform::p", "web::t"])
+
+    def test_document_refines_reference_rules(self):
+        """参照計算: 文書IDの`refines`は文書を起点にしたときだけ使い、推移的に辿り、`draft`の文書を含めない。"""
+        module = document_refines_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-169-03"
+            fixture = audit.FIXTURES / "single" / identifier
+            repository = fixture_setup(fixture, json.loads((fixture / "manifest.json").read_text()), Path(temporary) / "repo")
+            documents = module.load_tree(repository)
+            self.assertEqual(module.reference_targets(documents, "REQ-001"),
+                             ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01", "TECH-003:C-01"])
+            # 文書IDの`refines`を使わないと、鎖の先頭で止まる（修正前のCoreの再現）。
+            self.assertEqual(module.reference_targets(documents, "REQ-001", include_document_refinements=False), ["REQ-001:AC-01"])
+            # 規範文を起点にしたときは、文書IDの`refines`を使わない。
+            self.assertEqual(module.reference_targets(documents, "REQ-001:AC-01"), ["REQ-001:AC-01"])
+            # `TECH-002:C-01`を規範文IDで`refines`する`TECH-003`は、`TECH-002`を起点にしたときに入る。
+            self.assertEqual(module.reference_targets(documents, "TECH-002"), ["TECH-002:C-01", "TECH-003:C-01"])
+            # 状態`draft`の文書は含めず、その先の文書も辿らない。
+            documents["TECH-001"]["frontmatter"]["status"] = "draft"
+            self.assertEqual(module.reference_targets(documents, "REQ-001"), ["REQ-001:AC-01"])
+        multi = multi_document_refines_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "MULTI-055-02"
+            fixture = audit.FIXTURES / "multi" / identifier
+            repository = fixture_setup(fixture, json.loads((fixture / "manifest.json").read_text()), Path(temporary) / "repo")
+            _, _, documents = multi_crosscheck.load_workspaces(repository)
+            self.assertEqual(multi.reference_targets(documents, multi.ROOT_REQ), ["platform::REQ-001:AC-01", "web::TECH-010:C-01"])
+            self.assertEqual(multi.reference_targets(documents, multi.ROOT_REQ, include_document_refinements=False), ["platform::REQ-001:AC-01"])
+            self.assertEqual(multi.reference_targets(documents, "platform::REQ-001:AC-01"), ["platform::REQ-001:AC-01"])
+            # テスト対応を足すと、診断は消える。
+            closure, _ = multi_crosscheck.closure(documents, multi.ROOT_REQ)
+            targets = multi.reference_targets(documents, multi.ROOT_REQ)
+            self.assertEqual([item["summary"] for item in multi.reference_diagnostics(documents, closure, targets)],
+                             ["対象規範文MUST web::TECH-010:C-01にテスト対応がありません"])
+            documents[multi.WEB_TECH]["frontmatter"]["tests"] = [{"path": "tests/t.py", "covers": ["TECH-010:C-01"], "command": "t"}]
+            self.assertEqual(multi.reference_diagnostics(documents, closure, targets), [])
+
+    def test_document_refines_audit_rejects_tampering(self):
+        """入力の欠落と余り、期待値の改変（具体化文書の規範文を消す、状態を変える、実行順を替える）、入力の改変（文書IDの`refines`を規範文IDにする）を拒否する（陰性対照）。"""
+        for module, kind, copy_fixture in self.document_refines_modules():
+            identifiers = ("SINGLE-169-01", "SINGLE-169-04") if kind == "single" else ("MULTI-055-01", "MULTI-055-04")
+            for identifier in identifiers:
+                for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra"]:
+                    with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                        root = copy_fixture(temporary, identifier)
+                        fixture = root / kind / identifier
+                        if name == "extra":
+                            (fixture / "repo/extra.txt").write_text("x")
+                        else:
+                            (fixture / name).unlink()
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        edits = {
+            ("single", "SINGLE-169-01"): lambda result: result["constraintLedger"]["statements"].pop(),
+            ("single", "SINGLE-169-02"): lambda result: result["targetResults"][0]["statements"].pop(),
+            ("single", "SINGLE-169-03"): lambda result: result["documents"][2].update(projection="full"),
+            ("single", "SINGLE-169-04"): lambda result: result["targetResults"][0]["diagnostics"].clear(),
+            ("single", "SINGLE-169-05"): lambda result: result["targetResults"][0]["statements"].append("TECH-001:C-01"),
+            ("single", "SINGLE-169-06"): lambda result: result["commands"].clear(),
+            ("multi", "MULTI-055-01"): lambda result: result["resolution"]["crossWorkspaceEdges"].clear(),
+            ("multi", "MULTI-055-02"): lambda result: result["targetResults"][0]["diagnostics"][0].update(severity="warning"),
+            ("multi", "MULTI-055-03"): lambda result: result["targetResults"][0]["statements"].append("web::TECH-010:C-01"),
+            ("multi", "MULTI-055-04"): lambda result: result["commands"].reverse(),
+        }
+        for (kind, identifier), edit in edits.items():
+            module = document_refines_fixtures if kind == "single" else multi_document_refines_fixtures
+            copy_fixture = self.copy_single_fixture if kind == "single" else self.copy_multi_fixture
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = copy_fixture(temporary, identifier)
+                path = root / kind / identifier / f"expected/{module.CASES[identifier]['op']}.json"
+                result = json.loads(path.read_text())
+                edit(result)
+                path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+                outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertTrue(outcome["errors"], identifier)
+        # 入力の改変（文書IDの`refines`を、修正前のCoreも対象にする規範文IDの`refines`にする）。入力のバイト列の照合は通る状態にしても、参照計算が拒否する。
+        for module, kind, identifier, old, new in (
+                (document_refines_fixtures, "single", "SINGLE-169-02", "refines: [REQ-001]", "refines: [REQ-001:AC-01]"),
+                (multi_document_refines_fixtures, "multi", "MULTI-055-02", "refines: [platform::REQ-001]", "refines: [platform::REQ-001:AC-01]")):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = (self.copy_single_fixture if kind == "single" else self.copy_multi_fixture)(temporary, identifier)
+                fixture = root / kind / identifier
+                path = fixture / "repo" / (document_refines_fixtures.doc_path("TECH-001") if kind == "single" else multi_document_refines_fixtures.WEB_TECH_PATH)
+                path.write_text(path.read_text().replace(old, new))
+                edited = dict(module.reviewed_inputs(identifier))
+                edited[path.relative_to(fixture / "repo").as_posix()] = path.read_bytes()
+                self.regenerate_effects(module, fixture, temporary)
+                with patch.object(module, "reviewed_inputs", lambda _identifier: edited):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
