@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "passed",
+  "multiWorkspace": {
+    "id": "aaa",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "aaa",
+      "path": ".",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "aaa::REQ-001",
+          "status": "passed",
+          "contextDigest": "sha256:53db0a7d4debf09e2663c52d2a13398cc04c26fcb4419c11e259270df2d0e4c8",
+          "statements": [
+            "aaa::REQ-001:AC-01",
+            "aaa::REQ-001:AC-02"
+          ],
+          "bindingRefs": [
+            "aaa::a",
+            "aaa::b",
+            "bbb::t"
+          ],
+          "diagnostics": []
+        },
+        {
+          "target": "aaa::REQ-002",
+          "status": "passed",
+          "contextDigest": "sha256:5d51cd293cdbd96557ec535b54b69ce6f3314e46e1005df316fe1858458aaf11",
+          "statements": [
+            "aaa::REQ-002:AC-01"
+          ],
+          "bindingRefs": [
+            "ccc::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "aaa::a",
+          "workspaceId": "aaa",
+          "name": "a",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/sh",
+            "seq.sh",
+            "aaa::a",
+            "4",
+            "tests/a.py"
+          ],
+          "tests": [
+            "tests/a.py"
+          ],
+          "covers": [
+            "aaa::REQ-001:AC-02"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "aaa::a 1\n",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        },
+        {
+          "bindingId": "aaa::b",
+          "workspaceId": "aaa",
+          "name": "b",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/sh",
+            "seq.sh",
+            "aaa::b",
+            "4",
+            "tests/b.py"
+          ],
+          "tests": [
+            "tests/b.py"
+          ],
+          "covers": [
+            "aaa::REQ-001:AC-01",
+            "aaa::REQ-001:AC-02"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "aaa::b 2\n",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "bbb",
+      "path": "apps/bbb",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "bbb::TECH-001",
+          "status": "passed",
+          "contextDigest": "sha256:ab5ab9c7db39ae7f2ff87a1a2ac4b72c56960bc77aae6d62529336df90627809",
+          "statements": [],
+          "bindingRefs": [
+            "bbb::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "bbb::t",
+          "workspaceId": "bbb",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/sh",
+            "seq.sh",
+            "bbb::t",
+            "4",
+            "tests/t.py"
+          ],
+          "tests": [
+            "tests/t.py"
+          ],
+          "covers": [
+            "aaa::REQ-001:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "bbb::t 3\n",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "ccc",
+      "path": "apps/ccc",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "ccc::TECH-001",
+          "status": "passed",
+          "contextDigest": "sha256:270ee4e52ac1febd11feeb1bb892130b680bed57d904ab77e045d43e52fb2a80",
+          "statements": [],
+          "bindingRefs": [
+            "ccc::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "ccc::t",
+          "workspaceId": "ccc",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/sh",
+            "seq.sh",
+            "ccc::t",
+            "4",
+            "tests/t.py"
+          ],
+          "tests": [
+            "tests/t.py"
+          ],
+          "covers": [
+            "aaa::REQ-002:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "ccc::t 4\n",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

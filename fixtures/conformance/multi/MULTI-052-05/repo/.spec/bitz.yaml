@@ -1,0 +1,19 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: aaa
+multiWorkspace:
+  members:
+    - id: ccc
+      path: apps/ccc
+    - id: bbb
+      path: apps/bbb
+verify:
+  commands:
+    b:
+      argv: ["/bin/sh", "seq.sh", "aaa::b", "4", "{tests}"]
+      cwd: .
+    a:
+      argv: ["/bin/sh", "seq.sh", "aaa::a", "4", "{tests}"]
+      cwd: .

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "beta",
+    "path": "apps/beta"
+  },
+  "targetResults": [
+    {
+      "target": "beta::REQ-201",
+      "status": "passed",
+      "contextDigest": "sha256:4ed1aa2a6bcdac3b812199a013ed1c09dd12b2995979411e08977e2dac3a4176",
+      "statements": [
+        "beta::REQ-201:AC-01"
+      ],
+      "bindingRefs": [
+        "alpha::t",
+        "beta::t",
+        "zeta::a"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "zeta::a",
+      "workspaceId": "zeta",
+      "name": "a",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/sh",
+        "seq.sh",
+        "zeta::a",
+        "3",
+        "tests/z.py"
+      ],
+      "tests": [
+        "tests/z.py"
+      ],
+      "covers": [
+        "beta::REQ-201:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "zeta::a 1\n",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "alpha::t",
+      "workspaceId": "alpha",
+      "name": "t",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/sh",
+        "seq.sh",
+        "alpha::t",
+        "3",
+        "tests/t.py"
+      ],
+      "tests": [
+        "tests/t.py"
+      ],
+      "covers": [
+        "beta::REQ-201:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "alpha::t 2\n",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "beta::t",
+      "workspaceId": "beta",
+      "name": "t",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/sh",
+        "seq.sh",
+        "beta::t",
+        "3",
+        "tests/t.py"
+      ],
+      "tests": [
+        "tests/t.py"
+      ],
+      "covers": [
+        "beta::REQ-201:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "beta::t 3\n",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
