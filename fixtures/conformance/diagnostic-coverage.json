@@ -2,17 +2,17 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "5559d0bee8c2dfde47764ce036a3240a37a9552a909ee059dd111087de682c54",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "d148cb2634afe2251513e1b197381f1b0c56a78f242f59318d18fb37666474b6",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "014fc288ab4528c0766f589ff3e8504c319d43208ee0ce1fd2d9a48586fb4fec",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "9a4a265aaf0186465fdcc3bb53416632a0bac0e95f3d7b640d5fa77824b16283",
-    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "8ef5c824436f3212e32d4e114412d8fa9390116b0301023b066985677ddf78ec",
+    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "c50d1fbdfbb701d9b10ff94a710cde0d55a0ad4fa1cc4143b99111ebfd1b6b82",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "c6c8e17acca8abbb1101c5521a5ee0864a1060e79dc78b50d1072297319bfd5a",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "38bf62721f23b85f3f61f6e737f81c8c452061f07219cce7d295caa2bdfbce1e",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "69225bd90bea09ef079dd1edfd89a9670008ca7b7283ee92e92bc534e10da216",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "2d74ff44087818af17b061b7cd73e7fddf45d6cd3cb1925cbdf89a14be6131e6",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "3ffb9b5373d4a83d18de30d094c3d43ead5bb97613de64ed981660a3d64e9f93",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "77c1d38b99cfd0740cf4218fc970d161dae11f5a8341c605fba6cd0f413cd9f9",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "373d4fc050caee3cce12944aac129e838e7f7c7795289207cb07eed2d9c777c2",
-    "docs/03.詳細設計/03_操作仕様/03_verify.md": "0ddd4f36837883870766a13d419783ab14eee40e2c897d346c27b0bc8f5a9809",
+    "docs/03.詳細設計/03_操作仕様/03_verify.md": "6925779b47ea702b9ac1547fc01129c1be4641b359095097cc3d603476ea1e27",
     "docs/03.詳細設計/03_操作仕様/04_doctor.md": "bb53c6a0f308f5e6cf17a1a1b15983a915b475cde084602c2905b9aac43999f1",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
@@ -220,14 +220,15 @@
         "VERIFY-SIGNAL",
         "VERIFY-TIMEOUT",
         "VERIFY-CONFIG-UNTRACKED",
-        "VERIFY-TEST-OUTSIDE-CWD"
+        "VERIFY-TEST-OUTSIDE-CWD",
+        "VERIFY-CWD-OUTSIDE"
       ],
       "sources": [
         "docs/03.詳細設計/03_操作仕様/03_verify.md",
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md",
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md"
       ],
-      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。"
+      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。単一ワークスペースのcwdの実パスがルートの外なら起動前に遮断。"
     },
     {
       "id": "report",
@@ -267,6 +268,7 @@
         "MULTI-REF-UNQUALIFIED",
         "MULTI-REF-WORKSPACE",
         "MULTI-OWNERSHIP",
+        "MULTI-OWNERSHIP-CWD",
         "MULTI-CONFIG",
         "MULTI-MEMBER",
         "MULTI-ID",
@@ -284,7 +286,7 @@
         "docs/03.詳細設計/03_操作仕様/03_verify.md",
         "docs/03.詳細設計/03_操作仕様/04_doctor.md"
       ],
-      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。"
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの所有の違反はverifyがそのbindingだけを起動しない。"
     }
   ],
   "openIssues": []
