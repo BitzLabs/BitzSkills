@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-052-01",
+  "description": "全体のverifyは、ルートのIDが辞書順で最後でも、ルートのテスト割当てを先頭に実行し、その後をID辞書順、コマンド名の辞書順で実行する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

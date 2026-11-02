@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-052-06",
+  "description": "全体のverifyは、ルートのIDが辞書順でメンバーの間にあっても、ルートのテスト割当てを先頭に実行する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

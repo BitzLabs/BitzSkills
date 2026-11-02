@@ -94,6 +94,7 @@ from conformance import multi_verify_order_fixtures
 from conformance import multi_early_report_fixtures
 from conformance import multi_workspace_id_fixtures
 from conformance import multi_self_qualified_covers_fixtures
+from conformance import multi_binding_order_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -6638,6 +6639,254 @@ class AuditTests(unittest.TestCase):
         multi = multi_command_cwd_fixtures
         self.assertNotEqual(multi.digest("MULTI-051-01", "platform"), multi.digest("MULTI-051-06", "platform"))
         self.assertNotEqual(multi.digest("MULTI-051-03", "web"), multi.digest("MULTI-051-06", "web"))
+
+    def test_multi_binding_order_fixtures(self):
+        """`MULTI-052-01`〜`06`: テスト割当ての実行の順と`commands[]`の並びを固定する（確認事項C62・C61）。"""
+        module = multi_binding_order_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-052-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_binding_order_reference_rules(self):
+        """実行の順の参照計算: ルートを先頭、その後をワークスペースIDの辞書順、同じワークスペースの中はコマンド名の辞書順（`verify` §4の6.・§10）。"""
+        module = multi_binding_order_fixtures
+        bindings = ["alpha::t", "beta::t", "zeta::a", "zeta::b", "mid::a"]
+        self.assertEqual(module.reference_order("zeta", bindings), ["zeta::a", "zeta::b", "alpha::t", "beta::t", "mid::a"])
+        self.assertEqual(module.reference_order("mid", bindings), ["mid::a", "alpha::t", "beta::t", "zeta::a", "zeta::b"])
+        self.assertEqual(module.reference_order("alpha", bindings), ["alpha::t", "beta::t", "mid::a", "zeta::a", "zeta::b"])
+        # 起点のワークスペースは順に影響しない（参照計算は起点を受け取らない）。
+        self.assertEqual(module.reference_order("zeta", ["beta::t", "alpha::t"]), ["alpha::t", "beta::t"])
+
+        def document(workspace, identifier, kind, labels, tests=(), **relations):
+            body = "".join(f"- [{identifier}:{label}] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n" for label in labels)
+            return {"workspaceId": workspace, "kind": kind, "body": body, "path": f"{identifier}.md",
+                    "frontmatter": {"id": identifier, "title": "t", "status": "approved", "tests": list(tests),
+                                    "relations": {key: value for key, value in relations.items()}}}
+
+        documents = {
+            "zeta::REQ-001": document("zeta", "REQ-001", "requirement", ["AC-01"], [{"path": "z.py", "covers": ["REQ-001:AC-01"], "command": "b"}]),
+            "alpha::TECH-001": document("alpha", "TECH-001", "technical", [], [{"path": "t.py", "covers": ["zeta::REQ-001:AC-01"], "command": "t"}],
+                                        refines=["zeta::REQ-001:AC-01"]),
+        }
+        per_target, planned = module.reference_plan(documents, ["zeta::REQ-001", "alpha::TECH-001"])
+        self.assertEqual(per_target["zeta::REQ-001"], (["zeta::REQ-001:AC-01"], ["alpha::t", "zeta::b"]))
+        # 規範文のない文書は、自身の文書単位のテスト対応だけを使う。
+        self.assertEqual(per_target["alpha::TECH-001"], ([], ["alpha::t"]))
+        self.assertEqual(planned, {"alpha::t": (["t.py"], ["zeta::REQ-001:AC-01"]), "zeta::b": (["z.py"], ["zeta::REQ-001:AC-01"])})
+        # 対象のMUSTにテスト対応がなければ拒否する。
+        documents["zeta::REQ-001"]["frontmatter"]["tests"] = []
+        documents["alpha::TECH-001"]["frontmatter"]["tests"] = []
+        with self.assertRaisesRegex(ValueError, "MUST"):
+            module.reference_plan(documents, ["zeta::REQ-001"])
+
+    def test_multi_binding_order_expected_orders_distinguish_the_defect(self):
+        """リテラルの期待する実行の順は、修正前の並び（素の辞書順）と、欠陥を持つ4件で異なり、対照の2件で同じ。実行の順は連番が観測する。"""
+        module = multi_binding_order_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                expected, defective = module.literal_order(identifier), module.defective_order(identifier)
+                self.assertEqual(sorted(defective), sorted(expected))
+                self.assertEqual(expected != defective, case["defect"])
+                result = json.loads((audit.FIXTURES / "multi" / identifier / "expected/verify.json").read_text())
+                commands = [command for entry in result["workspaces"] for command in entry["commands"]] if "workspaces" in result else result["commands"]
+                self.assertEqual([command["bindingId"] for command in commands], expected)
+                self.assertEqual([command["stdoutExcerpt"] for command in commands], [f"{binding} {index}\n" for index, binding in enumerate(expected, 1)])
+                # 修正前のCoreなら、連番は修正前の並びの位置になる。期待値と異なる連番が現れる。
+                if case["defect"]:
+                    self.assertNotEqual([defective.index(binding) + 1 for binding in expected], list(range(1, len(expected) + 1)))
+        # 4件の欠陥は、ルートのIDが辞書順で最後（01、02、03）と間（06）の両方を含む。
+        self.assertEqual([identifier for identifier, case in module.CASES.items() if case["defect"]],
+                         ["MULTI-052-01", "MULTI-052-02", "MULTI-052-03", "MULTI-052-06"])
+        # `bindingRefs`は辞書順であり、`commands[]`（実行の順）とは別の並びである（`MULTI-052-02`）。
+        result = json.loads((audit.FIXTURES / "multi/MULTI-052-02/expected/verify.json").read_text())
+        self.assertEqual(result["targetResults"][0]["bindingRefs"], ["alpha::t", "beta::t", "zeta::a", "zeta::b"])
+        self.assertEqual([command["bindingId"] for command in result["commands"]], ["zeta::a", "zeta::b", "alpha::t", "beta::t"])
+        # `MULTI-052-04`の宣言の順は辞書順の逆で、結果は辞書順である。
+        text = (audit.FIXTURES / "multi/MULTI-052-04/repo/.spec/requirements/REQ-001.md").read_text()
+        self.assertLess(text.index("tests/z2.py"), text.index("tests/z1.py"))
+        self.assertLess(text.index("REQ-001:AC-02, alpha::TECH-001:C-01"), text.index("REQ-001:AC-01]"))
+        result = json.loads((audit.FIXTURES / "multi/MULTI-052-04/expected/verify.json").read_text())
+        self.assertEqual(result["commands"][0]["tests"], ["tests/z1.py", "tests/z2.py"])
+        self.assertEqual(result["commands"][0]["covers"], ["alpha::TECH-001:C-01", "zeta::REQ-001:AC-01", "zeta::REQ-001:AC-02"])
+
+    def test_multi_binding_order_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の期待値の改変（実行の順の改変を含む）を拒否する。"""
+        module = multi_binding_order_fixtures
+
+        def commands_of(value):
+            return [command for entry in value["workspaces"] for command in entry["commands"]] if "workspaces" in value else value["commands"]
+
+        def targets_of(value):
+            return [target for entry in value["workspaces"] for target in entry["targetResults"]] if "workspaces" in value else value["targetResults"]
+
+        def swap(values, first, second):
+            values[first], values[second] = values[second], values[first]
+
+        results = {
+            "status": lambda v: v.update(status="failed"),
+            "diagnostics-add": lambda v: v["diagnostics"].append({"code": "SPEC-VERIFY-BLOCKED-001"}),
+            "revision": lambda v: v.update(revision=None),
+            "scope": lambda v: v.update(scope="all" if v["scope"] != "all" else "selected"),
+            "workspace": lambda v: v["workspace"].update(id="web"),
+            "multi-id": lambda v: v["multiWorkspace"].update(id="platform"),
+            "workspaces-swap": lambda v: swap(v["workspaces"], 0, 1),
+            "workspaces-root-last": lambda v: v["workspaces"].append(v["workspaces"].pop(0)),
+            "workspaces-drop": lambda v: v["workspaces"].pop(),
+            "workspace-status": lambda v: v["workspaces"][0].update(status="failed"),
+            "workspace-path": lambda v: v["workspaces"][1].update(path="apps/other"),
+            "commands-reverse": lambda v: v["commands"].reverse(),
+            "commands-defective-order": lambda v: v["commands"].append(v["commands"].pop(0)),
+            "commands-swap": lambda v: swap(v["commands"], 0, 1),
+            "commands-clear": lambda v: v["commands"].clear(),
+            "ws-commands-drop": lambda v: v["workspaces"][1]["commands"].pop(),
+            "ws-commands-move": lambda v: v["workspaces"][0]["commands"].append(v["workspaces"][1]["commands"].pop()),
+            "ws-commands-reverse": lambda v: v["workspaces"][0]["commands"].reverse(),
+            "stdout-swap": lambda v: swap([c for c in commands_of(v)], 0, 1) or (commands_of(v)[0].update(stdoutExcerpt=commands_of(v)[1]["stdoutExcerpt"])),
+            "stdout-empty": lambda v: commands_of(v)[0].update(stdoutExcerpt=""),
+            "stdout-defective-sequence": lambda v: commands_of(v)[0].update(stdoutExcerpt=commands_of(v)[0]["stdoutExcerpt"].replace(" 1\n", " 3\n")),
+            "command-tests-reverse": lambda v: commands_of(v)[0]["tests"].reverse(),
+            "command-covers-reverse": lambda v: commands_of(v)[0]["covers"].reverse(),
+            "command-covers-drop": lambda v: commands_of(v)[0]["covers"].pop(),
+            "command-tests-add": lambda v: commands_of(v)[0]["tests"].append("tests/extra.py"),
+            "command-argv": lambda v: commands_of(v)[0]["argv"].__setitem__(1, "other.sh"),
+            "command-argv-total": lambda v: commands_of(v)[0]["argv"].__setitem__(3, "9"),
+            "command-status": lambda v: commands_of(v)[0].update(status="failed"),
+            "command-exit-code": lambda v: commands_of(v)[0].update(exitCode=1),
+            "command-binding-id": lambda v: commands_of(v)[0].update(bindingId="root::other"),
+            "command-cwd": lambda v: commands_of(v)[0].update(cwd="tests"),
+            "binding-refs-execution-order": lambda v: targets_of(v)[0]["bindingRefs"].append(targets_of(v)[0]["bindingRefs"].pop(0)),
+            "binding-refs-reverse": lambda v: targets_of(v)[0]["bindingRefs"].reverse(),
+            "binding-refs-drop": lambda v: targets_of(v)[0]["bindingRefs"].pop(),
+            "statements-reverse": lambda v: targets_of(v)[0]["statements"].reverse(),
+            "statements-drop": lambda v: targets_of(v)[0]["statements"].pop(),
+            "target-status": lambda v: targets_of(v)[0].update(status="blocked"),
+            "target-digest": lambda v: targets_of(v)[0].update(contextDigest="sha256:" + "0" * 64),
+            "target-digest-null": lambda v: targets_of(v)[0].update(contextDigest=None),
+            "target-diagnostics": lambda v: targets_of(v)[0]["diagnostics"].append({"code": "CTX-COVERAGE-TEST-001"}),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=1),
+            "cwd": lambda v: v["invocation"].update(cwd="apps"),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-target": lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-002"),
+            "env": lambda v: v["invocation"].update(env={"TMPDIR": "/tmp"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": "seq.sh"}),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+        }
+        effects = {
+            "policy": lambda v: v.update(policy="explicit-report"),
+            "extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+            "after-extra": lambda v: v["after"]["temporary"].update({"bitz-order": {"kind": "file", "executable": False, "sha256": "0" * 64}}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            mutations = [("expected/verify.json", name, change) for name, change in results.items()]
+            mutations += [("manifest.json", name, change) for name, change in manifests.items()]
+            mutations += [("side-effects.json", name, change) for name, change in effects.items()]
+            for relative, name, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    path = root / "multi" / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=name):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 200)
+
+    def test_multi_binding_order_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加を拒否する。原因を消す書換えと、種類（欠陥か対照か）の取り違えは、バイト列の照合以外の検査でも拒否する。"""
+        module = multi_binding_order_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 実行ビットのある入力を拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-052-01")
+            (root / "multi/MULTI-052-01/repo/seq.sh").chmod(0o755)
+            self.assertEqual(module.validate(root, {"MULTI-052-01"})["status"], "Failed")
+        # 種類の取り違え: 対照を欠陥と名乗る、欠陥を対照と名乗る。
+        for identifier in ("MULTI-052-05", "MULTI-052-04", "MULTI-052-01", "MULTI-052-06"):
+            with self.subTest(identifier=identifier):
+                flipped = dict(module.CASES[identifier], defect=not module.CASES[identifier]["defect"])
+                with patch.dict(module.CASES, {identifier: flipped}):
+                    outcome = module.validate(audit.FIXTURES, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertIn("修正前の並び", outcome["errors"][0])
+        # `covers`の宣言の順が辞書順でも、辞書順の対照は成り立たない（宣言の順に出力する実装を区別できない）。
+        original = module.declaration_order
+        with patch.object(module, "declaration_order", lambda documents, key: (original(documents, key)[0], sorted(original(documents, key)[1]))):
+            outcome = module.validate(audit.FIXTURES, {"MULTI-052-04"})
+        self.assertEqual(outcome["status"], "Failed")
+        self.assertIn("宣言の順が辞書順です", outcome["errors"][0])
+        # 原因を消す書換え。入力のバイト列の照合とスナップショットを通した上で（書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直す）、
+        # 参照計算と原因の構成の検査が拒否することを確かめる。
+        edits = {
+            # ルートのIDを変える（カタログの宣言と構成が入力と異なる）。
+            "MULTI-052-01": [(".spec/bitz.yaml", "  id: zeta\n", "  id: aaa\n")],
+            # メンバーの宣言の順を変える。
+            "MULTI-052-02": [(".spec/bitz.yaml", "    - id: beta\n      path: apps/beta\n    - id: alpha\n      path: apps/alpha\n",
+                              "    - id: alpha\n      path: apps/alpha\n    - id: beta\n      path: apps/beta\n")],
+            # 具体化文書のテスト対応を消す（対象のMUSTにテスト対応がない）。
+            "MULTI-052-03": [("apps/alpha/.spec/technical/TECH-100.md", "covers: [beta::REQ-201:AC-01]", "covers: [alpha::TECH-100:C-01]")],
+            # `tests`の宣言の順を辞書順へ変える（宣言の順に出力する実装を区別できなくなる）。
+            "MULTI-052-04": [(".spec/requirements/REQ-001.md", "tests/z1.py", "tests/z9.py")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    self.regenerate_effects(module, fixture, temporary)
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_binding_order_closure_follows_the_reverse_reference_rule(self):
+        """全体の操作の構成では、メンバーの`TECH-001`を起点にした閉包は、同じ`REQ`を具体化する別のメンバーの文書を含まない（関係・トレースモデル §6.1）。"""
+        module = multi_binding_order_fixtures
+        closure = module.pair_shape("zeta", "alpha", "beta")[2]
+        self.assertEqual(closure["alpha::TECH-001"], ["alpha::TECH-001", "zeta::REQ-001"])
+        self.assertEqual(closure["zeta::REQ-001"], ["alpha::TECH-001", "zeta::REQ-001"])
+        # 単独の操作の構成は、起点を所有する文書から逆参照を辿るので、複数の具体化文書を含む。
+        self.assertEqual(module.sibling_shape("zeta", "alpha", "beta")[2]["zeta::REQ-001"], ["alpha::TECH-001", "beta::TECH-001", "zeta::REQ-001"])
+        # ハッシュ値の材料は、検証対象ごとの閉包を反映する。
+        self.assertNotEqual(module.expected_digest("MULTI-052-01", "alpha::TECH-001"), module.expected_digest("MULTI-052-01", "beta::TECH-001"))
+        self.assertNotEqual(module.expected_digest("MULTI-052-01", "zeta::REQ-001"), module.expected_digest("MULTI-052-05", "aaa::REQ-001"))
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

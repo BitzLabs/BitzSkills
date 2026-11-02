@@ -1,0 +1,14 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: zeta
+multiWorkspace:
+  members:
+    - id: alpha
+      path: apps/alpha
+verify:
+  commands:
+    a:
+      argv: ["/bin/sh", "seq.sh", "zeta::a", "1", "{tests}"]
+      cwd: .

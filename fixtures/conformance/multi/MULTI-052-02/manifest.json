@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-052-02",
+  "description": "単独のverifyのcommandsは、ルートのIDが辞書順で最後でも、ルートのテスト割当てを先頭に、その後をID辞書順に並べ、bindingRefsは辞書順のままにする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}
