@@ -740,6 +740,15 @@ def _cwd_ownership_diag(
     )
 
 
+def _binding_order(ws_root_by_id: dict[str, str]):
+    """テスト割当ての``(workspace_id, コマンド名)``の並びのキーを返す。ワークスペースの処理順（``ws_root_by_id``の挿入順。
+    複合ワークスペースではルートを先頭、その後をワークスペースIDの辞書順）、コマンド名の辞書順とする（verify.md §4・§10）。
+    """
+
+    position = {ws_id: index for index, ws_id in enumerate(ws_root_by_id)}
+    return lambda key: (position[key[0]], key[1])
+
+
 def _plan_and_run_bindings(
     needs: dict[tuple[str, str], dict],
     *,
@@ -774,7 +783,8 @@ def _plan_and_run_bindings(
                 config_untracked_cache[ws_id] = False
         return config_untracked_cache[ws_id]
 
-    for ws_id, name in sorted(needs):
+    order = _binding_order(ws_root_by_id)
+    for ws_id, name in sorted(needs, key=order):
         bucket = needs[(ws_id, name)]
         tests_sorted = sorted(bucket["tests"])
         covers_sorted = sorted(bucket["covers"])
@@ -849,7 +859,7 @@ def _plan_and_run_bindings(
 
     commands_by_key: dict[tuple[str, str], dict] = {}
     status_by_key: dict[tuple[str, str], str] = {}
-    for ws_id, name in sorted(plan):
+    for ws_id, name in sorted(plan, key=order):
         info = plan[(ws_id, name)]
         effective_timeout = effective_timeout_for(ws_id)
         child_env = dict(env)
@@ -1180,7 +1190,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     top_diagnostics.extend(binding_top_diags)
     _apply_binding_results(target_entries, blocked_keys, status_by_key)
 
-    commands_out = [commands_by_key[k] for k in sorted(commands_by_key)]
+    commands_out = [commands_by_key[k] for k in sorted(commands_by_key, key=_binding_order(ws_root_by_id))]
 
     diagnostics = sort_diagnostics(top_diagnostics)
     all_statuses = [d["resultStatus"] for d in diagnostics] + [t["status"] for t in target_entries]
