@@ -96,6 +96,7 @@ from conformance import multi_workspace_id_fixtures
 from conformance import multi_self_qualified_covers_fixtures
 from conformance import multi_binding_order_fixtures
 from conformance import multi_config_warning_fixtures
+from conformance import related_advisory_fixtures, multi_related_advisory_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -7004,6 +7005,150 @@ class AuditTests(unittest.TestCase):
             self.regenerate_effects(module, fixture, temporary)
             with patch.object(module, "reviewed_inputs", lambda _identifier: edited):
                 outcome = module.validate(root, {identifier})
+            self.assertEqual(outcome["status"], "Failed")
+            self.assertEqual(len(outcome["errors"]), 1)
+            self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+
+    def related_advisory_modules(self):
+        return ((related_advisory_fixtures, "single", self.copy_single_fixture), (multi_related_advisory_fixtures, "multi", self.copy_multi_fixture))
+
+    def test_related_advisory_fixtures(self):
+        """`SINGLE-168-01`〜`06`と`MULTI-054-01`〜`04`: `context`と`verify`が`related`の参照切れの警告を返し、`related`を横断のエッジに収録しない（確認事項C78・C79）。"""
+        for module, kind, copy_fixture in self.related_advisory_modules():
+            result = module.validate()
+            self.assertEqual(result["errors"], [])
+            expected = [f"SINGLE-168-{number:02d}" for number in range(1, 7)] if kind == "single" else [f"MULTI-054-{number:02d}" for number in range(1, 5)]
+            self.assertEqual(result["prepared"], expected)
+            self.assertEqual(result["references"], 2)
+            self.assertEqual(result["core_execution"], "Not run")
+            # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+            for identifier in module.CASES:
+                with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = copy_fixture(temporary, identifier)
+                    self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_related_advisory_expected_results_place_the_warning_and_differ_from_the_old_core(self):
+        """警告の置き場所（`context`と`check`は最上位、`verify`は検証対象）、並び、状態。修正前のCoreの再現は、`context`と`verify`の6件で結果と異なり、`check`の対照と`MULTI-054-03`では同じ。"""
+        single, multi = related_advisory_fixtures, multi_related_advisory_fixtures
+        for module, kind in ((single, "single"), (multi, "multi")):
+            for identifier, case in module.CASES.items():
+                with self.subTest(identifier=identifier):
+                    result = json.loads((audit.FIXTURES / kind / identifier / f"expected/{case['op']}.json").read_text())
+                    diagnostics = single.result_diagnostics(result)
+                    warnings = [item["evidence"] for item in diagnostics if item["code"] == single.ADVISORY_CODE]
+                    holders = result["targetResults"][0]["diagnostics"] if case["op"] == "verify" else result["diagnostics"]
+                    self.assertEqual(holders, diagnostics)
+                    self.assertTrue(all(item["severity"] == "warning" and item["resultStatus"] == "passed_with_warnings"
+                                        for item in diagnostics if item["code"] == single.ADVISORY_CODE))
+                    defect = case["op"] != "check" and (bool(warnings) if kind == "multi" else True)
+                    self.assertEqual(single.old_core_result(result) != result, defect)
+                    failed = any(item["code"] == single.STRONG_CODE for item in diagnostics)
+                    self.assertEqual((result["status"], failed), ("failed", True) if failed else ("passed_with_warnings" if warnings else "passed", False))
+        read = lambda identifier: json.loads((audit.FIXTURES / "single" / identifier / f"expected/{single.CASES[identifier]['op']}.json").read_text())
+        # 失敗の結果: 同じ`path`では`code`の辞書順、同じ鍵の警告は宣言の順（TECH-099、ADR-099）。`related`の警告は未解決の強い関係に数えない。
+        context_failure = read("SINGLE-168-04")
+        self.assertEqual([(item["code"], item["evidence"]) for item in context_failure["diagnostics"]],
+                         [(single.ADVISORY_CODE, "TECH-099"), (single.ADVISORY_CODE, "ADR-099"), (single.STRONG_CODE, "REQ-099")])
+        self.assertEqual(context_failure["resolution"], {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 1})
+        self.assertEqual(read("SINGLE-168-05")["targetResults"][0]["diagnostics"], context_failure["diagnostics"])
+        # 閉包の外の`TECH-002`の警告は、`check`だけが返す。
+        self.assertEqual([item["evidence"] for item in read("SINGLE-168-06")["diagnostics"]], ["ADR-099", "ADR-098"])
+        for identifier in ("SINGLE-168-01", "SINGLE-168-02", "SINGLE-168-03"):
+            self.assertEqual([item["evidence"] for item in single.result_diagnostics(read(identifier))], ["ADR-099"])
+        # 複合ワークスペース: 横断のエッジは`requires`の1件だけで、解決できる横断の`related`（api::REQ-201）は入らない。失敗の結果は空。
+        for identifier, edges in (("MULTI-054-01", 1), ("MULTI-054-03", 1), ("MULTI-054-04", 0)):
+            result = json.loads((audit.FIXTURES / "multi" / identifier / "expected/context.json").read_text())
+            self.assertEqual(len(result["resolution"]["crossWorkspaceEdges"]), edges, identifier)
+            self.assertTrue(all(edge["relation"] == "requires" for edge in result["resolution"]["crossWorkspaceEdges"]), identifier)
+            self.assertNotIn("api::REQ-201", [document["id"] for document in result["documents"]], identifier)
+
+    def test_related_advisory_reference_rules(self):
+        """参照計算: 解決できる`related`は診断にしない、閉包の外の文書は`context`と`verify`で数えず`check`で数える、強い関係の診断と並べる。"""
+        module = related_advisory_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-168-01"
+            fixture = audit.FIXTURES / "single" / identifier
+            repository = fixture_setup(fixture, json.loads((fixture / "manifest.json").read_text()), Path(temporary) / "repo")
+            self.assertEqual([item["evidence"] for item in module.reference_diagnostics(repository, identifier)], ["ADR-099"])
+            # `ADR-099`を実在させると、警告は消える（存在する参照先は警告にならない）。
+            adr = (repository / ".spec/decisions/ADR-001.md").read_text()
+            (repository / ".spec/decisions/ADR-099.md").write_text(adr.replace("ADR-001", "ADR-099"))
+            self.assertEqual(module.reference_diagnostics(repository, identifier), [])
+            # `check --full`は閉包の外の`TECH-002`も数える（`SINGLE-168-06`と同じ入力）。
+            self.assertEqual([item["evidence"] for item in module.reference_diagnostics(repository, "SINGLE-168-06")], ["ADR-098"])
+        self.assertEqual(module.reference_status([]), "passed")
+        self.assertEqual(module.reference_status([module.advisory("X", "p")]), "passed_with_warnings")
+        self.assertEqual(module.reference_status([module.advisory("X", "p"), module.strong_missing("Y", "p")]), "failed")
+        # 複合ワークスペース: 起点ワークスペースの文書の宣言だけを読み、同じ`path`では`code`の辞書順に並べる。
+        multi = multi_related_advisory_fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "MULTI-054-04"
+            fixture = audit.FIXTURES / "multi" / identifier
+            repository = fixture_setup(fixture, json.loads((fixture / "manifest.json").read_text()), Path(temporary) / "repo")
+            _, _, documents = multi_crosscheck.load_workspaces(repository)
+            closure, _ = multi_crosscheck.closure(documents, multi.TARGET)
+            self.assertEqual([(item["code"], item["evidence"]) for item in multi.reference_diagnostics(documents, closure)],
+                             [(multi.ADVISORY_CODE, "platform::REQ-099"), (multi.STRONG_CODE, "platform::REQ-098")])
+            # 解決できる横断の`related`（api::REQ-201）は、エッジの参照計算に入らない。
+            self.assertEqual(multi.reference_edges(documents, closure),
+                             [{"relation": "requires", "source": multi.TARGET, "target": "platform::REQ-001"}])
+            # 別のワークスペースの文書が宣言する関係は読まない。
+            documents["platform::REQ-001"]["frontmatter"]["relations"] = {"related": ["web::REQ-999"]}
+            self.assertEqual(len(multi.reference_diagnostics(documents, closure)), 2)
+
+    def test_related_advisory_audit_rejects_tampering(self):
+        """入力の欠落と余り、期待値の改変（警告を消す、置き場所を移す、並びを替える、横断のエッジへ`related`を足す）、種類の取り違えを拒否する（陰性対照）。"""
+        for module, kind, copy_fixture in self.related_advisory_modules():
+            identifiers = ("SINGLE-168-01", "SINGLE-168-04") if kind == "single" else ("MULTI-054-01", "MULTI-054-04")
+            for identifier in identifiers:
+                for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra"]:
+                    with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                        root = copy_fixture(temporary, identifier)
+                        fixture = root / kind / identifier
+                        if name == "extra":
+                            (fixture / "repo/extra.txt").write_text("x")
+                        else:
+                            (fixture / name).unlink()
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        schema_phrase = "is not valid under any of the given schemas"
+        edits = {
+            ("single", "SINGLE-168-01"): (lambda result: result["diagnostics"].clear(), None),
+            ("single", "SINGLE-168-03"): (lambda result: result["targetResults"][0]["diagnostics"].clear(), None),
+            ("single", "SINGLE-168-04"): (lambda result: result["diagnostics"].reverse(), None),
+            ("single", "SINGLE-168-05"): (lambda result: (result["diagnostics"].extend(result["targetResults"][0]["diagnostics"]),
+                                                           result["targetResults"][0]["diagnostics"].clear()), None),
+            ("single", "SINGLE-168-06"): (lambda result: result["diagnostics"].pop(), None),
+            # `related`を横断のエッジに足した期待値は、結果のスキーマ（列挙値に`related`がない）が先に拒否する。
+            ("multi", "MULTI-054-01"): (lambda result: result["resolution"]["crossWorkspaceEdges"].append(
+                {"relation": "related", "source": "web::REQ-101", "target": "api::REQ-201"}), schema_phrase),
+            ("multi", "MULTI-054-02"): (lambda result: result["targetResults"][0].update(status="passed"), None),
+            ("multi", "MULTI-054-03"): (lambda result: result["resolution"]["crossWorkspaceEdges"].clear(), None),
+            ("multi", "MULTI-054-04"): (lambda result: result["diagnostics"].pop(0), None),
+        }
+        for (kind, identifier), (edit, phrase) in edits.items():
+            module = related_advisory_fixtures if kind == "single" else multi_related_advisory_fixtures
+            copy_fixture = self.copy_single_fixture if kind == "single" else self.copy_multi_fixture
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = copy_fixture(temporary, identifier)
+                path = root / kind / identifier / f"expected/{module.CASES[identifier]['op']}.json"
+                result = json.loads(path.read_text())
+                edit(result)
+                path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+                outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertIn(phrase or "完全結果がレビュー済みの期待値と異なります", outcome["errors"][0])
+        # 入力の改変（`TECH-001`の存在しない`related`を外す）。入力のバイト列の照合は通る状態にしても、参照計算が拒否する。
+        identifier = "SINGLE-168-01"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_single_fixture(temporary, identifier)
+            fixture = root / "single" / identifier
+            path = fixture / "repo" / related_advisory_fixtures.TECH_PATH
+            path.write_text(path.read_text().replace("related: [ADR-001, ADR-099]", "related: [ADR-001]"))
+            edited = dict(related_advisory_fixtures.reviewed_inputs(identifier))
+            edited[related_advisory_fixtures.TECH_PATH] = path.read_bytes()
+            self.regenerate_effects(related_advisory_fixtures, fixture, temporary)
+            with patch.object(related_advisory_fixtures, "reviewed_inputs", lambda _identifier: edited):
+                outcome = related_advisory_fixtures.validate(root, {identifier})
             self.assertEqual(outcome["status"], "Failed")
             self.assertEqual(len(outcome["errors"]), 1)
             self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])

@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-054-04",
+  "description": "強い関係の参照切れで失敗する複合ワークスペースのcontextにも、横断のrelatedの警告を並べる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "web::REQ-101",
+      "--purpose",
+      "verify",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

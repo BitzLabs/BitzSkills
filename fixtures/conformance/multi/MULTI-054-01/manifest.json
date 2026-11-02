@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-054-01",
+  "description": "複合ワークスペースのcontextが、横断のrelatedの参照切れの警告を返し、解決できる横断のrelatedをエッジに収録しない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "web::REQ-101",
+      "--purpose",
+      "verify",
+      "--detail",
+      "compact",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}
