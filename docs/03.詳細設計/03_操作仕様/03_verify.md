@@ -87,7 +87,9 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 複合ワークスペースは全体事前検査で遮断する。テストのパスが所有境界・存在の検査を通過しても、実効`cwd`の配下に
 ない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。いずれも診断`SPEC-VERIFY-BLOCKED-001`（重大度`error`、
 結果への効果`blocked`）、`source.kind: file`とし、前者の`source`は設定ファイル、
-後者の`source`は該当するテスト対応を宣言した仕様文書とする。独立したテスト割当ては継続し、後述する起動前検査の`blocked`と同じ証跡の規則を使う。
+後者の`source`は該当するテスト対応を宣言した仕様文書とする。実効`cwd`の実パスが所有領域の外であれば、単一ワークスペースは
+`VERIFY-CWD-OUTSIDE`として診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）、複合ワークスペースは`MULTI-OWNERSHIP-CWD`として
+診断`SPEC-MULTI-OWNERSHIP-001`（`failed`）とし、`source`は設定ファイルの`verify.commands.<名前>.cwd`とする。独立したテスト割当ては継続し、後述する起動前検査の`blocked`と同じ証跡の規則を使う。
 
 `argv[0]`に`/`があれば、絶対パスはそのパス、相対パスは実効`cwd`を基準に解決する。`/`がなければ、実効環境の
 `PATH`を左から探索する。空または相対の`PATH`要素は実効`cwd`を基準にし、プラットフォームの通常の実行可能ファイルの
@@ -246,7 +248,8 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 
 | 診断コード | 結果 | 条件 |
 |---|---|---|
-| `SPEC-VERIFY-BLOCKED-001` | `blocked` | テストまたはコマンドの不足、未追跡の設定、`cwd`の配下外のテスト、展開した引数列の上限、`cwd`または実行ファイルの不足 |
+| `SPEC-VERIFY-BLOCKED-001` | `blocked` | テストまたはコマンドの不足、未追跡の設定、`cwd`の配下外のテスト、展開した引数列の上限、`cwd`または実行ファイルの不足、単一ワークスペースのルートの外の`cwd` |
+| `SPEC-MULTI-OWNERSHIP-001` | `failed` | 複合ワークスペースで、実パスが所有領域の外の`cwd` |
 | `SPEC-VERIFY-BLOCKED-002` | `blocked`／`passed_with_warnings` | 単一・複合ワークスペース全体の対象0件／複合ワークスペースの1つのワークスペースの対象0件 |
 | `SPEC-VERIFY-COMMAND-001` | `error` | 起動前検査の後のプロセス生成の失敗またはシグナル |
 | `SPEC-VERIFY-TIMEOUT-001` | `error` | タイムアウト |
