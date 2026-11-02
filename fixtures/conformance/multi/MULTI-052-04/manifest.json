@@ -16,7 +16,9 @@
     "cwd": ".",
     "argv": [
       "verify",
-      "REQ-001",
+      "--workspace",
+      "alpha",
+      "alpha::TECH-900",
       "--format",
       "json"
     ],

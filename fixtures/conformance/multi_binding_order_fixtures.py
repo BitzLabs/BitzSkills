@@ -21,7 +21,7 @@
 | `MULTI-052-01` | `verify --all-workspaces`、`.` | ルート`zeta`、メンバー`beta`・`alpha`（この順で宣言）。ルートのコマンドは`b`・`a`。`REQ-001`を`alpha`、`REQ-002`を`beta`の`TECH-001`が具体化する | 実行は`zeta::a`、`zeta::b`、`alpha::t`、`beta::t`の順。修正前は`alpha::t`が先頭 |
 | `MULTI-052-02` | `verify REQ-001`、`.`（ルート） | ルート`zeta`、メンバー`beta`・`alpha`。ルートの`REQ-001`を`alpha`と`beta`の`TECH-001`が具体化し、3つのワークスペースのテスト割当てを要求する | `commands[]`は実行の順（`zeta::a`、`zeta::b`、`alpha::t`、`beta::t`）。`bindingRefs`は辞書順（`alpha::t`が先頭） |
 | `MULTI-052-03` | `verify --workspace beta beta::REQ-201`、`.` | メンバー`beta`の`REQ-201`を、ルート`zeta`とメンバー`alpha`の具体化文書が`refines`する | 起点のワークスペース`beta`を先頭にせず、`zeta::a`、`alpha::t`、`beta::t`の順 |
-| `MULTI-052-04` | `verify REQ-001`、`.`（ルート） | ルート`zeta`だけがテスト割当てを持つ。宣言の順を辞書順の逆にした`tests`と`covers`（メンバー`alpha`の規範文の`covers`を含む） | `tests`と`covers`は修飾IDの辞書順。修正前も同じ（対照） |
+| `MULTI-052-04` | `verify --workspace alpha alpha::TECH-900`、`.` | ルート`zeta`だけがテスト割当てを持つ。`alpha`の`TECH-900`を`zeta`の`TECH-100`が直接具体化し、`TECH-100`が両方の規範文を`covers`する。宣言の順を辞書順の逆にした`tests`と`covers` | `tests`と`covers`は修飾IDの辞書順。修正前も同じ（対照） |
 | `MULTI-052-05` | `verify --all-workspaces`、`.` | `MULTI-052-01`と同じ形で、ルート`aaa`、メンバー`ccc`・`bbb`（対照。ルートが辞書順で最初） | 実行は`aaa::a`、`aaa::b`、`bbb::t`、`ccc::t`の順。修正前も同じ |
 | `MULTI-052-06` | `verify --all-workspaces`、`.` | `MULTI-052-01`と同じ形で、ルート`mid`、メンバー`zeta`・`alpha`（ルートが辞書順で間） | 実行は`mid::a`、`mid::b`、`alpha::t`、`zeta::t`の順。修正前は`alpha::t`が先頭 |
 
@@ -125,14 +125,16 @@ def member_shape():
 
 
 def sorted_shape():
-    """ルート`zeta`だけがテスト割当てを持つ。`tests`と`covers`の宣言の順は、辞書順の逆にする（`z2.py`が先、`covers`は`REQ-001:AC-02`、`alpha::TECH-001:C-01`、`REQ-001:AC-01`の順）。
-    `alpha`の`TECH-001`は規範文`C-01`を持ち、`REQ-001:AC-01`を具体化する。その規範文のテスト対応はルートの`REQ-001`が宣言する。"""
+    """メンバー`alpha`の`TECH-900`（規範文`C-01`）を、ルート`zeta`の`TECH-100`（規範文`C-01`）が直接`refines`する。テスト割当てを持つのはルートだけで、`TECH-100`が
+    自身の`C-01`と`alpha::TECH-900:C-01`を`covers`する（別のワークスペースの規範文を`covers`できるのは、宣言する文書がその規範文を直接`refines`する場合に限る。関係・トレースモデル §9）。
+    `tests`と`covers`の宣言の順は辞書順の逆にする（`z2.py`が先、`covers`は`TECH-100:C-01`、`alpha::TECH-900:C-01`の順）。
+    修飾しないIDの順（`TECH-100:C-01`が先）と修飾IDの順（`alpha::TECH-900:C-01`が先）が異なるように、メンバーの文書番号をルートの文書番号より大きくする。"""
     documents = {
-        ("zeta", "REQ-001"): dict(title=TITLE, statements=[("AC-01", STATEMENT_TEXT), ("AC-02", "入力を検証する")],
-                                  tests=[("tests/z2.py", ["REQ-001:AC-02", "alpha::TECH-001:C-01"], "a"), ("tests/z1.py", ["REQ-001:AC-01"], "a")]),
-        ("alpha", "TECH-001"): dict(title="AC-01の実装方針", refines=["zeta::REQ-001:AC-01"], statements=[("C-01", "結果を記録する")]),
+        ("alpha", "TECH-900"): dict(title="メンバーの基準", statements=[("C-01", STATEMENT_TEXT)]),
+        ("zeta", "TECH-100"): dict(title="ルートの具体化", refines=["alpha::TECH-900:C-01"], statements=[("C-01", "結果を記録する")],
+                                   tests=[("tests/z2.py", ["TECH-100:C-01", "alpha::TECH-900:C-01"], "a"), ("tests/z1.py", ["alpha::TECH-900:C-01"], "a")]),
     }
-    return documents, {"zeta": ["a"]}, {"zeta::REQ-001": ["alpha::TECH-001", "zeta::REQ-001"]}
+    return documents, {"zeta": ["a"]}, {"alpha::TECH-900": ["alpha::TECH-900", "zeta::TECH-100"]}
 
 
 # id: 説明、操作の引数、ルートのID、カタログの宣言の順のメンバー、構成、欠陥を検出するか。`target`は単独の操作の起点（修飾ID）。
@@ -146,7 +148,8 @@ CASES = {
     "MULTI-052-03": dict(argv=["verify", "--workspace", "beta", "beta::REQ-201"], root="zeta", members=["beta", "alpha"], shape=member_shape,
                          target="beta::REQ-201", defect=True,
                          description="メンバーを起点にした単独のverifyも、起点のワークスペースを先頭にせず、ルートを先頭にID辞書順でテスト割当てを実行する"),
-    "MULTI-052-04": dict(argv=["verify", "REQ-001"], root="zeta", members=["alpha"], shape=sorted_shape, target="zeta::REQ-001", defect=False, unsorted=True,
+    "MULTI-052-04": dict(argv=["verify", "--workspace", "alpha", "alpha::TECH-900"], root="zeta", members=["alpha"], shape=sorted_shape,
+                         target="alpha::TECH-900", defect=False, unsorted=True,
                          description="対照: commandsのtestsとcoversは、宣言の順ではなく（修飾IDの）重複なし辞書順に並べる。修正の前後で同じ"),
     "MULTI-052-05": dict(argv=["verify", "--all-workspaces"], root="aaa", members=["ccc", "bbb"], shape=lambda: pair_shape("aaa", "bbb", "ccc"),
                          target=None, defect=False,
@@ -214,8 +217,8 @@ EXPECTED = {
         {"beta::REQ-201": (["beta::REQ-201:AC-01"], ["alpha::t", "beta::t", "zeta::a"])}),
     "MULTI-052-04": (
         ["zeta::a"],
-        {"zeta::a": (["tests/z1.py", "tests/z2.py"], ["alpha::TECH-001:C-01", "zeta::REQ-001:AC-01", "zeta::REQ-001:AC-02"])},
-        {"zeta::REQ-001": (["alpha::TECH-001:C-01", "zeta::REQ-001:AC-01", "zeta::REQ-001:AC-02"], ["zeta::a"])}),
+        {"zeta::a": (["tests/z1.py", "tests/z2.py"], ["alpha::TECH-900:C-01", "zeta::TECH-100:C-01"])},
+        {"alpha::TECH-900": (["alpha::TECH-900:C-01", "zeta::TECH-100:C-01"], ["zeta::a"])}),
     "MULTI-052-05": _pair_expected("aaa", "bbb", "ccc"),
     "MULTI-052-06": _pair_expected("mid", "alpha", "zeta"),
 }

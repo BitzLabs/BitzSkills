@@ -6709,12 +6709,14 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["targetResults"][0]["bindingRefs"], ["alpha::t", "beta::t", "zeta::a", "zeta::b"])
         self.assertEqual([command["bindingId"] for command in result["commands"]], ["zeta::a", "zeta::b", "alpha::t", "beta::t"])
         # `MULTI-052-04`の宣言の順は辞書順の逆で、結果は辞書順である。
-        text = (audit.FIXTURES / "multi/MULTI-052-04/repo/.spec/requirements/REQ-001.md").read_text()
+        text = (audit.FIXTURES / "multi/MULTI-052-04/repo/.spec/technical/TECH-100.md").read_text()
         self.assertLess(text.index("tests/z2.py"), text.index("tests/z1.py"))
-        self.assertLess(text.index("REQ-001:AC-02, alpha::TECH-001:C-01"), text.index("REQ-001:AC-01]"))
+        self.assertLess(text.index("TECH-100:C-01, alpha::TECH-900:C-01"), text.index("covers: [alpha::TECH-900:C-01]"))
+        # 修飾IDの順と、修飾しないIDの順は異なる（修飾しない順なら`zeta::TECH-100:C-01`が先）。
+        self.assertNotEqual(sorted(["alpha::TECH-900:C-01", "zeta::TECH-100:C-01"]), sorted(["alpha::TECH-900:C-01", "zeta::TECH-100:C-01"], key=lambda item: item.partition("::")[2]))
         result = json.loads((audit.FIXTURES / "multi/MULTI-052-04/expected/verify.json").read_text())
         self.assertEqual(result["commands"][0]["tests"], ["tests/z1.py", "tests/z2.py"])
-        self.assertEqual(result["commands"][0]["covers"], ["alpha::TECH-001:C-01", "zeta::REQ-001:AC-01", "zeta::REQ-001:AC-02"])
+        self.assertEqual(result["commands"][0]["covers"], ["alpha::TECH-900:C-01", "zeta::TECH-100:C-01"])
 
     def test_multi_binding_order_audit_rejects_changed_expectations(self):
         """期待結果・起動条件・副作用の期待値の改変（実行の順の改変を含む）を拒否する。"""
@@ -6855,7 +6857,7 @@ class AuditTests(unittest.TestCase):
             # 具体化文書のテスト対応を消す（対象のMUSTにテスト対応がない）。
             "MULTI-052-03": [("apps/alpha/.spec/technical/TECH-100.md", "covers: [beta::REQ-201:AC-01]", "covers: [alpha::TECH-100:C-01]")],
             # `tests`の宣言の順を辞書順へ変える（宣言の順に出力する実装を区別できなくなる）。
-            "MULTI-052-04": [(".spec/requirements/REQ-001.md", "tests/z1.py", "tests/z9.py")],
+            "MULTI-052-04": [(".spec/technical/TECH-100.md", "tests/z1.py", "tests/z9.py")],
         }
         byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
         for identifier, changes in edits.items():

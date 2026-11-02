@@ -4,18 +4,17 @@
   "status": "passed",
   "scope": "selected",
   "workspace": {
-    "id": "zeta",
-    "path": "."
+    "id": "alpha",
+    "path": "apps/alpha"
   },
   "targetResults": [
     {
-      "target": "zeta::REQ-001",
+      "target": "alpha::TECH-900",
       "status": "passed",
-      "contextDigest": "sha256:ec5fa542e832d6e70def06dc05525904f67ecbe1973d124f1539e662ea46183f",
+      "contextDigest": "sha256:dd1f451aa1e84a7c14f65f7272046e0116f3162fa6e8cd5d23cacc343877aa67",
       "statements": [
-        "alpha::TECH-001:C-01",
-        "zeta::REQ-001:AC-01",
-        "zeta::REQ-001:AC-02"
+        "alpha::TECH-900:C-01",
+        "zeta::TECH-100:C-01"
       ],
       "bindingRefs": [
         "zeta::a"
@@ -48,9 +47,8 @@
         "tests/z2.py"
       ],
       "covers": [
-        "alpha::TECH-001:C-01",
-        "zeta::REQ-001:AC-01",
-        "zeta::REQ-001:AC-02"
+        "alpha::TECH-900:C-01",
+        "zeta::TECH-100:C-01"
       ],
       "exitCode": 0,
       "timeoutSeconds": 300,

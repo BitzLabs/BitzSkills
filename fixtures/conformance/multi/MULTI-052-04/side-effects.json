@@ -11,13 +11,13 @@
         "executable": false,
         "sha256": "0eca1dfed748d6235656d34626b2a2ea7ad70e0072fadeb2fdcf00c647db14e1"
       },
-      ".spec/requirements": {
+      ".spec/technical": {
         "kind": "directory"
       },
-      ".spec/requirements/REQ-001.md": {
+      ".spec/technical/TECH-100.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "cf9a68eb0e774e3f5cd63a62c2eb449c2ec3e1c2d17805e6ba50f512fa1342f8"
+        "sha256": "887443fe41406ad2d98f4a12706d7de1dd815a14fe1e71c4e5b17612b4d8d31d"
       },
       "apps": {
         "kind": "directory"
@@ -36,10 +36,10 @@
       "apps/alpha/.spec/technical": {
         "kind": "directory"
       },
-      "apps/alpha/.spec/technical/TECH-001.md": {
+      "apps/alpha/.spec/technical/TECH-900.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "0e0548aeedf995d96d60adae7cc609cb84d0d4c671c997e0ce7f5dbe46a936a1"
+        "sha256": "d7bacd9c1bd8321ddc6dcf067183a34fbca460039f5b79768b097f743f274ef9"
       },
       "seq.sh": {
         "kind": "file",
@@ -62,7 +62,7 @@
     },
     "git": {
       "status": "",
-      "index": "100644 5edf42c9f7e0fe91f97e5ad3b753f2a5c47256bf 0\t.spec/bitz.yaml\n100644 c47a1db98285add9c3dc57a3564be2c749459f58 0\t.spec/requirements/REQ-001.md\n100644 f1bcb2f5f5c5649a18bea5517099cebef45c2b1d 0\tapps/alpha/.spec/bitz.yaml\n100644 1094e8854696aa294e42b0d98e6e580eafe3817f 0\tapps/alpha/.spec/technical/TECH-001.md\n100644 cd0743807f2138a9f955ce9aa44dc34b7b7a4299 0\tseq.sh\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z1.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z2.py\n"
+      "index": "100644 5edf42c9f7e0fe91f97e5ad3b753f2a5c47256bf 0\t.spec/bitz.yaml\n100644 0b296ef6ca16957ed7670ab7d6497c5b43fdbd24 0\t.spec/technical/TECH-100.md\n100644 f1bcb2f5f5c5649a18bea5517099cebef45c2b1d 0\tapps/alpha/.spec/bitz.yaml\n100644 ca327c7ec017b04ac924958032c123da740ecd95 0\tapps/alpha/.spec/technical/TECH-900.md\n100644 cd0743807f2138a9f955ce9aa44dc34b7b7a4299 0\tseq.sh\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z1.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z2.py\n"
     },
     "home": {},
     "cache": {},
@@ -78,13 +78,13 @@
         "executable": false,
         "sha256": "0eca1dfed748d6235656d34626b2a2ea7ad70e0072fadeb2fdcf00c647db14e1"
       },
-      ".spec/requirements": {
+      ".spec/technical": {
         "kind": "directory"
       },
-      ".spec/requirements/REQ-001.md": {
+      ".spec/technical/TECH-100.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "cf9a68eb0e774e3f5cd63a62c2eb449c2ec3e1c2d17805e6ba50f512fa1342f8"
+        "sha256": "887443fe41406ad2d98f4a12706d7de1dd815a14fe1e71c4e5b17612b4d8d31d"
       },
       "apps": {
         "kind": "directory"
@@ -103,10 +103,10 @@
       "apps/alpha/.spec/technical": {
         "kind": "directory"
       },
-      "apps/alpha/.spec/technical/TECH-001.md": {
+      "apps/alpha/.spec/technical/TECH-900.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "0e0548aeedf995d96d60adae7cc609cb84d0d4c671c997e0ce7f5dbe46a936a1"
+        "sha256": "d7bacd9c1bd8321ddc6dcf067183a34fbca460039f5b79768b097f743f274ef9"
       },
       "seq.sh": {
         "kind": "file",
@@ -129,7 +129,7 @@
     },
     "git": {
       "status": "",
-      "index": "100644 5edf42c9f7e0fe91f97e5ad3b753f2a5c47256bf 0\t.spec/bitz.yaml\n100644 c47a1db98285add9c3dc57a3564be2c749459f58 0\t.spec/requirements/REQ-001.md\n100644 f1bcb2f5f5c5649a18bea5517099cebef45c2b1d 0\tapps/alpha/.spec/bitz.yaml\n100644 1094e8854696aa294e42b0d98e6e580eafe3817f 0\tapps/alpha/.spec/technical/TECH-001.md\n100644 cd0743807f2138a9f955ce9aa44dc34b7b7a4299 0\tseq.sh\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z1.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z2.py\n"
+      "index": "100644 5edf42c9f7e0fe91f97e5ad3b753f2a5c47256bf 0\t.spec/bitz.yaml\n100644 0b296ef6ca16957ed7670ab7d6497c5b43fdbd24 0\t.spec/technical/TECH-100.md\n100644 f1bcb2f5f5c5649a18bea5517099cebef45c2b1d 0\tapps/alpha/.spec/bitz.yaml\n100644 ca327c7ec017b04ac924958032c123da740ecd95 0\tapps/alpha/.spec/technical/TECH-900.md\n100644 cd0743807f2138a9f955ce9aa44dc34b7b7a4299 0\tseq.sh\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z1.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/z2.py\n"
     },
     "home": {},
     "cache": {},
