@@ -6880,7 +6880,7 @@ class AuditTests(unittest.TestCase):
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_binding_order_closure_follows_the_reverse_reference_rule(self):
-        """全体の操作の構成では、メンバーの`TECH-001`を起点にした閉包は、同じ`REQ`を具体化する別のメンバーの文書を含まない（関係・トレースモデル §6.1）。"""
+        """全体操作の構成では、メンバーの`TECH-001`を起点にした閉包は、同じ`REQ`を具体化する別のメンバーの文書を含まない（関係・トレースモデル §6.1）。"""
         module = multi_binding_order_fixtures
         closure = module.pair_shape("zeta", "alpha", "beta")[2]
         self.assertEqual(closure["alpha::TECH-001"], ["alpha::TECH-001", "zeta::REQ-001"])
@@ -6892,7 +6892,7 @@ class AuditTests(unittest.TestCase):
         self.assertNotEqual(module.expected_digest("MULTI-052-01", "zeta::REQ-001"), module.expected_digest("MULTI-052-05", "aaa::REQ-001"))
 
     def test_multi_config_warning_fixtures(self):
-        """`MULTI-053-01`〜`06`: 全体の操作が各ワークスペースの設定の警告を、そのワークスペースのdiagnosticsに置くことを固定する（確認事項C22）。"""
+        """`MULTI-053-01`〜`06`: 全体操作が各ワークスペースの設定の警告を、そのワークスペースのdiagnosticsに置くことを固定する（確認事項C22）。"""
         module = multi_config_warning_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
