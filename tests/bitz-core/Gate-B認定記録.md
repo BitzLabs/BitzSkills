@@ -1019,3 +1019,23 @@ Core固有の単体試験は1105件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1108件がすべて成功した。
+
+## 2026-11-02: 全体操作で各ワークスペースの設定の警告を返すようにした後のStep 1〜5の再判定
+
+`multiws.py`、`check.py`、`verify.py`で、`check`と`verify`の全体操作が、全体事前検査を通過した各ワークスペースの設定の警告を、そのワークスペースの`diagnostics`へ置くようにした
+（実装の確認事項C22）。これを固定する`MULTI-053-01`〜`MULTI-053-06`（Step 5）を追加した。
+修正前のCore（コミット`f41b11e4`の版）では、追加した6件のうち5件（`-01`、`-02`、`-04`、`-05`、`-06`）が非成功となり、`doctor`の対照の`-03`と既存の565件はすべて通過することを確かめた。
+修正後のCoreでは571件すべてが`passed`となる。
+
+コミット`2878bd0bdd50a4995ad0bc1ca8bad6635ea2ce4b`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 571件（`MULTI-053-01`〜`MULTI-053-06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`bec4d0da0dfc4b5843364d6b8e762dbce3729fa035977ecec0174e046368dd9c` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1109件がすべて成功した。
