@@ -1,9 +1,9 @@
-"""複合ワークスペースの全体の操作が、各ワークスペースの設定の警告を、そのワークスペースの`diagnostics`へ置くことを固定する（Coreの公開操作は実行しない）。
+"""複合ワークスペースの全体操作が、各ワークスペースの設定の警告を、そのワークスペースの`diagnostics`へ置くことを固定する（Coreの公開操作は実行しない）。
 
 実装の確認事項C22とADR-051の追加に対応する。診断レジストリは、設定の警告の4つの条件（`INPUT-BOM-CONFIG`、`CONFIG-SCHEMA-MINOR-NEWER`、`CONFIG-KEY-PROFILES`、
 `CONFIG-KEY-UNKNOWN`）の返しうる操作を`all`、継続単位を`continue`と定める。結果・診断・終了コード §2は、全体事前検査を通過した各ワークスペースの設定の警告を、
-`doctor`、`check`、`verify`のどの全体の操作でも、そのワークスペースの`workspaces[].diagnostics`へ置き、最上位の`diagnostics`へ複製しないと定める。
-修正前のCoreは、`doctor`の全体の操作だけがこの警告を返し、`check`と`verify`の全体の操作は1件も返さず、状態も`passed`にしていた（単独の操作は返していた）。
+`doctor`、`check`、`verify`のどの全体操作でも、そのワークスペースの`workspaces[].diagnostics`へ置き、最上位の`diagnostics`へ複製しないと定める。
+修正前のCoreは、`doctor`の全体操作だけがこの警告を返し、`check`と`verify`の全体操作は1件も返さず、状態も`passed`にしていた（単独の操作は返していた）。
 この群は、その欠陥と、警告を持つワークスペースが同じワークスペースの別の診断と並ぶときの順序を6件で固定する。
 
 | fixture | 操作と実行ディレクトリ | 入力 | 期待 |
@@ -23,7 +23,7 @@
 - 診断レジストリ: `INPUT-BOM-CONFIG`（`SPEC-INPUT-BOM-001`）、`CONFIG-KEY-PROFILES`と`CONFIG-KEY-UNKNOWN`（どちらも`SPEC-CONFIG-UNKNOWN-001`）は`warning`／`passed_with_warnings`、
   返しうる操作は`all`、継続単位は`continue`。`WORKSPACE-ENTRY-UNKNOWN`（`SPEC-WORKSPACE-UNKNOWN-001`）は`check`と`doctor`、`VERIFY-MEMBER-TARGETS-EMPTY`
   （`SPEC-VERIFY-BLOCKED-002`）は`verify`（複合ワークスペースの1つのワークスペースの対象が0件のとき`warning`）。`CONFIG-SCHEMA-MINOR-NEWER`は、Coreが未実装（確認事項C93）なので扱わない。
-- 結果・診断・終了コード §2: 全体事前検査を通過した各ワークスペースの設定の警告は、どの全体の操作でも、そのワークスペースの`diagnostics`へ置く。最上位の`diagnostics`は複製しない。
+- 結果・診断・終了コード §2: 全体事前検査を通過した各ワークスペースの設定の警告は、どの全体操作でも、そのワークスペースの`diagnostics`へ置く。最上位の`diagnostics`は複製しない。
   §3: `warning`だけならワークスペースと全体は`passed_with_warnings`で、終了コードは0。最悪値の集約は`error > failed > blocked > passed_with_warnings > passed`。
 - 結果・診断・終了コード §5: 発生元は`file`で、`path`はワークスペースからの相対パス。設定の警告の`path`は`.spec/bitz.yaml`。
 - 結果・診断・終了コード §7: 診断の順序は、発生元のワークスペースID、`path`、`line`、`column`、`code`、`specRefs`の辞書順。すべて同じ診断は、生成元の宣言に現れた順になる。
@@ -327,7 +327,7 @@ def reviewed_effects(state):
 
 
 def old_core_result(result):
-    """修正前のCoreの`check`と`verify`の全体の操作の再現: 設定の警告の4つの条件の診断を返さない（欠陥の再現。期待値の根拠にしない）。"""
+    """修正前のCoreの`check`と`verify`の全体操作の再現: 設定の警告の4つの条件の診断を返さない（欠陥の再現。期待値の根拠にしない）。"""
     old = json.loads(json.dumps(result))
     for entry in old["workspaces"]:
         entry["diagnostics"] = [item for item in entry["diagnostics"] if item["code"] not in CONFIG_CODES]

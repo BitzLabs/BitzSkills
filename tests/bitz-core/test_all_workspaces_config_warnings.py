@@ -1,15 +1,15 @@
-"""全体の操作が各ワークスペースの設定の警告を返すことの単体試験（確認事項 C22）。
+"""全体操作が各ワークスペースの設定の警告を返すことの単体試験（確認事項 C22）。
 
 欠陥: `doctor --all-workspaces`は各ワークスペースの設定の警告（未知のキーなど）を`workspaces[].diagnostics`へ返すが、
 `check --all-workspaces`と`verify --all-workspaces`は1件も返さず、状態も`passed`になっていた。単独の操作は返していた。
 
 規範:
-- 診断レジストリ: `INPUT-BOM-CONFIG`、`CONFIG-SCHEMA-MINOR-NEWER`、`CONFIG-KEY-PROFILES`、`CONFIG-KEY-UNKNOWN`の対象の操作は`all`で、継続単位は`continue`。
-- 結果・診断・終了コード §2: 全体事前検査を通過した各ワークスペースの設定の警告は、`doctor`、`check`、`verify`のどの全体の操作でも、
+- 診断レジストリ: `INPUT-BOM-CONFIG`、`CONFIG-SCHEMA-MINOR-NEWER`、`CONFIG-KEY-PROFILES`、`CONFIG-KEY-UNKNOWN`の返しうる操作は`all`で、継続単位は`continue`。
+- 結果・診断・終了コード §2: 全体事前検査を通過した各ワークスペースの設定の警告は、`doctor`、`check`、`verify`のどの全体操作でも、
   そのワークスペースの`diagnostics`へ置く。最上位の`diagnostics`へ複製しない。
 
 この試験の対象:
-1. 3つの全体の操作で、設定の警告（未知のキー、`profiles`、BOM）が同じ形で、所有するワークスペースの`diagnostics`に置かれ、最上位には置かれない。
+1. 3つの全体操作で、設定の警告（未知のキー、`profiles`、BOM）が同じ形で、所有するワークスペースの`diagnostics`に置かれ、最上位には置かれない。
 2. 警告だけのワークスペースと全体の状態は`passed_with_warnings`、終了コードは0。警告のないワークスペースは`passed`のまま。
 3. 結果は`result.schema.json`に適合する。
 """
