@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "selected",
+  "status": "failed",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:7c535d8e20c782297ab6ac276e92b82e5d00ffed469bb62648155562caa14e60",
+      "statements": [
+        "platform::REQ-001:AC-01"
+      ],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-OWNERSHIP-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "パスlkの解決先がワークスペースplatformの所有領域の外です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.t.cwd"
+      }
+    }
+  ]
+}

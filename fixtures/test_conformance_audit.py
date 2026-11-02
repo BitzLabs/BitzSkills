@@ -85,6 +85,7 @@ from conformance import verify_stop_revision_fixtures
 from conformance import context_stop_revision_fixtures
 from conformance import multi_context_order_fixtures
 from conformance import multi_cross_cycle_fixtures
+from conformance import command_cwd_fixtures, multi_command_cwd_fixtures
 from conformance import multi_qualified_summary_fixtures
 from conformance import multi_null_declaration_fixtures
 from conformance import multi_unreadable_config_fixtures
@@ -6410,6 +6411,234 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(outcome["status"], "Failed", (source, name))
                     self.assertEqual(len(outcome["errors"]), len(users), (source, name, outcome["errors"]))
 
+    def regenerate_effects(self, module, fixture, temporary):
+        """入力を書き換えた複製の副作用の期待値を、準備手順の観測から作り直す（バイト列の不一致以外の検査で拒否されることを確かめるため）。"""
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+        external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+        for directory in external.values():
+            directory.mkdir(parents=True)
+        state = module.observe(repository, external)
+        (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+
+    def command_cwd_modules(self):
+        return ((command_cwd_fixtures, "single", self.copy_single_fixture), (multi_command_cwd_fixtures, "multi", self.copy_multi_fixture))
+
+    def test_command_cwd_fixtures(self):
+        """`SINGLE-167-01`〜`09`と`MULTI-051-01`〜`06`: コマンドのcwdの字句と所有領域を固定する（確認事項C82・C86）。"""
+        for module, kind, copy_fixture in self.command_cwd_modules():
+            result = module.validate()
+            self.assertEqual(result["errors"], [])
+            expected = [f"SINGLE-167-{number:02d}" for number in range(1, 10)] if kind == "single" else [f"MULTI-051-{number:02d}" for number in range(1, 7)]
+            self.assertEqual(result["prepared"], expected)
+            self.assertEqual(result["references"], 2)
+            self.assertEqual(result["core_execution"], "Not run")
+            # 複製した状態（シンボリックリンクを含む）でも通る。以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照。
+            for identifier in module.CASES:
+                with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = copy_fixture(temporary, identifier)
+                    self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_command_cwd_reference_rules(self):
+        """字句の規則（ワークスペース・設定仕様 §6）と包含の判定（複合ワークスペース仕様 §5.1）の参照計算。"""
+        module = command_cwd_fixtures
+        for cwd in (".", "tests", "a/b", "a.b", "..a", "a..", "日本語", "a-b_c"):
+            self.assertFalse(module.lexical_violation(cwd), cwd)
+        for cwd in ("", "..", "../..", "a/..", "/", "/tmp", "./tests", "tests/.", "tests//", "tests/", "a//b", "t*", "a?", "[a]", "a]", "a[", "a\0b"):
+            self.assertTrue(module.lexical_violation(cwd.replace("\\0", "\0")), cwd)
+        # 包含はパスのセグメントの境界で判定する。
+        self.assertTrue(module.within("/r", "/r"))
+        self.assertTrue(module.within("/r/a", "/r"))
+        self.assertFalse(module.within("/r2", "/r"))
+        self.assertFalse(module.within("/", "/r"))
+        # 違反の fixture は、入力から導く結果の種類が名乗る種類と一致する。
+        for identifier, case in module.CASES.items():
+            with tempfile.TemporaryDirectory() as temporary:
+                manifest = json.loads((audit.FIXTURES / "single" / identifier / "manifest.json").read_text())
+                repository = fixture_setup(audit.FIXTURES / "single" / identifier, manifest, Path(temporary) / "repo")
+                self.assertEqual(module.reference_outcome(repository), case["kind"], identifier)
+        multi = multi_command_cwd_fixtures
+        for identifier, case in multi.CASES.items():
+            with tempfile.TemporaryDirectory() as temporary:
+                manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+                repository = fixture_setup(audit.FIXTURES / "multi" / identifier, manifest, Path(temporary) / "repo")
+                lexical, outside = multi.reference_violations(repository)
+                self.assertEqual((lexical, outside), ([case["violated"]], []) if case["kind"] == "lexical"
+                                 else ([], [case["violated"]] if case["violated"] else []), identifier)
+
+    def test_command_cwd_expected_results_follow_the_norm(self):
+        """期待値の形: 字句の違反は設定の検査の1件、実パスの違反は単一が`blocked`・複合が`failed`で、テスト割当てを起動しない。"""
+        for identifier in command_cwd_fixtures.CASES:
+            result = json.loads((audit.FIXTURES / "single" / identifier / f"expected/{command_cwd_fixtures.CASES[identifier]['op']}.json").read_text())
+            kind = command_cwd_fixtures.CASES[identifier]["kind"]
+            codes = [item["code"] for item in result["diagnostics"]]
+            self.assertEqual(codes, {"lexical": ["SPEC-CONFIG-SCHEMA-001"], "outside": ["SPEC-VERIFY-BLOCKED-001"], "passed": []}[kind], identifier)
+            if kind != "passed":
+                self.assertEqual(result["diagnostics"][0]["source"]["key"], "verify.commands.default.cwd", identifier)
+                self.assertEqual(result.get("commands", []), [], identifier)
+        multi = multi_command_cwd_fixtures
+        for identifier, case in multi.CASES.items():
+            result = json.loads((audit.FIXTURES / "multi" / identifier / "expected/verify.json").read_text())
+            diagnostics = list(result["diagnostics"]) + [item for entry in result.get("workspaces", []) for item in entry["diagnostics"]]
+            expected = {"lexical": ["SPEC-CONFIG-SCHEMA-001"], "ownership": ["SPEC-MULTI-OWNERSHIP-001"], "passed": []}[case["kind"]]
+            self.assertEqual([item["code"] for item in diagnostics], expected, identifier)
+            # 単独の`verify`は最上位、全体の`verify`は所有ワークスペースの`diagnostics`に置く（`verify` §6）。
+            if case["kind"] == "ownership" and "--all-workspaces" in case["argv"]:
+                self.assertEqual(result["diagnostics"], [], identifier)
+                self.assertEqual([entry["id"] for entry in result["workspaces"] if entry["diagnostics"]], [case["violated"]], identifier)
+        # 違反していない独立したテスト割当ては実行する。
+        first = json.loads((audit.FIXTURES / "multi/MULTI-051-01/expected/verify.json").read_text())
+        self.assertEqual([c["bindingId"] for e in first["workspaces"] for c in e["commands"]], ["web::t"])
+        third = json.loads((audit.FIXTURES / "multi/MULTI-051-03/expected/verify.json").read_text())
+        self.assertEqual([c["bindingId"] for e in third["workspaces"] for c in e["commands"]], ["platform::t"])
+
+    def test_command_cwd_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の期待値の改変を拒否する。"""
+        def first(value):
+            return value["diagnostics"][0] if value["diagnostics"] else value["workspaces"][0]["diagnostics"][0] if value.get("workspaces") else None
+
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "failed"),
+            "status-error": lambda v: v.update(status="error" if v["status"] != "error" else "blocked"),
+            "diag-drop": lambda v: v["diagnostics"].pop(),
+            "diag-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "diag-code": lambda v: v["diagnostics"][0].update(code="SPEC-VERIFY-BLOCKED-002"),
+            "diag-effect": lambda v: v["diagnostics"][0].update(resultStatus="blocked" if v["diagnostics"][0]["resultStatus"] != "blocked" else "failed"),
+            "diag-summary": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            "diag-key": lambda v: v["diagnostics"][0]["source"].update(key="verify.commands.default.argv"),
+            "diag-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            "workspace": lambda v: v["workspace"].update(id="web" if v["workspace"]["id"] != "web" else "root"),
+            "revision": lambda v: v.update(revision={"commit": "0" * 40, "dirty": True}),
+            "commands-add": lambda v: v["commands"].append(copy.deepcopy(v["commands"][0])),
+            "command-cwd": lambda v: v["commands"][0].update(cwd="."),
+            "command-argv": lambda v: v["commands"][0]["argv"].append("x"),
+            "target-status": lambda v: v["targetResults"][0].update(status="passed" if v["targetResults"][0]["status"] != "passed" else "blocked"),
+            "target-binding": lambda v: v["targetResults"][0]["bindingRefs"].append("root::default"),
+            "target-digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            "ws-diag-drop": lambda v: v["workspaces"][0]["diagnostics"].pop(),
+            "ws-status": lambda v: v["workspaces"][1].update(status="blocked"),
+            "ws-command-drop": lambda v: v["workspaces"][-1]["commands"].pop(),
+            "ws-target-status": lambda v: v["workspaces"][0]["targetResults"][0].update(status="failed"),
+            "ws-add": lambda v: v["workspaces"].append(copy.deepcopy(v["workspaces"][0])),
+            "multi-id": lambda v: v["multiWorkspace"].update(id="platform" if v["multiWorkspace"]["id"] is None else None),
+            "purpose": lambda v: v.update(purpose="implement" if v["purpose"] != "implement" else "interpret"),
+            "checks": lambda v: v["checks"].pop(),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=v["expect"]["exitCode"] + 1),
+            "report-count": lambda v: v["expect"].update(reportFileCount=1),
+            "argv-extra": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-drop": lambda v: v["invocation"]["argv"].pop(1),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        effects = {
+            "policy": lambda v: v.update(policy="explicit-report" if v["policy"] == "read-only" else "read-only"),
+            "extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+            "after-changed": lambda v: v["after"]["repository"].update(extra={"kind": "directory"}),
+        }
+        applied = 0
+        for module, kind, copy_fixture in self.command_cwd_modules():
+            for identifier, case in module.CASES.items():
+                result_file = f"expected/{case['op']}.json" if kind == "single" else "expected/verify.json"
+                mutations = [(result_file, name, change) for name, change in results.items()]
+                mutations += [("manifest.json", name, change) for name, change in manifests.items()]
+                mutations += [("side-effects.json", name, change) for name, change in effects.items()]
+                for relative, name, mutate in mutations:
+                    with tempfile.TemporaryDirectory() as temporary:
+                        root = copy_fixture(temporary, identifier)
+                        path = root / kind / identifier / relative
+                        value = json.loads(path.read_text())
+                        before = json.dumps(value, sort_keys=True)
+                        try:
+                            mutate(value)
+                        except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                            continue
+                        if json.dumps(value, sort_keys=True) == before:
+                            continue
+                        applied += 1
+                        path.write_text(json.dumps(value))
+                        with self.subTest(identifier=identifier, file=relative, mutation=name):
+                            self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 300)
+
+    def test_command_cwd_audit_rejects_changed_corpus(self):
+        """入力の欠落・追加・シンボリックリンクの書換えを拒否する。原因を消す書換えは、バイト列の照合以外の検査（参照計算と原因の構成）でも拒否する。"""
+        for module, kind, copy_fixture in self.command_cwd_modules():
+            for identifier in module.CASES:
+                for name in [*sorted(f"repo/{path}" for path in module.reviewed_inputs(identifier)), *sorted(f"repo/{path}" for path in module.reviewed_links(identifier)),
+                             "extra", "extra-link"]:
+                    with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                        root = copy_fixture(temporary, identifier)
+                        fixture = root / kind / identifier
+                        if name == "extra":
+                            (fixture / "repo/extra.txt").write_text("x")
+                        elif name == "extra-link":
+                            (fixture / "repo/extra-link").symlink_to(".")
+                        else:
+                            (fixture / name).unlink()
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+                # 実行ビットを付けた入力も拒否する。
+                with self.subTest(identifier=identifier, file="mode"), tempfile.TemporaryDirectory() as temporary:
+                    root = copy_fixture(temporary, identifier)
+                    target = sorted(path for path in (root / kind / identifier / "repo").rglob("*.md"))[0]
+                    target.chmod(0o755)
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        # (モジュール, fixture, 種類, 書換えるファイル(パス, 旧, 新)の列, シンボリックリンクの書換え(パス, 新しい解決先)の列)。参照計算が拒否する。
+        edits = [
+            (command_cwd_fixtures, "SINGLE-167-01", "single", [(".spec/bitz.yaml", '"../.."', '"tests"')], []),
+            (command_cwd_fixtures, "SINGLE-167-06", "single", [(".spec/bitz.yaml", '"a]"', '"a"')], []),
+            (command_cwd_fixtures, "SINGLE-167-08", "single", [(".spec/bitz.yaml", "cwd: tests", 'cwd: "tests//"')], []),
+            (command_cwd_fixtures, "SINGLE-167-07", "single", [], [("up", "tests")]),
+            (command_cwd_fixtures, "SINGLE-167-09", "single", [], [("inner", "real/..")]),
+            (multi_command_cwd_fixtures, "MULTI-051-01", "multi", [(".spec/bitz.yaml", "cwd: apps/web", "cwd: tests")], []),
+            (multi_command_cwd_fixtures, "MULTI-051-02", "multi", [], [("lk", "tests")]),
+            (multi_command_cwd_fixtures, "MULTI-051-03", "multi", [], [("apps/web/esc", "tests")]),
+            (multi_command_cwd_fixtures, "MULTI-051-05", "multi", [(".spec/bitz.yaml", 'cwd: "/tmp"', 'cwd: "tests"')], []),
+            (multi_command_cwd_fixtures, "MULTI-051-06", "multi", [(".spec/bitz.yaml", "cwd: tests", "cwd: apps/web")], []),
+        ]
+        for module, identifier, kind, changes, links in edits:
+            with self.subTest(identifier=identifier, changes=changes, links=links), tempfile.TemporaryDirectory() as temporary:
+                copy_fixture = self.copy_single_fixture if kind == "single" else self.copy_multi_fixture
+                root = copy_fixture(temporary, identifier)
+                fixture = root / kind / identifier
+                edited, edited_links = dict(module.reviewed_inputs(identifier)), dict(module.reviewed_links(identifier))
+                for relative, old, new in changes:
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new, 1))
+                    edited[relative] = path.read_bytes()
+                for relative, target in links:
+                    link = fixture / "repo" / relative
+                    link.unlink()
+                    link.symlink_to(target)
+                    edited_links[relative] = target
+                self.regenerate_effects(module, fixture, temporary)
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited), \
+                        patch.object(module, "reviewed_links", lambda _identifier, edited_links=edited_links: edited_links):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_command_cwd_digest_inputs_reflect_the_cwd(self):
+        """ハッシュ値の材料のコマンドの`cwd`が入力の設定と一致しないと、参照計算AとBが食い違って拒否される（陰性対照）。"""
+        module = command_cwd_fixtures
+        self.assertNotEqual(module.context_digest("SINGLE-167-08"), module.context_digest("SINGLE-167-07"))
+        self.assertNotEqual(module.context_digest("SINGLE-167-08"), module.context_digest("SINGLE-167-09"))
+        with patch.object(module, "context_digest", lambda identifier: module.digest_reference.digest(module.digest_reference.canonical_bytes(
+                module.digest_reference.reviewed_digest_input("SINGLE-042")))):
+            self.assertEqual(module.validate(audit.FIXTURES, {"SINGLE-167-08"})["status"], "Failed")
+        multi = multi_command_cwd_fixtures
+        self.assertNotEqual(multi.digest("MULTI-051-01", "platform"), multi.digest("MULTI-051-06", "platform"))
+        self.assertNotEqual(multi.digest("MULTI-051-03", "web"), multi.digest("MULTI-051-06", "web"))
+
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
         kind = repo_root_fixtures.CASES[identifier][0]
@@ -10112,7 +10341,7 @@ class AuditTests(unittest.TestCase):
         for relative, mutate in mutations:
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
-                shutil.copytree(audit.FIXTURES / "single", root / "single")
+                shutil.copytree(audit.FIXTURES / "single", root / "single", symlinks=True)
                 for name in ("manifest", "result", "side-effects"):
                     shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = root / "single" / relative
