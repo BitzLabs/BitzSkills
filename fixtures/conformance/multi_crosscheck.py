@@ -205,7 +205,8 @@ def build(repository, root="platform::REQ-001", purpose="verify", loaded=None):
         workspace_id = document["workspaceId"]
         declared = relations(document)
         strong = sorted({(key, target) for key in STRONG for target in declared[key] if resolves(documents, target)})
-        for key in RELATION_KEYS:
+        # 横断のエッジは強い関係だけ。`related`は閉包を増やさないので収録しない（複合ワークスペース仕様 §6、確認事項C79）。
+        for key in STRONG:
             for target in declared[key]:
                 if target.partition("::")[0] != workspace_id and resolves(documents, target):
                     edges.add((identifier, key, target))

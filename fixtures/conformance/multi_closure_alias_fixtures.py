@@ -796,7 +796,8 @@ def derived_material(repository, root, purpose):
         document = documents[name]
         declared = multi_crosscheck.relations(document)
         role = role_of(documents, root, name, edges)
-        for relation in digest_crosscheck.RELATION_KEYS:
+        # 横断のエッジは強い関係だけ（`related`は収録しない。複合ワークスペース仕様 §6、確認事項C79）。
+        for relation in digest_crosscheck.STRONG:
             cross |= {(name, relation, target) for target in declared[relation]
                        if target.partition("::")[0] != document["workspaceId"] and digest_crosscheck.resolves(documents, target)}
         payload["documents"].append({
