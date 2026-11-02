@@ -706,6 +706,40 @@ def _process_single_target(
     return entry_out, needed_pairs
 
 
+def _cwd_ownership_diag(
+    ws_id: str, name: str, cwd_rel: str, cwd_abs: str, ws_root_by_id: dict[str, str], multi_root_id: str | None
+) -> dict | None:
+    """実効`cwd`の実パスが所有領域の外なら、起動を遮断する診断を返す（ワークスペース・設定仕様 §6、複合ワークスペース仕様 §5・§5.1）。
+
+    所有領域は、テスト割当てを所有するワークスペースのルートの実パスの配下（境界を含む）とし、パスのセグメントの境界で
+    包含を判定する。複合ワークスペースのルートワークスペースは、メンバーのルートの配下を所有しない。字句の検査は設定の
+    検査（config._cwd_lexically_valid）が済ませている。単一ワークスペースは`SPEC-VERIFY-BLOCKED-001`、複合ワークスペースは
+    `SPEC-MULTI-OWNERSHIP-001`とする。
+    """
+
+    def _within(path: str, base: str) -> bool:
+        return path == base or path.startswith(base.rstrip(os.sep) + os.sep)
+
+    real = os.path.realpath(cwd_abs)
+    outside = not _within(real, os.path.realpath(ws_root_by_id[ws_id]))
+    if not outside and multi_root_id is not None and ws_id == multi_root_id:
+        outside = any(
+            _within(real, os.path.realpath(root)) for other, root in ws_root_by_id.items() if other != ws_id
+        )
+    if not outside:
+        return None
+    key = f"verify.commands.{name}.cwd"
+    if multi_root_id is None:
+        return _file_diag(
+            "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_cwd_unavailable(),
+            ws_id, config_mod.CONFIG_PATH, key=key,
+        )
+    return _file_diag(
+        "SPEC-MULTI-OWNERSHIP-001", "error", "failed", messages.multi_ownership_resolved(cwd_rel, ws_id),
+        ws_id, config_mod.CONFIG_PATH, key=key,
+    )
+
+
 def _plan_and_run_bindings(
     needs: dict[tuple[str, str], dict],
     *,
@@ -714,9 +748,13 @@ def _plan_and_run_bindings(
     git: gitutil.GitInfo,
     env: dict[str, str],
     effective_timeout_for,
+    multi_root_id: str | None = None,
 ):
     """``needs``（``(workspace_id, コマンド名) -> {"tests": set, "covers": set}``）からテスト割当ての実行計画を
     作り、ワークスペースの処理順（``ws_root_by_id``の挿入順）、コマンド名の辞書順で逐次実行する。
+
+    ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
+    実効`cwd`の解決先が所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
 
     戻り値は``(commands_by_key, status_by_key, blocked_keys, top_diagnostics)``。
     """
@@ -745,7 +783,7 @@ def _plan_and_run_bindings(
             continue
 
         cmd_cwd_rel = cmd_def.get("cwd", ".")
-        cwd_abs = cmd_cwd_rel if os.path.isabs(cmd_cwd_rel) else os.path.normpath(os.path.join(workspace_root, cmd_cwd_rel))
+        cwd_abs = os.path.normpath(os.path.join(workspace_root, cmd_cwd_rel))
 
         diag: dict | None = None
         expanded: list[str] = []
@@ -756,6 +794,8 @@ def _plan_and_run_bindings(
                 "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_cwd_unavailable(),
                 ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.cwd",
             )
+        elif (ownership := _cwd_ownership_diag(ws_id, name, cmd_cwd_rel, cwd_abs, ws_root_by_id, multi_root_id)) is not None:
+            diag = ownership
         else:
             outside = []
             for t in tests_sorted:
@@ -1134,6 +1174,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for,
+        multi_root_id=multi_pre.root_id if multi_active and multi_pre is not None else None,
     )
     top_diagnostics.extend(binding_top_diags)
     _apply_binding_results(target_entries, blocked_keys, status_by_key)
@@ -1337,7 +1378,7 @@ def _run_all_workspaces_members(
 
     commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
-        git=git, env=env, effective_timeout_for=_effective_timeout_for,
+        git=git, env=env, effective_timeout_for=_effective_timeout_for, multi_root_id=pre.root_id,
     )
     top_diagnostics.extend(binding_top_diags)
 
