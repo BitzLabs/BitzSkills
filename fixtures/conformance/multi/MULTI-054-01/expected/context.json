@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed_with_warnings",
+  "purpose": "verify",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-101"
+  ],
+  "contextDigest": "sha256:11151e602b1f0e373dcf26fe788a7243b7e4b0c0df83db08e044496ff8b18630",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      },
+      {
+        "id": "platform",
+        "path": "."
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "requires",
+        "source": "web::REQ-101",
+        "target": "platform::REQ-001"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "web::REQ-101",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-101.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "workspaceId": "web",
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "platform::REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:web::REQ-101"
+      ],
+      "workspaceId": "platform",
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "web::REQ-101:AC-01",
+        "documentId": "web::REQ-101",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "画面に利用者のIDを表示しない"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "web::REQ-101:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "web::REQ-101:AC-01"
+      ],
+      "unaddressed": [
+        "web::REQ-101:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-ADVISORY-MISSING-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "関係型relatedの参照先が存在しません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/requirements/REQ-101.md",
+        "key": "relations.related"
+      },
+      "evidence": "platform::REQ-099"
+    }
+  ]
+}

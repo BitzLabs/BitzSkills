@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "failed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-101"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 1,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-ADVISORY-MISSING-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "関係型relatedの参照先が存在しません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/requirements/REQ-101.md",
+        "key": "relations.related"
+      },
+      "evidence": "platform::REQ-099"
+    },
+    {
+      "code": "SPEC-RELATION-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "強い関係の参照先が存在しません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/requirements/REQ-101.md",
+        "key": "relations.requires"
+      },
+      "evidence": "platform::REQ-098"
+    }
+  ]
+}

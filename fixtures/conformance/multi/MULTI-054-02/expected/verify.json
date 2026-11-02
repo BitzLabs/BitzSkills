@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed_with_warnings",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-101",
+      "status": "passed_with_warnings",
+      "contextDigest": "sha256:11151e602b1f0e373dcf26fe788a7243b7e4b0c0df83db08e044496ff8b18630",
+      "statements": [
+        "web::REQ-101:AC-01"
+      ],
+      "bindingRefs": [
+        "web::t"
+      ],
+      "diagnostics": [
+        {
+          "code": "SPEC-RELATION-ADVISORY-MISSING-001",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "関係型relatedの参照先が存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/requirements/REQ-101.md",
+            "key": "relations.related"
+          },
+          "evidence": "platform::REQ-099"
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "web::t",
+      "workspaceId": "web",
+      "name": "t",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/t.py"
+      ],
+      "tests": [
+        "tests/t.py"
+      ],
+      "covers": [
+        "web::REQ-101:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
