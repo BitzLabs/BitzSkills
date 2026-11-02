@@ -93,6 +93,27 @@ def _refines_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_i
     return out
 
 
+def _refines_target_documents(
+    entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
+) -> list[str]:
+    """``entry``の`relations.refines`のうち、文書ID形式の参照（規範文IDでない参照）の、解決済みの文書IDを返す。"""
+
+    if entry.kind not in ("REQ", "TECH"):
+        return []
+    allowed = RELATION_ALLOWED_TARGET_KINDS.get((entry.kind, "refines"), set())
+    refs = (entry.frontmatter.get("relations") or {}).get("refines") or []
+    out: list[str] = []
+    for ref in refs:
+        # 修飾（`ws::`）を外した字句に`:`があれば規範文IDである（文書IDは`:`を含まない）。
+        if not isinstance(ref, str) or ":" in ref.rpartition("::")[2]:
+            continue
+        target_entry, target_doc_id = _resolve_ref(ref, id_index, statement_index)
+        if target_entry is None or target_entry.kind not in allowed or target_doc_id in out:
+            continue
+        out.append(target_doc_id)
+    return out
+
+
 def _refines_target_statements(
     entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> list[str]:
@@ -667,6 +688,38 @@ def target_expansion(
                         frontier.append(sid)
         return out
 
+    def _applicable_document_refinement_statements(doc_id: str) -> list[str]:
+        """``doc_id``を文書IDで（推移的に）`refines`する適用可能な文書の規範文を、ID順・発見順で返す（§6.4の規則1）。
+
+        具体化文書は「選択した文書または規範文を`refines`する適用可能な文書」（用語集、§6.4）なので、文書IDで`refines`する文書の
+        規範文も対象規範文に含める。見つけた文書の規範文を`refines`する文書と、その文書を文書IDで`refines`する文書も推移的に
+        たどる（確認事項C54）。
+        """
+
+        out: list[str] = []
+        seen_docs: set[str] = {doc_id}
+        frontier = [doc_id]
+        while frontier:
+            target_doc = frontier.pop(0)
+            candidates = [
+                (cand_id, cand_entry)
+                for cand_id, cand_entry in canonical
+                if cand_entry.kind in ("REQ", "TECH")
+                and _is_applicable(cand_entry)
+                and target_doc in _refines_target_documents(cand_entry, id_index, statement_index)
+            ]
+            for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
+                _ensure_in_context(cand_id, "refines", cand_id, pred=target_doc)
+                ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
+                for stmt in cand_entry.statements:
+                    sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
+                    out.append(sid)
+                    out.extend(_applicable_refinement_statements(sid))
+                if cand_id not in seen_docs:
+                    seen_docs.add(cand_id)
+                    frontier.append(cand_id)
+        return out
+
     target_statements: list[str] = []
     adjacent_statements: list[str] = []
     target_set: set[str] = set()
@@ -702,6 +755,8 @@ def target_expansion(
             for stmt in root_entry.statements:
                 for s in _applicable_refinement_statements(stmt["id"]):
                     _add_target(s)
+            for s in _applicable_document_refinement_statements(owning_id):
+                _add_target(s)
     # 5. 規範文のないTECHを起点にした場合は`targetStatements`を空のままとする。
 
     result.target_statements = target_statements
