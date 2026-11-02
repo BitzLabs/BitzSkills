@@ -6,7 +6,7 @@
 - 関係・トレースモデル §3: `related`は閉包を増やさず、参照切れは診断`SPEC-RELATION-ADVISORY-MISSING-001`（重大度`warning`）とする。
   診断レジストリの条件`RELATION-TARGET-MISSING-RELATED`は、返しうる操作を`context`、`check`、`verify`、結果への効果を`passed_with_warnings`、
   継続単位を`skip-edge`と定める。
-- `context` §10: 閉包の文書が宣言する`related`の参照先が存在しない場合の警告は、コンテキストを失敗させず、成功・失敗のどちらの結果にも加える。
+- `context` §10: 閉包の文書が宣言する`related`の参照先が存在しない場合の警告は、コンテキストを失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える。
 - `verify` §9: 閉包の文書が宣言する`related`の参照切れは、検証対象を失敗させず、展開した後のどの結果にもその検証対象の`diagnostics`へ加える。
 - 結果・診断・終了コード §4: 関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりの文字列で持つ。§7: 診断は発生元のワークスペースID、`path`、`line`、
   `column`、`code`、`specRefs`の辞書順に並べ、これらがすべて同じ診断は生成元の宣言に現れた順（関係の配列の順）とする。

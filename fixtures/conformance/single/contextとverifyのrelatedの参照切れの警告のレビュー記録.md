@@ -11,14 +11,14 @@
 診断レジストリの条件`RELATION-TARGET-MISSING-RELATED`（診断`SPEC-RELATION-ADVISORY-MISSING-001`、`warning`）は、返しうる操作を`context`、`check`、`verify`、
 継続単位を`skip-edge`と定める。`check`はこの警告を返していたが、`context`と`verify`は関係の診断からエラーだけを残し、警告を捨てていた。
 既存のfixtureは、`related`の参照切れを`check`（`SINGLE-090`）でしか固定していなかったので、この欠陥を押さえていなかった。
-規範側は、`context` §10と`verify` §9に「閉包の文書が宣言する`related`の参照切れは、コンテキストまたは検証対象を失敗させず、成功・失敗のどちらの結果にも加える」と明記した
+規範側は、`context` §10と`verify` §9に「閉包の文書が宣言する`related`の参照切れは、コンテキストまたは検証対象を失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える」と明記した
 （検証対象の`diagnostics`に置く）。実装の確認事項C78に対応する。
 
 ## 根拠の規範文
 
 - 関係・トレースモデル §3: `related`は閉包を増やさず、参照切れは診断`SPEC-RELATION-ADVISORY-MISSING-001`（重大度`warning`）とする。§6.1の7.: `related`を自動で追加しない。
 - 診断レジストリ: `RELATION-TARGET-MISSING-RELATED`は`context, check, verify`、`warning`、`passed_with_warnings`、発生元`file`、継続単位`skip-edge`。
-- `context` §10: 閉包の文書が宣言する`related`の参照先が存在しない場合の警告は、コンテキストを失敗させず、成功・失敗のどちらの結果にも加える。
+- `context` §10: 閉包の文書が宣言する`related`の参照先が存在しない場合の警告は、コンテキストを失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える。
 - `verify` §9: 閉包の文書が宣言する`related`の参照切れは、検証対象を失敗させず、展開した後のどの結果にもその検証対象の`diagnostics`へ加える。
 - 結果・診断・終了コード §3: `warning`だけなら`passed_with_warnings`で終了コード0、`failed`の診断があれば`failed`で終了コード1。
   §4: 関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりの文字列で持つ。
