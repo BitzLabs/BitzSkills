@@ -1,0 +1,19 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: platform
+multiWorkspace:
+  members:
+    - id: web
+      path: apps/web
+    - id: api
+      path: services/api
+    - id: cli
+      path: apps/cli
+verify:
+  commands:
+    t:
+      argv: ["/bin/true", "{tests}"]
+      cwd: .
+futureOption: preserve-me
