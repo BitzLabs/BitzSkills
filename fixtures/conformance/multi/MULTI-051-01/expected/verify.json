@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "blocked",
+          "contextDigest": "sha256:89ecd13d3c8c54149e2baa24e21330b7e5244977274c232584e66cb79923bb63",
+          "statements": [
+            "platform::REQ-001:AC-01"
+          ],
+          "bindingRefs": [],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "パスapps/webの解決先がワークスペースplatformの所有領域の外です",
+          "source": {
+            "kind": "file",
+            "workspaceId": "platform",
+            "path": ".spec/bitz.yaml",
+            "key": "verify.commands.t.cwd"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "web::REQ-101",
+          "status": "passed",
+          "contextDigest": "sha256:e07acf270de59f8cc3c40480f90b2707e674db0fd706ecbe00fff79e8cedf6b4",
+          "statements": [
+            "web::REQ-101:AC-01"
+          ],
+          "bindingRefs": [
+            "web::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "web::t",
+          "workspaceId": "web",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_web.py"
+          ],
+          "tests": [
+            "tests/test_web.py"
+          ],
+          "covers": [
+            "web::REQ-101:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

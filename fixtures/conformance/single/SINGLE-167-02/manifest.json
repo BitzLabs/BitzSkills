@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-167-02",
+  "description": "cwdが絶対パスならdoctorは設定の検査で止まりコマンドの検査へ進まない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

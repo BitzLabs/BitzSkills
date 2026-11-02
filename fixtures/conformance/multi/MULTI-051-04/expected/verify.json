@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "selected",
+  "status": "failed",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-101",
+      "status": "blocked",
+      "contextDigest": "sha256:afd4b732f40bf303acedf74bf5bff504d4d763185158d1f2d7455423874a7696",
+      "statements": [
+        "web::REQ-101:AC-01"
+      ],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-OWNERSHIP-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "パスescの解決先がワークスペースwebの所有領域の外です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.t.cwd"
+      }
+    }
+  ]
+}

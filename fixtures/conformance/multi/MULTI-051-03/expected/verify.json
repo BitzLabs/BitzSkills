@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "passed",
+          "contextDigest": "sha256:20e023e5cfe6ceac32f368b9d61ed70ba709661ebff0fe9e67eac7786096affe",
+          "statements": [
+            "platform::REQ-001:AC-01"
+          ],
+          "bindingRefs": [
+            "platform::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "platform::t",
+          "workspaceId": "platform",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_platform.py"
+          ],
+          "tests": [
+            "tests/test_platform.py"
+          ],
+          "covers": [
+            "platform::REQ-001:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "web::REQ-101",
+          "status": "blocked",
+          "contextDigest": "sha256:afd4b732f40bf303acedf74bf5bff504d4d763185158d1f2d7455423874a7696",
+          "statements": [
+            "web::REQ-101:AC-01"
+          ],
+          "bindingRefs": [],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "パスescの解決先がワークスペースwebの所有領域の外です",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/bitz.yaml",
+            "key": "verify.commands.t.cwd"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
