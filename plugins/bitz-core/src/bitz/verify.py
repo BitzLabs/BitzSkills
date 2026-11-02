@@ -1306,7 +1306,9 @@ def _run_all_workspaces_members(
 
     top_diagnostics: list[dict] = []
     per_ws_target_entries: dict[str, list[dict]] = {wid: [] for wid, _, _ in workspaces}
-    per_ws_extra_diags: dict[str, list[dict]] = {wid: [] for wid, _, _ in workspaces}
+    per_ws_extra_diags: dict[str, list[dict]] = {
+        wid: [d.to_dict() for d in multiws.config_warnings(root)] for wid, root, _ in workspaces
+    }
     needs: dict[tuple[str, str], dict] = {}
     any_targets = False
     cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
