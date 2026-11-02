@@ -144,7 +144,7 @@ class SingleWorkspaceLexicalTests(_Base):
         _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
 
     def test_lexically_invalid_cwd_stops_every_operation(self):
-        invalid = ["../..", "/tmp", "tests//", "./tests", "tests/.", "tests/../tests", "t*", "a?", "[a]", "a]", ""]
+        invalid = ["../..", "/tmp", "tests//", "./tests", "tests/.", "tests/../tests", "t*", "a?", "[a]", "a]", "", "a\\0b"]
         for cwd in invalid:
             with self.subTest(cwd=cwd):
                 self.setUp()
@@ -260,7 +260,6 @@ class MultiWorkspaceOwnershipTests(_Base):
         self.assertEqual((result["status"], code), ("passed", 0), result)
         self.assertEqual(self.binding_ids(result), ["platform::t", "web::t"])
 
-
     def test_existing_skip_binding_diagnostics_go_to_the_owning_workspace(self):
         """既存の skip-binding（`VERIFY-CWD-UNAVAILABLE`）も、全体の verify では所有するワークスペースへ置く（verify.md §6）。"""
 
@@ -275,6 +274,27 @@ class MultiWorkspaceOwnershipTests(_Base):
             [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません")],
         )
         self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("passed", "blocked"))
+
+    def test_environment_source_skip_binding_goes_to_the_owning_workspace(self):
+        """発生元が environment の skip-binding（`VERIFY-EXECUTABLE-UNAVAILABLE`）も、所有するワークスペースへ置く（verify.md §6）。"""
+
+        self.write(".", ".")
+        _write(
+            self.root, "apps/web/.spec/bitz.yaml",
+            CONFIG + "workspace:\n  id: web\n"
+            + 'verify:\n  commands:\n    t:\n      argv: ["./absent-tool", "{tests}"]\n      cwd: "."\n',
+        )
+        self.commit()
+        result, code = self.run_op("verify", "--all-workspaces")
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(result["diagnostics"], [])
+        by_id = {ws["id"]: ws for ws in result["workspaces"]}
+        self.assertEqual(
+            [(d["code"], d["source"]) for d in by_id["web"]["diagnostics"]],
+            [("SPEC-VERIFY-BLOCKED-001", {"kind": "environment", "component": "command", "identifier": "web::t"})],
+        )
+        self.assertEqual(by_id["platform"]["diagnostics"], [])
+        self.assertEqual(self.binding_ids(result), ["platform::t"])
 
 
 if __name__ == "__main__":
