@@ -756,7 +756,8 @@ def _plan_and_run_bindings(
     ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
     実効`cwd`の解決先が所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
 
-    戻り値は``(commands_by_key, status_by_key, blocked_keys, top_diagnostics)``。
+    戻り値は``(commands_by_key, status_by_key, blocked, top_diagnostics)``。``blocked``は起動前に遮断したテスト割当ての
+    ``(workspace_id, コマンド名) -> 診断``で、その診断は``top_diagnostics``にも含む。
     """
 
     plan: dict[tuple[str, str], dict] = {}
@@ -890,10 +891,10 @@ def _plan_and_run_bindings(
             "durationMs": outcome_run["duration_ms"],
         }
 
-    return commands_by_key, status_by_key, set(blocked), top_diagnostics
+    return commands_by_key, status_by_key, blocked, top_diagnostics
 
 
-def _apply_binding_results(target_entries: list[dict], blocked_keys: set[tuple[str, str]], status_by_key: dict[tuple[str, str], str]) -> None:
+def _apply_binding_results(target_entries: list[dict], blocked_keys: dict[tuple[str, str], dict], status_by_key: dict[tuple[str, str], str]) -> None:
     for entry_out in target_entries:
         needed = entry_out.pop("_needed", None)
         if not needed:
@@ -1380,7 +1381,11 @@ def _run_all_workspaces_members(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for, multi_root_id=pre.root_id,
     )
-    top_diagnostics.extend(binding_top_diags)
+    # 起動前に遮断した診断（skip-binding）は、テスト割当てを所有するワークスペースへ1件だけ置く（verify.md §6）。
+    blocked_diag_ids = {id(diag) for diag in blocked_keys.values()}
+    for (ws_id, _name), diag in blocked_keys.items():
+        per_ws_extra_diags[ws_id].append(diag)
+    top_diagnostics.extend(d for d in binding_top_diags if id(d) not in blocked_diag_ids)
 
     all_target_entries = [e for wid, _, _ in workspaces for e in per_ws_target_entries[wid]]
     _apply_binding_results(all_target_entries, blocked_keys, status_by_key)
