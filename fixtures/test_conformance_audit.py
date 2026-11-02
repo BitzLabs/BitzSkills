@@ -95,6 +95,7 @@ from conformance import multi_early_report_fixtures
 from conformance import multi_workspace_id_fixtures
 from conformance import multi_self_qualified_covers_fixtures
 from conformance import multi_binding_order_fixtures
+from conformance import multi_config_warning_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -6889,6 +6890,123 @@ class AuditTests(unittest.TestCase):
         # ハッシュ値の材料は、検証対象ごとの閉包を反映する。
         self.assertNotEqual(module.expected_digest("MULTI-052-01", "alpha::TECH-001"), module.expected_digest("MULTI-052-01", "beta::TECH-001"))
         self.assertNotEqual(module.expected_digest("MULTI-052-01", "zeta::REQ-001"), module.expected_digest("MULTI-052-05", "aaa::REQ-001"))
+
+    def test_multi_config_warning_fixtures(self):
+        """`MULTI-053-01`〜`06`: 全体の操作が各ワークスペースの設定の警告を、そのワークスペースのdiagnosticsに置くことを固定する（確認事項C22）。"""
+        module = multi_config_warning_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-053-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_config_warning_expected_results_place_warnings_in_the_owning_workspace(self):
+        """設定の警告は所有ワークスペースの`diagnostics`に1件ずつあり、最上位にはない。欠陥を持つ5件は修正前のCoreの結果と異なり、対照の1件は同じ。"""
+        module = multi_config_warning_fixtures
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                path = audit.FIXTURES / "multi" / identifier / module.RESULT_FILES[case["op"]]
+                result = json.loads(path.read_text())
+                self.assertEqual(result["diagnostics"], [])
+                warnings = {entry["id"]: [item["code"] for item in entry["diagnostics"] if item["code"] in module.CONFIG_CODES] for entry in result["workspaces"]}
+                self.assertTrue(any(warnings.values()), identifier)
+                if case["op"] != "doctor":
+                    self.assertEqual(module.old_core_result(result) != result, case["defect"])
+                    old_warnings = [item for entry in module.old_core_result(result)["workspaces"] for item in entry["diagnostics"] if item["code"] in module.CONFIG_CODES]
+                    self.assertEqual(old_warnings, [])
+                else:
+                    self.assertFalse(case["defect"])
+        # `warned`の入力: 警告のない`cli`は`passed`、警告だけの3つは`passed_with_warnings`、ワークスペースの並びはルート先頭、ID辞書順（宣言の順は`web`、`api`、`cli`）。
+        result = json.loads((audit.FIXTURES / "multi/MULTI-053-01/expected/check.json").read_text())
+        self.assertEqual([(entry["id"], entry["status"]) for entry in result["workspaces"]],
+                         [("platform", "passed_with_warnings"), ("api", "passed_with_warnings"), ("cli", "passed"), ("web", "passed_with_warnings")])
+        self.assertEqual((result["status"], json.loads((audit.FIXTURES / "multi/MULTI-053-01/manifest.json").read_text())["expect"]["exitCode"]), ("passed_with_warnings", 0))
+        # 並べ替えの鍵: 同じ発生元の`.spec/bitz.yaml`では`code`の辞書順（`SPEC-CONFIG-UNKNOWN-001`、`SPEC-INPUT-BOM-001`、`SPEC-VERIFY-BLOCKED-002`）。
+        result = json.loads((audit.FIXTURES / "multi/MULTI-053-05/expected/verify.json").read_text())
+        self.assertEqual([item["code"] for item in result["workspaces"][1]["diagnostics"]],
+                         ["SPEC-CONFIG-UNKNOWN-001", "SPEC-INPUT-BOM-001", "SPEC-VERIFY-BLOCKED-002"])
+        # `path`の辞書順では、未知のファイルが設定の前後に分かれる。
+        result = json.loads((audit.FIXTURES / "multi/MULTI-053-04/expected/check.json").read_text())
+        self.assertEqual([item["source"]["path"] for item in result["workspaces"][1]["diagnostics"]],
+                         [".spec/aaa.txt", ".spec/bitz.yaml", ".spec/bitz.yaml", ".spec/notes.txt"])
+
+    def test_multi_config_warning_reference_rules(self):
+        """参照計算: 設定のBOM、予約キー、未知のキーを導く。並べ替えの鍵が重複する入力と、`line`などを持つ診断を拒否する。"""
+        module = multi_config_warning_fixtures
+        workspace = {"id": "web", "path": "apps/web", "raw": module.BOM + b"schemaVersion: x\n", "unknown": ["notes.txt"], "documents": {},
+                     "config": {"schemaVersion": "1.0", "profiles": "x", "futureOption": "y", "workspace": {"id": "web"}}}
+        # 同じ`path`と`code`の設定の警告が2件あると（`profiles`と未知のキー）、宣言の順に頼るので拒否する。
+        with self.assertRaisesRegex(ValueError, "並べ替えの鍵が重複しています"):
+            module.reference_diagnostics("check", workspace)
+        workspace["config"] = {"schemaVersion": "1.0", "profiles": "x", "workspace": {"id": "web"}}
+        self.assertEqual([item["code"] for item in module.reference_diagnostics("check", workspace)],
+                         ["SPEC-CONFIG-UNKNOWN-001", "SPEC-INPUT-BOM-001", "SPEC-WORKSPACE-UNKNOWN-001"])
+        # `verify`は未知のファイルを返さず、対象が0件なら`SPEC-VERIFY-BLOCKED-002`を返す。
+        self.assertEqual([item["code"] for item in module.reference_diagnostics("verify", workspace)],
+                         ["SPEC-CONFIG-UNKNOWN-001", "SPEC-INPUT-BOM-001", "SPEC-VERIFY-BLOCKED-002"])
+        # BOMがなく標準のキーだけなら、診断は0件。
+        workspace.update(raw=b"schemaVersion: x\n", unknown=[], config={"schemaVersion": "1.0", "multiWorkspace": {}})
+        self.assertEqual(module.reference_diagnostics("doctor", workspace), [])
+        with self.assertRaisesRegex(ValueError, "`line`"):
+            module.sort_key({"code": "X", "source": {"kind": "file", "workspaceId": "a", "path": "p", "line": 1}})
+
+    def test_multi_config_warning_audit_rejects_tampering(self):
+        """入力の欠落と余り、期待値の改変（警告を最上位へ移す、警告を消す）、種類の取り違え、BOMの除去を拒否する（陰性対照）。"""
+        module = multi_config_warning_fixtures
+        for identifier in ("MULTI-053-02", "MULTI-053-04"):
+            for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 期待値の改変。警告を最上位へ複製する、所有ワークスペースの警告を消す、状態を`passed`のままにする。
+        edits = {
+            "MULTI-053-01": lambda result: result["diagnostics"].append(result["workspaces"][1]["diagnostics"][0]),
+            "MULTI-053-02": lambda result: result["workspaces"][3]["diagnostics"].clear(),
+            "MULTI-053-06": lambda result: result["workspaces"][2].update(status="passed"),
+        }
+        for identifier, edit in edits.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / module.RESULT_FILES[module.CASES[identifier]["op"]]
+                result = json.loads(path.read_text())
+                edit(result)
+                path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+                outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertIn("完全結果がレビュー済みの期待値と異なります", outcome["errors"][0])
+        # 種類の取り違え: 対照を欠陥と名乗る、欠陥を対照と名乗る。
+        for identifier in ("MULTI-053-01", "MULTI-053-03"):
+            with self.subTest(identifier=identifier):
+                flipped = dict(module.CASES[identifier], defect=not module.CASES[identifier]["defect"])
+                with patch.dict(module.CASES, {identifier: flipped}):
+                    outcome = module.validate(audit.FIXTURES, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertTrue(any(phrase in outcome["errors"][0] for phrase in ("修正前のCore", "欠陥を名乗れません")), outcome["errors"][0])
+        # 設定のBOMを除いた入力（期待値と副作用の期待値はそのまま）。入力のバイト列の照合は通る状態にしても、参照計算が拒否する。
+        identifier = "MULTI-053-04"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, identifier)
+            fixture = root / "multi" / identifier
+            path = fixture / "repo/apps/web/.spec/bitz.yaml"
+            path.write_bytes(path.read_bytes().removeprefix(module.BOM))
+            edited = dict(module.reviewed_inputs(identifier))
+            edited["apps/web/.spec/bitz.yaml"] = path.read_bytes()
+            self.regenerate_effects(module, fixture, temporary)
+            with patch.object(module, "reviewed_inputs", lambda _identifier: edited):
+                outcome = module.validate(root, {identifier})
+            self.assertEqual(outcome["status"], "Failed")
+            self.assertEqual(len(outcome["errors"]), 1)
+            self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
