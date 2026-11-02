@@ -1980,3 +1980,23 @@ commit `2db03ebd17303b3dcca1d0d7bf93f4c7cfda247d`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-02: `SINGLE-167`と`MULTI-051`を追加した後のGate Aの再認定
+
+コマンドの`cwd`の字句と実パスの所有を検査していなかった欠陥を直した（実装の確認事項C82・C86、ユーザーの決定）。字句の違反（絶対パス、空のセグメント、`.`、`..`、NUL、globの文字`*?[]`）は
+設定の検査で`SPEC-CONFIG-SCHEMA-001`とし、実パスの所有は`verify`がテスト割当ての起動前に判定する（単一ワークスペースは新しい条件`VERIFY-CWD-OUTSIDE`、複合ワークスペースは`MULTI-OWNERSHIP-CWD`）。
+ワークスペース・設定仕様 §6、複合ワークスペース仕様 §5.1、`03_verify.md` §5.1・§9、診断レジストリに明記した。あわせて、全体の`verify`で起動前に遮断したテスト割当ての診断を、
+`03_verify.md` §6のとおりテスト割当てを所有するワークスペースへ置くようにCoreを直した。これらを固定する`SINGLE-167-01`〜`SINGLE-167-09`と`MULTI-051-01`〜`MULTI-051-06`を追加した
+（ADR-051の追加、群`command_cwd_fixtures`と`multi_command_cwd_fixtures`）。matrix、Step 4・Step 5の割当て、実装計画の完了条件、網羅表（122条件）と根拠文書のハッシュ値を合わせた。
+既存のfixtureの入力と期待値は変えていない。
+
+commit `0cc59a2cbb106caeebf4201cd6bd5c8f414b5b91`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`1a56f03371663351f7fdb56eee7699528320b416ae414ee9c00d77f05aeb5334`。前回から変わったのは次の値だけである: 15件の追加によるmatrixと網羅の件数（544件→559件）、Step 4の件数（69件→78件）とStep 5の件数（230件→236件）、群`command_cwd_fixtures`と`multi_command_cwd_fixtures`の追加、網羅表の条件の件数（120件→122件）、実行ビットを確かめたファイル数（3062件→3170件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4・Step 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
