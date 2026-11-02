@@ -4,7 +4,7 @@
 
 - C78: `related`の参照切れは、`check`が診断`SPEC-RELATION-ADVISORY-MISSING-001`（`warning`）で返していたが、`context`と`verify`は捨てていた。
   関係・トレースモデル §3と診断レジストリ（`RELATION-TARGET-MISSING-RELATED`、返しうる操作は`context`、`check`、`verify`、継続単位は`skip-edge`）、
-  `context` §10、`verify` §9は、閉包の文書が宣言する`related`の参照切れを、コンテキストまたは検証対象を失敗させず、成功・失敗のどちらの結果にも加えると定める。
+  `context` §10、`verify` §9は、閉包の文書が宣言する`related`の参照切れを、コンテキストまたは検証対象を失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加えると定める。
   `verify`では検証対象の`diagnostics`に置く。参照先が別のワークスペースの文書でも同じである（宣言する文書が起点ワークスペースの文書の場合）。
 - C79: 複合ワークスペース仕様 §6は、`related`は閉包を増やさないので、解決できても横断のエッジ（`resolution.crossWorkspaceEdges`）に収録しないと定める
   （`relation`の列挙値は`requires`、`refines`、`addresses`、`supersedes`）。同じ文書が宣言する横断の強い関係は収録する。
