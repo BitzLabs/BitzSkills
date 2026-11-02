@@ -910,6 +910,16 @@ def _check_resource_limits(
     return None
 
 
+def config_warnings(root_abs: str) -> list[Diagnostic]:
+    """ワークスペースの設定の警告（BOM、未知のキー、`profiles`など、`continue`継続単位）を返す。
+
+    全体の操作は、全体事前検査を通過した各ワークスペースの設定の警告を、そのワークスペースの結果の`diagnostics`へ置く
+    （結果・診断・終了コード §2、診断レジストリの対象の操作`all`。`doctor`と同じ形）。
+    """
+
+    return list(config_mod.read_config(os.path.join(root_abs, config_mod.CONFIG_PATH)).warnings)
+
+
 def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
     """``(workspace_id, root_abs, 複合ワークスペースのルートからの相対パス)``をルートを先頭に、以降はIDの辞書順で返す(§8)。"""
 

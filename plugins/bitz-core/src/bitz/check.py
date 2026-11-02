@@ -543,7 +543,7 @@ def _run_all_workspaces_members(
     ws_results: list[dict] = []
     for wid, root, relpath in workspaces:
         entries = per_ws_entries[wid]
-        diags: list[Diagnostic] = list(per_ws_catalog_diags[wid])
+        diags: list[Diagnostic] = multiws.config_warnings(root) + list(per_ws_catalog_diags[wid])
         diags.extend(
             _member_check_diagnostics(
                 entries, wid, root, local_id_indices, local_stmt_indices, known_ws_ids, real_roots
