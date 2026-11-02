@@ -303,6 +303,7 @@ CONFIG_ARGV_ELEMENT_NOT_STRING = "argvの要素は文字列で指定してくだ
 CONFIG_ARGV_FIRST_EMPTY = "argv[0]は空文字列にできません"
 CONFIG_ARGV_ELEMENT_NUL = "argvの要素にNULは使用できません"
 CONFIG_ARGV_ELEMENT_TOO_LONG = "argvの各要素はUTF-8で32 KiB以下で指定してください"
+CONFIG_CWD_INVALID = "作業ディレクトリのパスの形式が不正です"
 
 
 # --- `verify`操作（`SPEC-VERIFY-*`、`CTX-STATE-*`） ------------------------------------

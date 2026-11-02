@@ -203,7 +203,24 @@ def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict |
     if not isinstance(cwd, str):
         _add_type_error(diags, f"{prefix}.cwd", "文字列")
         return None
+    if not _cwd_lexically_valid(cwd):
+        diags.append(_argv_diag(f"{prefix}.cwd", messages.CONFIG_CWD_INVALID))
+        return None
     return {"argv": argv, "cwd": cwd}
+
+
+def _cwd_lexically_valid(cwd: str) -> bool:
+    """`cwd`の字句を検査する（ワークスペース・設定仕様 §6、複合ワークスペース仕様 §5.1 の3.）。
+
+    単独の`.`だけを許可し、それ以外は絶対パス、空のセグメント、`.`、`..`、NUL、globの文字`*?[]`を含まない
+    ワークスペース相対のパスとする。解決先の所有の検査は`verify`がテスト割当ての起動前に行う。
+    """
+
+    if cwd == ".":
+        return True
+    if cwd == "" or cwd.startswith("/") or "\x00" in cwd:
+        return False
+    return all(seg not in ("", ".", "..") and not any(ch in seg for ch in "*?[]") for seg in cwd.split("/"))
 
 
 def _validate_schema_version(config: dict, diags: list[Diagnostic]) -> None:
