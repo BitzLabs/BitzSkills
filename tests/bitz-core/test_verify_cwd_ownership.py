@@ -225,6 +225,11 @@ class MultiWorkspaceOwnershipTests(_Base):
         self.assertEqual((result["status"], code), ("failed", 1), result)
         self.assertEqual(self.diagnostics(result), self.ownership("apps/web", "platform"))
         self.assertEqual(self.binding_ids(result), ["web::t"])
+        # skip-binding の診断は、テスト割当てを所有するワークスペースへ置く（verify.md §6）。
+        self.assertEqual(result["diagnostics"], [])
+        by_id = {ws["id"]: ws for ws in result["workspaces"]}
+        self.assertEqual([d["code"] for d in by_id["platform"]["diagnostics"]], ["SPEC-MULTI-OWNERSHIP-001"])
+        self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("failed", "passed"))
 
     def test_root_symlink_cwd_into_a_member_is_outside_its_ownership(self):
         self.write("lk", ".")
@@ -243,6 +248,10 @@ class MultiWorkspaceOwnershipTests(_Base):
         self.assertEqual((result["status"], code), ("failed", 1), result)
         self.assertEqual(self.diagnostics(result), self.ownership("esc", "web"))
         self.assertEqual(self.binding_ids(result), ["platform::t"])
+        self.assertEqual(result["diagnostics"], [])
+        by_id = {ws["id"]: ws for ws in result["workspaces"]}
+        self.assertEqual([d["code"] for d in by_id["web"]["diagnostics"]], ["SPEC-MULTI-OWNERSHIP-001"])
+        self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("passed", "failed"))
 
     def test_cwd_inside_the_own_area_passes(self):
         self.write("tests", "tests")
@@ -250,6 +259,22 @@ class MultiWorkspaceOwnershipTests(_Base):
         result, code = self.run_op("verify", "--all-workspaces")
         self.assertEqual((result["status"], code), ("passed", 0), result)
         self.assertEqual(self.binding_ids(result), ["platform::t", "web::t"])
+
+
+    def test_existing_skip_binding_diagnostics_go_to_the_owning_workspace(self):
+        """既存の skip-binding（`VERIFY-CWD-UNAVAILABLE`）も、全体の verify では所有するワークスペースへ置く（verify.md §6）。"""
+
+        self.write(".", "absent-dir")
+        self.commit()
+        result, code = self.run_op("verify", "--all-workspaces")
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(result["diagnostics"], [])
+        by_id = {ws["id"]: ws for ws in result["workspaces"]}
+        self.assertEqual(
+            [(d["code"], d["summary"]) for d in by_id["web"]["diagnostics"]],
+            [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません")],
+        )
+        self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("passed", "blocked"))
 
 
 if __name__ == "__main__":
