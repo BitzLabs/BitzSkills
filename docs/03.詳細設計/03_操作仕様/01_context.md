@@ -334,7 +334,7 @@ YAMLへ直列化し直さない。`bodyText`は、`- bodyText:`の行と空行1�
 | `CTX-ROOT-MISSING-001` | `failed` | 起点のIDが存在しない |
 | `SPEC-RELATION-MISSING-001` | `failed` | 存在するワークスペースの中に、強い関係の参照先が存在しない |
 | `CTX-RELATION-TYPE-001` | `failed` | 関係型が不正 |
-| `SPEC-RELATION-ADVISORY-MISSING-001` | `passed_with_warnings` | 閉包の文書が宣言する`related`の参照先が存在しない。コンテキストを失敗させず、成功・失敗のどちらの結果にも加える |
+| `SPEC-RELATION-ADVISORY-MISSING-001` | `passed_with_warnings` | 閉包の文書（[関係・トレースモデル](../02_仕様文書モデル/04_関係・トレースモデル.md) §6.3が検査する範囲）が宣言する`related`の参照先が存在しない。コンテキストを失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える。上限、提示、ハッシュ値の不一致で止まる結果には加えない |
 | `CTX-CYCLE-001` | `failed` | 禁止された循環がある |
 | `CTX-TASK-DEPENDENCY-001` | `blocked` | 先行するTASKが完了していない |
 | `CTX-STATE-001` | `blocked` | 目的に適用できない |

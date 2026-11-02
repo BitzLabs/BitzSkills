@@ -222,7 +222,7 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 | `target` | 文字列 | ○ | 検証対象の正規ID。複合ワークスペースでは修飾ID |
 | `status` | 列挙値 | ○ | コンテキスト、カバレッジ、すべての`bindingRefs`の最悪の状態 |
 | `contextDigest` | 文字列または`null` | ○ | 完全解決したコンテキストのハッシュ値。コンテキストを構成できない場合だけ`null` |
-| `statements` | 文字列の配列 | ○ | 検証対象が検証する規範文。重複なし辞書順 |
+| `statements` | 文字列の配列 | ○ | 検証対象が検証する規範文。重複なし辞書順。コンテキストを構成できない検証対象は空の配列 |
 | `bindingRefs` | 文字列の配列 | ○ | 必要なテスト割当てのID。重複なし辞書順 |
 | `diagnostics` | 配列 | ○ | 検証対象に固有の診断 |
 
@@ -263,7 +263,7 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 完全解決するため、これに加えて`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、`CTX-RELATION-TYPE-001`、
 `SPEC-RELATION-MISSING-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
 `CTX-TASK-DEPENDENCY-001`を検証対象の`diagnostics`へ返し得る。これらの検証対象は`bindingRefs: []`とし、
-コンテキストを構成できない場合は`contextDigest: null`とする。閉包の文書が宣言する`related`の参照切れ
+コンテキストを構成できない場合は`contextDigest: null`とする。閉包の文書（関係・トレースモデル §6.3が検査する範囲）が宣言する`related`の参照切れ
 （`SPEC-RELATION-ADVISORY-MISSING-001`、`passed_with_warnings`）は、検証対象を失敗させず、展開した後のどの結果にも
 その検証対象の`diagnostics`へ加える。全条件の診断コード、重大度、結果への効果、発生元、
 継続単位、主診断の優先順位は[診断レジストリ](../00_共通契約/05_診断レジストリ.md)が所有する。
