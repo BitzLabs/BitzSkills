@@ -2039,3 +2039,23 @@ commit `2878bd0bdd50a4995ad0bc1ca8bad6635ea2ce4b`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-03: `SINGLE-168`と`MULTI-054`を追加した後のGate Aの再認定
+
+`context`と`verify`が、閉包の文書が宣言する`related`の参照切れの警告（`SPEC-RELATION-ADVISORY-MISSING-001`）を捨てていた欠陥を直した（実装の確認事項C78、ユーザーの決定）。
+`context` §10と`verify` §9に、この警告は通過状態の結果と、関係・状態・依存の診断による非成功の結果に加えること（`context`の上限、提示、ハッシュ値の不一致で止まる結果には加えない）、
+閉包の文書は関係・トレースモデル §6.3が検査する範囲に限ることを明記した。`verify` §8に、コンテキストを構成できない検証対象の`statements`は空の配列と明記した。
+複合ワークスペース仕様 §6、`context`の表、結果のスキーマの列挙から、`resolution.crossWorkspaceEdges`の`related`を外し、参照計算の3か所も強い関係だけにした（C79。Coreは元から収録していない）。
+これらを固定する`SINGLE-168-01`〜`SINGLE-168-06`と`MULTI-054-01`〜`MULTI-054-04`を追加した（ADR-051の追加、群`related_advisory_fixtures`と`multi_related_advisory_fixtures`）。
+matrix、Step 3〜5の割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `31431bd0fcc2985580aaf3ad1ccd6c4bd7df7444`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`8284a56404003555a430c95e2e9e4beb3ce9c34015a7e08697faddcab55f7f0b`。前回から変わったのは次の値だけである: 10件の追加によるmatrixと網羅の件数（571件→581件）、Step 3の件数（102件→106件）、Step 4の件数（78件→80件）、Step 5の件数（248件→252件）、群`related_advisory_fixtures`と`multi_related_advisory_fixtures`の追加、実行ビットを確かめたファイル数（3301件→3370件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3〜5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
