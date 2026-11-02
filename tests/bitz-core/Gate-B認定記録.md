@@ -1039,3 +1039,23 @@ Core固有の単体試験は1108件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1109件がすべて成功した。
+
+## 2026-11-03: contextとverifyでrelatedの参照切れの警告を返すようにした後のStep 1〜5の再判定
+
+`context.py`と`verify.py`で、閉包の文書が宣言する`related`の参照切れの警告を、`context`と`verify`の結果に加えるようにした（実装の確認事項C78）。
+これを固定する`SINGLE-168-01`〜`SINGLE-168-06`（Step 3・Step 4）と`MULTI-054-01`〜`MULTI-054-04`（Step 5）を追加した。
+修正前のCore（コミット`e146c782`の版）では、追加した10件のうち8件（`SINGLE-168-01`〜`05`、`MULTI-054-01`、`02`、`04`）が非成功となり、対照の`SINGLE-168-06`、`MULTI-054-03`と既存の571件はすべて通過することを確かめた。
+修正後のCoreでは581件すべてが`passed`となる。
+
+コミット`31431bd0fcc2985580aaf3ad1ccd6c4bd7df7444`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 581件（`SINGLE-168-01`〜`06`と`MULTI-054-01`〜`04`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`e523e218eb0ea480074dbb97f021927a677dfffee82b2a11ae207803277b842a` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1121件がすべて成功した。
