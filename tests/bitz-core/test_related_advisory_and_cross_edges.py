@@ -5,12 +5,13 @@
 
 規範:
 - 関係・トレースモデル §3: `related`は閉包を増やさず、参照切れは`SPEC-RELATION-ADVISORY-MISSING-001`（`warning`）とする。
-- `context` §10・`verify` §9: この警告はコンテキストまたは検証対象を失敗させず、成功・失敗のどちらの結果にも加える。
+- `context` §10・`verify` §9: この警告はコンテキストまたは検証対象を失敗させず、通過状態の結果と、関係・状態・依存の診断による非成功の結果に加える。
 - 複合ワークスペース仕様 §6（C79）: `related`は閉包を増やさないので、解決できても横断のエッジ（`resolution.crossWorkspaceEdges`）として収録しない。
 
 この試験の対象:
 1. 単一ワークスペースの`context`（目的`interpret`と`implement`）と`verify`が、成功の結果に警告を返し、状態は`passed_with_warnings`、終了コードは0。
-2. 強い関係の参照切れもある失敗の結果にも、同じ警告を並べる。
+2. 強い関係の参照切れもある失敗の結果にも、同じ警告を並べる。`verify`は、MUSTとSHOULDの未テスト、テスト割当ての不足、
+   状態による展開の失敗、テストの失敗のどの経路でも、検証対象に警告を1件だけ加える。ハッシュ値の不一致で止まる`context`の結果には加えない。
 3. 複合ワークスペースの`context`と`verify`も同じ警告を返す。
 4. 解決できる横断の`related`は`crossWorkspaceEdges`に入らず、横断の`requires`は入る。
 5. 結果は`result.schema.json`に適合する。
@@ -153,6 +154,79 @@ class SingleWorkspaceAdvisoryTests(_Base):
                 result, code = self.run_op(op, *argv)
                 self.assertEqual((result["status"], code), ("failed", 1), result)
                 self.assertEqual(self.codes(result), [(ADVISORY, "REQ-099"), ("SPEC-RELATION-MISSING-001", "REQ-098")])
+
+
+class VerifyPathTests(_Base):
+    """`verify`の検証対象のどの経路の結果にも、`related`の参照切れの警告を1件だけ加える（`verify` §9）。"""
+
+    RELATED = "relations:\n  related: [REQ-099]\n"
+
+    def write(self, req: str, config: str = VERIFY):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + config)
+        _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
+        _write(self.root, ".spec/requirements/REQ-001.md", req)
+        self.commit()
+
+    def target(self):
+        result, code = self.run_op("verify", "REQ-001")
+        (target,) = result["targetResults"]
+        return result, code, target
+
+    def assert_one_advisory(self, target):
+        self.assertEqual([d["evidence"] for d in target["diagnostics"] if d["code"] == ADVISORY], ["REQ-099"])
+
+    def test_must_untested(self):
+        req = _req("REQ-001", self.RELATED).replace("tests:\n  - path: tests/t.py\n    covers: [REQ-001:AC-01]\n    command: t\n", "")
+        self.write(req)
+        result, code, target = self.target()
+        self.assertEqual((result["status"], code, target["status"]), ("blocked", 2, "blocked"), result)
+        self.assertEqual(sorted(d["code"] for d in target["diagnostics"]), ["CTX-COVERAGE-TEST-001", ADVISORY])
+        self.assert_one_advisory(target)
+
+    def test_should_untested(self):
+        req = _req("REQ-001", self.RELATED).replace(
+            "## Verification", "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [SHOULD] [CONSTRAINT] REQ-001:AC-02を守る。\n\n## Verification"
+        )
+        self.write(req)
+        result, code, target = self.target()
+        self.assertEqual((result["status"], code, target["status"]), ("passed_with_warnings", 0, "passed_with_warnings"), result)
+        self.assertEqual(sorted(d["code"] for d in target["diagnostics"]), ["CTX-COVERAGE-TEST-001", ADVISORY])
+        self.assert_one_advisory(target)
+
+    def test_binding_missing(self):
+        self.write(_req("REQ-001", self.RELATED).replace("command: t", "command: absent"))
+        result, code, target = self.target()
+        self.assertEqual((result["status"], code, target["status"]), ("blocked", 2, "blocked"), result)
+        self.assertEqual(sorted(d["code"] for d in target["diagnostics"]), [ADVISORY, "SPEC-VERIFY-BLOCKED-001"])
+        self.assertEqual(target["bindingRefs"], [])
+        self.assert_one_advisory(target)
+
+    def test_expansion_failure_by_state(self):
+        self.write(_req("REQ-001", self.RELATED).replace("status: approved", "status: draft"))
+        result, code, target = self.target()
+        self.assertEqual((result["status"], code, target["status"]), ("blocked", 2, "blocked"), result)
+        self.assertEqual(sorted(d["code"] for d in target["diagnostics"]), ["CTX-STATE-001", ADVISORY])
+        self.assert_one_advisory(target)
+
+    def test_failing_test_command(self):
+        self.write(_req("REQ-001", self.RELATED), VERIFY.replace("/bin/true", "/bin/false"))
+        result, code, target = self.target()
+        self.assertEqual((result["status"], code, target["status"]), ("failed", 1, "failed"), result)
+        self.assertEqual([d["code"] for d in target["diagnostics"]], [ADVISORY])
+        self.assert_one_advisory(target)
+
+
+class ContextStopPathTests(_Base):
+    """ハッシュ値の不一致で止まる`context`の結果は、その診断だけを返し、`related`の警告を加えない（`context` §10）。"""
+
+    def test_stale_result_has_only_the_stale_diagnostic(self):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + VERIFY)
+        _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", "relations:\n  related: [REQ-099]\n"))
+        self.commit()
+        result, code = self.run_op("context", "REQ-001", "--purpose", "interpret", "--expect-digest", "sha256:" + "0" * 64)
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual([d["code"] for d in result["diagnostics"]], ["CTX-STALE-001"])
 
 
 class MultiWorkspaceRelatedTests(_Base):
