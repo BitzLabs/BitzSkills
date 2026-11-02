@@ -263,7 +263,9 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 完全解決するため、これに加えて`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、`CTX-RELATION-TYPE-001`、
 `SPEC-RELATION-MISSING-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
 `CTX-TASK-DEPENDENCY-001`を検証対象の`diagnostics`へ返し得る。これらの検証対象は`bindingRefs: []`とし、
-コンテキストを構成できない場合は`contextDigest: null`とする。全条件の診断コード、重大度、結果への効果、発生元、
+コンテキストを構成できない場合は`contextDigest: null`とする。閉包の文書が宣言する`related`の参照切れ
+（`SPEC-RELATION-ADVISORY-MISSING-001`、`passed_with_warnings`）は、検証対象を失敗させず、展開した後のどの結果にも
+その検証対象の`diagnostics`へ加える。全条件の診断コード、重大度、結果への効果、発生元、
 継続単位、主診断の優先順位は[診断レジストリ](../00_共通契約/05_診断レジストリ.md)が所有する。
 
 ## 10. 全体操作での検証

@@ -143,7 +143,7 @@
       "type": "object",
       "required": ["relation", "source", "target"],
       "properties": {
-        "relation": {"enum": ["requires", "refines", "addresses", "supersedes", "related"]},
+        "relation": {"enum": ["requires", "refines", "addresses", "supersedes"]},
         "source": {"type": "string"},
         "target": {"type": "string"}
       },
