@@ -345,8 +345,8 @@ def reference_statements(documents, root, order_of_documents=None):
 def reference_bindings(documents, ordered, targets):
     """通過した検証対象が要求するテスト割当て（`verify` §4の4.〜5.）。全`MUST`にテスト対応があることを要求する。
 
-    2つ以上のワークスペースのテスト割当てを受け取ったら止める。単独の操作が複数のワークスペースのテスト割当てを実行するときの`commands[]`の並びは、
-    規範から導けない（確認事項C62）ので、この群は固定しない。
+    2つ以上のワークスペースのテスト割当てを受け取ったら止める。複数のワークスペースのテスト割当ての`commands[]`の並び（ルートワークスペースを先頭、
+    その後をワークスペースIDの辞書順。`verify` §4の6.、確認事項C62）は`multi_binding_order_fixtures`が固定するので、この群は扱わない。
     """
     wanted = set(targets)
     grouped = {}
@@ -364,7 +364,7 @@ def reference_bindings(documents, ordered, targets):
     if set().union(*(slot["covers"] for slot in grouped.values())) != wanted:
         raise ValueError("対象のすべての`MUST`にテスト対応がある必要があります")
     if len({workspace for workspace, _ in grouped}) > 1:
-        raise ValueError("複数のワークスペースのテスト割当ての`commands[]`の並びは規範から導けないため、この群は扱いません（確認事項C62）")
+        raise ValueError("複数のワークスペースのテスト割当ての`commands[]`の並びはmulti_binding_order_fixturesが固定するため、この群は扱いません（確認事項C62）")
     # 1つのワークスペースの中は、コマンド名の辞書順（`verify` §4の6.）。
     keys = sorted(grouped, key=lambda key: (key[0], key[1]))
     return [(workspace, command, sorted(grouped[(workspace, command)]["tests"]), sorted(grouped[(workspace, command)]["covers"]))

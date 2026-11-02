@@ -3789,7 +3789,7 @@ class AuditTests(unittest.TestCase):
         # 内部の並び: 起点の規範文を文書に書いた順、その後に具体化文書の規範文。出力する修飾IDの辞書順は別に求める。
         self.assertEqual(targets, ["platform::REQ-001:AC-10", "platform::REQ-001:AC-02", "api::TECH-010:C-01"])
         self.assertEqual(sorted(set(targets)), ["api::TECH-010:C-01", "platform::REQ-001:AC-02", "platform::REQ-001:AC-10"])
-        # 2つ以上のワークスペースのテスト割当ては、`commands[]`の並びが規範から導けない（確認事項C62）ので止まる。
+        # 2つ以上のワークスペースのテスト割当ては、`commands[]`の並びをmulti_binding_order_fixturesが固定する（確認事項C62）ので、この群では止まる。
         with self.assertRaisesRegex(ValueError, "複数のワークスペース"):
             module.reference_bindings(documents, ordered, targets)
         # 1つのワークスペースのテスト割当ては、コマンド名の辞書順にまとめる（テストのパスと`covers`は辞書順）。
