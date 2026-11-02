@@ -592,7 +592,12 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     for exp in expansions:
         relation_scope_ids |= set(exp.relation_scope or exp.context_documents)
 
-    def _relation_errors(scope_ids: set[str]) -> list:
+    def _relation_diagnostics(scope_ids: set[str]) -> tuple[list, list]:
+        """閉包の文書が宣言する関係の診断を、エラーと警告に分けて返す。
+
+        警告は`related`の参照切れ（`SPEC-RELATION-ADVISORY-MISSING-001`、継続単位`skip-edge`）だけで、閉包を増やさないので
+        コンテキストを失敗させず、成功・失敗のどちらの結果にも加える（関係・トレースモデル §3、診断レジストリ。確認事項C78）。
+        """
         if multi_active:
             scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in scope_ids]
             raw: list = []
@@ -612,14 +617,14 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             )
         else:
             raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
-        return [d for d in raw if d.severity == "error"]
+        return [d for d in raw if d.severity == "error"], [d for d in raw if d.severity == "warning"]
 
     def _unresolved_count(diag_dicts: list[dict]) -> int:
         return len([d for d in diag_dicts if d["code"] in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")])
 
     if all_errors:
-        relation_error_diags = _relation_errors(relation_scope_ids)
-        diags = [d.to_dict() for d in relation_error_diags]
+        relation_error_diags, relation_warning_diags = _relation_diagnostics(relation_scope_ids)
+        diags = [d.to_dict() for d in relation_error_diags + relation_warning_diags]
         for err in all_errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -655,9 +660,9 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     )
     context_documents = expansion.context_documents
 
-    relation_error_diags = _relation_errors(relation_scope_ids | set(context_documents))
+    relation_error_diags, relation_warning_diags = _relation_diagnostics(relation_scope_ids | set(context_documents))
     if relation_error_diags:
-        diags = [d.to_dict() for d in relation_error_diags]
+        diags = [d.to_dict() for d in relation_error_diags + relation_warning_diags]
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
@@ -885,7 +890,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             )
 
     # --- 文書の一覧の診断（EARS-AIなど）: コンテキスト文書のものだけを含める -----------------
-    catalog_diags: list[dict] = []
+    catalog_diags: list[dict] = [d.to_dict() for d in relation_warning_diags]
     for doc_id in context_documents:
         entry = id_index[doc_id]
         for w in entry.warnings:

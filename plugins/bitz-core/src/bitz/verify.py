@@ -543,18 +543,26 @@ def _process_single_target(
     # 両方を返す（診断レジストリ、関係・トレースモデル §4・§6.3）。
     relation_scope = expansion.relation_scope or expansion.context_documents
 
-    def _relation_errors() -> list[dict]:
-        return [
-            d.to_dict()
-            for d in _relation_check_diagnostics(
-                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active,
-                cycle_diagnostics_for,
-            )
-            if d.severity == "error"
-        ]
+    relation_diags = [
+        d.to_dict()
+        for d in _relation_check_diagnostics(
+            relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active,
+            cycle_diagnostics_for,
+        )
+    ]
+    relation_error_diags = [d for d in relation_diags if d["severity"] == "error"]
+    # `related`の参照切れ（`SPEC-RELATION-ADVISORY-MISSING-001`、継続単位`skip-edge`）は、検証対象を失敗させず、
+    # 展開した後のどの結果にも検証対象の`diagnostics`として加える（関係・トレースモデル §3、診断レジストリ。確認事項C78）。
+    relation_warning_diags = [d for d in relation_diags if d["severity"] == "warning"]
+
+    def _finish(diags: list[dict], status: str | None = None) -> None:
+        merged = list(diags) + relation_warning_diags
+        if merged:
+            entry_out["diagnostics"] = sort_diagnostics(merged)
+        entry_out["status"] = worst_status(([status] if status else []) + [d["resultStatus"] for d in merged])
 
     if expansion.errors:
-        diags = _relation_errors()
+        diags = list(relation_error_diags)
         for err in expansion.errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -570,8 +578,7 @@ def _process_single_target(
                 if err.get("suggestedAction") is not None:
                     diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
-        entry_out["diagnostics"] = sort_diagnostics(diags)
-        entry_out["status"] = worst_status([d["resultStatus"] for d in diags])
+        _finish(diags)
         return entry_out, needed_pairs
 
     context_documents = expansion.context_documents
@@ -584,14 +591,11 @@ def _process_single_target(
                 "SPEC-MULTI-DEPENDENCY-001", "error", "blocked", messages.MULTI_DEPENDENCY_CONTEXT, workspace_id, root_entry.path
             )
             diag["evidence"] = {"stage": "context", **dep_evidence}
-            entry_out["diagnostics"] = [diag]
-            entry_out["status"] = "blocked"
+            _finish([diag], "blocked")
             return entry_out, needed_pairs
 
-    relation_error_diags = _relation_errors()
     if relation_error_diags:
-        entry_out["diagnostics"] = sort_diagnostics(relation_error_diags)
-        entry_out["status"] = worst_status([d["resultStatus"] for d in relation_error_diags])
+        _finish(relation_error_diags)
         return entry_out, needed_pairs
 
     target_statements = expansion.target_statements
@@ -628,8 +632,7 @@ def _process_single_target(
     entry_out["statements"] = sorted({_canon_id(s) for s in target_statements})
 
     if must_untested:
-        entry_out["diagnostics"] = sort_diagnostics(coverage_diags)
-        entry_out["status"] = "blocked"
+        _finish(coverage_diags, "blocked")
         return entry_out, needed_pairs
 
     # --- テスト割当て候補の決定（関係・トレースモデル §6.4「規範文のないTECHを起点にした場合は`targetStatements`を空とし、文書単位のテスト割当てを保持する」） ---
@@ -692,17 +695,15 @@ def _process_single_target(
                 needed_pairs.append((owner, name, t["path"], _canon_id(cover_id)))
 
     if binding_missing_diags:
-        entry_out["diagnostics"] = sort_diagnostics(binding_missing_diags)
-        entry_out["status"] = "blocked"
+        _finish(binding_missing_diags, "blocked")
         entry_out["bindingRefs"] = []
         entry_out["contextDigest"] = context_digest
         return entry_out, []
 
     entry_out["bindingRefs"] = sorted({f"{ws}::{name}" for ws, name, _p, _c in needed_pairs})
     entry_out["_needed"] = sorted({(ws, name) for ws, name, _p, _c in needed_pairs})
-    if should_untested:
-        entry_out["diagnostics"] = sort_diagnostics(coverage_diags)
-        entry_out["status"] = "passed_with_warnings"
+    if should_untested or relation_warning_diags:
+        _finish(coverage_diags if should_untested else [], "passed_with_warnings" if should_untested else None)
     return entry_out, needed_pairs
 
 
