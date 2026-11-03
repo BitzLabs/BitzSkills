@@ -59,18 +59,18 @@ class ShardingTests(unittest.TestCase):
         self.assertLess(max(fixture_seconds) - min(fixture_seconds), 0.2)
         plan = partition_plan(step_ids(5), 4)
         self.assertTrue(all(200 <= row["predictedSeconds"] <= 240 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 619)
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 627)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
         workers = plan["matrix"]["include"]
         self.assertEqual([(row["replica"], row["shard"]) for row in workers],
                          [(replica, shard) for replica in (1, 2) for shard in range(1, 5)])
-        # 4つの分割の予測秒数は236.3〜236.4秒で、どれもPythonのroundで236秒になる。
-        self.assertEqual({row["predicted"] for row in workers}, {"3分56秒"})
+        # 4つの分割の予測秒数は236.6〜236.7秒で、どれもPythonのroundで237秒になる。
+        self.assertEqual({row["predicted"] for row in workers}, {"3分57秒"})
         summary = planning.markdown(plan)
         self.assertIn("GitHub Actionsの実行36248419060", summary)
-        self.assertEqual(summary.count("| 3分56秒 |"), 4)
+        self.assertEqual(summary.count("| 3分57秒 |"), 4)
         pull_request = planning.build_plan(step=5, shards=4, replicas=1)
         self.assertEqual([(row["replica"], row["shard"])
                           for row in pull_request["matrix"]["include"]],
