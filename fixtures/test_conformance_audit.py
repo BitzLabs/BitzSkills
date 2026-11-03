@@ -102,6 +102,7 @@ from conformance import multi_check_qualified_summary_fixtures
 from conformance import multi_member_config_source_fixtures
 from conformance import multi_doctor_git_catalog_fixtures
 from conformance import workspace_selection_fixtures
+from conformance import frontmatter_glob_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
 
@@ -8335,6 +8336,297 @@ class AuditTests(unittest.TestCase):
                 else:
                     inputs[relative] = data
                 check_rejected(identifier, inputs, (relative, "create" if data is not None else "delete"))
+
+    def test_frontmatter_glob_fixtures(self):
+        """`SINGLE-171-01`〜`08`: フロントマターのパスは、globの文字`*?[]`の4つを拒否し、ほかの記号は拒否しない（確認事項C43）。"""
+        module = frontmatter_glob_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"SINGLE-171-{number:02d}" for number in range(1, 9)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_frontmatter_glob_expected_results(self):
+        """期待結果の要点: 閉じ括弧だけのパスも拒否し（`implements`、`changes`、`tests[0].path`）、`*?[`は修正前から拒否し、ほかの記号は受理する。"""
+        def fixture(identifier):
+            return audit.FIXTURES / "single" / identifier
+
+        def read(identifier):
+            return json.loads((fixture(identifier) / "expected/check.json").read_text())
+
+        def manifest(identifier):
+            return json.loads((fixture(identifier) / "manifest.json").read_text())
+
+        spec = {"REQ": ".spec/requirements/REQ-001.md", "TASK": ".spec/tasks/TASK-001.md"}
+        summaries = {"implements": "フロントマターのフィールドimplementsは文字列の配列が必要です",
+                     "changes": "フロントマターのフィールドchangesは文字列の配列が必要です",
+                     "tests[0].path": "フロントマターのフィールドtests[0].pathは文字列が必要です"}
+        # 識別子: (文書の種類, キー, 実ファイルを置くパス)
+        rejected = {"SINGLE-171-01": ("REQ", "implements", ["src/a]b.py"]), "SINGLE-171-02": ("TASK", "changes", ["src/a]b.py"]),
+                    "SINGLE-171-03": ("REQ", "tests[0].path", ["tests/t]x.py"]), "SINGLE-171-04": ("REQ", "implements", []),
+                    "SINGLE-171-05": ("TASK", "changes", []), "SINGLE-171-06": ("REQ", "tests[0].path", [])}
+        for identifier, (kind, key, files) in rejected.items():
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"]), ("failed", 1))
+                self.assertEqual(result["diagnostics"], [{"code": "SPEC-FM-SCHEMA-001", "severity": "error", "resultStatus": "failed",
+                                                          "summary": summaries[key],
+                                                          "source": {"kind": "file", "workspaceId": "root", "path": spec[kind], "key": key}}])
+                self.assertEqual((result["checkedDocumentCount"], result["checkedStatementCount"]), (0, 0))
+                self.assertEqual(manifest(identifier)["invocation"]["argv"], ["check", "--full", "--base", "HEAD", "--format", "json"])
+                present = sorted(path.relative_to(fixture(identifier) / "repo").as_posix()
+                                 for directory in ("src", "tests") if (fixture(identifier) / "repo" / directory).is_dir()
+                                 for path in (fixture(identifier) / "repo" / directory).rglob("*") if path.is_file())
+                self.assertEqual(present, files)
+        # 受理する対照: 診断なし、文書は受理して数える（REQは規範文1件、TASKは0件）。
+        for identifier, counts in (("SINGLE-171-07", (1, 1)), ("SINGLE-171-08", (1, 0))):
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], result["diagnostics"], manifest(identifier)["expect"]["exitCode"]), ("passed", [], 0))
+                self.assertEqual((result["checkedDocumentCount"], result["checkedStatementCount"]), counts)
+        # 実ファイルの名前に`]`・`(){}!`を含む（`*?[`のファイル名は置かない）。
+        self.assertTrue((fixture("SINGLE-171-01") / "repo/src/a]b.py").is_file())
+        self.assertTrue((fixture("SINGLE-171-03") / "repo/tests/t]x.py").is_file())
+        self.assertTrue((fixture("SINGLE-171-07") / "repo/src/a(1){2}!.py").is_file())
+        self.assertTrue((fixture("SINGLE-171-07") / "repo/tests/t(1){2}!.py").is_file())
+        # 入力のフロントマターの行。
+        text = lambda identifier, name: (fixture(identifier) / "repo/.spec" / name).read_text()
+        self.assertIn('implements: ["src/a]b.py"]\n', text("SINGLE-171-01", "requirements/REQ-001.md"))
+        self.assertIn('changes: ["src/a]b.py"]\n', text("SINGLE-171-02", "tasks/TASK-001.md"))
+        self.assertIn('tests: [{"path": "tests/t]x.py", "covers": ["REQ-001:AC-01"], "command": "default"}]\n',
+                      text("SINGLE-171-03", "requirements/REQ-001.md"))
+        self.assertIn('implements: ["src/a*b.py"]\n', text("SINGLE-171-04", "requirements/REQ-001.md"))
+        self.assertIn('changes: ["src/a?b.py"]\n', text("SINGLE-171-05", "tasks/TASK-001.md"))
+        self.assertIn('"path": "tests/t[x.py"', text("SINGLE-171-06", "requirements/REQ-001.md"))
+        self.assertIn('implements: ["src/a(1){2}!.py"]\n', text("SINGLE-171-07", "requirements/REQ-001.md"))
+        self.assertIn('"path": "tests/t(1){2}!.py"', text("SINGLE-171-07", "requirements/REQ-001.md"))
+        self.assertIn('changes: ["src/a(1){2}!.py"]\n', text("SINGLE-171-08", "tasks/TASK-001.md"))
+        # 承認済みの文言だけ: `SINGLE-120-04`と同じ`changes`の文言、`SINGLE-088`と同じ形の`tests[0].path`の文言。
+        self.assertEqual(read("SINGLE-171-02")["diagnostics"][0]["summary"], read("SINGLE-120-04")["diagnostics"][0]["summary"])
+        self.assertEqual(read("SINGLE-171-03")["diagnostics"][0]["summary"],
+                         read("SINGLE-088")["diagnostics"][0]["summary"].replace("title", "tests[0].path"))
+        # 同じ形の対（修正前から拒否する対照と、欠陥を検出するケース）は、`key`と`summary`だけが違わない。
+        for defect, control in (("SINGLE-171-01", "SINGLE-171-04"), ("SINGLE-171-02", "SINGLE-171-05"), ("SINGLE-171-03", "SINGLE-171-06")):
+            self.assertEqual(read(defect), read(control))
+
+    def test_frontmatter_glob_reference_rules(self):
+        """参照計算: パスの字句の判定は、`frontmatter.schema.json`の`pathString`と一致し、修正前の3文字の読み方はケースの欠陥の有無と一致する。"""
+        module = frontmatter_glob_fixtures
+        schema = json.loads(schema_path(audit.FIXTURES, "frontmatter").read_text())
+        validator = Draft202012Validator({"$ref": "#/$defs/pathString", "$defs": schema["$defs"]})
+        # (パス, 拒否するか, 修正前の3文字の読み方でも拒否するか)
+        table = [
+            ("src/a.py", False, False), ("src/", False, False), ("a b.py", False, False), ("src/a(1){2}!.py", False, False),
+            ("src/a#b$c&d'e,f;g.py", False, False), ("src/日本語.py", False, False), ("src/.hidden", False, False), ("src/a..b.py", False, False),
+            ("src/a*b.py", True, True), ("src/a?b.py", True, True), ("src/a[b.py", True, True), ("src/a]b.py", True, False),
+            ("]", True, False), ("a[1].py", True, True), ("*", True, True), ("src/[a]b.py", True, True),
+            ("/src/a.py", True, True), ("../a.py", True, True), ("src/../a.py", True, True), ("src/./a.py", True, True),
+            ("src/..", True, True), ("src/a\x00b.py", True, True), ("", True, True), (".", True, True),
+        ]
+        for path, expected, old in table:
+            with self.subTest(path=path):
+                self.assertEqual(module.path_rejected(path), expected)
+                self.assertEqual(module.path_rejected(path, module.OLD_GLOB_CHARACTERS), old)
+                self.assertEqual(not validator.is_valid(path), expected)
+        self.assertEqual(module.GLOB_CHARACTERS, "*?[]")
+        self.assertEqual(module.OLD_GLOB_CHARACTERS, "*?[")
+        # 欠陥を検出するケースは、`]`だけを含み、修正前の読み方との差が出る3件。
+        self.assertEqual([identifier for identifier, case in module.CASES.items() if case["defective"]],
+                         ["SINGLE-171-01", "SINGLE-171-02", "SINGLE-171-03"])
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                old = any(module.path_rejected(path, module.OLD_GLOB_CHARACTERS) for path in case["paths"])
+                self.assertEqual(old != case["rejected"], case["defective"])
+                self.assertEqual(any(module.path_rejected(path) for path in case["paths"]), case["rejected"])
+                self.assertEqual(any("]" in path for path in case["paths"]) and case["rejected"], case["defective"])
+        # 単一原因: globの文字を1文字だけ含み、除けば違反がない。
+        for path, expected in (("src/a]b.py", True), ("src/a*b.py", True), ("src/a]*b.py", False), ("src/a]/../b.py", False), ("/a]", False), ("src/ab.py", False)):
+            with self.subTest(single_cause=path):
+                self.assertEqual(module.single_cause(path), expected)
+        # 4つのglobの文字が、3つのフィールドそれぞれで拒否され、受理される入力はスキーマも通す。
+        for kind, definition in (("REQ", "reqFrontmatter"), ("TASK", "taskFrontmatter")):
+            fields = {"id": f"{kind}-001", "title": "t", "status": "approved" if kind == "REQ" else "open"}
+            validator = Draft202012Validator({"$ref": "#/$defs/" + definition, "$defs": schema["$defs"]})
+            field = "implements" if kind == "REQ" else "changes"
+            for character in "*?[]":
+                self.assertFalse(validator.is_valid({**fields, field: [f"src/a{character}b.py"]}), (kind, character))
+            self.assertTrue(validator.is_valid({**fields, field: ["src/a(1){2}!.py"]}), kind)
+        test = {"id": "REQ-001", "title": "t", "status": "approved", "tests": [{"path": "tests/t]x.py", "covers": ["REQ-001:AC-01"]}]}
+        requirement = Draft202012Validator({"$ref": "#/$defs/reqFrontmatter", "$defs": schema["$defs"]})
+        self.assertFalse(requirement.is_valid(test))
+        test["tests"][0]["path"] = "tests/t(1){2}!.py"
+        self.assertTrue(requirement.is_valid(test))
+
+    def test_frontmatter_glob_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）と、入力の欠落・余りを拒否する（陰性対照）。"""
+        module = frontmatter_glob_fixtures
+
+        def source(value):
+            return value["diagnostics"][0]["source"]
+
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-blocked": lambda v: v.update(status="blocked"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code": lambda v: v["diagnostics"][0].update(code="SPEC-FM-UNKNOWN-001"),
+            "code-required": lambda v: v["diagnostics"][0].update(code="SPEC-FM-REQUIRED-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="パスにglobの文字があります"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="passed"),
+            "source-path": lambda v: source(v).update(path=".spec/requirements/REQ-002.md"),
+            "source-workspace": lambda v: source(v).update(workspaceId="app"),
+            "source-key": lambda v: source(v).update(key="tests" if source(v)["key"] != "tests" else "implements"),
+            "source-key-index": lambda v: source(v).update(key="tests[]" if source(v)["key"] == "tests[0].path" else source(v)["key"] + "[0]"),
+            "source-key-drop": lambda v: source(v).pop("key"),
+            "documents": lambda v: v.update(checkedDocumentCount=1 - v["checkedDocumentCount"]),
+            "statements": lambda v: v.update(checkedStatementCount=1 - v["checkedStatementCount"]),
+            "scope": lambda v: v.update(scope="selected"),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "workspace": lambda v: v["workspace"].update(id="app"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0 if v["expect"]["exitCode"] != 0 else 1),
+            "exit-code-4": lambda v: v["expect"].update(exitCode=4),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+            "argv-full": lambda v: v["invocation"]["argv"].remove("--full"),
+            "argv-base": lambda v: v["invocation"]["argv"].remove("--base"),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "doctor"),
+            "cwd": lambda v: v["invocation"].update(cwd="src"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "no-base-commit": lambda v: v["setup"].pop("baseCommit"),
+            "base-paths": lambda v: v["setup"]["baseCommit"].update(paths=[".spec"]),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations += [("expected/check.json", label, change) for label, change in results.items()]
+            mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            mutations.append(("side-effects.json", "after", lambda v: v["after"]["cache"].update(index={"kind": "directory"})))
+            mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    path = root / "single" / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra", "stray-changes", "stray-cli-output", "other-result"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    fixture = root / "single" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif name == "stray-changes":
+                        (fixture / "changes").mkdir()
+                        (fixture / "changes/a.py").write_text("x")
+                    elif name == "stray-cli-output":
+                        (fixture / "cli-output.json").write_text("{}")
+                    elif name == "other-result":
+                        (fixture / "expected/doctor.json").write_text((fixture / "expected/check.json").read_text())
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 欠陥を検出するケースの期待を、修正前のCoreの出力（受理）へ取り違える改変を拒否する。
+        for identifier in ("SINGLE-171-01", "SINGLE-171-02", "SINGLE-171-03"):
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                accepted = {"SINGLE-171-01": "SINGLE-171-07", "SINGLE-171-02": "SINGLE-171-08", "SINGLE-171-03": "SINGLE-171-07"}[identifier]
+                result = json.loads((audit.FIXTURES / "single" / accepted / "expected/check.json").read_text())
+                manifest = json.loads((audit.FIXTURES / "single" / accepted / "manifest.json").read_text())
+                (fixture / "expected/check.json").write_text(json.dumps(result))
+                (fixture / "manifest.json").write_text(json.dumps({**manifest, "fixtureId": identifier,
+                                                                    "description": module.CASES[identifier]["description"]}))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 200)
+
+    def test_frontmatter_glob_audit_rejects_changed_causes(self):
+        """原因を消す、または別の原因を重ねる入力の書換えを、入力のバイト列の照合を通した上で、参照計算と原因の構成の検査が拒否する。"""
+        module = frontmatter_glob_fixtures
+        requirement, task = ".spec/requirements/REQ-001.md", ".spec/tasks/TASK-001.md"
+        edits = {
+            # `]`を取り除く（原因が消えて、欠陥を検出できない）、別の原因を重ねる、ほかのglobの文字へ替える。
+            "SINGLE-171-01": [(requirement, b"src/a]b.py", b"src/ab.py"), (requirement, b"src/a]b.py", b"src/a]b/../c.py"),
+                              (requirement, b"src/a]b.py", b"/src/a]b.py"), (requirement, b"src/a]b.py", b"src/a]*b.py"),
+                              (requirement, b"src/a]b.py", b"src/a*b.py"), (requirement, b'implements: ["src/a]b.py"]', b'implements: ["src/a]b.py", "src/x.py"]')],
+            "SINGLE-171-02": [(task, b"src/a]b.py", b"src/ab.py"), (task, b"src/a]b.py", b"src/a]b/./c.py"), (task, b"src/a]b.py", b"src/a]?b.py"),
+                              (task, b"src/a]b.py", b"src/a?b.py")],
+            "SINGLE-171-03": [(requirement, b"tests/t]x.py", b"tests/tx.py"), (requirement, b"tests/t]x.py", b"tests/t]x/../y.py"),
+                              (requirement, b"tests/t]x.py", b"tests/t[x.py")],
+            "SINGLE-171-04": [(requirement, b"src/a*b.py", b"src/ab.py"), (requirement, b"src/a*b.py", b"src/a]b.py")],
+            "SINGLE-171-05": [(task, b"src/a?b.py", b"src/ab.py"), (task, b"src/a?b.py", b"src/a]b.py")],
+            "SINGLE-171-06": [(requirement, b"tests/t[x.py", b"tests/tx.py"), (requirement, b"tests/t[x.py", b"tests/t]x.py")],
+            # 対照の入力へglobの文字を重ねる、または別の原因を重ねる。
+            "SINGLE-171-07": [(requirement, b"src/a(1){2}!.py", b"src/a(1){2}!].py"), (requirement, b"tests/t(1){2}!.py", b"tests/t(1)*{2}!.py"),
+                              (requirement, b"src/a(1){2}!.py", b"src/../a(1){2}!.py"), (requirement, b'"command": "default"', b'"command": "other"')],
+            "SINGLE-171-08": [(task, b"src/a(1){2}!.py", b"src/a(1){2}[!.py"), (task, b"src/a(1){2}!.py", b"/src/a(1){2}!.py")],
+        }
+        # 実ファイルの有無を変える（既存のファイルの書換えではないので、別に扱う）。
+        deletions = {"SINGLE-171-01": ["src/a]b.py"], "SINGLE-171-02": ["src/a]b.py"], "SINGLE-171-03": ["tests/t]x.py"],
+                     "SINGLE-171-07": ["src/a(1){2}!.py", "tests/t(1){2}!.py"], "SINGLE-171-08": ["src/a(1){2}!.py"]}
+        creations = {"SINGLE-171-04": ["src/a*b.py"], "SINGLE-171-05": ["src/a?b.py"], "SINGLE-171-06": ["tests/t[x.py"]}
+        byte_phrases = ("入力のバイト列またはファイルモードがレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+
+        rejections = []
+
+        def check_rejected(identifier, edited, label):
+            rejections.append((identifier, label))
+            with self.subTest(identifier=identifier, change=label), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                for relative in list(module.reviewed_inputs(identifier)):
+                    if relative not in edited:
+                        (fixture / "repo" / relative).unlink()
+                for relative, data in edited.items():
+                    (fixture / "repo" / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (fixture / "repo" / relative).write_bytes(data)
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                for directory in external.values():
+                    directory.mkdir(parents=True)
+                state = observe_single(repository, external)
+                (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                self.assertNotIn("KeyError", outcome["errors"][0])
+
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                inputs = dict(module.reviewed_inputs(identifier))
+                self.assertIn(old, inputs[relative])
+                check_rejected(identifier, {**inputs, relative: inputs[relative].replace(old, new, 1)}, (relative, old[:30], new[:30]))
+        for identifier, paths in deletions.items():
+            for path in paths:
+                inputs = dict(module.reviewed_inputs(identifier))
+                del inputs[path]
+                check_rejected(identifier, inputs, (path, "delete"))
+        for identifier, paths in creations.items():
+            for path in paths:
+                check_rejected(identifier, {**module.reviewed_inputs(identifier), path: module.CODE_CONTENT}, (path, "create"))
+        self.assertEqual(len(rejections), 34)
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
