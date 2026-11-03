@@ -100,6 +100,8 @@ from conformance import related_advisory_fixtures, multi_related_advisory_fixtur
 from conformance import document_refines_fixtures, multi_document_refines_fixtures
 from conformance import multi_check_qualified_summary_fixtures
 from conformance import multi_member_config_source_fixtures
+from conformance import workspace_selection_fixtures
+from conformance.initial_fixtures import observe as observe_single
 
 
 class AuditTests(unittest.TestCase):
@@ -7799,6 +7801,319 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(len(outcome["errors"]), 1)
                     self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                     self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_workspace_selection_fixtures(self):
+        """`SINGLE-170-01`〜`08`: 単一ワークスペースの`--workspace`は同一性を構成できないとき比べず、宣言のない`--all-workspaces`は発見できない（確認事項C73・C64）。"""
+        module = workspace_selection_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"SINGLE-170-{number:02d}" for number in range(1, 9)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 1)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_workspace_selection_expected_results(self):
+        """期待結果の要点: 同一性を構成できないときは停止の結果、構成できるときの不一致と宣言のない`--all-workspaces`は終了コード4で結果を作らない。"""
+        def fixture(identifier):
+            return audit.FIXTURES / "single" / identifier
+
+        def manifest(identifier):
+            return json.loads((fixture(identifier) / "manifest.json").read_text())
+
+        def read(identifier, name):
+            return json.loads((fixture(identifier) / "expected" / name).read_text())
+
+        # 終了コード4: 結果の状態もレポートも持たず、`cli-output.json`だけを持つ（`cli_error_fixtures.py`と同じ形）。
+        for identifier, operation in (("SINGLE-170-03", "context"), ("SINGLE-170-05", "check"), ("SINGLE-170-06", "doctor"), ("SINGLE-170-07", "verify")):
+            with self.subTest(identifier=identifier):
+                self.assertEqual(manifest(identifier)["expect"], {"exitCode": 4, "stdout": "none", "reportFileCount": 0})
+                self.assertEqual(manifest(identifier)["invocation"]["argv"][0], operation)
+                self.assertEqual(json.loads((fixture(identifier) / "cli-output.json").read_text()),
+                                 {"exitCode": 4, "stdout": "", "stderrPrefix": f"bitz: {operation}: ", "stderrLineCount": 1,
+                                  "stderrReasonRequired": True, "stderrTerminalControls": False})
+                self.assertFalse((fixture(identifier) / "expected").exists())
+        # 停止の結果: `--workspace`の値は結果に現れず、同一性を構成できないので`workspace.id`は`null`。
+        expected = {
+            "SINGLE-170-01": ("check.json", "SPEC-CONFIG-SCHEMA-001", "error", 3, "設定YAMLの構文が不正です",
+                              {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"}),
+            "SINGLE-170-02": ("doctor.json", "SPEC-CONFIG-SCHEMA-001", "error", 3, "設定キーlanguageは文字列で指定してください",
+                              {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml", "key": "language"}),
+            "SINGLE-170-04": ("verify.json", "SPEC-WORKSPACE-MISSING-001", "blocked", 2, ".spec/bitz.yamlがありません",
+                              {"kind": "environment", "component": "workspace", "identifier": "."}),
+            "SINGLE-170-08": ("check.json", "SPEC-CONFIG-SCHEMA-001", "error", 3, "設定YAMLの構文が不正です",
+                              {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"}),
+        }
+        for identifier, (name, code, status, exit_code, summary, source) in expected.items():
+            with self.subTest(identifier=identifier):
+                result = read(identifier, name)
+                self.assertEqual([(item["code"], item["resultStatus"], item["summary"], item["source"]) for item in result["diagnostics"]],
+                                 [(code, status, summary, source)])
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"]), (status, exit_code))
+                self.assertNotIn('"app"', json.dumps(result, ensure_ascii=False))
+                self.assertEqual(result["workspace" if identifier != "SINGLE-170-08" else "multiWorkspace"], {"id": None, "path": "."})
+        # `--workspace`なしの既存のfixtureと同じ停止の結果（`--workspace`の値が結果を変えないこと）。
+        self.assertEqual(read("SINGLE-170-02", "doctor.json"), read("SINGLE-092", "doctor.json"))
+        self.assertEqual(manifest("SINGLE-170-02")["setup"], manifest("SINGLE-092")["setup"])
+        self.assertEqual(json.loads((fixture("SINGLE-170-04") / "expected/verify.json").read_text())["diagnostics"],
+                         json.loads((fixture("SINGLE-152") / "expected/context.json").read_text())["diagnostics"])
+        syntax = read("SINGLE-170-01", "check.json")
+        self.assertEqual((syntax["scope"], syntax["checkedDocumentCount"], syntax["checkedStatementCount"]), ("full", 0, 0))
+        verify = read("SINGLE-170-04", "verify.json")
+        self.assertEqual((verify["scope"], verify["targetResults"], verify["commands"], verify["revision"]),
+                         ("selected", [], [], {"commit": "0" * 40, "dirty": False}))
+        # 全体操作の停止の結果は、ワークスペースの処理を始めない。設定の診断は`--workspace`の対と同じ。
+        everything = read("SINGLE-170-08", "check.json")
+        self.assertEqual((everything["scope"], everything["workspaces"]), ("all-workspaces", []))
+        self.assertEqual(everything["diagnostics"], syntax["diagnostics"])
+        self.assertNotIn("workspace", everything)
+        self.assertEqual(manifest("SINGLE-170-01")["setup"]["baseCommit"]["paths"], ["."])
+        # 入力: 同じ入力の対、既定値`root`の設定、宣言のない設定
+        inputs = lambda identifier: {path.relative_to(fixture(identifier) / "repo").as_posix(): path.read_bytes()
+                                     for path in (fixture(identifier) / "repo").rglob("*") if path.is_file()}
+        self.assertEqual(inputs("SINGLE-170-01"), inputs("SINGLE-170-08"))
+        self.assertNotIn(".spec/bitz.yaml", inputs("SINGLE-170-04"))
+        self.assertEqual(set(inputs("SINGLE-170-06")) - set(inputs("SINGLE-170-05")), {"services/api/.spec/bitz.yaml"})
+        for identifier in ("SINGLE-170-03", "SINGLE-170-05", "SINGLE-170-06", "SINGLE-170-07"):
+            self.assertNotIn(b"multiWorkspace", inputs(identifier)[".spec/bitz.yaml"])
+        self.assertIn(b'schemaVersion: "2.0"', inputs("SINGLE-170-07")[".spec/bitz.yaml"])
+        # 既存の`--workspace`のfixtureは、同一性を構成できる設定の不一致だけ（`SINGLE-127-14`）。
+        self.assertEqual(manifest("SINGLE-127-14")["invocation"]["argv"][:3], ["doctor", "--workspace", "missing"])
+
+    def test_workspace_selection_reference_rules(self):
+        """参照計算: 同一性を構成できるかの判定と、`--workspace`・`--all-workspaces`の結果の導出。修正前のCoreの再現を含む。"""
+        module = workspace_selection_fixtures
+        default = module.DEFAULT_CONFIG.encode()
+
+        def decide(argv, config, function="reference_outcome", nested=None):
+            with tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary)
+                if config is not None:
+                    (repository / ".spec").mkdir()
+                    (repository / ".spec/bitz.yaml").write_bytes(config)
+                return getattr(module, function)(argv, repository)
+
+        stop = lambda kind: {"kind": "stop", "stop": kind}
+        error = {"kind": "argument-error"}
+        # 同一性: 設定がない、または同一性を構成する前に止まる不備なら構成できない。版の非対応は構成できる。
+        self.assertEqual(module.identity(None), None)
+        self.assertEqual(module.identity(default), "root")
+        self.assertEqual(module.identity(default + b"workspace:\n  id: web\n"), "web")
+        self.assertEqual(module.identity(default.replace(b'"1.0"', b'"2.0"', 1)), "root")
+        self.assertEqual(module.identity(default + b"workspace:\n  id: web\n" + b'x: 1\n').__class__, str)
+        for broken in (default + b"workspace: [\n", default.replace(b"language: ja", b"language: 42"), default + b"# \xff\n",
+                       default.replace(b"language: ja", b"language: &label ja"), default + b"#" * 70000 + b"\n"):
+            self.assertIsNone(module.identity(broken), broken[:60])
+        # `--workspace`: 構成できなければ比べず停止の結果。構成できれば不一致は終了コード4。
+        self.assertEqual(decide(["check", "--workspace", "app", "--full"], default + b"workspace: [\n"), stop("syntax"))
+        self.assertEqual(decide(["check", "--workspace", "root", "--full"], default + b"workspace: [\n"), stop("syntax"))
+        self.assertEqual(decide(["verify", "--workspace", "root", "REQ-001"], None), stop("missing"))
+        self.assertEqual(decide(["doctor", "--workspace", "app"], default.replace(b"language: ja", b"language: 42")), stop("type"))
+        self.assertEqual(decide(["context", "REQ-001", "--workspace", "app"], default), error)
+        self.assertEqual(decide(["check", "--workspace", "app", "--full"], default.replace(b'"1.0"', b'"2.0"', 1)), error)
+        self.assertEqual(decide(["check", "--workspace", "other", "--full"], default + b"workspace:\n  id: app\n"), error)
+        with self.assertRaises(ValueError):
+            decide(["check", "--workspace", "root", "--full"], default)
+        # `--all-workspaces`: 読めて宣言がなければ引数不正（版の非対応を含む）。読めなければ停止の結果。設定がなければ発見できず引数不正。
+        self.assertEqual(decide(["check", "--all-workspaces"], default), error)
+        self.assertEqual(decide(["check", "--all-workspaces"], default + b"workspace:\n  id: app\n"), error)
+        self.assertEqual(decide(["verify", "--all-workspaces"], default.replace(b'"1.0"', b'"2.0"', 1)), error)
+        self.assertEqual(decide(["check", "--all-workspaces"], None), error)
+        self.assertEqual(decide(["check", "--all-workspaces"], default + b"workspace: [\n"), stop("syntax"))
+        self.assertEqual(decide(["doctor", "--all-workspaces"], default.replace(b"language: ja", b"language: 42")), stop("type"))
+        with self.assertRaises(ValueError):
+            decide(["check", "--all-workspaces"], default + b"multiWorkspace:\n  members: []\n")
+        # 修正前のCore: `--workspace`は設定の有無・同一性を構成できるかにかかわらず比べる。`--all-workspaces`は宣言を見ない。
+        broken = lambda argv, config: decide(argv, config, "defective_outcome")
+        self.assertEqual(broken(["check", "--workspace", "app", "--full"], default + b"workspace: [\n"), error)
+        self.assertEqual(broken(["verify", "--workspace", "app", "REQ-001"], None), error)
+        self.assertEqual(broken(["context", "REQ-001", "--workspace", "app"], default), error)
+        self.assertEqual(broken(["check", "--workspace", "root", "--full"], default), {"kind": "proceeds"})
+        self.assertEqual(broken(["check", "--all-workspaces"], default), {"kind": "proceeds"})
+        self.assertEqual(broken(["check", "--all-workspaces"], default + b"workspace: [\n"), stop("syntax"))
+        # 不備の分類は、診断レジストリの条件の順（構文が型より先）で最初の1つ。この群が扱わない不備は拒否する。
+        self.assertEqual(module.stop_kind(default + b"workspace: [\n" + b"x: 1\n"), "syntax")
+        with self.assertRaises(ValueError):
+            module.stop_kind(default.replace(b'"1.0"', b'"2.0"', 1))
+        with self.assertRaises(ValueError):
+            module.stop_kind(default + b"# \xff\n")
+
+    def test_workspace_selection_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）と、入力の欠落・余りを拒否する（陰性対照）。"""
+        module = workspace_selection_fixtures
+
+        def source(value):
+            return value["diagnostics"][0]["source"]
+
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-other": lambda v: v.update(status="failed" if v["status"] != "failed" else "blocked"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code": lambda v: v["diagnostics"][0].update(code="SPEC-WORKSPACE-MISSING-001" if v["diagnostics"][0]["code"] != "SPEC-WORKSPACE-MISSING-001" else "SPEC-CONFIG-SCHEMA-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="設定を読めません"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="passed"),
+            "source-workspace-app": lambda v: source(v).update(workspaceId="app"),
+            "source-workspace-root": lambda v: source(v).update(workspaceId="root"),
+            "source-path": lambda v: source(v).update(path="app/.spec/bitz.yaml"),
+            "source-key": lambda v: source(v).update(key="workspace.id"),
+            "source-kind": lambda v: source(v).update(kind="environment"),
+            "workspace-app": lambda v: v["workspace"].update(id="app"),
+            "workspace-root": lambda v: v["workspace"].update(id="root"),
+            "workspace-path": lambda v: v["workspace"].update(path="app"),
+            "multi-id": lambda v: v["multiWorkspace"].update(id="root"),
+            "workspaces-fill": lambda v: v["workspaces"].append({"id": "root", "path": ".", "status": "passed", "durationMs": 0, "diagnostics": []}),
+            "scope": lambda v: v.update(scope="changed"),
+            "revision-null": lambda v: v.update(revision=None),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "checked": lambda v: v.update(checkedDocumentCount=1),
+            "target-results": lambda v: v["targetResults"].append({"id": "REQ-001"}),
+            "checks": lambda v: v["checks"][2].update(status="passed"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0),
+            "exit-code-4": lambda v: v["expect"].update(exitCode=4),
+            "exit-code-stop": lambda v: v["expect"].update(exitCode=3 if v["expect"].get("exitCode") != 3 else 2),
+            "stdout": lambda v: v["expect"].update(stdout="json" if v["expect"]["stdout"] == "none" else "none"),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+            "workspace-value": lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("app") if "app" in v["invocation"]["argv"] else 0, "root"),
+            "drop-workspace": lambda v: v["invocation"]["argv"].remove("--workspace"),
+            "swap-all-workspaces": lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("--all-workspaces"), "--full"),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "verify" if v["invocation"]["argv"][0] != "verify" else "check"),
+            "cwd": lambda v: v["invocation"].update(cwd="services"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "base-commit": lambda v: v["setup"].pop("baseCommit") if "baseCommit" in v["setup"] else v["setup"].update(baseCommit={"message": "base", "paths": ["."]}),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        cli_outputs = {
+            "exit-code": lambda v: v.update(exitCode=3),
+            "stdout": lambda v: v.update(stdout="{}"),
+            "prefix": lambda v: v.update(stderrPrefix="bitz: other: "),
+            "lines": lambda v: v.update(stderrLineCount=2),
+            "reason": lambda v: v.update(stderrReasonRequired=False),
+            "controls": lambda v: v.update(stderrTerminalControls=True),
+        }
+        applied = 0
+        for identifier, case in module.CASES.items():
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            if case["outcome"] == "stop":
+                mutations += [(module.RESULT_FILES[case["op"]], label, change) for label, change in results.items()]
+            else:
+                mutations += [("cli-output.json", label, change) for label, change in cli_outputs.items()]
+            mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    path = root / "single" / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra", "other-result", "stray-result"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    fixture = root / "single" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif name == "other-result":
+                        # 操作と異なる期待結果のファイルが残っている（停止の結果のfixtureだけ）。
+                        if case["outcome"] != "stop":
+                            continue
+                        other = "expected/doctor.json" if case["op"] == "check" else "expected/check.json"
+                        (fixture / other).write_text((fixture / module.RESULT_FILES[case["op"]]).read_text())
+                    elif name == "stray-result":
+                        # 引数不正のfixtureに、結果の期待値が残っている。停止の結果のfixtureは、結果の期待値と`cli-output.json`を併せ持たない。
+                        if case["outcome"] == "stop":
+                            (fixture / "cli-output.json").write_text("{}")
+                        else:
+                            (fixture / "expected").mkdir()
+                            (fixture / "expected/check.json").write_text("{}")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 120)
+
+    def test_workspace_selection_audit_rejects_changed_causes(self):
+        """原因を消す、または別の原因を重ねる入力の書換えを、入力のバイト列の照合を通した上で、参照計算と原因の構成の検査が拒否する。"""
+        module = workspace_selection_fixtures
+        config, nested = ".spec/bitz.yaml", "services/api/.spec/bitz.yaml"
+        edits = {
+            # 不備を直す、または重ねる（欠陥を検出できない構成にする）。
+            "SINGLE-170-01": [(config, b"workspace: [\n", b""), (config, b"workspace: [\n", b"workspace:\n  id: app\n"),
+                              (config, b"workspace: [\n", b"workspace: [\nx: 1\nlanguage: 42\n"),
+                              (config, b"workspace: [\n", b"workspace: &anchor [\n")],
+            "SINGLE-170-02": [(config, b"language: 42", b"language: ja"), (config, b"language: 42", b"language: 42\nworkspace: [\n")],
+            "SINGLE-170-03": [(config, b"earsAi", b"workspace:\n  id: app\nearsAi"), (config, b"earsAi", b"workspace:\n  id: other\nearsAi"),
+                              (config, b"language: ja", b"language: 42"), (config, b"language: ja", b"multiWorkspace:\n  members: []\nlanguage: ja")],
+            "SINGLE-170-05": [(config, b"language: ja", b"multiWorkspace:\n  members: []\nlanguage: ja"), (config, b"language: ja", b"language: 42"),
+                              (config, b'"1.0"', b'"2.0"')],
+            "SINGLE-170-06": [(nested, b"id: api", b"id: [\n"), (nested, b"workspace:\n  id: api\n", b""),
+                              (config, b"language: ja", b"multiWorkspace:\n  members:\n    - id: api\n      path: services/api\nlanguage: ja")],
+            "SINGLE-170-07": [(config, b'"2.0"', b'"1.0"'), (config, b"language: ja", b"multiWorkspace:\n  members: []\nlanguage: ja"),
+                              (config, b"language: ja", b"workspace:\n  id: app\nlanguage: ja")],
+            "SINGLE-170-08": [(config, b"workspace: [\n", b""), (config, b"workspace: [\n", b"multiWorkspace:\n  members: []\n")],
+        }
+        # 入れ子の`.spec`と設定の有無そのものを変える（既存のファイルの書換えではないので、別に扱う）。
+        creations = {
+            "SINGLE-170-04": [(config, module.DEFAULT_CONFIG.encode()), (nested, module.NESTED_CONFIG.encode())],
+            "SINGLE-170-05": [(nested, module.NESTED_CONFIG.encode())],
+            "SINGLE-170-06": [(nested, None)],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+
+        def check_rejected(identifier, edited, label):
+            with self.subTest(identifier=identifier, change=label), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                for relative in list(module.reviewed_inputs(identifier)):
+                    if relative not in edited:
+                        (fixture / "repo" / relative).unlink()
+                for relative, data in edited.items():
+                    (fixture / "repo" / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (fixture / "repo" / relative).write_bytes(data)
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                for directory in external.values():
+                    directory.mkdir(parents=True)
+                state = observe_single(repository, external)
+                (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                self.assertNotIn("KeyError", outcome["errors"][0])
+
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                inputs = dict(module.reviewed_inputs(identifier))
+                self.assertIn(old, inputs[relative])
+                check_rejected(identifier, {**inputs, relative: inputs[relative].replace(old, new, 1)}, (relative, old[:30], new[:30]))
+        for identifier, changes in creations.items():
+            for relative, data in changes:
+                inputs = dict(module.reviewed_inputs(identifier))
+                if data is None:
+                    del inputs[relative]
+                else:
+                    inputs[relative] = data
+                check_rejected(identifier, inputs, (relative, "create" if data is not None else "delete"))
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

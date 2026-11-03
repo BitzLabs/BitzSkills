@@ -1,0 +1,30 @@
+{
+  "fixtureId": "SINGLE-170-06",
+  "description": "入れ子の.specがあっても、multiWorkspaceを宣言しない設定のdoctor --all-workspacesは終了コード4にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

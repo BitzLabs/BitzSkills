@@ -736,6 +736,22 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-131` | `local-id`に区切りのハイフンと数字がない`[REQ-001:AC1]` | check | failed／1 | `EAI-CORE-ID-001`、形式不正の要約 |
 | `SINGLE-132` | `local-id`が複数のハイフンを含む`[REQ-001:A-B-01]` | check | passed／0 | ADR-054の境界を誤遮断しない |
 
+### 6.14 単一ワークスペースの`--workspace`と宣言のない`--all-workspaces`
+
+単一ワークスペースの`--workspace`は、設定がない場合と同一性を構成できない場合に値を比べない（Core実行環境・CLI基盤契約 §6）。`multiWorkspace`を宣言しない設定の`--all-workspaces`は、
+複合ワークスペースを発見できず引数不正になる（複合ワークスペース仕様 §8）。いずれも実装の確認事項C73・C64で、既存の`--workspace`のfixtureは`SINGLE-127-14`（同一性を構成できる設定で、カタログにない値）だけだった。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-170-01` | 設定のYAMLの構文が不正（閉じられていないフロー配列`workspace: [`）。`REQ-001`がある（基準版のコミットあり） | check --workspace app --full --base HEAD | error／3 | 同一性を構成できないので`app`を比べず、`--workspace`なしと同じ停止の結果を返す。診断は`SPEC-CONFIG-SCHEMA-001`（`error`／`error`、summary「設定YAMLの構文が不正です」）の1件で、`source`は`{kind: file, workspaceId: null, path: .spec/bitz.yaml}`、`workspace`は`{null, .}`、`scope`は`full`、`checkedDocumentCount`と`checkedStatementCount`は0。修正前のCoreは結果を作らず終了コード4 |
+| `SINGLE-170-02` | 設定の`language`が整数`42`（型の不正。`SINGLE-092`と同じ入力） | doctor --workspace app | error／3 | `SINGLE-092`と同じ結果を返す（`app`を比べない）。診断は`SPEC-CONFIG-SCHEMA-001`（`error`／`error`）の1件、`source`は`{file, null, .spec/bitz.yaml, key: language}`、`checks[]`の`config`は`error`。修正前のCoreは終了コード4 |
+| `SINGLE-170-03` | 既定値`root`の設定（`workspace.id`なし）。`REQ-001`がある（基準版のコミットあり） | context REQ-001 --workspace app | 結果なし／4 | 対照: 同一性を構成できる（既定値`root`）ので、一致しない`app`は引数不正。結果もレポートも作らず、標準エラー出力は`bitz: context: `で始まる1行。修正前のCoreも通る |
+| `SINGLE-170-04` | `.spec/bitz.yaml`がない。`REQ-001`がある（基準版のコミットあり） | verify --workspace app REQ-001 | blocked／2 | 設定がないので`app`を比べず、設定の不在の停止の結果を返す。診断は`SPEC-WORKSPACE-MISSING-001`（`blocked`、`source`は`{environment, workspace, .}`）の1件だけ。`workspace`は`{null, .}`、`scope`は`selected`、`targetResults`と`commands`は空、`revision`は`commit`と`dirty: false`。修正前のCoreは終了コード4 |
+| `SINGLE-170-05` | 既定値`root`の設定（`multiWorkspace`なし）。`REQ-001`がある（基準版のコミットあり） | check --all-workspaces --base HEAD | 結果なし／4 | `multiWorkspace`を宣言しないので複合ワークスペースを発見できず、引数不正。結果もレポートも作らず、標準エラー出力は`bitz: check: `で始まる1行。修正前のCoreは`root`だけを処理して`passed`／0で成功した |
+| `SINGLE-170-06` | 既定値`root`の設定（`multiWorkspace`なし）と、入れ子の`services/api/.spec/bitz.yaml`（`workspace.id: api`）。基準版のコミットあり | doctor --all-workspaces | 結果なし／4 | 入れ子の`.spec`があっても、ルートの設定が宣言しなければ引数不正。標準エラー出力は`bitz: doctor: `で始まる1行。修正前のCoreは入れ子の設定を`SPEC-MULTI-UNREGISTERED-001`として`blocked`／2にした |
+| `SINGLE-170-07` | `schemaVersion`が`2.0`（Coreが対応するメジャーバージョンは1）で、`multiWorkspace`なしの設定。`REQ-001`がある（基準版のコミットあり） | verify --all-workspaces | 結果なし／4 | YAMLとして読めたルートの設定は、版の非対応でも宣言がなければ発見できず、引数不正。標準エラー出力は`bitz: verify: `で始まる1行。修正前のCoreはスキーマの版の非対応（`SPEC-CONFIG-SCHEMA-001`）の`blocked`／2を返した |
+| `SINGLE-170-08` | `SINGLE-170-01`と同じ入力（設定のYAMLの構文が不正） | check --all-workspaces --base HEAD | error／3 | 対照: 設定を読めないので宣言の有無を判定できず、候補を発見した後の不適合として全体事前検査の停止の結果を返す（引数不正にしない）。診断は`SPEC-CONFIG-SCHEMA-001`の1件で`source`は`SINGLE-170-01`と同じ、`multiWorkspace`は`{null, .}`、`workspaces`は空、`scope`は`all-workspaces`。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |

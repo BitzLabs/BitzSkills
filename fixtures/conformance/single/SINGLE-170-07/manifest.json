@@ -1,0 +1,30 @@
+{
+  "fixtureId": "SINGLE-170-07",
+  "description": "スキーマの版が非対応でもmultiWorkspaceを宣言しない設定のverify --all-workspacesは終了コード4にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

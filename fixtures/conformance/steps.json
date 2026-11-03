@@ -50,7 +50,9 @@
         "SINGLE-127-16",
         "SINGLE-127-17",
         "SINGLE-127-18",
-        "SINGLE-127-19"
+        "SINGLE-127-19",
+        "SINGLE-170-01",
+        "SINGLE-170-02"
       ]
     },
     {
@@ -277,7 +279,8 @@
         "SINGLE-127-03",
         "SINGLE-127-04",
         "SINGLE-127-12",
-        "SINGLE-127-13"
+        "SINGLE-127-13",
+        "SINGLE-170-03"
       ]
     },
     {
@@ -369,12 +372,17 @@
         "SINGLE-126-16",
         "SINGLE-127-08",
         "SINGLE-127-09",
-        "SINGLE-127-10"
+        "SINGLE-127-10",
+        "SINGLE-170-04"
       ]
     },
     {
       "step": 5,
       "fixtures": [
+        "SINGLE-170-05",
+        "SINGLE-170-06",
+        "SINGLE-170-07",
+        "SINGLE-170-08",
         "MULTI-001",
         "MULTI-002-01",
         "MULTI-002-02",

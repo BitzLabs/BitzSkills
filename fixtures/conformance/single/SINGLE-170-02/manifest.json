@@ -1,0 +1,27 @@
+{
+  "fixtureId": "SINGLE-170-02",
+  "description": "設定の型が不正なdoctorは、--workspaceの値を比べず、--workspaceなしと同じ停止の結果を返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--workspace",
+      "app",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}
