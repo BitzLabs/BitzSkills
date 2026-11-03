@@ -7,6 +7,7 @@ sourceのコードで、原記録の元の場所に対してもう一度実行�
   変更なしで置く。このファイル自体は調査時のsourceにないので、空のディレクトリへ複写して実行する。
 - 失敗の後に取込み処理が書いた停止の印（`capture-stop.json`）は、検査の間だけ原記録のディレクトリの一覧から除く。
 - 主な書込みの経路をプロセス内で遮断し、原記録の変化は前後の属性とhashの照合で検出する。
+- 認証情報のファイルは属性だけを確認し、内容を読まない。検査コードからの読取りも拒否する。
 - 出力は、例外の型、評価基盤の固定の文言、評価基盤のコード内の発生箇所だけであり、ケース本文・応答・
   原記録の内容は出さない。モデル起動・予約はしない。
 """
@@ -32,7 +33,7 @@ import production_ledger as io
 import production_trace as trace
 
 require = trace.require
-VERSION = 'evaluation-failure-diagnosis-0.2.0'
+VERSION = 'evaluation-failure-diagnosis-0.2.1'
 OWN = Path(__file__).resolve()
 STOP_MARKER = 'capture-stop.json'
 GIT_VALUE_OPTIONS = frozenset({'-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path', '--config-env'})
@@ -41,6 +42,15 @@ WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND
 BLOCKED_OS = ('mkdir', 'makedirs', 'rename', 'renames', 'replace', 'unlink', 'remove', 'rmdir', 'removedirs',
     'symlink', 'link', 'chmod', 'lchmod', 'fchmod', 'chown', 'lchown', 'fchown', 'utime', 'truncate', 'ftruncate',
     'mkfifo', 'mknod', 'setxattr', 'removexattr', 'system', 'posix_spawn', 'posix_spawnp')
+PROTECTED_NAMES = frozenset({'auth.json', 'credentials.json', '.credentials.json', '.env', '.netrc'})
+
+
+def protected_path(path):
+    """認証情報の既知の名前を内容を読まずに判定する。ファイル記述子はここでは辿らない。"""
+    if isinstance(path, int):
+        return False
+    parts = Path(os.fsdecode(path)).parts
+    return any(name in PROTECTED_NAMES or name.startswith('.env.') for name in parts)
 
 
 class ReadOnlyViolation(PermissionError):
@@ -72,17 +82,23 @@ def read_only():
     original_file_io, original_posix_open = stdio.FileIO, posix.open
 
     def guarded_open(file, mode='r', *args, **kwargs):
+        if protected_path(file):
+            raise ReadOnlyViolation('diagnosis does not read credentials')
         if any(flag in mode for flag in 'wax+'):
             raise ReadOnlyViolation('diagnosis is read-only: open for writing')
         return original_open(file, mode, *args, **kwargs)
 
     def guarded_os_open(path, flags, *args, **kwargs):
+        if protected_path(path):
+            raise ReadOnlyViolation('diagnosis does not read credentials')
         if flags & WRITE_FLAGS:
             raise ReadOnlyViolation('diagnosis is read-only: os.open for writing')
         return original_os_open(path, flags, *args, **kwargs)
 
     class GuardedFileIO(original_file_io):
         def __init__(self, file, mode='r', *args, **kwargs):
+            if protected_path(file):
+                raise ReadOnlyViolation('diagnosis does not read credentials')
             if any(flag in mode for flag in 'wax+'):
                 raise ReadOnlyViolation('diagnosis is read-only: FileIO for writing')
             super().__init__(file, mode, *args, **kwargs)
@@ -115,6 +131,8 @@ def read_only():
 def _entry(path):
     value = os.lstat(path)
     entry = (value.st_mode, value.st_size, value.st_mtime_ns, value.st_ctime_ns, value.st_nlink)
+    if protected_path(path):
+        return entry
     if os.path.islink(path):
         return entry + (os.readlink(path),)
     if os.path.isfile(path):
@@ -126,7 +144,7 @@ def _entry(path):
 
 
 def fingerprint(root):
-    """原記録の木（root自身を含む）の属性とhash。symlinkは辿らず、リンク先の文字列を記録する。"""
+    """原記録の属性とhash。認証情報は属性だけを確認し、symlinkは辿らない。"""
     root = Path(root)
     require(root.is_absolute() and root.is_dir(), 'diagnosis original attempt directory')
     result = {'.': _entry(root)}
