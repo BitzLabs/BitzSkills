@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-057-05",
+  "description": "対照: ルートのEARS-AIの版の非対応は、メンバーの中から実行しても、doctorの設定の診断でルートの設定を指す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-057-03",
+  "description": "メンバーの設定の文字コードの不正の診断のpathを、doctor --all-workspacesでもルートからの相対にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

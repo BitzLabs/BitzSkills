@@ -103,6 +103,7 @@ from conformance.multi_related_advisory_fixtures import validate as validate_mul
 from conformance.document_refines_fixtures import validate as validate_document_refines_fixtures
 from conformance.multi_document_refines_fixtures import validate as validate_multi_document_refines_fixtures
 from conformance.multi_check_qualified_summary_fixtures import validate as validate_multi_check_qualified_summary_fixtures
+from conformance.multi_member_config_source_fixtures import validate as validate_multi_member_config_source_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -410,6 +411,7 @@ def main():
     checks["document_refines_fixtures"] = validate_document_refines_fixtures()
     checks["multi_document_refines_fixtures"] = validate_multi_document_refines_fixtures()
     checks["multi_check_qualified_summary_fixtures"] = validate_multi_check_qualified_summary_fixtures()
+    checks["multi_member_config_source_fixtures"] = validate_multi_member_config_source_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-VERSION-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "メンバーの設定キーearsAiのメジャーバージョンが未対応です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "multiWorkspace.members"
+      }
+    }
+  ]
+}
