@@ -2137,3 +2137,25 @@ commit `282d59b380520d539d29cbaf875bff31efb1fd6a`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 1〜5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-03: `MULTI-058`を追加した後のGate Aの再認定
+
+Gitの境界を確定できない複合ワークスペースで、`doctor`が`SPEC-MULTI-GIT-001`だけを返し、ルートの設定の本文だけで判定できるカタログの不適合を隠していた欠陥
+（実装の確認事項C50）を直した（ユーザーの決定）。`doctor`仕様 §3と複合ワークスペース仕様 §3に、`doctor`はGitの境界を確定できずに止まる場合も、
+ルートの設定の本文だけで判定できる`SPEC-MULTI-CONFIG-001`の条件（ルートの`workspace.id`の省略、`multiWorkspace`の型と件数、除外のパスの不正）を並べて返し、
+検査項目`catalog`を`failed`とすることを明記し、ADR-063の`Decision`の5番目の項目を`doctor`について部分改訂するADR-070を追加した。
+これを固定する`MULTI-058-01`〜`MULTI-058-06`を追加した（ADR-051の追加、群`multi_doctor_git_catalog_fixtures`）。matrix、Step 5の割当て、実装計画の完了条件、
+網羅表のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `4f1ed3068c52313c5c3e9e390ce37256ee97604b`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。同じcommitの1回目の実行は、2つ目のクローンの規模の検証で`MULTI-021-02`の後片付けが競合し
+（`OSError: [Errno 39] Directory not empty: '.git'`）`Blocked`になった。監査のReport SHA-256は2つのクローンで一致しており、同じfixtureは以前にも負荷の下で
+一度だけ同じ形で失敗している（今回の変更と無関係な、harnessの後片付けの競合）。入力を変えずに再実行した結果を認定とする。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`9436cb83b64e0558b53c1eae93d07fb787ada2d09107c60cfcd5e76e16ec1c9c`。前回から変わったのは次の値だけである: 6件の追加によるmatrixと網羅の件数（613件→619件）、Step 5の件数（271件→277件）、群`multi_doctor_git_catalog_fixtures`の追加、実行ビットを確かめたファイル数（3505件→3524件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
