@@ -59,6 +59,36 @@ class FailureDiagnosisTests(unittest.TestCase):
         target.write_bytes(b'after the guard')
         self.assertEqual(b'after the guard', target.read_bytes())
 
+    def test_credential_names_are_never_opened_by_fingerprinting(self):
+        # 合成ファイルだけを用い、既知の認証情報へのopenを検知したら失敗する。
+        home = self.base/'codex-home'
+        home.mkdir()
+        for name in ['auth.json', 'credentials.json', '.credentials.json', '.env', '.env.local', '.netrc']:
+            (home/name).write_bytes(b'synthetic credential placeholder')
+        original_open = os.open
+        def checked_open(path, *args, **kwargs):
+            if diagnosis.protected_path(path):
+                self.fail('credential content opened')
+            return original_open(path, *args, **kwargs)
+        with patch.object(os, 'open', side_effect=checked_open):
+            before = diagnosis.fingerprint(self.base)
+        self.assertEqual(5, len(before['codex-home/auth.json']))
+        self.assertNotIn('synthetic credential placeholder', repr(before))
+        (home/'auth.json').write_bytes(b'changed synthetic placeholder')
+        with patch.object(os, 'open', side_effect=checked_open):
+            self.assertNotEqual(before, diagnosis.fingerprint(self.base))
+
+    def test_check_code_cannot_read_credentials_through_file_apis(self):
+        target = self.base/'auth.json'
+        target.write_bytes(b'synthetic credential placeholder')
+        attempts = [lambda: open(target, 'rb'), lambda: target.read_bytes(),
+            lambda: stream.FileIO(target, 'r'), lambda: os.open(target, os.O_RDONLY)]
+        with diagnosis.read_only():
+            for attempt in attempts:
+                with self.subTest(attempt=attempt), self.assertRaisesRegex(
+                        diagnosis.ReadOnlyViolation, 'does not read credentials'):
+                    attempt()
+
     def test_only_static_require_messages_are_reported(self):
         def fail(message):
             try:
