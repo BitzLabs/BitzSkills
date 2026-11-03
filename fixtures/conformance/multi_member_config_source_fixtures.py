@@ -45,7 +45,7 @@ YAMLの構文、型、必須の不正）は、修正前のCoreでは、メンバ
   設定YAMLの診断の対象名を「設定YAML」のまま変えないと承認しており（「{label}は設定YAML」）、フロントマターの構文の不正の承認済みの文言「フロントマターのYAMLの構文が不正です」
   （行#70）と同じひな形「{対象名}の構文が不正です」である。表記規則に反せず、Coreの現在の文言と同じなので採った。仕様解釈として報告する。
 
-読取りの失敗（`INPUT-IO-CONFIG`、権限の不足）は、適合harnessが作れないので、この群にもfixtureを置かない（`tests/bitz-core/test_unreadable_config_identity.py`が固定する）。
+読取りの失敗（`INPUT-IO-CONFIG`、権限の不足）は、適合harnessが作れないので、この群にもfixtureを置かない（`path`は`tests/bitz-core/test_member_config_source_path.py`が固定する）。
 上限の超過は`MULTI-049-02`が固定する。
 """
 import json
