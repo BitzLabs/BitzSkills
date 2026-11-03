@@ -22,7 +22,7 @@ def load_provider_capture(bound,ordinal,*,source_repository,artifact_repository,
     require(receipt['sourceCommit']==bound.contract['sourceCommit'] and trace.json_equal(receipt['slot'],bound.slot(ordinal))
         and receipt['cwd']==environment['cwd'],'matrix original reader source/slot/root drift')
     names=provider.evidence.inventory.artifact_inventory(base,receipt['artifactSha256'],
-        additional_artifacts=provider.evidence.PROVIDER_ARTIFACTS)
+        additional_artifacts=provider.evidence.provider_artifacts(receipt['version']))
     # type/nlinkはinventoryが固定directory FDから全集合を検査済み。
     # 親を名前で再追跡する重複metadata読取りは行わない。
     originals={name:io.read_regular(base/name) for name in names}

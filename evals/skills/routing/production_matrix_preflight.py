@@ -17,6 +17,7 @@ import production_canary_capture as capture
 import production_canary_evidence as inventory
 import production_trace as trace
 import source_guard as guard
+import production_heldout_model_catalog as model_catalog
 
 io = matrix.io
 require = trace.require
@@ -26,7 +27,7 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     catalog='evals/skills/event-catalog.json', instructions='evals/skills/routing/production-matrix-instructions-v0.1.txt',
     caseSchema='evals/skills/schemas/case.schema.json')
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
-    'production_matrix_preflight', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run', 'production_failure_streak',
+    'production_matrix_preflight', 'production_heldout_model_catalog', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run', 'production_failure_streak',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
     'production_canary_host', 'production_canary_review', 'production_canary_evidence',
     'production_canary_trace', 'production_canary_rollout', 'production_canary_runtime',
@@ -45,6 +46,16 @@ SDK_TOP = {'openai_codex', 'openai_codex-0.160.1.dist-info', 'annotated_types',
     'pydantic-2.13.5.dist-info', 'pydantic_core', 'pydantic_core-2.46.5.dist-info',
     'typing_extensions.py', 'typing_extensions-4.16.0.dist-info', 'typing_inspection',
     'typing_inspection-0.4.4.dist-info'}
+
+
+def config_for(base, contract, *, repository):
+    """公開の新条件だけに固定catalogを接続し、旧Canary設定は保持する。"""
+    return model_catalog.configuration(base, capture.config_for(base, contract, repository=repository))
+
+
+def verify_model_catalog(raw):
+    model_catalog.verify(raw)
+    require(raw == model_catalog.fixed_catalog(), 'matrix public catalog outside fixed runtime')
 
 
 def deployment(bound, raw):

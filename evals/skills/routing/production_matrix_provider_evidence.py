@@ -19,6 +19,17 @@ def absolute_root(value):
     return value
 
 
+def producer_sources(context, source_repository):
+    if trace.strict_json(context.receipt_raw)['version'] == evidence.PROVIDER_VERSION:
+        return preflight.SOURCE_FILES
+    # 旧原のmount順序とsource proofは、当時の確定Gitの宣言で再構成する。
+    from production_matrix_calibration import source_files
+    names = source_files(source_repository, context.bound.contract['sourceCommit'])
+    require('evals/skills/routing/production_heldout_model_catalog.py' not in names,
+        'matrix provider version and catalog producer mismatch')
+    return names
+
+
 def environment_spec(context,source_repository,artifact_repository):
     source_repository=absolute_root(source_repository);artifact_repository=absolute_root(artifact_repository)
     c=context.bound.contract;slot=context.bound.slot(context.ordinal)
@@ -49,7 +60,8 @@ def verify_bytes(context,*,source_repository,artifact_repository):
     # 完全な元receiptのversion/hash/inventoryを再検査し、原を差替えずに共通照合する。
     parent=evidence.verify_complete(context)
     receipt=trace.strict_json(context.receipt_raw)
-    require(receipt['version']==evidence.PROVIDER_VERSION,'provider capture version required; legacy diagnostic only')
+    require(receipt['version'] in {evidence.LEGACY_PROVIDER_VERSION,evidence.PROVIDER_VERSION},
+        'provider capture version required; legacy diagnostic only')
     originals=context.originals
     d=preflight.deployment(context.bound,originals['deployment.json'])
     sdk_files=preflight.sdk_manifest(originals['sdk-manifest.json'],d)
@@ -66,7 +78,11 @@ def verify_bytes(context,*,source_repository,artifact_repository):
     require(trace.json_equal(trace.strict_json(originals['capture-environment.json']),environment)
         and receipt['cwd']==environment['cwd'],'matrix capture roots/slot/finite environment drift')
     base=Path(environment['cwd']).parent
-    config=preflight.capture.config_for(base,d,repository=source_repository)
+    if receipt['version'] == evidence.PROVIDER_VERSION:
+        preflight.verify_model_catalog(originals[preflight.model_catalog.FILE])
+        config=preflight.config_for(base,d,repository=source_repository)
+    else:
+        config=preflight.capture.config_for(base,d,repository=source_repository)
     require(trace.json_equal(trace.strict_json(originals['config.json']),config),'matrix complete provider config drift')
     guards=trace.strict_json(originals['resource-guards.json'])
     require(isinstance(guards,dict) and set(guards)=={'before','invoke','after'} and
@@ -76,7 +92,8 @@ def verify_bytes(context,*,source_repository,artifact_repository):
     for key,value in expected.items():
         if value is not None:require(trace.json_equal(proof[key],value),'matrix resource proof field drift: '+key)
     require(proof['deploymentSha256']==io.sha(originals['deployment.json']) and isinstance(proof['sourceSha256'],dict)
-        and set(proof['sourceSha256'])==set(preflight.SOURCE_FILES),'matrix source proof declared inventory')
+        and set(proof['sourceSha256'])==set(producer_sources(context,source_repository)),
+        'matrix source proof declared inventory')
     for digest in proof['sourceSha256'].values():io.pin(digest)
     profile=preflight.capture.context_profile(context.context_raw,d)
     require(proof['contextDate']==profile['date'],'matrix original calibrated date drift')

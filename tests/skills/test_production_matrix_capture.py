@@ -183,7 +183,8 @@ class MatrixCaptureTests(unittest.TestCase):
     def test_saved_invocation_bytes_are_bound_and_environment_drift_is_rejected(self):
         d_raw=capture.io.encoded(self.r.deployment)
         originals={'deployment.json':d_raw,'invocation.json':capture.io.encoded(capture.invocation(self.repository,self.base,self.r.bound,d_raw,1))}
-        context=SimpleNamespace(bound=self.r.bound,ordinal=1,originals=originals)
+        context=SimpleNamespace(bound=self.r.bound,ordinal=1,originals=originals,
+            receipt_raw=capture.io.encoded(dict(version=capture.originals_reader.provider.evidence.PROVIDER_VERSION)))
         with patch.object(capture.originals_reader.provider,'verify_bytes',return_value=dict(eligibleForMeasurement=False)) as byte_checker:
             result=VERIFY_LAUNCH(context,self.repository,self.repository,self.review_raw,self.report_raw)
             self.assertTrue(result['invocationArgvBytesMatched']);self.assertFalse(result['eligibleForMeasurement'])
@@ -198,6 +199,7 @@ class MatrixCaptureTests(unittest.TestCase):
         d_raw=capture.io.encoded(self.r.deployment)
         schema=capture.p.decision_schema(self.r.originals[capture.p.inventory.SCHEMA])
         inputs={'contract.json':self.r.bound.execution_raw,'deployment.json':d_raw,'reservation.json':capture.io.encoded(self.r.bound.slot(1)),
+            capture.p.model_catalog.FILE:self.r.catalog_raw,
             'model-input.json':self.r.bound.matrix.payloads[0],'decision-schema.json':schema,'sdk-manifest.json':self.r.sdk_manifest_raw,
             'runtime-manifest.json':self.r.originals[capture.p.capture.fixed_runtime.MANIFEST],
             'launch-settings.json':capture.launch.launch_settings(self.r.bound.execution_raw,d_raw),
