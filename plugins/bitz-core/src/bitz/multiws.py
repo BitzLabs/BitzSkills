@@ -1131,8 +1131,9 @@ def precheck(
     ``selected_dir``は選択した最も近い設定のディレクトリ（カタログに登録されていなければ`SPEC-MULTI-UNREGISTERED-001`）、
     ``compare_git_configs``はGitが認識する設定の列挙と比較するか（単独の`context`・`check`・`verify`は偽）。
 
-    ``report_git_with_config_stop``が真なら、ルートの設定で停止したときも、Gitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加える
-    （`doctor`だけが真を渡す。`04_doctor.md` §3）。
+    ``report_git_with_config_stop``が真なら、ルートの設定で停止したときも、Gitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加え、
+    Gitの境界を確定できずに止まるときも、ルートの設定の本文だけで判定できるカタログの不適合（ルートの`workspace.id`の省略、
+    `multiWorkspace`の型と件数、除外のパスの不正。`SPEC-MULTI-CONFIG-001`）を並べて返す（`doctor`だけが真を渡す。`04_doctor.md` §3、ADR-070）。
     """
 
     root, cfg_path, git_confirmed, git_top = _locate_root(cwd, git, env, nearest_config_path)
@@ -1192,8 +1193,9 @@ def precheck(
             "SPEC-MULTI-GIT-001", "blocked", messages.MULTI_GIT_BOUNDARY_UNKNOWN,
             {"kind": "environment", "component": "git"},
         )
-        # `doctor`はカタログの形状の不正とGitの不在を独立した2つの原因とし、Gitを使わずに判定できるルートの`workspace.id`の省略と
-        # `multiWorkspace`の形状の不正（`SPEC-MULTI-CONFIG-001`）も並べて返す（`04_doctor.md` §3、確認事項C50。ほかの操作はGitの診断だけ）。
+        # `doctor`はカタログの不適合とGitの不在を独立した2つの原因とし、ルートの設定の本文だけで判定できるルートの`workspace.id`の省略、
+        # `multiWorkspace`の形状の不正、除外のパスの不正（`SPEC-MULTI-CONFIG-001`）も並べて返す（`04_doctor.md` §3、ADR-070、確認事項C50。
+        # ほかの操作はGitの診断だけ）。ルートの候補の位置に依存するメンバーの検査は行わない。
         shape_diags: list[Diagnostic] = []
         if report_git_with_config_stop:
             if not root_id_explicit:
@@ -1206,7 +1208,7 @@ def precheck(
                 if shape_diag is not None:
                     shape_diags.append(shape_diag)
                 elif isinstance(outcome.config.get("multiWorkspace"), dict):
-                    # 除外のパスの要素の字句・`.spec`・重複・入れ子の不正も、Gitを使わずに判定できるカタログの不適合である。
+                    # 除外のパスの要素の字句・`.spec`・重複・入れ子の不正も、ルートの設定の本文だけで判定できるカタログの不適合である。
                     shape_diags.extend(_evaluate_excludes(root_id, outcome.config["multiWorkspace"].get("exclude", []))[0])
         return PrecheckResult(
             ok=False, root_id=root_id, diagnostics=shape_diags + [diag], git_status="blocked",
