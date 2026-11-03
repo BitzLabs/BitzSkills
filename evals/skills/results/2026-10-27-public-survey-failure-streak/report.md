@@ -233,3 +233,49 @@ SDKのnative観測使用量は入力19,712・出力332・合計20,044 token（�
 外部のモデル情報の更新が原因という説明は推定であり、catalog固定による是正の効果はまだ実証していない。
 校正のhashを実評価からコピーしたり検査を緩めたりせず、必要な是正は別の確定候補・条件で検分する。
 今回の停止と消費、旧公開92枠・保持の停止は維持する。R04全体・Skill Gate・リリースは未完了である。
+
+
+## 2026-11-04: 公開一次と局所校正のモデル情報を固定する是正
+
+修正は`e23ec42d`、旧版読取り入口の是正と新校正の束縛まで含む検証対象は
+`02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae`である。公開一次・当日校正・通常局所プローブに、
+既存の固定CLI内蔵catalogの抽出処理を共通して接続した。catalogはSOL 1モデル、65,209 bytes、
+SHA-256は`529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9`。
+受け取った実評価の補助文を校正profileへコピーする変更や、補助指示の一致検査を緩める変更は行っていない。
+
+- 新しい原には`public-model-catalog.json`を保存し、固定runtimeから導出したbytesと親子で照合する。
+  `config.model_catalog_json`の固定パスも検査する。catalog helperは確定sourceの照合・namespaceのmountに含む。
+- 校正manifestは新版`matrix-client-calibration-originals-0.2.0`（24原）、provider receiptは
+  新版`public-matrix-original-binding-0.1.2`とした。旧校正0.1.0・旧provider 0.1.1は、当時のGitにある宣言から
+  旧inventory・config・mount順序・source proofで再検証する。新版のcatalog欠落、改変、設定解除、版の偽装は拒否する。
+- 独立検分で旧providerを読む入口の版条件の見落としを1件指摘され、入口を是正した。
+  実際の`load_provider_capture`へ旧原を渡し、受領記録不変・catalogを追加しないことを確認する回帰試験を追加した。
+
+新校正原は`.venv/matrix-local-isolation-calibration-catalog-20261104-01`、producerは`e23ec42d`。
+`local_calibration_verified`、namespace終了0、manifestは
+`e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1`、受領記録は
+`c1ac29747b8e32f83425dae78529d8d5fd42e9a1cc9b48a0d568b59a048c51cd`。
+新版manifestから全原・当時Git・profileを再検証し、`original_local_calibration_matches`を確認した。
+補助指示のhashは従来の校正と同じ`50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d`である。
+
+`02328a56`の通常原は`.venv/matrix-local-isolation-catalog-20261104-01`。
+`local_isolation_verified`、namespace終了0、local HTTP 1・raw通知5。
+6スキル・73資源のsnapshotは`.venv/matrix-routing-preparation-catalog-20261104-02/snapshot`、manifestは
+`b29de030340dc1572d4c48f7fbe8ad55d10e7badbcf6232eb9fc94842b83ede8`へ固定した。
+
+親は同refで次を実行した。
+
+- `PYTHONPATH=plugins/bitz-core/src UV_CACHE_DIR=$PWD/.venv/uv-cache PYTHONDONTWRITEBYTECODE=1 TMPDIR=$PWD/.venv uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'`
+  — `Ran 1183 tests in 192.827s`、`OK`、終了0。
+- `uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python evals/skills/validate.py audit`
+  — `Passed`、`errors: []`、終了0。
+- 旧停止9a85b909の原を新版readerから読取り専用で再検査し、従来どおり
+  `fixed caller and SDK supplement`で拒否すること、`originalsUnchanged: true`・`ledgerUnchanged: true`を確認した。
+
+[独立検分記録](public-catalog-independent-review-20261104.json)には、初回209試験、是正後の関連33試験、
+新校正24原・通常23原の再照合、旧校正chainと旧停止原の再検査、阻害1件の是正と残存阻害なしを記録した。
+同じ試験の追試を別々の測定件数として加算しない。
+
+今回の作業の外部モデル呼出し・課金・予約は0。旧バッチは`stopped`、一次予約1・独立0を維持し、追記していない。
+公開側の実providerでこの是正の効果を確認する新測定はまだ行っていない。
+次はこの新候補に対する少数枠の実行条件と開始前検分を固定する。R04全体やSkill Gateの完了とは判定しない。
