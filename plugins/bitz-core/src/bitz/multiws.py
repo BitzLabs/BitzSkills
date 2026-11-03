@@ -15,6 +15,7 @@ Gitの既知の設定の事前検査）、§10（スナップショット全体�
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import unicodedata
 from dataclasses import dataclass, field
@@ -458,11 +459,17 @@ def _member_config_check(
                 else messages.MULTI_VERSION_EARS_MAJOR
             )
             return _diag(code, "blocked", msg, _root_source(root_id, "multiWorkspace.members")), None
-        # 一般的な設定の不適合（YAML構文・型・必須のフィールド・I/O）はメンバー自身の診断をそのまま返す。
+        # 一般的な設定の不適合（YAML構文・型・必須のフィールド・I/O）はメンバー自身の診断を返す。同一性を構成できないので
+        # `workspaceId`は`null`のまま、`path`はどのメンバーの設定かが分かるよう複合ワークスペースのルートからの相対パスにする
+        # （結果・診断・終了コード §5、未登録の設定の`SPEC-MULTI-UNREGISTERED-001`と同じ形。確認事項C72）。
         all_diags = m_outcome.diagnostics + m_outcome.warnings
-        return (all_diags[0] if all_diags else _diag(
-            "SPEC-CONFIG-SCHEMA-001", "error", "メンバーの設定が不正です", _root_source(root_id, "multiWorkspace.members")
-        )), None
+        if not all_diags:
+            return _diag(
+                "SPEC-CONFIG-SCHEMA-001", "error", "メンバーの設定が不正です", _root_source(root_id, "multiWorkspace.members")
+            ), None
+        first = all_diags[0]
+        source = {**first.source, "workspaceId": None, "path": f"{mpath}/{config_mod.CONFIG_PATH}"}
+        return dataclasses.replace(first, source=source), None
 
     assert m_outcome.config is not None
     # 省略時の既定値`root`は明示のIDではないため、カタログのIDが`root`でも一致とみなさない（複合ワークスペース仕様 §2）。
