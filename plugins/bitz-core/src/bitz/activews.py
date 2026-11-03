@@ -175,7 +175,8 @@ def select_active(
 
     ``compare_git_configs``は、全体事前検査でGitが認識する設定の列挙と比較するか（単独の`doctor`だけ真。
     単独の`context`・`check`・`verify`は、選択した最も近い設定だけをカタログと照合する。複合ワークスペース仕様 §7）。
-    ``report_git_with_config_stop``は、ルートの設定で停止したときもGitの不在を診断に加えるか（単独の`doctor`だけ真。`04_doctor.md` §3）。
+    ``report_git_with_config_stop``は、ルートの設定で停止したときもGitの不在を診断に加え、Gitの不在で停止したときもルートの設定の本文だけで
+    判定できるカタログの不適合を並べるか（単独の`doctor`だけ真。`04_doctor.md` §3、ADR-070）。
     ``skip_limit_dimensions``は、全体事前検査のリソースの上限の判定から除く次元（単独の`verify`だけが、実行計画を確定した後に
     自分で判定する`commandDefinitionCount`を渡す。複合ワークスペース仕様 §7・§10、ADR-066）。
     """
