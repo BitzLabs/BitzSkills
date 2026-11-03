@@ -217,7 +217,7 @@ class RootWithoutWorkspaceIdAndNoGitTests(_Base):
         for name, (result, _code) in self.all_runs(self.root):
             codes = [d["code"] for d in result["diagnostics"]]
             self.assertIn("SPEC-MULTI-GIT-001", codes, name)
-            # `doctor`だけは、Gitを使わずに判定できるルートの`workspace.id`の省略も並べて返す（`04_doctor.md` §3、確認事項C50）。
+            # `doctor`だけは、ルートの設定の本文だけで判定できるルートの`workspace.id`の省略も並べて返す（`04_doctor.md` §3、確認事項C50）。
             if name == "doctor":
                 self.assertIn("SPEC-MULTI-CONFIG-001", codes, name)
             else:
