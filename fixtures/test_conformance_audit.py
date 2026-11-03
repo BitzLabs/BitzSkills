@@ -98,6 +98,7 @@ from conformance import multi_binding_order_fixtures
 from conformance import multi_config_warning_fixtures
 from conformance import related_advisory_fixtures, multi_related_advisory_fixtures
 from conformance import document_refines_fixtures, multi_document_refines_fixtures
+from conformance import multi_check_qualified_summary_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -7362,6 +7363,190 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(outcome["status"], "Failed")
                 self.assertEqual(len(outcome["errors"]), 1)
                 self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")), outcome["errors"][0])
+
+    def test_multi_check_qualified_summary_fixtures(self):
+        """`MULTI-056-01`〜`05`: 複合ワークスペースの影響の候補と文書IDの重複のsummaryが作業ワークスペースの文書IDを修飾する（確認事項C69・C80）。"""
+        module = multi_check_qualified_summary_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-056-{number:02d}" for number in range(1, 6)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_check_qualified_summary_expected_results_qualify_every_inserted_id(self):
+        """期待する診断は、差し込む文書IDをすべて`web::`で修飾する。全体操作と単独の操作は同じ診断を返し、単一ワークスペースの対照は修飾しない。"""
+        module = multi_check_qualified_summary_fixtures
+        read = lambda identifier: json.loads((audit.FIXTURES / "multi" / identifier / "expected/check.json").read_text())
+
+        def diagnostics(identifier):
+            result = read(identifier)
+            return result["workspaces"][1]["diagnostics"] if "workspaces" in result else result["diagnostics"]
+
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier):
+                for item in diagnostics(identifier):
+                    self.assertFalse(re.search(r"(?<![:A-Za-z0-9_-])(REQ|TECH|TASK)-[0-9]+", item["summary"]), item["summary"])
+        # 全体操作と単独の操作の対は、診断が同じ。
+        self.assertEqual(diagnostics("MULTI-056-01"), diagnostics("MULTI-056-03"))
+        self.assertEqual(diagnostics("MULTI-056-04"), diagnostics("MULTI-056-05"))
+        self.assertEqual([item["summary"] for item in diagnostics("MULTI-056-01")], [
+            "web::TECH-010が強く依存するweb::REQ-001が変更されています。再確認してください",
+            "web::TECH-011が強く依存するweb::REQ-001が変更されています。再確認してください"])
+        self.assertEqual([item["summary"] for item in diagnostics("MULTI-056-04")], ["文書ID web::REQ-003が重複しています"])
+        # 全体操作は`platform`を先頭に置き、診断を所有ワークスペースへ置く（最上位は空）。
+        for identifier in ("MULTI-056-01", "MULTI-056-02", "MULTI-056-04"):
+            result = read(identifier)
+            self.assertEqual([entry["id"] for entry in result["workspaces"]], ["platform", "web"])
+            self.assertEqual((result["diagnostics"], result["workspaces"][0]["diagnostics"]), ([], []))
+        # 重複した2つのファイルは完全検査の文書へ数えない。
+        self.assertEqual(read("MULTI-056-05")["checkedDocumentCount"], 0)
+        # 単一ワークスペースの対照は、修飾しない形のまま。
+        single = lambda identifier: json.loads((audit.FIXTURES / "single" / identifier / "expected/check.json").read_text())
+        self.assertEqual([item["summary"] for item in single("SINGLE-033")["diagnostics"]],
+                         ["TECH-002が強く依存するTECH-001が変更されています。再確認してください"])
+        self.assertEqual([item["summary"] for item in single("SINGLE-015")["diagnostics"]], ["文書ID TECH-001が重複しています"])
+
+    def test_multi_check_qualified_summary_reference_rules(self):
+        """参照計算: 自ワークスペースを修飾した参照と非修飾の参照を同じ文書として扱い、`approved`の依存元だけを警告し、重複した文書を数えない。修正前のCoreの再現を含む。"""
+        module = multi_check_qualified_summary_fixtures
+
+        def document(workspace, local, status, path, label="AC-01", kind="requirement", **relations):
+            body = f"- [{local}:{label}] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n" if kind == "requirement" else ""
+            return {"workspaceId": workspace, "kind": kind, "body": body, "path": f".spec/{path}", "repositoryPath": f"apps/web/.spec/{path}",
+                    "frontmatter": {"id": local, "title": "t", "status": status, "relations": dict(relations)}}
+
+        documents = [
+            document("web", "REQ-001", "draft", "requirements/REQ-001.md"),
+            document("web", "TECH-010", "approved", "technical/TECH-010.md", kind="technical", refines=["web::REQ-001:AC-01"]),
+            document("web", "TECH-011", "approved", "technical/TECH-011.md", kind="technical", requires=["REQ-001"]),
+            document("web", "TECH-012", "draft", "technical/TECH-012.md", kind="technical", refines=["REQ-001:AC-01"]),
+            document("web", "TECH-013", "approved", "technical/TECH-013.md", kind="technical", related=["REQ-001"]),
+        ]
+        changed = {"apps/web/.spec/requirements/REQ-001.md"}
+        found, count, statements = module.reference_workspace(documents, "web", changed)
+        # `draft`の依存元（TECH-012）と`related`（TECH-013）は警告しない。修飾した参照（TECH-010）も同じ文書を指す。
+        self.assertEqual([(item["source"]["path"], item["source"]["key"], item["summary"]) for item in found], [
+            (".spec/technical/TECH-010.md", "relations.refines", "web::TECH-010が強く依存するweb::REQ-001が変更されています。再確認してください"),
+            (".spec/technical/TECH-011.md", "relations.requires", "web::TECH-011が強く依存するweb::REQ-001が変更されています。再確認してください")])
+        self.assertEqual((count, statements), (5, 1))
+        # 修正前のCoreの再現: 修飾せず、全体操作は自ワークスペースを修飾した参照を照合しない。
+        old, _, _ = module.reference_workspace(documents, "web", changed, qualify=False, match_self_qualified=False)
+        self.assertEqual([item["summary"] for item in old], ["TECH-011が強く依存するREQ-001が変更されています。再確認してください"])
+        # 変更されていない文書は出発点にならない。
+        self.assertEqual(module.reference_workspace(documents, "web", set())[0], [])
+        # 重複した文書IDは、パスの辞書順で先頭に1件だけ診断し、完全検査へ数えない。
+        duplicates = [document("web", "REQ-003", "approved", "requirements/REQ-003-b.md", label="AC-02"),
+                      document("web", "REQ-003", "approved", "requirements/REQ-003-a.md", label="AC-01")]
+        found, count, statements = module.reference_workspace(duplicates, "web", set())
+        self.assertEqual([(item["code"], item["source"]["path"], item["source"]["key"], item["summary"]) for item in found],
+                         [("SPEC-ID-DUPLICATE-001", ".spec/requirements/REQ-003-a.md", "id", "文書ID web::REQ-003が重複しています")])
+        self.assertEqual((count, statements), (0, 0))
+        self.assertEqual(module.reference_workspace(duplicates, "web", set(), qualify=False)[0][0]["summary"], "文書ID REQ-003が重複しています")
+
+    def test_multi_check_qualified_summary_audit_rejects_changed_expectations(self):
+        """期待結果と起動条件の改変（修飾の取り消し、診断の欠落、件数、状態、起動の引数）と、入力の欠落・余りを拒否する（陰性対照）。"""
+        module = multi_check_qualified_summary_fixtures
+
+        def diagnostics(value):
+            return value["workspaces"][1]["diagnostics"] if "workspaces" in value else value["diagnostics"]
+
+        def unqualify(value):
+            for item in diagnostics(value):
+                item["summary"] = item["summary"].replace("web::", "")
+
+        results = {
+            "unqualify": unqualify,
+            "diagnostics-clear": lambda v: diagnostics(v).clear(),
+            "diagnostics-drop": lambda v: diagnostics(v).pop(),
+            "diagnostics-duplicate": lambda v: diagnostics(v).append(copy.deepcopy(diagnostics(v)[0])),
+            "summary-other-text": lambda v: diagnostics(v)[0].update(summary="変更されています"),
+            "severity": lambda v: diagnostics(v)[0].update(severity="error"),
+            "source-path": lambda v: diagnostics(v)[0]["source"].update(path=".spec/technical/TECH-999.md"),
+            "source-key": lambda v: diagnostics(v)[0]["source"].update(key="relations.requires"),
+            "source-workspace": lambda v: diagnostics(v)[0]["source"].update(workspaceId="platform"),
+            "status": lambda v: v.update(status="failed" if v["status"] != "failed" else "passed"),
+            "revision-dirty": lambda v: v["revision"].update(dirty=not v["revision"]["dirty"]),
+            "top-level-diagnostic": lambda v: v["diagnostics"].append(copy.deepcopy(diagnostics(v)[0])),
+            "documents": lambda v: (v["workspaces"][1] if "workspaces" in v else v).update(checkedDocumentCount=99),
+            "statements": lambda v: (v["workspaces"][1] if "workspaces" in v else v).update(checkedStatementCount=99),
+            "scope": lambda v: v.update(scope="changed"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed" if v["expect"]["status"] != "failed" else "passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=3),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "argv-workspace": lambda v: v["invocation"]["argv"].__setitem__(v["invocation"]["argv"].index("check") + 1, "--full"),
+            "argv-base": lambda v: v["invocation"]["argv"].remove("--base"),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            mutations = [("expected/check.json", name, change) for name, change in results.items()]
+            mutations += [("manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            for relative, name, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    path = root / "multi" / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=name):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)["files"]), "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 60)
+
+    def test_multi_check_qualified_summary_audit_rejects_changed_causes(self):
+        """原因を消す入力の書換え（欠陥を検出できない構成にする）を、入力のバイト列の照合を通した上で、参照計算と原因の構成の検査が拒否する。"""
+        module = multi_check_qualified_summary_fixtures
+        edits = {
+            # 自ワークスペースを修飾した参照を非修飾にする（修正前のCoreも見落とさない入力）。
+            "MULTI-056-02": ("apps/web/.spec/technical/TECH-010.md", "web::REQ-001:AC-01", "REQ-001:AC-01"),
+            # 依存元を`draft`にする（警告が消える）。
+            "MULTI-056-01": ("apps/web/.spec/technical/TECH-011.md", "status: approved", "status: draft"),
+            # `platform`の文書のIDを変える（同じローカルIDの対照がなくなる）。
+            "MULTI-056-04": (".spec/requirements/REQ-003.md", "id: REQ-003", "id: REQ-004"),
+            # 重複の2つ目の規範文IDを1つ目と同じにする（文書IDの重複に規範文IDの重複が混ざる）。
+            "MULTI-056-05": ("apps/web/.spec/requirements/REQ-003-b.md", "REQ-003:AC-02", "REQ-003:AC-01"),
+        }
+        for identifier, (relative, old, new) in edits.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                path = fixture / "repo" / relative
+                self.assertIn(old, path.read_text())
+                path.write_text(path.read_text().replace(old, new))
+                edited = dict(module.reviewed_inputs(identifier)["files"])
+                edited[relative] = path.read_bytes()
+                self.regenerate_effects(module, fixture, temporary)
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited, original=module.reviewed_inputs: {
+                        "files": edited, "changes": original(_identifier)["changes"]}):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")),
+                                 outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
