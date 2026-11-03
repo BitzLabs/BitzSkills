@@ -1,0 +1,27 @@
+{
+  "fixtureId": "MULTI-058-02",
+  "description": "Git不在で、除外のパスが不正のとき、単独のdoctorもGitの不在とカタログの不適合の両方を返す",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

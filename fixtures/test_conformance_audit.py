@@ -100,6 +100,7 @@ from conformance import related_advisory_fixtures, multi_related_advisory_fixtur
 from conformance import document_refines_fixtures, multi_document_refines_fixtures
 from conformance import multi_check_qualified_summary_fixtures
 from conformance import multi_member_config_source_fixtures
+from conformance import multi_doctor_git_catalog_fixtures
 from conformance import workspace_selection_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -5972,6 +5973,226 @@ class AuditTests(unittest.TestCase):
             "MULTI-040-08": [(root_config, 'earsAi: "2.0"', 'earsAi: "1.0"')],
             "MULTI-040-09": [(root_config, 'schemaVersion: "2.0"', 'schemaVersion: "1.0"')],
             "MULTI-040-10": [(root_config, "language: &label ja", "language: ja")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, edit=old), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir()
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_multi_doctor_git_catalog_fixtures(self):
+        """`MULTI-058-01`〜`06`: Gitの境界を確定できない`doctor`が、Gitを使わずに判定できるカタログの不適合も並べて返すことを固定する（確認事項C50）。"""
+        module = multi_doctor_git_catalog_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-058-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_doctor_git_catalog_expected_results(self):
+        """期待結果の要点: 診断の並びと発生元、`catalog`、状態、対象のID。Git不在の作り方は`MULTI-040`と同じ。"""
+        def read(identifier, name):
+            return json.loads((audit.FIXTURES / "multi" / identifier / name).read_text())
+
+        config = {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml"}
+        git = ("SPEC-MULTI-GIT-001", {"kind": "environment", "component": "git"})
+        expected = {
+            "MULTI-058-01": ("doctor.json", "failed", [git, ("SPEC-MULTI-CONFIG-001", {**config, "key": "multiWorkspace.members"})], "platform"),
+            "MULTI-058-02": ("doctor.json", "failed", [git, ("SPEC-MULTI-CONFIG-001", {**config, "key": "multiWorkspace.exclude"})], "platform"),
+            # ルートの`workspace.id`の省略は同一性を構成できないので`workspaceId`は`null`で、環境の発生元より前に置く（結果・診断・終了コード §7）。
+            "MULTI-058-03": ("doctor.json", "failed", [("SPEC-MULTI-CONFIG-001", {**config, "workspaceId": None, "key": "workspace.id"}), git], None),
+            "MULTI-058-04": ("doctor.json", "blocked", [git], "platform"),
+            "MULTI-058-05": ("doctor.json", "blocked", [git], "platform"),
+            "MULTI-058-06": ("check.json", "blocked", [git], "platform"),
+        }
+        for identifier, (name, status, diagnostics, subject_id) in expected.items():
+            with self.subTest(identifier=identifier):
+                value = read(identifier, "expected/" + name)
+                self.assertEqual([(item["code"], item["source"]) for item in value["diagnostics"]], diagnostics)
+                self.assertEqual(value["status"], status)
+                manifest = read(identifier, "manifest.json")
+                self.assertEqual((manifest["expect"]["exitCode"], manifest["setup"]["git"], manifest["invocation"]["env"]),
+                                 ({"failed": 1, "blocked": 2}[status], False, {"PATH": "/dev/null"}))
+                subject = value["workspace"] if "workspace" in value else value["multiWorkspace"]
+                self.assertEqual(subject, {"id": subject_id, "path": "."})
+                if name == "doctor.json":
+                    catalog = [check["status"] for check in value["checks"] if check["name"] == "catalog"]
+                    self.assertEqual(catalog, ["failed"] if status == "failed" else [])
+                    self.assertEqual([check["status"] for check in value["checks"] if check["name"] == "git"], ["blocked"])
+        # 単独の`doctor`は単独結果（`workspace`）だけを持つ。全体の結果は`multiWorkspace`と空の`workspaces`を持つ。
+        single = read("MULTI-058-02", "expected/doctor.json")
+        self.assertNotIn("multiWorkspace", single)
+        self.assertNotIn("workspaces", single)
+        self.assertEqual(read("MULTI-058-01", "expected/doctor.json")["workspaces"], [])
+        # `check`は`revision: null`、`scope: all-workspaces`で、カタログの不適合を返さない。
+        check = read("MULTI-058-06", "expected/check.json")
+        self.assertEqual((check["revision"], check["scope"], check["workspaces"]), (None, "all-workspaces", []))
+        # 修正前のCoreが通る対照（04〜06）は、併記する不適合がなく、Gitを使う検査の診断を含まない。
+        for identifier in ("MULTI-058-04", "MULTI-058-05", "MULTI-058-06"):
+            name = "check.json" if identifier == "MULTI-058-06" else "doctor.json"
+            self.assertEqual([item["code"] for item in read(identifier, "expected/" + name)["diagnostics"]], ["SPEC-MULTI-GIT-001"])
+
+    def test_multi_doctor_git_catalog_reference_rules(self):
+        """参照計算（`doctor` §3、複合ワークスペース仕様 §3、結果・診断・終了コード §7）。"""
+        module = multi_doctor_git_catalog_fixtures
+        empty, exclude, omitted, valid = (module.root_text(name) for name in ("members-empty", "exclude-invalid", "root-id-omitted", "valid"))
+        # 不適合の分類: ルートのIDの省略が最優先、次にmembersの形状、次に除外のパス。
+        self.assertEqual([module.classify_catalog(text) for text in (empty, exclude, omitted, valid)], ["members", "exclude", "root-id", None])
+        self.assertEqual(module.classify_catalog(omitted.replace("  members:\n", "  members: []\n", 1).split("    - id")[0]), "root-id")
+        self.assertIsNone(module.classify_catalog(valid.replace("    - id: api\n      path: services/api\n", "") + "  exclude:\n    - cases/x\n"))
+        for bad in ("/abs", "a/../b", ".."):
+            self.assertEqual(module.classify_catalog(valid + f"  exclude:\n    - {bad}\n"), "exclude")
+        # `doctor`だけが、Gitを使わずに判定できる不適合を並べて返し、`catalog`を`failed`にする。ほかの操作はGitの診断だけ。
+        expected = module.reference_expected(empty, "doctor", "all")
+        self.assertEqual((expected["diagnostics"], expected["checks"], expected["status"], expected["exit"], expected["subjectId"]),
+                         (["git", "config"], [("core", "passed"), ("git", "blocked"), ("catalog", "failed")], "failed", 1, "platform"))
+        self.assertEqual(module.reference_expected(exclude, "doctor", "single")["diagnostics"], ["git", "config"])
+        # 並び: ルートの省略は`workspaceId: null`のファイルの発生元なので環境の発生元より前。
+        expected = module.reference_expected(omitted, "doctor", "all")
+        self.assertEqual((expected["diagnostics"], expected["subjectId"]), (["config", "git"], None))
+        expected = module.reference_expected(valid, "doctor", "all")
+        self.assertEqual((expected["diagnostics"], expected["checks"], expected["status"], expected["exit"]),
+                         (["git"], [("core", "passed"), ("git", "blocked")], "blocked", 2))
+        for operation in ("check", "verify"):
+            expected = module.reference_expected(empty, operation, "all")
+            self.assertEqual((expected["diagnostics"], expected["status"], expected["exit"]), (["git"], "blocked", 2))
+
+    def test_multi_doctor_git_catalog_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）を拒否する。"""
+        module = multi_doctor_git_catalog_fixtures
+
+        results = {
+            "status-blocked": lambda v: v.update(status="blocked"),
+            "status-failed": lambda v: v.update(status="failed"),
+            "status-passed": lambda v: v.update(status="passed"),
+            "diag-drop-first": lambda v: v["diagnostics"].pop(0),
+            "diag-drop-last": lambda v: v["diagnostics"].pop(),
+            "diag-reverse": lambda v: v["diagnostics"].reverse(),
+            "diag-duplicate": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "diag-code": lambda v: v["diagnostics"][-1].update(code="SPEC-MULTI-MEMBER-001"),
+            "diag-effect": lambda v: v["diagnostics"][0].update(resultStatus="failed" if v["diagnostics"][0]["resultStatus"] != "failed" else "blocked"),
+            "diag-severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "diag-summary": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            "diag-source-id": lambda v: v["diagnostics"][-1]["source"].update(workspaceId="web"),
+            "diag-source-key": lambda v: v["diagnostics"][-1]["source"].update(key="language"),
+            "diag-action-add": lambda v: v["diagnostics"][0].update(suggestedAction="直してください"),
+            "checks-drop-git": lambda v: v["checks"].pop(1),
+            "checks-git-passed": lambda v: v["checks"][1].update(status="passed"),
+            "checks-catalog-add": lambda v: v["checks"].append({"name": "catalog", "status": "failed"}),
+            "checks-catalog-drop": lambda v: v["checks"].pop(),
+            "checks-catalog-blocked": lambda v: v["checks"][-1].update(status="blocked"),
+            "subject-id": lambda v: (v["multiWorkspace"] if "multiWorkspace" in v else v["workspace"]).update(id="web"),
+            "subject-null": lambda v: (v["multiWorkspace"] if "multiWorkspace" in v else v["workspace"]).update(id=None),
+            "subject-path": lambda v: (v["multiWorkspace"] if "multiWorkspace" in v else v["workspace"]).update(path="docs"),
+            "workspaces-add": lambda v: v["workspaces"].append({"id": "web"}),
+            "workspace-add": lambda v: v.update(workspace={"id": "platform", "path": "."}),
+            "revision": lambda v: v.update(revision={"base": "0" * 40, "commit": "0" * 40, "dirty": False}),
+            "scope": lambda v: v.update(scope="changed"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="failed" if v["expect"]["status"] != "failed" else "blocked"),
+            "exit-code": lambda v: v["expect"].update(exitCode=4),
+            "cwd": lambda v: v["invocation"].update(cwd="apps/web"),
+            "argv-all": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-drop": lambda v: v["invocation"]["argv"].pop(1),
+            "env": lambda v: v["invocation"].update(env={}),
+            "git": lambda v: v["setup"].update(git=True),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        mutations = []
+        for identifier in module.CASES:
+            relative = module.RESULT_FILES[module.operation(identifier)]
+            mutations += [(identifier, relative, name, change) for name, change in results.items()]
+            mutations += [(identifier, "manifest.json", name, change) for name, change in manifests.items()]
+            mutations.append((identifier, "side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+        applied = 0
+        for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
+                path.write_text(json.dumps(value))
+                with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 改変の適用が空振りしていないこと。
+        self.assertGreater(applied, 180)
+        # 修正前のCoreの出力（カタログの不適合を落とした`SPEC-MULTI-GIT-001`だけの`blocked`／2）への取り違えを、`01`〜`03`は拒否する。
+        for identifier in ("MULTI-058-01", "MULTI-058-02", "MULTI-058-03"):
+            with self.subTest(identifier=identifier, mutation="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                result = json.loads((fixture / "expected/doctor.json").read_text())
+                result["status"] = "blocked"
+                result["checks"].pop()
+                result["diagnostics"] = [item for item in result["diagnostics"] if item["code"] == "SPEC-MULTI-GIT-001"]
+                (fixture / "expected/doctor.json").write_text(json.dumps(result))
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                manifest["expect"].update(status="blocked", exitCode=2)
+                (fixture / "manifest.json").write_text(json.dumps(manifest))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_doctor_git_catalog_audit_rejects_changed_corpus(self):
+        """入力の欠落と追加（バイト列の照合）と、原因を消す入力の書換え（参照計算と原因の構成の検査）を拒否する。"""
+        module = multi_doctor_git_catalog_fixtures
+        for identifier in module.CASES:
+            names = sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier) if name.endswith("bitz.yaml"))
+            for name in [*names, "extra"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 原因を消す・変える書換え。書換え後の内容を`reviewed_inputs`にし、副作用の期待値を作り直して、バイト列の照合を通した上で、
+        # 参照計算と原因の構成の検査が拒否することを確かめる。
+        root_config = ".spec/bitz.yaml"
+        edits = {
+            "MULTI-058-01": [(root_config, "  members: []\n", "  members:\n    - id: web\n      path: apps/web\n"),
+                             # 不適合の種類を別の種類に変える（IDの省略が優先して分類される）。
+                             (root_config, "workspace:\n  id: platform\n", "")],
+            "MULTI-058-02": [(root_config, "    - ../x\n", "    - cases/x\n"),
+                             (root_config, "    - ../x\n", "    - /x\n")],
+            "MULTI-058-03": [(root_config, "multiWorkspace:", "workspace:\n  id: platform\nmultiWorkspace:")],
+            "MULTI-058-04": [(root_config, "  members:\n", "  members: []\n  xmembers:\n"),
+                             (root_config, "multiWorkspace:", "workspace2: x\nmultiWorkspace:")],
+            "MULTI-058-05": [("apps/web/.spec/bitz.yaml", "id: frontend", "id: web"),
+                             (root_config, "  members:\n", "  members: []\n  xmembers:\n")],
+            "MULTI-058-06": [(root_config, "  members: []\n", "  members:\n    - id: web\n      path: apps/web\n")],
         }
         byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
         for identifier, changes in edits.items():
