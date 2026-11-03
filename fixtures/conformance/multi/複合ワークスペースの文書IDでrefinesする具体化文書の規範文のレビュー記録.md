@@ -14,7 +14,8 @@
 
 ## 根拠の規範文
 
-- 関係・トレースモデル §6.4の規則1・2、§6.1の4.・末尾、`context` §4・§10、`verify` §8: 単一ワークスペースの記録と同じ。
+- 関係・トレースモデル §6.4の規則1・2と具体化文書の段落（見つけた具体化文書は規範文IDと文書IDの両方の`refines`で辿り、起点の文書自身から文書IDで辿るのは規則1だけ）、
+  §6.1の4.・末尾、`context` §4・§10、`verify` §8: 単一ワークスペースの記録と同じ。
 - 複合ワークスペース仕様 §4・§6: 他のワークスペースの文書も、修飾した文書IDで`refines`できる。機械可読な結果の文書`id`、規範文ID、`roots`は修飾IDで返す。
   `resolution.crossWorkspaceEdges`は`refines`を含み、`source`は修飾した文書ID、`target`は修飾した文書IDまたは規範文ID。`resolution.workspaces`は起点ワークスペースを先頭、以降はID辞書順。
 - `verify` §7（確認事項C62）: テスト割当ての実行は、ルートワークスペースを先頭に、以降をワークスペースIDの辞書順とし、`commands[]`と`bindingRefs`も同じ順に並べる。
@@ -35,8 +36,10 @@
 ## 期待値の導き方（Coreの出力を根拠にしない）
 
 1. **閉包**。`platform::REQ-001`と、それを文書IDで`refines`する`web::TECH-010`の2文書（`documentCount`は2）。`web::TECH-010`は役割`refinement`、`reachedBy`は`refines:web::TECH-010`。
-2. **対象規範文**。規則1から、文書を起点にした`01`、`02`、`04`は`platform::REQ-001:AC-01`、`web::TECH-010:C-01`。規則2から、規範文を起点にした`03`は前者だけ。
-   参照計算は、`multi_crosscheck`の関係の修飾（`relations`）を使って、文書IDの`refines`を使う計算と使わない（修正前の）計算を別に書き、欠陥のケースでは後者が前者の真部分集合に、対照では同じになることを要求する。
+2. **対象規範文**。規則1から、文書を起点にした`01`、`02`、`04`は`platform::REQ-001:AC-01`、`web::TECH-010:C-01`。規則2から、規範文を起点にした`03`は前者だけ
+   （起点の所有文書`platform::REQ-001`を文書IDで`refines`する`web::TECH-010`は、辿る起点にしないので含めない）。
+   参照計算は、`multi_crosscheck`の関係の修飾（`relations`）を使って、§6.4の規則による計算と、文書IDの`refines`を使わない（修正前の）計算を別に書き、欠陥のケースでは後者が前者の真部分集合に、対照では同じになることを要求する。
+   この群の入力は、見つけた具体化文書の先を持たないので、途中のCoreの再現（`SINGLE-169-07`〜`09`が固定する）は必要としない。
 3. **横断のエッジ**。`01`は`{refines, web::TECH-010, platform::REQ-001}`の1件。参照計算は`multi_related_advisory_fixtures.reference_edges`（閉包の文書が宣言する、別のワークスペースへ向かい解決できる強い関係）で導く。
 4. **カバレッジと診断**。`01`は目的`verify`で、2件の`MUST`がどちらもテスト済みなので診断は0件。`unaddressed`は目的`verify`の形（`MULTI-054-01`と同じく`addressed`は空）。
    `02`は`web::TECH-010:C-01`の未テストの`MUST`で`CTX-COVERAGE-TEST-001`（`blocked`、`source`は`{file, web, .spec/technical/TECH-010.md}`）。

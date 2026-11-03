@@ -7158,11 +7158,11 @@ class AuditTests(unittest.TestCase):
         return ((document_refines_fixtures, "single", self.copy_single_fixture), (multi_document_refines_fixtures, "multi", self.copy_multi_fixture))
 
     def test_document_refines_fixtures(self):
-        """`SINGLE-169-01`〜`06`と`MULTI-055-01`〜`04`: 起点の文書を文書IDで`refines`する文書の規範文も対象規範文に含める（確認事項C54）。"""
+        """`SINGLE-169-01`〜`09`と`MULTI-055-01`〜`04`: 起点の文書を文書IDで`refines`する文書の規範文も対象規範文に含め、見つけた具体化文書は規範文IDと文書IDの両方で辿る（確認事項C54）。"""
         for module, kind, copy_fixture in self.document_refines_modules():
             result = module.validate()
             self.assertEqual(result["errors"], [])
-            expected = [f"SINGLE-169-{number:02d}" for number in range(1, 7)] if kind == "single" else [f"MULTI-055-{number:02d}" for number in range(1, 5)]
+            expected = [f"SINGLE-169-{number:02d}" for number in range(1, 10)] if kind == "single" else [f"MULTI-055-{number:02d}" for number in range(1, 5)]
             self.assertEqual(result["prepared"], expected)
             self.assertEqual(result["references"], 2)
             self.assertEqual(result["core_execution"], "Not run")
@@ -7194,6 +7194,14 @@ class AuditTests(unittest.TestCase):
                          [("REQ-001", "root", "full"), ("TECH-001", "refinement", "full"),
                           ("TECH-002", "refinement", "normative"), ("TECH-003", "refinement", "normative")])
         self.assertTrue(all("bodyText" not in item and "frontmatter" not in item for item in chain["documents"][2:]))
+        # 見つけた具体化文書は、どの起点でも文書IDの`refines`で辿る。起点の所有文書を文書IDで`refines`する`TECH-001`は、規範文の起点とTASKの起点では含めない。
+        for identifier, expected in (("SINGLE-169-07", ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"]),
+                                     ("SINGLE-169-08", ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"]),
+                                     ("SINGLE-169-09", ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"])):
+            result = read(identifier)
+            self.assertEqual((result["status"], result["targetResults"][0]["statements"]), ("blocked", expected))
+            self.assertEqual([item["summary"] for item in result["targetResults"][0]["diagnostics"]],
+                             ["対象規範文MUST TECH-003:C-01にテスト対応がありません"])
         # `blocked`の`verify`はテストを開始しない。未テストなのは、鎖の末尾だけ。
         for identifier, untested in (("SINGLE-169-02", "TECH-001:C-01"), ("SINGLE-169-04", "TECH-003:C-01")):
             result = read(identifier)
@@ -7219,7 +7227,7 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(module.reference_targets(documents, "REQ-001"),
                              ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01", "TECH-003:C-01"])
             # 文書IDの`refines`を使わないと、鎖の先頭で止まる（修正前のCoreの再現）。
-            self.assertEqual(module.reference_targets(documents, "REQ-001", include_document_refinements=False), ["REQ-001:AC-01"])
+            self.assertEqual(module.reference_targets(documents, "REQ-001", mode="main"), ["REQ-001:AC-01"])
             # 規範文を起点にしたときは、文書IDの`refines`を使わない。
             self.assertEqual(module.reference_targets(documents, "REQ-001:AC-01"), ["REQ-001:AC-01"])
             # `TECH-002:C-01`を規範文IDで`refines`する`TECH-003`は、`TECH-002`を起点にしたときに入る。
@@ -7227,6 +7235,25 @@ class AuditTests(unittest.TestCase):
             # 状態`draft`の文書は含めず、その先の文書も辿らない。
             documents["TECH-001"]["frontmatter"]["status"] = "draft"
             self.assertEqual(module.reference_targets(documents, "REQ-001"), ["REQ-001:AC-01"])
+        # 見つけた具体化文書からは、規範文の起点とTASKの起点でも文書IDの`refines`を辿り、起点の所有文書の文書IDの`refines`は辿らない。
+        corpora = module.CORPORA
+        owner = module.corpus_documents(corpora["owner-document"])
+        full = ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"]
+        self.assertEqual(module.reference_targets(owner, "REQ-001:AC-01"), full)
+        self.assertEqual(module.reference_targets(owner, "REQ-001"), ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01", "TECH-003:C-01"])
+        self.assertEqual(module.reference_targets(owner, "REQ-001:AC-01", mode="main"), ["REQ-001:AC-01", "TECH-002:C-01"])
+        self.assertEqual(module.reference_targets(owner, "REQ-001:AC-01", mode="midway"), ["REQ-001:AC-01", "TECH-002:C-01"])
+        self.assertEqual(module.reference_targets(owner, "REQ-001", mode="midway"), ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01"])
+        tasked = module.corpus_documents(corpora["task"])
+        self.assertEqual(module.reference_targets(tasked, "TASK-001"), full)
+        self.assertEqual(module.reference_targets(tasked, "TASK-001", mode="midway"), ["REQ-001:AC-01", "TECH-002:C-01"])
+        # 規範文のないTECHは、文書IDの`refines`を辿る起点にしない（規則3・5）。
+        owner["TECH-001"]["statements"] = []
+        owner["TECH-001"]["frontmatter"]["relations"] = {"refines": [], "addresses": []}
+        owner["TECH-002"]["frontmatter"]["relations"] = {"refines": ["TECH-001"], "addresses": []}
+        self.assertEqual(module.reference_targets(owner, "TECH-001"), [])
+        owner["TASK-001"] = dict(kind="task", statements=[], frontmatter={"status": "open", "relations": {"refines": [], "addresses": ["TECH-001"]}})
+        self.assertEqual(module.reference_targets(owner, "TASK-001"), [])
         multi = multi_document_refines_fixtures
         with tempfile.TemporaryDirectory() as temporary:
             identifier = "MULTI-055-02"
@@ -7234,7 +7261,7 @@ class AuditTests(unittest.TestCase):
             repository = fixture_setup(fixture, json.loads((fixture / "manifest.json").read_text()), Path(temporary) / "repo")
             _, _, documents = multi_crosscheck.load_workspaces(repository)
             self.assertEqual(multi.reference_targets(documents, multi.ROOT_REQ), ["platform::REQ-001:AC-01", "web::TECH-010:C-01"])
-            self.assertEqual(multi.reference_targets(documents, multi.ROOT_REQ, include_document_refinements=False), ["platform::REQ-001:AC-01"])
+            self.assertEqual(multi.reference_targets(documents, multi.ROOT_REQ, mode="main"), ["platform::REQ-001:AC-01"])
             self.assertEqual(multi.reference_targets(documents, "platform::REQ-001:AC-01"), ["platform::REQ-001:AC-01"])
             # テスト対応を足すと、診断は消える。
             closure, _ = multi_crosscheck.closure(documents, multi.ROOT_REQ)
@@ -7265,6 +7292,9 @@ class AuditTests(unittest.TestCase):
             ("single", "SINGLE-169-04"): lambda result: result["targetResults"][0]["diagnostics"].clear(),
             ("single", "SINGLE-169-05"): lambda result: result["targetResults"][0]["statements"].append("TECH-001:C-01"),
             ("single", "SINGLE-169-06"): lambda result: result["commands"].clear(),
+            ("single", "SINGLE-169-07"): lambda result: result["targetResults"][0]["statements"].pop(),
+            ("single", "SINGLE-169-08"): lambda result: result["targetResults"][0]["statements"].insert(1, "TECH-001:C-01"),
+            ("single", "SINGLE-169-09"): lambda result: result["targetResults"][0]["diagnostics"].clear(),
             ("multi", "MULTI-055-01"): lambda result: result["resolution"]["crossWorkspaceEdges"].clear(),
             ("multi", "MULTI-055-02"): lambda result: result["targetResults"][0]["diagnostics"][0].update(severity="warning"),
             ("multi", "MULTI-055-03"): lambda result: result["targetResults"][0]["statements"].append("web::TECH-010:C-01"),

@@ -285,32 +285,33 @@ def result_targets(result):
 
 # --- 参照計算（準備手順の後の入力から導く） -----------------------------------------------------
 
-def reference_targets(documents, root, include_document_refinements=True):
+def reference_targets(documents, root, mode="current"):
     """関係・トレースモデル §6.4から、起点の対象規範文を修飾IDで導く。
 
-    文書を起点にしたとき、起点の文書を修飾した文書IDで`refines`する適用可能な文書（`include_document_refinements`）と、
-    選択した規範文を規範文IDで`refines`する適用可能な文書の規範文を、推移的に加える。規範文を起点にしたときは文書IDの`refines`を使わない。
+    - 選択済みの規範文を規範文IDで`refines`する適用可能な文書は、どの起点でも具体化文書として規範文を加える。
+    - 文書IDの`refines`を辿るのは、規則1（規範文のある文書の起点）の起点の文書と、見つけた具体化文書である。規則2の起点の所有文書は、文書IDの`refines`を辿る起点にしない。
+    `mode`: `current`は上の規則、`main`は文書IDの`refines`を辿らない（`origin/main`のCoreの再現）。
     """
     statements = {name: [f"{item['workspaceId']}::{statement['id']}" for statement in digest_crosscheck.read_statements(item["body"])]
                   for name, item in documents.items()}
     owner = multi_crosscheck.owner(root)
     by_document = root == owner
-    selected_documents = {owner} if by_document else set()
     selected_statements = set(statements[owner]) if by_document else {root}
-    targets = set(selected_statements)
+    followed = {owner} if by_document and statements[owner] and mode != "main" else set()
+    targets, found = set(selected_statements), set()
     changed = True
     while changed:
         changed = False
         for name in sorted(documents):
             item = documents[name]
-            if name in selected_documents or name == owner or item["frontmatter"]["status"] != "approved":
+            if name in found or name == owner or item["frontmatter"]["status"] != "approved":
                 continue
             refined = multi_crosscheck.relations(item)["refines"]
-            if any(ref in selected_statements for ref in refined) or (
-                    include_document_refinements and by_document and any(ref in selected_documents for ref in refined)):
-                selected_documents.add(name)
+            if any(ref in selected_statements for ref in refined) or (mode != "main" and any(ref in followed for ref in refined)):
+                found.add(name)
                 selected_statements.update(statements[name])
                 targets.update(statements[name])
+                followed.add(name)
                 changed = True
     return sorted(targets, key=lambda target: (multi_crosscheck.owner(target) != owner, target))
 
@@ -339,7 +340,7 @@ def check_conditions(identifier, repository, manifest, result):
     if multi_crosscheck.relations(documents[WEB_TECH])["refines"] != [ROOT_REQ]:
         raise ValueError("`web::TECH-010`は`platform::REQ-001`を修飾した文書IDで`refines`する必要があります")
     targets = reference_targets(documents, case["root"])
-    old = reference_targets(documents, case["root"], include_document_refinements=False)
+    old = reference_targets(documents, case["root"], mode="main")
     if targets != reviewed_targets(identifier) or result_targets(result) != targets:
         raise ValueError("対象規範文が参照計算と異なります")
     if (old != targets) != case["defect"] or (case["defect"] and old != [STATEMENTS[ROOT_REQ]]):

@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-169-08",
+  "description": "規範文の起点でも、見つけた具体化文書は文書IDのrefinesで辿り、起点の所有文書を文書IDでrefinesするTECHは対象にしない",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001:AC-01",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}
