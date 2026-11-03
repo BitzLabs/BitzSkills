@@ -47,7 +47,7 @@
 | `MULTI-056-04` | `check --all-workspaces --base HEAD` | `web`の`REQ-003-a.md`と`REQ-003-b.md`が同じ文書ID`REQ-003`を定義する。`platform`は`REQ-003`を1件持つ | `failed`／1 |
 | `MULTI-056-05` | `check --workspace web --full --base HEAD` | `MULTI-056-04`と同じ入力 | `failed`／1 |
 
-変更する`REQ-001`を状態`draft`にするのは、状態`approved`のREQの意味の変更が`SPEC-SAFETY-APPROVED-001`（承認済み要求の保護）を起こし、影響の候補だけを固定できなくなるためである。
+変更する`REQ-001`を状態`draft`にするのは、承認済み要求の保護（`SPEC-SAFETY-APPROVED-001`）との関わりを入力から外すためである。本文の`Intent`だけの変更は、文書・フロントマター・状態仕様 §8では意味の変更に当たらないので、`approved`のままでもこの診断は出ない（独立レビューの実測）。§8の比較の範囲の読みに頼らず、影響の候補だけを固定するために`draft`にした。
 `REQ-001`の変更は、本文の`Intent`の1文だけである（基準版は「意図。」、現在版は「変更した意図。」）。依存元の`TECH-010`・`TECH-011`は`approved`で、`draft`の`REQ-001`を強い関係で参照する。
 参照先の状態が`draft`でも、型の制約（`CTX-RELATION-TYPE-001`）にならない（関係・トレースモデル §4の「`draft`のREQなど…は…`CTX-STATE-*`で扱う」）。
 
