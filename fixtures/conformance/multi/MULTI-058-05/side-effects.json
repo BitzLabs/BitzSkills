@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "88d6819ec9014c159c6a44213cbbc98358c4294b49830789afaf91a605653f8f"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9ddded0a65114d966ef3504b595e05166183089a0cba7f42eeaef78180286147"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eed8d6ff738866b58ca05af89e7ab4e2380c4f1bf8f407b22c3ba54335a05e98"
+      },
+      "tools": {
+        "kind": "directory"
+      },
+      "tools/x": {
+        "kind": "directory"
+      },
+      "tools/x/.spec": {
+        "kind": "directory"
+      },
+      "tools/x/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6fc8e56c21bd183757fe53dade8d40a3d27fcf64f8dce0d33aab48a0f9213432"
+      }
+    },
+    "git": null,
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "88d6819ec9014c159c6a44213cbbc98358c4294b49830789afaf91a605653f8f"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9ddded0a65114d966ef3504b595e05166183089a0cba7f42eeaef78180286147"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eed8d6ff738866b58ca05af89e7ab4e2380c4f1bf8f407b22c3ba54335a05e98"
+      },
+      "tools": {
+        "kind": "directory"
+      },
+      "tools/x": {
+        "kind": "directory"
+      },
+      "tools/x/.spec": {
+        "kind": "directory"
+      },
+      "tools/x/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6fc8e56c21bd183757fe53dade8d40a3d27fcf64f8dce0d33aab48a0f9213432"
+      }
+    },
+    "git": null,
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

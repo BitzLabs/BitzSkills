@@ -1,0 +1,28 @@
+{
+  "fixtureId": "MULTI-058-04",
+  "description": "Git不在でもカタログが妥当なら、doctorはGitの不在の診断だけを返す",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

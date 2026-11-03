@@ -1,0 +1,28 @@
+{
+  "fixtureId": "MULTI-058-03",
+  "description": "Git不在で、ルートのworkspace.idが省略されているとき、doctorはGitの不在とカタログの不適合の両方を返す",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}
