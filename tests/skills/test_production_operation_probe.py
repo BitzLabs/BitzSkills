@@ -419,7 +419,7 @@ class ProductionOperationProbeTests(unittest.TestCase):
 
     @staticmethod
     def raw_verifier():
-        path = ROOT / 'evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py'
+        path = ROOT / 'evals/skills/routing/recorded_raw_capture.py'
         spec = importlib.util.spec_from_file_location('raw_fixture_verifier', path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

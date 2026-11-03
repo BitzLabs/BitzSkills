@@ -79,7 +79,7 @@ class RolloutRequestTests(unittest.TestCase):
 class RecordedCaptureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        path = ROOT / 'evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py'
+        path = ROOT / 'evals/skills/routing/recorded_rollout_capture.py'
         spec = importlib.util.spec_from_file_location('rollout_capture_record_test', path)
         cls.record = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.record)

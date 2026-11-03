@@ -14,7 +14,7 @@ import production_fault_probe as probe
 class FaultProbeTests(unittest.TestCase):
     def test_original_api_attempts_must_match_fixed_fault_not_self_reported_counts(self):
         spec = importlib.util.spec_from_file_location('fault_record',
-            ROOT / 'evals/skills/results/2026-10-11-sdk-provider-faults/verify-recorded-results.py')
+            ROOT / 'evals/skills/routing/recorded_fault_capture.py')
         record = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(record)
         api = [{'attempt': 0, 'auth.header_attached': False, 'http.response.status_code': None}]

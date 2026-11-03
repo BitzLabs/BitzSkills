@@ -1,7 +1,11 @@
 # 製品6スキルの発火評価準備
 
+現在の残件・継続条件は[提案31](../../../docs/04.提案資料/31_スキル統合残件の開発計画と進捗.md)を参照する。
+以下の旧集合・準備検分は当時の経緯であり、今後の起動許可ではない。
+過去の有限レビュー契約は当時のsourceCommitで使用する。削除済みの旧結果を含む契約を現行refへ流用しない。
+
 旧 `candidates/six-skill` の6本文は、製品pluginsの本文とは異なる。
-旧候補・protocol・原測定は保持し、製品本文の結果として扱わない。
+旧候補とprotocolは現行の監査・回帰試験が使うため残す。旧測定は[必要な履歴](../results/README.md)へ集約し、製品本文の結果として扱わない。
 `prepare.py` は確定commitのGit blobから製品6本文とpackage資源を取得し、
 名前・description・版・取得先・全資源hashのmanifestを作る。
 作業ツリーの未コミット差分を取り込まず、symlink・保護対象・不正パスを拒否する。
@@ -32,7 +36,7 @@ python -B evals/skills/routing/audit_held_out.py --cases /home/hide/BitzLabs/Bit
 
 初期集合12件は機械検査を通過したが、独立検分で公開ケースとの意味重複P2が2件あり停止した。
 当該集合で一次評価を行わず、原ケース・失敗記録を非公開で保持する。
-[停止結果](../results/2026-10-06-held-out-collection-stopped/report.md)を後続成功へ置換しない。
+この旧停止の事実は[必要な履歴](../results/README.md#対応済み事項)へ集約し、後続成功へ置換しない。
 
 `host.py` は固定manifestのhashと全package資源を照合してから、stdio MCPで
 `list_resources` と `read_resource` だけを提供する。モデルに渡す情報は6スキルの
