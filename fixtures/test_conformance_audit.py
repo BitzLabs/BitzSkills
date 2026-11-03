@@ -6051,7 +6051,7 @@ class AuditTests(unittest.TestCase):
         # `check`は`revision: null`、`scope: all-workspaces`で、カタログの不適合を返さない。
         check = read("MULTI-058-06", "expected/check.json")
         self.assertEqual((check["revision"], check["scope"], check["workspaces"]), (None, "all-workspaces", []))
-        # 修正前のCoreが通る対照（04〜06）は、併記する不適合がなく、Gitを使う検査の診断を含まない。
+        # 修正前のCoreが通る対照（04〜06）は、併記する不適合がなく、ルートの候補の位置に依存する検査の診断を含まない。
         for identifier in ("MULTI-058-04", "MULTI-058-05", "MULTI-058-06"):
             name = "check.json" if identifier == "MULTI-058-06" else "doctor.json"
             self.assertEqual([item["code"] for item in read(identifier, "expected/" + name)["diagnostics"]], ["SPEC-MULTI-GIT-001"])
