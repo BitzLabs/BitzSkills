@@ -410,7 +410,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-029` | 管理済みSPECの削除 | check --base | failed／1 | `SPEC-STATE-TRANSITION-001` |
 | `SINGLE-030` | パスだけの変更 | check --base | passed／0 | `rename`として同一文書 |
 | `SINGLE-031` | `approved`のREQの意味変更で状態を戻さない | check --base | failed／1 | `SPEC-SAFETY-APPROVED-001` |
-| `SINGLE-158` | 基準版の`approved`のREQ 2件（REQ-001、REQ-002）。作業ツリーでREQ-001の`title`と見出しを変えて状態は`approved`のままにし、REQ-002を削除する。ワークスペースのルートはリポジトリのルートで、下位のディレクトリ`docs`で実行する | check --full --base | failed／1 | `scope: full`、`workspace`は`root`（`.`）、`checkedDocumentCount`は1（現在版に残るREQ-001。削除したREQ-002は数えない）、`checkedStatementCount`は1。診断は`REQ-001`の`SPEC-SAFETY-APPROVED-001`（`source.key`は`title`）と`REQ-002`の`SPEC-STATE-TRANSITION-001`（管理済みの仕様文書の削除）の2件で、ルートで実行した場合と同じ。基準版の一覧は現在のディレクトリによらずワークスペースのルートを基準に求める（`check` §5）。引数なしの`check`が削除した文書を`selection.targetDocumentCount`に数えるかは規範文が定めないので、引数なしを使わない |
+| `SINGLE-158` | 基準版の`approved`のREQ 2件（REQ-001、REQ-002）。作業ツリーでREQ-001の`title`と見出しを変えて状態は`approved`のままにし、REQ-002を削除する。ワークスペースのルートはリポジトリのルートで、下位のディレクトリ`docs`で実行する | check --full --base | failed／1 | `scope: full`、`workspace`は`root`（`.`）、`checkedDocumentCount`は1（現在版に残るREQ-001。削除したREQ-002は数えない）、`checkedStatementCount`は1。診断は`REQ-001`の`SPEC-SAFETY-APPROVED-001`（`source.key`は`title`）と`REQ-002`の`SPEC-STATE-TRANSITION-001`（管理済みの仕様文書の削除）の2件で、ルートで実行した場合と同じ。基準版の一覧は現在のディレクトリによらずワークスペースのルートを基準に求める（`check` §5）。引数なしの`check`が削除した文書を`selection.targetDocumentCount`に数えることは、この群の追加の後に`check` §9へ明記した（実装の確認事項C28）。この群は`--full`だけを固定し、引数なしを使わない |
 | `SINGLE-032-01` | `implements`だけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-02` | `tests`だけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-03` | `related`だけの変更 | check --base | passed／0 | 保護対象外 |

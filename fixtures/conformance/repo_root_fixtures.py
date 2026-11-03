@@ -47,8 +47,8 @@ UNREGISTERED_PATH = "tools/x/.spec/bitz.yaml"
 CHANGE_SOURCE = "changes/REQ-changed.md"
 CONFIG_SOURCE = "changes/x-bitz.yaml"
 
-# 引数なしの`check`が削除した仕様文書を`selection.targetDocumentCount`に数えるかは、規範文が定めない（実装の確認事項C28）。
-# そのため、この群は引数なしの`check`を使わず、`selection`を持たない`--full`で実行する。
+# 引数なしの`check`が削除した仕様文書を`selection.targetDocumentCount`に数えることは、この群の追加の後に`check` §9へ明記した
+# （実装の確認事項C28）。この群は引き続き引数なしの`check`を使わず、`selection`を持たない`--full`で実行する。
 
 SAFETY_SUMMARY = "状態approvedのREQの意味変更時に文書の状態が戻されていません"
 DELETED_SUMMARY = "管理済みの仕様文書が削除されています"
