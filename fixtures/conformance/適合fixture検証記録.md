@@ -2178,3 +2178,21 @@ commit `b32629d3d94faee3076e7025b9d47fd4fbb1f9b6`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 2に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-04: 規範の空白を明記した後のGate Aの再認定
+
+実装の確認事項C66、C68、C34、C20、C30、C32、C25、C81、C28、C39、C83の決定（ユーザーの決定。いずれも現状の挙動の明記）に合わせ、規範を書き足した。
+診断レジストリでは、`TRACE-COVERAGE-INVALID`の条件の説明から「または対応が重複」を削り、`WORKSPACE-ENTRY-UNKNOWN`の`operations`から`doctor`を外した。
+網羅表のハッシュ値と根拠、対象展開のvectorの契約のハッシュ値、C28とC83の明記で古くなった適合fixture仕様と生成器とレビュー記録の記述、
+設定の警告の参照計算（未知のファイルの診断を返す操作を`check`だけにした）を合わせた。fixtureの入力と期待値は変えていない。
+
+commit `db2d534abf47dbb950d620f7ea40929806ffabd2`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`98cfd2b1419575b5632edf95c7af547c87e675dba6519a13b6dbb4f293f3b0af`。前回から変わったのは、網羅表が固定する根拠文書のハッシュ値、対象展開のvectorの契約のハッシュ値、リンクを確かめた件数だけである。matrixと網羅の件数（627件）、Stepの件数、実行ビットを確かめたファイル数は変わらない |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStepに属するfixtureの入力と期待値、Coreを変えていないため、Gate Bは判定し直さない（ADR-051）。
