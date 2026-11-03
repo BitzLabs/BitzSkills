@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/r04_independent_review",
+  "subjectCommit": "9dd983127ccb01117efade6b96db5e1980528f7b",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [
+    "共通指示とレビュー依頼。実装者の作業履歴・内部推論は継承していない。",
+    "作業者の診断集計は検分対象の主張として提示された。採用すべき結論や合格の指示はない。",
+    "AGENTS.md、ADR-068、比較元bedbf416から対象9dd983127ccb01117efade6b96db5e1980528f7bまでの差分。",
+    "production_failure_diagnosis.py、対応試験、原因調査報告、計画および結果索引。",
+    "保存診断のdiagnosis.jsonとcurrent-native-check.json。",
+    "対象35枠のrpc-in.jsonl、rpc-out.jsonl、および該当枠のhost.jsonl、host-stop.json。",
+    "当時の確定refから取得したproduction_trace.pyのcompleted_items実装。",
+    "過去の停止を維持し、オフライン検証と起動承認を区別するための既存メモ。"
+  ],
+  "directChecks": [
+    "Gitで対象の完全SHAと対象ファイルの一致を確認した。",
+    "認証情報の既知名は属性のみを取得し、検査中の主要なファイル読取りAPIでも内容を拒否する差分を検分した。",
+    "固定依存jsonschema 4.23.0の環境で診断・ホスト・SDK通知の関連113試験を独立に実行し、全件成功した。",
+    "原RPCから独立に集計し、現行の投影とSDK通知検査は34件通過、1件はraw native turn lifecycleで拒否することを確認した。",
+    "正規化framesを当時のcompleted_itemsへ渡し、34件すべてがnative action not allowedで拒否されることを確認した。",
+    "全35件の補助通知の存在と正確なparamsのフィールド集合を確認した。",
+    "ホスト停止は1件。該当する2回目の呼出しはread_resource、引数キーuriのみ、accepted=false、ログ内ValueErrorだった。",
+    "原成績・停止・消費を維持し、現行候補の少数枠で一次取得・独立採点・親確認を要求する再開条件をADR-068と照合した。",
+    "本文・metadata内容・ID・認証情報を出力せず、モデル起動・予約・コードと原記録の変更を行わなかった。",
+    "ADR-068の対象範囲でP1〜P3の指摘0件。今回の限定変更を妨げる指摘はなかった。"
+  ],
+  "notRerun": [
+    {
+      "check": "当時のソース全体を元パスへ提示した完全な診断実行",
+      "reason": "診断用のマウント環境は再構築せず、当時のcompleted_itemsと現行の投影・SDK通知検査を限定追試した。"
+    },
+    {
+      "check": "保存診断の実行前後における全原記録の属性・ハッシュ一致",
+      "reason": "作業者の実行前の状態を独立に観測していないため、一致の主張自体は独立再現していない。"
+    },
+    {
+      "check": "保存診断実行時のネットワーク分離と読取り専用マウント",
+      "reason": "過去の実行環境そのものは独立再現していない。"
+    },
+    {
+      "check": "全スキル試験、Core適合試験、Gate認定",
+      "reason": "親が同じ確定refで全スキル試験を実行しており、依頼に従って関連試験のみ実行した。"
+    },
+    {
+      "check": "現行候補の少数枠の実評価と保持評価の継続",
+      "reason": "モデル起動・予約はレビュー対象外。この検分は評価起動の承認でも有効測定への昇格でもない。"
+    }
+  ],
+  "independent": true
+}
