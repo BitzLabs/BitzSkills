@@ -162,6 +162,60 @@ class SingleWorkspaceTests(_Base):
         self.assertEqual((result["status"], code), ("passed", 0), result)
         self.assertEqual(target["statements"], ["REQ-001:AC-01"])
 
+    def test_document_id_refinement_of_a_statement_refinement_is_a_target(self):
+        """規範文IDで見つけた具体化文書を、さらに文書IDで`refines`する文書も辿る（文書の起点）。"""
+
+        self.write(("TECH-002", "REQ-001:AC-01", "approved"), ("TECH-003", "TECH-002", "approved"))
+        _result, _code, target = self.verify_target("REQ-001")
+        self.assertEqual(target["statements"], ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"])
+
+    def test_statement_origin_follows_document_id_refinements_of_found_documents(self):
+        """規範文の起点でも、見つけた具体化文書の先は文書IDの`refines`も辿る。起点の所有文書の文書IDの`refines`は辿らない。"""
+
+        self.write(
+            ("TECH-001", "REQ-001", "approved"),
+            ("TECH-002", "REQ-001:AC-01", "approved"),
+            ("TECH-003", "TECH-002", "approved"),
+        )
+        _result, _code, target = self.verify_target("REQ-001:AC-01")
+        self.assertEqual(target["statements"], ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"])
+
+    def test_task_origin_follows_document_id_refinements_of_found_documents(self):
+        self.write(("TECH-002", "REQ-001:AC-01", "approved"), ("TECH-003", "TECH-002", "approved"))
+        _write(
+            self.root, ".spec/tasks/TASK-001.md",
+            "---\nid: TASK-001\ntitle: TASK-001の作業\nstatus: open\nrelations:\n  addresses: [REQ-001:AC-01]\nchanges: []\n---\n\n"
+            "# TASK-001 TASK-001の作業\n\n## Goal\n\n目的。\n",
+        )
+        _git(self.root, "add", ".")
+        _git(self.root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "task")
+        _result, _code, target = self.verify_target("TASK-001")
+        self.assertEqual(target["statements"], ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"])
+
+    def test_statementless_tech_is_not_a_document_refinement_origin(self):
+        """規則3・5: `addresses`または起点にした規範文のないTECHは、文書IDの`refines`を辿る起点にしない。"""
+
+        _write(self.root, ".spec/bitz.yaml", CONFIG + VERIFY)
+        _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
+        _write(
+            self.root, ".spec/technical/TECH-001.md",
+            "---\nid: TECH-001\ntitle: TECH-001の文書\nstatus: approved\n"
+            "tests:\n  - path: tests/t.py\n    covers: [TECH-001]\n    command: t\n---\n\n"
+            "# TECH-001 TECH-001の文書\n\n## Context\n\n本文。\n",
+        )
+        _write(self.root, ".spec/technical/TECH-002.md", _tech("TECH-002", "TECH-001"))
+        _write(
+            self.root, ".spec/tasks/TASK-001.md",
+            "---\nid: TASK-001\ntitle: TASK-001の作業\nstatus: open\nrelations:\n  addresses: [TECH-001]\nchanges: []\n---\n\n"
+            "# TASK-001 TASK-001の作業\n\n## Goal\n\n目的。\n",
+        )
+        self.commit()
+        for root in ("TECH-001", "TASK-001"):
+            with self.subTest(root=root):
+                result, code, target = self.verify_target(root)
+                self.assertEqual((result["status"], code), ("passed", 0), result)
+                self.assertEqual(target["statements"], [])
+
     def test_statement_origin_does_not_include_document_id_refinements(self):
         self.write(("TECH-001", "REQ-001", "approved"))
         self.assertEqual(self.ledger("REQ-001:AC-01"), ["REQ-001:AC-01"])
