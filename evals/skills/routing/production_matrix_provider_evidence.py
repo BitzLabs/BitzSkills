@@ -1,6 +1,7 @@
 """取得構成とRPC/rolloutを固定bytesへ束縛。実起動・予約・適格性は認定しない。
 
-v0.1.1の6追加原を消費する。旧v0.1.0や4枠Canaryへreceiptを書換えない。
+v0.1.2は固定catalog原を要求する。旧v0.1.1は当時の6追加原・設定で再検証する。
+旧v0.1.0や4枠Canaryへreceiptを書換えない。
 現物再照合・argv権限・独立開始前検分・安全意味・台帳確定は別工程。
 """
 from pathlib import Path

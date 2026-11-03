@@ -92,6 +92,17 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
 
     def verify(self):return provider.verify_bytes(self.bind(),source_repository=self.source_repository,artifact_repository=self.artifact_repository)
 
+    def legacy_provider(self):
+        self.receipt['version']=provider.evidence.LEGACY_PROVIDER_VERSION
+        self.originals.pop(provider.preflight.model_catalog.FILE)
+        config=provider.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
+        self.originals['config.json']=provider.io.encoded(config)
+        guards=provider.trace.strict_json(self.originals['resource-guards.json'])
+        path='evals/skills/routing/production_heldout_model_catalog.py'
+        for proof in guards.values():proof['sourceSha256'].pop(path,None)
+        self.originals['resource-guards.json']=provider.io.encoded(guards);self.rehash()
+        return tuple(n for n in provider.preflight.SOURCE_FILES if n!=path)
+
     def test_complete_provider_configuration_does_not_claim_live_environment_or_measurement(self):
         result=self.verify();self.assertTrue(result['providerConfigurationBytesMatched']);self.assertTrue(result['rawPayloadCorrelationVerified'])
         for name in ['sourceRuntimeOnDiskVerified','invocationArgvVerified','launchEnvironmentVerified','eligibleForMeasurement','independentReviewPerformed','ledgerFinalized']:
@@ -117,15 +128,7 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.bind()
 
     def test_legacy_provider_is_verified_without_adding_catalog_or_changing_source(self):
-        self.receipt['version']=provider.evidence.LEGACY_PROVIDER_VERSION
-        self.originals.pop(provider.preflight.model_catalog.FILE)
-        config=provider.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
-        self.originals['config.json']=provider.io.encoded(config)
-        guards=provider.trace.strict_json(self.originals['resource-guards.json'])
-        path='evals/skills/routing/production_heldout_model_catalog.py'
-        for proof in guards.values():proof['sourceSha256'].pop(path,None)
-        self.originals['resource-guards.json']=provider.io.encoded(guards);self.rehash()
-        names=tuple(n for n in provider.preflight.SOURCE_FILES if n!=path)
+        names=self.legacy_provider()
         with patch('production_matrix_calibration.source_files',return_value=names):
             self.assertTrue(self.verify()['providerConfigurationBytesMatched'])
         with patch('production_matrix_calibration.source_files',return_value=provider.preflight.SOURCE_FILES),\
