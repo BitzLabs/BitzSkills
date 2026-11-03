@@ -21,7 +21,7 @@
 期待値の根拠は規範文と、このモジュールの参照計算だけである（Coreの出力は根拠にしない）。
 
 - 診断レジストリ: `INPUT-BOM-CONFIG`（`SPEC-INPUT-BOM-001`）、`CONFIG-KEY-PROFILES`と`CONFIG-KEY-UNKNOWN`（どちらも`SPEC-CONFIG-UNKNOWN-001`）は`warning`／`passed_with_warnings`、
-  返しうる操作は`all`、継続単位は`continue`。`WORKSPACE-ENTRY-UNKNOWN`（`SPEC-WORKSPACE-UNKNOWN-001`）は`check`と`doctor`、`VERIFY-MEMBER-TARGETS-EMPTY`
+  返しうる操作は`all`、継続単位は`continue`。`WORKSPACE-ENTRY-UNKNOWN`（`SPEC-WORKSPACE-UNKNOWN-001`）は`check`（確認事項C83で`doctor`を外した）、`VERIFY-MEMBER-TARGETS-EMPTY`
   （`SPEC-VERIFY-BLOCKED-002`）は`verify`（複合ワークスペースの1つのワークスペースの対象が0件のとき`warning`）。`CONFIG-SCHEMA-MINOR-NEWER`は、Coreが未実装（確認事項C93）なので扱わない。
 - 結果・診断・終了コード §2: 全体事前検査を通過した各ワークスペースの設定の警告は、どの全体操作でも、そのワークスペースの`diagnostics`へ置く。最上位の`diagnostics`は複製しない。
   §3: `warning`だけならワークスペースと全体は`passed_with_warnings`で、終了コードは0。最悪値の集約は`error > failed > blocked > passed_with_warnings > passed`。
@@ -387,8 +387,8 @@ def reference_diagnostics(operation, workspace):
             found.append(entry("profiles", key=key))
         elif key not in STANDARD_KEYS:
             found.append(entry("unknown-key", key=key))
-    # 未知のファイル（診断レジストリ: `check`と`doctor`）。
-    if operation in ("check", "doctor"):
+    # 未知のファイル（診断レジストリ: `check`だけ）。
+    if operation == "check":
         found += [entry("unknown-file", path=f".spec/{name}") for name in workspace["unknown"]]
     # 強い関係の参照先の不在（`check`）。参照先はワークスペースの内のローカルID。
     if operation == "check":
