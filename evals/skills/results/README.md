@@ -55,5 +55,22 @@
 `candidates/`、現行の契約・バッチ・評価コードは、監査・試験または運用入口からの参照があるため残す。
 これらの役割がなくなった時点で改めて整理する。
 
-検証は評価契約の監査、全スキル単体試験、適合fixtureの監査、変更した文書のリンクと削除先への参照の確認を行う。
+確定したGitの参照で測った整理結果は次のとおりである。対象は`evals/skills/`の追跡ファイルであり、Git履歴の容量ではない。
+
+| 項目 | 整理前 `8776ead9` | 整理後 `f56887e6` |
+|---|---:|---:|
+| ファイル数 | 1,051 | 353 |
+| ファイル内容の合計 | 50,420,799バイト（48.09 MiB） | 4,002,254バイト（3.82 MiB） |
+| 圧縮証拠ファイル | 168 | 7 |
+
+旧結果703ファイルを削除し、必要な履歴の一覧と回帰試験が使う4モジュールを追加した。
+残した原記録27ファイルは整理前のバイト列と一致し、移設した11関数は構文木の比較で検査ロジックが同一であることを確認した。
+現行文書に削除先へのリンクがないこと、変更した文書の相対リンクと見出しへの参照、現在のPythonコードの結果ファイル参照も確認した。
+
+評価契約の監査は`Passed`、`errors: []`、終了コード0。
+適合fixtureの監査は検査エラー0、pendingが`full Gate A fresh-checkout repeatability`だけ、規定どおり終了コード1だった。
+確定コミット`f56887e6`で、`PYTHONPATH`を`plugins/bitz-core/src`へ設定して
+`uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'`を実行し、`Ran 1174 tests`、`OK`、終了コード0を確認した。
+評価契約の監査コマンドは`uv run --offline evals/skills/validate.py audit`、適合fixtureの監査コマンドは`uv run fixtures/validate_conformance.py`である。
+依存パッケージのキャッシュと一時出力はリポジトリ内へ限定し、モデルの新規評価、予約、非公開原記録の読取りは行っていない。
 整理そのものを、未完了のR04〜R11やSkill Gateの通過とは扱わない。
