@@ -655,8 +655,13 @@ def target_expansion(
         if pair not in edges[doc_id]:
             edges[doc_id].append(pair)
 
-    def _applicable_refinement_statements(stmt_id: str) -> list[str]:
-        """``stmt_id``を（推移的に）`refines`する適用可能な文書の規範文を、ID順・発見順で返す。
+    def _applicable_refinement_statements(stmt_ids: list[str], *, origin_doc: str | None = None) -> list[str]:
+        """``stmt_ids``の具体化文書の規範文を、推移的な具体化を終端まで辿って、ID順・発見順で返す（§6.4）。
+
+        具体化文書は「選択した文書または規範文を`refines`する適用可能な文書」（用語集、§6.4）である。規範文を規範文IDで
+        `refines`する文書を見つけたら、その文書の規範文と、その文書自身を次の選択とし、規範文IDの`refines`と文書IDの`refines`の
+        両方で辿る（確認事項C54。どの起点でも同じ）。``origin_doc``は規則1（文書を起点にした場合）の起点の文書で、
+        起点の文書を文書IDで`refines`する文書も含める。規則2・3の起点の文書は、文書IDの`refines`の起点にしない。
 
         `refines`する文書はカタログ全体（``id_index``）から探す（TASKを起点にした場合、`refines`する文書は
         起点自身の`interpret`の閉包に含まれていないことがあるため）。見つけた`refines`する文書は
@@ -664,60 +669,40 @@ def target_expansion(
         """
 
         out: list[str] = []
-        seen: set[str] = set()
-        frontier = [stmt_id]
+        seen_statements: set[str] = set()
+        seen_documents: set[str] = set()
+        # ``frontier``の要素は``("statement", 規範文ID)``または``("document", 文書ID)``。
+        frontier: list[tuple[str, str]] = [("statement", stmt_id) for stmt_id in stmt_ids]
+        if origin_doc is not None:
+            seen_documents.add(origin_doc)
+            frontier.append(("document", origin_doc))
         while frontier:
-            target = frontier.pop(0)
+            kind, target = frontier.pop(0)
             candidates: list[tuple[str, DocEntry]] = []
             for cand_id, cand_entry in canonical:
                 if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                     continue
-                if target in _refines_target_statements(cand_entry, id_index, statement_index):
+                if kind == "statement":
+                    matched = target in _refines_target_statements(cand_entry, id_index, statement_index)
+                else:
+                    matched = target in _refines_target_documents(cand_entry, id_index, statement_index)
+                if matched:
                     candidates.append((cand_id, cand_entry))
             # ``cand_id``は``id_index``の索引のキー（複合ワークスペースでは他のワークスペースの候補が`ws::local`の
             # 修飾形式）であり、``cand_entry.doc_id``（常に修飾なし）ではなくこちらをコンテキストの追跡のキーに使う
             # （単一ワークスペースでは両者が一致するため挙動を変えない）。
             for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
-                _ensure_in_context(cand_id, "refines", cand_id, pred=_owner(target))
+                _ensure_in_context(cand_id, "refines", cand_id, pred=_owner(target) if kind == "statement" else target)
                 ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
                 for stmt in cand_entry.statements:
                     sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
-                    if sid not in seen:
-                        seen.add(sid)
+                    if sid not in seen_statements:
+                        seen_statements.add(sid)
                         out.append(sid)
-                        frontier.append(sid)
-        return out
-
-    def _applicable_document_refinement_statements(doc_id: str) -> list[str]:
-        """``doc_id``を文書IDで（推移的に）`refines`する適用可能な文書の規範文を、ID順・発見順で返す（§6.4の規則1）。
-
-        具体化文書は「選択した文書または規範文を`refines`する適用可能な文書」（用語集、§6.4）なので、文書IDで`refines`する文書の
-        規範文も対象規範文に含める。見つけた文書の規範文を`refines`する文書と、その文書を文書IDで`refines`する文書も推移的に
-        たどる（確認事項C54）。
-        """
-
-        out: list[str] = []
-        seen_docs: set[str] = {doc_id}
-        frontier = [doc_id]
-        while frontier:
-            target_doc = frontier.pop(0)
-            candidates = [
-                (cand_id, cand_entry)
-                for cand_id, cand_entry in canonical
-                if cand_entry.kind in ("REQ", "TECH")
-                and _is_applicable(cand_entry)
-                and target_doc in _refines_target_documents(cand_entry, id_index, statement_index)
-            ]
-            for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
-                _ensure_in_context(cand_id, "refines", cand_id, pred=target_doc)
-                ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
-                for stmt in cand_entry.statements:
-                    sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
-                    out.append(sid)
-                    out.extend(_applicable_refinement_statements(sid))
-                if cand_id not in seen_docs:
-                    seen_docs.add(cand_id)
-                    frontier.append(cand_id)
+                        frontier.append(("statement", sid))
+                if cand_id not in seen_documents:
+                    seen_documents.add(cand_id)
+                    frontier.append(("document", cand_id))
         return out
 
     target_statements: list[str] = []
@@ -737,13 +722,13 @@ def target_expansion(
             # 対象規範文を増やさず、`verify`の文書単位のテスト割当てとする（§6.4の規則3）。
             if ref in statement_index:
                 _add_target(ref)
-                for s in _applicable_refinement_statements(ref):
+                for s in _applicable_refinement_statements([ref]):
                     _add_target(s)
     elif root_entry.statements:
         if ":" in root:
             # 2. 規範文を起点にした場合: 指定した規範文とその具体化文書の規範文。ほかの規範文は隣接規範文（`adjacentStatements`）。
             _add_target(root)
-            for s in _applicable_refinement_statements(root):
+            for s in _applicable_refinement_statements([root]):
                 _add_target(s)
             for stmt in root_entry.statements:
                 if stmt["id"] != root:
@@ -752,10 +737,7 @@ def target_expansion(
             # 1. 文書を起点にした場合（規範文あり）: 所有するすべての規範文とその具体化文書の規範文。
             for stmt in root_entry.statements:
                 _add_target(stmt["id"])
-            for stmt in root_entry.statements:
-                for s in _applicable_refinement_statements(stmt["id"]):
-                    _add_target(s)
-            for s in _applicable_document_refinement_statements(owning_id):
+            for s in _applicable_refinement_statements([stmt["id"] for stmt in root_entry.statements], origin_doc=owning_id):
                 _add_target(s)
     # 5. 規範文のないTECHを起点にした場合は`targetStatements`を空のままとする。
 
