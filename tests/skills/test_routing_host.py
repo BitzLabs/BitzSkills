@@ -76,6 +76,7 @@ class RoutingHostTests(unittest.TestCase):
                 self.assertTrue(result["isError"])
                 self.assertNotIn("HIDDEN_INPUT_SENTINEL", json.dumps(result))
             for name, arguments in [("run_bitz", {}), ("run_fixture_test", {}), ("shell", {"command": "cat cases.json"}),
+                                    ("read_resource", {"uri": self.manifest["skills"][0]["path"]}),
                                     ("read_resource", {"path": self.manifest["skills"][0]["path"], "extra": True}),
                                     ("list_resources", {"path": "cases.json"}), ("read_resource", [])]:
                 self.assertTrue(value.call(name, arguments)["isError"])
