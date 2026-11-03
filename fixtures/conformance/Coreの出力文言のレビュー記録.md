@@ -622,3 +622,50 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 | summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-YAML-SYNTAX`） | `config.py`の設定のYAMLの構文の不正 | `設定YAMLの構文が不正です` | `MULTI-057-02`、`SINGLE-170-01`、`SINGLE-170-08`（2026-11-03に追加）；生成器・監査`multi_member_config_source_fixtures.py`、`workspace_selection_fixtures.py` |
 
 - Coreの出力は変えない。既存のfixtureの期待値も変えない。
+
+## 2026-11-04: argvの要素の上限と、フロントマターのパスの形式の不正の文言の分離（C84・C85）
+
+### 追加の理由
+
+- 実装の確認事項C84・C85。次の2つの診断は、条件IDが同じ別の原因を、同じ文言で返していた。原因の内訳が出力から分からなかった。
+  表記規則 §3.5の7（同じ条件IDの中で原因の内訳が異なる診断は、内訳ごとに文型を分けてよい）に基づき、文言を分ける。
+  - **C84**: `verify`で`{tests}`を展開した後、argvの1要素がバイト数上限（32 KiB）を超えたとき（`SPEC-VERIFY-BLOCKED-001`、`VERIFY-ARGV-EXPANDED-LIMIT`）。
+    総和の上限（1 MiB）と同じ文言「{tests}展開後のargvがバイト数上限1 MiBを超えます」（行#140）を返していたので、要素の上限の超過なのに「1 MiB」と表示した。
+  - **C85**: フロントマターのパス（`implements`、`changes`、`tests[].path`）が字句の規則（globの文字`*?[]`、絶対パス、`.`、`..`、NUL、空文字列）で拒否されたとき
+    （`SPEC-FM-SCHEMA-001`、`FM-FIELD-TYPE`）。型の不正と同じ文言（`implements`と`changes`は「…は文字列の配列が必要です」、`tests[i].path`は「…は文字列が必要です」。行#48・#49）を返していたので、
+    文字列の配列を書いたのに「文字列の配列が必要」と表示した。
+- 型の不正（配列でない、文字列でない要素）の文言と、総和の上限の文言は変えない。行#48・#49・#140の対応表は編集しない。この節が、それぞれの内訳の文言を追加する。
+
+### 管理者の承認
+
+- 2026-11-04、人間の管理者（ユーザー）が、次の2件の文言を承認した（ADR-062 Decision 2。選択肢から推奨案を選択）。
+- **この文字列は、規範文から一意に導いた値ではなく、管理者が承認した値である。** 文型は、既存の「メンバーのパスの形式が不正です」「作業ディレクトリのパスの形式が不正です」（2026-11-02の節）と、
+  行#140の「{tests}展開後のargvがバイト数上限…を超えます」に合わせた。
+
+| 種類 | 診断（条件） | Coreの位置 | 文言 | 固定しているfixtureまたは単体試験 |
+|---|---|---|---|---|
+| summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`、`{tests}`展開後のargvの1要素が32 KiBを超える） | `messages.py`の`VERIFY_ARGV_EXPANDED_ELEMENT_LIMIT`（`verify.py`の要素の検査） | `{tests}展開後のargvの要素がバイト数上限32 KiBを超えます` | 単体試験`tests/bitz-core/test_output_wording_limits_paths.py`の`ExpandedArgvLimitTests`（適合fixtureなし） |
+| summary | `SPEC-FM-SCHEMA-001`（`FM-FIELD-TYPE`、フロントマターのパスの字句の違反） | `messages.py`の`fm_path_form_error`（`frontmatter.py`の`_check_path_array`と`tests[].path`の検査） | `フロントマターのフィールド{key}のパスの形式が不正です`（`{key}`は`implements`、`changes`、`tests[i].path`） | `SINGLE-171-01`〜`06`；生成器・監査`frontmatter_glob_fixtures.py`、単体試験`FrontmatterPathFormTests`（同上） |
+
+- C84の要素の経路は、実ファイルでは再現できないので、適合fixtureで固定できない。適合fixtureは変わらず、単体試験が固定する。
+  総和の経路は、既存の`SINGLE-126-08`が固定する（文言は行#140のまま変えない）。
+- `source`、`code`、`severity`、`resultStatus`は変えない。`suggestedAction`は付けない。
+- C85の`{key}`の値は、型の不正の行#48・#49と同じ集合（`implements`、`changes`、`tests[i].path`）である。型の不正の経路（`SINGLE-088`・`SINGLE-120-04`）は変わらない。
+
+### 期待値の訂正の対象
+
+- ADR-051の期待値の訂正（規範と承認済みの文言から導いた値への訂正）である。Coreの出力に合わせて曲げたのではなく、承認済みの文言を生成器の定数に置き、生成し直した。
+- 訂正したのは`SINGLE-171-01`〜`06`の`expected/check.json`の`diagnostics[0].summary`だけである。
+
+| fixture | キー | 旧い期待値（C43の追加の時点） | 新しい期待値 |
+|---|---|---|---|
+| `SINGLE-171-01`、`SINGLE-171-04` | `implements` | `フロントマターのフィールドimplementsは文字列の配列が必要です` | `フロントマターのフィールドimplementsのパスの形式が不正です` |
+| `SINGLE-171-02`、`SINGLE-171-05` | `changes` | `フロントマターのフィールドchangesは文字列の配列が必要です` | `フロントマターのフィールドchangesのパスの形式が不正です` |
+| `SINGLE-171-03`、`SINGLE-171-06` | `tests[0].path` | `フロントマターのフィールドtests[0].pathは文字列が必要です` | `フロントマターのフィールドtests[0].pathのパスの形式が不正です` |
+
+- ほかの期待値は変えない。入力、`manifest.json`、`side-effects.json`、件数、`code`、`source`は同じである。
+- 全件を確かめた結果、旧い文言を期待値に持つ適合fixtureは、上の6件だけだった。型の不正を押さえる`SINGLE-088`（`title: 42`）・`SINGLE-120-04`（`changes: 42`）は、型の不正なので変わらない。
+  総和の上限を押さえる`SINGLE-126-08`も変わらない。`SINGLE-126-05`の「argvの各要素はUTF-8で32 KiB以下で指定してください」は、`{tests}`の展開前の別の診断（設定の検査）である。
+- 監査の回帰試験（`test_frontmatter_glob_audit_rejects_changed_expectations`）は、6件の期待を旧い文言へ取り違える改変を拒否する。
+  修正前のCore（`origin/main`の`plugins/bitz-core`）に対して、`SINGLE-171-01`〜`06`は`summary`の差で失敗する。`07`・`08`は診断がないので通る。
+- 既存のレビュー記録（[フロントマターのパスのglobの文字](single/フロントマターのパスのglobの文字のレビュー記録.md)）の診断の文言の節を、新しい文言に合わせた。
