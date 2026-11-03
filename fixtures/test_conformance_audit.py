@@ -6000,7 +6000,7 @@ class AuditTests(unittest.TestCase):
                     self.assertNotIn("KeyError", outcome["errors"][0])
 
     def test_multi_doctor_git_catalog_fixtures(self):
-        """`MULTI-058-01`〜`06`: Gitの境界を確定できない`doctor`が、Gitを使わずに判定できるカタログの不適合も並べて返すことを固定する（確認事項C50）。"""
+        """`MULTI-058-01`〜`06`: Gitの境界を確定できない`doctor`が、ルートの設定の本文だけで判定できるカタログの不適合も並べて返すことを固定する（確認事項C50）。"""
         module = multi_doctor_git_catalog_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
@@ -6066,7 +6066,7 @@ class AuditTests(unittest.TestCase):
         self.assertIsNone(module.classify_catalog(valid.replace("    - id: api\n      path: services/api\n", "") + "  exclude:\n    - cases/x\n"))
         for bad in ("/abs", "a/../b", ".."):
             self.assertEqual(module.classify_catalog(valid + f"  exclude:\n    - {bad}\n"), "exclude")
-        # `doctor`だけが、Gitを使わずに判定できる不適合を並べて返し、`catalog`を`failed`にする。ほかの操作はGitの診断だけ。
+        # `doctor`だけが、ルートの設定の本文だけで判定できる不適合を並べて返し、`catalog`を`failed`にする。ほかの操作はGitの診断だけ。
         expected = module.reference_expected(empty, "doctor", "all")
         self.assertEqual((expected["diagnostics"], expected["checks"], expected["status"], expected["exit"], expected["subjectId"]),
                          (["git", "config"], [("core", "passed"), ("git", "blocked"), ("catalog", "failed")], "failed", 1, "platform"))

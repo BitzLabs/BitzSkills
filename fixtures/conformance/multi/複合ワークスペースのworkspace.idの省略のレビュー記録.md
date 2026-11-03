@@ -147,7 +147,7 @@
   2. Gitの境界を確定できず止まるときも、ルートの同一性は`null`である（既定値`root`を使わない）。単体試験（同じファイルの`test_git_boundary_unknown_keeps_null_identity`、
      `test_doctor_without_git_has_null_identity`）が固定し、この群の fixture では固定しない。Gitの不在と設定の不備が重なる`doctor`の診断の並びが、既存の`MULTI-040-01`〜`03`の規則
      （ADR-065）にどう載るかは、この群で新たに固定しないため。（2026-11-03、実装の確認事項C50のユーザーの決定で、`doctor`はGitの境界を確定できずに止まる場合も、
-     ルートの`workspace.id`の省略などGitを使わずに判定できるカタログの不適合を並べて返すと定めた（`04_doctor.md` §3）。単体試験の`doctor`の期待もこれに合わせた。）
+     ルートの`workspace.id`の省略などルートの設定の本文だけで判定できるカタログの不適合を並べて返すと定めた（`04_doctor.md` §3、ADR-070）。単体試験の`doctor`の期待もこれに合わせた。）
   ルートの版の非対応で止まるときの`null`（`13`〜`16`）は、規範の明記（コミット`706eae6d`）で規範になった。この明記より前は、規範文に書かれていなかった。
 - 基準版が`multiWorkspace`ありでルートのIDを省略していた（修正前のCoreでは通っていた）リポジトリで、現在版に`workspace.id`を加えると、
   `check --all-workspaces --base <基準版>`は`SPEC-STATE-TRANSITION-001`（「管理済みの仕様文書が削除されています」、`workspaceId`は`root`）で`failed`になる。
