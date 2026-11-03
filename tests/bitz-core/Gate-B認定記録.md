@@ -1119,3 +1119,23 @@ Core固有の単体試験は1134件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1136件がすべて成功した。
+
+## 2026-11-03: 単一ワークスペースの--workspaceと宣言のない--all-workspacesを直した後のStep 1〜5の再判定
+
+`activews.py`、`multiws.py`などで、単一ワークスペースの`--workspace`を同一性を構成できないときは比べず、宣言のない`--all-workspaces`を引数不正にした（実装の確認事項C73・C64）。
+これを固定する`SINGLE-170-01`〜`SINGLE-170-08`（Step 1・3・4・5）を追加した。
+修正前のCore（コミット`c4ff9233`の版）では、追加した8件のうち6件（`-01`、`-02`、`-04`〜`-07`）が非成功となり、対照の`-03`、`-08`と既存の605件はすべて通過することを確かめた。
+修正後のCoreでは613件すべてが`passed`となる。
+
+コミット`282d59b380520d539d29cbaf875bff31efb1fd6a`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 613件（`SINGLE-170-01`〜`08`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`021bb23b0acae46e3b9445b85fb1162073b5c65a79fa70214074115b25fc4d07` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1140件がすべて成功した。
