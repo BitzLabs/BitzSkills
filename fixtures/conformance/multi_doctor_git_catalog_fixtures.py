@@ -1,8 +1,8 @@
-"""Gitの境界を確定できない`doctor`が、Gitを使わずに判定できるカタログの不適合も並べて返すことを固定する（Coreの公開操作は実行しない）。
+"""Gitの境界を確定できない`doctor`が、ルートの設定の本文だけで判定できるカタログの不適合も並べて返すことを固定する（Coreの公開操作は実行しない）。
 
 実装の確認事項C50（ADR-051の追加）に対応する。`doctor`仕様 §3は、設定の不適合とGitの不在を独立した原因とし、Gitの境界を確定できずに止まる場合も、
-Gitを使わずに判定できるカタログの不適合（ルートの`workspace.id`の省略、`multiWorkspace`の形状、除外のパスの不正。いずれも`SPEC-MULTI-CONFIG-001`）を
-`SPEC-MULTI-GIT-001`と並べて返し、検査項目`catalog`を`failed`とする。メンバーの設定、パス、未登録の設定などGitを使う検査は行わない。
+ルートの設定の本文だけで判定できるカタログの不適合（ルートの`workspace.id`の省略、`multiWorkspace`の型と件数、除外のパスの不正。いずれも`SPEC-MULTI-CONFIG-001`）を
+`SPEC-MULTI-GIT-001`と並べて返し、検査項目`catalog`を`failed`とする。メンバーの設定、メンバーのパス、未登録の設定など、ルートの候補の位置に依存する検査は行わない。
 単独の`doctor`の全体事前検査も同じである。ほかの操作（`check`、`verify`）は、`SPEC-MULTI-GIT-001`だけを返す（複合ワークスペース仕様 §3）。
 修正前のCoreは、Gitがないと`doctor`も`SPEC-MULTI-GIT-001`だけを返し、カタログの不適合を隠した。
 この群は、その併記と、併記しない境界を、6件で固定する。基本のリポジトリは`MULTI-040`と同じ形（ルート`platform`、
@@ -15,7 +15,7 @@ Gitを使わずに判定できるカタログの不適合（ルートの`workspa
 | `MULTI-058-02` | `doctor`（単独）、`.`。Git不在 | 除外のパス`../x`が不正。`SPEC-MULTI-GIT-001`と`SPEC-MULTI-CONFIG-001`（`multiWorkspace.exclude`）の両方。単独結果（`workspace`）。`failed`／1 |
 | `MULTI-058-03` | `doctor --all-workspaces`、`.`。Git不在 | ルートの`workspace.id`の省略。`SPEC-MULTI-CONFIG-001`（`workspace.id`、`workspaceId: null`）と`SPEC-MULTI-GIT-001`の両方。`multiWorkspace.id`は`null`。`failed`／1 |
 | `MULTI-058-04` | `doctor --all-workspaces`、`.`。Git不在 | 対照: カタログが妥当。`SPEC-MULTI-GIT-001`だけ。`catalog`を置かない。`blocked`／2。修正前のCoreも通る |
-| `MULTI-058-05` | `doctor --all-workspaces`、`.`。Git不在 | 対照: カタログの形状は妥当で、Gitを使う検査の不備（メンバー`web`のIDの不一致、未登録の設定）がある。`SPEC-MULTI-GIT-001`だけ。`blocked`／2。修正前のCoreも通る |
+| `MULTI-058-05` | `doctor --all-workspaces`、`.`。Git不在 | 対照: カタログの形状は妥当で、ルートの候補の位置に依存する検査の不備（メンバー`web`のIDの不一致、未登録の設定）がある。`SPEC-MULTI-GIT-001`だけ。`blocked`／2。修正前のCoreも通る |
 | `MULTI-058-06` | `check --all-workspaces`、`.`。Git不在 | 対照: `058-01`と同じ入力。`check`は`SPEC-MULTI-GIT-001`だけ。`blocked`／2。修正前のCoreも通る |
 
 期待値の根拠は規範文（`doctor` §3、複合ワークスペース仕様 §3、結果・診断・終了コード §2.3・§3・§7、診断レジストリ）と、
@@ -53,7 +53,7 @@ MEMBER_LINES = "    - id: web\n      path: apps/web\n    - id: api\n      path: 
 STATUS_RANK = {"blocked": 1, "failed": 2, "error": 3}
 EXIT_CODE = {"blocked": 2, "failed": 1, "error": 3}
 
-# 操作: all=`--all-workspaces`、single=単独。inputs: ルートの設定の種類。defect: Gitを使わずに判定できるカタログの不適合の種類
+# 操作: all=`--all-workspaces`、single=単独。inputs: ルートの設定の種類。defect: ルートの設定の本文だけで判定できるカタログの不適合の種類
 # （`members`、`exclude`、`root-id`）。`None`は併記する不適合がない対照。
 CASES = {
     "MULTI-058-01": dict(op="doctor", form="all", cwd=".", inputs="members-empty", defect="members", status="failed", exit=1,
@@ -105,7 +105,7 @@ def reviewed_inputs(identifier):
     repo = base_files()
     repo[ROOT_CONFIG_PATH] = root_text(kind)
     if kind == "member-defects":
-        # メンバー`web`の設定のIDがカタログと異なり、カタログにない`tools/x`に設定がある。どちらもGitを使う検査の対象である。
+        # メンバー`web`の設定のIDがカタログと異なり、カタログにない`tools/x`に設定がある。どちらもルートの候補の位置に依存する検査の対象である。
         repo[WEB_CONFIG_PATH] = multi_reference.plain_config("frontend")
         repo[TOOLS_CONFIG_PATH] = multi_reference.plain_config("x")
     return {name: (data if isinstance(data, bytes) else data.encode()) for name, data in repo.items()}
@@ -192,7 +192,7 @@ def reviewed_result(identifier):
 # --- 参照計算 --------------------------------------------------------------------------------
 
 def classify_catalog(text):
-    """ルートの設定の本文から、Gitを使わずに判定できるカタログの不適合の種類を導く。ない場合は`None`。
+    """ルートの設定の本文だけで判定できるカタログの不適合の種類を導く。ない場合は`None`。
 
     複合ワークスペース仕様 §2・§2.1とADR-064: ルートの`workspace.id`の省略が最優先（ほかのカタログの不備より優先）、次に`multiWorkspace.members`の形状、
     次に除外のパス。除外のパスの不正は、字句の規則に反するもの（空、絶対パス、`..`の要素）とする。
@@ -216,7 +216,7 @@ def reference_expected(text, op, form):
     """参照計算: ルートの設定の本文、操作から、診断のコードと並び、最上位の`checks`、状態、終了コード、対象のIDを導く。
 
     - この群はいずれもGit不在で、Gitの境界を確定できずに止まる。`SPEC-MULTI-GIT-001`（`blocked`）は全操作が返す。
-    - `doctor`だけが、Gitを使わずに判定できるカタログの不適合（`SPEC-MULTI-CONFIG-001`、`failed`）を並べて返し、`catalog`を`failed`とする（`doctor` §3）。
+    - `doctor`だけが、ルートの設定の本文だけで判定できるカタログの不適合（`SPEC-MULTI-CONFIG-001`、`failed`）を並べて返し、`catalog`を`failed`とする（`doctor` §3）。
     - 状態は診断の効果の最悪値（`failed`>`blocked`）。
     """
     defect = classify_catalog(text) if op == "doctor" else None
@@ -266,7 +266,7 @@ def check_conditions(identifier, repository):
     if classify_catalog(text) != INPUT_DEFECT[case["inputs"]]:
         raise ValueError("ルートの設定のカタログの不適合の種類が期待と異なります")
     if case["inputs"] == "member-defects":
-        # カタログの形状は妥当で、Gitを使う検査の不備だけがある。
+        # カタログの形状は妥当で、ルートの候補の位置に依存する検査の不備だけがある。
         if classify_catalog(text) is not None:
             raise ValueError("カタログの形状は妥当である必要があります")
         if read_yaml((repository / WEB_CONFIG_PATH).read_text(encoding="utf-8"))["workspace"]["id"] == "web":

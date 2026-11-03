@@ -7,18 +7,18 @@
 
 ## 追加の理由
 
-Gitを利用できない（またはリポジトリの外の）複合ワークスペースで、`doctor`は`SPEC-MULTI-GIT-001`だけを返し、Gitを使わずに判定できるカタログの不適合
-（`multiWorkspace`の形状、除外のパス、ルートの`workspace.id`の省略）を隠していた（実装の確認事項C50）。Gitがあれば、同じ入力で`SPEC-MULTI-CONFIG-001`を返す。
+Gitを利用できない（またはリポジトリの外の）複合ワークスペースで、`doctor`は`SPEC-MULTI-GIT-001`だけを返し、ルートの設定の本文だけで判定できるカタログの不適合
+（`multiWorkspace`の型と件数、除外のパス、ルートの`workspace.id`の省略）を隠していた（実装の確認事項C50）。Gitがあれば、同じ入力で`SPEC-MULTI-CONFIG-001`を返す。
 ユーザーの決定（2026-11-03）に基づき、[`doctor`仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md) §3と
 [複合ワークスペース仕様](../../../docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md) §3が、`doctor`だけは設定の不適合とGitの不在を独立した原因とし、
-Gitの境界を確定できずに止まる場合も、Gitを使わずに判定できるカタログの不適合を並べて返すと定めた（コミット`b1216175`）。既存のfixtureは、
+Gitの境界を確定できずに止まる場合も、ルートの設定の本文だけで判定できるカタログの不適合を並べて返すと定めた（コミット`b1216175`）。既存のfixtureは、
 Gitの不在とルートの設定の停止（版の非対応と構文の不正。`MULTI-040`）を固定していたが、カタログの不適合との併記を固定していなかったので、6件を追加する。
 既存の入力と期待値は変えない。
 
 ## 根拠の規範文
 
-- `doctor`仕様 §3: Gitの境界を確定できずに止まる場合も、Gitを使わずに判定できるカタログの不適合（ルートの`workspace.id`の省略、`multiWorkspace`の形状、
-  除外のパスの不正。`SPEC-MULTI-CONFIG-001`）を並べて返し、検査項目`catalog`を`failed`とする。メンバーの設定、パス、未登録の設定などGitを使う検査は行わない。
+- `doctor`仕様 §3: Gitの境界を確定できずに止まる場合も、ルートの設定の本文だけで判定できるカタログの不適合（ルートの`workspace.id`の省略、`multiWorkspace`の型と件数、
+  除外のパスの不正。`SPEC-MULTI-CONFIG-001`）を並べて返し、検査項目`catalog`を`failed`とする。メンバーの設定、メンバーのパス、未登録の設定など、ルートの候補の位置に依存する検査は行わない。
   単独の`doctor`の全体事前検査も同じ。ほかの操作は設定の停止の診断だけ（`SPEC-MULTI-GIT-001`だけ）。
 - 複合ワークスペース仕様 §3: `doctor`以外の操作は`SPEC-MULTI-GIT-001`だけを返す。§2: ルートワークスペースの`workspace.id`は必須で、既定値`root`を有効なIDとみなさない。
   除外のパスはADR-064。
@@ -39,7 +39,7 @@ Gitのある入力は、この群にはない。
 | `MULTI-058-02` | `doctor`（単独）、`.` | `multiWorkspace.exclude: [../x]` | `failed`／1。`SPEC-MULTI-GIT-001`、`SPEC-MULTI-CONFIG-001`（`multiWorkspace.exclude`）。`checks`は`058-01`と同じ。単独結果（`workspace`は`{platform, .}`） |
 | `MULTI-058-03` | `doctor --all-workspaces`、`.` | `workspace`キーなし（ルートの`workspace.id`の省略） | `failed`／1。`SPEC-MULTI-CONFIG-001`（`workspace.id`、`workspaceId: null`）、`SPEC-MULTI-GIT-001`。`checks`は`058-01`と同じ。`multiWorkspace`は`{null, .}` |
 | `MULTI-058-04` | `doctor --all-workspaces`、`.` | 妥当 | 対照: `blocked`／2。`SPEC-MULTI-GIT-001`だけ。`checks`は`core`・`git`（`blocked`）で`catalog`を置かない |
-| `MULTI-058-05` | `doctor --all-workspaces`、`.` | 妥当。`web`の設定の`workspace.id`が`frontend`、カタログにない`tools/x`に設定がある | 対照: `blocked`／2。`SPEC-MULTI-GIT-001`だけ。Gitを使う検査（メンバーのIDの不一致、未登録の設定）は行わない |
+| `MULTI-058-05` | `doctor --all-workspaces`、`.` | 妥当。`web`の設定の`workspace.id`が`frontend`、カタログにない`tools/x`に設定がある | 対照: `blocked`／2。`SPEC-MULTI-GIT-001`だけ。ルートの候補の位置に依存する検査（メンバーのIDの不一致、未登録の設定）は行わない |
 | `MULTI-058-06` | `check --all-workspaces`、`.` | `multiWorkspace.members: []`（`058-01`と同じ） | 対照: `blocked`／2。`SPEC-MULTI-GIT-001`だけ。`revision: null`、`scope: all-workspaces`、`workspaces`は空 |
 
 診断の文言は、既存のfixtureが固定済みの承認済みの文字列だけを使う（`Coreの出力文言のレビュー記録.md`）。`members`の0件は「設定キーmultiWorkspace.membersは1件以上指定してください」
@@ -69,15 +69,18 @@ Gitのある入力は、この群にはない。
 | fixture | 修正前のCore | 失敗の内容 |
 |---|---|---|
 | `MULTI-058-01`〜`03` | 失敗 | `SPEC-MULTI-CONFIG-001`を返さない。`catalog`を置かない。`blocked`／2 |
-| `MULTI-058-04`〜`06` | **通る** | 対照: カタログが妥当、またはGitを使う検査の不備だけ、または`doctor`以外の操作は、`SPEC-MULTI-GIT-001`だけ |
+| `MULTI-058-04`〜`06` | **通る** | 対照: カタログが妥当、またはルートの候補の位置に依存する検査の不備だけ、または`doctor`以外の操作は、`SPEC-MULTI-GIT-001`だけ |
 
 ## 規範から導けなかった点・固定の程度
 
-- **メンバーのパスの形式の不正の扱い**。`doctor` §3が挙げるGitを使わずに判定できるカタログの不適合は、ルートの`workspace.id`の省略、`multiWorkspace`の形状、除外のパスの不正の3つである。
-  メンバーのパス（`SPEC-MULTI-PATH-001`の字句の不正、重複、入れ子）は、字句だけならGitを使わずに判定できるが、規範はこの3つに限り、「メンバーの設定、パス、未登録の設定などGitを使う検査は行わない」と書く。
+- **メンバーのパスの形式の不正の扱い**。`doctor` §3が挙げるルートの設定の本文だけで判定できるカタログの不適合は、ルートの`workspace.id`の省略、`multiWorkspace`の型と件数、
+  除外のパスの不正である（ADR-070）。メンバーのパス（`SPEC-MULTI-PATH-001`の字句の不正、重複、入れ子）は、メンバーの検査の一部としてルートの候補の位置に依存する検査と同じ段階で行うため、
+  規範は「メンバーの設定、メンバーのパス、未登録の設定など、ルートの候補の位置に依存する検査は行わない」と書く。
   この群は、メンバーのパスの不正を固定しない（`058-05`はメンバーのIDの不一致と未登録の設定だけを置く）。
-- **`multiWorkspace`の形状の例**。形状の不正には複数の種類がある（`members`の欠落・非配列・0件・要素の型、`maxMembers`の範囲外、`multiWorkspace`がマッピングでない）が、
-  承認済みの文言を既存のfixtureが固定している`members: []`だけをfixtureにした。ほかの形状は単体試験（`tests/bitz-core/test_doctor_no_git_catalog.py`）が確かめる。
+- **`multiWorkspace`の形状と除外のパスの例**。形状の不正には複数の種類がある（`multiWorkspace`の値の欠落、マッピングでない、`maxMembers`の範囲外、`members`の欠落・非配列・0件・要素の型）が、
+  承認済みの文言を既存のfixtureが固定している`members: []`だけをfixtureにした。除外のパスも、字句の不正（`../x`）だけをfixtureにした。
+  ほかの形状と、除外のパスの`.spec`・重複・入れ子・複数の要素の不正は、単体試験（`tests/bitz-core/test_doctor_no_git_catalog.py`）が、Gitがある場合の`doctor`と同じ診断と件数になることを確かめる。
+  単体試験は、Gitはあるがリポジトリの外で実行した場合も確かめる（この群のfixtureはGit不在だけを置く）。
 - **`failed`と`blocked`が並ぶときの`checks[]`**。最上位の`checks[]`の`git`は`blocked`、`catalog`は`failed`と、検査項目ごとの原因を保つ。状態の集約だけが最悪値の`failed`になる。
 - **Git不在の`check --all-workspaces`の`multiWorkspace.id`**。ルートが有効な`workspace.id`を明示していれば、`MULTI-019`の`doctor`と同じく`platform`とする（`058-06`）。
   ルートの`workspace.id`を省略した`check`の`null`は、既存の`MULTI-045-11`が固定している。
