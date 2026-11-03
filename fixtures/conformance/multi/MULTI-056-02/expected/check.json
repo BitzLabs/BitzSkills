@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "passed_with_warnings",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed_with_warnings",
+      "checkedDocumentCount": 2,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-IMPACT-OUTDATED-001",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "web::TECH-010が強く依存するweb::REQ-001が変更されています。再確認してください",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-010.md",
+            "key": "relations.refines"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

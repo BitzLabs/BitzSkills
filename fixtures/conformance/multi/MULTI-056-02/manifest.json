@@ -1,0 +1,40 @@
+{
+  "fixtureId": "MULTI-056-02",
+  "description": "全体のcheckは、自ワークスペースを修飾した参照だけの依存元も、変更された文書への影響の候補として警告する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "apps/web/.spec/requirements/REQ-001.md",
+        "source": "changes/REQ-001.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

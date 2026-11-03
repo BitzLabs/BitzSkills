@@ -105,4 +105,4 @@
 - `verify`の`CTX-STATE-001`・`CTX-TASK-DEPENDENCY-001`の複合ワークスペースでの修飾（単体試験`tests/bitz-core/test_multi_summary_qualified_ids.py`で固定している）。
 - テキスト形式・Markdown形式の出力。この群はJSONだけを固定する。
 - 単一ワークスペースの対照。修飾しない形は、既存の`SINGLE-051`、`SINGLE-144`、`SINGLE-159`、`SINGLE-142`などが固定している。
-- 範囲外: `check`の`SPEC-IMPACT-OUTDATED-001`と`SPEC-ID-DUPLICATE-001`の`summary`も、複合ワークスペースで作業ワークスペースのIDを修飾しない（同じ`check`の`SPEC-TASK-BOUNDARY-001`は修飾する）。2026-10-26の決定は上の4診断に限るので、実装の確認事項C69としてユーザーの判断を待つ。
+- 範囲外: `check`の`SPEC-IMPACT-OUTDATED-001`と`SPEC-ID-DUPLICATE-001`の`summary`も、複合ワークスペースで作業ワークスペースのIDを修飾しなかった（同じ`check`の`SPEC-TASK-BOUNDARY-001`は修飾する）。2026-10-26の決定は上の4診断に限るので、実装の確認事項C69とした。C69は`MULTI-056`が固定する（[複合ワークスペースの`check`の診断のsummaryの修飾のレビュー記録](複合ワークスペースのcheckの診断のsummaryの修飾のレビュー記録.md)）。

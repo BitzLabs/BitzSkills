@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-ID-DUPLICATE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "文書ID web::REQ-003が重複しています",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/requirements/REQ-003-a.md",
+            "key": "id"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
