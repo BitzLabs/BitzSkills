@@ -1,16 +1,17 @@
 """Gitの境界を確定できない`doctor`が、カタログの不適合も返すことの単体試験（確認事項 C50）。
 
-欠陥: Gitがない（またはリポジトリの外の）複合ワークスペースで、`doctor`は`SPEC-MULTI-GIT-001`だけを返し、Gitを使わずに判定できるカタログの不適合
-（`multiWorkspace`の形状、除外のパス、ルートの`workspace.id`の省略）を隠していた。Gitがあれば同じ入力で`SPEC-MULTI-CONFIG-001`を返す。
+欠陥: Gitがない（またはリポジトリの外の）複合ワークスペースで、`doctor`は`SPEC-MULTI-GIT-001`だけを返し、ルートの設定の本文だけで判定できるカタログの不適合
+（`multiWorkspace`の型と件数、除外のパス、ルートの`workspace.id`の省略）を隠していた。Gitがあれば同じ入力で`SPEC-MULTI-CONFIG-001`を返す。
 
 規範:
-- `04_doctor.md` §3: `doctor`は設定の不適合とGitの不在を独立した原因とする。Gitの境界を確定できずに止まる場合も、Gitを使わずに判定できるカタログの不適合
-  （`SPEC-MULTI-CONFIG-001`）を並べて返し、検査項目`catalog`を`failed`とする。
+- `04_doctor.md` §3: `doctor`は設定の不適合とGitの不在を独立した原因とする。Gitの境界を確定できずに止まる場合も、ルートの設定の本文だけで判定できるカタログの不適合
+  （`SPEC-MULTI-CONFIG-001`）を並べて返し、検査項目`catalog`を`failed`とする。ルートの候補の位置に依存する検査（メンバーの設定、パス、未登録の設定）は行わない（ADR-070）。
 - 複合ワークスペース仕様 §3: ほかの操作は`SPEC-MULTI-GIT-001`だけを返す。
 
 この試験の対象:
-1. Gitがないとき、`doctor`と`doctor --all-workspaces`は、形状・除外・ルートのIDの省略の不適合を`SPEC-MULTI-GIT-001`と並べて返し、`catalog`は`failed`、全体は`failed`／1。
-2. 診断の中身は、Gitがある場合の`doctor`の`SPEC-MULTI-CONFIG-001`と同じ。
+1. Gitがないとき、`doctor`と`doctor --all-workspaces`は、形状（`multiWorkspace`の値の欠落・非マッピング、`maxMembers`の範囲外、`members`の欠落・非配列・0件・要素の型）、
+   除外のパス（字句、`.spec`、重複、入れ子、複数の要素）、ルートのIDの省略の不適合を`SPEC-MULTI-GIT-001`と並べて返し、`catalog`は`failed`、全体は`failed`／1。
+2. 診断の中身と件数は、Gitがある場合の`doctor`の`SPEC-MULTI-CONFIG-001`と同じ。Gitはあるがリポジトリの外で実行した場合も同じ。
 3. カタログが妥当なら、`SPEC-MULTI-GIT-001`だけ（修正前と同じ）。
 4. `check`と`verify`は、どの入力でも`SPEC-MULTI-GIT-001`だけ。
 5. 結果は`result.schema.json`に適合する。
@@ -43,6 +44,15 @@ CASES = {
     "members-empty": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members: []\n",
     "members-type": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members: 3\n",
     "exclude-invalid": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS + "  exclude: [../x]\n",
+    "members-missing": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  maxMembers: 5\n",
+    "member-entry-type": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members: [web]\n",
+    "max-members-range": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  maxMembers: 0\n" + MEMBERS,
+    "not-mapping": CONFIG + "workspace:\n  id: platform\nmultiWorkspace: [web]\n",
+    "null-declaration": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n",
+    "exclude-spec": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS + "  exclude: [tools/.spec]\n",
+    "exclude-duplicate": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS + "  exclude: [tools, tools]\n",
+    "exclude-nested": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS + "  exclude: [tools, tools/x]\n",
+    "exclude-two": CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS + "  exclude: [../x, /abs]\n",
     "root-id-omitted": CONFIG + "multiWorkspace:\n" + MEMBERS,
 }
 
@@ -94,6 +104,8 @@ class DoctorWithoutGitTests(unittest.TestCase):
         _write(root, ".spec/bitz.yaml", root_config)
         _write(root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
         if git:
+            if subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, capture_output=True).returncode == 0:
+                raise unittest.SkipTest("一時ディレクトリがGitのリポジトリの中にあります")
             env = {**os.environ, **_GIT_ENV}
             for args in (["init", "-q", "--initial-branch=main"], ["add", "."],
                          ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base"]):
@@ -115,15 +127,21 @@ class DoctorWithoutGitTests(unittest.TestCase):
             with self.subTest(case=name):
                 with_git, _code = self.run_op("doctor", self.make(root_config, git=True), dict(os.environ))
                 expected = self.config_diagnostics(with_git)
-                self.assertEqual(len(expected), 1, (name, with_git["diagnostics"]))
+                self.assertEqual(len(expected), 2 if name == "exclude-two" else 1, (name, with_git["diagnostics"]))
+                self.assertEqual(len(with_git["diagnostics"]), len(expected), (name, with_git["diagnostics"]))
                 root = self.make(root_config, git=False)
-                for argv in ((), ("--all-workspaces",)):
-                    result, code = self.run_op("doctor", root, self.no_git, *argv)
-                    self.assertEqual((result["status"], code), ("failed", 1), (name, argv, result))
-                    self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["SPEC-MULTI-CONFIG-001", "SPEC-MULTI-GIT-001"])
-                    self.assertEqual(self.config_diagnostics(result), expected, (name, argv))
-                    checks = {c["name"]: c["status"] for c in result["checks"]}
-                    self.assertEqual((checks.get("git"), checks.get("catalog")), ("blocked", "failed"), (name, argv))
+                # Gitがない場合と、Gitはあるがリポジトリの外で実行した場合。
+                for env in (self.no_git, dict(os.environ)):
+                    for argv in ((), ("--all-workspaces",)):
+                        result, code = self.run_op("doctor", root, env, *argv)
+                        self.assertEqual((result["status"], code), ("failed", 1), (name, argv, result))
+                        self.assertEqual(
+                            sorted(d["code"] for d in result["diagnostics"]),
+                            ["SPEC-MULTI-CONFIG-001"] * len(expected) + ["SPEC-MULTI-GIT-001"],
+                        )
+                        self.assertEqual(self.config_diagnostics(result), expected, (name, argv))
+                        checks = {c["name"]: c["status"] for c in result["checks"]}
+                        self.assertEqual((checks.get("git"), checks.get("catalog")), ("blocked", "failed"), (name, argv))
 
     def test_valid_catalog_without_git_returns_only_the_git_diagnostic(self):
         root = self.make(CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n" + MEMBERS, git=False)
