@@ -94,7 +94,7 @@ def _is_bad_path(p: object) -> bool:
         return True
     if "\x00" in p:
         return True
-    if any(ch in p for ch in "*?["):
+    if any(ch in p for ch in "*?[]"):
         return True
     if any(seg in (".", "..") for seg in p.split("/")):
         return True
