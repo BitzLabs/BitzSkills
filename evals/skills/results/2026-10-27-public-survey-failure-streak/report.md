@@ -161,3 +161,75 @@ manifestのSHA-256は`f34a7bd1dc61e53a95487ad0df04541e4775b50e4f707b38c32960437e
 候補`9dd98312`は73資源（`activews.py`の追加、既存16資源の内容変更）であり、旧保持台帳の条件へ単純に継ぎ足せない。
 この確認はGitの確定ref同士で行った。保持の旧結果を現行製品の結果へ読み替えず、当面は公開の少数枠の起動前準備を先に進める。
 保持側の候補・条件を更新する場合は、先行台帳の消費と旧停止を保全したうえで、評価条件の変更として別に扱う。検査を緩めて通過させない。
+
+
+## 2026-11-04: 当日校正・起動前検分と公開少数枠の停止
+
+### 固定した条件と検証
+
+mainを`6506f66a`へ更新し、当日の局所校正を束縛した候補
+`9a85b9098af7b19316d518978f82eaac790fcfc0`を確定した。6スキル・73資源のsnapshotは
+`.venv/matrix-routing-preparation-public-recovery-20261104-01/snapshot`、manifestのSHA-256は
+`f77ac641408efedd9c0b75e2c67dc50f0dddd2d3207e59a909965453fdacd6c8`である。
+旧候補の測定をこの候補の成績へ合算しない。
+
+- 校正原は`.venv/matrix-local-isolation-calibration-recovery-20261104-02`。
+  `local_calibration_verified`、namespace終了0、外部モデル・課金・予約0。校正のmanifestは
+  `99fdd1dac2991919780fd73b3b0dfd1c5082eb8032234f6f91d6ffb4364ea72e`、受領記録は
+  `0999833e26eb0ab77df962b3499311704f6b34b0ff3892692c1a7b997d77eeb9`。
+  通常の局所隔離検査も`local_isolation_verified`（local HTTP 1、raw通知5、外部モデル・予約0）。
+- 最初の局所校正`...-01`はsandboxでの`NETLINK_ROUTE`拒否で停止した。停止原を保持し、実評価に数えない。
+  過去の校正原12ファイルはworktree整理時の退避先から、歴史manifestの全hash一致を確認して元の固定パスへ復元した。
+  退避原を変更せず、認証情報は読んでいない。
+- 確定候補で全スキル試験を実行し、`Ran 1176 tests in 184.022s`、`OK`、終了0。
+  コマンドは`PYTHONPATH=plugins/bitz-core/src UV_CACHE_DIR=$PWD/.venv/uv-cache PYTHONDONTWRITEBYTECODE=1 TMPDIR=$PWD/.venv uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'`。
+  `uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python evals/skills/validate.py audit`は`Passed`、`errors: []`。
+- 別文脈の検分者は関連392試験（matrix 191、trace 164、関連37）を終了0で実行した。
+  独立worktreeは検分前後ともclean。snapshot、SDK、runtime、9世代の校正chain、復元12ファイル、通常局所原と
+  最終pinを再検証し、阻害指摘なし。[コード検分](public-prelaunch-code-review-20261104.json)と
+  [具体条件の検分](public-operational-review-20261104.json)に範囲・制限を残した。
+
+公開の`SE-001`（「bitz doctorをJSON形式で実行し、結果を説明して」）を2反復する条件を固定した。
+SOLの一次最大2・独立最大2、再試行0・委譲0、起動間隔60秒、任意の評価失敗でこのバッチを停止する。
+既存92枠の実行契約を縮小したとは扱わず、親が単枠ごとに検査して、この2枠以外を起動しない運用条件である。
+外部送信・実評価は自動承認レビューで一度拒否された後、この入力と範囲への利用者の明示承認を得た。
+
+束は`.venv/matrix-public-recovery-bound-20261104-01`、条件のSHA-256は
+`b702b946cdfc6b25f370950e581e0b10a31186f4dd30f3be54f3e00a38bc92d7`。
+実行契約のSHA-256は`4340249b1d7093389537b55fdb9ff908500a0c77ded952b95b931ffc66c92faa`、
+開始前検分のSHA-256は`126eb92af63cb2e4610eed32dcd66bebbb6c4db90b1ac4b69539a3fc8b58dd3f`である。
+
+### 実評価と停止
+
+`production_matrix_survey_run.run(root, bundle, 1)`で1枠目だけを実行した。
+一次は1回、独立採点は0回、測定完了は0件。`evaluation_failed`、段階`primary`で閉じ、2枠目は未予約・未起動。
+同条件を再試行せず、停止原・一次予約の消費を維持する。
+停止後の独立診断を終えた後、このバッチの台帳へ`stop.json`をEXCL追記し、同じ入口からの追加予約も拒否する。
+既存`summary()`の再集計は`status: stopped`、`primaryReserved: 1`、`independentReserved: 0`、
+`evaluationFailed: 1`、`pendingSlots: 0`である。
+
+CLIは19.210537秒で終了0、timeoutなし、SDK errorなし、資源の前後照合一致。
+`list_resources`と`read_resource`はいずれも受理され、host停止はない。
+ただし原rolloutと校正の照合は`production_canary_rollout.initial_context`の
+`fixed caller and SDK supplement`で拒否された。既存の`production_failure_diagnosis.py --bundle ... --ordinals 1`で
+読取り専用に再現し、`originalsUnchanged: true`、追加モデル・予約0を確認した。
+
+校正と実評価のdeveloper補助指示は、Default modeで仮定を置いて実行を優先するという1段落だけ異なる。
+校正の補助ブロックのSHA-256は`50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d`、
+実評価は`cad0a82ec499c65eee6cfd73d82d5d1d56da8a4cfcc00c81e7980de2db7b35d0`。
+通知不対応や`uri`引数の旧原因と混同しない。`primary.native`の限定検査は通過し`bitz-core`選択を観測したが、
+完全な証拠照合と独立採点がないため、正解や有効測定へ昇格しない。
+
+SDKのnative観測使用量は入力19,712・出力332・合計20,044 token（入力cache 10,112）。
+推論APIは3回で、一次軌跡1回とは区別する。これは観測値であり、未完了の全原照合や課金額の認定ではない。
+金額は未確認で、0円とは扱わない。
+
+### 次の是正の範囲
+
+補助指示の不一致を独立に再検査し、公開の実起動と局所校正でモデル情報の条件を固定する接続を確認する。
+保持側には既存のcatalog固定があるが、公開側の`config_for`には接続されていない。
+[停止後の独立検分](public-poststop-review-20261104.json)も同じ拒否と補助指示の差分、raw RPCとrolloutの一致を再現した。
+固定runtimeのcatalogには追加段落がないが、実通信のmodels応答本文は取得していない。
+外部のモデル情報の更新が原因という説明は推定であり、catalog固定による是正の効果はまだ実証していない。
+校正のhashを実評価からコピーしたり検査を緩めたりせず、必要な是正は別の確定候補・条件で検分する。
+今回の停止と消費、旧公開92枠・保持の停止は維持する。R04全体・Skill Gate・リリースは未完了である。
