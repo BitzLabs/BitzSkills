@@ -1192,8 +1192,25 @@ def precheck(
             "SPEC-MULTI-GIT-001", "blocked", messages.MULTI_GIT_BOUNDARY_UNKNOWN,
             {"kind": "environment", "component": "git"},
         )
+        # `doctor`はカタログの形状の不正とGitの不在を独立した2つの原因とし、Gitを使わずに判定できるルートの`workspace.id`の省略と
+        # `multiWorkspace`の形状の不正（`SPEC-MULTI-CONFIG-001`）も並べて返す（`04_doctor.md` §3、確認事項C50。ほかの操作はGitの診断だけ）。
+        shape_diags: list[Diagnostic] = []
+        if report_git_with_config_stop:
+            if not root_id_explicit:
+                shape_diags.append(_diag(
+                    "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_ROOT_ID_REQUIRED,
+                    _root_source(None, "workspace.id"),
+                ))
+            else:
+                shape_diag, _members = _validate_multiworkspace_shape(outcome.config, root_id)
+                if shape_diag is not None:
+                    shape_diags.append(shape_diag)
+                elif isinstance(outcome.config.get("multiWorkspace"), dict):
+                    # 除外のパスの要素の字句・`.spec`・重複・入れ子の不正も、Gitを使わずに判定できるカタログの不適合である。
+                    shape_diags.extend(_evaluate_excludes(root_id, outcome.config["multiWorkspace"].get("exclude", []))[0])
         return PrecheckResult(
-            ok=False, root_id=root_id, diagnostics=[diag], git_status="blocked", catalog_status=None, repo_root=root,
+            ok=False, root_id=root_id, diagnostics=shape_diags + [diag], git_status="blocked",
+            catalog_status="failed" if shape_diags else None, repo_root=root,
             git_confirmed=False, root_config=outcome.config,
         )
 
