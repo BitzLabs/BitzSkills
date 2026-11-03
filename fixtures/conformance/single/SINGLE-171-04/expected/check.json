@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "フロントマターのフィールドimplementsは文字列の配列が必要です",
+      "summary": "フロントマターのフィールドimplementsのパスの形式が不正です",
       "source": {
         "kind": "file",
         "workspaceId": "root",
