@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "targetResults": [],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-WORKSPACE-MISSING-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": ".spec/bitz.yamlがありません",
+      "source": {
+        "kind": "environment",
+        "component": "workspace",
+        "identifier": "."
+      }
+    }
+  ]
+}

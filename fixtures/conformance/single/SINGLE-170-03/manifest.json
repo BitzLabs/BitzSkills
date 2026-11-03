@@ -1,0 +1,32 @@
+{
+  "fixtureId": "SINGLE-170-03",
+  "description": "対照: 同一性を構成できる既定値rootの設定では、一致しない--workspaceを終了コード4で拒否する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--workspace",
+      "app",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}
