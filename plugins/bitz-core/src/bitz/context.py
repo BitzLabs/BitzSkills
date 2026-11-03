@@ -35,7 +35,6 @@ from . import relations as relations_mod
 from . import targetexpand
 from .cliargs import ParsedArgs
 from .document import DocEntry
-from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
 from .workspace import locate_workspace
 
@@ -443,10 +442,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     if loc.config_path is not None:
         outcome = config_mod.read_config(loc.config_path)
 
-    if requested_workspace is not None:
-        effective_id = outcome.workspace_id if outcome is not None else None
-        if effective_id != requested_workspace:
-            raise CliArgError("context", f"指定したワークスペースが見つかりません: {requested_workspace}")
+    activews.check_requested_workspace("context", requested_workspace, outcome)
 
     # 設定がない、または不適合で同一性が確定しない場合は null（結果・診断・終了コード §2。`check`、`verify`と同じ）。
     workspace_id = outcome.workspace_id if outcome is not None else None

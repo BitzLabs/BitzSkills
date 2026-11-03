@@ -1104,8 +1104,12 @@ def precheck(
     selected_dir: str | None = None,
     compare_git_configs: bool = True,
     report_git_with_config_stop: bool = False,
+    require_declaration: bool = False,
 ) -> PrecheckResult:
     """`--all-workspaces`の全体事前検査（複合ワークスペース仕様 §8）。
+
+    ``require_declaration``は全体操作（`--all-workspaces`）だけが真を渡す。読めたルートの設定が`multiWorkspace`を宣言しなければ、
+    複合ワークスペースを発見できないとして``discovery_failed``を返す（終了コード4。確認事項C64）。
 
     ``extra_config_revs``は、現在のスナップショットに加えてGitの既知の設定を比較するリビジョンの一覧
     （`check`の`--base`、`doctor`の`HEAD`など。§8「`check`は指定した基準版のスナップショット、`doctor`は`HEAD`の
@@ -1136,6 +1140,11 @@ def precheck(
         return PrecheckResult(discovery_failed=True)
 
     outcome = config_mod.read_config(cfg_path, ears_version_code=ears_version_code)
+    if require_declaration and not _declares_multiworkspace(outcome) and outcome.stop_stage != "config":
+        # `--all-workspaces`は、ルートの設定が`multiWorkspace`を宣言するときだけ複合ワークスペースを発見できる（複合ワークスペース仕様 §8、
+        # 確認事項C64）。宣言の有無は、YAMLとして読めた設定（版の非対応で止まった設定を含む）のキーで判定する。設定を読めない場合は、
+        # 候補を発見した後の不適合として、停止の結果を返す（§8）。
+        return PrecheckResult(discovery_failed=True)
     if outcome.stop:
         diags = outcome.diagnostics + outcome.warnings
         if report_git_with_config_stop and not git_confirmed:
