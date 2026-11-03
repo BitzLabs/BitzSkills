@@ -563,6 +563,39 @@ class AuditTests(unittest.TestCase):
         implement = dict(case, purpose="implement")
         self.assertIn("TASK-002", target_vectors.reference(implement)["contextDocuments"])
 
+    def test_target_vector_reference_follows_document_id_refines_by_rule(self):
+        """関係・トレースモデル §6.4: 見つけた具体化文書は文書IDの`refines`でも辿るが、起点の文書自身から辿るのは規則1だけ（確認事項C54）。
+
+        25ケースには文書IDの`refines`がないので、参照計算の規則をこのグラフで固定する。
+        """
+
+        def node(identifier, kind, statements=(), refines=(), addresses=(), status="approved"):
+            return {"id": identifier, "kind": kind, "status": status,
+                    "statements": [{"id": f"{identifier}:{suffix}", "line": 10 + index} for index, suffix in enumerate(statements)],
+                    "requires": [], "refines": list(refines), "addresses": list(addresses), "related": []}
+
+        graph = [
+            node("REQ-001", "REQ", ["AC-01"]),
+            node("TECH-001", "TECH", ["C-01"], refines=["REQ-001"]),
+            node("TECH-002", "TECH", ["C-01"], refines=["REQ-001:AC-01"]),
+            node("TECH-003", "TECH", ["C-01"], refines=["TECH-002"]),
+            node("TECH-004", "TECH"),
+            node("TECH-005", "TECH", ["C-01"], refines=["TECH-004"]),
+            node("TASK-001", "TASK", addresses=["REQ-001:AC-01"], status="open"),
+            node("TASK-002", "TASK", addresses=["TECH-004"], status="open"),
+        ]
+        expected = {
+            "REQ-001": ["REQ-001:AC-01", "TECH-001:C-01", "TECH-002:C-01", "TECH-003:C-01"],
+            "REQ-001:AC-01": ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"],
+            "TASK-001": ["REQ-001:AC-01", "TECH-002:C-01", "TECH-003:C-01"],
+            "TECH-004": [],
+            "TASK-002": [],
+        }
+        for root, statements in expected.items():
+            with self.subTest(root=root):
+                case = {"id": "DOCUMENT-ID-REFINES", "purpose": "verify", "roots": [root], "graph": copy.deepcopy(graph)}
+                self.assertEqual(sorted(target_vectors.reference(case)["targetStatements"]), statements)
+
     def test_target_root_audit_rejects_adr_reference_in_corpus(self):
         original = target_root_fixtures.reviewed_inputs
 
