@@ -2159,3 +2159,22 @@ commit `4f1ed3068c52313c5c3e9e390ce37256ee97604b`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-04: `SINGLE-171`を追加した後のGate Aの再認定
+
+フロントマターのパス（`implements`、`changes`、`tests[].path`）がglobの文字を`*?[`の3つとして判定し、閉じ括弧`]`を含むパスを受け付けていた欠陥
+（実装の確認事項C43）を直した（ユーザーの決定）。ワークスペース・設定仕様 §9、文書種別・本文テンプレートの`changes`、複合ワークスペース仕様 §2・§5.1で
+「glob」とだけ書いていた禁止を「globの文字`*?[]`」と明記し、`frontmatter.schema.json`の`pathString`のパターンに`]`を加えた。メンバーのパス、除外のパス、
+コマンドの`cwd`と同じ4つの文字にそろう。これを固定する`SINGLE-171-01`〜`SINGLE-171-08`を追加した（ADR-051の追加、群`frontmatter_glob_fixtures`）。
+matrix、Step 2の割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `b32629d3d94faee3076e7025b9d47fd4fbb1f9b6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`a3f685c6b6a4be459e3a7935d48054a72d1e396870c437e7cf5754da49bfae68`。前回から変わったのは次の値だけである: 8件の追加によるmatrixと網羅の件数（619件→627件）、Step 2の件数（103件→111件）、群`frontmatter_glob_fixtures`の追加、実行ビットを確かめたファイル数（3524件→3546件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
