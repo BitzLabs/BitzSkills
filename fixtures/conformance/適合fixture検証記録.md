@@ -2059,3 +2059,23 @@ commit `31431bd0fcc2985580aaf3ad1ccd6c4bd7df7444`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3〜5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-03: `SINGLE-169`と`MULTI-055`を追加した後のGate Aの再認定
+
+文書を起点にした対象展開が、起点の文書を文書IDで`refines`する具体化文書の規範文を対象規範文に含めず、`verify`がその未テストの`MUST`を通していた欠陥を直した（実装の確認事項C54、ユーザーの決定）。
+関係・トレースモデル §6.4に、起点の文書を文書IDで`refines`する適用可能な文書も具体化文書とすること（規則1）、見つけた具体化文書は規範文IDと文書IDの両方の`refines`で辿ること
+（どの起点でも同じ）、起点の文書自身から文書IDで辿るのは規則1だけとすることを明記し、§7の6.に、目的`implement`で対象規範文を`addresses`するTASKの距離を明記した（C55）。
+これを固定する`SINGLE-169-01`〜`SINGLE-169-09`と`MULTI-055-01`〜`MULTI-055-04`を追加し（ADR-051の追加、群`document_refines_fixtures`と`multi_document_refines_fixtures`）、
+対象展開の参照計算`target_vectors.py`を規則3・5の文面に合わせた（25ケースの期待集合は変えていない）。matrix、Step 3〜5の割当て、実装計画の完了条件、網羅表と対象展開の契約のハッシュ値を合わせた。
+既存のfixtureの入力と期待値は変えていない。
+
+commit `e0414fb75643a98b6643092deac2aa2489e0036c`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`13b951e00764ffe9a0795b42e8fc387cc8f0ec5cc2e86132cccd546a8c91ba3b`。前回から変わったのは次の値だけである: 13件の追加によるmatrixと網羅の件数（581件→594件）、Step 3の件数（106件→108件）、Step 4の件数（80件→87件）、Step 5の件数（252件→256件）、群`document_refines_fixtures`と`multi_document_refines_fixtures`の追加、実行ビットを確かめたファイル数（3370件→3445件）、網羅表と対象展開の契約が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3〜5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
