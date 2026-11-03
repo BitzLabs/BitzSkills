@@ -1034,7 +1034,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     multi_active = multi_pre is not None and multi_pre.ok
 
-    catalog = document_mod.build_catalog(workspace_root, workspace_id)
+    catalog = document_mod.build_catalog(workspace_root, workspace_id, qualify_summary_ids=multi_active)
     if multi_active:
         assert multi_pre is not None
         (
@@ -1297,7 +1297,7 @@ def _run_all_workspaces_members(
 
     per_ws_catalog: dict[str, document_mod.CatalogResult] = {}
     for wid, root, _rel in workspaces:
-        per_ws_catalog[wid] = document_mod.build_catalog(root, wid)
+        per_ws_catalog[wid] = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
 
     entries_by_ws = {wid: cat.entries for wid, cat in per_ws_catalog.items()}
     invalid_by_ws = {

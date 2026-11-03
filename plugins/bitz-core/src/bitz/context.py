@@ -493,7 +493,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     config_raw = outcome.config
     assert loc.root is not None
 
-    catalog = document_mod.build_catalog(loc.root, workspace_id)
+    catalog = document_mod.build_catalog(loc.root, workspace_id, qualify_summary_ids=multi_active)
 
     if multi_active:
         assert multi_pre is not None

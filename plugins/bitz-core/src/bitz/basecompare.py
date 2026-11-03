@@ -322,6 +322,7 @@ def impact_candidate_diagnostics(
     *,
     source_ids: set[str] | None = None,
     normalize: Callable[[str], str] | None = None,
+    qualify_summary_ids: bool = False,
 ) -> list[Diagnostic]:
     """変更されたREQまたはTECHへ強く依存する`approved`の文書を警告する（`check.md §8`）。
 
@@ -330,7 +331,13 @@ def impact_candidate_diagnostics(
 
     ``normalize``（複合ワークスペース内の単独操作）は、参照先の文書ID（修飾IDを含む）を``changed_doc_ids``と
     同じ表現へそろえる。作業ワークスペース自身を修飾した参照（``ws::DOC``）を修飾のないIDへ戻すのに使う。
+
+    ``qualify_summary_ids``（複合ワークスペース内）は、`summary`に差し込む依存元と変更された文書のIDを、作業ワークスペースの
+    IDで修飾する（複合ワークスペース仕様 §4、確認事項C69）。
     """
+
+    def _display(identifier: str) -> str:
+        return identifier if not qualify_summary_ids or "::" in identifier else f"{workspace_id}::{identifier}"
 
     diags: list[Diagnostic] = []
     for doc_id in sorted(current_by_id):
@@ -355,7 +362,7 @@ def impact_candidate_diagnostics(
                         "SPEC-IMPACT-OUTDATED-001",
                         "warning",
                         "passed_with_warnings",
-                        messages.impact_outdated(doc_id, hit_id),
+                        messages.impact_outdated(_display(doc_id), _display(hit_id)),
                         entry.path,
                         workspace_id,
                         key=f"relations.{relation}",

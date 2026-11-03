@@ -510,6 +510,7 @@ def build_catalog(
     workspace_id: str,
     *,
     spec_file_count_limit: int = SPEC_FILE_COUNT_LIMIT,
+    qualify_summary_ids: bool = False,
 ) -> CatalogResult:
     result = CatalogResult()
     spec_dir = os.path.join(workspace_root, ".spec")
@@ -584,7 +585,12 @@ def build_catalog(
                 e.duplicate = True
             first = group_sorted[0]
             result.diagnostics.append(
-                _mk("SPEC-ID-DUPLICATE-001", "error", "failed", messages.doc_id_duplicate(doc_id), first.path, workspace_id, key="id")
+                # 複合ワークスペース内では、`summary`に差し込む文書IDを作業ワークスペースのIDで修飾する（複合ワークスペース仕様 §4、確認事項C69）。
+                _mk(
+                    "SPEC-ID-DUPLICATE-001", "error", "failed",
+                    messages.doc_id_duplicate(f"{workspace_id}::{doc_id}" if qualify_summary_ids else doc_id),
+                    first.path, workspace_id, key="id",
+                )
             )
 
     for e in entries:
