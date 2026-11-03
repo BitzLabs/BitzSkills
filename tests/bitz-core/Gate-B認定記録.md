@@ -1180,3 +1180,23 @@ Core固有の単体試験は1143件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1147件がすべて成功した。
+
+## 2026-11-04: argvの要素の上限とフロントマターのパスの形式の文言を直した後のStep 1〜5の再判定
+
+`messages.py`、`frontmatter.py`、`verify.py`で、`{tests}`展開後のargvの要素の上限と、フロントマターのパスの形式の不正に、理由の分かる文言を返すようにした
+（実装の確認事項C84・C85。文言はADR-062により管理者が承認）。`SINGLE-171-01`〜`SINGLE-171-06`（Step 2）の期待値の`summary`を訂正した。
+修正前のCore（コミット`d06b30b1`の版）では、訂正した6件が`summary`の差で非成功となり、対照の`SINGLE-171-07`・`08`と既存の619件はすべて通過することを確かめた。
+修正後のCoreでは627件すべてが`passed`となる。
+
+コミット`c38d86588a2e409208b91317b31f58ad27d75ce2`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 627件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`171ab0d708303a98ef5a4ae41087c0cb38f1e052592eae5ca5c7c758f85dbb46`（前回と同じ。合否だけが変わらない） |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1152件がすべて成功した。

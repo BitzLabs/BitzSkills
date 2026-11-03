@@ -2196,3 +2196,21 @@ commit `db2d534abf47dbb950d620f7ea40929806ffabd2`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStepに属するfixtureの入力と期待値、Coreを変えていないため、Gate Bは判定し直さない（ADR-051）。
+
+## 2026-11-04: `SINGLE-171-01`〜`06`の期待値を訂正した後のGate Aの再認定
+
+`{tests}`展開後のargvの要素の上限と、フロントマターのパスの形式の不正の`summary`を、理由の分かる文言にした（実装の確認事項C84・C85）。
+新しい文言は「{tests}展開後のargvの要素がバイト数上限32 KiBを超えます」と「フロントマターのフィールド{key}のパスの形式が不正です」で、
+人間の管理者（ユーザー）が承認した（ADR-062、`Coreの出力文言のレビュー記録.md`）。これに伴い、`SINGLE-171-01`〜`SINGLE-171-06`の期待値の`summary`を訂正した
+（ADR-051の期待値の訂正）。入力、件数、Stepの割当ては変えていない。要素の上限の経路は適合fixtureで再現できないので、単体試験で固定した。
+
+commit `c38d86588a2e409208b91317b31f58ad27d75ce2`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`98cfd2b1419575b5632edf95c7af547c87e675dba6519a13b6dbb4f293f3b0af`（前回と同じ。期待値の`summary`の文字列は監査の報告に含まれない）。matrixと網羅の件数（627件）、Stepの件数、実行ビットを確かめたファイル数は変わらない |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2に属するfixtureの期待値を訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
