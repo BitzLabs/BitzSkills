@@ -99,6 +99,7 @@ from conformance import multi_config_warning_fixtures
 from conformance import related_advisory_fixtures, multi_related_advisory_fixtures
 from conformance import document_refines_fixtures, multi_document_refines_fixtures
 from conformance import multi_check_qualified_summary_fixtures
+from conformance import multi_member_config_source_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -7555,6 +7556,249 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(len(outcome["errors"]), 1)
                 self.assertFalse(any(phrase in outcome["errors"][0] for phrase in ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")),
                                  outcome["errors"][0])
+
+    def test_multi_member_config_source_fixtures(self):
+        """`MULTI-057-01`〜`06`: メンバーの設定の診断の`path`をルートからの相対にし、ルートの版の非対応は設定の読込みの診断にする（確認事項C72・C37）。"""
+        module = multi_member_config_source_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-057-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_member_config_source_expected_results(self):
+        """期待結果の要点: メンバーの設定の診断は`workspaceId: null`と、ルートからの相対の`path`。ルートの版の非対応は`workspaceId: platform`と`.spec/bitz.yaml`。"""
+        def read(identifier, name):
+            return json.loads((audit.FIXTURES / "multi" / identifier / "expected" / name).read_text())
+
+        member = "apps/web/.spec/bitz.yaml"
+        expected = {
+            "MULTI-057-01": ("check.json", "SPEC-CONFIG-SCHEMA-001", "error", {"kind": "file", "workspaceId": None, "path": member, "key": "language"}),
+            "MULTI-057-02": ("check.json", "SPEC-CONFIG-SCHEMA-001", "error", {"kind": "file", "workspaceId": None, "path": member}),
+            "MULTI-057-03": ("doctor.json", "SPEC-INPUT-READ-001", "failed", {"kind": "file", "workspaceId": None, "path": member}),
+            "MULTI-057-04": ("check.json", "SPEC-CONFIG-SCHEMA-001", "blocked",
+                             {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "schemaVersion"}),
+            "MULTI-057-05": ("doctor.json", "SPEC-DOCTOR-EARS-001", "blocked",
+                             {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "earsAi"}),
+            "MULTI-057-06": ("check.json", "SPEC-MULTI-VERSION-001", "blocked",
+                             {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "multiWorkspace.members"}),
+        }
+        for identifier, (name, code, status, source) in expected.items():
+            with self.subTest(identifier=identifier):
+                result = read(identifier, name)
+                self.assertEqual([(item["code"], item["resultStatus"], item["source"]) for item in result["diagnostics"]], [(code, status, source)])
+                self.assertEqual(result["status"], status)
+                manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+                self.assertEqual(manifest["expect"]["exitCode"], {"error": 3, "failed": 1, "blocked": 2}[status])
+        # 単独の操作は、設定を読めないメンバーを作業ワークスペースにするので`id: null`、`path`は候補のパス。全体操作は確定したルートのIDを使う。
+        single = read("MULTI-057-02", "check.json")
+        self.assertEqual((single["workspace"], single["scope"], single["checkedDocumentCount"], single["checkedStatementCount"]),
+                         ({"id": None, "path": "apps/web"}, "full", 0, 0))
+        self.assertNotIn("multiWorkspace", single)
+        for identifier, name in (("MULTI-057-01", "check.json"), ("MULTI-057-03", "doctor.json"), ("MULTI-057-06", "check.json")):
+            result = read(identifier, name)
+            self.assertEqual((result["multiWorkspace"], result["workspaces"]), ({"id": "platform", "path": "."}, []))
+        # 全体事前検査が非成功の`doctor`は、ワークスペース固有の検査を置かず、`catalog`の状態は全体事前検査の状態と同じ。
+        for identifier, status in (("MULTI-057-03", "failed"), ("MULTI-057-05", "blocked")):
+            self.assertEqual(read(identifier, "doctor.json")["checks"],
+                             [{"name": "core", "status": "passed"}, {"name": "git", "status": "passed"}, {"name": "catalog", "status": status}])
+        # `doctor`のEARS-AIの非対応だけが修復手順を持つ（`MULTI-033`と同じ）。
+        self.assertEqual([item.get("suggestedAction") for name in ("MULTI-057-03", "MULTI-057-05") for item in read(name, "doctor.json")["diagnostics"]],
+                         [None, "設定キーearsAiをCoreが対応するメジャーバージョン1に合わせてください"])
+        # ルートの設定の診断は、メンバーの設定の診断と`source`が異なる（C72の欠陥は、この2つが同じ`{null, .spec/bitz.yaml}`になることだった）。
+        self.assertNotEqual(read("MULTI-057-04", "check.json")["diagnostics"][0]["source"], read("MULTI-057-01", "check.json")["diagnostics"][0]["source"])
+        # 訂正した上限の超過のfixtureも、メンバーの設定の診断はルートからの相対。ルートの設定の診断は`.spec/bitz.yaml`のまま。
+        limit = lambda identifier: json.loads((audit.FIXTURES / "multi" / identifier / "expected/check.json").read_text())["diagnostics"][0]["source"]
+        self.assertEqual(limit("MULTI-049-02"), {"kind": "file", "workspaceId": None, "path": "apps/web/.spec/bitz.yaml"})
+        self.assertEqual(limit("MULTI-049-01"), {"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})
+
+    def test_multi_member_config_source_reference_rules(self):
+        """参照計算: 原因の判定の順と、発生元の導出。修正前のCoreの再現を含む。"""
+        module = multi_member_config_source_fixtures
+
+        def decide(identifier, function="reference_decision", edits=()):
+            case = module.CASES[identifier]
+            with tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary)
+                for name, data in module.reviewed_inputs(identifier).items():
+                    (repository / name).parent.mkdir(parents=True, exist_ok=True)
+                    (repository / name).write_bytes(data)
+                for relative, data in edits:
+                    (repository / relative).write_bytes(data)
+                return getattr(module, function)(repository, case["op"], case["argv"], case["cwd"])
+
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                self.assertEqual(decide(identifier)["cause"], case["cause"])
+                broken = decide(identifier, "defective_decision")
+                reference = decide(identifier)
+                # 修正前のCoreは、メンバーの設定の診断（読めない・構文・型の不正）の`path`だけが異なる。ほかは同じ（対照）。
+                if case["cause"] in module.DEFECTIVE:
+                    self.assertEqual(broken["source"]["path"], ".spec/bitz.yaml")
+                    self.assertEqual(broken["source"], {**reference["source"], "path": ".spec/bitz.yaml"})
+                else:
+                    self.assertEqual(broken, reference)
+        self.assertEqual(decide("MULTI-057-01")["source"], {"kind": "file", "workspaceId": None, "path": "apps/web/.spec/bitz.yaml", "key": "language"})
+        self.assertEqual(decide("MULTI-057-02")["workspace"], {"id": None, "path": "apps/web"})
+        self.assertEqual(decide("MULTI-057-01")["multiWorkspaceId"], "platform")
+        # 判定の順: ルートの版の非対応が先（メンバーの不備は見ない）。メンバーでは文字コード、構文、型の順に判定し、版の非対応は最後。
+        good_root = module.reviewed_inputs("MULTI-057-01")[module.ROOT_CONFIG_PATH]
+        bad_root = good_root.replace(b'earsAi: "1.0"', b'earsAi: "2.0"')
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.ROOT_CONFIG_PATH, bad_root)])["cause"], "root-ears")
+        web = module.reviewed_inputs("MULTI-057-01")[module.WEB_CONFIG_PATH]
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web + b"# \xff\n")])["cause"], "member-utf8")
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web + b"x: [\n")])["cause"], "member-syntax")
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web.replace(b"language: 42", b"language: ja"))])["cause"], None)
+        # 引用符で囲んだ数字は文字列なので型の不正ではない。版の非対応は、メンバーでは`SPEC-MULTI-VERSION-001`の原因になる。
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web.replace(b"language: 42", b'language: "42"'))])["cause"], None)
+        self.assertEqual(decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web.replace(b'schemaVersion: "1.0"', b'schemaVersion: "2.0"').replace(b"language: 42", b"language: ja"))])["cause"], "member-version")
+        # 上限ちょうどは超過ではない。メンバーの設定が上限を超えると、この群の参照計算が扱わない不備として拒否する（上限の超過は`MULTI-049-02`）。
+        with self.assertRaises(ValueError):
+            decide("MULTI-057-01", edits=[(module.WEB_CONFIG_PATH, web + b"#" * module.CONFIG_LIMIT)])
+
+    def test_multi_member_config_source_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）と、入力の欠落・余りを拒否する（陰性対照）。"""
+        module = multi_member_config_source_fixtures
+
+        def source(value):
+            return value["diagnostics"][0]["source"]
+
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-other": lambda v: v.update(status="blocked" if v["status"] != "blocked" else "failed"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="設定を読めません"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="passed"),
+            # 修正前のCoreの出力と、取り違えやすい値。
+            "source-path-root": lambda v: source(v).update(path=".spec/bitz.yaml"),
+            "source-path-other": lambda v: source(v).update(path="services/api/.spec/bitz.yaml"),
+            "source-path-member": lambda v: source(v).update(path="apps/web/.spec/bitz.yaml"),
+            "source-path-absolute": lambda v: source(v).update(path="/apps/web/.spec/bitz.yaml"),
+            "source-workspace-platform": lambda v: source(v).update(workspaceId="platform"),
+            "source-workspace-web": lambda v: source(v).update(workspaceId="web"),
+            "source-workspace-root": lambda v: source(v).update(workspaceId="root"),
+            "source-workspace-null": lambda v: source(v).update(workspaceId=None),
+            "source-key": lambda v: source(v).update(key="workspace.id"),
+            "source-key-drop": lambda v: source(v).pop("key"),
+            "multi-id": lambda v: v["multiWorkspace"].update(id=None),
+            "multi-path": lambda v: v["multiWorkspace"].update(path="apps/web"),
+            "workspaces-fill": lambda v: v["workspaces"].append({"id": "platform", "path": ".", "status": "passed", "durationMs": 0, "diagnostics": []}),
+            "workspace-id": lambda v: v["workspace"].update(id="web"),
+            "workspace-path": lambda v: v["workspace"].update(path="."),
+            "scope": lambda v: v.update(scope="changed"),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "checks-catalog": lambda v: v["checks"][-1].update(status="passed"),
+            "checks-drop": lambda v: v["checks"].pop(),
+            "suggested-action": lambda v: v["diagnostics"][0].update(suggestedAction="設定を直してください"),
+            "suggested-action-drop": lambda v: v["diagnostics"][0].pop("suggestedAction"),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0),
+            "cwd": lambda v: v["invocation"].update(cwd="services/api"),
+            "cwd-root": lambda v: v["invocation"].update(cwd="."),
+            "cwd-member": lambda v: v["invocation"].update(cwd="apps/web"),
+            "argv-single": lambda v: v["invocation"]["argv"].remove("--all-workspaces"),
+            "argv-all": lambda v: v["invocation"]["argv"].insert(1, "--all-workspaces"),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "verify"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+        }
+        applied = 0
+        for identifier, case in module.CASES.items():
+            name = module.RESULT_FILES[case["op"]]
+            mutations = [(name, label, change) for label, change in results.items()]
+            mutations += [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    path = root / "multi" / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            for name in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra", "other-result"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif name == "other-result":
+                        # 操作と異なる期待結果のファイルが残っている。
+                        other = "expected/doctor.json" if case["op"] == "check" else "expected/check.json"
+                        (fixture / other).write_text((fixture / module.RESULT_FILES[case["op"]]).read_text())
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 150)
+
+    def test_multi_member_config_source_audit_rejects_changed_causes(self):
+        """原因を消す、または別の原因を重ねる入力の書換えを、入力のバイト列の照合を通した上で、参照計算と原因の構成の検査が拒否する。"""
+        module = multi_member_config_source_fixtures
+        edits = {
+            # 不備を直す（欠陥を検出できない構成にする）。
+            "MULTI-057-01": [(module.WEB_CONFIG_PATH, b"language: 42", b"language: ja"),
+                             # 不備の種類を変える、または重ねる。
+                             (module.WEB_CONFIG_PATH, b"language: 42", b"language: [\n"),
+                             (module.WEB_CONFIG_PATH, b'earsAi: "1.0"', b'earsAi: "2.0"'),
+                             (module.ROOT_CONFIG_PATH, b'earsAi: "1.0"', b'earsAi: "2.0"'),
+                             (module.ROOT_CONFIG_PATH, b"  id: platform\n", b"")],
+            "MULTI-057-02": [(module.WEB_CONFIG_PATH, b"workspace: [\n", b"workspace:\n  id: web\n"),
+                             (module.WEB_CONFIG_PATH, b"workspace: [\n", b"workspace: &anchor [\n")],
+            "MULTI-057-03": [(module.WEB_CONFIG_PATH, b"# \xff\n", b"# x\n"),
+                             (module.WEB_CONFIG_PATH, b"# \xff\n", b"# \xff\nworkspace: [\n")],
+            "MULTI-057-04": [(module.ROOT_CONFIG_PATH, b'schemaVersion: "2.0"', b'schemaVersion: "1.0"'),
+                             (module.ROOT_CONFIG_PATH, b"  id: platform\n", b"")],
+            "MULTI-057-05": [(module.ROOT_CONFIG_PATH, b'earsAi: "2.0"', b'earsAi: "1.0"'),
+                             (module.WEB_CONFIG_PATH, b"language: ja", b"language: 42")],
+            "MULTI-057-06": [(module.WEB_CONFIG_PATH, b'earsAi: "2.0"', b'earsAi: "1.0"'),
+                             (module.WEB_CONFIG_PATH, b"language: ja", b"language: 42")],
+        }
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                with self.subTest(identifier=identifier, file=relative, old=old[:30], new=new[:30]), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_multi_fixture(temporary, identifier)
+                    fixture = root / "multi" / identifier
+                    path = fixture / "repo" / relative
+                    data = path.read_bytes()
+                    self.assertIn(old, data)
+                    path.write_bytes(data.replace(old, new, 1))
+                    edited = dict(module.reviewed_inputs(identifier))
+                    edited[relative] = path.read_bytes()
+                    manifest = json.loads((fixture / "manifest.json").read_text())
+                    repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                    external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                    for directory in external.values():
+                        directory.mkdir(parents=True)
+                    state = module.observe_state(manifest, repository, external)
+                    (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                    with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                        outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed")
+                    self.assertEqual(len(outcome["errors"]), 1)
+                    self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                    self.assertNotIn("KeyError", outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)
