@@ -74,15 +74,19 @@ def reference(case):
     if purpose != "interpret" and any(nodes[r]["kind"] == "ADR" for r in root_docs):
         return {"outcome": "invocation_error", "exitCode": 4}
 
+    # 選択済みの集合は、具体化文書を探す起点（関係・トレースモデル §6.4）。見つけた具体化文書は文書として加える（規範文IDと文書IDの両方で辿る）。
+    # 文書IDの`refines`を辿る起点は、規則1（規範文のある文書の起点）の起点の文書だけである。規則2の起点の所有文書、規則3で`addresses`する
+    # 規範文のないTECH、規則5の起点（規範文のないTECH）は、文書IDを選択済みにしない。
     selected = set()
     for r in roots:
         if r in statements:
             selected.add(r)
         elif nodes[r]["kind"] == "TASK":
             if purpose != "interpret":
-                selected.update(nodes[r]["addresses"])
+                selected.update(t for t in nodes[r]["addresses"] if t in statements)
         elif nodes[r]["kind"] in {"REQ", "TECH"}:
-            selected.add(r)
+            if nodes[r]["statements"]:
+                selected.add(r)
             selected.update(s["id"] for s in nodes[r]["statements"])
     changed = True
     while changed:
