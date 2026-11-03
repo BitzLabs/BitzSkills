@@ -1142,7 +1142,7 @@ def precheck(
     outcome = config_mod.read_config(cfg_path, ears_version_code=ears_version_code)
     if require_declaration and not _declares_multiworkspace(outcome) and outcome.stop_stage != "config":
         # `--all-workspaces`は、ルートの設定が`multiWorkspace`を宣言するときだけ複合ワークスペースを発見できる（複合ワークスペース仕様 §8、
-        # 確認事項C64）。宣言の有無は、YAMLとして読めた設定（版の非対応で止まった設定を含む）のキーで判定する。設定を読めない場合は、
+        # 確認事項C64）。宣言の有無は、設定の読込みを通過した設定（版の非対応で止まった設定を含む）のキーで判定する。設定を読めない場合は、
         # 候補を発見した後の不適合として、停止の結果を返す（§8）。
         return PrecheckResult(discovery_failed=True)
     if outcome.stop:
