@@ -279,3 +279,34 @@ SHA-256は`529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9`。
 今回の作業の外部モデル呼出し・課金・予約は0。旧バッチは`stopped`、一次予約1・独立0を維持し、追記していない。
 公開側の実providerでこの是正の効果を確認する新測定はまだ行っていない。
 次はこの新候補に対する少数枠の実行条件と開始前検分を固定する。R04全体やSkill Gateの完了とは判定しない。
+
+
+## 2026-11-04: 固定catalogの新条件で公開1枠を完走
+
+候補`02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae`で、`SE-001`の反復1を一次取得・独立採点・親原照合まで完了した。
+新条件の成績は**正解1・不正解0・評価失敗0**。旧9a85b909の一次1失敗を成功へ変更せず、別条件・別出力に保持する。
+今回の確認はこの1枠のpipeline完走であり、全スキル・反復・特性を網羅したSkill GateやR04全体の完了ではない。
+
+[実行条件・最終検分・原照合・集計の必要証拠](public-catalog-one-slot-20261104.json)を1ファイルへ集約した。
+campaignは`public-matrix-catalog-one-slot-20261104-01`、条件は
+`6fbe91d84b16e4a39a13b1bd98e937ddb3193b75d9e64a3e4b359a4c6e0279ad`、
+束は`.venv/matrix-catalog-public-bound-20261104-01`である。
+一次原は`.venv/matrix-catalog-public-20261104-01/attempt-0001`、独立原は同prefixの`-independent/attempt-0001`に保持する。
+
+- 起動前のコード・具体条件・最終pinを別文脈で検分し、阻害なしを確認して単発`run(root, bundle, 1)`だけを実行した。
+  追加一次1・独立1、retry0・委譲0。旧停止の一次1・独立0も含め、通算一次2・独立1で既承認の2+2以内。
+- 一次は20.731627秒、独立は27.027308秒、両方終了0・timeoutなし。
+  一次は固定catalogと校正の補助指示を照合し、原RPC・host・rollout・全argv・資源の検査を通過した。
+  推論APIは3回、モデルcatalog APIは0回を観測した。旧失敗でのcatalog API 2回とは区別するが、旧応答本文は依然不明である。
+- 取得後の親再検査でも`load_provider_capture`、`verify_launch`、`semantic.prepare`、`verify_originals`と共有台帳の
+  一次・独立予約・reviewを読取り専用で照合し、`measured_correct`、原・台帳の前後不変を確認した。
+  独立検分者も同じ完成原を別文脈で再構成し、公開有限72ファイルの前後hash一致と旧停止3原の不変を確認した。
+- 今回1枠の運用範囲を終えたため、`operator-one-slot-scope-complete`のstopをEXCL追記し、追加予約を拒否した。
+  台帳の`status: stopped`はこの範囲の終了を意味し、この1枠の評価失敗ではない。
+  集計は`primaryReserved: 1`、`independentReserved: 1`、`parentVerified: 1`、`measuredCorrect: 1`、
+  `evaluationFailed: 0`、`pendingSlots: 0`。契約92枠の未測定91は残る。
+
+今回の観測使用量は、一次が入力19,676・出力347・合計20,023 token（入力cache 10,112）、
+独立が入力27,506・出力588・合計28,094 token（入力cache 0）。合計48,117 token、金額は未確認。
+原照合と完走後の独立検分による追加モデル・予約は0。旧停止と消費を維持し、過去の測定へ合算しない。
+次は、新候補の残りの公開評価に対する有限予算・継続条件を固定する。保持側は旧72資源の条件から別途移行が必要である。
