@@ -73,7 +73,7 @@ class ExpandedArgvLimitTests(unittest.TestCase):
         return [d["summary"] for d in result["diagnostics"] if d["code"] == "SPEC-VERIFY-BLOCKED-001"]
 
     def test_element_limit_reports_the_element_limit(self):
-        # 展開した要素（`tests/test_long_name_for_limit.py`、34バイト）だけが上限を超える。
+        # 展開した要素（`tests/test_long_name_for_limit.py`、33バイト）だけが上限を超える。
         with mock.patch.object(verify_mod, "_ARGV_ELEMENT_LIMIT", 20):
             self.assertEqual(self.blocked_summaries(), [ELEMENT_SUMMARY])
 
@@ -95,7 +95,7 @@ def _task(**fields):
 
 
 class FrontmatterPathFormTests(unittest.TestCase):
-    BAD_PATHS = ("src/a]b.py", "src/a*b.py", "/abs/a.py", "src/../a.py", "./a.py", "src/a\x00b.py", "")
+    BAD_PATHS = ("src/a]b.py", "src/a*b.py", "src/a?b.py", "src/a[b.py", "/abs/a.py", "src/../a.py", "./a.py", "src/a\x00b.py", "")
 
     def summaries(self, value, kind):
         return [(i.code, i.key, i.summary) for i in fm.validate(value, kind).hard]
@@ -117,6 +117,8 @@ class FrontmatterPathFormTests(unittest.TestCase):
             (_task(changes=42), "TASK", "changes", "フロントマターのフィールドchangesは文字列の配列が必要です"),
             # 文字列でない要素と字句の違反が並ぶときは、型の不正を返す。
             (_req(implements=[1, "src/a]b.py"]), "REQ", "implements", "フロントマターのフィールドimplementsは文字列の配列が必要です"),
+            (_req(implements=["src/a]b.py", 1]), "REQ", "implements", "フロントマターのフィールドimplementsは文字列の配列が必要です"),
+            (_task(changes=["/abs", None]), "TASK", "changes", "フロントマターのフィールドchangesは文字列の配列が必要です"),
             (_req(tests=[{"path": 3, "covers": ["REQ-001:AC-01"]}]), "REQ", "tests[0].path",
              "フロントマターのフィールドtests[0].pathは文字列が必要です"),
         )
