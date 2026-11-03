@@ -1194,7 +1194,7 @@ def precheck(
             {"kind": "environment", "component": "git"},
         )
         # `doctor`はカタログの不適合とGitの不在を独立した2つの原因とし、ルートの設定の本文だけで判定できるルートの`workspace.id`の省略、
-        # `multiWorkspace`の形状の不正、除外のパスの不正（`SPEC-MULTI-CONFIG-001`）も並べて返す（`04_doctor.md` §3、ADR-070、確認事項C50。
+        # `multiWorkspace`の型と件数の不正、除外のパスの不正（`SPEC-MULTI-CONFIG-001`）も並べて返す（`04_doctor.md` §3、ADR-070、確認事項C50。
         # ほかの操作はGitの診断だけ）。ルートの候補の位置に依存するメンバーの検査は行わない。
         shape_diags: list[Diagnostic] = []
         if report_git_with_config_stop:
