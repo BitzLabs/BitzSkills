@@ -1079,3 +1079,23 @@ Core固有の単体試験は1121件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1130件がすべて成功した。
+
+## 2026-11-03: 複合ワークスペースの影響の候補と文書IDの重複のsummaryを修飾するようにした後のStep 1〜5の再判定
+
+`document.py`、`basecompare.py`、`check.py`などで、複合ワークスペースの`SPEC-IMPACT-OUTDATED-001`と`SPEC-ID-DUPLICATE-001`の`summary`に差し込む作業ワークスペースの文書IDを修飾し、
+`check --all-workspaces`のメンバーの影響の候補で自ワークスペースを修飾した参照も照合するようにした（実装の確認事項C69・C80）。これを固定する`MULTI-056-01`〜`MULTI-056-05`（Step 5）を追加した。
+修正前のCore（コミット`8e09f7b1`の版）では、追加した5件がすべて非成功となり、対照の`SINGLE-015`、`SINGLE-033`、`MULTI-029-02`、`MULTI-047-01`と既存の594件はすべて通過することを確かめた。
+修正後のCoreでは599件すべてが`passed`となる。
+
+コミット`9b19d7b6cb251802b6f9b4e6db45fb9545f9eb9d`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 599件（`MULTI-056-01`〜`MULTI-056-05`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`8f2c9f4cf2c0237e7ce1a675667af29bb44a504eac6d8daf0a037c533abcbd89` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1134件がすべて成功した。
