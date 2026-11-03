@@ -8364,9 +8364,10 @@ class AuditTests(unittest.TestCase):
             return json.loads((fixture(identifier) / "manifest.json").read_text())
 
         spec = {"REQ": ".spec/requirements/REQ-001.md", "TASK": ".spec/tasks/TASK-001.md"}
-        summaries = {"implements": "フロントマターのフィールドimplementsは文字列の配列が必要です",
-                     "changes": "フロントマターのフィールドchangesは文字列の配列が必要です",
-                     "tests[0].path": "フロントマターのフィールドtests[0].pathは文字列が必要です"}
+        # 承認済みの文言（C85、2026-11-04）。型の不正の文言（#48・#49）とは別の文型である。
+        summaries = {"implements": "フロントマターのフィールドimplementsのパスの形式が不正です",
+                     "changes": "フロントマターのフィールドchangesのパスの形式が不正です",
+                     "tests[0].path": "フロントマターのフィールドtests[0].pathのパスの形式が不正です"}
         # 識別子: (文書の種類, キー, 実ファイルを置くパス)
         rejected = {"SINGLE-171-01": ("REQ", "implements", ["src/a]b.py"]), "SINGLE-171-02": ("TASK", "changes", ["src/a]b.py"]),
                     "SINGLE-171-03": ("REQ", "tests[0].path", ["tests/t]x.py"]), "SINGLE-171-04": ("REQ", "implements", []),
@@ -8407,10 +8408,16 @@ class AuditTests(unittest.TestCase):
         self.assertIn('implements: ["src/a(1){2}!.py"]\n', text("SINGLE-171-07", "requirements/REQ-001.md"))
         self.assertIn('"path": "tests/t(1){2}!.py"', text("SINGLE-171-07", "requirements/REQ-001.md"))
         self.assertIn('changes: ["src/a(1){2}!.py"]\n', text("SINGLE-171-08", "tasks/TASK-001.md"))
-        # 承認済みの文言だけ: `SINGLE-120-04`と同じ`changes`の文言、`SINGLE-088`と同じ形の`tests[0].path`の文言。
-        self.assertEqual(read("SINGLE-171-02")["diagnostics"][0]["summary"], read("SINGLE-120-04")["diagnostics"][0]["summary"])
-        self.assertEqual(read("SINGLE-171-03")["diagnostics"][0]["summary"],
-                         read("SINGLE-088")["diagnostics"][0]["summary"].replace("title", "tests[0].path"))
+        # パスの字句の違反の文言は、型の不正の文言（`SINGLE-120-04`の`changes`、`SINGLE-088`の`title`）と異なる（C85）。
+        self.assertNotEqual(read("SINGLE-171-02")["diagnostics"][0]["summary"], read("SINGLE-120-04")["diagnostics"][0]["summary"])
+        self.assertEqual(read("SINGLE-120-04")["diagnostics"][0]["summary"], "フロントマターのフィールドchangesは文字列の配列が必要です")
+        self.assertEqual(read("SINGLE-088")["diagnostics"][0]["summary"], "フロントマターのフィールドtitleは文字列が必要です")
+        old_summaries = {"implements": "フロントマターのフィールドimplementsは文字列の配列が必要です",
+                         "changes": "フロントマターのフィールドchangesは文字列の配列が必要です",
+                         "tests[0].path": "フロントマターのフィールドtests[0].pathは文字列が必要です"}
+        for identifier, (_, key, _) in rejected.items():
+            self.assertNotEqual(read(identifier)["diagnostics"][0]["summary"], old_summaries[key], identifier)
+            self.assertEqual(read(identifier)["diagnostics"][0]["summary"], f"フロントマターのフィールド{key}のパスの形式が不正です", identifier)
         # 同じ形の対（修正前から拒否する対照と、欠陥を検出するケース）は、`key`と`summary`だけが違わない。
         for defect, control in (("SINGLE-171-01", "SINGLE-171-04"), ("SINGLE-171-02", "SINGLE-171-05"), ("SINGLE-171-03", "SINGLE-171-06")):
             self.assertEqual(read(defect), read(control))
@@ -8556,6 +8563,19 @@ class AuditTests(unittest.TestCase):
                 (fixture / "expected/check.json").write_text(json.dumps(result))
                 (fixture / "manifest.json").write_text(json.dumps({**manifest, "fixtureId": identifier,
                                                                     "description": module.CASES[identifier]["description"]}))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 6件（拒否する対照を含む）の期待のsummaryを、修正前のCoreの出力（型の不正と同じ旧い文言）へ取り違える改変を拒否する（C85）。
+        old_summaries = {"implements": "フロントマターのフィールドimplementsは文字列の配列が必要です",
+                         "changes": "フロントマターのフィールドchangesは文字列の配列が必要です",
+                         "tests[0].path": "フロントマターのフィールドtests[0].pathは文字列が必要です"}
+        for number in range(1, 7):
+            identifier = f"SINGLE-171-{number:02d}"
+            with self.subTest(identifier=identifier, swap="old-summary"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                path = root / "single" / identifier / "expected/check.json"
+                result = json.loads(path.read_text())
+                result["diagnostics"][0]["summary"] = old_summaries[result["diagnostics"][0]["source"]["key"]]
+                path.write_text(json.dumps(result))
                 self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
         self.assertGreater(applied, 200)
 

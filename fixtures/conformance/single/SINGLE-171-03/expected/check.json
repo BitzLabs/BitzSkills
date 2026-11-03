@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "フロントマターのフィールドtests[0].pathは文字列が必要です",
+      "summary": "フロントマターのフィールドtests[0].pathのパスの形式が不正です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

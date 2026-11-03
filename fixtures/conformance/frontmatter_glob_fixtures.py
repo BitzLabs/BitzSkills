@@ -11,7 +11,8 @@
 
 フロントマターの拒否は`SPEC-FM-SCHEMA-001`（`error`／`failed`）で、診断の`source`は`{kind: file, workspaceId: root, path: <仕様文書>, key: <フィールド>}`、
 文書をスキップするので`checkedDocumentCount`と`checkedStatementCount`は0になる（`SINGLE-117-03`・`SINGLE-120-04`と同じ形）。
-診断の`summary`は、承認済みの文言だけを使う（`Coreの出力文言のレビュー記録.md`の#48〜#49）。
+診断の`summary`は、承認済みの文言「フロントマターのフィールド{key}のパスの形式が不正です」を使う
+（`Coreの出力文言のレビュー記録.md`の2026-11-04の節、C85。型の不正の文言#48〜#49とは区別する）。
 
 | fixture | フィールド | パス | 期待 |
 |---|---|---|---|
@@ -24,6 +25,7 @@
 | `SINGLE-171-07` | REQの`implements`と`tests[0].path` | `*?[]`以外の記号`(){}!`を含む（実ファイルあり） | `passed`／0。診断なし |
 | `SINGLE-171-08` | TASKの`changes` | `*?[]`以外の記号`(){}!`を含む（実ファイルあり） | `passed`／0。診断なし |
 
+`04`〜`06`のC85の修正前のCoreは、拒否はするが`summary`が旧い文言（型の不正と同じ）なので、期待と一致しない。
 `04`〜`06`は、パスの字句の検査が実在の検査より前なので、実ファイルを置かない（ファイル名に`*?[`を含む入力は、シェルやツールが解釈しうるので避ける）。
 `01`〜`03`は、修正前のCoreが`]`以外の原因（実ファイルの不在、ほかの不正な字句）で非成功にならないよう、実ファイルを基準版のコミットへ入れる。
 実ファイルがなければ、`approved`のREQの`implements`と`tests[].path`は不在の診断を返す（関係・トレースモデル §9）。
@@ -57,12 +59,11 @@ TASK_BODY = "## Objective\n\nパスの記号を確認する。\n\n## Completion 
 GLOB_CHARACTERS = "*?[]"
 # 修正前のCoreが拒否していた、閉じ括弧を除く3つ。
 OLD_GLOB_CHARACTERS = "*?["
-# 承認済みの文言（`Coreの出力文言のレビュー記録.md`の#48: `フロントマターのフィールド{key}は文字列が必要です`、#49: `…は文字列の配列が必要です`）。
-SUMMARIES = {
-    "implements": "フロントマターのフィールドimplementsは文字列の配列が必要です",
-    "changes": "フロントマターのフィールドchangesは文字列の配列が必要です",
-    "tests[0].path": "フロントマターのフィールドtests[0].pathは文字列が必要です",
-}
+# 承認済みの文言（`Coreの出力文言のレビュー記録.md`の2026-11-04の節、C85。ADR-062 Decision 2）。
+# パスの字句の拒否は、型の不正（#48: `…は文字列が必要です`、#49: `…は文字列の配列が必要です`）と区別する。
+# 旧い文言（修正前のCoreの出力）は、型の不正と同じ文言で、監査の回帰試験が拒否する。
+SUMMARY_TEMPLATE = "フロントマターのフィールド{key}のパスの形式が不正です"
+SUMMARIES = {key: SUMMARY_TEMPLATE.format(key=key) for key in ("implements", "changes", "tests[0].path")}
 KINDS = {"REQ": ("requirements", "reqFrontmatter", "approved"), "TASK": ("tasks", "taskFrontmatter", "open")}
 
 # id: dict(kind〈文書の種類〉, field〈対象のフロントマターのフィールド〉, paths〈そのフィールドのパス〉,

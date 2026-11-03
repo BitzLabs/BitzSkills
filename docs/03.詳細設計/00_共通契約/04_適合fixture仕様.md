@@ -758,15 +758,17 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 修正前は閉じ括弧`]`を除く3つしか拒否せず、`]`だけを含むパスを受理した（実装の確認事項C43。メンバーのパス、除外のパス、`cwd`は4つを拒否していた）。
 いずれも入力は、基準版のコミットへ入れた最小設定と対象の文書1件で、操作は`check --full --base HEAD`である。違反の診断は`SPEC-FM-SCHEMA-001`（`error`／`failed`）の1件で、
 文書をスキップするので`checkedDocumentCount`と`checkedStatementCount`は0（`SINGLE-120-04`と同じ形）。`source`は`{kind: file, workspaceId: root, path: 仕様文書, key: フィールド}`である。
+`summary`は、型の不正（`SINGLE-088`・`SINGLE-120-04`の「…は文字列が必要です」「…は文字列の配列が必要です」）とは別に、パスの字句の違反として「フロントマターのフィールド{key}のパスの形式が不正です」とする
+（実装の確認事項C85。ADR-062 Decision 2の承認。出力文言の対応表の#48・#49は型の不正の文言で、変えない）。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
-| `SINGLE-171-01` | `approved`のREQ-001（規範文`AC-01`）の`implements: ["src/a]b.py"]`。`src/a]b.py`は通常のファイルとして基準版のコミットに含む | check --full --base HEAD | failed／1 | 閉じ括弧だけを含むパスも、globの文字として拒否する。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドimplementsは文字列の配列が必要です」、キー`implements`）の1件だけで、実ファイルがあるので不在の診断は重ならない。修正前のCoreは文書を受理して`passed`／0（`checkedDocumentCount`は1） |
-| `SINGLE-171-02` | `open`のTASK-001の`changes: ["src/a]b.py"]`。`src/a]b.py`は通常のファイルとして基準版のコミットに含む | check --full --base HEAD | failed／1 | `changes`も同じ。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドchangesは文字列の配列が必要です」、キー`changes`）の1件だけ。修正前のCoreは`passed`／0 |
-| `SINGLE-171-03` | `approved`のREQ-001（規範文`AC-01`）の`tests: [{path: tests/t]x.py, covers: [REQ-001:AC-01], command: default}]`。`tests/t]x.py`は通常のファイルとして基準版のコミットに含み、設定にコマンド`default`を定義する | check --full --base HEAD | failed／1 | `tests[].path`も同じ。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドtests[0].pathは文字列が必要です」、キー`tests[0].path`）の1件だけ。修正前のCoreは`passed`／0 |
-| `SINGLE-171-04` | `SINGLE-171-01`と同じ形で、`implements: ["src/a*b.py"]`（`*`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: アスタリスクも拒否する。字句の検査が実在の検査より前なので、診断は`SINGLE-171-01`と同じ1件だけ。修正前のCoreも通る |
-| `SINGLE-171-05` | `SINGLE-171-02`と同じ形で、`changes: ["src/a?b.py"]`（`?`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: 疑問符も拒否する。診断は`SINGLE-171-02`と同じ1件だけ。修正前のCoreも通る |
-| `SINGLE-171-06` | `SINGLE-171-03`と同じ形で、`tests[0].path`が`tests/t[x.py`（`[`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: 開き括弧も拒否する。診断は`SINGLE-171-03`と同じ1件だけ。修正前のCoreも通る |
+| `SINGLE-171-01` | `approved`のREQ-001（規範文`AC-01`）の`implements: ["src/a]b.py"]`。`src/a]b.py`は通常のファイルとして基準版のコミットに含む | check --full --base HEAD | failed／1 | 閉じ括弧だけを含むパスも、globの文字として拒否する。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドimplementsのパスの形式が不正です」、キー`implements`）の1件だけで、実ファイルがあるので不在の診断は重ならない。修正前のCoreは文書を受理して`passed`／0（`checkedDocumentCount`は1） |
+| `SINGLE-171-02` | `open`のTASK-001の`changes: ["src/a]b.py"]`。`src/a]b.py`は通常のファイルとして基準版のコミットに含む | check --full --base HEAD | failed／1 | `changes`も同じ。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドchangesのパスの形式が不正です」、キー`changes`）の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-171-03` | `approved`のREQ-001（規範文`AC-01`）の`tests: [{path: tests/t]x.py, covers: [REQ-001:AC-01], command: default}]`。`tests/t]x.py`は通常のファイルとして基準版のコミットに含み、設定にコマンド`default`を定義する | check --full --base HEAD | failed／1 | `tests[].path`も同じ。診断は`SPEC-FM-SCHEMA-001`（summary「フロントマターのフィールドtests[0].pathのパスの形式が不正です」、キー`tests[0].path`）の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-171-04` | `SINGLE-171-01`と同じ形で、`implements: ["src/a*b.py"]`（`*`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: アスタリスクも拒否する。字句の検査が実在の検査より前なので、診断は`SINGLE-171-01`と同じ1件だけ。C85の修正前のCoreも拒否するが、summaryが型の不正と同じ旧い文言なので、期待と一致しない |
+| `SINGLE-171-05` | `SINGLE-171-02`と同じ形で、`changes: ["src/a?b.py"]`（`?`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: 疑問符も拒否する。診断は`SINGLE-171-02`と同じ1件だけ。C85の修正前のCoreも拒否するが、summaryが旧い文言なので、期待と一致しない |
+| `SINGLE-171-06` | `SINGLE-171-03`と同じ形で、`tests[0].path`が`tests/t[x.py`（`[`。実ファイルは置かない） | check --full --base HEAD | failed／1 | 対照: 開き括弧も拒否する。診断は`SINGLE-171-03`と同じ1件だけ。C85の修正前のCoreも拒否するが、summaryが旧い文言なので、期待と一致しない |
 | `SINGLE-171-07` | `approved`のREQ-001の`implements: ["src/a(1){2}!.py"]`と、`tests[0].path`が`tests/t(1){2}!.py`（`*?[]`以外の記号`(){}!`を含む。実ファイルは基準版のコミットに含み、設定にコマンド`default`を定義する） | check --full --base HEAD | passed／0 | 対照: globの文字は`*?[]`の4つだけで、ほかの記号は拒否しない。診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は1。修正前のCoreも通る |
 | `SINGLE-171-08` | `open`のTASK-001の`changes: ["src/a(1){2}!.py"]`（実ファイルは基準版のコミットに含む） | check --full --base HEAD | passed／0 | 対照: `changes`も`*?[]`以外の記号を拒否しない。診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は0。修正前のCoreも通る |
 

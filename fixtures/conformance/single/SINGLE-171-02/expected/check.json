@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "フロントマターのフィールドchangesは文字列の配列が必要です",
+      "summary": "フロントマターのフィールドchangesのパスの形式が不正です",
       "source": {
         "kind": "file",
         "workspaceId": "root",
