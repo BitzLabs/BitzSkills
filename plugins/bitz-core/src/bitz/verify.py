@@ -831,7 +831,7 @@ def _plan_and_run_bindings(
                     )
                 elif any(len(a.encode("utf-8")) > _ARGV_ELEMENT_LIMIT for a in expanded):
                     diag = _file_diag(
-                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_ARGV_EXPANDED_LIMIT,
+                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_ARGV_EXPANDED_ELEMENT_LIMIT,
                         ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.argv",
                     )
                 elif total_bytes > _ARGV_TOTAL_LIMIT:
