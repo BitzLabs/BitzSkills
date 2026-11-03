@@ -12,7 +12,7 @@
 
 この試験の対象:
 1. 全体操作と単独の操作の両方で、2つの診断の`summary`が作業ワークスペースのIDで修飾される。
-2. 全体操作でも、自ワークスペースを修飾した参照の依存元を警告する。
+2. 全体操作でも、自ワークスペースを修飾した参照の依存元を警告する（メンバーとルートの両方）。
 3. 単一ワークスペースの`summary`は修飾しない。
 4. 結果は`result.schema.json`に適合する。
 """
@@ -149,6 +149,20 @@ class MultiWorkspaceTests(_Base):
                 result, code = self.check(*argv)
                 self.assertEqual((result["status"], code), ("passed_with_warnings", 0), result)
                 self.assertEqual(self.summaries(result, "SPEC-IMPACT-OUTDATED-001"), self.IMPACT)
+
+    def test_root_workspace_self_qualified_reference_is_matched_in_all_workspaces(self):
+        """ルートワークスペースでも、全体操作が自ワークスペースを修飾した参照の依存元を警告する（C80）。"""
+
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", status="draft"))
+        _write(self.root, ".spec/technical/TECH-021.md", _tech("TECH-021", "platform::REQ-001:AC-01"))
+        self.commit("root")
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", status="draft", intent="変更した意図。"))
+        result, _code = self.check("--all-workspaces", "--base", "HEAD")
+        by_id = {ws["id"]: ws for ws in result["workspaces"]}
+        self.assertEqual(
+            sorted(d["summary"] for d in by_id["platform"]["diagnostics"] if d["code"] == "SPEC-IMPACT-OUTDATED-001"),
+            ["platform::TECH-021が強く依存するplatform::REQ-001が変更されています。再確認してください"],
+        )
 
     def test_duplicate_id_summary_is_qualified(self):
         _write(self.root, "apps/web/.spec/requirements/REQ-003-a.md", _req("REQ-003"))
