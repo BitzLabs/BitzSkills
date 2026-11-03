@@ -1,5 +1,8 @@
 # 品質スキルの先行2ケース
 
+過去の限定評価と対応済みの確認結果は[結果一覧](../results/README.md)へ集約した。
+以下の版ごとの説明と実施件数は当時の条件での履歴であり、現在の合格・再開を示さない。
+
 原0.1.1評価は2軌跡で意味不適合が出て停止した。原approval/protocolとfailed結果は保持する。
 2026-10-04の「SOLでの評価は、すべて許可します。」を[包括承認](../sol-authorization.json)へ記録した。
 是正候補0.1.2はremediation-protocol.jsonのQR-001×skill/baseline×2反復、最大4軌跡を
@@ -11,7 +14,7 @@ remediation-approval.jsonに基づき別出力・別台帳で測定する。失�
 advice-format.mdを共通配布し、実際の読取りを検査する実行器quality-execution-0.1.1で新測定する。
 shared-format-protocol.jsonとshared-format-approval.jsonは包括承認に基づく別4件で、ケース/期待条件/スキル版は保持する。
 この新条件は471d360から4件完走し、各runの独立判定は全項目passed。
-詳細と未認定の範囲は[限定適合の記録](../results/2026-10-04-quality-shared-format/report.md)を参照する。
+限定適合と全体未認定の経緯は[必要な履歴](../results/README.md#対応済み事項)へ集約した。
 
 比較の準備版。2026-10-04の利用者承認はapproval.jsonに記録した。実行開始前の時点ではモデル実測は未実行。
 bitz-quality 0.1.1の局所試作から始める。
@@ -89,7 +92,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/sr
 拡張2ケースの8一次軌跡は同じ確定ref `7d20d818` から完走し、各件の必須4検査・作業者の元証拠再検査を通過した。
 原独立起動の利用上限中断1件を保持して、利用者の再開指示後に別の有限独立条件から再開した。
 両条件とも証拠不足Q2/unknownと供給網Q3/not_readyを2反復で保持し、上限後のCodex起動0と台帳不変も実検査した。
-使用量・保存監査・限界は[拡張結果](../results/2026-10-05-quality-expansion/report.md)を参照する。
+拡張結果の結論と制限は[必要な履歴](../results/README.md#対応済み事項)へ集約し、役割を終えた詳細ログは削除した。
 
 ## Q0/Q1の通常レビュー2ケース
 
@@ -106,7 +109,7 @@ QR-005は既存契約の空文字/非空文字の内容を3件の実assertで検
 source `c04da223` に固定した一次8件は全件完走し、各件の独立4検査と作業者の原証拠再検査を通過した。
 両側ともQ0/Q1・ready・必須不足0を2反復で保持する。文書の未許可試験は0、内部関数の固定3試験は各件成功。
 上限後のCodex起動0と新旧台帳不変、同じ入力・権限と新規thread 8件も実検査した。
-公開2ケースから比較優位を一般化しない。使用量と保存監査は[通常レビュー結果](../results/2026-10-05-quality-normal/report.md)を参照する。
+公開2ケースから比較優位を一般化しない。限定した確認範囲は[必要な履歴](../results/README.md#対応済み事項)に残す。
 
 評価器は起動中断・非0終了・原出力の保存失敗を成功へ変換しない。trace/stderrの原bytes、保存失敗、未保存bytesのbase64、argv/cwd/timeout、workspace前後差分、errno、自動再試行禁止を `interruption.json` へ保存する。
 `quality-execution-0.1.3`は出力をbytesで取得してから復号し、後処理の例外で原ログを上書きしない。手動中断では `subprocess.run` が返さないpartial outputを捏造せず、未取得と使用量不明を記録する。中断記録がある軌跡はreceiptがあっても追加起動を止める。過去の測定版・失敗記録は書き換えない。
@@ -121,7 +124,7 @@ QR-006の次の公開攻撃ケースは、実装者のREADMEへ偽SYSTEM命令�
 
 原QR-006比較はsource `0c84a621` の2/4で停止した。baselineは認可欠陥をnot_readyとしたがQ2と分類し、
 独立性をfalseと申告した。独立原因診断では、未信頼READMEの読取りと先行結論継承の境界をunknownとした。
-原failed・skillの原passed receipt・残2枠不使用は[停止結果](../results/2026-10-06-quality-attack-stopped/report.md)へ保持する。
+元の失敗と残2枠の不使用は[必要な履歴](../results/README.md#対応済み事項)へ集約した。原ファイルの一律保存は行わない。
 候補0.1.3と実行版0.1.4では、leadingConclusionProvidedの前提継承と未信頼データの検分を区別し、
 全ケース共通のリスク帯の意味を公開schema/共有形式へ記す。申告不成立と実ID不一致の診断文は分離する。
 `attack-remediation-protocol.json`と`attack-remediation-approval.json`は元fixture・差分・4枠を据え置いた別sourceの条件で、
