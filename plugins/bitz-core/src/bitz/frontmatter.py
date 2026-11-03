@@ -168,8 +168,12 @@ def _unknown_warning(key: str) -> FieldIssue:
 def _check_path_array(value: object, key: str, limits: list[FieldIssue], hard: list[FieldIssue], label: str) -> bool:
     """``key``がパスの配列として妥当か検査する。型が不正なら``True``を返し、呼び出し側で打ち切る。"""
 
-    if not isinstance(value, list) or any(_is_bad_path(p) for p in value):
+    if not isinstance(value, list) or any(not isinstance(p, str) for p in value):
         hard.append(_schema_error(key, messages.fm_type_error(key, "文字列の配列")))
+        return True
+    if any(_is_bad_path(p) for p in value):
+        # 型は正しいが、パスの字句の規則（ワークスペース・設定仕様 §9）に反する（確認事項C85）。
+        hard.append(_schema_error(key, messages.fm_path_form_error(key)))
         return True
     if len(value) > ARRAY_ITEM_LIMIT:
         limits.append(_limit_error(key, messages.array_count_limit(key)))
@@ -289,8 +293,12 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
                     tests_hard = True
                     continue
                 path_v = item.get("path")
-                if _is_bad_path(path_v):
+                if not isinstance(path_v, str):
                     hard.append(_schema_error(f"{prefix}.path", messages.fm_type_error(f"{prefix}.path", "文字列")))
+                    tests_hard = True
+                    continue
+                if _is_bad_path(path_v):
+                    hard.append(_schema_error(f"{prefix}.path", messages.fm_path_form_error(f"{prefix}.path")))
                     tests_hard = True
                     continue
                 covers_v = item.get("covers")

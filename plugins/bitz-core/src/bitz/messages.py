@@ -51,6 +51,10 @@ def fm_type_error(key: str, expected: str) -> str:
     return f"フロントマターのフィールド{key}は{expected}が必要です"
 
 
+def fm_path_form_error(key: str) -> str:
+    return f"フロントマターのフィールド{key}のパスの形式が不正です"
+
+
 def fm_required_missing(key: str) -> str:
     return f"フロントマターの必須フィールド{key}がありません"
 
@@ -313,6 +317,7 @@ VERIFY_SPAWN_ERROR = "コマンドの実行形式をOSが拒否しプロセス�
 VERIFY_SIGNAL = "コマンドがシグナルで終了しました"
 VERIFY_EXECUTABLE_UNAVAILABLE = "コマンドの実行可能ファイルを環境変数PATHから解決できません"
 VERIFY_ARGV_EXPANDED_LIMIT = "{tests}展開後のargvがバイト数上限1 MiBを超えます"
+VERIFY_ARGV_EXPANDED_ELEMENT_LIMIT = "{tests}展開後のargvの要素がバイト数上限32 KiBを超えます"
 VERIFY_CONFIG_UNTRACKED = "設定ファイルがGit管理下で未追跡です"
 VERIFY_TEST_OUTSIDE_CWD = "テストのパスが実効の作業ディレクトリの配下にありません"
 
