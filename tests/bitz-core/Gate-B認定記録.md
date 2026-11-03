@@ -1139,3 +1139,24 @@ Core固有の単体試験は1136件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1140件がすべて成功した。
+
+## 2026-11-03: Gitのないdoctorのカタログの不適合を直した後のStep 1〜5の再判定
+
+`multiws.py`で、Gitの境界を確定できずに止まる`doctor`が、ルートの設定の本文だけで判定できるカタログの不適合（ルートの`workspace.id`の省略、
+`multiWorkspace`の型と件数、除外のパスの不正。`SPEC-MULTI-CONFIG-001`）も`SPEC-MULTI-GIT-001`と並べて返し、検査項目`catalog`を`failed`とするようにした
+（実装の確認事項C50、ADR-070）。これを固定する`MULTI-058-01`〜`MULTI-058-06`（Step 5）を追加した。
+修正前のCore（コミット`496eecb8`の版）では、追加した6件のうち3件（`-01`〜`-03`）が非成功となり、対照の`-04`〜`-06`と既存の613件はすべて通過することを確かめた。
+修正後のCoreでは619件すべてが`passed`となる。
+
+コミット`4f1ed3068c52313c5c3e9e390ce37256ee97604b`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 619件（`MULTI-058-01`〜`06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`aeb9ac2083391fc700e8132b8d1346a7ebbd6b88212db5c31b3508c7050031ac` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1143件がすべて成功した。
