@@ -5027,12 +5027,16 @@ class AuditTests(unittest.TestCase):
                 return getattr(module, function)(repository)
 
         # ルートの設定を読めなければ、ルートのIDを構成できない。メンバーの設定を読めなくても、ルートのIDは確定している。
-        self.assertEqual(decide("MULTI-049-01"), {"cause": "root-limit", "multiWorkspaceId": None, "sourceWorkspaceId": None})
-        self.assertEqual(decide("MULTI-049-02"), {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": None})
-        # 修正前の読み方は、読めない設定の同一性に既定値`root`を補う。メンバーの場合、`multiWorkspace.id`は変わらない。
-        self.assertEqual(decide("MULTI-049-01", "defective_decision"), {"cause": "root-limit", "multiWorkspaceId": "root", "sourceWorkspaceId": "root"})
+        # 診断の`path`は、ルートの設定なら`.spec/bitz.yaml`、メンバーの設定ならルートからの相対パス（結果・診断・終了コード §5、確認事項C72）。
+        self.assertEqual(decide("MULTI-049-01"), {"cause": "root-limit", "multiWorkspaceId": None, "sourceWorkspaceId": None,
+                                                  "sourcePath": ".spec/bitz.yaml"})
+        self.assertEqual(decide("MULTI-049-02"), {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": None,
+                                                  "sourcePath": "apps/web/.spec/bitz.yaml"})
+        # 修正前の読み方は、読めない設定の同一性に既定値`root`を補い、メンバーの設定の`path`を`.spec/bitz.yaml`のままにする。メンバーの場合、`multiWorkspace.id`は変わらない。
+        self.assertEqual(decide("MULTI-049-01", "defective_decision"), {"cause": "root-limit", "multiWorkspaceId": "root", "sourceWorkspaceId": "root",
+                                                                        "sourcePath": ".spec/bitz.yaml"})
         self.assertEqual(decide("MULTI-049-02", "defective_decision"),
-                         {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": "root"})
+                         {"cause": "member-limit", "multiWorkspaceId": "platform", "sourceWorkspaceId": "root", "sourcePath": ".spec/bitz.yaml"})
         # 上限ちょうど（64 KiB）は超過ではない。1バイト足すと超過する（境界の対照）。
         root_config = module.multi_reference.root_config((("web", "apps/web"),), root_id="platform").encode()
         padding = b"#" * (module.CONFIG_LIMIT - len(root_config) - 1) + b"\n"
@@ -5069,7 +5073,11 @@ class AuditTests(unittest.TestCase):
             "source-workspace-root": lambda v: v["diagnostics"][0]["source"].update(workspaceId="root"),
             "source-workspace-platform": lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform"),
             "source-workspace-web": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            # ルートの設定の診断は`.spec/bitz.yaml`、メンバーの設定の診断はルートからの相対。互いの値、メンバーのディレクトリからの相対（修正前のCoreの出力）に取り違えない。
             "source-path-member": lambda v: v["diagnostics"][0]["source"].update(path="apps/web/.spec/bitz.yaml"),
+            "source-path-root": lambda v: v["diagnostics"][0]["source"].update(path=".spec/bitz.yaml"),
+            "source-path-web-relative": lambda v: v["diagnostics"][0]["source"].update(path="web/.spec/bitz.yaml"),
+            "source-path-absolute": lambda v: v["diagnostics"][0]["source"].update(path="/apps/web/.spec/bitz.yaml"),
             "source-path-other": lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md"),
             "source-key": lambda v: v["diagnostics"][0]["source"].update(key="workspace.id"),
             "multi-id-root": lambda v: v["multiWorkspace"].update(id="root"),

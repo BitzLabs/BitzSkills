@@ -23,7 +23,7 @@
       "source": {
         "kind": "file",
         "workspaceId": null,
-        "path": ".spec/bitz.yaml"
+        "path": "apps/web/.spec/bitz.yaml"
       }
     }
   ]

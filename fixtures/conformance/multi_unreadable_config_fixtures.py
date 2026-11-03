@@ -8,8 +8,8 @@
 
 | fixture | 操作と実行ディレクトリ | 原因と期待 |
 |---|---|---|
-| `MULTI-049-01` | `check --all-workspaces --base HEAD`、`.` | ルートの設定が64 KiBを超える。`multiWorkspace`は`{null, .}`、`workspaces`は空、`SPEC-INPUT-LIMIT-001`の1件で`source.workspaceId`は`null` |
-| `MULTI-049-02` | `check --all-workspaces --base HEAD`、`.` | メンバー`web`の設定が64 KiBを超える。ルートの同一性は確定しているので`multiWorkspace`は`{platform, .}`。`source.workspaceId`は`null` |
+| `MULTI-049-01` | `check --all-workspaces --base HEAD`、`.` | ルートの設定が64 KiBを超える。`multiWorkspace`は`{null, .}`、`workspaces`は空、`SPEC-INPUT-LIMIT-001`の1件で`source`は`{null, .spec/bitz.yaml}` |
+| `MULTI-049-02` | `check --all-workspaces --base HEAD`、`.` | メンバー`web`の設定が64 KiBを超える。ルートの同一性は確定しているので`multiWorkspace`は`{platform, .}`。`source`は`{null, apps/web/.spec/bitz.yaml}` |
 
 基本のリポジトリは、ルート`platform`（`.`）の設定とREQ-001、メンバー`web`（`apps/web`）の設定である。入力の種類は次のとおりである。
 
@@ -25,11 +25,15 @@
 - 診断レジストリ: `INPUT-LIMIT-CONFIG`（`SPEC-INPUT-LIMIT-001`、`error`／`failed`、`stop-operation`）。結果の状態は`failed`、終了コードは1（`SINGLE-078`と同じ）。
 - 結果・診断・終了コード §2・§5と複合ワークスペース仕様 §9（ユーザーの決定、2026-10-26）: 設定を読めないこと（上限の超過、読取りの失敗、文字コードの不正）で
   同一性を構成する前に止まった結果は、`workspace.id`、`multiWorkspace.id`、`source.workspaceId`を`null`にする。
-  `path`は発見済みのワークスペースの候補からの相対パスで、設定は`.spec/bitz.yaml`である（メンバーの設定は、メンバーのディレクトリからの相対）。
+  ルートの設定の診断の`path`は`.spec/bitz.yaml`である。
+- 結果・診断・終了コード §5（確認事項C72、ユーザーの決定、2026-11-03）: 複合ワークスペースの全体事前検査が返すメンバーの設定の診断は、どのメンバーの設定かが分かるよう、
+  `path`を複合ワークスペースのルートからの相対パス（`apps/web/.spec/bitz.yaml`）とする。未登録の設定の`SPEC-MULTI-UNREGISTERED-001`と同じ形である。
+  この期待値は初め、メンバーのディレクトリからの相対（`.spec/bitz.yaml`）としていた。規範を直したので`MULTI-049-02`の`source.path`を訂正した。
 - 複合ワークスペース仕様 §8: 全体事前検査が非成功なら、ワークスペースの処理を始めず`workspaces: []`で結果を返す。
   §9: `multiWorkspace`を`{"id": null, "path": "."}`にするのは、ルートの設定が読めない（または構文、型、IDが不正な）ときに限る。
   それ以外は有効なIDを必須とするので、メンバーの設定が読めなくても、確定したルートのID（`platform`）を使う。
 - 本書はメンバーの設定の診断に`workspaceId: null`を置く。メンバー自身のIDも、設定を読めないので構成できないためである（ユーザーの決定、2026-10-26）。
+  `path`は、ルートの設定なら`.spec/bitz.yaml`、メンバーの設定ならルートからの相対の`apps/web/.spec/bitz.yaml`である（確認事項C72）。
 - 読取りの失敗（`INPUT-IO-CONFIG`、権限の不足など）は、適合harnessが作れないので、この群にもfixtureを置かない。単体試験
   （`tests/bitz-core/test_unreadable_config_identity.py`）が固定する。
 """
@@ -58,6 +62,8 @@ CONFIG_SOURCE_PATH = ".spec/bitz.yaml"
 LIMIT_SUMMARY = "設定ファイルが64 KiB上限を超過しました"
 # 修正前のCoreが同一性に補った既定値。
 DEFAULT_ID = "root"
+# メンバーの設定の診断の`path`。複合ワークスペースのルートからの相対パス（結果・診断・終了コード §5、確認事項C72）。
+MEMBER_SOURCE_PATH = WEB_CONFIG_PATH
 
 # id: dict(inputs, cause, description)。cause: `root-limit`（ルートの設定が上限超過）、`member-limit`（メンバーの設定が上限超過）。
 CASES = {
@@ -104,12 +110,13 @@ def reviewed_manifest(identifier):
 def reviewed_result(identifier):
     # ルートの設定を読めないときだけ、全体の同一性を構成できない（複合ワークスペース仕様 §9）。メンバーの設定が読めないときは、ルートのIDを確定している。
     multi_id = None if CASES[identifier]["cause"] == "root-limit" else ROOT_ID
+    source_path = CONFIG_SOURCE_PATH if CASES[identifier]["cause"] == "root-limit" else MEMBER_SOURCE_PATH
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "failed",
         "multiWorkspace": {"id": multi_id, "path": "."}, "workspaces": [],
         "revision": {"base": COMMIT, "commit": COMMIT, "dirty": False}, "durationMs": 0,
         "diagnostics": [{"code": LIMIT_CODE, "severity": "error", "resultStatus": "failed", "summary": LIMIT_SUMMARY,
-                         "source": {"kind": "file", "workspaceId": None, "path": CONFIG_SOURCE_PATH}}],
+                         "source": {"kind": "file", "workspaceId": None, "path": source_path}}],
     }
 
 
@@ -125,12 +132,13 @@ def reference_decision(repository):
 
     設定のバイト数が64 KiBを超えるものを探す。ルートが先（ルートの設定を読めなければ、ルートのIDも、メンバーの一覧も分からない）。
     ルートが読めれば、カタログのメンバーの設定を順に見る。読めない設定の診断は`workspaceId: null`。`multiWorkspace.id`は、ルートを読めたときだけ確定したルートのID。
+    診断の`path`は、ルートの設定なら`.spec/bitz.yaml`、メンバーの設定なら複合ワークスペースのルートからの相対パス（結果・診断・終了コード §5、確認事項C72）。
     """
     root_bytes = read_config_bytes(repository, ROOT_CONFIG_PATH)
     if root_bytes is None:
         raise ValueError("複合ワークスペースのルートの設定が必要です")
     if len(root_bytes) > CONFIG_LIMIT:
-        return {"cause": "root-limit", "multiWorkspaceId": None, "sourceWorkspaceId": None}
+        return {"cause": "root-limit", "multiWorkspaceId": None, "sourceWorkspaceId": None, "sourcePath": ROOT_CONFIG_PATH}
     root = read_yaml(root_bytes.decode("utf-8"))
     root_id = explicit_id(root)
     if root_id is None:
@@ -140,20 +148,21 @@ def reference_decision(repository):
     for _, path in members:
         data = read_config_bytes(repository, f"{path}/.spec/bitz.yaml")
         if data is not None and len(data) > CONFIG_LIMIT:
-            return {"cause": "member-limit", "multiWorkspaceId": root_id, "sourceWorkspaceId": None}
-    return {"cause": None, "multiWorkspaceId": root_id, "sourceWorkspaceId": None}
+            return {"cause": "member-limit", "multiWorkspaceId": root_id, "sourceWorkspaceId": None, "sourcePath": f"{path}/.spec/bitz.yaml"}
+    return {"cause": None, "multiWorkspaceId": root_id, "sourceWorkspaceId": None, "sourcePath": None}
 
 
 def defective_decision(repository):
-    """修正前のCoreの読み方の再現: 設定を読めずに止まる診断の同一性に、既定値`root`を補う。
+    """修正前のCoreの読み方の再現: 設定を読めずに止まる診断の同一性に、既定値`root`を補い、メンバーの設定の`path`をメンバーのディレクトリからの相対のままにする。
 
     ルートを読めないとき、`multiWorkspace.id`も`source.workspaceId`も`root`になった。メンバーの設定を読めないときは、`multiWorkspace.id`はルートのID、
-    診断の`source.workspaceId`だけが`root`になった。
+    診断の`source.workspaceId`だけが`root`になった（確認事項C59の欠陥）。さらにメンバーの設定の診断は、`path`が`.spec/bitz.yaml`のままで、ルートの設定の診断と
+    区別できなかった（確認事項C72の欠陥）。
     """
     reference = reference_decision(repository)
     if reference["cause"] is None:
         return reference
-    return {**reference, "sourceWorkspaceId": DEFAULT_ID,
+    return {**reference, "sourceWorkspaceId": DEFAULT_ID, "sourcePath": CONFIG_SOURCE_PATH,
             "multiWorkspaceId": DEFAULT_ID if reference["cause"] == "root-limit" else reference["multiWorkspaceId"]}
 
 
@@ -172,7 +181,7 @@ def check_against_reference(identifier, result, reference):
     if result["status"] != "failed" or [(item["code"], item["resultStatus"], item["summary"]) for item in result["diagnostics"]] != [
             (LIMIT_CODE, "failed", LIMIT_SUMMARY)]:
         raise ValueError("診断または状態が停止の原因と異なります")
-    if result["diagnostics"][0]["source"] != {"kind": "file", "workspaceId": reference["sourceWorkspaceId"], "path": CONFIG_SOURCE_PATH}:
+    if result["diagnostics"][0]["source"] != {"kind": "file", "workspaceId": reference["sourceWorkspaceId"], "path": reference["sourcePath"]}:
         raise ValueError("診断の発生元が入力からの参照計算と異なります")
     if result["multiWorkspace"] != {"id": reference["multiWorkspaceId"], "path": "."} or result["workspaces"] != [] or "workspace" in result:
         raise ValueError("`multiWorkspace`または`workspaces`が入力からの参照計算と異なります")
@@ -290,7 +299,8 @@ def validate(root=HERE, identifiers=None):
                     check_against_reference(identifier, result, reference)
                     # 欠陥を検出できる入力であること: 修正前の読み方の同一性は、期待値と異なる。
                     broken = defective_decision(repository)
-                    if (broken["sourceWorkspaceId"], broken["multiWorkspaceId"]) == (reference["sourceWorkspaceId"], reference["multiWorkspaceId"]):
+                    if (broken["sourceWorkspaceId"], broken["sourcePath"], broken["multiWorkspaceId"]) == (
+                            reference["sourceWorkspaceId"], reference["sourcePath"], reference["multiWorkspaceId"]):
                         raise ValueError("この入力は修正前のCoreの欠陥を検出できません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
