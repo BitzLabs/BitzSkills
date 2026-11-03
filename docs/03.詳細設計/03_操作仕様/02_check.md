@@ -160,6 +160,10 @@ REQまたはTECHだけとする。同じ表の「コードのパス」「テス�
 出発点の変更されたREQまたはTECHへ、強く依存する状態`approved`の文書を、診断`SPEC-IMPACT-OUTDATED-001`（重大度`warning`）として示す。
 Coreは意味的な影響を断定せず、状態を自動で変更しない。`related`、コード、テストの変更を影響候補の出発点にしない。
 
+出発点の変更されたREQまたはTECHと、警告する依存元の文書は、どちらも作業ワークスペースの文書に限る（§6）。別のワークスペースの文書が
+修飾IDで出発点へ強く依存していても影響候補にせず、別のワークスペースで変更されたREQまたはTECHを出発点にしない。`--all-workspaces`では、
+ワークスペースごとにそのワークスペースを作業ワークスペースとして同じ規則を適用するので、ワークスペースをまたぐ強い依存は影響候補にならない。
+
 ## 9. 結果
 
 ```json
@@ -181,6 +185,8 @@ Coreは意味的な影響を断定せず、状態を自動で変更しない。`
 ```
 
 `scope: changed`では`selection`を必須とする。テキストの出力も同じ3つの件数を使う。
+`selection.targetDocumentCount`は、§6の表で変更されたパスから写像した所有文書の数とする。作業ツリーで削除した仕様文書も、削除の検出（§5）のために
+基準版のフロントマターのIDへ写像して数える。削除した文書は完全検査の対象にならない。
 明示対象は`scope: selected`、`--full`とGit不在またはコミットのないリポジトリのときの全体への縮退は`scope: full`とし、両方のスコープでは
 `checkedDocumentCount`と`checkedStatementCount`を必須にする。`selection`は`changed`だけで出力する。
 `--all-workspaces`では`scope: all-workspaces`と、共通の`multiWorkspace`、`workspaces`の外形を使用し、各ワークスペースの
