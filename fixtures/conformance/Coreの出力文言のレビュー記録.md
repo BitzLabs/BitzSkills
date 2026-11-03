@@ -619,6 +619,6 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 | 種類 | 診断（条件） | Coreの位置 | 文言 | 固定しているfixture |
 |---|---|---|---|---|
-| summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-YAML-SYNTAX`） | `config.py`の設定のYAMLの構文の不正 | `設定YAMLの構文が不正です` | `MULTI-057-02`；生成器・監査`multi_member_config_source_fixtures.py` |
+| summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-YAML-SYNTAX`） | `config.py`の設定のYAMLの構文の不正 | `設定YAMLの構文が不正です` | `MULTI-057-02`、`SINGLE-170-01`、`SINGLE-170-08`（2026-11-03に追加）；生成器・監査`multi_member_config_source_fixtures.py`、`workspace_selection_fixtures.py` |
 
 - Coreの出力は変えない。既存のfixtureの期待値も変えない。
