@@ -476,7 +476,12 @@ def _member_base_diagnostics(
     if git.available and git.executable:
         changed_paths_ws = gitutil.collect_changed_paths(git.executable, cwd, env, base_commit, ws_root_abs)
     changed_doc_ids = basecompare.changed_spec_document_ids(changed_paths_ws, current_by_path, base_by_path)
-    diags.extend(basecompare.impact_candidate_diagnostics(changed_doc_ids, current_by_id, ws_id))
+    # 自ワークスペースを修飾した参照（``ws::DOC``）も変更された文書へ照合する（単独の操作と同じ。確認事項C80）。
+    diags.extend(
+        basecompare.impact_candidate_diagnostics(
+            changed_doc_ids, current_by_id, ws_id, normalize=_alias_normalizer(ws_id), qualify_summary_ids=True,
+        )
+    )
     return diags
 
 
@@ -503,7 +508,7 @@ def _run_all_workspaces_members(
     local_stmt_indices: dict[str, dict[str, dict]] = {}
 
     for wid, root, _relpath in workspaces:
-        catalog = document_mod.build_catalog(root, wid)
+        catalog = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
         for e in catalog.entries:
             e.body = None
         per_ws_entries[wid] = catalog.entries
@@ -800,15 +805,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         # 全体事前検査（設定）が非成功なら文書の検査を開始しない（check.md §4「1」）。
         if not outcome.stop:
             assert loc.root is not None
-            catalog = document_mod.build_catalog(loc.root, workspace_id)
-            catalog_diags = catalog.diagnostics
-
             # 複合ワークスペースの統合索引は、作業ワークスペースがカタログ（ルートまたはメンバー）に登録されている
             # ときだけ使う（カタログ外の入れ子のワークスペースは、従来どおり単一ワークスペースとして扱う）。
             ws_roots: dict[str, str] = {}
             if multi_pre is not None and multi_pre.ok:
                 ws_roots = {wid: root for wid, root, _rel in multiws.ordered_workspaces(multi_pre)}
             multi_active = multi_pre is not None and multi_pre.ok and workspace_id in ws_roots
+            catalog = document_mod.build_catalog(loc.root, workspace_id, qualify_summary_ids=multi_active)
+            catalog_diags = catalog.diagnostics
             member_catalogs: dict[str, document_mod.CatalogResult] = {}
             if multi_active:
                 assert multi_pre is not None
@@ -1056,7 +1060,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 base_diags.extend(
                     basecompare.impact_candidate_diagnostics(
                         changed_doc_ids, active_index, workspace_id,
-                        source_ids=base_source_ids, normalize=normalize,
+                        source_ids=base_source_ids, normalize=normalize, qualify_summary_ids=multi_active,
                     )
                 )
 

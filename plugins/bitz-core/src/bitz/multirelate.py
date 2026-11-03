@@ -585,7 +585,7 @@ def build_multi_context(
         known_ws_ids.add(wid)
         if wid == active_ws_id:
             continue
-        catalog = document_mod.build_catalog(root, wid)
+        catalog = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
         if not keep_body:
             for e in catalog.entries:
                 e.body = None
