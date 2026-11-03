@@ -104,8 +104,6 @@ class DoctorWithoutGitTests(unittest.TestCase):
         _write(root, ".spec/bitz.yaml", root_config)
         _write(root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
         if git:
-            if subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, capture_output=True).returncode == 0:
-                raise unittest.SkipTest("一時ディレクトリがGitのリポジトリの中にあります")
             env = {**os.environ, **_GIT_ENV}
             for args in (["init", "-q", "--initial-branch=main"], ["add", "."],
                          ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base"]):
@@ -130,8 +128,9 @@ class DoctorWithoutGitTests(unittest.TestCase):
                 self.assertEqual(len(expected), 2 if name == "exclude-two" else 1, (name, with_git["diagnostics"]))
                 self.assertEqual(len(with_git["diagnostics"]), len(expected), (name, with_git["diagnostics"]))
                 root = self.make(root_config, git=False)
-                # Gitがない場合と、Gitはあるがリポジトリの外で実行した場合。
-                for env in (self.no_git, dict(os.environ)):
+                # Gitがない場合と、Gitはあるがリポジトリの外で実行した場合（一時ディレクトリがGitのリポジトリの中なら後者を省く）。
+                outside = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, capture_output=True).returncode != 0
+                for env in (self.no_git, dict(os.environ)) if outside else (self.no_git,):
                     for argv in ((), ("--all-workspaces",)):
                         result, code = self.run_op("doctor", root, env, *argv)
                         self.assertEqual((result["status"], code), ("failed", 1), (name, argv, result))
