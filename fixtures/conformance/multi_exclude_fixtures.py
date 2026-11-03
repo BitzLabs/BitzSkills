@@ -57,7 +57,7 @@ CAPABILITIES = ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorksp
 CORE = {"version": "1.0.0", "apiVersion": "1.0", "capabilities": CAPABILITIES}
 SUPPORTED_MAJOR = 1
 MAX_EXCLUDE = 100
-GLOB_CHARACTERS = set("*?[]")  # メンバーのパスの字句の規則と同じ集合（実装の確認事項C43で規範の集合を決める）
+GLOB_CHARACTERS = set("*?[]")  # 複合ワークスペース仕様 §2が除外のパスとメンバーのパスで禁止するglobの文字（ワークスペース・設定仕様 §9と同じ4つ。実装の確認事項C43）
 ROOT_ID = "platform"
 EXCLUDE = ["cases", "apps/web/tests/data"]
 X_DIRECTORY = "apps/web/tests/data/x"
@@ -457,7 +457,7 @@ def versions_supported(config):
 
 
 def lexical_problem(path):
-    """メンバーのパスと同じ字句の規則: 絶対パス、空のパス（末尾の`/`を含む）、`.`、`..`、globを禁止する。"""
+    """メンバーのパスと同じ字句の規則: 絶対パス、空のパス（末尾の`/`を含む）、`.`、`..`、globの文字`*?[]`を禁止する（複合ワークスペース仕様 §2）。"""
     if not isinstance(path, str) or not path or path.startswith("/"):
         return True
     parts = path.split("/")

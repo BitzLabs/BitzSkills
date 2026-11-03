@@ -160,7 +160,15 @@
         "SINGLE-129",
         "SINGLE-130",
         "SINGLE-131",
-        "SINGLE-132"
+        "SINGLE-132",
+        "SINGLE-171-01",
+        "SINGLE-171-02",
+        "SINGLE-171-03",
+        "SINGLE-171-04",
+        "SINGLE-171-05",
+        "SINGLE-171-06",
+        "SINGLE-171-07",
+        "SINGLE-171-08"
       ],
       "parserChecks": [
         "SINGLE-096-01",
