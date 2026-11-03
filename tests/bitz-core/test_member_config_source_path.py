@@ -10,7 +10,7 @@
   （`SPEC-CONFIG-SCHEMA-001`、`SPEC-EARS-VERSION-001`、`doctor`は`SPEC-DOCTOR-EARS-001`）。
 
 この試験の対象:
-1. 上限の超過、文字コードの不正、YAMLの構文、型の不正のどれでも、全体操作・ルートでの単独の操作・メンバーの中での単独の操作・`doctor`の全体操作が、
+1. 上限の超過、読取りの失敗、文字コードの不正、YAMLの構文、型の不正のどれでも、全体操作・ルートでの単独の操作・メンバーの中での単独の操作・`doctor`の全体操作が、
    同じ`{"workspaceId": null, "path": "apps/web/.spec/bitz.yaml"}`を返す（型の不正は`key`も保つ）。
 2. ルートの版の非対応は、設定の読込みの診断で、`path`は`.spec/bitz.yaml`。
 3. 結果は`result.schema.json`に適合する。
@@ -88,6 +88,14 @@ class _Base(unittest.TestCase):
         if self.results:
             _validate_against_schema(self.results)
 
+    def reset_repository(self):
+        """subTestごとにリポジトリを作り直す。スキーマ適合は、すべての結果をtearDownでまとめて確かめる。"""
+
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name) / "repo"
+        self.root.mkdir()
+
     def commit(self):
         _git(self.root, "init", "-q", "--initial-branch=main")
         _git(self.root, "add", ".")
@@ -109,20 +117,26 @@ class MemberConfigSourcePathTests(_Base):
         "limit": (CONFIG + "workspace:\n  id: web\n" + "#" * 70000 + "\n").encode(),
         "utf8": (CONFIG + "workspace:\n  id: web\n").encode() + b"\xff\n",
         "syntax": (CONFIG + "workspace: [\n").encode(),
-        "type": (CONFIG + "workspace:\n  id: web\nlanguage: 3\n").encode(),
+        "unreadable": (CONFIG + "workspace:\n  id: web\n").encode(),
+        "type": (CONFIG.replace("language: ja", "language: 3") + "workspace:\n  id: web\n").encode(),
     }
     EXPECTED_CODE = {
         "limit": "SPEC-INPUT-LIMIT-001", "utf8": "SPEC-INPUT-READ-001",
-        "syntax": "SPEC-CONFIG-SCHEMA-001", "type": "SPEC-CONFIG-SCHEMA-001",
+        "syntax": "SPEC-CONFIG-SCHEMA-001", "type": "SPEC-CONFIG-SCHEMA-001", "unreadable": "SPEC-INPUT-READ-001",
     }
 
     def test_member_config_diagnostic_path_is_relative_to_the_multi_workspace_root(self):
         for name, content in self.CASES.items():
             with self.subTest(case=name):
-                self.setUp()
+                self.reset_repository()
                 _write(self.root, ".spec/bitz.yaml", ROOT.encode())
                 _write(self.root, "apps/web/.spec/bitz.yaml", content)
                 self.commit()
+                if name == "unreadable":
+                    if os.geteuid() == 0:
+                        continue  # rootはファイルの権限に関係なく読めるので、読取りの失敗を作れない。
+                    os.chmod(self.root / "apps" / "web" / ".spec" / "bitz.yaml", 0)
+                    self.addCleanup(os.chmod, self.root / "apps" / "web" / ".spec" / "bitz.yaml", 0o644)
                 expected_source = {"kind": "file", "workspaceId": None, "path": "apps/web/.spec/bitz.yaml"}
                 if name == "type":
                     expected_source["key"] = "language"
@@ -146,7 +160,7 @@ class RootVersionTests(_Base):
         }
         for name, (root_config, check_code, doctor_code) in cases.items():
             with self.subTest(case=name):
-                self.setUp()
+                self.reset_repository()
                 _write(self.root, ".spec/bitz.yaml", root_config.encode())
                 _write(self.root, "apps/web/.spec/bitz.yaml", (CONFIG + "workspace:\n  id: web\n").encode())
                 self.commit()
