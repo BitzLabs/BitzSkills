@@ -96,6 +96,22 @@ def _stopped_selection(pre: multiws.PrecheckResult, loc: WorkspaceLocation, ears
     )
 
 
+def check_requested_workspace(
+    operation: str, requested_workspace: str | None, outcome: config_mod.ConfigOutcome | None
+) -> None:
+    """単一ワークスペースの`--workspace`を、設定から構成した同一性と比べる（Core実行環境・CLI基盤契約 §6）。
+
+    同一性を構成できないとき（設定がない、または設定を読めず`workspace.id`が`null`のとき）は比べず、呼び出し側の停止結果へ進む
+    （複合ワークスペース仕様 §3の5の、全体事前検査が非成功の場合と同じ扱い。確認事項C73）。構成できた同一性と一致しなければ
+    終了コード4の引数不正とする。
+    """
+
+    if requested_workspace is None or outcome is None or outcome.workspace_id is None:
+        return
+    if outcome.workspace_id != requested_workspace:
+        raise CliArgError(operation, f"指定したワークスペースが見つかりません: {requested_workspace}")
+
+
 def current_revision(
     git: gitutil.GitInfo, cwd: str, env: dict[str, str], stop: StoppedSelection
 ) -> dict | None:

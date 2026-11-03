@@ -974,10 +974,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if loc.config_path is not None:
         outcome = config_mod.read_config(loc.config_path)
 
-    if requested_workspace is not None:
-        effective_id = outcome.workspace_id if outcome is not None else None
-        if effective_id != requested_workspace:
-            raise CliArgError("verify", f"指定したワークスペースが見つかりません: {requested_workspace}")
+    activews.check_requested_workspace("verify", requested_workspace, outcome)
 
     # 単一ワークスペースの`revision`は、Git不在とコミットのないリポジトリだけ`null`とする（結果・診断・終了コード §2）。
     # 早期に返す結果（設定がない、設定の停止、対象が0件）も同じ規則に従うため、最初に求める。
@@ -1236,7 +1233,9 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
 
     # `commandDefinitionCount`は全体事前検査から除外し、`verifyBindingCount`を優先する判定を
     # `_run_all_workspaces_members`自身のテスト割当ての計画の集計に委ねる（複合ワークスペース仕様 §10）。
-    pre = multiws.precheck(cwd, git, env, skip_limit_dimensions=frozenset({"commandDefinitionCount"}))
+    pre = multiws.precheck(
+        cwd, git, env, skip_limit_dimensions=frozenset({"commandDefinitionCount"}), require_declaration=True,
+    )
     if pre.discovery_failed:
         raise CliArgError("verify", "複合ワークスペースのルートワークスペースの設定を発見できません")
 

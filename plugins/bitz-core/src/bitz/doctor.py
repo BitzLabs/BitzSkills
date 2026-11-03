@@ -194,7 +194,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
 
     pre = multiws.precheck(
         cwd, git, env, extra_config_revs=["HEAD"], ears_version_code="SPEC-DOCTOR-EARS-001",
-        report_git_with_config_stop=True,
+        report_git_with_config_stop=True, require_declaration=True,
     )
     if pre.discovery_failed:
         raise CliArgError("doctor", "複合ワークスペースのルートワークスペースの設定を発見できません")
@@ -289,10 +289,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         outcome = config_mod.read_config(loc.config_path, ears_version_code="SPEC-DOCTOR-EARS-001")
 
     # 全体事前検査が停止したときは、未知の`--workspace`でも終了コード4にせず、停止結果を返す（複合ワークスペース仕様 §3の5）。
-    if requested_workspace is not None and sel.stop is None:
-        effective_id = outcome.workspace_id if outcome is not None else None
-        if effective_id != requested_workspace:
-            raise CliArgError("doctor", f"指定したワークスペースが見つかりません: {requested_workspace}")
+    if sel.stop is None:
+        activews.check_requested_workspace("doctor", requested_workspace, outcome)
 
     checks: list[dict] = []
     diagnostics: list[dict] = []

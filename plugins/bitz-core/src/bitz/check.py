@@ -632,7 +632,7 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
             raise CliArgError("check", f"--baseを解決できません: {base_arg}")
 
     extra_revs = [resolved_base] if resolved_base is not None else []
-    pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs)
+    pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs, require_declaration=True)
     if pre.discovery_failed:
         raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
@@ -763,10 +763,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if loc.config_path is not None:
         outcome = config_mod.read_config(loc.config_path)
 
-    if requested_workspace is not None:
-        effective_id = outcome.workspace_id if outcome is not None else None
-        if effective_id != requested_workspace:
-            raise CliArgError("check", f"指定したワークスペースが見つかりません: {requested_workspace}")
+    activews.check_requested_workspace("check", requested_workspace, outcome)
 
     diagnostics: list[dict] = []
     workspace_id: str | None
