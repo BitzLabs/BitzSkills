@@ -2097,3 +2097,23 @@ commit `9b19d7b6cb251802b6f9b4e6db45fb9545f9eb9d`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-03: `MULTI-049-02`を訂正し`MULTI-057`を追加した後のGate Aの再認定
+
+複合ワークスペースの全体事前検査が、メンバーの設定を読めない・構文・型・必須の不正の診断を、ルートの設定と区別できない`{workspaceId: null, path: .spec/bitz.yaml}`で返していた
+欠陥を直した（実装の確認事項C72、ユーザーの決定）。結果・診断・終了コード §5に、これらの`path`を複合ワークスペースのルートからの相対パスとすることを明記し、
+複合ワークスペース仕様 §2・§11に、`SPEC-MULTI-VERSION-001`はメンバーだけで、ルートワークスペース自身の版の非対応は設定の読込みの診断とすることを明記した（C37）。
+`MULTI-049-02`の期待値の`source.path`を訂正し（ADR-051の期待値の訂正。2026-11-02にユーザーが決定）、`MULTI-057-01`〜`MULTI-057-06`を追加した
+（ADR-051の追加、群`multi_member_config_source_fixtures`）。`MULTI-057-02`が初めて固定する文言「設定YAMLの構文が不正です」は、管理者が承認した（ADR-062）。
+matrix、Step 5の割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。ほかの既存のfixtureの入力と期待値は変えていない。
+
+commit `27b11e23e0e7aef1bcced4471645a6773c6437a4`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`3a17e01f4f6aefb8742ff6bc75ea8bf359cd8f33999b6fca123d47ce8749f978`。前回から変わったのは次の値だけである: 6件の追加によるmatrixと網羅の件数（599件→605件）、Step 5の件数（261件→267件）、群`multi_member_config_source_fixtures`の追加、実行ビットを確かめたファイル数（3472件→3490件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを訂正・追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
