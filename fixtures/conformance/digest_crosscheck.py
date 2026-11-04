@@ -249,15 +249,23 @@ def closure(documents, root, purpose):
 def _closure(documents, root, purpose):
     """これらのcorpusに対するレビュー済みの閉包（関係・トレースモデル §6.1〜§6.4）。
 
-    起点の文書と、interpret以外のTASK起点ではそのTASKがaddressesする対象を所有する文書を含める。
-    到達した適用対象の文書それぞれから、`requires`の対象（verifyでの起点TASKのものを除く。§6.3）、
-    `refines`の対象、その文書またはその規範文を`refines`する適用対象の文書をたどる。目的`interpret`では、
-    `refines`の参照元である`draft`の文書を役割`advisory`として保持し、展開しない（§6.1 6.）。目的`implement`と`verify`では、
-    その`draft`の文書を閉包へ含めない（§6.1の末尾）。目的`implement`では、対象の規範文を
-    `addresses`する`open`のTASKをすべて加える。目的`verify`でTASKを起点にしたときは、起点が`requires`する先行TASKを
-    閉包へ含めず、その`addresses`のエッジも辿らない辺として記録する（§6.3、§6.4の4.）。規則で説明できない強いエッジが閉包に接していれば、
-    黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の
-    実装にはならない。
+    文書ごとに、その文書から辿る向きを持つ。向きは次の3つで、文書は到達した経路ごとに向きを得る。
+    - `requires`: その文書の`requires`を終端まで辿る（§6.1の2.、4.）。
+    - `refines`: その文書の`refines`の参照先を含める。参照先は何も辿らない（§6.1の3.）。起点を所有する文書だけが持つ。
+    - `referrers`: その文書またはその規範文を`refines`する適用可能な文書を逆参照で含める（§6.1の4.）。
+      含めた文書は`requires`と`referrers`の向きを持つ（推移的な具体化、含めた文書の`requires`）。
+      起点を所有する文書だけが出発点で、`requires`で到達した文書や、`refines`の参照先は出発点にしない。
+    目的が`implement`か`verify`でTASKを起点にするときは、起点のTASKではなく、その`addresses`の参照先を所有する文書を
+    距離1の起点を所有する文書とし、3つの向きをすべて持たせる（§6.3）。起点のTASK自身は、目的`implement`では`requires`だけを辿り（§6.2）、
+    目的`verify`では何も辿らない（§6.3）。
+
+    閉包内の適用可能な文書またはその規範文を`refines`する状態`draft`の文書は、目的`interpret`では役割`advisory`として保持し、
+    その`requires`も`refines`する文書も辿らない（§6.1の6.）。目的`implement`と`verify`では閉包へ含めない（§6.1の末尾）。
+    目的`implement`では、対象の規範文を`addresses`する`open`のTASKをすべて加える。目的`verify`でTASKを起点にしたときは、
+    起点が`requires`する先行TASKを閉包へ含めず、その`addresses`のエッジも辿らない辺として記録する（§6.3、§6.4の4.）。
+    規則で説明できる、辿らない辺（§6.1の3.の参照先の`requires`、4.の出発点でない文書の参照元、6.の`advisory`の`requires`）は
+    閉包の外の辺として記録する。規則で説明できない強いエッジが閉包に接していれば、黙って取り込まずに拒否する。
+    そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の実装にはならない。
 
     目的`interpret`で、起点を所有するREQまたはTECHを`supersedes`する文書がちょうど1件あるとき（置換済みの起点。§6.1 5.）、
     起点を役割`advisory`、その後継を役割`replacement`として示す。起点の`requires`と起点を具体化する文書は通常の起点と同じに辿り、
@@ -276,22 +284,28 @@ def _closure(documents, root, purpose):
     if root_document not in documents or (root != root_document and root not in known_statements):
         raise ValueError("起点がこのcorpusに存在しません")
     root_kind = documents[root_document]["kind"]
-    reached, advisory, accounted = {root_document: 0}, set(), set()
-    # 起点が置換済みのときの`advisory`は、`refines`する`draft`の文書の`advisory`と異なり、起点の`requires`を辿る。
-    draft_advisory, replacement = set(), set()
-    frontier = [root_document]
+    advisory, accounted, replacement = set(), set(), set()
+    directions, edges, pending = {}, set(), []
 
-    def reach(identifier, distance):
+    def reach(identifier, gained, source):
         if identifier not in documents:
             raise ValueError("強いエッジがこのcorpusの外を指しています")
-        if identifier not in reached:
-            reached[identifier] = distance
-            frontier.append(identifier)
+        if source is not None:
+            edges.add((source, identifier))
+        if identifier not in directions:
+            directions[identifier] = set()
+            pending.append(identifier)
+        if gained - directions[identifier]:
+            directions[identifier] |= gained
+            if identifier not in pending:
+                pending.append(identifier)
 
+    owner_directions = {"requires", "refines", "referrers"}
     if root_kind == "task" and purpose != "interpret":
+        reach(root_document, {"requires"} if purpose == "implement" else set(), None)
         for target in _relations(documents[root_document]["frontmatter"])["addresses"]:
             accounted.add((root_document, "addresses", target))
-            reach(owner(target), 1)
+            reach(owner(target), owner_directions, root_document)
         if purpose == "verify":
             # §6.3: verifyの起点TASKはrequires閉包を含めない。辿らない辺として記録する。
             for target in _relations(documents[root_document]["frontmatter"])["requires"]:
@@ -301,40 +315,74 @@ def _closure(documents, root, purpose):
                 if target in documents and documents[target]["kind"] == "task":
                     for reference in _relations(documents[target]["frontmatter"])["addresses"]:
                         accounted.add((target, "addresses", reference))
-    while frontier:
-        current = frontier.pop(0)
-        if current in draft_advisory:
-            continue
+    else:
+        reach(root_document, owner_directions, None)
+    while pending:
+        current = pending.pop(0)
+        held = directions[current]
         relations = _relations(documents[current]["frontmatter"])
-        for key in ("requires", "refines"):
-            for target in relations[key]:
-                if (current, key, target) in accounted:
+        for key, gained in (("requires", {"requires"}), ("refines", set())):
+            if key in held:
+                for target in relations[key]:
+                    accounted.add((current, key, target))
+                    reach(owner(target), gained, current)
+        if "referrers" in held:
+            mine = {current, *owned.get(current, [])}
+            for identifier, document in sorted(documents.items()):
+                refined = [target for target in _relations(document["frontmatter"])["refines"] if target in mine]
+                if (not refined or identifier == current
+                        or document["frontmatter"]["status"] not in APPLICABLE_STATUS):
                     continue
-                accounted.add((current, key, target))
-                reach(owner(target), reached[current] + 1)
-        mine = {current, *owned.get(current, [])}
-        for identifier, document in sorted(documents.items()):
-            refined = [target for target in _relations(document["frontmatter"])["refines"] if target in mine]
-            if not refined or identifier in reached:
-                continue
-            status = document["frontmatter"]["status"]
-            if status in APPLICABLE_STATUS:
-                pass
-            elif status == "draft" and purpose == "interpret":
-                advisory.add(identifier)
-                draft_advisory.add(identifier)
-            elif status == "draft":
-                # §6.1の末尾: `implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない。含めない文書の
-                # `refines`のエッジは、閉包の外の辺として記録し、展開しない（状態`draft`の文書は適用可能でないので、
-                # 強い関係が要求しているわけではなく、状態の検査にも入れない。§10）。
                 for target in refined:
                     accounted.add((identifier, "refines", target))
-                continue
-            else:
-                continue
-            for target in refined:
+                reach(identifier, {"requires", "referrers"}, current)
+    # 閉包に含めない文書のうち、閉包内の文書またはその規範文を`refines`するもの。
+    in_closure = set(directions)
+    for identifier, document in sorted(documents.items()):
+        refined = [target for target in _relations(document["frontmatter"])["refines"]
+                   if owner(target) in in_closure and (target == owner(target) or target in owned[owner(target)])]
+        if identifier in in_closure or not refined:
+            continue
+        status = document["frontmatter"]["status"]
+        if status in APPLICABLE_STATUS:
+            # §6.1の4.: 逆参照の出発点でない文書（`requires`で到達した文書、`refines`の参照先）を`refines`する
+            # 適用可能な文書は含めない。閉包の外の辺として記録する。
+            pass
+        elif status == "draft":
+            # 目的`interpret`は`advisory`として保持し、展開しない（§6.1の6.）。`implement`と`verify`は含めない。
+            # 含めない文書の`refines`のエッジは閉包の外の辺として記録する（状態`draft`の文書は適用可能でないので、
+            # 強い関係が要求しているわけではなく、状態の検査にも入れない。§10）。
+            if purpose == "interpret":
+                advisory.add(identifier)
+                directions[identifier] = set()
+                for target in refined:
+                    edges.add((owner(target), identifier))
+        else:
+            continue
+        for target in refined:
+            accounted.add((identifier, "refines", target))
+    # 規則で辿らない、閉包内の文書の辺（閉包の外の辺として記録する）。`refines`の参照先は「参照先だけ」を含め、その`requires`と`refines`は辿らない
+    # （§6.1の3.）。`advisory`の文書の`requires`は辿らない（§6.1の6.）。`refines`を辿るのは起点を所有する文書だけで（§6.1の3.）、
+    # 逆参照で含めた具体化文書、`requires`で到達した文書の`refines`は辿らない（§6.1の4.は含めた文書の`requires`だけを辿る）。
+    for identifier, held in directions.items():
+        relations = _relations(documents[identifier]["frontmatter"])
+        if "requires" not in held:
+            for target in relations["requires"]:
+                accounted.add((identifier, "requires", target))
+        if "refines" not in held:
+            for target in relations["refines"]:
                 accounted.add((identifier, "refines", target))
-            reach(identifier, reached[current] + 1)
+    reached = {root_document: 0}
+    adjacent = {}
+    for source, target in edges:
+        adjacent.setdefault(source, set()).add(target)
+    queue = [root_document]
+    while queue:
+        current = queue.pop(0)
+        for target in sorted(adjacent.get(current, ())):
+            if target not in reached:
+                reached[target] = reached[current] + 1
+                queue.append(target)
     if purpose == "interpret" and root_kind in ("requirement", "technical"):
         successors = [identifier for identifier, document in sorted(documents.items())
                       if root_document in _relations(document["frontmatter"])["supersedes"]
@@ -354,8 +402,8 @@ def _closure(documents, root, purpose):
             for target in _relations(document["frontmatter"])["addresses"]:
                 if target in targets:
                     accounted.add((identifier, "addresses", target))
-                    if identifier not in reached:
-                        reached[identifier] = reached[owner(target)] + 1
+                    # 対象規範文を所有する文書から`addresses`のエッジを1本辿った段数。複数あれば最短（§7の6.）。
+                    reached[identifier] = min(reached.get(identifier, reached[owner(target)] + 1), reached[owner(target)] + 1)
     # 1つのワークスペースは独立した起点を複数持ち得る。説明が必要なのは、この閉包に触れる
     # エッジだけである。閉包の完全に外にあるエッジは別のコンテキストに属し、
     # この計算の対象ではない。

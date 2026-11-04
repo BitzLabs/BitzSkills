@@ -82,7 +82,13 @@ def paths(values):
 
 
 def closure(documents, root):
-    """`purpose=verify`のレビュー済みの閉包。起点の文書と、それを具体化する適用対象の文書をたどる。
+    """`purpose=verify`のレビュー済みの閉包（関係・トレースモデル §6.1、§6.3）。
+
+    単一ワークスペースの参照計算B（`digest_crosscheck._closure`）と同じ規則を、修飾IDで適用する。文書ごとに、辿る向きを持つ。
+    `requires`はその文書の`requires`を終端まで辿り、`refines`はその文書の`refines`の参照先だけを含め（参照先の`requires`は辿らない）、
+    `referrers`はその文書またはその規範文を`refines`する適用対象の文書を逆参照で含める。逆参照の出発点は起点を所有する文書だけで、
+    `requires`で到達した文書や`refines`の参照先を`refines`する文書は含めない。含めた具体化文書は`requires`と`referrers`の向きを持つ。
+    TASKを起点にするときは、起点のTASKではなく、その`addresses`の参照先を所有する文書を起点を所有する文書として距離1で含める。
 
     このcorpusはdraftと、`requires`を持つTASK起点を持たない。単一ワークスペースの参照計算Bと同じく、規則で説明できない
     強いエッジが閉包に触れていれば、黙って取り込まずに拒否する。
@@ -94,41 +100,84 @@ def closure(documents, root):
     root_document = owner(root)
     if root_document not in documents or (root != root_document and root not in known):
         raise ValueError("起点がこのcorpusに存在しません")
-    reached, accounted, frontier = {root_document: 0}, set(), [root_document]
+    accounted, directions, edges, pending = set(), {}, set(), []
+
+    def reach(identifier, gained, source):
+        if source is not None:
+            edges.add((source, identifier))
+        if identifier not in directions:
+            directions[identifier] = set()
+            pending.append(identifier)
+        if gained - directions[identifier]:
+            directions[identifier] |= gained
+            if identifier not in pending:
+                pending.append(identifier)
+
+    owner_directions = {"requires", "refines", "referrers"}
     if documents[root_document]["kind"] == "task":
         # TASK起点の`verify`は、`addresses`の先と、その先を所有する文書を距離1で閉包へ含める（関係・トレースモデル §6.3）。
         # 起点のTASKの`requires`の閉包は含めない（§6.3）ので、この参照計算は`requires`を持つTASK起点を扱わない。
         if relations(documents[root_document])["requires"]:
             raise ValueError("`requires`を持つTASK起点はこのcorpusの対象外です")
+        reach(root_document, set(), None)
         for target in relations(documents[root_document])["addresses"]:
             accounted.add((root_document, "addresses", target))
             if owner(target) not in documents:
                 raise ValueError("`addresses`の先がこのcorpusに存在しません")
-            if owner(target) not in reached:
-                reached[owner(target)] = 1
-                frontier.append(owner(target))
-    while frontier:
-        current = frontier.pop(0)
-        edges = relations(documents[current])
-        for key in ("requires", "refines"):
-            for target in edges[key]:
+            reach(owner(target), owner_directions, root_document)
+    else:
+        reach(root_document, owner_directions, None)
+    while pending:
+        current = pending.pop(0)
+        held = directions[current]
+        edges_of = relations(documents[current])
+        for key, gained in (("requires", {"requires"}), ("refines", set())):
+            if key not in held:
+                continue
+            for target in edges_of[key]:
                 accounted.add((current, key, target))
                 if owner(target) not in documents:
                     continue  # 参照先を解決できない関係は閉包へ加えない（検査しない他のワークスペースの文書の参照切れなど）
-                if owner(target) not in reached:
-                    reached[owner(target)] = reached[current] + 1
-                    frontier.append(owner(target))
-        mine = {current, *owned.get(current, [])}
-        for identifier, document in sorted(documents.items()):
-            refined = [target for target in relations(document)["refines"] if target in mine]
-            if not refined or identifier in reached:
-                continue
-            if document["frontmatter"]["status"] not in APPLICABLE:
-                continue
-            for target in refined:
+                reach(owner(target), gained, current)
+        if "referrers" in held:
+            mine = {current, *owned.get(current, [])}
+            for identifier, document in sorted(documents.items()):
+                refined = [target for target in relations(document)["refines"] if target in mine]
+                if (not refined or identifier == current
+                        or document["frontmatter"]["status"] not in APPLICABLE):
+                    continue
+                for target in refined:
+                    accounted.add((identifier, "refines", target))
+                reach(identifier, {"requires", "referrers"}, current)
+    # 閉包に含めない適用対象の文書が、閉包内の文書またはその規範文を`refines`する辺は、逆参照の出発点でない文書を
+    # 参照する辺である（`requires`で到達した文書、`refines`の参照先。§6.1の4.）。閉包の外の辺として記録する。
+    for identifier, document in sorted(documents.items()):
+        if identifier in directions or document["frontmatter"]["status"] not in APPLICABLE:
+            continue
+        for target in relations(document)["refines"]:
+            if owner(target) in directions and (target == owner(target) or target in owned[owner(target)]):
                 accounted.add((identifier, "refines", target))
-            reached[identifier] = reached[current] + 1
-            frontier.append(identifier)
+    # 規則で辿らない、閉包内の文書の辺（閉包の外の辺として記録する）。`refines`の参照先は「参照先だけ」を含め、その`requires`と`refines`は
+    # 辿らない（§6.1の3.）。`refines`を辿るのは起点を所有する文書だけで、逆参照で含めた具体化文書、`requires`で到達した文書の`refines`は辿らない（§6.1の4.）。
+    for identifier, held in directions.items():
+        edges_of = relations(documents[identifier])
+        if "requires" not in held:
+            for target in edges_of["requires"]:
+                accounted.add((identifier, "requires", target))
+        if "refines" not in held:
+            for target in edges_of["refines"]:
+                accounted.add((identifier, "refines", target))
+    reached = {root_document: 0}
+    adjacent = {}
+    for source, target in edges:
+        adjacent.setdefault(source, set()).add(target)
+    queue = [root_document]
+    while queue:
+        current = queue.pop(0)
+        for target in sorted(adjacent.get(current, ())):
+            if target not in reached:
+                reached[target] = reached[current] + 1
+                queue.append(target)
     for identifier, document in documents.items():
         for key in STRONG:
             for target in relations(document)[key]:
