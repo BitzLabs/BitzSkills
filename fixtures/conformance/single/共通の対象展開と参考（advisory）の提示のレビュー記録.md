@@ -382,3 +382,53 @@ Coreの出力文言の意味の食い違い（同じ条件IDの診断の文型�
 
 - 対象: `SINGLE-142`
 - 訂正の内容: `CTX-COVERAGE-TEST-001`の`summary`を「対象規範文MUST REQ-001:AC-01にテスト対応がありません」にした（`verify`と同じ文言）。
+
+## 2026-11-04: 閉包の逆参照の出発点のfixture（SINGLE-172-01〜02）の追加（確認事項C91）
+
+[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の追加（[ADR-051](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)）。
+いずれもレビュー済みの期待値であり、Coreの挙動を観測したものではない。生成器と監査は`fixtures/conformance/expansion_fixtures.py`（`generate`を加えた）である。
+
+### 追加の理由
+
+参照計算B（`digest_crosscheck.py`の`_closure`と`multi_crosscheck.py`の`closure`）は、到達したすべての文書から逆参照を辿り、`refines`の参照先の`requires`も辿ったので、
+関係・トレースモデル §6.1の3.・4.より広い閉包を作った（Coreの`targetexpand.py`は規範どおり）。例えば、`REQ-001`が`REQ-002`を`requires`し、`TECH-001`が`REQ-002`を`refines`するとき、
+起点`REQ-001`の閉包に、参照計算Bだけが`TECH-001`を含めた。同じfixtureの中でも、閉包をリテラルで書いて回避していた群（`MULTI-052`）があった。
+参照計算Bを規範どおりに直した（コミット`1e5dbec3`。Coreは変えない）ので、その差を固定するfixtureを追加する。既存のfixtureの期待値は変えない（全fixture、全起点、全目的で、
+直す前の参照計算Bと直した後の参照計算Bの出力を比べ、既存のfixtureが使う閉包、並び、ハッシュ値が変わらないことを確かめた）。
+
+### 根拠の規範文
+
+- 関係・トレースモデル §6.1の3.: 起点を所有する文書の`refines`の参照先だけを含め、その参照先の`requires`は辿らない。
+- §6.1の4.: 起点を所有する文書またはその規範文を`refines`する適用可能な文書を逆参照で含め（その文書を`refines`する文書も推移的に含める）、含めたそれぞれの文書の`requires`を辿る。
+  逆参照の出発点は起点を所有する文書だけで、`requires`で到達した文書を`refines`する文書は含めない。
+- §6.2、§6.4の1.・4.: 目的`implement`の対象規範文は起点と具体化文書の規範文で、`requires`の参照先の規範文は昇格しない。対象規範文を`addresses`する`open`のTASKを加える。
+- §7の6.: 距離は閉包を作るときに辿ったエッジ1本を1段とした最短の段数。並びは距離、種別（REQ、TECH、ADR、TASK）、IDの順。
+
+### 入力と期待
+
+| fixture | 操作 | 入力 | 期待 |
+|---|---|---|---|
+| `SINGLE-172-01` | `context REQ-001 --purpose interpret` | `REQ-001`（`AC-01`、テスト対応あり）が`REQ-002`（`AC-01`）を`requires`する。`TECH-001`（規範文`AC-01`、テスト対応あり）が`REQ-002:AC-01`を、`TECH-002`（同）が`REQ-001:AC-01`を`refines`する。すべて`approved`、TASKなし | `passed`／0。文書は`REQ-001`（root）、`REQ-002`（`requirement`、`requires:REQ-001`）、`TECH-002`（`refinement`、`refines:TECH-002`）の3件。`TECH-001`は閉包に入らない。制約台帳とカバレッジは空 |
+| `SINGLE-172-02` | `context REQ-001 --purpose implement` | `SINGLE-172-01`に、`REQ-001:AC-01`と`TECH-002:AC-01`を`addresses`する`open`の`TASK-001`を加える | `passed`／0。文書は`REQ-001`、`REQ-002`、`TECH-002`、`TASK-001`の4件（距離は0、1、1、1で、種別の順）。対象規範文は`REQ-001:AC-01`と`TECH-002:AC-01`だけで、`REQ-002:AC-01`と`TECH-001:AC-01`は入らない。2件とも対応済み・テスト済みで、診断は0件 |
+
+`172-01`にTASKを置かないのは、参照計算Bが、閉包の外のTASKが`addresses`で閉包の文書を指す入力を拒否するため（目的`interpret`では、TASKを自動で追加しない。§6.1の7.）。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+- ハッシュ値の材料は、このモジュールのリテラル（参照計算A。閉包の文書を`EXPANSIONS`で列挙する）と、入力の木構造から導く参照計算Bの2系統で作り、正規JSONのバイト列の一致を要求する。
+  参照計算Bが導く閉包の並び（距離、種別、IDの順）が、リテラルの並びと一致することも要求する。
+- `check_contract`が、4つの集合（`LITERAL_SETS`）、役割、提示形式、`reachedBy`を、完全比較とは別に確かめる。回帰試験は、`TECH-001`の追加、文書の欠落、役割と`reachedBy`の取り違え、
+  制約台帳へ`REQ-002:AC-01`や`TECH-001:AC-01`を加える改変、`tested`への`TECH-001:AC-01`の計上、並びの入替え、状態の取り違え、目的の取り違えを拒否することを確かめる。
+
+### 陰性対照
+
+- 直す前の参照計算B（`origin/main`の`digest_crosscheck.py`、`multi_crosscheck.py`）に差し替えると、`SINGLE-172-01`と`SINGLE-172-02`は「参照計算AとBの正規JSONが一致しません」で失敗する。
+  直す前の参照計算Bの閉包は、`172-01`が`REQ-001`、`REQ-002`、`TECH-002`、`TECH-001`、`172-02`がこれに`TASK-001`を加えたものである。既存の`SINGLE-139`、`SINGLE-140`、`SINGLE-145`は、差し替えても通る（対照）。
+- Coreは修正前も同じ閉包を返す（Coreの変更はない）ので、Coreの陰性対照はない。Coreの出力と期待値は、`revision`を除いて一致した（期待値を決めた後の確認。Gate Bで判定する）。
+
+### 規範から導けなかった点・固定の程度
+
+- 目的`implement`でTASKを起点にしたとき、起点が`addresses`する規範文を所有する文書の`requires`の参照先と、その文書を文書IDで`refines`する文書を閉包へ含めるかは、
+  §6.2の「`interpret`に加えて」と§6.3の「`implement`と異なり、起点のTASKの`requires`の閉包は含めない」の読み方による。参照計算Bは、`verify`と同じく、含める読み方で導く。
+  Coreは、含めない（`addresses`の参照先を所有する文書と、起点のTASKの`requires`の閉包だけを含める）。この食い違いは直す前から同じで、既存のfixtureは固定していない（`SINGLE-140`の具体化文書は
+  規範文IDで`refines`する）ので、この群は固定しない。

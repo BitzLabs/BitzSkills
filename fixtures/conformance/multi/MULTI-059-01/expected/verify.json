@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "passed",
+  "multiWorkspace": {
+    "id": "zeta",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "zeta",
+      "path": ".",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "zeta::REQ-001",
+          "status": "passed",
+          "contextDigest": "sha256:932fd8207118cb47f7c0ce76a16fd119ec7f1dace22a3d80bc65435d4a37ca5e",
+          "statements": [
+            "zeta::REQ-001:AC-01",
+            "zeta::REQ-001:AC-02"
+          ],
+          "bindingRefs": [
+            "alpha::t",
+            "beta::t",
+            "zeta::p"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "zeta::p",
+          "workspaceId": "zeta",
+          "name": "p",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/p.py"
+          ],
+          "tests": [
+            "tests/p.py"
+          ],
+          "covers": [
+            "zeta::REQ-001:AC-01",
+            "zeta::REQ-001:AC-02"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "alpha",
+      "path": "apps/alpha",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "alpha::TECH-001",
+          "status": "passed",
+          "contextDigest": "sha256:4e66d855f76010a323c0d1810e465b0ce287da8db4284c61a2428e4733348d84",
+          "statements": [],
+          "bindingRefs": [
+            "alpha::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "alpha::t",
+          "workspaceId": "alpha",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/t.py"
+          ],
+          "tests": [
+            "tests/t.py"
+          ],
+          "covers": [
+            "zeta::REQ-001:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "beta",
+      "path": "apps/beta",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "beta::TECH-001",
+          "status": "passed",
+          "contextDigest": "sha256:b0ea45a01d6b8e609f2468675ab7b612265b1e5a235c0c335f544b5c8172463e",
+          "statements": [],
+          "bindingRefs": [
+            "beta::t"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "beta::t",
+          "workspaceId": "beta",
+          "name": "t",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/t.py"
+          ],
+          "tests": [
+            "tests/t.py"
+          ],
+          "covers": [
+            "zeta::REQ-001:AC-02"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
