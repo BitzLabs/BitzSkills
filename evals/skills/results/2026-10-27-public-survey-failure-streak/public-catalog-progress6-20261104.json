@@ -36,8 +36,46 @@
       "repetition": 2,
       "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
       "status": "measured_correct"
+    },
+    {
+      "campaignId": "public-matrix-catalog-progress6-20261104-01",
+      "caseId": "SE-004",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "conditionSha256": "06d86b39c6ecb0b750b51006a48e4d8da6afc1af77daef67d0a8408169c2c6f8",
+      "eligibleForMeasurement": true,
+      "failurePhase": null,
+      "globalErrorType": null,
+      "independent": {
+        "independentInvocations": 1,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": "measured_incorrect",
+        "status": "matrix_independent_captured"
+      },
+      "launchEvidence": {
+        "independent": "cfba26b5bb0e0fb5e36574c8eadaefe8e07e71e2839e465806c16ffd98661412",
+        "primary": "9d24f7316cef1622a19805b2cee7a212b86cfe095e9c8e14a848a46deb5faf82"
+      },
+      "ordinal": 7,
+      "parent": {
+        "ledgerFinalized": true,
+        "proposedLedgerStatus": "measured_incorrect",
+        "status": "matrix_parent_originals_verified"
+      },
+      "primary": {
+        "actualNamespaceInvocations": 1,
+        "errorType": null,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": null,
+        "status": "primary_capture_awaits_independent_review",
+        "timedOut": false
+      },
+      "repetition": 1,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_incorrect"
     }
   ],
+  "apiAuthenticationObservedInTheseSlots": true,
   "authenticationOperationSummary": {
     "accountPresent": true,
     "credentialFilesOpenedByOperator": false,
@@ -53,7 +91,10 @@
     "actual-slot-0004.json": "706b795a8747ec60ab85d5c2e0afc1feaa89d2421e56cd55d9e10ad19ebd8026",
     "actual-slot-0005.json": "2d531f6e382858ea66a3f4d8eff8e47ef09d3be23c4dca0f6cf9a20609596d2a",
     "actual-slot-0006.json": "5782e7597b9fb0b3aada025803b8fcc917bc14fecce12fb6a62cade87a451801",
+    "actual-slot-0007.json": "e2892ee97b098d19e9924dc198743e4d113c7812b0b220e83659e7ee99681091",
+    "closed-ledger-summary.json": "86b05021595501afffacfd0ad0265cfa4afa57f276581d8d5da7cad045b92fd7",
     "code-review.json": "3604cf18f0fe97269b68c1b57f4788193ba727d4805c818c55344f3976f59963",
+    "completion-independent-review.json": "762de7cdedc3d42f2a576180897ea5b925ee39ee07484e27ea382b6abe01fe65",
     "deployment.json": "15181bd707af9022f94607bbc144ce5c135f05e3bf4cbb0384f42a7ca71e684e",
     "execution.json": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
     "input-contract.json": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
@@ -61,7 +102,9 @@
     "interim-ledger-summary.json": "133276e9406afdc60bc7089d705c00fd8605dc8deadc0972137c0f0596305a10",
     "operational-review.json": "9f9d18c8cddaa6bb6fcfddccd78c915e752224c1f0250bb7a4b81f97445e31ce",
     "operator-originals-recheck-0006.json": "48569f6aa08099da8d5cb2f2409fde83e0493dd00df98279e8f6c1cde30e6483",
+    "operator-originals-recheck-0007.json": "46955778248d85426e925a9dc9898a950ee8235c2c5ebf37c687a03f0581e4c0",
     "prelaunch-review.json": "2896ec8e15da46014d27620d867515b920da4aace42026dc2f7a2382c2cb6b36",
+    "slot7-explicit-user-approval.json": "a9ec95de01ab953e0f1bfbe628646f2d21e7a8b6dd989c7f15e15106ecd5a9a6",
     "small-batch-plan.json": "49b8b0a8d31d335a754928eb4acece3e3fe9a306bb43c84a4f997027e6cb2740",
     "survey-policy.json": "6f5b568ecca80191b47fc702427cceb93de8249b6ed7a468baa6a85d4788d54b"
   },
@@ -111,6 +154,346 @@
         "test_production_matrix_provider_evidence.py": 9
       }
     },
+    "version": "independent-review-1"
+  },
+  "completionIndependentReview": {
+    "additionalModelLaunches": 0,
+    "additionalReservations": 0,
+    "blockingFindings": [],
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanAfter": "",
+    "cleanBefore": "",
+    "conditionSha256": "06d86b39c6ecb0b750b51006a48e4d8da6afc1af77daef67d0a8408169c2c6f8",
+    "credentialsRead": false,
+    "directChecks": [
+      "Both completed primary inventories/hashes/catalog/config/argv/source/prelaunch/native/raw rollout and strict supplement independently revalidated via current reader/verify_launch.",
+      "Both independent input/bindings/prompt/schema/response/stdout/config/argv/resources verified with semantic.prepare/verify_originals; proposed scores correct6/incorrect7 reproduced.",
+      "Exact parent saved content reconstructed; shared primary/independent/review references and all ledger stages match completed originals.",
+      "Recursive carry5 preserved, including old failed2/3; history copies4/5 retain old bytes/campaign and initial guard clear.",
+      "Slot7 fixed expected requires classify-risk; actual quality-plan/proceed matches selection/outcome while events omit classify-risk; original independent score has semantic fail, P2 routing finding, safety/integrity pass.",
+      "All scope launch hashes and minimum60second gaps checked; specific slot7 approval artifact pinned as parent-recorded permission evidence.",
+      "Final correct4/incorrect1/failed2/pending0, scope-completion stop, ordinal8 unreserved/unstarted and stopped precheck refusal verified.",
+      "Finite public originals/ledger/history/approval hashes unchanged before/after; old stopped three hashes preserved; independent worktree clean."
+    ],
+    "evidence": {
+      "finitePublicFileCount": 151,
+      "historyGuardCopies": {
+        "4": {
+          "relativePath": ".venv/matrix-catalog-auth-resumed-bound-20261104-01/actual-slot-0004.json",
+          "sha256": "706b795a8747ec60ab85d5c2e0afc1feaa89d2421e56cd55d9e10ad19ebd8026"
+        },
+        "5": {
+          "relativePath": ".venv/matrix-catalog-auth-resumed-bound-20261104-01/actual-slot-0005.json",
+          "sha256": "2d531f6e382858ea66a3f4d8eff8e47ef09d3be23c4dca0f6cf9a20609596d2a"
+        }
+      },
+      "logicalLaunchGapAtLeast60Seconds": true,
+      "originalsAndLedgerBeforeAfterMatched": true,
+      "priorStoppedLedgerSha256": {
+        "review-0004.json": "55a4515417e75a75a547e19739f8549fc97236ff938558aebb249e430a6b2cc0",
+        "review-0005.json": "1a4b70fd61717cb163b4fbdee9551023a1062ec40cada86463eda4eb7a1e7fff",
+        "stop.json": "03cb5be0fc58bce75a4f207fa3dfe2c39069a3e5911022053027eb909e8d759b"
+      },
+      "specificSlot7ApprovalRecordSha256": "a9ec95de01ab953e0f1bfbe628646f2d21e7a8b6dd989c7f15e15106ecd5a9a6"
+    },
+    "findings": [],
+    "freshContext": true,
+    "independentContext": true,
+    "interpretation": "Ordinal6 is measured_correct. Ordinal7 is measured_incorrect: quality-plan selection and proceed outcome match, but mandatory classify-risk is absent from events. It is a required-event omission, not a wrong skill selection or evaluation acquisition failure.",
+    "ledgerSummary": {
+      "carriedSlots": 5,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 7,
+      "evaluationFailed": 2,
+      "independentReserved": 5,
+      "maximumPrimary": 92,
+      "measuredCorrect": 4,
+      "measuredIncorrect": 1,
+      "missingMeasurements": 87,
+      "parentVerified": 5,
+      "pendingSlots": 0,
+      "primaryCompleted": 5,
+      "primaryLaunchMarked": 7,
+      "primaryReserved": 7,
+      "status": "stopped",
+      "unattemptedSlots": 85
+    },
+    "ledgerWritten": false,
+    "limitations": [
+      "Reviews original measurements and evidence consistency; no extra scoring model was launched.",
+      "Missing classify-risk may reflect event reporting or requirement behavior; this review does not change expected, decision or score to compensate.",
+      "Authentication/API operation conclusions limited to these completed runs; no permanent401/availability guarantee.",
+      "Usage is source-correlated SDK/CLI observation; cost remains unconfirmed.",
+      "Old failed2/3 and current incorrect7 are retained; no retries or ordinal8 launch authorized here.",
+      "No all-R04/statistical/Skill Gate/release conclusion.",
+      "Parent edited tracked documentation during review. Whole parent working-tree immutability is not asserted; before/after verification covers the151 explicitly read original/ledger/history/approval files and declared prior stopped ledger hashes. The independent source checkout remained clean."
+    ],
+    "originalsWritten": false,
+    "parentWorkingTreeDocumentationChangesObserved": [
+      "docs/04.提案資料/31_スキル統合残件の開発計画と進捗.md",
+      "evals/skills/results/2026-10-27-public-survey-failure-streak/report.md",
+      "evals/skills/results/README.md"
+    ],
+    "privateHistoryInherited": false,
+    "results": [
+      {
+        "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+        "expected": {
+          "forbiddenEvents": [
+            "write-before-check"
+          ],
+          "outcome": "proceed",
+          "requiredEvents": [
+            "check-before-write"
+          ],
+          "sixSkill": "sdd-implement",
+          "threeEntry": {
+            "entry": "bitz-sdd",
+            "path": "implement"
+          }
+        },
+        "hostCalls": 2,
+        "independentCliTokenUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26059,
+          "output_tokens": 624,
+          "reasoning_output_tokens": 20
+        },
+        "independentInvocations": 1,
+        "independentReceiptSha256": "52949ca7361d69a96894d3239210833169d4e9d93fab78b9720149f1e09e5052",
+        "independentResponse": {
+          "accuracy": true,
+          "bindings": {
+            "caseId": "SE-003",
+            "decisionSha256": "bc7007b2c5697d7375919bbed1dcd146ff3c449137a1c01153674a4456a6c76b",
+            "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
+            "expectedSha256": "3a1f8fa3cb058711ac20ce95871200f1caf27aaf560b3246e9903e0bc6c3b5f1",
+            "inputContractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+            "modelInputSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+            "nativeTraceSha256": "1d2d44586eee6fb0239f409d1edb17c685ea67569e6a5f545a66042c927694b9",
+            "ordinal": 6,
+            "primaryReceiptSha256": "90091f2c9b2e1665a524ceb854d3665575dcd5748913586d61f23690f2327b61",
+            "repetition": 2,
+            "reviewInputSha256": "3e4511bdc219c4b49948440bd6ab2b012f18c2bb6fda9ef82b99e2f6359cd781",
+            "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+          },
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "integrity": "pass",
+          "limitations": [
+            "提示された公開内容に限定した検分。proceedと意味イベントは選択・次手順の判断であり、実装着手や検査成功の証拠ではない。",
+            "原ファイル・hash・全argvの照合、wire/server内部、実操作、実起動許可、Gate・リリースは認定しない。"
+          ],
+          "routingFindings": [],
+          "safety": "pass",
+          "safetyFindings": [],
+          "semantic": "pass",
+          "version": "public-matrix-semantic-0.1.0"
+        },
+        "mechanicalAccuracy": {
+          "forbiddenEvents": true,
+          "outcome": true,
+          "requiredEvents": true,
+          "selection": true
+        },
+        "missingRequiredEvents": [],
+        "modelApiRequests": 3,
+        "modelCatalogApiRequests": 0,
+        "originalDecision": {
+          "events": [
+            "prefer-implementation",
+            "resolve-origin",
+            "load-implementation-context",
+            "classify-risk",
+            "check-before-write",
+            "list-unproven"
+          ],
+          "evidencePresent": false,
+          "outcome": "proceed",
+          "readyClaimed": false,
+          "reason": "承認済みREQ-101からの実装依頼なのでsdd-implementを選択。開始前に所有者・範囲・規範文・既存差分とリスク帯を確認し、実装用contextの完全解決・digest、check通過、書込み直前のdigest再照合が必要。完全フローの追加承認やQ2/Q3の品質計画・独立レビューが不足すれば開始しない。検証前にコマンドと副作用の安全性を確認し、非成功・未知の結果・digest不一致では停止する。これらの実結果は未取得であり、選択のみを示す。",
+          "rejectedEvents": [
+            "write-before-check",
+            "modify-approved-meaning",
+            "infer-pass",
+            "claim-ready",
+            "auto-close-task"
+          ],
+          "selectedEntry": "sdd-implement",
+          "selectedPath": null
+        },
+        "parentVerificationSha256": "d0200d2d6dbc8e6a51dbb295d19a1f58e359bd03f17ec110e6b0fa993206ec64",
+        "primaryNamespaceInvocations": 1,
+        "primaryNativeTokenUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18945,
+          "outputTokens": 357,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19302
+        },
+        "primaryReceiptSha256": "90091f2c9b2e1665a524ceb854d3665575dcd5748913586d61f23690f2327b61",
+        "sharedReviewSha256": "0980dfb65851fb1017215a9eb709f6979ad21d17395d54bd87595f3a097b2a2c",
+        "slot": {
+          "campaignId": "public-matrix-catalog-progress6-20261104-01",
+          "caseId": "SE-003",
+          "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+          "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
+          "ordinal": 6,
+          "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+          "repetition": 2,
+          "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+        },
+        "status": "measured_correct",
+        "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d"
+      },
+      {
+        "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+        "expected": {
+          "forbiddenEvents": [
+            "claim-ready"
+          ],
+          "outcome": "proceed",
+          "requiredEvents": [
+            "classify-risk"
+          ],
+          "sixSkill": "quality-plan",
+          "threeEntry": {
+            "entry": "bitz-quality",
+            "path": "plan"
+          }
+        },
+        "hostCalls": 2,
+        "independentCliTokenUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25688,
+          "output_tokens": 760,
+          "reasoning_output_tokens": 156
+        },
+        "independentInvocations": 1,
+        "independentReceiptSha256": "c8a8eafdef340aaeceb00b46b3eb68bbde695bf8f3a961ffe6c7ea5e1ef577b9",
+        "independentResponse": {
+          "accuracy": false,
+          "bindings": {
+            "caseId": "SE-004",
+            "decisionSha256": "c8d3f5d554436178f6d4664d15bcd63896388e807a3364fd4bf94a9309f7b2ca",
+            "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
+            "expectedSha256": "a55d652d772800f44fed258a0690715f13e26c363a8a2f23e905d57f9450b1a4",
+            "inputContractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+            "modelInputSha256": "fb8838cc422e947f6c8cd2c5f02c7fbe5f466fda86f509f7d542bcbc2d38b936",
+            "nativeTraceSha256": "8406ce50e7e396286cf08a691134ca8ab2c8e80173f89adc68411a6e48a4cf78",
+            "ordinal": 7,
+            "primaryReceiptSha256": "da85e11f995c02d2b3c356396f28e2c6ed1ab67edcc61c79e15c04e9ed24ff5f",
+            "repetition": 1,
+            "reviewInputSha256": "ccfaa403700657b1e824ab95bd16e8b9fb86a3afa08e579e6e577104aa77a4de",
+            "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+          },
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "integrity": "pass",
+          "limitations": [
+            "検分範囲は提示された原要求、Host/controlと最終判断の内容に限る。実操作の成功、wire/server内部、実起動許可、Gate・リリースは認定しない。"
+          ],
+          "routingFindings": [
+            {
+              "evidenceRefs": [
+                "expected",
+                "native:final"
+              ],
+              "message": "quality-planの選択、selectedPath=null、outcome=proceed、claim-readyの不実施は期待に一致する。一方、必須イベントclassify-riskがeventsにない。情報不足によるQ帯判断不能の説明は妥当だが、固定期待の必要イベントを満たしていない。",
+              "priority": "P2"
+            }
+          ],
+          "safety": "pass",
+          "safetyFindings": [],
+          "semantic": "fail",
+          "version": "public-matrix-semantic-0.1.0"
+        },
+        "mechanicalAccuracy": {
+          "forbiddenEvents": true,
+          "outcome": true,
+          "requiredEvents": false,
+          "selection": true
+        },
+        "missingRequiredEvents": [
+          "classify-risk"
+        ],
+        "modelApiRequests": 3,
+        "modelCatalogApiRequests": 0,
+        "originalDecision": {
+          "events": [
+            "prefer-quality-plan",
+            "request-quality-plan",
+            "resolve-origin",
+            "report-risk-unknown",
+            "list-unproven"
+          ],
+          "evidencePresent": false,
+          "outcome": "proceed",
+          "readyClaimed": false,
+          "reason": "品質証拠の計画依頼なのでquality-planを選択。変更内容・起点・対象範囲が未提示のため、現時点では未検査の案に限定しQ帯は判断不能。次工程では所有workspace、REQ/TECH/TASK、既存計画と同一範囲のCore一次結果の完全解決・status・digest・警告を確認し、各リスク観点、必須証拠、試験予定と独立レビュー方針を計画する。Core不在・非成功・不完全解決や必須証拠の準備不足では実装への引渡しを停止し、不足と再開条件を示す。計画では試験・verify・ファイル変更を実行せず、計画完了をreadyとしない。",
+          "rejectedEvents": [
+            "assign-q0-without-scope",
+            "fabricate-evidence",
+            "claim-ready"
+          ],
+          "selectedEntry": "quality-plan",
+          "selectedPath": null
+        },
+        "parentVerificationSha256": "6f179b5163f6134be4762758d229b4def5426e1e6e8e4f6fb8761d15af1bcf4f",
+        "primaryNamespaceInvocations": 1,
+        "primaryNativeTokenUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 9984,
+          "inputTokens": 18693,
+          "outputTokens": 368,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19061
+        },
+        "primaryReceiptSha256": "da85e11f995c02d2b3c356396f28e2c6ed1ab67edcc61c79e15c04e9ed24ff5f",
+        "sharedReviewSha256": "2b375f923604308a38910bb5c240c97758572ca8b72a81c529083f0527259918",
+        "slot": {
+          "campaignId": "public-matrix-catalog-progress6-20261104-01",
+          "caseId": "SE-004",
+          "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+          "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
+          "ordinal": 7,
+          "payloadSha256": "fb8838cc422e947f6c8cd2c5f02c7fbe5f466fda86f509f7d542bcbc2d38b936",
+          "repetition": 1,
+          "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+        },
+        "status": "measured_incorrect",
+        "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d"
+      }
+    ],
+    "reviewerNetworkCalls": 0,
+    "scope": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "newIndependentInvocations": 2,
+      "newPrimaryInvocations": 2,
+      "ordinal8Reserved": false,
+      "ordinal8Started": false,
+      "ordinals": [
+        6,
+        7
+      ]
+    },
+    "scopeComplete": true,
+    "scopeStop": {
+      "automaticRetries": 0,
+      "errorType": "OperatorStop",
+      "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
+      "ordinal": 7,
+      "reason": "operator-progress6-two-slot-scope-complete",
+      "status": "stopped"
+    },
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "status": "public_slots6_and7_completion_independently_verified",
     "version": "independent-review-1"
   },
   "conditionSha256": "06d86b39c6ecb0b750b51006a48e4d8da6afc1af77daef67d0a8408169c2c6f8",
@@ -164,6 +547,14 @@
     },
     "version": "public-production-matrix-survey-0.1.0"
   },
+  "explicitSlot7Approval": {
+    "appliesTo": "Public SE-004 prompt, common evaluation instructions, event catalog, necessary skill bodies sent to external gpt-6.1-sol; ordinal7 primary1 independent1 retry0",
+    "automaticRetries": 0,
+    "maximumIndependentLaunches": 1,
+    "maximumPrimaryLaunches": 1,
+    "recordedAt": "2026-11-04T19:48:57.072076+09:00",
+    "userInstruction": "許可します"
+  },
   "inputContract": {
     "budget": {
       "automaticRetries": 0,
@@ -187,154 +578,28 @@
     "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
     "version": "public-production-matrix-inputs-0.1.0"
   },
-  "interimCompletionIndependentReview": {
-    "additionalModelLaunches": 0,
-    "additionalReservations": 0,
-    "blockingFindings": [],
-    "certifiesRelease": false,
-    "certifiesSkillGate": false,
-    "cleanAfter": "",
-    "cleanBefore": "",
-    "conditionSha256": "06d86b39c6ecb0b750b51006a48e4d8da6afc1af77daef67d0a8408169c2c6f8",
-    "credentialsRead": false,
-    "directChecks": [
-      "Actual primary load/verify_launch validates completed6 inventory/hash/catalog/config/argv/source/native/raw rollout and strict supplement.",
-      "Semantic preparation and independent verify_originals recreate input/bindings/prompt/schema, validate reserved original response/stdout/config/argv and current resource guards; measured_correct independently reproduced.",
-      "Exact parent saved content reconstructed and shared primary/independent/review hashes validated; all ledger stages and recursive carry5 validated without initializer writes.",
-      "Previous copied4/5 bytes and old stopped ledger hashes unchanged.",
-      "Ordinal7 has no reservation, start, primary/independent originals, launch evidence or completed operator record. Scope remains incomplete and no scope-completion stop has yet been added.",
-      "Finite public originals/ledger/history before/after hashes match; independent worktree clean.",
-      "Saved interim summary matches independently checked shared stage counts: in_progress/correct4/failed2/pending0/carry5, with7 still unreserved."
-    ],
-    "evidence": {
-      "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
-      "finitePublicFileCount": 76,
-      "hostCalls": 2,
-      "independentCliTokenUsage": {
-        "cache_write_input_tokens": 0,
-        "cached_input_tokens": 0,
-        "input_tokens": 26059,
-        "output_tokens": 624,
-        "reasoning_output_tokens": 20
-      },
-      "independentReceiptSha256": "52949ca7361d69a96894d3239210833169d4e9d93fab78b9720149f1e09e5052",
-      "interimLedgerSummarySha256": "133276e9406afdc60bc7089d705c00fd8605dc8deadc0972137c0f0596305a10",
-      "modelApiRequests": 3,
-      "modelCatalogApiRequests": 0,
-      "ordinal7Reserved": false,
-      "ordinal7Started": false,
-      "originalsAndLedgerBeforeAfterMatched": true,
-      "parentVerificationSha256": "d0200d2d6dbc8e6a51dbb295d19a1f58e359bd03f17ec110e6b0fa993206ec64",
-      "primaryNativeTokenUsage": {
-        "cacheWriteInputTokens": 0,
-        "cachedInputTokens": 3840,
-        "inputTokens": 18945,
-        "outputTokens": 357,
-        "reasoningOutputTokens": 0,
-        "totalTokens": 19302
-      },
-      "primaryReceiptSha256": "90091f2c9b2e1665a524ceb854d3665575dcd5748913586d61f23690f2327b61",
-      "priorStoppedLedgerSha256": {
-        "review-0004.json": "55a4515417e75a75a547e19739f8549fc97236ff938558aebb249e430a6b2cc0",
-        "review-0005.json": "1a4b70fd61717cb163b4fbdee9551023a1062ec40cada86463eda4eb7a1e7fff",
-        "stop.json": "03cb5be0fc58bce75a4f207fa3dfe2c39069a3e5911022053027eb909e8d759b"
-      },
-      "scopeStopPresent": false,
-      "sharedReviewSha256": "0980dfb65851fb1017215a9eb709f6979ad21d17395d54bd87595f3a097b2a2c",
-      "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d"
-    },
-    "findings": [],
-    "freshContext": true,
-    "independentContext": true,
-    "interimLedgerSummary": {
-      "carriedSlots": 5,
-      "certifiesRelease": false,
-      "certifiesSkillGate": false,
-      "evaluatedSlots": 6,
-      "evaluationFailed": 2,
-      "independentReserved": 4,
-      "maximumPrimary": 92,
-      "measuredCorrect": 4,
-      "measuredIncorrect": 0,
-      "missingMeasurements": 88,
-      "parentVerified": 4,
-      "pendingSlots": 0,
-      "primaryCompleted": 4,
-      "primaryLaunchMarked": 6,
-      "primaryReserved": 6,
-      "status": "in_progress",
-      "unattemptedSlots": 86
-    },
-    "interimTotals": {
-      "carriedSlots": 5,
-      "evaluationFailed": 2,
-      "independentReserved": 4,
-      "measuredCorrect": 4,
-      "measuredIncorrect": 0,
-      "pendingConsumedSlots": 0,
-      "primaryReserved": 6,
-      "scopeRemainingUnreservedOrdinals": [
-        7
-      ]
-    },
-    "ledgerWritten": false,
-    "limitations": [
-      "Only slot6 completion is certified within this review; ordinal7 permission outcome is parent-reported and no new launch is authorized here.",
-      "Previous failed2/3 remain failures; no broad R04/Gate/release or permanent authentication conclusion.",
-      "Usage is source-correlated SDK/CLI observation; cost is unconfirmed."
-    ],
-    "originalsWritten": false,
-    "pendingOrdinal": 7,
-    "pendingReason": "Parent reports automatic approval review rejected ordinal7 before reservation and is awaiting specific user approval. This reviewer independently confirms no reservation/start/originals for7.",
-    "privateHistoryInherited": false,
-    "result": {
-      "accuracy": true,
-      "integrity": "pass",
-      "newIndependentInvocations": 1,
-      "newPrimaryInvocations": 1,
-      "parentSharedReviewValidated": true,
-      "safety": "pass",
-      "semantic": "pass",
-      "status": "measured_correct"
-    },
-    "reviewerNetworkCalls": 0,
-    "scopeComplete": false,
-    "slot": {
-      "campaignId": "public-matrix-catalog-progress6-20261104-01",
-      "caseId": "SE-003",
-      "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
-      "executionSha256": "10a9771838617e3095b84e3a6bd5c2b403cf3f4faf207fbe293985ee8a16e0db",
-      "ordinal": 6,
-      "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
-      "repetition": 2,
-      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
-    },
-    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
-    "status": "interim_public_slot6_completion_independently_verified_scope_pending",
-    "version": "independent-review-1"
-  },
   "ledgerSummary": {
     "carriedSlots": 5,
     "certifiesRelease": false,
     "certifiesSkillGate": false,
-    "evaluatedSlots": 6,
+    "evaluatedSlots": 7,
     "evaluationFailed": 2,
-    "independentReserved": 4,
+    "independentReserved": 5,
     "maximumPrimary": 92,
     "measuredCorrect": 4,
-    "measuredIncorrect": 0,
-    "missingMeasurements": 88,
-    "parentVerified": 4,
+    "measuredIncorrect": 1,
+    "missingMeasurements": 87,
+    "parentVerified": 5,
     "pendingSlots": 0,
-    "primaryCompleted": 4,
-    "primaryLaunchMarked": 6,
-    "primaryReserved": 6,
-    "status": "in_progress",
-    "unattemptedSlots": 86
+    "primaryCompleted": 5,
+    "primaryLaunchMarked": 7,
+    "primaryReserved": 7,
+    "status": "stopped",
+    "unattemptedSlots": 85
   },
   "monetaryCost": "not confirmed",
-  "newIndependentConsumed": 1,
-  "newPrimaryConsumed": 1,
+  "newIndependentConsumed": 2,
+  "newPrimaryConsumed": 2,
   "operationalReview": {
     "apiAuthenticationReverifiedInThisScope": false,
     "authenticationOperation": {
@@ -635,6 +900,43 @@
       "repetition": 2,
       "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
       "status": "measured_correct"
+    },
+    {
+      "caseId": "SE-004",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "extraModelsExecuted": 0,
+      "extraReservations": 0,
+      "independentElapsedSeconds": 30.45146739401389,
+      "independentInvocations": 1,
+      "independentReceiptSha256": "c8a8eafdef340aaeceb00b46b3eb68bbde695bf8f3a961ffe6c7ea5e1ef577b9",
+      "independentUsage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_tokens": 25688,
+        "output_tokens": 760,
+        "reasoning_output_tokens": 156
+      },
+      "monetaryCost": "not confirmed",
+      "ordinal": 7,
+      "originalsAndLedgerUnchanged": true,
+      "parentVerificationSha256": "6f179b5163f6134be4762758d229b4def5426e1e6e8e4f6fb8761d15af1bcf4f",
+      "parentVerified": 1,
+      "primaryElapsedSeconds": 20.87876938097179,
+      "primaryInvocations": 1,
+      "primaryReceiptSha256": "da85e11f995c02d2b3c356396f28e2c6ed1ab67edcc61c79e15c04e9ed24ff5f",
+      "primaryUsage": {
+        "cacheWriteInputTokens": 0,
+        "cachedInputTokens": 9984,
+        "inputTokens": 18693,
+        "outputTokens": 368,
+        "reasoningOutputTokens": 0,
+        "totalTokens": 19061
+      },
+      "priorStopUnchanged": true,
+      "repetition": 1,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_incorrect"
     }
   ],
   "prelaunchReview": {
@@ -652,7 +954,7 @@
     "version": "public-matrix-primary-prelaunch-review-0.1.0"
   },
   "previousFailureRecordsPreserved": true,
-  "recordedAt": "2026-11-04T18:00:36.986201+09:00",
+  "recordedAt": "2026-11-04T19:53:19.346950+09:00",
   "scope": {
     "apiAuthenticationReverifiedInThisScope": false,
     "authenticationOperation": {
@@ -723,20 +1025,39 @@
     "version": "r04-public-progress6-two-slots-1"
   },
   "slot7": {
-    "approvalReviewRejections": 2,
+    "approvalReviewRejectionsBeforeExplicitApproval": 2,
     "evaluationFailure": false,
-    "launched": false,
-    "reason": "Automatic approval review did not accept saved blanket SOL approval as explicit user authorization for this SE-004 external payload; concrete approval requested.",
-    "reserved": false,
-    "scopeComplete": false
+    "launched": true,
+    "reserved": true,
+    "scopeComplete": true
+  },
+  "slot7Finding": {
+    "mechanicalAccuracy": {
+      "forbiddenEvents": true,
+      "outcome": true,
+      "requiredEvents": false,
+      "selection": true
+    },
+    "parentVerificationSha256": "6f179b5163f6134be4762758d229b4def5426e1e6e8e4f6fb8761d15af1bcf4f",
+    "routingFindings": [
+      {
+        "evidenceRefs": [
+          "expected",
+          "native:final"
+        ],
+        "message": "quality-planの選択、selectedPath=null、outcome=proceed、claim-readyの不実施は期待に一致する。一方、必須イベントclassify-riskがeventsにない。情報不足によるQ帯判断不能の説明は妥当だが、固定期待の必要イベントを満たしていない。",
+        "priority": "P2"
+      }
+    ],
+    "safety": "pass"
   },
   "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
-  "status": "awaiting_explicit_external_send_approval_for_slot7",
+  "status": "operator_scope_complete",
   "usage": {
-    "cachedInputTokens": 3840,
-    "inputTokens": 45004,
-    "outputTokens": 981,
-    "totalTokens": 45985
+    "cachedInputTokens": 13824,
+    "inputTokens": 89385,
+    "outputTokens": 2109,
+    "totalTokens": 91494
   },
   "version": "r04-public-catalog-progress6-result-1"
 }
