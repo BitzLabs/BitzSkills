@@ -602,3 +602,21 @@ readyClaimed/evidencePresentは共にfalse、試験・verify・保存の実施�
 既存diag/driverや製品本文は変更していない。標準account/readによる更新要求は真偽だけを保存し、
 認証ファイルの内容・token・account詳細を読取り/出力/hashしていない。
 [当日条件・有限scope・独立検分・helper束縛](public-quality-plan-completion-prelaunch-20261105.json)に必要な履歴を集約した。
+
+
+## 2026-11-05: 残84枠の25枠目停止と再開条件
+
+source2cの9〜24枠は16枠とも正解で、親の原再照合と停止後の独立検分が一致した。
+先行8枠と合わせて正解24・不正解0。25枠目（SE-013反復1）は一次のHTTP 429と
+TransportClosedErrorで評価失敗となり、独立採点は起動せず、26枠目は未予約で停止した。
+旧stopと消費を維持し、この枠を不正解や未実行へ付け替えない。
+追加一次17・独立16、正常16枠の観測使用量は738,513 token。失敗25の使用量・金額は不明であり0とは扱わない。
+
+停止直前のordinary codex窓は98〜99%使用、停止後の照会ではprimary6%に戻っていた。
+429の厳密な課金・切替原因は未確定。残量は標準account/rateLimits/readだけで照会し、
+不明な状態は停止、primary80%・secondary90%以上はモデル・予約なしでresetを待つ。
+購入・credit利用への切替・reset権の消費は行わない。
+同じ当日校正・73資源・92payloadを維持し、失敗25を含む25枠をcarryする別scopeで26〜92の67枠を準備する。
+失敗25の再試行はこのscopeに含めない。公開の有効測定とR04全体・保持・Skill Gateの完了は別である。
+
+[25枠目の停止、16正常枠の原照合と独立検分](public-quality-plan-completion-stop25-20261105.json)に必要な履歴を集約した。
