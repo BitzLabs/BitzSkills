@@ -1,0 +1,156 @@
+{
+  "version": "independent-review-1",
+  "status": "public_matrix_catalog_connection_independently_verified",
+  "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+  "comparisonBase": "1687d5a2",
+  "independentContext": true,
+  "freshContext": true,
+  "privateHistoryInherited": false,
+  "scope": "Public fixed SOL catalog connection, historical calibration/provider compatibility and zero-paid local calibration evidence only.",
+  "findings": [],
+  "blockingFindings": [],
+  "resolvedFindings": [
+    {
+      "severity": "P2",
+      "location": "production_matrix_originals.load_provider_capture receipt version gate",
+      "originalRef": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+      "problem": "Legacy provider 0.1.1 was rejected before its compatible inventory/config verifier could run.",
+      "resolution": "02328a56 accepts only legacy/current provider versions and adds an actual legacy reader regression preserving receipt bytes and no catalog addition.",
+      "independentlyRetested": true
+    }
+  ],
+  "cleanBefore": "",
+  "cleanAfter": "",
+  "tests": {
+    "count": 33,
+    "exitCode": 0,
+    "ref": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "suites": {
+      "test_production_matrix_originals.py": 15,
+      "test_production_matrix_provider_evidence.py": 9,
+      "test_production_matrix_calibration.py": 9
+    }
+  },
+  "priorIndependentTests": {
+    "count": 209,
+    "exitCode": 0,
+    "ref": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+    "suites": {
+      "test_production_matrix*.py": 197,
+      "test_production_heldout_model_catalog.py": 8,
+      "test_production_canary_calibration.py": 4
+    }
+  },
+  "directChecks": [
+    "Read AGENTS.md, ADR-068 D5 and the stopped public batch poststop review; kept same-uid filesystem attackers outside review scope.",
+    "Reviewed fixed source diff and public calibration/probe/primary config parity through the same bounded runtime catalog helper.",
+    "Reviewed catalog original inventories, fixed hashes, child verification, complete config equality, version dispatch and source/argv historical reconstruction.",
+    "Historical calibration real originals independently verified at e23ec42d: original_local_calibration_matches, manifest 99fdd1dac2991919780fd73b3b0dfd1c5082eb8032234f6f91d6ffb4364ea72e.",
+    "New local calibration all 24 original hashes matched before/after and the committed manifest; producer e23ec42d retained.",
+    "New local calibration independently verified from real originals with calibration.verify; exact config catalog path, bounded runtime catalog bytes, request initial context and SDK/raw RPC correlation passed.",
+    "Supplement digest remains the independently calibrated 50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d; strict comparison was preserved.",
+    "Independent worktree clean before/after; git diff --check passed.",
+    "Normal probe 02328a56 real originals independently verified with verify_originals; 23 artifact hashes and receipt unchanged, config/catalog/request/raw context and namespace/argv bindings passed.",
+    "New reader independently re-read actual stopped 9a85b909 ordinal1 originals under read-only guard: original fixed caller and SDK supplement rejection reproduced; original fingerprint unchanged. No reclassification."
+  ],
+  "newCalibration": {
+    "producerSource": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+    "outputRelativeRoot": ".venv/matrix-local-isolation-calibration-catalog-20261104-01",
+    "manifestVersion": "matrix-client-calibration-originals-0.2.0",
+    "manifestSha256": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+    "receiptSha256": "c1ac29747b8e32f83425dae78529d8d5fd42e9a1cc9b48a0d568b59a048c51cd",
+    "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+    "status": "original_local_calibration_matches",
+    "originalCount": 24,
+    "originalHashesBeforeAfterMatched": true
+  },
+  "notRerun": [
+    "Real provider execution and remote catalog response capture.",
+    "Reviewer did not launch new calibration/probe processes; independently reverified both resulting sets of local originals.",
+    "Full skills suite and Gate A/B certification.",
+    "Latest-ref full matrix suite: 197 tests ran at e23ec42d, then 33 affected tests ran after the limited reader fix and profile update.",
+    "All stopped evaluation originals and ledger balances; no eligibility or scoring reclassification was performed."
+  ],
+  "normalProbeReview": {
+    "status": "local_isolation_verified",
+    "verification": {
+      "status": "matrix_local_sdk_context_verified",
+      "rawNotificationCount": 5,
+      "primaryModelTrajectories": 0,
+      "paidModelCalls": 0,
+      "realReservations": 0,
+      "localHttpRequests": 1,
+      "launchEnabled": false,
+      "eligibleForMeasurement": false,
+      "certifiesSkillGate": false,
+      "certifiesRelease": false
+    },
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "receiptSha256": "e79a7b3937fb42ee549eb58ae0bcc1c2dbdc818b7377805b2363668a632b7447",
+    "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+    "originalCount": 23,
+    "originalHashesBeforeAfterMatched": true
+  },
+  "realProviderDriftResolved": false,
+  "launchEnabled": false,
+  "eligibleForMeasurement": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false,
+  "reviewerModelLaunches": 0,
+  "reviewerReservations": 0,
+  "reviewerNetworkCalls": 0,
+  "credentialsRead": false,
+  "oldOriginalsChanged": false,
+  "ledgerChanged": false,
+  "legacyStoppedCaptureReview": {
+    "status": "rejected",
+    "failure": {
+      "errorType": "ValueError",
+      "message": "fixed caller and SDK supplement",
+      "messageWithheld": false,
+      "frames": [
+        {
+          "file": "production_failure_diagnosis.py",
+          "function": "recheck",
+          "line": 211
+        },
+        {
+          "file": "production_matrix_originals.py",
+          "function": "load_provider_capture",
+          "line": 31
+        },
+        {
+          "file": "production_matrix_provider_evidence.py",
+          "function": "verify_bytes",
+          "line": 62
+        },
+        {
+          "file": "production_matrix_evidence.py",
+          "function": "verify_complete",
+          "line": 113
+        },
+        {
+          "file": "production_primary_review.py",
+          "function": "correlate_rollout",
+          "line": 76
+        },
+        {
+          "file": "production_canary_rollout.py",
+          "function": "correlate",
+          "line": 395
+        },
+        {
+          "file": "production_canary_rollout.py",
+          "function": "initial_context",
+          "line": 79
+        },
+        {
+          "file": "production_trace.py",
+          "function": "require",
+          "line": 34
+        }
+      ]
+    },
+    "originalsUnchanged": true
+  }
+}

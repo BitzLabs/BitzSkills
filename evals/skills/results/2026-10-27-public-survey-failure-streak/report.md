@@ -161,3 +161,327 @@ manifestのSHA-256は`f34a7bd1dc61e53a95487ad0df04541e4775b50e4f707b38c32960437e
 候補`9dd98312`は73資源（`activews.py`の追加、既存16資源の内容変更）であり、旧保持台帳の条件へ単純に継ぎ足せない。
 この確認はGitの確定ref同士で行った。保持の旧結果を現行製品の結果へ読み替えず、当面は公開の少数枠の起動前準備を先に進める。
 保持側の候補・条件を更新する場合は、先行台帳の消費と旧停止を保全したうえで、評価条件の変更として別に扱う。検査を緩めて通過させない。
+
+
+## 2026-11-04: 当日校正・起動前検分と公開少数枠の停止
+
+### 固定した条件と検証
+
+mainを`6506f66a`へ更新し、当日の局所校正を束縛した候補
+`9a85b9098af7b19316d518978f82eaac790fcfc0`を確定した。6スキル・73資源のsnapshotは
+`.venv/matrix-routing-preparation-public-recovery-20261104-01/snapshot`、manifestのSHA-256は
+`f77ac641408efedd9c0b75e2c67dc50f0dddd2d3207e59a909965453fdacd6c8`である。
+旧候補の測定をこの候補の成績へ合算しない。
+
+- 校正原は`.venv/matrix-local-isolation-calibration-recovery-20261104-02`。
+  `local_calibration_verified`、namespace終了0、外部モデル・課金・予約0。校正のmanifestは
+  `99fdd1dac2991919780fd73b3b0dfd1c5082eb8032234f6f91d6ffb4364ea72e`、受領記録は
+  `0999833e26eb0ab77df962b3499311704f6b34b0ff3892692c1a7b997d77eeb9`。
+  通常の局所隔離検査も`local_isolation_verified`（local HTTP 1、raw通知5、外部モデル・予約0）。
+- 最初の局所校正`...-01`はsandboxでの`NETLINK_ROUTE`拒否で停止した。停止原を保持し、実評価に数えない。
+  過去の校正原12ファイルはworktree整理時の退避先から、歴史manifestの全hash一致を確認して元の固定パスへ復元した。
+  退避原を変更せず、認証情報は読んでいない。
+- 確定候補で全スキル試験を実行し、`Ran 1176 tests in 184.022s`、`OK`、終了0。
+  コマンドは`PYTHONPATH=plugins/bitz-core/src UV_CACHE_DIR=$PWD/.venv/uv-cache PYTHONDONTWRITEBYTECODE=1 TMPDIR=$PWD/.venv uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'`。
+  `uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python evals/skills/validate.py audit`は`Passed`、`errors: []`。
+- 別文脈の検分者は関連392試験（matrix 191、trace 164、関連37）を終了0で実行した。
+  独立worktreeは検分前後ともclean。snapshot、SDK、runtime、9世代の校正chain、復元12ファイル、通常局所原と
+  最終pinを再検証し、阻害指摘なし。[コード検分](public-prelaunch-code-review-20261104.json)と
+  [具体条件の検分](public-operational-review-20261104.json)に範囲・制限を残した。
+
+公開の`SE-001`（「bitz doctorをJSON形式で実行し、結果を説明して」）を2反復する条件を固定した。
+SOLの一次最大2・独立最大2、再試行0・委譲0、起動間隔60秒、任意の評価失敗でこのバッチを停止する。
+既存92枠の実行契約を縮小したとは扱わず、親が単枠ごとに検査して、この2枠以外を起動しない運用条件である。
+外部送信・実評価は自動承認レビューで一度拒否された後、この入力と範囲への利用者の明示承認を得た。
+
+束は`.venv/matrix-public-recovery-bound-20261104-01`、条件のSHA-256は
+`b702b946cdfc6b25f370950e581e0b10a31186f4dd30f3be54f3e00a38bc92d7`。
+実行契約のSHA-256は`4340249b1d7093389537b55fdb9ff908500a0c77ded952b95b931ffc66c92faa`、
+開始前検分のSHA-256は`126eb92af63cb2e4610eed32dcd66bebbb6c4db90b1ac4b69539a3fc8b58dd3f`である。
+
+### 実評価と停止
+
+`production_matrix_survey_run.run(root, bundle, 1)`で1枠目だけを実行した。
+一次は1回、独立採点は0回、測定完了は0件。`evaluation_failed`、段階`primary`で閉じ、2枠目は未予約・未起動。
+同条件を再試行せず、停止原・一次予約の消費を維持する。
+停止後の独立診断を終えた後、このバッチの台帳へ`stop.json`をEXCL追記し、同じ入口からの追加予約も拒否する。
+既存`summary()`の再集計は`status: stopped`、`primaryReserved: 1`、`independentReserved: 0`、
+`evaluationFailed: 1`、`pendingSlots: 0`である。
+
+CLIは19.210537秒で終了0、timeoutなし、SDK errorなし、資源の前後照合一致。
+`list_resources`と`read_resource`はいずれも受理され、host停止はない。
+ただし原rolloutと校正の照合は`production_canary_rollout.initial_context`の
+`fixed caller and SDK supplement`で拒否された。既存の`production_failure_diagnosis.py --bundle ... --ordinals 1`で
+読取り専用に再現し、`originalsUnchanged: true`、追加モデル・予約0を確認した。
+
+校正と実評価のdeveloper補助指示は、Default modeで仮定を置いて実行を優先するという1段落だけ異なる。
+校正の補助ブロックのSHA-256は`50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d`、
+実評価は`cad0a82ec499c65eee6cfd73d82d5d1d56da8a4cfcc00c81e7980de2db7b35d0`。
+通知不対応や`uri`引数の旧原因と混同しない。`primary.native`の限定検査は通過し`bitz-core`選択を観測したが、
+完全な証拠照合と独立採点がないため、正解や有効測定へ昇格しない。
+
+SDKのnative観測使用量は入力19,712・出力332・合計20,044 token（入力cache 10,112）。
+推論APIは3回で、一次軌跡1回とは区別する。これは観測値であり、未完了の全原照合や課金額の認定ではない。
+金額は未確認で、0円とは扱わない。
+
+### 次の是正の範囲
+
+補助指示の不一致を独立に再検査し、公開の実起動と局所校正でモデル情報の条件を固定する接続を確認する。
+保持側には既存のcatalog固定があるが、公開側の`config_for`には接続されていない。
+[停止後の独立検分](public-poststop-review-20261104.json)も同じ拒否と補助指示の差分、raw RPCとrolloutの一致を再現した。
+固定runtimeのcatalogには追加段落がないが、実通信のmodels応答本文は取得していない。
+外部のモデル情報の更新が原因という説明は推定であり、catalog固定による是正の効果はまだ実証していない。
+校正のhashを実評価からコピーしたり検査を緩めたりせず、必要な是正は別の確定候補・条件で検分する。
+今回の停止と消費、旧公開92枠・保持の停止は維持する。R04全体・Skill Gate・リリースは未完了である。
+
+
+## 2026-11-04: 公開一次と局所校正のモデル情報を固定する是正
+
+修正は`e23ec42d`、旧版読取り入口の是正と新校正の束縛まで含む検証対象は
+`02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae`である。公開一次・当日校正・通常局所プローブに、
+既存の固定CLI内蔵catalogの抽出処理を共通して接続した。catalogはSOL 1モデル、65,209 bytes、
+SHA-256は`529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9`。
+受け取った実評価の補助文を校正profileへコピーする変更や、補助指示の一致検査を緩める変更は行っていない。
+
+- 新しい原には`public-model-catalog.json`を保存し、固定runtimeから導出したbytesと親子で照合する。
+  `config.model_catalog_json`の固定パスも検査する。catalog helperは確定sourceの照合・namespaceのmountに含む。
+- 校正manifestは新版`matrix-client-calibration-originals-0.2.0`（24原）、provider receiptは
+  新版`public-matrix-original-binding-0.1.2`とした。旧校正0.1.0・旧provider 0.1.1は、当時のGitにある宣言から
+  旧inventory・config・mount順序・source proofで再検証する。新版のcatalog欠落、改変、設定解除、版の偽装は拒否する。
+- 独立検分で旧providerを読む入口の版条件の見落としを1件指摘され、入口を是正した。
+  実際の`load_provider_capture`へ旧原を渡し、受領記録不変・catalogを追加しないことを確認する回帰試験を追加した。
+
+新校正原は`.venv/matrix-local-isolation-calibration-catalog-20261104-01`、producerは`e23ec42d`。
+`local_calibration_verified`、namespace終了0、manifestは
+`e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1`、受領記録は
+`c1ac29747b8e32f83425dae78529d8d5fd42e9a1cc9b48a0d568b59a048c51cd`。
+新版manifestから全原・当時Git・profileを再検証し、`original_local_calibration_matches`を確認した。
+補助指示のhashは従来の校正と同じ`50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d`である。
+
+`02328a56`の通常原は`.venv/matrix-local-isolation-catalog-20261104-01`。
+`local_isolation_verified`、namespace終了0、local HTTP 1・raw通知5。
+6スキル・73資源のsnapshotは`.venv/matrix-routing-preparation-catalog-20261104-02/snapshot`、manifestは
+`b29de030340dc1572d4c48f7fbe8ad55d10e7badbcf6232eb9fc94842b83ede8`へ固定した。
+
+親は同refで次を実行した。
+
+- `PYTHONPATH=plugins/bitz-core/src UV_CACHE_DIR=$PWD/.venv/uv-cache PYTHONDONTWRITEBYTECODE=1 TMPDIR=$PWD/.venv uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'`
+  — `Ran 1183 tests in 192.827s`、`OK`、終了0。
+- `uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python evals/skills/validate.py audit`
+  — `Passed`、`errors: []`、終了0。
+- 旧停止9a85b909の原を新版readerから読取り専用で再検査し、従来どおり
+  `fixed caller and SDK supplement`で拒否すること、`originalsUnchanged: true`・`ledgerUnchanged: true`を確認した。
+
+[独立検分記録](public-catalog-independent-review-20261104.json)には、初回209試験、是正後の関連33試験、
+新校正24原・通常23原の再照合、旧校正chainと旧停止原の再検査、阻害1件の是正と残存阻害なしを記録した。
+同じ試験の追試を別々の測定件数として加算しない。
+
+今回の作業の外部モデル呼出し・課金・予約は0。旧バッチは`stopped`、一次予約1・独立0を維持し、追記していない。
+公開側の実providerでこの是正の効果を確認する新測定はまだ行っていない。
+次はこの新候補に対する少数枠の実行条件と開始前検分を固定する。R04全体やSkill Gateの完了とは判定しない。
+
+
+## 2026-11-04: 固定catalogの新条件で公開1枠を完走
+
+候補`02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae`で、`SE-001`の反復1を一次取得・独立採点・親原照合まで完了した。
+新条件の成績は**正解1・不正解0・評価失敗0**。旧9a85b909の一次1失敗を成功へ変更せず、別条件・別出力に保持する。
+今回の確認はこの1枠のpipeline完走であり、全スキル・反復・特性を網羅したSkill GateやR04全体の完了ではない。
+
+[実行条件・最終検分・原照合・集計の必要証拠](public-catalog-one-slot-20261104.json)を1ファイルへ集約した。
+campaignは`public-matrix-catalog-one-slot-20261104-01`、条件は
+`6fbe91d84b16e4a39a13b1bd98e937ddb3193b75d9e64a3e4b359a4c6e0279ad`、
+束は`.venv/matrix-catalog-public-bound-20261104-01`である。
+一次原は`.venv/matrix-catalog-public-20261104-01/attempt-0001`、独立原は同prefixの`-independent/attempt-0001`に保持する。
+
+- 起動前のコード・具体条件・最終pinを別文脈で検分し、阻害なしを確認して単発`run(root, bundle, 1)`だけを実行した。
+  追加一次1・独立1、retry0・委譲0。旧停止の一次1・独立0も含め、通算一次2・独立1で既承認の2+2以内。
+- 一次は20.731627秒、独立は27.027308秒、両方終了0・timeoutなし。
+  一次は固定catalogと校正の補助指示を照合し、原RPC・host・rollout・全argv・資源の検査を通過した。
+  推論APIは3回、モデルcatalog APIは0回を観測した。旧失敗でのcatalog API 2回とは区別するが、旧応答本文は依然不明である。
+- 取得後の親再検査でも`load_provider_capture`、`verify_launch`、`semantic.prepare`、`verify_originals`と共有台帳の
+  一次・独立予約・reviewを読取り専用で照合し、`measured_correct`、原・台帳の前後不変を確認した。
+  独立検分者も同じ完成原を別文脈で再構成し、公開有限72ファイルの前後hash一致と旧停止3原の不変を確認した。
+- 今回1枠の運用範囲を終えたため、`operator-one-slot-scope-complete`のstopをEXCL追記し、追加予約を拒否した。
+  台帳の`status: stopped`はこの範囲の終了を意味し、この1枠の評価失敗ではない。
+  集計は`primaryReserved: 1`、`independentReserved: 1`、`parentVerified: 1`、`measuredCorrect: 1`、
+  `evaluationFailed: 0`、`pendingSlots: 0`。契約92枠の未測定91は残る。
+
+今回の観測使用量は、一次が入力19,676・出力347・合計20,023 token（入力cache 10,112）、
+独立が入力27,506・出力588・合計28,094 token（入力cache 0）。合計48,117 token、金額は未確認。
+原照合と完走後の独立検分による追加モデル・予約は0。旧停止と消費を維持し、過去の測定へ合算しない。
+次は、新候補の残りの公開評価に対する有限予算・継続条件を固定する。保持側は旧72資源の条件から別途移行が必要である。
+
+
+## 2026-11-04: 正解1枠を継続し、次枠はサービス混雑で停止
+
+同じ候補`02328a56`の既存survey継続方式で、正解1枠の原、policy、入力、73資源をhashへ束縛して引き継ぎ、
+ordinal2（SE-001反復2）・ordinal3（SE-002反復1）、追加一次最大2・独立最大2の範囲を固定した。
+期待値を一次入力へ混ぜないこと、当日校正と開始前検分、baseline公開後60秒、旧停止の維持を独立確認した。
+
+ordinal2を単発で起動したところ、原RPCの`turn/completed`は`status: failed`、
+`error.codexErrorInfo: serverOverloaded`、`itemsView: notLoaded`、要約items空だった。
+CLIは8.715452秒で終了0・timeoutなし・SDK errorなしだが、最終回答、host操作、tokenUsage通知は0件。
+正常なsummaryがないため検査は`SDK turn summary mismatch`で拒否し、`evaluation_failed`として閉じた。
+今回はproviderの混雑による取得失敗であり、SDK検査を緩めたり、旧補助指示の不一致が再発したと判断したりしない。
+HTTP status、使用token数、課金額は未確認。使用量未取得を0 token・0円と扱わない。
+
+停止条件に従ってordinal3を予約・起動せず、再試行0のまま新台帳へstopをEXCL追記した。
+[今回の条件・診断・独立検分・集計](public-catalog-followup-20261104.json)に必要証拠を集約した。
+独立検分者は、公開有限41ファイル、失敗した終端、catalog/config/argv/資源、再帰carryと共有台帳を
+読取り専用で再検査し、原・台帳の前後不変と旧停止3原のhash一致を確認した。
+検分記録は完了して保存済みであり、その後の検分者の利用上限による応答中断とは区別する。
+
+追加の消費は一次1・独立0。有効測定は正解1のまま、評価失敗1、未着手90、未完了0、有効測定の欠測91。
+旧9a85b909の失敗は別条件の履歴として維持する。混雑停止の再試行と、未実行の次枠を進めることを混同しない。
+
+
+## 2026-11-04: 未起動のSE-002を進め、認証拒否で停止
+
+利用者の再開指示を受け、正解1・評価失敗1を変更せず、同候補02328a56の未実行ordinal3
+（SE-002反復1）だけを一次最大1・独立最大1で開始した。失敗したordinal2の再試行ではない。
+再帰carry2、全92入力・73資源、期待値の一次入力への非混入、当日校正と最終pinを独立検分した。
+追加消費は一次1・独立0で、前scopeの未使用分以内。再試行は0、4枠目は未予約・未起動である。
+
+CLIは18.043648秒で終了0、timeoutなし、SDK errorなしだが、原のturnは`failed / other`、
+`itemsView: notLoaded`、summary items空だった。46字のエラー文言に401とunauthorized（大文字小文字を区別しない）を確認した。
+HTTP応答header、tokenの期限、refreshの挙動は取得・検証していないため推定しない。
+前の`serverOverloaded`とは別の、認証拒否を示す停止として区分する。
+最終回答、host操作、tokenUsage通知はいずれも0で、正常summaryの検査は`SDK turn summary mismatch`で拒否した。
+使用量と金額は未確認で、0 token・0円とは扱わない。
+
+[実行条件・認証停止の診断・独立検分・集計](public-catalog-se002-auth-stop-20261104.json)に必要な証拠を集約した。
+独立検分者は公開40ファイルの前後hash、catalog/config/argv/資源、失敗の原終端、再帰carryと共有台帳を
+読取り専用で検証した。親も新版readerからの拒否、台帳の終端、旧停止不変を自分で確認した。
+ordinal2・3は共にprimary/ValueErrorなので、既存の連続失敗guardが次ordinal4を確認記録なしで拒否することも再現した。
+原・旧台帳は変更せず、今回の台帳にもscope終了のstopをEXCL追記して追加予約を止めている。
+
+新候補の累計は正解1・不正解0・評価失敗2・未着手89・未完了0、有効測定の欠測91。
+4枠目以降は、評価用CLIの認証更新と原因を踏まえた起動前検分を済ませるまで進めない。
+認証ファイルの内容は読んでおらず、ログイン・logout・tokenの複写や更新も実行していない。
+固定CLIの`login --help`と[OpenAI公式認証手順](https://learn.chatgpt.com/docs/auth#preferred-device-code-authentication-beta)で
+device code loginとfile保存の設定を確認した。評価はWSLの`/home/hide/.codex`を使うため、Windows側だけのログイン変更と混同しない。
+本人のログイン操作とリポジトリ外の認証更新が必要であり、利用者へWSLでの更新を依頼した。
+
+
+## 2026-11-04: 認証更新後の2枠が完走
+
+利用者の操作依頼により、評価用固定CLIの標準device loginを`/home/hide/.codex`・file保存で実行した。
+本人承認の後、CLIの`Successfully logged in`と終了0を確認した。エージェントは認証ファイルの内容を開かず、
+認証code・token・認証ファイルのhashをこのリポジトリへ保存していない。
+
+開発再開の指示を受け、同じ候補`02328a56`で未実行ordinal4（SE-002反復2）と5（SE-003反復1）を
+追加一次2・独立2以内に固定した。旧正解1・失敗2と全92入力・73資源を既存survey継続方式で引き継いだ。
+旧失敗2・3の原記録を変えず履歴copyし、原因診断・独立検分・標準ログインの成功・失敗時停止を確認記録へ束縛した。
+既存の連続失敗guardと実driverの両方で`acknowledged`を確認してから起動した。失敗枠の再試行ではない。
+
+| 枠 | 公開ケース | 一次 | 独立採点 | 親確認 | 一次/独立の時間 | 観測token合計 |
+|---|---|---|---|---|---|---|
+| 4 | SE-002 反復2（sdd-plan） | 完了 | 完了 | 正解として確定 | 21.011366秒 / 24.994608秒 | 45,620 |
+| 5 | SE-003 反復1（sdd-implement） | 完了 | 完了 | 正解として確定 | 20.484172秒 / 25.919100秒 | 45,922 |
+
+両枠とも一次・独立は終了0・timeoutなし。一次の推論APIは各3回、catalog APIは各0回。
+認証更新後の実通信と校正の補助指示を含む証拠照合が通ったことを、この2枠の範囲で確認した。
+永続的な認証保証や全R04・Skill Gate・リリースの認定へは広げない。
+
+親は4枠目を完了後に読取り専用で再照合してから5枠目へ進み、5枠目も完成原・台帳を自分で再検査した。
+別文脈の検分者も両枠の実reader・起動宣言・意味採点・親保存content・共有stage・再帰carryと確認記録を
+読取り専用で再構成し、公開151ファイルと旧停止3原の前後hash一致を確認した。
+追加のモデル・予約・通信・秘密読取り、原や旧台帳の変更はいずれも0。
+
+[実行条件・最終検分・2枠の原照合・集計](public-catalog-auth-resumed-20261104.json)に必要な証拠を1ファイルへ集約した。
+今回のscopeは終了後にEXCL stopを追記し、6枠目は未予約・未起動。
+新候補の累計は正解3・不正解0・評価失敗2・未着手87・未完了0で、有効測定の欠測89。
+過去の混雑・認証停止は成功へ置換せず、消費も返却していない。
+今回の観測使用量は入力89,763・出力1,779・合計91,542 token（入力cache 13,952）、金額は未確認である。
+ソース・fixtureは変更しておらず、同じrefの全1,183試験と監査の結果を再利用した。
+次は、残る公開評価の対象と有限予算を固定して進める。保持側の旧72資源からの移行は引き続き残る。
+
+
+## 2026-11-04: 6枠目の完走と7枠目の送信承認待ち
+
+候補`02328a56`と同じ73資源・全92入力を維持し、未実行6（SE-003反復2）・7（SE-004反復1）を
+追加一次2・独立2、再試行0、評価失敗時停止のscopeへ固定した。別文脈の最終起動前検分後、親も資源・hash・
+再帰carry5・旧停止の不変を確認して6枠目を起動した。標準`account/read`の更新要求は完了したが、
+認証情報の内容・hash・account詳細は記録しておらず、実際の資格情報の更新有無は断定しない。
+
+6枠目は一次・独立採点・親確認で正解として確定した。親は原reader・意味採点・共有stageを読取り専用で
+再照合し、完成原と台帳の前後fingerprintおよび旧停止3原のhash一致を確認した。
+一次20.717534秒、独立27.839043秒、観測使用量は入力45,004・出力981・合計45,985 token
+（入力cache 3,840）。金額は未確認。ソース・fixtureは変更せず、同じrefの全1,183試験を再利用した。
+
+7枠目のコマンドは、自動承認レビューが今回の公開SE-004ペイロードの外部SOL送信に対する明示承認を
+確認できないとして、プロセス起動前に拒否した。保存済みの包括SOL承認記録を追加証拠として提示した
+再審査も同じ理由で拒否された。両方ともモデル起動・予約は0で、評価失敗へは数えない。
+今回の公開入力・共通評価指示・イベント一覧・必要スキル本文と、一次1・独立1・再試行0の範囲を利用者へ確認中。
+scopeは完了扱いせず、7枠目未予約のまま保留している。
+
+現時点の新候補累計は正解4・不正解0・評価失敗2・未着手86・未完了0、有効測定の欠測88。
+旧失敗2・3、停止、消費を維持し、全R04・Skill Gate・リリースの認定とは扱わない。
+
+別文脈の完成検分でも、実readerから正解を再現し、親保存content・共有stage・再帰carry5と旧停止を照合した。
+公開76ファイルの前後hashは一致し、追加モデル・予約・通信・秘密読取り・原台帳書込みは0。
+7枠目の全stage・実原・launch記録が存在しないことも確認した。
+[6枠目の原照合・独立検分・集計と承認待ちの範囲](public-catalog-progress6-20261104.json)へ必要な証拠を集約した。
+
+
+## 2026-11-04: 明示承認後の7枠目とイベント欠落
+
+利用者が前節の具体的な外部送信範囲に「許可します」と回答したため、固定条件と6枠目の完成照合・
+独立検分・7枠目未予約を再確認し、SE-004反復1を一次1・独立1、再試行0で実行した。
+一次20.878769秒・独立30.451467秒で完了し、親確認と読取り専用の原再照合でも`measured_incorrect`を再現した。
+
+`quality-plan`の選択・selectedPath=null・outcome=proceedとclaim-readyの不実施は期待どおりだった。
+不正解の理由は、固定期待が要求する`classify-risk`が最終判断のeventsにないこと。
+独立採点はP2のrouting指摘1件、safetyはpassとした。情報不足でQ帯を判断できないという説明はあったが、
+必須イベントは満たしていない。スキルの誤選択や取得失敗と混同せず、結果・固定期待・消費をそのまま保持する。
+
+7枠目の観測使用量は入力44,381・出力1,128・合計45,509 token（入力cache 9,984）。
+6・7合計は入力89,385・出力2,109・合計91,494 token（入力cache 13,824）、金額は未確認。
+新候補累計は正解4・不正解1・評価失敗2・未着手85・未完了0、有効測定の欠測87となった。
+scope終了のstopをEXCL追記し、8枠目は予約していない。旧停止・旧失敗と消費は維持する。
+
+[同じ集約記録](public-catalog-progress6-20261104.json)を今回2枠の最終結果へ更新し、前節の承認待ち状態は
+Git履歴に残した。ソースとfixtureは変えず、固定refの全1,183試験を再利用する。
+次はquality-planのリスク分類判断と固定期待の整合を調べ、必要な対策と別条件の新測定を検討する。
+全R04・Skill Gate・リリースは未認定。
+
+別文脈の最終検分でも6正解・7不正解を原readerから再現し、親保存content・共有stage・再帰carry5・
+旧停止3原・起動間隔60秒以上・scope終了と8未予約を照合した。原・台帳・履歴・承認の151ファイルは
+前後hash一致。親が更新した進捗文書はこの不変の主張に含めていない。追加モデル・予約・通信・
+秘密読取り・原台帳書込みは0であり、検分記録を上の集約JSONへ束縛した。
+
+
+## 2026-11-04: 情報不足時の分類手順を製品本文へ補足
+
+7枠目の最終判断と製品本文・共通指示・固定期待を親と別文脈で読み直した。観測できるのは、
+quality-planの選択は正しく、Q帯判断不能の報告と次工程の説明がある一方、分類手順の意味イベントが
+欠けたこと。モデル内部の原因までは1試行で断定できない。
+
+既存本文は8観点の根拠確認と判断不能時のband=nullを既に要求している。共通評価指示と評価READMEは
+通常の入力収集後に行う分類もeventsに含めると定めており、現行期待を緩める根拠は確認できなかった。
+最も整合する仮説は、現時点のQ帯を確定できないことと、その後の分類手順を採用することの混同である。
+
+最新origin/main `756cb301`から専用ブランチ`codex/quality-plan-risk-procedure`を分け、
+`b0b6f22608f5fcbc5af85e36f13a0ac297dbf027`で次を確定した。評価基盤の既存ブランチとは分離している。
+
+- quality-plan本文に、変更範囲が未提示でも入力収集→各観点の分類→証拠選定の手順を計画へ残すことを補足した。
+- 現在判断不能なQ帯はnullとし、質問と再開条件を返す。予定を分類済み・検査済み・実装許可へ変えない。
+- スキルを0.1.2、プラグインを0.1.4へ更新した。評価専用のイベント名は製品本文へ追加していない。
+- 版更新で中断処理に到達できなくなった既存合成試験は、合成packageだけを旧評価契約の版へ固定した。
+  本番の候補版検査・過去のprotocol/approvalは変更していない。
+
+親の最終検証は品質関連101試験（17.887秒）・SDD連携4試験（3.395秒）がOK、
+評価契約監査は46ケース・7schema・Passed/errors=[]、diff checkも通過した。
+初回の試験起動はPYTHONPATH不足、版更新後の中断試験は旧版拘束で失敗し、上の環境修正と合成fixture修正後に
+通過を確認した。文章そのものをassertする試験は追加していない。
+旧7枠の束縛原の全hashも再確認し、旧7不正解・旧失敗2・消費を維持した。
+
+これは局所の是正候補であり、実モデルの改善を確認した結果ではない。新候補での実測は未起動・未予約。
+次はcatalog固定済み基盤と製品候補を同じ確定refへ束縛し、新snapshot/局所校正/有限予算/開始前検分を
+揃えた別条件の測定で効果を確認する。全R04・Skill Gate・リリースは未認定。
+
+同じ確定refの独立検分でも、品質101試験（17.683秒）・SDD連携4試験（3.494秒）・監査・diff checkが通過し、
+限定変更の阻害指摘はなかった。実際の新版packageと旧承認の組合せが候補版不一致で拒否され、
+CLI/modelとattempt予約へ到達しないことも合成検査した。独立記録SHA-256は
+`681c35336002fbd671bd529a66d89d9c1b4e95ed17e4a07b6dc46d005c124b19`。
+この検分は実モデルの改善実証ではなく、追加モデル・実予約・通信・秘密読取り・原台帳書込みは0である。

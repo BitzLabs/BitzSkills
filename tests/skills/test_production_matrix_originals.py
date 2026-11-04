@@ -46,6 +46,18 @@ class MatrixOriginalsTests(unittest.TestCase):
         with patch.object(originals.provider.preflight.capture.subprocess,'Popen',side_effect=AssertionError('process')):
             self.assertEqual(self.load(),context)
 
+    def test_legacy_provider_reader_preserves_original_inventory_and_receipt(self):
+        names=self.fixture.legacy_provider()
+        (self.base/originals.provider.preflight.model_catalog.FILE).unlink()
+        for name,raw in self.fixture.originals.items():(self.base/name).write_bytes(raw)
+        self.persist();before=(self.base/'receipt.json').read_bytes()
+        with patch('production_matrix_calibration.source_files',return_value=names):
+            self.assertEqual(self.load(),self.fixture.bind())
+        self.assertEqual((self.base/'receipt.json').read_bytes(),before)
+        self.assertFalse((self.base/originals.provider.preflight.model_catalog.FILE).exists())
+        self.fixture.receipt['version']=originals.provider.evidence.PROVIDER_VERSION;self.persist()
+        with self.assertRaises(ValueError):self.load()
+
     def test_opaque_contents_are_not_enumerated_or_opened(self):
         for name in originals.provider.evidence.inventory.OPAQUE_DIRECTORIES:
             path=self.base/name;path.mkdir(exist_ok=True);(path/'synthetic-unread-sentinel').write_bytes(b'public sentinel')

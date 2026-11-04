@@ -1,0 +1,997 @@
+{
+  "actualSlots": [
+    {
+      "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+      "caseId": "SE-002",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+      "eligibleForMeasurement": true,
+      "failurePhase": null,
+      "globalErrorType": null,
+      "independent": {
+        "independentInvocations": 1,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": "measured_correct",
+        "status": "matrix_independent_captured"
+      },
+      "launchEvidence": {
+        "independent": "f2e383831c4b9ebc332765a09a119de951fa34b586ea9d39b774a90c4e75d79d",
+        "primary": "781161b9884a7f4d84556a175c063962468d757a876f1875215a93c2048d4943"
+      },
+      "ordinal": 4,
+      "parent": {
+        "ledgerFinalized": true,
+        "proposedLedgerStatus": "measured_correct",
+        "status": "matrix_parent_originals_verified"
+      },
+      "primary": {
+        "actualNamespaceInvocations": 1,
+        "errorType": null,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": null,
+        "status": "primary_capture_awaits_independent_review",
+        "timedOut": false
+      },
+      "repetition": 2,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_correct"
+    },
+    {
+      "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+      "caseId": "SE-003",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+      "eligibleForMeasurement": true,
+      "failurePhase": null,
+      "globalErrorType": null,
+      "independent": {
+        "independentInvocations": 1,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": "measured_correct",
+        "status": "matrix_independent_captured"
+      },
+      "launchEvidence": {
+        "independent": "ffae4198be3854b74bdcd310ba820387303e361df14023ff11816cf7411748ff",
+        "primary": "accee7282c8eaffc6c3832704d3e8954270793dc4c015c748a60b87e8e405d8d"
+      },
+      "ordinal": 5,
+      "parent": {
+        "ledgerFinalized": true,
+        "proposedLedgerStatus": "measured_correct",
+        "status": "matrix_parent_originals_verified"
+      },
+      "primary": {
+        "actualNamespaceInvocations": 1,
+        "errorType": null,
+        "ledgerFinalized": false,
+        "proposedLedgerStatus": null,
+        "status": "primary_capture_awaits_independent_review",
+        "timedOut": false
+      },
+      "repetition": 1,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_correct"
+    }
+  ],
+  "apiAuthenticationObservedInTheseSlots": true,
+  "boundArtifactSha256": {
+    "actual-slot-0002.json": "b7fcae8997dea5d27d20e5f23d7b9eee2b3002a95681f9fcfb7ceb388b1ed4e2",
+    "actual-slot-0003.json": "f1f9841a07a37b031f5ef9a8e6993c1455f1d80cfc0d38a550544629db1b1ee9",
+    "actual-slot-0004.json": "706b795a8747ec60ab85d5c2e0afc1feaa89d2421e56cd55d9e10ad19ebd8026",
+    "actual-slot-0005.json": "2d531f6e382858ea66a3f4d8eff8e47ef09d3be23c4dca0f6cf9a20609596d2a",
+    "closed-ledger-summary.json": "b4aeb0143fdcb150bc4f282dc9b49037033b3f1535a2cdb38169e4b69fd93492",
+    "code-review.json": "dae5d599a6a26feca1c1d4513692b07279b856e8eec7e4d22a0e997a6b51c0b4",
+    "completion-independent-review.json": "3dedbb7d7626edeed84e2b3813c6ff2b934d19d9f0877ead86739775d5890832",
+    "deployment.json": "cac982b888442476962b34e1fce03eafce88801c6669fd0500a5ab2ba010895a",
+    "execution.json": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+    "failure-acknowledgement-0004.json": "44705e60418e1d41f7cad0802ddb9be4101919fdb31d13f0569204e1dc408297",
+    "input-contract.json": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+    "operational-review.json": "85d25f7deecd707647509f087d7dca9e6eff59a78a046ba5b263279fe4ea8d3e",
+    "operator-originals-recheck-0004.json": "c61718022345626387097893a45879d38dcfd78f0cd6d70730a1afa6303da231",
+    "operator-originals-recheck-0005.json": "14a4135b80adbde678d137b9baefa87d98212d781d5256d96e06177828a09fcd",
+    "prelaunch-review.json": "cb97f2a9b2a34288304b6746f25dd4faae3c706380c1996928067fd7ed126e5a",
+    "small-batch-plan.json": "05055c1367d7c3da58ab605007111a8c23f2f8e155d1030431e9f68a53502ce1",
+    "survey-policy.json": "4ebb749deeeeeb51946540fae25f3ecd8d591994cdfec7921792e1ef06d5a59d"
+  },
+  "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+  "certifiesRelease": false,
+  "certifiesSkillGate": false,
+  "cliLoginReportedSuccess": true,
+  "codeReview": {
+    "blockingFindings": [],
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanAfter": "",
+    "cleanBefore": "",
+    "comparisonBase": "1687d5a2",
+    "credentialsRead": false,
+    "directChecks": [
+      "Read AGENTS.md, ADR-068 D5 and the stopped public batch poststop review; kept same-uid filesystem attackers outside review scope.",
+      "Reviewed fixed source diff and public calibration/probe/primary config parity through the same bounded runtime catalog helper.",
+      "Reviewed catalog original inventories, fixed hashes, child verification, complete config equality, version dispatch and source/argv historical reconstruction.",
+      "Historical calibration real originals independently verified at e23ec42d: original_local_calibration_matches, manifest 99fdd1dac2991919780fd73b3b0dfd1c5082eb8032234f6f91d6ffb4364ea72e.",
+      "New local calibration all 24 original hashes matched before/after and the committed manifest; producer e23ec42d retained.",
+      "New local calibration independently verified from real originals with calibration.verify; exact config catalog path, bounded runtime catalog bytes, request initial context and SDK/raw RPC correlation passed.",
+      "Supplement digest remains the independently calibrated 50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d; strict comparison was preserved.",
+      "Independent worktree clean before/after; git diff --check passed.",
+      "Normal probe 02328a56 real originals independently verified with verify_originals; 23 artifact hashes and receipt unchanged, config/catalog/request/raw context and namespace/argv bindings passed.",
+      "New reader independently re-read actual stopped 9a85b909 ordinal1 originals under read-only guard: original fixed caller and SDK supplement rejection reproduced; original fingerprint unchanged. No reclassification."
+    ],
+    "eligibleForMeasurement": false,
+    "findings": [],
+    "freshContext": true,
+    "independentContext": true,
+    "launchEnabled": false,
+    "ledgerChanged": false,
+    "legacyStoppedCaptureReview": {
+      "failure": {
+        "errorType": "ValueError",
+        "frames": [
+          {
+            "file": "production_failure_diagnosis.py",
+            "function": "recheck",
+            "line": 211
+          },
+          {
+            "file": "production_matrix_originals.py",
+            "function": "load_provider_capture",
+            "line": 31
+          },
+          {
+            "file": "production_matrix_provider_evidence.py",
+            "function": "verify_bytes",
+            "line": 62
+          },
+          {
+            "file": "production_matrix_evidence.py",
+            "function": "verify_complete",
+            "line": 113
+          },
+          {
+            "file": "production_primary_review.py",
+            "function": "correlate_rollout",
+            "line": 76
+          },
+          {
+            "file": "production_canary_rollout.py",
+            "function": "correlate",
+            "line": 395
+          },
+          {
+            "file": "production_canary_rollout.py",
+            "function": "initial_context",
+            "line": 79
+          },
+          {
+            "file": "production_trace.py",
+            "function": "require",
+            "line": 34
+          }
+        ],
+        "message": "fixed caller and SDK supplement",
+        "messageWithheld": false
+      },
+      "originalsUnchanged": true,
+      "status": "rejected"
+    },
+    "newCalibration": {
+      "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+      "manifestSha256": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+      "manifestVersion": "matrix-client-calibration-originals-0.2.0",
+      "originalCount": 24,
+      "originalHashesBeforeAfterMatched": true,
+      "outputRelativeRoot": ".venv/matrix-local-isolation-calibration-catalog-20261104-01",
+      "producerSource": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+      "receiptSha256": "c1ac29747b8e32f83425dae78529d8d5fd42e9a1cc9b48a0d568b59a048c51cd",
+      "status": "original_local_calibration_matches"
+    },
+    "normalProbeReview": {
+      "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+      "originalCount": 23,
+      "originalHashesBeforeAfterMatched": true,
+      "receiptSha256": "e79a7b3937fb42ee549eb58ae0bcc1c2dbdc818b7377805b2363668a632b7447",
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "local_isolation_verified",
+      "verification": {
+        "certifiesRelease": false,
+        "certifiesSkillGate": false,
+        "eligibleForMeasurement": false,
+        "launchEnabled": false,
+        "localHttpRequests": 1,
+        "paidModelCalls": 0,
+        "primaryModelTrajectories": 0,
+        "rawNotificationCount": 5,
+        "realReservations": 0,
+        "status": "matrix_local_sdk_context_verified"
+      }
+    },
+    "notRerun": [
+      "Real provider execution and remote catalog response capture.",
+      "Reviewer did not launch new calibration/probe processes; independently reverified both resulting sets of local originals.",
+      "Full skills suite and Gate A/B certification.",
+      "Latest-ref full matrix suite: 197 tests ran at e23ec42d, then 33 affected tests ran after the limited reader fix and profile update.",
+      "All stopped evaluation originals and ledger balances; no eligibility or scoring reclassification was performed."
+    ],
+    "oldOriginalsChanged": false,
+    "operationalScope": "New ordinals4/5 only, additional primary2/independent2. Carry correct1/failed2 unchanged, old2/3 copied solely for failure guard and acknowledged. Single-call4 then validate completion, only then5 if measured; scope stop afterward.",
+    "priorIndependentTests": {
+      "count": 209,
+      "exitCode": 0,
+      "ref": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+      "suites": {
+        "test_production_canary_calibration.py": 4,
+        "test_production_heldout_model_catalog.py": 8,
+        "test_production_matrix*.py": 197
+      }
+    },
+    "privateHistoryInherited": false,
+    "realProviderDriftResolved": false,
+    "resolvedFindings": [
+      {
+        "independentlyRetested": true,
+        "location": "production_matrix_originals.load_provider_capture receipt version gate",
+        "originalRef": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+        "problem": "Legacy provider 0.1.1 was rejected before its compatible inventory/config verifier could run.",
+        "resolution": "02328a56 accepts only legacy/current provider versions and adds an actual legacy reader regression preserving receipt bytes and no catalog addition.",
+        "severity": "P2"
+      }
+    ],
+    "reviewerModelLaunches": 0,
+    "reviewerNetworkCalls": 0,
+    "reviewerReservations": 0,
+    "scope": "Public fixed SOL catalog connection, historical calibration/provider compatibility and zero-paid local calibration evidence only.",
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "status": "matrix_pipeline_prelaunch_code_verified",
+    "tests": {
+      "count": 33,
+      "exitCode": 0,
+      "ref": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "suites": {
+        "test_production_matrix_calibration.py": 9,
+        "test_production_matrix_originals.py": 15,
+        "test_production_matrix_provider_evidence.py": 9
+      }
+    },
+    "version": "independent-review-1"
+  },
+  "completionIndependentReview": {
+    "additionalModelLaunches": 0,
+    "additionalReservations": 0,
+    "blockingFindings": [],
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanAfter": "",
+    "cleanBefore": "",
+    "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+    "credentialsRead": false,
+    "directChecks": [
+      "Both completed primary inventories/hashes/catalog/config/argv/source/prelaunch/native/raw rollout and strict supplement independently revalidated via current reader and verify_launch.",
+      "Both independent input/bindings/prompt/schema/response/stdout/config/argv/resources reverified with semantic.prepare and verify_originals.",
+      "Measured_correct and exact parent saved content independently reconstructed; shared primary/independent/review references and all ledger stages validated.",
+      "Recursive carry [correct,failed,failed] preserved; old history copies remain byte-identical with old campaign IDs; ack hash/streak.guard/driver guard acknowledged.",
+      "Launch evidence hashes and logical inter-launch gaps at least60seconds verified.",
+      "Closed correct3/failed2/pending0, scope-completion stop, ordinal6 unreserved/unstarted and stopped precheck rejection confirmed.",
+      "Finite public original/ledger/history hashes unchanged before/after; old stop three hashes preserved; independent worktree clean."
+    ],
+    "evidence": {
+      "failureAcknowledgementSha256": "44705e60418e1d41f7cad0802ddb9be4101919fdb31d13f0569204e1dc408297",
+      "finitePublicFileCount": 151,
+      "historyGuardCopies": {
+        "2": {
+          "relativePath": ".venv/matrix-catalog-followup-bound-20261104-01/actual-slot-0002.json",
+          "sha256": "b7fcae8997dea5d27d20e5f23d7b9eee2b3002a95681f9fcfb7ceb388b1ed4e2"
+        },
+        "3": {
+          "relativePath": ".venv/matrix-catalog-next-se002-bound-20261104-01/actual-slot-0003.json",
+          "sha256": "f1f9841a07a37b031f5ef9a8e6993c1455f1d80cfc0d38a550544629db1b1ee9"
+        }
+      },
+      "logicalLaunchGapAtLeast60Seconds": true,
+      "originalsAndLedgerBeforeAfterMatched": true,
+      "priorStoppedLedgerSha256": {
+        "attempt-0003.json": "d15836e8a86fb622fa8d8ea9fd9a33bbc3ac03da8bf77225fb07eb91f8e1c462",
+        "failure-0003.json": "2ca08f0bd62cfe0402eaa9fb37c34cd8bea5e61cdbd90f44986e2bf04d9bb084",
+        "stop.json": "3c913738234e7c8798aefc3b7b049725125447ef8dd5beed6f4c66d5b9cb89c3"
+      }
+    },
+    "findings": [],
+    "freshContext": true,
+    "independentContext": true,
+    "ledgerSummary": {
+      "carriedSlots": 3,
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "evaluatedSlots": 5,
+      "evaluationFailed": 2,
+      "independentReserved": 3,
+      "maximumPrimary": 92,
+      "measuredCorrect": 3,
+      "measuredIncorrect": 0,
+      "missingMeasurements": 89,
+      "parentVerified": 3,
+      "pendingSlots": 0,
+      "primaryCompleted": 3,
+      "primaryLaunchMarked": 5,
+      "primaryReserved": 5,
+      "status": "stopped",
+      "unattemptedSlots": 87
+    },
+    "ledgerWritten": false,
+    "limitations": [
+      "Confirms real-provider capture/independent/parent completion and sufficient API authentication for these two runs only.",
+      "Does not certify permanent401 remediation, future availability or precise old authentication failure mechanism.",
+      "Token usage is source-correlated SDK/CLI observation; monetary cost remains unconfirmed.",
+      "Reproduces bound original independent scores without launching an extra model or certifying successful real implementation.",
+      "Old failed ordinals2/3 remain failed and are not replaced by new successful repetitions.",
+      "No broader statistical/all-R04/Skill Gate/release conclusion."
+    ],
+    "originalsWritten": false,
+    "privateHistoryInherited": false,
+    "results": [
+      {
+        "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+        "hostCalls": 2,
+        "independentAccuracy": true,
+        "independentCliTokenUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 25897,
+          "output_tokens": 508,
+          "reasoning_output_tokens": 19
+        },
+        "independentInvocations": 1,
+        "independentReceiptSha256": "31bc21ed7993fe082b58b39e3fd1151efc8daf47fac1c770c54d0c267a36f8b0",
+        "integrity": "pass",
+        "modelApiRequests": 3,
+        "modelCatalogApiRequests": 0,
+        "parentVerificationSha256": "bd6549c1a0178532e3344e3710aa740eee893bba442c2d0c855f23a28b1ff377",
+        "primaryNamespaceInvocations": 1,
+        "primaryNativeTokenUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 10112,
+          "inputTokens": 18855,
+          "outputTokens": 360,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19215
+        },
+        "primaryReceiptSha256": "573118c949f13432cf32eb66b5b7e0eeaeaf69e15666e3e86ec514ba54810bce",
+        "safety": "pass",
+        "semantic": "pass",
+        "sharedReviewSha256": "55a4515417e75a75a547e19739f8549fc97236ff938558aebb249e430a6b2cc0",
+        "slot": {
+          "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+          "caseId": "SE-002",
+          "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+          "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+          "ordinal": 4,
+          "payloadSha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584",
+          "repetition": 2,
+          "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+        },
+        "status": "measured_correct",
+        "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d"
+      },
+      {
+        "catalogSha256": "529c2b0d2e898ac64e6bfedf750818a94cc5cba7c0e3fac950c2c81211675db9",
+        "hostCalls": 2,
+        "independentAccuracy": true,
+        "independentCliTokenUsage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 26070,
+          "output_tokens": 541,
+          "reasoning_output_tokens": 19
+        },
+        "independentInvocations": 1,
+        "independentReceiptSha256": "55d85a1d5cf82528f21aae515feaed23b7d84bcc925181bb2d246fe5a43d2d25",
+        "integrity": "pass",
+        "modelApiRequests": 3,
+        "modelCatalogApiRequests": 0,
+        "parentVerificationSha256": "5a9940028764c85814add2c2e16109b7d29422f9cb4eaf05f7e614fc39734b65",
+        "primaryNamespaceInvocations": 1,
+        "primaryNativeTokenUsage": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 3840,
+          "inputTokens": 18941,
+          "outputTokens": 370,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 19311
+        },
+        "primaryReceiptSha256": "5b95e5e4344ed87641375e6b177f5ba77417d172a422832c05adebaed2993b65",
+        "safety": "pass",
+        "semantic": "pass",
+        "sharedReviewSha256": "1a4b70fd61717cb163b4fbdee9551023a1062ec40cada86463eda4eb7a1e7fff",
+        "slot": {
+          "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+          "caseId": "SE-003",
+          "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+          "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+          "ordinal": 5,
+          "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+          "repetition": 1,
+          "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+        },
+        "status": "measured_correct",
+        "supplementSha256": "50b5bc7aa05dca239d92bb79cf72e3b65e1d0da62ff988af6eb5db443913f92d"
+      }
+    ],
+    "reviewerNetworkCalls": 0,
+    "scope": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "newIndependentInvocations": 2,
+      "newPrimaryInvocations": 2,
+      "ordinal6Reserved": false,
+      "ordinal6Started": false,
+      "ordinals": [
+        4,
+        5
+      ]
+    },
+    "scopeStop": {
+      "automaticRetries": 0,
+      "errorType": "OperatorStop",
+      "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+      "ordinal": 5,
+      "reason": "operator-auth-resumed-two-slot-scope-complete",
+      "status": "stopped"
+    },
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "status": "two_public_slots_completion_independently_verified",
+    "version": "independent-review-1"
+  },
+  "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+  "credentialsRead": false,
+  "deployment": {
+    "calibrationManifestSha256": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+    "certifiesSkillGate": false,
+    "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+    "codexVersion": "codex-cli 0.160.1",
+    "contextProfileSha256": "8d10eac4dc7b67983f15a78d68d169ef61c05604f09573913fb1be327ff13fa9",
+    "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+    "manifestSha256": "b29de030340dc1572d4c48f7fbe8ad55d10e7badbcf6232eb9fc94842b83ede8",
+    "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+    "sdkManifestSha256": "14128a2836901fe8a2d4daf907d3f8b1502cd88674eaaf2a4003e7f178851ca1",
+    "sdkRelativePath": ".venv/matrix-codex-python-sdk-deps-01",
+    "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+    "sdkVersion": "0.160.1",
+    "snapshotRelativePath": ".venv/matrix-routing-preparation-catalog-20261104-02/snapshot",
+    "snapshotResourceCount": 73,
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "version": "public-matrix-deployment-resources-0.1.0"
+  },
+  "execution": {
+    "budget": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "independent": 92,
+      "primary": 92
+    },
+    "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+    "certifiesSkillGate": false,
+    "cliVersion": "0.160.1",
+    "inputContractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+    "model": "gpt-6.1-sol",
+    "outputRelativeRoot": ".venv/matrix-catalog-auth-resumed-20261104-01",
+    "pins": {
+      "calibrationManifest": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+      "cli": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+      "contextProfile": "8d10eac4dc7b67983f15a78d68d169ef61c05604f09573913fb1be327ff13fa9",
+      "decisionSchema": "98ecdddcf7e5a63ee27b218e7e93a93de9a98ca299bcaf7ab6f5abf1c1484332",
+      "prelaunchReview": "cb97f2a9b2a34288304b6746f25dd4faae3c706380c1996928067fd7ed126e5a",
+      "runtimeManifest": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+      "sdk": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+      "snapshotManifest": "b29de030340dc1572d4c48f7fbe8ad55d10e7badbcf6232eb9fc94842b83ede8"
+    },
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "surveyPolicySha256": "4ebb749deeeeeb51946540fae25f3ecd8d591994cdfec7921792e1ef06d5a59d",
+    "timeoutSeconds": {
+      "independent": 300,
+      "primary": 240
+    },
+    "version": "public-production-matrix-survey-0.1.0"
+  },
+  "failureAcknowledgement": {
+    "decision": "continue",
+    "failedOrdinals": [
+      2,
+      3
+    ],
+    "nextOrdinal": 4,
+    "reason": "ordinal2のserverOverloadedとordinal3の401/unauthorized文言を原・独立検分で確認した。旧失敗と消費は保持する。利用者の本人承認後、評価用固定CLIの標準device loginがexit0/Successfully logged inで完了した。資格情報は読んでいない。失敗枠は再試行せず、新規ordinal4/5のみ一次2・独立2以内で進む。実通信の認証は次の枠で確認し、いずれかの評価失敗で打ち切る。",
+    "signature": [
+      "primary",
+      "primary_capture_stopped",
+      "ValueError",
+      false
+    ],
+    "version": "evaluation-failure-acknowledgement-0.1.0"
+  },
+  "inputContract": {
+    "budget": {
+      "automaticRetries": 0,
+      "delegations": 0,
+      "independent": 92,
+      "primary": 92
+    },
+    "certifiesBehavior": false,
+    "certifiesSkillGate": false,
+    "inputSha256": {
+      "behaviorSafety": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+      "caseSchema": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+      "catalog": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+      "instructions": "6d5cf82621829a5e4578f157996b67d727f93c34a7a1e194d7cacd118b89c6f1",
+      "protocol": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+      "routing": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235"
+    },
+    "model": "gpt-6.1-sol",
+    "repetitions": 2,
+    "scope": "public-six-skill-input-binding-only",
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "version": "public-production-matrix-inputs-0.1.0"
+  },
+  "ledgerSummary": {
+    "carriedSlots": 3,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "evaluatedSlots": 5,
+    "evaluationFailed": 2,
+    "independentReserved": 3,
+    "maximumPrimary": 92,
+    "measuredCorrect": 3,
+    "measuredIncorrect": 0,
+    "missingMeasurements": 89,
+    "parentVerified": 3,
+    "pendingSlots": 0,
+    "primaryCompleted": 3,
+    "primaryLaunchMarked": 5,
+    "primaryReserved": 5,
+    "status": "stopped",
+    "unattemptedSlots": 87
+  },
+  "monetaryCost": "not confirmed",
+  "newIndependentConsumed": 2,
+  "newPrimaryConsumed": 2,
+  "operationalReview": {
+    "apiAuthenticationReverified": false,
+    "baselinePublicationElapsedSeconds": 18820.651502,
+    "baselinePublicationGapSatisfied": true,
+    "baselineReportSha256": "e4a05dfeb36187a8a499f1f0d6fe0b8c8e8330519c84d45641efb4ad3d50aed2",
+    "blockingFindings": [],
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cleanAfter": "",
+    "cleanBefore": "",
+    "cliLoginReportedSuccess": true,
+    "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+    "credentialsRead": false,
+    "directChecks": [
+      "Read source-pinned SOL approval and unchanged source identity.",
+      "Current same-day source/snapshot73/SDK/runtime/calibration resource proof verified under read-only guard.",
+      "Noninitializing policy validation recursively checks carry3 [correct,failed,failed] and referenced execution/input/deployment/manifest/policy/report/slot originals, all92payloads and73resources.",
+      "Confirmed baseline correct1/failed2/pending0 and observed publication elapsed seconds.",
+      "Both history copies exactly match pinned original bytes and prior carried records, retaining old campaign identities.",
+      "Ack SHA/signature/ordinals validated with streak.guard and actual driver.failure_guard, which returns acknowledged.",
+      "Primary case projections contain only context/prompt; SE002rep2 and SE003rep1 prompts/context exact, expected excluded.",
+      "Fixed catalog config/helper mounts/argv reconstructed for both slots.",
+      "Old stop and declared ledger hashes unchanged, copied history is not an executed new slot.",
+      "Reused independently executed same-source tests, calibration/probe and earlier original evidence reviews.",
+      "All final six hashes matched; strict prelaunch pin/source/code/scope verified; condition unchanged. Resource proof unchanged except execution/deployment hashes, recursive carry3/old stops/history copies/driver failure acknowledgement verified again; 4/5 payloads and additional2+2 scope unchanged, publication gap exceeds60seconds."
+    ],
+    "draftDeploymentSha256": "be548fd73b3957eee1717277886b51ce0e393414e23d415908dc04b26f75e076",
+    "draftExecutionSha256": "159f7b30190624d20c6a642b39b21349b2dd17b95f496ffd156ca53ae5bbd447",
+    "failureAcknowledgementSha256": "44705e60418e1d41f7cad0802ddb9be4101919fdb31d13f0569204e1dc408297",
+    "failureGuardVerification": {
+      "status": "acknowledged",
+      "streak": {
+        "ordinals": [
+          2,
+          3
+        ],
+        "signature": [
+          "primary",
+          "primary_capture_stopped",
+          "ValueError",
+          false
+        ]
+      },
+      "version": "evaluation-failure-streak-0.1.0"
+    },
+    "finalPinnedBytesVerified": true,
+    "finalSha256": {
+      "code-review.json": "dae5d599a6a26feca1c1d4513692b07279b856e8eec7e4d22a0e997a6b51c0b4",
+      "deployment.json": "cac982b888442476962b34e1fce03eafce88801c6669fd0500a5ab2ba010895a",
+      "execution.json": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+      "failure-acknowledgement-0004.json": "44705e60418e1d41f7cad0802ddb9be4101919fdb31d13f0569204e1dc408297",
+      "prelaunch-review.json": "cb97f2a9b2a34288304b6746f25dd4faae3c706380c1996928067fd7ed126e5a",
+      "small-batch-plan.json": "05055c1367d7c3da58ab605007111a8c23f2f8e155d1030431e9f68a53502ce1"
+    },
+    "finalSlots": [
+      {
+        "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+        "caseId": "SE-002",
+        "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+        "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+        "ordinal": 4,
+        "payloadSha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584",
+        "repetition": 2,
+        "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+      },
+      {
+        "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+        "caseId": "SE-003",
+        "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+        "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+        "ordinal": 5,
+        "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+        "repetition": 1,
+        "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+      }
+    ],
+    "findings": [],
+    "freshContext": true,
+    "historyGuardCopies": {
+      "2": {
+        "relativePath": ".venv/matrix-catalog-followup-bound-20261104-01/actual-slot-0002.json",
+        "sha256": "b7fcae8997dea5d27d20e5f23d7b9eee2b3002a95681f9fcfb7ceb388b1ed4e2"
+      },
+      "3": {
+        "relativePath": ".venv/matrix-catalog-next-se002-bound-20261104-01/actual-slot-0003.json",
+        "sha256": "f1f9841a07a37b031f5ef9a8e6993c1455f1d80cfc0d38a550544629db1b1ee9"
+      }
+    },
+    "independentContext": true,
+    "launchEnabled": false,
+    "ledgerWritten": false,
+    "loginEvidenceIndependentlyRerun": false,
+    "notRerun": [
+      "No repeat full suite on unchanged code.",
+      "No credential reads, login or model/process evaluation, reservation or network communication.",
+      "Parent-reported CLI login success not independently rerun and not treated as API authentication proof."
+    ],
+    "oldOriginalsWritten": false,
+    "operatorHelperSha256": {
+      "driver": "4bb589566d4df92c0d38e0614ac40e2503b3a16851c83abac4671857f168ba19"
+    },
+    "operatorRestrictions": [
+      "First launch requires baseline publication gap at least60seconds and final pin review.",
+      "Run ordinal4 once; independently verify completed originals/shared records and proceed to ordinal5 once only if ordinal4 is a normal measurement.",
+      "Any evaluation failure stops scope; no retry of old2/3 or new4/5, no ordinal6 or delegation.",
+      "Append EXCL scope stop after final slot or earlier failure; preserve already-existing stops and verify reservation rejection.",
+      "History copies2/3 remain byte-identical old campaign records solely for failure guard; no new invocation or score is attributed to them.",
+      "Failure acknowledgement applies to fixed history2/3 and next4; no general retry or further launch permission.",
+      "Driver retains92-slot bounds; additional primary2/independent2 is enforced by the parent operation, not a reduced generic contract.",
+      "Login reported success does not establish API authentication; actual provider failure must remain failure."
+    ],
+    "payloads": [
+      {
+        "caseId": "SE-002",
+        "ordinal": 4,
+        "projectedCaseKeys": [
+          "context",
+          "prompt"
+        ],
+        "repetition": 2,
+        "sha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584"
+      },
+      {
+        "caseId": "SE-003",
+        "ordinal": 5,
+        "projectedCaseKeys": [
+          "context",
+          "prompt"
+        ],
+        "repetition": 1,
+        "sha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7"
+      }
+    ],
+    "planSha256": "94719c01c9d12042651ea9b3f95ac58473ae5c50bf163360f6bd763974ccce85",
+    "policySha256": "4ebb749deeeeeb51946540fae25f3ecd8d591994cdfec7921792e1ef06d5a59d",
+    "prelaunchReviewPinned": true,
+    "priorIndependentTests": {
+      "count": 209,
+      "exitCode": 0,
+      "ref": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+      "suites": {
+        "test_production_canary_calibration.py": 4,
+        "test_production_heldout_model_catalog.py": 8,
+        "test_production_matrix*.py": 197
+      }
+    },
+    "priorStoppedLedgerSha256": {
+      "attempt-0003.json": "d15836e8a86fb622fa8d8ea9fd9a33bbc3ac03da8bf77225fb07eb91f8e1c462",
+      "failure-0003.json": "2ca08f0bd62cfe0402eaa9fb37c34cd8bea5e61cdbd90f44986e2bf04d9bb084",
+      "stop.json": "3c913738234e7c8798aefc3b7b049725125447ef8dd5beed6f4c66d5b9cb89c3"
+    },
+    "privateHistoryInherited": false,
+    "resourceProof": {
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "contextDate": "2026-11-04",
+      "contextProfileSha256": "8d10eac4dc7b67983f15a78d68d169ef61c05604f09573913fb1be327ff13fa9",
+      "decisionSchemaSha256": "98ecdddcf7e5a63ee27b218e7e93a93de9a98ca299bcaf7ab6f5abf1c1484332",
+      "deploymentSha256": "cac982b888442476962b34e1fce03eafce88801c6669fd0500a5ab2ba010895a",
+      "eligibleForMeasurement": false,
+      "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+      "independentPrelaunchReviewPerformed": false,
+      "launchEnabled": false,
+      "oldCanaryBudgetReused": false,
+      "originalCalibration": {
+        "calibrationManifestSha256": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+        "certifiesProviderWireBodies": false,
+        "paidModelCalls": 0,
+        "primaryModelTrajectories": 0,
+        "receiptSha256": "c1ac29747b8e32f83425dae78529d8d5fd42e9a1cc9b48a0d568b59a048c51cd",
+        "requestSha256": "5fba0036e6212e42696c61ec07701688ea1d4a3b1934e6f9294483199820c3fc",
+        "sourceCommit": "e23ec42dbd5322f9683bf58c12d7b6706003ca2e",
+        "status": "original_local_calibration_matches"
+      },
+      "physicalMatrixIsolationAndArgvTested": false,
+      "primaryModelTrajectories": 0,
+      "realReservations": 0,
+      "runtime": {
+        "codexPath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/fixed-codex-0.160.1/bin/codex",
+        "files": 50,
+        "runtimeManifestSha256": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "status": "fixed_runtime_bytes_match"
+      },
+      "sdkFileCount": 207,
+      "sdkManifestSha256": "14128a2836901fe8a2d4daf907d3f8b1502cd88674eaaf2a4003e7f178851ca1",
+      "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+      "snapshotManifestSha256": "b29de030340dc1572d4c48f7fbe8ad55d10e7badbcf6232eb9fc94842b83ede8",
+      "snapshotResourceCount": 73,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "sourceSha256": {
+        "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+        "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+        "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+        "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+        "evals/skills/routing/host.py": "9f0df294ce019d6351c52a2e10e3dad3fd253e232dbe6992a0c69cd18803b298",
+        "evals/skills/routing/production-canary-calibration-v0.1.json": "e20ff69b401600fc798d4508415392e68b13e22298e39407e0797949b4a38ca1",
+        "evals/skills/routing/production-canary-context-v0.1.json": "8d10eac4dc7b67983f15a78d68d169ef61c05604f09573913fb1be327ff13fa9",
+        "evals/skills/routing/production-canary-runtime-v0.1.json": "41adc2b9381fb765abaa5112b6b1de8b8c17d056d18a9fe931f8be0e5b305d3d",
+        "evals/skills/routing/production-matrix-instructions-v0.1.txt": "6d5cf82621829a5e4578f157996b67d727f93c34a7a1e194d7cacd118b89c6f1",
+        "evals/skills/routing/production_canary_calibration.py": "097f031ac4060e9ea2f047f70d3dc45dba4c97ae1f6bb8930823161852c040de",
+        "evals/skills/routing/production_canary_capture.py": "93550cce6eecc8677c7d7f072b160b11f7b69c7786481b76c9c99d0fb77beda5",
+        "evals/skills/routing/production_canary_evidence.py": "04f83aefc05badce09552ef3f29c12a56b67400d059d48497c46f3e8e1b84c2e",
+        "evals/skills/routing/production_canary_host.py": "a5a7ba2b890250587bab2562f7382b76304827b82aaa07f9d706acc7f191c015",
+        "evals/skills/routing/production_canary_review.py": "1a333d6695128fa70857bf382d57c829648965982f3f72d1c0b83339854959e2",
+        "evals/skills/routing/production_canary_rollout.py": "fe7029d007a6b4f152e4d6fbd737f63e1169d508d4cecde2f01d62bfee883cfd",
+        "evals/skills/routing/production_canary_runtime.py": "31a17810aef7d903ce8a47c689fda98274fe99e0725561d9fa9d2cf577743ef7",
+        "evals/skills/routing/production_canary_score.py": "fb54db0f5345d43b4b7301bd2ad2a0dae7cf30e798ea027a8af9a3efeb337f1b",
+        "evals/skills/routing/production_canary_trace.py": "6319449828af0dc3decb9f32ea80564f29a518360c8ad3ba3ed57ea97b5b4af0",
+        "evals/skills/routing/production_cli_probe.py": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7",
+        "evals/skills/routing/production_connection_probe.py": "6a46538b2f7e3aa08dfac45164fe3abaea5198165ff5b0bcb9debb86e7d8f26e",
+        "evals/skills/routing/production_failure_streak.py": "c03ec3910e3cc664b3adf11b9792d3386b66cebc44d7ff14ee90887b725b812d",
+        "evals/skills/routing/production_heldout_model_catalog.py": "f2821141e18090bc12ace3ad7b0b16da96897a4dd1e7204e10a6dce70e224e3e",
+        "evals/skills/routing/production_ledger.py": "5a09128386746c8a8598d7d872cb2e6d05c948f6df603724a08784482554ecbf",
+        "evals/skills/routing/production_matrix_calibration.py": "3ea34d43cc25f9201388277ffcd9c6816670a0961ba2add36200729ef8f02ebd",
+        "evals/skills/routing/production_matrix_capture.py": "d141e171c854b65854e35aab309f58dbea676154573d24d497914ed7acd7b7b8",
+        "evals/skills/routing/production_matrix_context_probe.py": "6e7fdbd9206ea44b2edf6da481e70b50907c18547ea097ac3c2fa1228cf0a786",
+        "evals/skills/routing/production_matrix_evidence.py": "4e09de048ab7f80170290c820ad25a634480aeab07fb60cbeda211a9c6515fcd",
+        "evals/skills/routing/production_matrix_inputs.py": "dfbe11be8c65f782aefc0e77bf7a103a4b30fd4f9d08ad2e8d152dbf8d9dca77",
+        "evals/skills/routing/production_matrix_launch.py": "8f4988541aaa3c1a39fe9db6a568acb571831b896cb80553ad26eff6d94d5b1a",
+        "evals/skills/routing/production_matrix_ledger.py": "294bd14d58553a3bb390c803820359f95a7fbeca3929be7168a7f785a05ce6fb",
+        "evals/skills/routing/production_matrix_originals.py": "d86ab924f6a284e1490a3aecef35b940f821bddc127eaa7436871ad13090b4f8",
+        "evals/skills/routing/production_matrix_preflight.py": "2b93971f65a9693bbcc76ca7d1aa20d0f994c141c16452c4770e0593db1d76c1",
+        "evals/skills/routing/production_matrix_provider_evidence.py": "e8bdf42a6a663f4287abe643d6839e55e460ade5348dd15596b040e754e6df82",
+        "evals/skills/routing/production_matrix_score.py": "ea29125ab576090cf6b1edddd7d22c07c8e610c33d233249934265576db0b6c7",
+        "evals/skills/routing/production_matrix_semantic.py": "7b091966472ab253d2af9f32a210d4735aa08e6fe5bf1f7b7859bdf31b30950b",
+        "evals/skills/routing/production_matrix_survey.py": "512004bf283f0135fcdb4434d1f5b90e857b764835803e7711acda45b89ff08b",
+        "evals/skills/routing/production_matrix_survey_run.py": "4bb589566d4df92c0d38e0614ac40e2503b3a16851c83abac4671857f168ba19",
+        "evals/skills/routing/production_primary_review.py": "4d063df1e559f36b0f41851b7a0d97e575032563d8c6871d4ce6571cd6691bbf",
+        "evals/skills/routing/production_sdk_probe.py": "70583f885724dc934cc84e134018f4cb5ddca0bdcbd778e76476dac352ce3351",
+        "evals/skills/routing/production_sdk_trace.py": "0e45910bb4541527369390f09f329d08f9736b2c9e2ffcae4de9f3647d3ccf28",
+        "evals/skills/routing/production_trace.py": "9b69e8e4695833c1970dc96d658bf4faabe2ef537b567ec56cf406dc22570070",
+        "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+        "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+        "evals/skills/schemas/decision.schema.json": "d1e1612e419a669a283dd670b0a1246df9bbc7e875cae51ff6be6580242401ac",
+        "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e"
+      },
+      "status": "matrix_deployment_resources_verified_launch_not_enabled"
+    },
+    "reviewerModelLaunches": 0,
+    "reviewerNetworkCalls": 0,
+    "reviewerReservations": 0,
+    "scope": {
+      "automaticRetries": 0,
+      "carriedEvaluationFailed": 2,
+      "carriedMeasuredCorrect": 1,
+      "delegations": 0,
+      "failedOrdinalsRetried": [],
+      "maximumIndependentLaunches": 2,
+      "maximumPrimaryLaunches": 2,
+      "minimumLaunchGapSeconds": 60,
+      "ordinals": [
+        4,
+        5
+      ],
+      "scopeStopAfterOrdinal": 5,
+      "stopOnAnyEvaluationFailure": true
+    },
+    "scopeAuthorizedForParentOperationOnly": true,
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "status": "matrix_concrete_prelaunch_verified",
+    "tests": {
+      "count": 33,
+      "exitCode": 0,
+      "ref": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "suites": {
+        "test_production_matrix_calibration.py": 9,
+        "test_production_matrix_originals.py": 15,
+        "test_production_matrix_provider_evidence.py": 9
+      }
+    },
+    "version": "independent-review-1"
+  },
+  "operatorOriginalsRechecks": [
+    {
+      "caseId": "SE-002",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "extraModelsExecuted": 0,
+      "extraReservations": 0,
+      "independentElapsedSeconds": 24.994607693050057,
+      "independentInvocations": 1,
+      "independentReceiptSha256": "31bc21ed7993fe082b58b39e3fd1151efc8daf47fac1c770c54d0c267a36f8b0",
+      "independentUsage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_tokens": 25897,
+        "output_tokens": 508,
+        "reasoning_output_tokens": 19
+      },
+      "monetaryCost": "not confirmed",
+      "ordinal": 4,
+      "originalsAndLedgerUnchanged": true,
+      "parentVerificationSha256": "bd6549c1a0178532e3344e3710aa740eee893bba442c2d0c855f23a28b1ff377",
+      "parentVerified": 1,
+      "primaryElapsedSeconds": 21.011365643003955,
+      "primaryInvocations": 1,
+      "primaryReceiptSha256": "573118c949f13432cf32eb66b5b7e0eeaeaf69e15666e3e86ec514ba54810bce",
+      "primaryUsage": {
+        "cacheWriteInputTokens": 0,
+        "cachedInputTokens": 10112,
+        "inputTokens": 18855,
+        "outputTokens": 360,
+        "reasoningOutputTokens": 0,
+        "totalTokens": 19215
+      },
+      "priorStopUnchanged": true,
+      "repetition": 2,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_correct"
+    },
+    {
+      "caseId": "SE-003",
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "extraModelsExecuted": 0,
+      "extraReservations": 0,
+      "independentElapsedSeconds": 25.91910005407408,
+      "independentInvocations": 1,
+      "independentReceiptSha256": "55d85a1d5cf82528f21aae515feaed23b7d84bcc925181bb2d246fe5a43d2d25",
+      "independentUsage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_tokens": 26070,
+        "output_tokens": 541,
+        "reasoning_output_tokens": 19
+      },
+      "monetaryCost": "not confirmed",
+      "ordinal": 5,
+      "originalsAndLedgerUnchanged": true,
+      "parentVerificationSha256": "5a9940028764c85814add2c2e16109b7d29422f9cb4eaf05f7e614fc39734b65",
+      "parentVerified": 1,
+      "primaryElapsedSeconds": 20.48417203500867,
+      "primaryInvocations": 1,
+      "primaryReceiptSha256": "5b95e5e4344ed87641375e6b177f5ba77417d172a422832c05adebaed2993b65",
+      "primaryUsage": {
+        "cacheWriteInputTokens": 0,
+        "cachedInputTokens": 3840,
+        "inputTokens": 18941,
+        "outputTokens": 370,
+        "reasoningOutputTokens": 0,
+        "totalTokens": 19311
+      },
+      "priorStopUnchanged": true,
+      "repetition": 1,
+      "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+      "status": "measured_correct"
+    }
+  ],
+  "prelaunchReview": {
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+    "independentContext": true,
+    "reviewReportSha256": "dae5d599a6a26feca1c1d4513692b07279b856e8eec7e4d22a0e997a6b51c0b4",
+    "scope": "public-matrix-primary-and-independent-launch-only",
+    "severityCounts": {
+      "P1": 0,
+      "P2": 0
+    },
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "version": "public-matrix-primary-prelaunch-review-0.1.0"
+  },
+  "previousFailureRecordsPreserved": true,
+  "recordedAt": "2026-11-04T14:46:09.380078+09:00",
+  "scope": {
+    "apiAuthenticationReverified": false,
+    "automaticRetries": 0,
+    "carriedEvaluationFailed": 2,
+    "carriedMeasuredCorrect": 1,
+    "certifiesRelease": false,
+    "certifiesSkillGate": false,
+    "cliLoginReportedSuccess": true,
+    "conditionSha256": "a7315f0e9094bc3fbaedb47ba626d0a6a8834c8e682c2682b54b4632baa30ca1",
+    "delegations": 0,
+    "failedOrdinalsRetried": [],
+    "failureAcknowledgementSha256": "44705e60418e1d41f7cad0802ddb9be4101919fdb31d13f0569204e1dc408297",
+    "historyGuardCopies": {
+      "2": {
+        "relativePath": ".venv/matrix-catalog-followup-bound-20261104-01/actual-slot-0002.json",
+        "sha256": "b7fcae8997dea5d27d20e5f23d7b9eee2b3002a95681f9fcfb7ceb388b1ed4e2"
+      },
+      "3": {
+        "relativePath": ".venv/matrix-catalog-next-se002-bound-20261104-01/actual-slot-0003.json",
+        "sha256": "f1f9841a07a37b031f5ef9a8e6993c1455f1d80cfc0d38a550544629db1b1ee9"
+      }
+    },
+    "maximumIndependentLaunches": 2,
+    "maximumPrimaryLaunches": 2,
+    "minimumLaunchGapSeconds": 60,
+    "ordinals": [
+      4,
+      5
+    ],
+    "prelaunchReviewPinned": true,
+    "previousCurrentCandidateIndependentConsumed": 1,
+    "previousCurrentCandidatePrimaryConsumed": 3,
+    "previousOtherConditionPrimaryConsumed": 1,
+    "priorStoppedLedger": "/home/hide/BitzLabs/BitzSkills/.venv/production-matrix-ledgers/public-matrix-catalog-next-se002-20261104-01",
+    "priorStoppedLedgerSha256": {
+      "attempt-0003.json": "d15836e8a86fb622fa8d8ea9fd9a33bbc3ac03da8bf77225fb07eb91f8e1c462",
+      "failure-0003.json": "2ca08f0bd62cfe0402eaa9fb37c34cd8bea5e61cdbd90f44986e2bf04d9bb084",
+      "stop.json": "3c913738234e7c8798aefc3b7b049725125447ef8dd5beed6f4c66d5b9cb89c3"
+    },
+    "scopeStopAfterOrdinal": 5,
+    "slots": [
+      {
+        "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+        "caseId": "SE-002",
+        "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+        "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+        "ordinal": 4,
+        "payloadSha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584",
+        "repetition": 2,
+        "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+      },
+      {
+        "campaignId": "public-matrix-catalog-auth-resumed-20261104-01",
+        "caseId": "SE-003",
+        "contractSha256": "fe56aa6b1adaacf39486a595f3275f3671366fb27e0319690ffe814b1f7432b1",
+        "executionSha256": "70e5af543cfc1c328d8da8543137167cd68821c8cd865884d2f58b3414f44b27",
+        "ordinal": 5,
+        "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+        "repetition": 1,
+        "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae"
+      }
+    ],
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "status": "awaits_final_independent_bytes_check",
+    "stopOnAnyEvaluationFailure": true,
+    "version": "r04-public-auth-resumed-two-slots-1"
+  },
+  "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+  "status": "operator_scope_complete",
+  "usage": {
+    "cachedInputTokens": 13952,
+    "inputTokens": 89763,
+    "outputTokens": 1779,
+    "totalTokens": 91542
+  },
+  "version": "r04-public-catalog-auth-resumed-result-1"
+}

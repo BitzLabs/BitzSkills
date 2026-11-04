@@ -28,6 +28,7 @@ class MatrixContextProbeTests(unittest.TestCase):
         self.originals={name:b'' for name in probe.FIXED_FILES}
         self.originals.update(calibration.originals);self.originals.pop('receipt.json')
         self.originals.update({'contract.json':self.bound.execution_raw,'deployment.json':self.deployment_raw,
+            probe.preflight.model_catalog.FILE:resource.catalog_raw,
             'sdk-manifest.json':resource.sdk_manifest_raw,'reservation.json':probe.io.encoded(self.slot),
             'resource-preflight.json':self.resource_proof_raw,'model-input.json':self.bound.matrix.payloads[0],
             'context-profile.json':self.context_raw,'launch-settings.json':probe.launch.launch_settings(self.bound.execution_raw,self.deployment_raw),
@@ -58,7 +59,7 @@ class MatrixContextProbeTests(unittest.TestCase):
             environment=probe.launch.local_environment(self.base,resource.deployment),sourceCommit=self.bound.contract['sourceCommit'],
             executionSha256=probe.io.sha(self.bound.execution_raw),slot=self.slot,maximumLocalRequests=1,maximumLogicalTurns=1,
             timeoutSeconds=60,paidModelCalls=0,parentNetworkNamespace='net:[1]'))
-        config=probe.preflight.capture.config_for(self.base,resource.deployment,repository=self.repository)
+        config=probe.preflight.config_for(self.base,resource.deployment,repository=self.repository)
         config.update({'model_providers.bitz_openai_http.base_url':'http://127.0.0.1:1234/v1',
             'model_providers.bitz_openai_http.requires_openai_auth':False})
         self.originals['config.json']=probe.io.encoded(config)
@@ -72,6 +73,35 @@ class MatrixContextProbeTests(unittest.TestCase):
         result=self.verify();self.assertEqual(result['localHttpRequests'],1);self.assertEqual(result['rawNotificationCount'],5)
         self.assertEqual(result['realReservations'],0);self.assertEqual(result['paidModelCalls'],0)
         self.assertFalse(result['launchEnabled']);self.assertFalse(result['eligibleForMeasurement'])
+
+    def test_catalog_missing_changed_or_config_unpinned_is_rejected(self):
+        name=probe.preflight.model_catalog.FILE
+        saved=copy.deepcopy(self.originals)
+        for fault in ['missing','changed','config']:
+            self.originals=copy.deepcopy(saved)
+            if fault=='missing':self.originals.pop(name)
+            elif fault=='changed':self.originals[name]+=b' '
+            else:
+                config=probe.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
+                self.originals['config.json']=probe.io.encoded(config)
+            with self.subTest(fault=fault),self.assertRaises(ValueError):self.verify()
+
+    def test_historical_probe_uses_producer_inventory_config_and_mounts(self):
+        names=tuple(n for n in probe.preflight.SOURCE_FILES if n!=probe.CATALOG_SOURCE)
+        self.originals.pop(probe.preflight.model_catalog.FILE)
+        config=probe.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
+        self.originals['config.json']=probe.io.encoded(config)
+        # 歴史mount宣言の受入れは校正の再検査だけに限定する。
+        self.calibrate()
+        invocation=probe.trace.strict_json(self.originals['invocation.json'])
+        invocation['argv']=probe.launch.local_namespace_command(self.repository,self.base,self.bound.execution_raw,
+            self.deployment_raw,calibration_only=True,source_files=names)
+        self.originals['invocation.json']=probe.io.encoded(invocation)
+        result=probe.verify_originals(self.originals,execution_raw=self.bound.execution_raw,deployment_raw=self.deployment_raw,
+            slot=self.slot,cwd=str(self.base/'work'),source_repository=self.repository,context_raw=self.context_raw,
+            resource_proof_raw=self.resource_proof_raw,calibration_only=True,calibration_date=self.calibration_date,source_files=names)
+        self.assertEqual(result['status'],'matrix_local_sdk_calibration_verified')
+        with self.assertRaises(ValueError):self.verify_calibration()
 
     def calibrate(self, *, update_request=True):
         reference=json.loads(self.context_raw)['date'];self.calibration_date=(date.fromisoformat(reference)+timedelta(days=1)).isoformat()
