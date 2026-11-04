@@ -132,7 +132,13 @@ class QualityInterruptionTests(unittest.TestCase):
 
         args = SimpleNamespace(output=output, timeout=600, protocol=HERE / "attack-remediation-protocol.json",
                                approval=HERE / "attack-remediation-approval.json")
-        with patch("evaluate.authorization_directory", return_value=scope_dir), \
+        # 中断試験の合成packageを固定protocolに合わせる。現行製品の版を旧評価契約へ戻さない。
+        package = replay_dir / "package"
+        package.mkdir()
+        evaluate.write(package / "plugin.json", {"name": "bitz-quality",
+                                               "version": evaluate.load(args.protocol)["pluginVersion"]})
+        with patch.object(evaluate, "PACKAGE", package), \
+             patch("evaluate.authorization_directory", return_value=scope_dir), \
              patch("preflight.git", side_effect=lambda args, *rest: b"" if args[0] == "status" else b"a" * 40), \
              patch("evaluate.setup", side_effect=setup), \
              patch("evaluate.subprocess.run", side_effect=backend), \
