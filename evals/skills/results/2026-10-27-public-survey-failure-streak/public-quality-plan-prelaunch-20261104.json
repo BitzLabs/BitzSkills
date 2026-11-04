@@ -1,0 +1,250 @@
+{
+  "boundArtifactSha256": {
+    "code-review.json": "ae62eca4e66cce9faaf7f808738e4355de76aa68f11700bdba15d229044427e7",
+    "deployment.json": "84f6a8633edc9a2835b120b5185a56ccb4e2a886b36e653139df95eb795f2db5",
+    "execution.json": "466d6309db6b8c7e2f0c227f81603d92203a64048bf5099a75dcb7eacbd39aeb",
+    "input-contract.json": "d9c950af916b032da46ac415892aacabc649dc4ce4cb71ce6d61a25fba5af6e9",
+    "operational-review.json": "76fe6b65793421162d6cc2b950ff26cdb2f4f22202f74a22b47afea3b23af285",
+    "operator-final-preflight.json": "c29c1b8348eebb7323a489454fd02b6df703d16baf75d74f55e92231297f5f9d",
+    "prelaunch-review.json": "3f3f44648cbd107ffb094e44548c81e160e08c816cf412b70cd3b50e1f608e89",
+    "small-batch-plan.json": "02ea3e30964b7e89a989ab2926a45f16432b91caab7020c2c9dfc0bbb2cb463a",
+    "survey-policy.json": "c3db7fca36c2f68dacd75066f7264cbe4dcd37f38b78cac72755cd7e22ae4dbb"
+  },
+  "calibrationReused": true,
+  "campaignId": "public-matrix-quality-plan-20261104-01",
+  "certifiesRelease": false,
+  "certifiesSkillGate": false,
+  "changedProductResources": [
+    "resources/bitz-core/src/bitz/frontmatter.py",
+    "resources/bitz-core/src/bitz/messages.py",
+    "resources/bitz-core/src/bitz/verify.py",
+    "resources/bitz-quality/README.md",
+    "resources/bitz-quality/plugin.json",
+    "resources/bitz-quality/skills/quality-plan/SKILL.md"
+  ],
+  "conditionSha256": "1aee14ad69fad7e7d55049cfe87a383cd79d213c3e4facd59004eeba8cee4b45",
+  "credentialsRead": false,
+  "explicitUserLaunchApprovalObtained": false,
+  "freshCandidate": {
+    "carriedSlots": 0,
+    "independentReserved": 0,
+    "parentVerified": 0,
+    "primaryReserved": 0,
+    "unattemptedSlots": 92
+  },
+  "normalProbe": {
+    "originalFileCount": 23,
+    "originalHashesBeforeAfterMatched": true,
+    "outputRelativeRoot": ".venv/matrix-local-isolation-quality-plan-20261104-01",
+    "receiptSha256": "4469763904a630f49872183f3f7f0616128169a4775645f444f10929edc1467f",
+    "sourceCommit": "1cf72e1576da8d3b9c3f0813f4f3930806ccb6e5",
+    "status": "local_isolation_verified",
+    "verification": {
+      "certifiesRelease": false,
+      "certifiesSkillGate": false,
+      "eligibleForMeasurement": false,
+      "launchEnabled": false,
+      "localHttpRequests": 1,
+      "paidModelCalls": 0,
+      "primaryModelTrajectories": 0,
+      "rawNotificationCount": 5,
+      "realReservations": 0,
+      "status": "matrix_local_sdk_context_verified"
+    }
+  },
+  "paidModelCalls": 0,
+  "payloads": [
+    {
+      "caseId": "SE-001",
+      "ordinal": 1,
+      "payloadSha256": "eedbf6eebf7b6d6cc7630260cb77cd3624577776483fc6efd11158b17f53ea47",
+      "repetition": 1
+    },
+    {
+      "caseId": "SE-001",
+      "ordinal": 2,
+      "payloadSha256": "eedbf6eebf7b6d6cc7630260cb77cd3624577776483fc6efd11158b17f53ea47",
+      "repetition": 2
+    },
+    {
+      "caseId": "SE-002",
+      "ordinal": 3,
+      "payloadSha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584",
+      "repetition": 1
+    },
+    {
+      "caseId": "SE-002",
+      "ordinal": 4,
+      "payloadSha256": "30ecb1b4993bc1eea315a8c8891be59244991e6ae0cb6ef808d15182263b0584",
+      "repetition": 2
+    },
+    {
+      "caseId": "SE-003",
+      "ordinal": 5,
+      "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+      "repetition": 1
+    },
+    {
+      "caseId": "SE-003",
+      "ordinal": 6,
+      "payloadSha256": "7302a6795971b80bd648925342fbbdad0eadbb3d5ce1823e30255911130592f7",
+      "repetition": 2
+    },
+    {
+      "caseId": "SE-004",
+      "ordinal": 7,
+      "payloadSha256": "fb8838cc422e947f6c8cd2c5f02c7fbe5f466fda86f509f7d542bcbc2d38b936",
+      "repetition": 1
+    },
+    {
+      "caseId": "SE-004",
+      "ordinal": 8,
+      "payloadSha256": "fb8838cc422e947f6c8cd2c5f02c7fbe5f466fda86f509f7d542bcbc2d38b936",
+      "repetition": 2
+    }
+  ],
+  "priorCandidate": {
+    "evaluationFailed": 2,
+    "measuredCorrect": 4,
+    "measuredIncorrect": 1,
+    "sourceCommit": "02328a5619419d0ebbf5ea01bcfc33c0ba33a4ae",
+    "unattemptedSlots": 85,
+    "unchanged": true
+  },
+  "realReservations": 0,
+  "recordedAt": "2026-11-04T20:36:24.776738+09:00",
+  "scope": {
+    "automaticRetries": 0,
+    "carrySlots": 0,
+    "delegations": 0,
+    "maximumIndependentLaunches": 8,
+    "maximumPrimaryLaunches": 8,
+    "minimumLaunchGapSeconds": 60,
+    "ordinals": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "scopeStopAfterOrdinal": 8,
+    "stopOnAnyEvaluationFailure": true,
+    "stopOnMeasuredIncorrect": false
+  },
+  "snapshotManifestSha256": "2fab8a4d616e758593d0a6ba18c437c6725b3522b1b8a539fcfe6b50f3f08c4f",
+  "snapshotResourceCount": 73,
+  "sourceCommit": "1cf72e1576da8d3b9c3f0813f4f3930806ccb6e5",
+  "status": "prepared_pending_explicit_8plus8_external_send_approval",
+  "tests": {
+    "core": {
+      "count": 1152,
+      "elapsedSeconds": 113.542,
+      "exitCode": 0,
+      "isolatedParentRepositoryAndWorkspace": true
+    },
+    "coreConformance": {
+      "allPassed": true,
+      "counts": {
+        "error": 0,
+        "failed": 0,
+        "passed": 599
+      },
+      "exitCode": 0,
+      "fullAndScaleNotCertified": true,
+      "step": 5,
+      "suite": "standard"
+    },
+    "fixtureAudit": {
+      "exitCode": 1,
+      "expected": true,
+      "pending": [
+        "full Gate A fresh-checkout repeatability"
+      ]
+    },
+    "independentRelated": {
+      "count": 33,
+      "exitCode": 0,
+      "ref": "1cf72e1576da8d3b9c3f0813f4f3930806ccb6e5",
+      "suites": {
+        "test_production_matrix_calibration.py": {
+          "count": 9,
+          "exitCode": 0,
+          "seconds": 1.209
+        },
+        "test_production_matrix_originals.py": {
+          "count": 15,
+          "exitCode": 0,
+          "seconds": 2.451
+        },
+        "test_production_matrix_provider_evidence.py": {
+          "count": 9,
+          "exitCode": 0,
+          "seconds": 1.795
+        }
+      }
+    },
+    "skillContractAudit": {
+      "errors": [],
+      "status": "Passed"
+    },
+    "skills": {
+      "count": 1183,
+      "elapsedSeconds": 188.056,
+      "exitCode": 0
+    }
+  },
+  "verificationArtifactSha256": {
+    "r04-quality-plan-audit-20261104.json": "7e5bd258e6e3d909f6e37be1796dbf18ef5e1101503e7da6f769caee4eee4bca",
+    "r04-quality-plan-conformance-standard-20261104.json": "b3e4a9d9b5c580500727fa004b83f472909777c880885917f94d587a86ac3fe4",
+    "r04-quality-plan-conformance-standard-progress-20261104.log": "fc4d137845dcee7859ed9bdb2bbce0e668a4aa6d2727001dec32aea7cc4263fc",
+    "r04-quality-plan-core-isolated-final-20261104.log": "dbe9c82a4c532acd92419078ce5c3792d4b3ab5d76c0204475cec7c73c5f5ae0",
+    "r04-quality-plan-fixture-audit-20261104.json": "98cfd2b1419575b5632edf95c7af547c87e675dba6519a13b6dbb4f293f3b0af",
+    "r04-quality-plan-integrated-tests-20261104.log": "4da90f4de165531f0c88728a1f7a32767197c4cc0e99a86228a51eea6c04336f"
+  },
+  "verificationEnvironment": {
+    "conformanceCommand": "uv run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python fixtures/run_conformance.py --core plugins/bitz-core --step 5 --suite standard --progress",
+    "coreCommand": "uv run --offline --project plugins/bitz-core python tests/bitz-core/run_test_files.py tests/bitz-core/test_*.py",
+    "environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "TMPDIR": "/home/hide/BitzLabs/BitzSkills/.venv",
+      "UV_CACHE_DIR": "/home/hide/BitzLabs/BitzSkills/.venv/uv-cache",
+      "UV_OFFLINE": "1"
+    },
+    "limitations": [
+      "Earlier repository-local scratch without masking discovered parent .git/.spec; those failed and interrupted runs are not successful validation.",
+      "Fixture Gate A pending1 is retained; no Gate recertification is claimed.",
+      "Earlier full conformance was interrupted during scale cases; only standard599 is reported as complete."
+    ],
+    "namespacePrefix": [
+      "bwrap",
+      "--ro-bind",
+      "/",
+      "/",
+      "--dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--unshare-net",
+      "--bind",
+      "/home/hide/BitzLabs/BitzSkills/.venv",
+      "/home/hide/BitzLabs/BitzSkills/.venv",
+      "--bind",
+      "/home/hide/BitzLabs/BitzSkills/plugins/bitz-core/.venv",
+      "/home/hide/BitzLabs/BitzSkills/plugins/bitz-core/.venv",
+      "--tmpfs",
+      "/home/hide/BitzLabs/BitzSkills/.git",
+      "--tmpfs",
+      "/home/hide/BitzLabs/BitzSkills/.spec",
+      "--chdir",
+      "/home/hide/BitzLabs/BitzSkills"
+    ],
+    "networkIsolated": true,
+    "parentRepositoryAndWorkspaceMasked": true,
+    "temporaryRoot": "/home/hide/BitzLabs/BitzSkills/.venv",
+    "workdir": "/home/hide/BitzLabs/BitzSkills"
+  },
+  "version": "r04-quality-plan-prelaunch-result-1"
+}

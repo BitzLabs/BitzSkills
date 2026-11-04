@@ -485,3 +485,45 @@ quality-planの選択は正しく、Q帯判断不能の報告と次工程の説�
 CLI/modelとattempt予約へ到達しないことも合成検査した。独立記録SHA-256は
 `681c35336002fbd671bd529a66d89d9c1b4e95ed17e4a07b6dc46d005c124b19`。
 この検分は実モデルの改善実証ではなく、追加モデル・実予約・通信・秘密読取り・原台帳書込みは0である。
+
+
+## 2026-11-04: 修正候補の統合と新規8枠の起動前準備
+
+`codex/r04-quality-plan-validation`を最新origin/mainから作り、catalog固定済み基盤と品質計画の修正を
+`1cf72e1576da8d3b9c3f0813f4f3930806ccb6e5`へ統合した。旧023との製品差分はqualityの3ファイルと、
+最新main由来のCore frontmatter/messages/verifyの3ファイル。73資源の新snapshotは
+`2fab8a4d616e758593d0a6ba18c437c6725b3522b1b8a539fcfe6b50f3f08c4f`。本文だけの孤立した差分とは扱わない。
+
+旧候補の正解4・不正解1・評価失敗2・未着手85は歴史として維持する。製品bytesが変わったため
+surveyのproductResources完全一致を満たさず、旧成績を新候補へcarryしない。既存の新規surveyは
+先頭1からしか予約できず、SE-004の2反復は7・8にある。評価基盤を拡張せずにそこへ到達する最小範囲として、
+SE-001〜004各2反復、一次最大8・独立最大8、再試行0、委譲0、各論理起動60秒以上、
+評価失敗で停止・8終了でscope閉鎖を固定した。意味不正解は成績として保持し、成功へ置換しない。
+
+新候補の全92payloadは旧候補と同一で、case順・期待・共通指示・catalogを変えていない。
+当日のe23局所校正24原はproducer自身のsource/snapshot/旧chainまで再照合し再利用した。
+CLI/SDK/catalog/補助指示の同一性を保持し、新候補の通常probeは別出力で取得した。
+結果は`local_isolation_verified`、loopback HTTP1・raw通知5、7.949460秒、外部モデル・実予約0。
+局所probeはSE-004の挙動や実認証の通過を証明しない。
+
+親は統合候補で全スキル1183試験（188.056秒）を実行してOK、独立clean worktreeで関連33試験も通過した。
+別文脈で最終code/prelaunch/plan/operationalを束縛し、親もstrict bind・condition・fresh policy・
+資源・通常probe原・旧停止を自分で再検証した。conditionは
+`1aee14ad69fad7e7d55049cfe87a383cd79d213c3e4facd59004eeba8cee4b45`。
+新候補の予約・モデル起動は0、carry0、未着手92であり、旧成績と混ぜない。
+
+Core追加検査ではrepo内TMPDIRが親.git/.specを拾い、非リポジトリの試験前提を崩していた。
+ホストのファイルを変えずnamespace内だけ親.git/.specを隠し、書込みをrepo内scratchに限定し、
+ネットワークを分離して1152試験（113.542秒）がOKとなった。依存cache不足はlockのwheel hashを検証して補った。
+Gate A用fixture監査は想定どおりexit1・fresh-checkout repeatabilityのpending1を保持する。
+全件適合試験の大規模性能部分は今回の本文変更の確認対象から外して中断し、成功とは数えない。
+性能/Gateの再認定へ広げず、standard区分の適合結果を別に記録する。
+
+外部SOLへ新候補の8枠を送る具体的承認は未取得として、最終の起動条件に残した。
+公開入力・共通指示・イベント一覧・必要なスキル本文を送る今回の有限範囲を明示して確認する。
+旧scopeの7枠目への承認を、新scope8枠の承認とは扱わない。新測定による改善効果、Skill Gate、
+リリースの認定はいずれも未確認である。
+
+最終のstandard適合試験はStep5・599 passed/0 failed/0 error・exit0となった。
+[新候補・8枠の条件・検証と起動前束縛](public-quality-plan-prelaunch-20261104.json)へ必要な履歴を集約した。
+外部送信の明示承認待ちであり、新規台帳と起動controlはまだ作っていない。
