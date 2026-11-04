@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-172-01",
+  "description": "interpretでは、起点がrequiresで到達した文書をrefinesする文書を閉包へ含めず、起点をrefinesする文書は含める",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

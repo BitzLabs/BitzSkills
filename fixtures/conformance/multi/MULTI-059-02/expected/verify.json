@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "zeta",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "zeta::REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:2381abab68bb80cb00e2f9a189413fc12bbf2fef4ea2c5046c3db299419cb3e1",
+      "statements": [
+        "zeta::REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "zeta::p"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "zeta::p",
+      "workspaceId": "zeta",
+      "name": "p",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/p.py"
+      ],
+      "tests": [
+        "tests/p.py"
+      ],
+      "covers": [
+        "zeta::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

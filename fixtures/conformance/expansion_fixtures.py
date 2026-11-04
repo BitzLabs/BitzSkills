@@ -407,6 +407,45 @@ def corpus_distance():
     ]
 
 
+def corpus_requires_target_refined():
+    """172-01: REQ-001がREQ-002をrequiresし、TECH-001がREQ-002を、TECH-002がREQ-001を、それぞれ規範文単位で`refines`する。
+    逆参照の出発点は起点を所有する文書だけなので（関係・トレースモデル §6.1の4.）、起点が`requires`で到達したREQ-002を
+    `refines`するTECH-001は、閉包に入らない。起点REQ-001を`refines`するTECH-002は閉包に入る。"""
+    root = [("REQ-001:AC-01", "入力を検証する")]
+    prerequisite = [("REQ-002:AC-01", "前提を満たす")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "起点要求", root, "relations:\n  requires: [REQ-002]\n" + ROOT_ONE_TEST_YAML),
+            fm("REQ-001", "起点要求", relations={"requires": ["REQ-002"]},
+               tests=[{"path": "tests/test_root.py", "covers": ["REQ-001:AC-01"], "command": "default"}]), root),
+        document(".spec/requirements/REQ-002.md", requirement("REQ-002", "前提要求", prerequisite),
+                 fm("REQ-002", "前提要求"), prerequisite),
+        document(".spec/technical/TECH-001.md", technical(
+            "TECH-001", "前提の具体化", [("TECH-001:AC-01", "前提の形式を固定する")],
+            "relations:\n  refines: [REQ-002:AC-01]\ntests:\n  - path: tests/test_prerequisite.py\n"
+            "    covers: [TECH-001:AC-01]\n    command: default\n"),
+            fm("TECH-001", "前提の具体化", relations={"refines": ["REQ-002:AC-01"]},
+               tests=[{"path": "tests/test_prerequisite.py", "covers": ["TECH-001:AC-01"], "command": "default"}]),
+            [("TECH-001:AC-01", "前提の形式を固定する")]),
+        document(".spec/technical/TECH-002.md", technical(
+            "TECH-002", "起点の具体化", [("TECH-002:AC-01", "入力形式を固定する")],
+            "relations:\n  refines: [REQ-001:AC-01]\ntests:\n  - path: tests/test_direct.py\n"
+            "    covers: [TECH-002:AC-01]\n    command: default\n"),
+            fm("TECH-002", "起点の具体化", relations={"refines": ["REQ-001:AC-01"]},
+               tests=[{"path": "tests/test_direct.py", "covers": ["TECH-002:AC-01"], "command": "default"}]),
+            [("TECH-002:AC-01", "入力形式を固定する")]),
+    ]
+
+
+def corpus_requires_target_refined_task():
+    """172-02: 172-01の入力に、起点REQ-001の規範文とTECH-002の規範文を`addresses`する`open`のTASK-001を加える
+    （目的`implement`の対象規範文がすべて対応済みになり、未対応の警告が出ない）。"""
+    return [*corpus_requires_target_refined(), document(".spec/tasks/TASK-001.md", task(
+        "TASK-001", "対象句の実装", "open", "relations:\n  addresses: [REQ-001:AC-01, TECH-002:AC-01]\n"),
+        fm("TASK-001", "対象句の実装", "open",
+           relations={"addresses": ["REQ-001:AC-01", "TECH-002:AC-01"]}), [])]
+
+
 # ID: (corpus, 引数列, 期待する状態, 説明)
 CASES = {
     "SINGLE-106-03": (corpus_advisory, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
@@ -448,6 +487,10 @@ CASES = {
     "SINGLE-106-07": (corpus_refinement, ["context", "REQ-001", "--purpose", "verify",
                                           "--detail", "compact", "--format", "json"],
                       "compact detailは全文書をreference提示にしContext Digestを変えない"),
+    "SINGLE-172-01": (corpus_requires_target_refined, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
+                      "interpretでは、起点がrequiresで到達した文書をrefinesする文書を閉包へ含めず、起点をrefinesする文書は含める"),
+    "SINGLE-172-02": (corpus_requires_target_refined_task, ["context", "REQ-001", "--purpose", "implement", "--format", "json"],
+                      "implementでも、起点がrequiresで到達した文書をrefinesする文書とその規範文を含めない"),
 }
 # `context`の期待展開（レビュー済み）。`verify`は同じ起点の`context`のfixtureの集合を参照する。
 EXPANSIONS = {
@@ -627,6 +670,29 @@ EXPANSIONS = {
                       "addressed": [], "adjacent": [], "advisory": []},
     # 詳細度`compact`は提示形式を`reference`へ統一するだけで、107-01と同じcorpus・目的・
     # 閉包を使うのでコンテキストのハッシュ値は変わらない（`bitz context`仕様 §5・§6）。
+    # 172は、起点REQ-001（距離0）が`requires`するREQ-002（距離1）を、TECH-001が規範文単位で`refines`し、起点REQ-001を、TECH-002が規範文単位で
+    # `refines`する。閉包の逆参照の出発点は起点を所有する文書だけであり、`requires`で到達した文書を`refines`する文書は含めない
+    # （関係・トレースモデル §6.1の4.）ので、TECH-001は閉包にも対象規範文にも入らない。TECH-002は起点を`refines`する具体化文書で、
+    # 閉包に入り、目的`implement`では規範文が対象規範文になる（§6.4の1.）。REQ-002は距離1の役割`requirement`、TECH-002は距離1の役割
+    # `refinement`で、種別（REQ、TECH）の順に並ぶ。REQ-002の規範文は`requires`の参照先なので対象規範文へ昇格しない（§6.4の4.）。
+    # 172-01は目的`interpret`で、対象規範文を持たないので制約台帳とカバレッジは空である。
+    "SINGLE-172-01": {"purpose": "interpret", "root": "REQ-001",
+                      "documents": [("REQ-001", "root", "full", ["root"]),
+                                    ("REQ-002", "requirement", "full", ["requires:REQ-001"]),
+                                    ("TECH-002", "refinement", "full", ["refines:TECH-002"])],
+                      "ledger": [], "tested": [], "addressed": [], "adjacent": [], "advisory": []},
+    # 172-02は目的`implement`。TASK-001は対象規範文REQ-001:AC-01とTECH-002:AC-01を`addresses`するので（§6.2）、距離は
+    # 規範文を所有する文書（距離0のREQ-001、距離1のTECH-002）から`addresses`のエッジを1本辿った段数のうち最短の1で（§7の6.）、
+    # 距離1の3件は種別（REQ、TECH、TASK）の順に並ぶ。対象規範文は2件とも対応済みで、文書がテスト対応を宣言するのでテスト済みである。
+    # TECH-001のテスト対応は閉包の文書ではないので数えず、診断は0件になる。
+    "SINGLE-172-02": {"purpose": "implement", "root": "REQ-001",
+                      "documents": [("REQ-001", "root", "full", ["root"]),
+                                    ("REQ-002", "requirement", "full", ["requires:REQ-001"]),
+                                    ("TECH-002", "refinement", "full", ["refines:TECH-002"]),
+                                    ("TASK-001", "work", "full", ["addresses:TASK-001"])],
+                      "ledger": ["REQ-001:AC-01", "TECH-002:AC-01"],
+                      "tested": ["REQ-001:AC-01", "TECH-002:AC-01"],
+                      "addressed": ["REQ-001:AC-01", "TECH-002:AC-01"], "adjacent": [], "advisory": []},
     "SINGLE-106-07": {"purpose": "verify", "root": "REQ-001", "detail": "compact",
                       "documents": [("REQ-001", "root", "reference", ["root"]),
                                     ("REQ-009", "requirement", "reference", ["requires:REQ-001"]),
@@ -851,6 +917,10 @@ LITERAL_SETS = {
     "SINGLE-141": (["TECH-005"], ["TECH-005", "TECH-007", "TECH-009"], [], []),
     # 142は、`refines`する状態`draft`のTECH-005を含めないので、閉包は起点REQ-001だけである。
     "SINGLE-142": (["REQ-001"], ["REQ-001"], ["REQ-001:AC-01"], []),
+    # 172は、`requires`で到達したREQ-002を`refines`するTECH-001を閉包へ含めない。
+    "SINGLE-172-01": (["REQ-001"], ["REQ-001", "REQ-002", "TECH-002"], [], []),
+    "SINGLE-172-02": (["REQ-001"], ["REQ-001", "REQ-002", "TECH-002", "TASK-001"],
+                      ["REQ-001:AC-01", "TECH-002:AC-01"], []),
 }
 
 
@@ -1009,6 +1079,37 @@ def check_git_state(identifier, repository):
     except subprocess.CalledProcessError:
         return
     raise ValueError("対象展開のfixtureはコミットを持ってはいけません")
+
+
+def reviewed_effects(state):
+    return {"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}
+
+
+def generate(root=HERE, identifiers=None):
+    """レビュー済みの入力と期待値からfixtureを書き出す。副作用の期待値は、隔離した準備手順の観測で作る（Coreは実行しない）。
+    `identifiers`を省くとこの群のすべてのfixtureを書き出す（既存のfixtureは同じバイト列になる）。"""
+    for identifier in CASES:
+        if identifiers is not None and identifier not in identifiers:
+            continue
+        fixture = root / "single" / identifier
+        for name, content in reviewed_inputs(identifier).items():
+            path = fixture / "repo" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        manifest = reviewed_manifest(identifier)
+        (fixture / "expected").mkdir(parents=True, exist_ok=True)
+        (fixture / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+        (fixture / manifest["expect"]["resultFile"]).write_text(
+            json.dumps(reviewed_result(identifier), ensure_ascii=False, indent=2) + "\n")
+        with tempfile.TemporaryDirectory(prefix="bitz-expansion-") as temporary:
+            sandbox = Path(temporary)
+            repository = setup(fixture, manifest, sandbox / "repo")
+            external = {name: sandbox / name for name in ("home", "cache", "temporary")}
+            for path in external.values():
+                path.mkdir()
+            state = observe(repository, external)
+        (fixture / "side-effects.json").write_text(
+            json.dumps(reviewed_effects(state), ensure_ascii=False, indent=2) + "\n")
 
 
 def validate(root=HERE, identifiers=None):
