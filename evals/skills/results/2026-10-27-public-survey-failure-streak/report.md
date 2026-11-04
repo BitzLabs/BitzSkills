@@ -333,3 +333,31 @@ HTTP status、使用token数、課金額は未確認。使用量未取得を0 to
 
 追加の消費は一次1・独立0。有効測定は正解1のまま、評価失敗1、未着手90、未完了0、有効測定の欠測91。
 旧9a85b909の失敗は別条件の履歴として維持する。混雑停止の再試行と、未実行の次枠を進めることを混同しない。
+
+
+## 2026-11-04: 未起動のSE-002を進め、認証拒否で停止
+
+利用者の再開指示を受け、正解1・評価失敗1を変更せず、同候補02328a56の未実行ordinal3
+（SE-002反復1）だけを一次最大1・独立最大1で開始した。失敗したordinal2の再試行ではない。
+再帰carry2、全92入力・73資源、期待値の一次入力への非混入、当日校正と最終pinを独立検分した。
+追加消費は一次1・独立0で、前scopeの未使用分以内。再試行は0、4枠目は未予約・未起動である。
+
+CLIは18.043648秒で終了0、timeoutなし、SDK errorなしだが、原のturnは`failed / other`、
+`itemsView: notLoaded`、summary items空だった。46字のエラー文言に401とunauthorized（大文字小文字を区別しない）を確認した。
+HTTP応答header、tokenの期限、refreshの挙動は取得・検証していないため推定しない。
+前の`serverOverloaded`とは別の、認証拒否を示す停止として区分する。
+最終回答、host操作、tokenUsage通知はいずれも0で、正常summaryの検査は`SDK turn summary mismatch`で拒否した。
+使用量と金額は未確認で、0 token・0円とは扱わない。
+
+[実行条件・認証停止の診断・独立検分・集計](public-catalog-se002-auth-stop-20261104.json)に必要な証拠を集約した。
+独立検分者は公開40ファイルの前後hash、catalog/config/argv/資源、失敗の原終端、再帰carryと共有台帳を
+読取り専用で検証した。親も新版readerからの拒否、台帳の終端、旧停止不変を自分で確認した。
+ordinal2・3は共にprimary/ValueErrorなので、既存の連続失敗guardが次ordinal4を確認記録なしで拒否することも再現した。
+原・旧台帳は変更せず、今回の台帳にもscope終了のstopをEXCL追記して追加予約を止めている。
+
+新候補の累計は正解1・不正解0・評価失敗2・未着手89・未完了0、有効測定の欠測91。
+4枠目以降は、評価用CLIの認証更新と原因を踏まえた起動前検分を済ませるまで進めない。
+認証ファイルの内容は読んでおらず、ログイン・logout・tokenの複写や更新も実行していない。
+固定CLIの`login --help`と[OpenAI公式認証手順](https://learn.chatgpt.com/docs/auth#preferred-device-code-authentication-beta)で
+device code loginとfile保存の設定を確認した。評価はWSLの`/home/hide/.codex`を使うため、Windows側だけのログイン変更と混同しない。
+本人のログイン操作とリポジトリ外の認証更新が必要であり、利用者へWSLでの更新を依頼した。
