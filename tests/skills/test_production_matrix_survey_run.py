@@ -62,19 +62,35 @@ class PacingTests(unittest.TestCase):
     def test_first_launch_no_sleep(self):
         self.pace();self.assertEqual(self.sleeps,[])
 
-    def test_independent_waits_60(self):
-        self.pace();self.pace('independent');self.assertEqual(self.sleeps,[60.0])
+    def test_independent_waits_5_and_records_new_condition(self):
+        self.pace();self.pace('independent');self.assertEqual(self.sleeps,[5.0])
+        value=runner.p.trace.strict_json(self.io.files[str(self.root/'launch-independent-0001.json')])
+        self.assertEqual(value['version'],'operator-logical-launch-pacing-0.2.0')
+        self.assertEqual(value['minimumGapSeconds'],5)
+        self.assertEqual(value['monotonicSeconds'],105.0)
+
+    def test_only_remaining_interval_is_waited(self):
+        self.pace();self.clock+=2;self.pace('independent');self.assertEqual(self.sleeps,[3.0])
+
+    def test_elapsed_interval_does_not_add_sleep(self):
+        self.pace();self.clock+=6;self.pace('independent');self.assertEqual(self.sleeps,[])
+
+    def test_legacy_60_second_record_cannot_enter_new_condition(self):
+        self.reject(dict(version='operator-logical-launch-pacing-0.1.0',minimumGapSeconds=60))
+
+    def test_same_version_cannot_change_interval(self):
+        self.reject(dict(minimumGapSeconds=60))
 
     def test_primary_after_failed_primary_waits(self):
-        state=self.previous();self.pace(n=2,prior=state);self.assertEqual(self.sleeps,[60.0])
+        state=self.previous();self.pace(n=2,prior=state);self.assertEqual(self.sleeps,[5.0])
 
     def test_primary_after_failed_independent_waits(self):
         state=self.previous(phase='independent',independent=True);self.pace(n=2,prior=state)
-        self.assertEqual(self.sleeps,[60.0,60.0])
+        self.assertEqual(self.sleeps,[5.0,5.0])
 
     def test_primary_after_normal_waits_from_independent(self):
         state=self.previous(status='measured_correct',phase=None,independent=True);self.pace(n=2,prior=state)
-        self.assertEqual(self.clock,220.0)
+        self.assertEqual(self.clock,110.0)
 
     def test_missing_independent_record_not_treated_as_failed_primary(self):
         state=self.previous(status='measured_correct',phase=None,independent=True)
@@ -108,7 +124,8 @@ class PacingTests(unittest.TestCase):
 
     def test_bad_numbers_and_identity(self):
         changes=[dict(monotonicSeconds=True),dict(monotonicSeconds=float('nan')),dict(monotonicSeconds=float('inf')),
-            dict(monotonicSeconds=-1),dict(waitedSeconds=True),dict(waitedSeconds=61),dict(minimumGapSeconds=True),
+            dict(monotonicSeconds=-1),dict(waitedSeconds=True),dict(waitedSeconds=6),dict(minimumGapSeconds=True),
+            dict(minimumGapSeconds=5.0),
             dict(ordinal=True),dict(role='independent'),dict(sourceCommit='c'*40),dict(campaignId='other'),
             dict(conditionSha256='c'*64),dict(startedAt='2026-10-15T00:00:00'),dict(extra='unknown')]
         for changeset in changes:
@@ -131,5 +148,21 @@ class PacingTests(unittest.TestCase):
         self.io.files['/baseline/report.json']=raw;self.policy.update(startOrdinal=19,priorSlots=[{}],
             baselineReportAbsolutePath='/baseline/report.json',baselineReport=dict(sha256=self.io.sha(raw)))
         with self.assertRaises(ValueError):self.pace(n=19)
+
+    def test_carried_baseline_five_second_boundary(self):
+        class FixedDateTime(datetime.datetime):
+            @classmethod
+            def now(cls,tz=None):return cls(2026,11,5,12,tzinfo=runner.JST)
+        now=FixedDateTime.now(runner.JST)
+        for gap in [4.999,5.0]:
+            with self.subTest(gap=gap):
+                self.io.files.clear();self.result=dict(launchEvidence={})
+                raw=self.io.encoded(dict(recordedAt=(now-datetime.timedelta(seconds=gap)).isoformat()))
+                self.io.files['/baseline/report.json']=raw;self.policy.update(startOrdinal=19,priorSlots=[{}],
+                    baselineReportAbsolutePath='/baseline/report.json',baselineReport=dict(sha256=self.io.sha(raw)))
+                with patch.object(runner.datetime,'datetime',FixedDateTime):
+                    if gap<5:
+                        with self.assertRaises(ValueError):self.pace(n=19)
+                    else:self.pace(n=19)
 
 if __name__=='__main__':unittest.main()

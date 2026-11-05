@@ -14,6 +14,8 @@ p=capture.p
 io=p.io
 require=p.require
 JST=datetime.timezone(datetime.timedelta(hours=9))
+PACE_VERSION='operator-logical-launch-pacing-0.2.0'
+MINIMUM_GAP_SECONDS=5
 PACE_KEYS={'version','sourceCommit','campaignId','conditionSha256','role','ordinal','minimumGapSeconds',
     'monotonicSeconds','waitedSeconds','startedAt','declaresProviderInvoked'}
 
@@ -50,34 +52,34 @@ def pace(root,bound,policy,condition,ordinal,role,result,prior_state=None):
         baseline=p.trace.strict_json(raw)
         observed=datetime.datetime.fromisoformat(baseline['recordedAt'])
         require(observed.utcoffset()==datetime.timedelta(hours=9)
-            and (datetime.datetime.now(JST)-observed).total_seconds()>=60,'survey baseline publication gap')
+            and (datetime.datetime.now(JST)-observed).total_seconds()>=MINIMUM_GAP_SECONDS,'survey baseline publication gap')
     if previous is not None:
         raw=io.read_regular(previous);require(io.sha(raw)==expected_sha,'survey previous pacing hash drift')
         value=p.trace.strict_json(raw)
         require(isinstance(value,dict) and set(value)==PACE_KEYS,'survey pacing inventory')
-        require(value['version']=='operator-logical-launch-pacing-0.1.0'
+        require(value['version']==PACE_VERSION
             and value['sourceCommit']==bound.contract['sourceCommit'] and value['campaignId']==bound.contract['campaignId']
             and value['conditionSha256']==condition and value['role']==expected_role
             and type(value['ordinal']) is int and value['ordinal']==expected_ordinal
-            and type(value['minimumGapSeconds']) is int and value['minimumGapSeconds']==60
+            and type(value['minimumGapSeconds']) is int and value['minimumGapSeconds']==MINIMUM_GAP_SECONDS
             and value['declaresProviderInvoked'] is False,'survey pacing identity')
         require(type(value['monotonicSeconds']) in {int,float} and math.isfinite(value['monotonicSeconds'])
             and value['monotonicSeconds']>=0 and type(value['waitedSeconds']) in {int,float}
-            and math.isfinite(value['waitedSeconds']) and 0<=value['waitedSeconds']<=60,
+            and math.isfinite(value['waitedSeconds']) and 0<=value['waitedSeconds']<=MINIMUM_GAP_SECONDS,
             'survey finite pacing values')
         require(isinstance(value['startedAt'],str) and datetime.datetime.fromisoformat(value['startedAt']).utcoffset()
             ==datetime.timedelta(hours=9),'survey pacing timestamp')
         elapsed=time.monotonic()-value['monotonicSeconds'];require(math.isfinite(elapsed) and elapsed>=0,'survey monotonic drift')
-        delay=max(0.0,60.0-elapsed)
+        delay=max(0.0,MINIMUM_GAP_SECONDS-elapsed)
         if delay:time.sleep(delay)
     moment=time.monotonic();require(type(moment) in {int,float} and math.isfinite(moment) and moment>=0,'survey current clock')
     if previous is not None:
-        require(moment-value['monotonicSeconds']>=60 and io.sha(io.read_regular(previous))==expected_sha,
+        require(moment-value['monotonicSeconds']>=MINIMUM_GAP_SECONDS and io.sha(io.read_regular(previous))==expected_sha,
             'survey pacing minimum gap and stable original')
     if prior_path is not None:require(io.sha(io.read_regular(prior_path))==prior_sha,'survey previous result drift')
-    value=dict(version='operator-logical-launch-pacing-0.1.0',sourceCommit=bound.contract['sourceCommit'],
+    value=dict(version=PACE_VERSION,sourceCommit=bound.contract['sourceCommit'],
         campaignId=bound.contract['campaignId'],conditionSha256=condition,role=role,ordinal=ordinal,
-        minimumGapSeconds=60,monotonicSeconds=moment,waitedSeconds=delay,
+        minimumGapSeconds=MINIMUM_GAP_SECONDS,monotonicSeconds=moment,waitedSeconds=delay,
         startedAt=datetime.datetime.now(JST).isoformat(),declaresProviderInvoked=False)
     raw=io.encoded(value);io.exclusive(root/f'launch-{role}-{ordinal:04d}.json',raw)
     result['launchEvidence'][role]=io.sha(raw)
