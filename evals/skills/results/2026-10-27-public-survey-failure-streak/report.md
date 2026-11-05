@@ -634,3 +634,24 @@ TransportClosedErrorで評価失敗となり、独立採点は起動せず、26�
 プロセス作成前に拒否した。迂回起動はせず、具体的な範囲の承認を依頼した。
 新scopeのモデル・予約は0で、raw/control/ledgerディレクトリも未作成。残67枠はまだ未着手である。
 [再開条件・独立検分・親の最終照合・起動拒否](public-quality-plan-resumed-prelaunch-20261105.json)へ必要な履歴を集約した。
+
+
+## 2026-11-05: 明示承認後の48有効枠と74枠目停止、残18枠の回復待ち
+
+利用者が「許可するので、残り枠を完了させて下さい」と明示承認し、固定した公開26〜92枠を再開した。
+26〜73の48枠は正解47・不正解1（45、SE-023反復1の一般的コメント編集への誤発火）。
+74（SE-037反復2）はモデルがread_resourceにpathではなくuriを送り、ホスト引数ポリシーが拒否した。
+UnfinishedRelayとTransportClosedErrorは後続症状で、HTTP429は観測していない。初期のtransportだけの説明をこの原因で訂正する。
+74は独立採点を起動せず評価失敗として残し、75未予約で停止。独立した48原の再検査と親による同じ実検査の再実行は全件通過し、旧停止・原記録は不変だった。
+有効48枠の観測使用量は1,749,382 token、74の観測使用量は4,050 token。金額と失敗25の使用量は未確認。
+
+先行分を含むcarry74は正解71・不正解1・評価失敗2、pending0。残18枠75〜92は
+一次最大18・独立最大18・retry0の別scopeへ束縛し、73資源・全92payload・SDK/runtime・当日校正を維持した。
+実drive16合成分岐とguard8試験、code/prelaunch/concrete review、局所probe（local1/raw5/model0/reservation0）、
+親の最終pin・再帰carry照合を通過した。sandbox内のprobe01はNETLINK_ROUTE権限制限で失敗し、外側のprobe02で隔離を確認した。
+実行器は75予約前に短期使用率94%・週間57%を観測し、20:42:53 JSTの回復までモデル・予約なしで待機している。
+失敗25/74は再試行せず、ホスト制約・停止規則・消費を維持する。残18枠の測定完了やSkill Gate認定はまだ主張しない。
+
+[今回の明示承認](public-quality-plan-resumed-user-approval-20261105.json)、
+[74停止時の集計](public-quality-plan-stop74-20261105.json)、
+[残18枠の開始条件と停止原因の独立確認](public-quality-plan-final18-prelaunch-20261105.json)へ必要な証拠を集約した。

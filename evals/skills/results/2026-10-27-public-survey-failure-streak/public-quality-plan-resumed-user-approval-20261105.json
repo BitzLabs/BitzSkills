@@ -1,0 +1,23 @@
+{
+  "version": "r04-public-resumed67-user-approval-1",
+  "userInstruction": "許可するので、残り枠を完了させて下さい",
+  "authorizationSource": "direct_current_user_message",
+  "campaignId": "public-matrix-quality-plan-resumed-20261105-01",
+  "sourceCommit": "2c5390923dff31b0144b1d142150a7d8e24651a7",
+  "conditionSha256": "34d72c2168207d02c63c611b2333a57830c1f69a37b6c1856c79413a2fb969c6",
+  "firstOrdinal": 26,
+  "lastOrdinal": 92,
+  "maximumPrimaryLaunches": 67,
+  "maximumIndependentLaunches": 67,
+  "model": "gpt-6.1-sol",
+  "externalPayloadScope": "Public SE-013 repetition2 and SE-014..046 each2 repetitions; frozen common instructions/event catalog/necessary skill bodies; expected answers and acquired results only for independent grading",
+  "automaticRetries": 0,
+  "includesHeldoutTransmission": false,
+  "includesRetryOf25": false,
+  "stopOnAnyEvaluationFailure": true,
+  "rateGuardRetained": true,
+  "fixedBundleAndPriorStopReverifiedAt": "2026-11-05T15:46:01.829751+09:00",
+  "status": "user_authorized_launch_pending",
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
