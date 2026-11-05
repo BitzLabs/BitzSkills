@@ -99,6 +99,26 @@ class CanaryCaptureTests(unittest.TestCase):
                 'tool_source': 'code_mode', 'tool_namespace': namespace, 'tool_name': tool}}))
             self.assertTrue((other.base / 'capture-stop.json').exists())
 
+    def test_generic_mcp_discovery_cannot_replace_production_host(self):
+        # 公開再評価7の受領event。汎用MCP一覧も読取り専用という理由で許可しない。
+        for tool in ['list_mcp_resources', 'list_mcp_resource_templates', 'read_mcp_resource']:
+            base = self.temporary()
+            guard = capture.CaptureGuard(base)
+            self.assertTrue(guard('telemetry', {'fields': {
+                'event.name': 'codex.tool_call_received', 'tool_source': 'direct', 'tool_name': 'exec'}}))
+            with self.subTest(tool=tool):
+                self.assertFalse(guard('telemetry', {'fields': {
+                    'event.name': 'codex.tool_call_received', 'tool_source': 'code_mode',
+                    'tool_namespace': 'functions', 'tool_name': tool}}))
+                marker = json.loads((base / 'capture-stop.json').read_bytes())
+                self.assertEqual(marker, {'reason': 'unknown-child-tool',
+                    'counts': {'/models': 0, '/responses': 0, 'control': 1},
+                    'certifiesApiRequestHardCap': False})
+                self.assertFalse(guard('telemetry', {'fields': {
+                    'event.name': 'codex.tool_call_received', 'tool_source': 'code_mode',
+                    'tool_namespace': 'mcp__production_routing', 'tool_name': 'list_resources'}}))
+                self.assertEqual(json.loads((base / 'capture-stop.json').read_bytes()), marker)
+
     def test_callback_free_legacy_proxy_keeps_optional_tracing_and_result_shape(self):
         base = self.temporary()
         fake = base / 'fake-codex'
