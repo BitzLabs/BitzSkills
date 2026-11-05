@@ -720,3 +720,25 @@ start1/carry0/旧成績の流用なし。scopeのcode/concrete reviewと親最�
 新しい公開1〜92枠を開始し、各枠の一次取得・独立採点・親照合の完了後に次へ進む。
 取得失敗・未確定親・原不整合は停止し、有効な不正解は保持する。現時点の準備をSkill Gate認定へ拡張しない。
 [開始条件と独立検分](public-remediation-prelaunch-20261106.json)に固定条件を集約した。
+
+
+## 2026-11-06: 2枠目の独立binding不一致停止と残90枠の準備
+
+新候補3ccの1枠目は正解として一次・独立・親照合・原再検査を完了した。
+2枠目の独立応答はexit0・timeoutなしだが、expectedSha256だけが元の64桁値から1文字異なり、
+実semantic.responseのsaved/original/bindings照合で拒否した。saved JSONとnative最終応答は同一で、
+元bindings/promptと再構成したexpected hashは一致した。応答上のaccuracy=trueを正解へ採用しない。
+一次2・独立2を消費し、親確定1・正解1・評価失敗1、3〜92未予約で停止した。
+親と独立が実原から同じ拒否を再現し、宣言receipt hashと有限171原の不変を確認した。
+評価基盤の障害とは認定せず、evidence不整合として2の失敗と消費を保持する。
+
+2を再試行せず、残3〜92の90枠だけを、同source/profile/73資源/全92payload/最小5秒の別scopeへ束縛する。
+引継ぎは新候補の正解1・評価失敗1、追加一次/独立各最大90で、既消費2+追加90の上限92を保つ。
+旧候補の85正解等は引き継がない。新normalprobeは8.746489秒、local1/raw5/model0/reservation0で通過した。
+残90枠は開始前の独立検分と親最終照合を終えてから再開する。
+[2枠停止の原と独立確認](public-remediation-stop2-20261106.json)に必要な原因・消費・制限を保存した。
+
+残90scopeのcode/concrete reviewと親最終照合は通過し、実行器を起動した。
+親は1枠目の実原再検査、残90実drive16/guard8を再実行して通過した。
+開始前の標準残量は短期55%・週間82%、明示状態は許可範囲で、各予約前にも再確認する。
+[残90枠の開始条件](public-remediation-resumed90-prelaunch-20261106.json)に新pin・carry2・残予算・原検分を集約した。
