@@ -797,3 +797,23 @@ localHTTP1/raw5/model0/reservation0で通過した。親と独立が保存原を
 07:05の続行指示後に再確認した残量は短期1%・週間89%、guardはreadyへ回復した。
 候補・局所確認の記録を確定し、新条件の具体的な開始前独立検分へ進む。
 週間90%の基準や、枠ごとの再確認を変えず、現時点の新条件モデル起動・実予約は0である。
+
+
+## 2026-11-06 07:42: 新条件の開始前検分と週間枠による予約前停止
+
+source562の新92枠・carry0/start1/最小5秒を別scopeへ束縛し、code/concreteの独立検分と親最終pinを通過した。
+新helperは前の92枠のパスと採用指示の束縛だけを変え、guard・停止・再試行の規則を維持した。
+親と独立が実guard8/drive16分岐を再実行し、独立は範囲境界4分岐も確認した。
+最終executionのnormalprobeは8.782968秒、localHTTP1/raw5/model0/reservation0で成功し、
+親と独立が保存23原とreceiptを実verify_originalsで再照合した。
+source45・73資源・SDK207・当日校正・全92slot・旧15失敗/停止pinも照合した。
+
+直前の標準RPCは短期12%・週間91%、spendControlReached=false/rateLimitReachedType=nullだった。
+明示到達状態がなくても週間90%未満の既存guardを満たさず、実行器の起動前に止めた。
+新条件のモデル起動・実予約は0、全92未着手、新台帳・control・評価出力は未作成である。
+旧source3ccの安全停止7と失敗2、正解5・評価失敗2・未着手85はそのまま別に保持する。
+
+週間reset予定は11月11日17:42:24 JST。実際の起動日には当日校正とsource/context/資源束縛を更新し、
+独立した具体的検分・親最終pin・短期80%未満/週間90%未満の残量を改めて確認する。
+本日のprelaunch通過を別日へ流用せず、まだ新条件の有効測定や無再発を認定しない。
+[開始前検分、固定hashと予約前のguard拒否](public-tool-boundary-prelaunch-20261106.json)に証拠を保存した。
