@@ -955,3 +955,58 @@ codex-home/logs/state/tmp/workのopaque内容を読むものではない。親�
 22:29の新RPCは短期1%/週間28%、rateLimitReachedType=null/spendControlReached=false/ready=trueで、後の値と拒否時の値を混同しない。
 旧scopeは再利用せず、全75結果・消費を保持して残76〜92の17枠だけを別scopeへ束縛する。
 [75枠の全件検分・閉鎖・再照会](public-tool-boundary-stop75-20261106.json)へ証拠を保存した。
+
+
+## 2026-11-06 22:45: 残17枠の開始前検分通過
+
+carry75=71正解/1不正解/3失敗と消費75primary/74independentを保持する76〜92の別scopeを束縛した。追加各17で上限一次92/独立91、source562/全input/当日校正/73資源/固定モデル/5秒/98-80は不変。guard9/drive16、旧75全auditを再利用し新107台帳/13保全pin等を実検査した。子の権限付きlocal-probe呼出しは承認済みprefixでも応答待ちとなり実起動証拠がなかったため中断し、親が実行して8.760415秒、local1/raw5/models0/res0の原を取得。独立が実verify_originalsで再照合した。concrete検分と親最終pin通過後、直前の標準RPCは短期22%・週間31%、ready=true。旧scopeへ追記せず、残17だけを起動する。
+
+[残17枠の開始条件と固定原](public-tool-boundary-weekly98-final17-prelaunch-20261106.json)に証拠を保存した。
+
+
+## 2026-11-06: 新候補の公開92枠の処理・全件検分完了
+
+固定source562の最終76〜92は全17枠が正解で完走した。全46ケース各2試行の92枠を処理し、
+正解88・不正解1（27）・評価失敗3（45/48/54）、未着手0・pending0となった。
+一次予約/起動印92・一次完了91・独立予約91・親確定89、有効測定89・欠測3である。
+最後のstop.jsonはordinal92/reason=operator-public-completion-scope-complete/errorType=OperatorStopで、
+raw ledgerのstatus=stoppedを変更せず、全予定92枠処理完了を派生判定した。
+処理・検分の完了を、全測定適合・R04全体・Skill Gate・releaseの完了へ広げない。
+
+親は1〜54/55〜75/76〜92を分けて全89有効枠の実operator-recheckを再実行した。
+独立も既75auditの全5554原が現在不変であることを再確認して72枠分の実検査証拠を再利用し、尾17の実原を全件追加検査した。
+3失敗のfailure_valid・observation/stageReceipt/resourceProof封印を再検査し、すべての結果と消費を保持した。
+親の初回全体集約は尾17検査の結果ファイル生成前に走ったため入力欠落で停止し、
+尾17完了後に依存順序を直して再実行・通過した。未完の初回を検分通過へ数えない。
+
+全183logical launchのhash/最小5秒、5baseline publication gap、92primary-slot quota admissionの98/80・日付、
+全46ケース各2枠の分母・カテゴリ・消費、source45/製品73/SDK207/当日校正を元原で照合した。
+独立の6854有限原hash/属性不変と全frozen/旧停止pinの維持を確認し、親も6854原の全hashを現在値へ再照合した。
+quota確認は各新枠の一次admission前であり、独立呼出し前に別RPCがあったことやprovider内部のhard capを主張しない。
+追加の検分モデル・実予約は0、opaque内容や資格情報を読まず、保持集合も送信していない。
+
+| 区分 | 正解 | 不正解 | 評価失敗 | 合計 |
+|---|---:|---:|---:|---:|
+| explicit | 12 | 0 | 0 | 12 |
+| implicit | 12 | 0 | 0 | 12 |
+| contextual | 11 | 1 | 0 | 12 |
+| negative | 18 | 0 | 2 | 20 |
+| conflict | 11 | 0 | 1 | 12 |
+| behavior | 12 | 0 | 0 | 12 |
+| safety | 12 | 0 | 0 | 12 |
+| 合計 | 88 | 1 | 3 | 92 |
+
+有効89の入口選択はすべて一致したが、27はquality-planの必須raise-risk-bandをeventsへ含めず不正解のまま保持する。
+45の独立binding不一致、48の一次容量拒否、54の独立transport/decode失敗を正解や不正解へ置換せず、retryも返却もしていない。
+旧不正解枠78/79/80/91は新条件で正解となり、45は独立測定欠落、対になる46は正解だった。
+旧候補の測定を再分類せず、旧2cの85正解/5不正解/2失敗、3ccの安全停止等とも混ぜない。
+27への対応、欠測3の扱い、保持評価とR04全体・Skill Gate・releaseの判定は残る。
+
+観測181trajectoryの使用量はinput3773049/output79293/合計3852342 token。
+48primaryと54independentのusageは不明で0扱いせず、48independentは未起動として区別する。金額は未確認。
+最後の新枠予約前の標準RPCは短期55%・週間37%で、元の週間98%/短期80%条件を維持した。
+
+[全92の確定集計と全件検分](public-tool-boundary-completed92-20261106.json)に元records・親/独立検分・残件を集約し、
+[6854原のhash一覧](public-tool-boundary-full92-original-sha256-20261106.json)へ全宣言原の追跡用digestを保存した。
+
+最終保存後の`uv run evals/skills/validate.py audit`もexit0/Passed、evaluationSetVersion0.7.2・46ケース・7schema・errors[]を確認した。モデル起動・実予約は0である。
