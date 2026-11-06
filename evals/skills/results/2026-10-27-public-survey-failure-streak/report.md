@@ -904,3 +904,26 @@ APItelemetryは200/attempt0であり、HTTP429や利用枠超過へ言い換え�
 今回の公開92枠について全件の原・採点・件数/消費・旧停止保持を親と独立で最終照合する。
 保持集合の送信や停止済み枠のretryへ範囲を広げず、元の98/80・日付・安全停止を維持する。
 [48停止の原と独立判定](public-tool-boundary-stop48-20261106.json)へ証拠を保存した。
+
+
+## 2026-11-06 18:52: 残44枠の開始前検分通過
+
+carry48=45正解/1不正解/2失敗と消費一次48/独立47を保持する49〜92の別scopeを束縛した。追加各44で最大全体一次92/独立91、retry0、モデル/source562/全input/73資源/当日校正/5秒/98-80は不変。guard9/drive16、最終normalprobe8.784059秒（local1/raw5/model0/res0）、code/concrete検分と親最終pinを通過した。直前残量は短期5%・週間13%、ready=true。容量拒否が解消したとの認定ではなく、48の失敗を保持して未使用44枠だけを起動する。
+
+[残44枠の開始条件と固定原](public-tool-boundary-weekly98-final44-prelaunch-20261106.json)に証拠を保存した。
+
+
+## 2026-11-06: 54枠目の独立通信切断と残38枠
+
+49〜53は5正解として一次・独立・親照合を確定した。54の一次は正常だが独立processはexit1/timeoutfalse、
+traceにstream disconnected before completion / network error / error decoding response bodyを残した。
+response.json、正常終端、usageはなく、stderrは0byteである。親と独立が一次原と検分入力/bindings/prompt/argv/configを再構成し、
+実verify_originalsのmatrix independent receipt scope or terminal drift拒否を再現した。
+固定分類evidence_invalidを維持し、観測CLI transport/decode errorを別記録として保存する。
+安全違反や内部wireの仕組みまでは認定せず、54はretryしない。usage欠落を0 tokenとして集計しない。
+
+累計一次54・一次完了53・独立53・親確定51、正解50・不正解1・評価失敗3、未着手38・pending0である。
+親は355宣言artifact、独立は2331有限原のhash/属性不変を確認した。53は正常でD4末尾失敗は54だけ。
+55〜92の38枠を別scopeへ束縛し、54結果と消費一次54/独立53を保持する。
+追加各38で最大全体一次92/独立91、retry0・固定モデル・全入力・当日校正・73資源・5秒・98/80は維持する。
+[54停止の原と独立判定](public-tool-boundary-stop54-20261106.json)に固定証拠を集約した。
