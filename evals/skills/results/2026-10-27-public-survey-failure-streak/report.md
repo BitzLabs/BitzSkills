@@ -927,3 +927,31 @@ response.json、正常終端、usageはなく、stderrは0byteである。親と
 55〜92の38枠を別scopeへ束縛し、54結果と消費一次54/独立53を保持する。
 追加各38で最大全体一次92/独立91、retry0・固定モデル・全入力・当日校正・73資源・5秒・98/80は維持する。
 [54停止の原と独立判定](public-tool-boundary-stop54-20261106.json)に固定証拠を集約した。
+
+
+## 2026-11-06 19:47: 残38枠の開始前検分通過
+
+carry54=50正解/1不正解/3失敗・既消費一次54/独立53を保持し、追加55〜92の各最大38を新scopeへ束縛した。モデル/source562/全input/当日校正/73資源/5秒/98-80は不変。guard9/drive16とcode検分後にpinを確定した。独立側の局所probe呼出しは権限付きツールの応答待ちで中断され、実起動証拠がなかったため親が引き継ぎ、network/auth隔離で8.780496秒、local1/raw5/model0/res0の正常原を取得した。独立はその原を実verify_originalsで再検証し、concrete審査を通過。親最終pinと直前RPCは短期42%・週間19%でreadyとなった。
+
+親の全件検分part1は1〜54について有効51の実operator-recheckを全件再実行し、3失敗の診断とfrozen不変も確認した。最終独立全件検分はこれを代替せず実行後に行う。[残38枠の開始条件と証拠](public-tool-boundary-weekly98-final38-prelaunch-20261106.json)へ固定原を保存した。
+
+
+## 2026-11-06 22:29: 75枠の全件検分と予約前閉鎖
+
+55〜75は全21枠を正解で確定し、累計75枠は正解71・不正解1・評価失敗3、
+一次75・一次完了74・独立74・親確定72、未着手17・pending0・欠測20となった。
+親は1〜54と55〜75を分け、全72有効枠の実operator-recheckを再実行し、失敗45/48/54の封印/receipt/宣言原を再照合した。
+独立も全72を別に実再検査し、3失敗の拒否再現・封印、5554有限原のhash/属性不変を確認した。
+親はその5554原hashも再確認した。rollout-tracesはreceiptに宣言された公開exportであり、
+codex-home/logs/state/tmp/workのopaque内容を読むものではない。親の初回照合はrollout-tracesをopaqueへ広く含めすぎたため拒否し、
+正規inventoryを確認して宣言exportだけを対象に修正・再実行した。原記録への書込みはない。
+
+全149logical launchの5秒条件/4baseline gap、75primary-slot quota admissionの98/80・日付・消費・分母を照合した。
+各独立呼出し前に別のRPCを行ったとは主張しない。観測147trajectoryの使用量は3043286 token、
+48primary・54indのusageは不明、48indは未起動として区別し、金額は未確認である。
+
+76予約前の短期80%待機中にbackend limit state unresolvedで実行器が閉じた。
+直前に保存された20:36の値は短期99%/週間28%だが、拒否したRPC自体の値は保存されていない。
+22:29の新RPCは短期1%/週間28%、rateLimitReachedType=null/spendControlReached=false/ready=trueで、後の値と拒否時の値を混同しない。
+旧scopeは再利用せず、全75結果・消費を保持して残76〜92の17枠だけを別scopeへ束縛する。
+[75枠の全件検分・閉鎖・再照会](public-tool-boundary-stop75-20261106.json)へ証拠を保存した。
