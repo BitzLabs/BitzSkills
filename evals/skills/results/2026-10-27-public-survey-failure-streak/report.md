@@ -875,3 +875,32 @@ source562の新条件は公開1〜20（SE-001〜SE-010の各2反復）を全て�
 carry45は43正解・1不正解・1評価失敗、追加一次/独立各最大47で既消費45+追加47=92を保つ。
 46は元から予定された反復2であり、45の再試行ではない。旧閉鎖scopeへは追記しない。
 [45停止の原因、原照合と独立判定](public-tool-boundary-stop45-20261106.json)に固定証拠を保存した。
+
+
+## 2026-11-06 15:44: 残47枠の開始前検分通過
+
+source562・carry45=43正解/不正解27/失敗45・残46〜92を別scopeへ束縛した。追加一次/独立各47と既消費各45の合計92、retry0、当日校正、73資源、全payload、最小5秒、週間98/短期80は不変。親と独立のguard9/drive16、first46/out45・93/last92を確認し、独立は45停止1700原も再照合した。最終normalprobeは8.712558秒、local1/raw5/model0/reservation0。code/concrete検分と親最終pinを通過し、直前残量は短期61%・週間10%でreadyとなった。各枠の予約前に残量・日付・連続失敗を確認して残47を起動する。
+
+[残47枠の固定条件と検分原](public-tool-boundary-weekly98-final47-prelaunch-20261106.json)に停止原の保持と残予算を保存した。
+
+
+## 2026-11-06: 48枠目のCLI容量拒否と全検分の続行
+
+46/47は正解で確定したが、48（SE-024反復2）はCLIがSelected model is at capacity、
+codexErrorInfo=serverOverloaded、willRetry=falseを記録して一次失敗した。
+runtimeはexit0/captureIntegrity=true、SDKerrorNoneだが、turnはfailedでitems空、toolcall0/hostlog空だった。
+親と独立が停止印をディスク変更せず一覧からだけ除外したread-only検査でSDK turn summary mismatchを再現した。
+APItelemetryは200/attempt0であり、HTTP429や利用枠超過へ言い換えない。
+固定分類器のevidence_invalidを改変せず、観測原因cli_reported_provider_capacityを別に保持する。
+モデルを替えず、48をretryしない。wirebodyや配信内部の障害の仕組みまでは認定しない。
+
+累計一次48・一次完了47・独立47・親確定46、正解45・不正解1・評価失敗2、未着手44・pending0である。
+45は独立binding不一致、48は一次容量拒否の欠測として保持する。親133宣言artifact、独立1889有限原の不変を確認した。
+直前47は正常でD4の同型連続失敗には該当しない。残49〜92だけを別scopeへ束縛し、
+全48結果・消費一次48/独立47と追加各44を保持する（最大全体一次92/独立91、92cap以下）。
+48で未使用の独立1枠はretryへ回さない。
+
+利用者の「検分の為の処理を実行するのは全て許可、全検分実施」を受け、
+今回の公開92枠について全件の原・採点・件数/消費・旧停止保持を親と独立で最終照合する。
+保持集合の送信や停止済み枠のretryへ範囲を広げず、元の98/80・日付・安全停止を維持する。
+[48停止の原と独立判定](public-tool-boundary-stop48-20261106.json)へ証拠を保存した。
