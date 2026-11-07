@@ -1280,3 +1280,23 @@ Core固有の単体試験は1200件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1220件がすべて成功した。
+
+## 2026-11-08: 全体操作のtext出力と起動した後の診断の置き場所を直した後のStep 1〜5の再判定
+
+`textrender.py`で、`check`と`verify`の`--all-workspaces`のtext出力を結果・診断・終了コード §7どおりにし（実装の確認事項C94）、`verify.py`で、全体の`verify`の
+起動した後の診断をテスト割当てを所有するワークスペースへ置くようにした（C89）。これを固定する`MULTI-063-01`〜`06`（Step 5）を追加した。
+修正前のCore（コミット`a70bd089`の版）では、追加した6件のうち陽性の5件が非成功となり、対照の`MULTI-063-06`と既存の678件はすべて通過することを確かめた。
+修正後のCoreでは684件すべてが`passed`となる。
+
+コミット`68ad1005dc597fd7750d7ae15e894e388d039879`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 684件（`MULTI-063-01`〜`06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`1fe12efa3c00aeb110a78a5c5a133a5255a673e0d031fdfcf34389b015fbf24a` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1237件がすべて成功した。
