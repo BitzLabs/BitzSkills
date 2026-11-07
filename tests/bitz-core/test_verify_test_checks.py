@@ -239,6 +239,28 @@ class SingleWorkspaceTests(_Base):
         (command,) = result["commands"]
         self.assertEqual((command["status"], command["tests"], command["covers"]), ("passed", ["tests/b.py"], ["REQ-002:AC-01"]))
 
+    def test_defect_violation_and_missing_command_in_another_entry_return_both(self):
+        """同じ検証対象の別のテスト対応で、パスの違反とコマンドの定義の不足が重なれば、両方の診断を返して`failed`にする（`verify` §4）。"""
+        self.build([("tests/nope.py", ["REQ-001:AC-01"], "default"), ("tests/b.py", ["REQ-001:AC-02"], "absent")])
+        result, code = self.verify("REQ-001")
+        target = self.targets(result)["REQ-001"]
+        self.assertSkippedTarget(target)
+        self.assertEqual(
+            sorted((d["code"], d["source"].get("key")) for d in target["diagnostics"]),
+            [("SPEC-PATH-INVALID-001", "tests[0].path"), ("SPEC-VERIFY-BLOCKED-001", "tests[1].command")],
+        )
+        self.assertEqual((result["status"], code), ("failed", 1))
+        self.assertEqual(result["commands"], [])
+
+    def test_control_violation_and_missing_command_in_the_same_entry_return_only_the_violation(self):
+        """違反したテスト対応はテスト割当ての解決から外すので、同じテスト対応のコマンドの定義の不足は判定しない（`verify` §4）。"""
+        self.build([("tests/a.py", ["REQ-001:AC-01"], "default"), ("tests/nope.py", ["REQ-001:AC-02"], "absent")])
+        result, code = self.verify("REQ-001")
+        target = self.targets(result)["REQ-001"]
+        self.assertSkippedTarget(target)
+        self.assertEqual(self.codes(target), [("SPEC-PATH-INVALID-001", TECH_PATH, "tests[1].path")])
+        self.assertEqual((result["status"], code), ("failed", 1))
+
     def test_control_unused_invalid_test_correspondence_does_not_stop(self):
         """検証対象が使わないテスト対応（別のREQを`refines`するTECHの不在のパスと不正な`covers`）は検査しない。"""
         self.build([("tests/a.py", ["REQ-001:AC-01"], "default"), ("tests/b.py", ["REQ-001:AC-02"], "default")])
