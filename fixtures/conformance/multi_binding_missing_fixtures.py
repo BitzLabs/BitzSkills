@@ -17,6 +17,11 @@
 
 期待値の根拠は規範文と、このモジュールの参照計算だけである（Coreの出力は根拠にしない）。
 
+入力の訂正（ADR-051の期待値の訂正の手続き）: `MULTI-039-03`・`04`のTECH-001は、規範文2件を`covers`しながら規範文`REQ-001:AC-01`だけを`refines`していたので、
+`REQ-001:AC-02`は`covers`に指定できない（文書・フロントマター・状態仕様のテスト対応の規則）入力だった。`verify`は検証対象が使うテスト対応の`covers`を`check`と同じ規則で検査する
+（`bitz verify`仕様 §4の4.）ので、TECH-001が`refines`する参照をREQ-001（文書）へ直し、`covers`が適法な入力にした。診断（`SPEC-VERIFY-BLOCKED-001`、所有ワークスペースごとに1件へ畳む）、
+状態、終了コードの期待は変えない。ハッシュ値は、`refines`の参照が変わるので計算し直した（`MULTI-039-01`・`02`は規範文1件で、入力もハッシュ値も変えない）。
+
 - 診断レジストリ §2: 独立した元の原因はそれぞれ主診断を持つ。同じ元の原因（同じ所有ワークスペースの同じ`path`・`key`）は1件に畳む。
   `VERIFY-BINDING-MISSING`は`SPEC-VERIFY-BLOCKED-001`（`blocked`）で、継続単位は`skip-target`（当該検証対象の`diagnostics`へ置く）。
 - 結果・診断・終了コード §4・§5: 診断の`source`は`workspaceId`と`path`の組で一意である。診断の順序は、発生元のワークスペースID、`path`、`line`、`column`、`code`の辞書順。
@@ -108,7 +113,16 @@ def technical(workspace, refines, covers):
 def declared(workspace, count, single):
     """TECH-001の宣言どおりの`refines`と`covers`。`web`と単一ワークスペースは非修飾、`api`は`web`を修飾する。"""
     prefix = "web::" if workspace == "api" else ""
-    return f"{prefix}REQ-001:AC-01", [f"{prefix}REQ-001:AC-{number:02d}" for number in range(1, count + 1)]
+    return f"{prefix}{refines_reference(count)}", [f"{prefix}REQ-001:AC-{number:02d}" for number in range(1, count + 1)]
+
+
+def refines_reference(count):
+    """TECH-001が`refines`するREQ-001への参照（修飾の前）。規範文を1件指すTECHは規範文を、2件以上を`covers`するTECHは文書を`refines`する。
+
+    `covers`に指定できるのは、宣言する文書が直接`refines`する文書の規範文、または直接`refines`する規範文だけである（文書・フロントマター・状態仕様のテスト対応の規則）。
+    `verify`は検証対象が使うテスト対応の`covers`をこの規則で検査する（`bitz verify`仕様 §4の4.）ので、規範文2件を`covers`するTECHは、文書を`refines`する。
+    """
+    return "REQ-001:AC-01" if count == 1 else "REQ-001"
 
 
 def corpus_files(corpus, single):
@@ -249,23 +263,25 @@ def reviewed_digest_input(identifier, target):
     req_body, web_body, api_body = requirement(count)[1], technical("web", *declared("web", count, False))[1], technical("api", *declared("api", count, False))[1]
     if single:
         _, covers = declared("root", count, True)
+        refines, _ = declared("root", count, True)
         documents = [
             _document("root", "requirement", True, REQ_TITLE, req_body, statements=numbers),
-            _document("root", "technical", True, TECH_TITLES["root"], technical("root", "REQ-001:AC-01", covers)[1],
-                      refines="REQ-001:AC-01", covers=covers, command=MISSING_COMMAND["root"]),
+            _document("root", "technical", True, TECH_TITLES["root"], technical("root", refines, covers)[1],
+                      refines=refines, covers=covers, command=MISSING_COMMAND["root"]),
         ]
         return _material_request(True, [("root", ".")], documents, [], "REQ-001", purpose="verify")
     request = target.partition("::")[0]
     req = _document("web", "requirement", False, REQ_TITLE, req_body, statements=numbers)
-    web = _document("web", "technical", False, TECH_TITLES["web"], web_body, refines="web::REQ-001:AC-01",
+    refines = f"web::{refines_reference(count)}"
+    web = _document("web", "technical", False, TECH_TITLES["web"], web_body, refines=refines,
                     covers=[f"web::REQ-001:AC-{n:02d}" for n in numbers], command=MISSING_COMMAND["web"])
-    api = _document("api", "technical", False, TECH_TITLES["api"], api_body, refines="web::REQ-001:AC-01",
+    api = _document("api", "technical", False, TECH_TITLES["api"], api_body, refines=refines,
                     covers=[f"web::REQ-001:AC-{n:02d}" for n in numbers], command=MISSING_COMMAND["api"])
     members = {"web": ("web", "apps/web"), "api": ("api", "services/api")}
     chosen = {"web::REQ-001": [req, web, api], "web::TECH-001": [req, web], "api::TECH-001": [req, api]}[target]
     reached = sorted({document["workspaceId"] for document in chosen})
     ordered = [request] + [name for name in reached if name != request]
-    edges = [{"relation": "refines", "source": document["id"], "target": "web::REQ-001:AC-01"}
+    edges = [{"relation": "refines", "source": document["id"], "target": refines}
              for document in chosen if document["workspaceId"] != "web"]
     return _material_request(False, [members[name] for name in ordered], chosen, edges, target, purpose="verify")
 
@@ -287,6 +303,22 @@ def refines_of(documents, identifier):
 def statement_ids(documents, identifier):
     document = documents[identifier]
     return [f"{document['workspaceId']}::{item['id']}" for item in read_statements(document["body"])]
+
+
+def covers_are_valid(documents):
+    """すべてのテスト対応の`covers`が、文書・フロントマター・状態仕様のテスト対応の規則に合う（入力の木構造から導く）。
+
+    宣言する文書の`covers`に指定できるのは、(a)自身の規範文、(b)規範文を持たない文書は自身のID、(c)直接`refines`する文書の規範文、または直接`refines`する規範文である。
+    """
+    for name, document in documents.items():
+        own = set(statement_ids(documents, name))
+        allowed = set(own) | ({name} if not own else set())
+        for _, target in refines_of(documents, name):
+            allowed |= set(statement_ids(documents, target)) if target in documents else {target}
+        for entry in document["frontmatter"].get("tests", []):
+            if any(multi_crosscheck.qualify(document["workspaceId"], text) not in allowed for text in entry["covers"]):
+                return False
+    return True
 
 
 def verify_closure(documents, root):
@@ -470,6 +502,8 @@ def check_conditions(identifier, repository):
     case = CASES[identifier]
     single, root_id, workspaces, documents = load_tree(repository)
     corpus = case["corpus"]
+    if not covers_are_valid(documents):
+        raise ValueError("`covers`は、宣言する文書が直接`refines`する規範文だけを指す必要があります（検証対象が使うテスト対応は`verify`が検査する）")
     if single:
         # 単一ワークスペース: 1つのエントリが複数の規範文を指し、そのコマンド名は設定にない。
         entry = documents[f"{root_id}::TECH-001"]["frontmatter"]["tests"]
@@ -491,8 +525,8 @@ def check_conditions(identifier, repository):
             raise ValueError("どちらのテスト対応も、設定に定義のないコマンド名を1エントリで指す必要があります")
         if len(tests[0]["covers"]) != statement_count(corpus):
             raise ValueError("エントリが指す規範文の件数が入力と異なります")
-    if api["frontmatter"]["relations"]["refines"] != ["web::REQ-001:AC-01"]:
-        raise ValueError("`api::TECH-001`は修飾した宣言で起点の規範文を`refines`する必要があります")
+    if api["frontmatter"]["relations"]["refines"] != [f"web::{refines_reference(statement_count(corpus))}"]:
+        raise ValueError("`api::TECH-001`は修飾した宣言で起点を`refines`する必要があります")
     order, refiners = verify_closure(documents, "web::REQ-001")
     if set(order) != {"web::REQ-001", "web::TECH-001", "api::TECH-001"} or set(refiners) != {"web::TECH-001", "api::TECH-001"}:
         raise ValueError("起点の閉包に、別のワークスペースの文書が含まれる必要があります")
