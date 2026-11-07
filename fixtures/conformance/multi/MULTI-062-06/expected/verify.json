@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "platform",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "api::REQ-201",
+          "status": "passed",
+          "contextDigest": "sha256:8049fbe23104227d5ace7b7dcf2b1d0c2a634d51a14aa9f3e44bff9b8c2d91f5",
+          "statements": [
+            "api::REQ-201:AC-01"
+          ],
+          "bindingRefs": [
+            "api::default"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "api::default",
+          "workspaceId": "api",
+          "name": "default",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/ok.py"
+          ],
+          "tests": [
+            "tests/ok.py"
+          ],
+          "covers": [
+            "api::REQ-201:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "web::REQ-101",
+          "status": "failed",
+          "contextDigest": "sha256:16ce31626e1eb89e49f6d10a21545f5f80f136441ec43de45ab19d307f462754",
+          "statements": [
+            "web::REQ-101:AC-01"
+          ],
+          "bindingRefs": [],
+          "diagnostics": [
+            {
+              "code": "SPEC-PATH-INVALID-001",
+              "severity": "error",
+              "resultStatus": "failed",
+              "summary": "テストのパスが存在しません",
+              "source": {
+                "kind": "file",
+                "workspaceId": "web",
+                "path": ".spec/requirements/REQ-101.md",
+                "key": "tests[1].path"
+              }
+            }
+          ]
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

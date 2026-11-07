@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "failed",
+      "contextDigest": "sha256:c6050cb5935f367dda23a740562dea5aefd70c4ad4f286deb5f1746489f4f17c",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-TEST-COVERAGE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "フィールドcoversの参照先が存在しないか、対応できません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-002.md",
+            "key": "tests[0].covers"
+          },
+          "evidence": "REQ-001:AC-02"
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

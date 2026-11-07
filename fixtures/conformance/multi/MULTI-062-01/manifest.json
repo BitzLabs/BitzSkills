@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-062-01",
+  "description": "複合ワークスペースで、使うテスト対応のテストのパスが所有領域の外へ解決するとき、検証対象をfailedにし、SPEC-MULTI-OWNERSHIP-001を返す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "web::REQ-101",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

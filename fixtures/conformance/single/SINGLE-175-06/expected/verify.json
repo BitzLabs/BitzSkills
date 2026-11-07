@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "failed",
+      "contextDigest": "sha256:951c057100cd39dedf4a8afaec8911841936d1ccdad09dc8c6e3859744da962f",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "テストのパスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[2].path"
+          }
+        }
+      ]
+    },
+    {
+      "target": "REQ-002",
+      "status": "passed",
+      "contextDigest": "sha256:10cc67d4abc09f1b3dcd8b02d7e7a3e5606363230e31482c7f8d633a605bb23e",
+      "statements": [
+        "REQ-002:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_other.py"
+      ],
+      "tests": [
+        "tests/test_other.py"
+      ],
+      "covers": [
+        "REQ-002:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
