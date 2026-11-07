@@ -73,7 +73,8 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 不在または不正なテストのパスは`SPEC-PATH-INVALID-001`、複合ワークスペースで所有領域の外へ解決するテストのパスは`SPEC-MULTI-OWNERSHIP-001`、
 `covers`に指定できない値は`SPEC-TEST-COVERAGE-001`とし、`check`と同じ文言と発生元（テスト対応を宣言した仕様文書）で検証対象の`diagnostics`へ返す。
 3.のカバレッジは宣言どおりのテスト対応で判定し、4.で違反が見つかった検証対象は`failed`、`bindingRefs: []`とし、テストを起動しない（`skip-target`）。
-同じ検証対象でコマンドの定義の不足（`VERIFY-BINDING-MISSING`）が重なる場合は両方の診断を返し、検証対象は最悪値の`failed`とする。独立した検証対象は続ける。
+違反したテスト対応はテスト割当ての解決から外すので、そのテスト対応のコマンドの定義の不足は判定しない。同じ検証対象の別のテスト対応でコマンドの定義の不足
+（`VERIFY-BINDING-MISSING`）が重なる場合は両方の診断を返し、検証対象は最悪値の`failed`とする。独立した検証対象は続ける。
 `requires`で到達しただけの文書が起点の規範文を`covers`する形は、`covers`に指定できない値であり、`check`と同じく`SPEC-TEST-COVERAGE-001`とする（実装の確認事項C48の決定は、`covers`の規則を満たす範囲でだけ成り立つ）。
 検証対象が使わないテスト対応と`implements`の検査は`check`の責務とし、`verify`は行わない。
 
