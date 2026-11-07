@@ -457,8 +457,11 @@ def versions_supported(config):
 
 
 def lexical_problem(path):
-    """メンバーのパスと同じ字句の規則: 絶対パス、空のパス（末尾の`/`を含む）、`.`、`..`、globの文字`*?[]`を禁止する（複合ワークスペース仕様 §2）。"""
+    """メンバーのパスと同じ字句の規則: 絶対パス、空のパス（末尾の`/`を含む）、`.`、`..`、NULを含む制御文字（U+0000〜U+001F、U+007F）、
+    globの文字`*?[]`を禁止する（複合ワークスペース仕様 §2）。"""
     if not isinstance(path, str) or not path or path.startswith("/"):
+        return True
+    if any(ord(char) < 0x20 or ord(char) == 0x7F for char in path):
         return True
     parts = path.split("/")
     return any(part in {"", ".", ".."} or set(part) & GLOB_CHARACTERS for part in parts)
