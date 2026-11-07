@@ -657,7 +657,7 @@ class FilesystemIdentityTests(unittest.TestCase):
 class OwnershipResolutionStaysWithinCheckedScopeTests(_MultiBase):
     """TASKの`changes`の所有（複合ワークスペース仕様 §5.2）は、上位のシンボリックリンクでも外へ逃げない。"""
 
-    def test_task_change_through_an_upper_symlink_to_another_workspace_is_an_ownership_violation(self):
+    def test_task_change_of_a_symlink_to_another_workspace_is_an_ownership_violation(self):
         from bitz import check as check_mod_local
 
         self.write(web_tests=["tests/test_web.py"])
@@ -681,6 +681,31 @@ class OwnershipResolutionStaysWithinCheckedScopeTests(_MultiBase):
             "inner", "A",
         )
         self.assertIsNone(inner)
+
+    def test_root_task_change_of_a_regular_file_under_a_member_is_not_an_ownership_violation(self):
+        """シンボリックリンクでない変更パスは所有境界違反にせず、TASKの境界で扱う（独立レビューのH1の回帰）。"""
+        from bitz import check as check_mod_local
+
+        self.write(web_tests=["tests/test_web.py"])
+        _write(self.root, "apps/web/src/a.py", "x = 1\n")
+        self.commit()
+        _write(self.root, "apps/web/src/b.py", "y = 1\n")
+        roots = {"platform": str(self.root), "web": str(self.root / "apps" / "web")}
+        for status, path in (("A", "apps/web/src/b.py"), ("M", "apps/web/src/a.py")):
+            with self.subTest(status=status):
+                diag = check_mod_local._task_change_ownership_diag(
+                    mock.Mock(available=False, executable=None), str(self.root), {}, None, "platform",
+                    str(self.root), roots, path, status,
+                )
+                self.assertIsNone(diag)
+        # 対照: ルートのシンボリックリンクがメンバーの配下を指せば、ルートはメンバーの配下を所有しないので違反である。
+        os.symlink("apps/web/src", self.root / "lk")
+        diag = check_mod_local._task_change_ownership_diag(
+            mock.Mock(available=False, executable=None), str(self.root), {}, None, "platform",
+            str(self.root), roots, "lk", "A",
+        )
+        self.assertIsNotNone(diag)
+        self.assertEqual(diag.code, OWNERSHIP)
 
 
 if __name__ == "__main__":
