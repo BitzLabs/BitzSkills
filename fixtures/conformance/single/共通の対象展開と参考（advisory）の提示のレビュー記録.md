@@ -428,7 +428,10 @@ Coreの出力文言の意味の食い違い（同じ条件IDの診断の文型�
 
 ### 規範から導けなかった点・固定の程度
 
-- 目的`implement`でTASKを起点にしたとき、起点が`addresses`する規範文を所有する文書の`requires`の参照先と、その文書を文書IDで`refines`する文書を閉包へ含めるかは、
+- **C106として未決、ユーザーの判断待ち**。目的`implement`でTASKを起点にしたとき、起点が`addresses`する規範文を所有する文書から、`requires`の参照先、その文書を文書IDで`refines`する文書、
+  その文書の`refines`の参照先（(a)）、その文書の対象でない別の規範文を`refines`する文書（(b)）を閉包へ含めるかは、
   §6.2の「`interpret`に加えて」と§6.3の「`implement`と異なり、起点のTASKの`requires`の閉包は含めない」の読み方による。参照計算Bは、`verify`と同じく、含める読み方で導く。
-  Coreは、含めない（`addresses`の参照先を所有する文書と、起点のTASKの`requires`の閉包だけを含める）。この食い違いは直す前から同じで、既存のfixtureは固定していない（`SINGLE-140`の具体化文書は
-  規範文IDで`refines`する）ので、この群は固定しない。
+  Coreは、含めない（`addresses`の参照先を所有する文書と、起点のTASKの`requires`の閉包、対象規範文の具体化文書だけを含める）。Coreの`verify`は参照計算Bと同じである。
+  再現（(a)(b)）: REQ-001が`REQ-005`を`refines`し、TECH-003が`REQ-001:AC-02`を`refines`し、TASK-001が`REQ-001:AC-01`だけを`addresses`するとき、
+  参照計算Bの`implement`は`[TASK-001, REQ-001, REQ-005, TECH-003]`、Coreの`implement`は`[TASK-001, REQ-001]`である。
+  この食い違いは直す前から同じで、既存のfixtureは固定していない（`SINGLE-140`の具体化文書は規範文IDで`refines`し、対象規範文の具体化文書として含める）ので、この群は固定しない。

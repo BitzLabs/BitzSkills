@@ -559,6 +559,24 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(ordered[:3], ["REQ-001", "REQ-002", "TECH-002"])
         self.assertEqual(sorted(ordered[3:]), ["TASK-001", "TASK-009"])
 
+    def test_reference_closure_orders_a_task_by_its_nearest_target_statement(self):
+        """目的`implement`で、複数の対象規範文を`addresses`するTASKの距離は、規範文を所有する文書から`addresses`のエッジを1本辿った段数のうち最短である
+        （関係・トレースモデル §7の6.）。遠い規範文（TECH-002:AC-01）が`addresses`の宣言の辞書順で先に評価されても、近い規範文（TECH-009:AC-01）の距離で並べる。
+        TASK-001は距離1でTECH-001と同じ距離になり、種別（TECH、TASK）の順に並ぶので、距離2のTECH-002より前になる。"""
+        documents = self.closure_corpus(**{
+            "TECH-009": ("approved", {}),
+            "TECH-001": ("approved", {"refines": ["TECH-009:AC-01"]}),
+            "TECH-002": ("approved", {"refines": ["TECH-001:AC-01"]}),
+            "TASK-001": ("open", {"addresses": ["TECH-002:AC-01", "TECH-009:AC-01"]})})
+        ordered = digest_crosscheck.closure(documents, "TECH-009", "implement")[0]
+        self.assertEqual(ordered, ["TECH-009", "TECH-001", "TASK-001", "TECH-002"])
+        # 陰性対照: 近い規範文だけを`addresses`する別の宣言の順でも、同じ並びになる。遠い規範文だけを`addresses`すると、距離3でTECH-002の後ろになる。
+        documents["TASK-001"]["frontmatter"]["relations"] = {"addresses": ["TECH-009:AC-01", "TECH-002:AC-01"]}
+        self.assertEqual(digest_crosscheck.closure(documents, "TECH-009", "implement")[0], ordered)
+        documents["TASK-001"]["frontmatter"]["relations"] = {"addresses": ["TECH-002:AC-01"]}
+        self.assertEqual(digest_crosscheck.closure(documents, "TECH-009", "implement")[0],
+                         ["TECH-009", "TECH-001", "TECH-002", "TASK-001"])
+
     def test_multi_reference_closure_starts_reverse_references_only_from_the_origin_document(self):
         """複合ワークスペースの参照計算Bの閉包も、逆参照の出発点を起点を所有する文書だけにし、`refines`の参照先の`requires`を辿らない
         （関係・トレースモデル §6.1の3.・4.、実装の確認事項C91）。`MULTI-059`の入力と、ワークスペースをまたぐ辺で確かめる。"""
@@ -8548,8 +8566,23 @@ class AuditTests(unittest.TestCase):
                     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
+    def test_multi_closure_origin_conditions_reject_an_input_that_cannot_detect_the_wide_closure(self):
+        """`check_conditions`は、修正前の広い閉包と、どの検証対象の閉包も同じになる入力を、入力の完全一致の検査とは別に拒否する（この入力は欠陥を検出できない）。
+        修正前の広い閉包の再現を、参照計算Bの閉包と同じにして直接呼ぶ。再現が異なる通常の入力は通る（陽性対照）。"""
+        module = multi_closure_origin_fixtures
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                fixture = audit.FIXTURES / "multi" / identifier
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                result = json.loads((fixture / "expected/verify.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "repo")
+                module.check_conditions(identifier, repository, result)
+                with patch.object(module, "defective_closure", lambda documents, target: multi_crosscheck.closure(documents, target)[0]):
+                    with self.assertRaisesRegex(ValueError, "修正前の広い閉包を検出できません"):
+                        module.check_conditions(identifier, repository, result)
+
     def test_multi_closure_origin_audit_rejects_changed_corpus(self):
-        """入力の追加・欠落・原因を消す書換えを拒否する（閉包が欠陥を検出できる構成でなくなる入力を含む）。"""
+        """入力の追加・欠落・原因を消す書換えを拒否する（入力の完全一致の検査で拒否する。閉包が欠陥を検出できない入力の判定は、`test_multi_closure_origin_conditions_*`が直接確かめる）。"""
         module = multi_closure_origin_fixtures
 
         def rewrite(relative, old, new):
