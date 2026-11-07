@@ -825,6 +825,26 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `SINGLE-174-09` | `cwd`が`tests`、TECH-001の`tests[0]`が`tests/test_ok.py`（配下）、`tests[1]`が`tests/link/test_auth.py`（配下にない）、TECH-002（`REQ-001`を`refines`）の`tests[0]`が`tests/link/test_auth.py`。同じコマンド`default`。`tests/link -> ../other` | verify REQ-001 | blocked／2 | 同じテスト割当てを複数の文書が宣言するときは、パスの辞書順で最初の文書（TECH-001）を発生元にし、キーは配下にないテストの添字（`tests[1].path`）にする（全体の最小の添字`tests[0]`のTECH-002ではない）。診断は1件。修正前のCoreは`passed`／0 |
 | `SINGLE-174-10` | `cwd`が`.`、TECH-001のテストが`ext/test_auth.py`、`ext/test_session.py`（`ext -> real`。字句でも実パスでも配下） | verify REQ-001 | passed／0 | 対照: 字句の相対パスが`cwd`の外を指さなければ、引数列は字句の相対パス（`["/bin/true", "ext/test_auth.py", "ext/test_session.py"]`）のままにする。修正前のCoreも通る |
 
+### 6.18 `verify`が使うテスト対応のテストのパスと`covers`の検査
+
+`verify`は、その検証対象が使うテスト対応（対象規範文を`covers`するテスト対応。規範文のないTECHは文書単位の`tests`）のテストのパスの存在と所有境界、`covers`の妥当性を、`check`と同じ規則で検査する
+（[`verify` §4の4.](../03_操作仕様/03_verify.md#4-処理)。実装の確認事項N2・C92、PR-cの独立レビューのM1）。違反は`check`と同じ診断（`SPEC-PATH-INVALID-001`、複合ワークスペースで所有領域の外は`SPEC-MULTI-OWNERSHIP-001`、
+`covers`は`SPEC-TEST-COVERAGE-001`。文言と発生元は同じ。承認済みの文言「テストのパスが存在しません」「フィールドcoversの参照先が存在しないか、対応できません」）を検証対象の`diagnostics`へ返し、
+その検証対象は`failed`、`bindingRefs: []`で、テストを起動せず、独立した検証対象は続ける。コンテキストは完成するので、`contextDigest`と`statements`は値を持つ。使わないテスト対応と`implements`は検査しない。
+入力は`SINGLE-042`のcorpus（`REQ-001`の`MUST`と`SHOULD`の規範文、規範文のないTECH-001。コマンド`default`）を基にする。違反するエントリは、正しいエントリと同じ規範文を`covers`する
+（正しいエントリが規範文を数えるので、違反したエントリをカバレッジに数えるかどうかに依存しない）。リポジトリの外のディレクトリは、ホストの`/usr/bin`を指す絶対パスのシンボリックリンクで置く（`/usr/bin/env`がファイルへ解決する前提）。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-175-01` | TECH-001の`tests[2].path`が存在しない`tests/nope.py`（`REQ-001:AC-01`を`covers`。`tests[0]`・`[1]`は正しい）。インデックスにステージ | verify REQ-001 | failed／1 | `REQ-001`は`failed`で、診断は`SPEC-PATH-INVALID-001`（`source`は`{file, root, .spec/technical/TECH-001.md, tests[2].path}`、summary「テストのパスが存在しません」）の1件。`bindingRefs`は空、`commands`は空（`tests/test_auth.py`も起動しない）。`statements`は`REQ-001:AC-01`・`AC-02`。修正前のCoreは`passed`／0 |
+| `SINGLE-175-02` | `tests[2].path`がディレクトリ`tests/suite`（中に通常のファイルがある） | verify REQ-001 | failed／1 | 結果は`SINGLE-175-01`と同じ。ディレクトリは通常のファイルではないので不在と同じに扱う。修正前のCoreは`passed`／0 |
+| `SINGLE-175-03` | `tests[2].path`が`ext/env`。`ext`は`/usr/bin`を指すシンボリックリンク（リポジトリの外） | verify REQ-001 | failed／1 | 結果は`SINGLE-175-01`と同じ。上位のディレクトリのシンボリックリンクがワークスペースの外へ解決するパスは、存在しないパスと同じ（ワークスペース・設定仕様 §9）。修正前のCoreは`blocked`／2 |
+| `SINGLE-175-04` | TECH-001（`REQ-001`を`refines`、正しいテスト2件）に加え、TECH-002が`TECH-001`だけを`refines`し、`tests[0]`が`REQ-001:AC-02`を`covers`する（推移的） | verify REQ-001 | failed／1 | 診断は`SPEC-TEST-COVERAGE-001`の1件（`source`は`{file, root, .spec/technical/TECH-002.md, tests[0].covers}`、証拠`REQ-001:AC-02`）。直接`refines`していない規範文は`covers`に指定できない（(a)〜(c)）。`bindingRefs`と`commands`は空。修正前のCoreは`passed`／0 |
+| `SINGLE-175-05` | 規範文を持たないTECH-001の`tests[2].path`が存在しない（文書単位の`tests`） | verify TECH-001 | failed／1 | `TECH-001`は`failed`、`SPEC-PATH-INVALID-001`（キー`tests[2].path`）の1件。`statements`は空、`bindingRefs`は空。修正前のCoreは`passed`／0 |
+| `SINGLE-175-06` | `SINGLE-175-01`の入力に、独立したREQ-002とTECH-003（`tests/test_other.py`、正しい）を足す | verify REQ-001 REQ-002 | failed／1 | `REQ-001`は`SINGLE-175-01`と同じ`failed`、`REQ-002`は`passed`（`bindingRefs`は`root::default`、診断なし）。`commands`は1件で、`tests`は`tests/test_other.py`だけ（`REQ-001`の正しいテストは起動しない）。修正前のCoreは`passed`／0（`commands`は1件で、`tests`は`tests/nope.py`を含む4件） |
+| `SINGLE-175-07` | `SINGLE-175-06`と同じ入力 | verify REQ-002 | passed／0 | 対照: `REQ-001`の不在のパスは、`REQ-002`が使わないので検査しない。`commands`は`tests/test_other.py`だけ。修正前のCoreも通る |
+| `SINGLE-175-08` | TECH-001の`implements`が存在しない`src/gone.py`。テスト対応は正しい | verify REQ-001 | passed／0 | 対照: `implements`の検査は`check`の責務で、`verify`は検査しない。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1114,6 +1134,13 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `MULTI-061-05` | `MULTI-061-01`と同じ形で、ルートのREQ-001の`implements: [lk/a.py]`、`lk -> apps/web/src`（ルートの領域から、メンバーの配下へ解決）、`apps/web/src/a.py`は通常のファイル（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | ルートがメンバーの配下へ解決するシンボリックリンクを経由しても、所有しない。`platform`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスlk/a.pyの解決先がワークスペースplatformの所有領域の外です」、キー`implements`）の1件。修正前のCoreは`passed`／0 |
 | `MULTI-061-06` | `MULTI-061-01`と同じ形で、`web`のREQ-101の`implements: [ext/env]`、`apps/web/ext -> /usr/bin`（リポジトリの外）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | リポジトリの外へ解決するので、`web`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/envの解決先がワークスペースwebの所有領域の外です」、キー`implements`）の1件。修正前のCoreは`passed`／0 |
 | `MULTI-061-07` | `MULTI-061-01`と同じ形で、ルートのREQ-001の`tests[0].path`が`lib/test_x.py`、`lib -> shared`（ルートの領域の中）、`shared/test_x.py`は通常のファイル。ルートの設定にコマンド`default`を定義する（`.`で実行） | check --all-workspaces --base HEAD | passed／0 | 対照: ルートの領域の中へ解決するシンボリックリンクは通る。診断は0件。修正前のCoreも通る |
+| `MULTI-062-01` | ルート`platform`（`.`）、メンバー`web`（`apps/web`）、`api`（`services/api`）。`web`のREQ-101（`approved`、`MUST`1件）の`tests[0].path`が`tests/ok.py`（正しい）、`tests[1].path`が`ext/test_x.py`。`apps/web/ext -> ../../tests`（ルートの領域）。どちらも`AC-01`を`covers`する（`.`で実行） | verify web::REQ-101 | failed／1 | `web::REQ-101`は`failed`で、診断は`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/test_x.pyの解決先がワークスペースwebの所有領域の外です」、`source`は`{file, web, .spec/requirements/REQ-101.md, tests[1].path}`）の1件。`bindingRefs`と`commands`は空。`workspace`は`web`。修正前のCoreは`blocked`／2（実効`cwd`の包含で遮断する） |
+| `MULTI-062-02` | `MULTI-062-01`と同じ形で、`tests[1].path`が存在しない`tests/nope.py` | verify web::REQ-101 | failed／1 | 診断は`SPEC-PATH-INVALID-001`（summary「テストのパスが存在しません」、`source`は`{file, web, .spec/requirements/REQ-101.md, tests[1].path}`）の1件。修正前のCoreは`passed`／0 |
+| `MULTI-062-03` | ルートのREQ-001（`MUST`1件）の`tests[0].path`が`tests/root.py`（正しい）、`tests[1].path`が`apps/web/t.py`（字句でメンバーの配下） | verify REQ-001 | failed／1 | ルートワークスペースはメンバーの配下を所有しない。`platform::REQ-001`は`failed`で、診断は`SPEC-MULTI-OWNERSHIP-001`（summary「パスapps/web/t.pyの解決先がワークスペースplatformの所有領域の外です」、`source`は`{file, platform, .spec/requirements/REQ-001.md, tests[1].path}`）の1件。修正前のCoreは`passed`／0 |
+| `MULTI-062-04` | ルートのREQ-001（`MUST`1件、自身の`tests/root.py`が`covers`する）。`web::TECH-005`が`platform::REQ-001`を`refines`し、`web::TECH-010`が`TECH-005`だけを`refines`して`platform::REQ-001:AC-01`を`covers`する（横断で直接`refines`なし） | verify REQ-001 | failed／1 | `platform::REQ-001`は`failed`で、診断は`SPEC-TEST-COVERAGE-001`（`source`は`{file, web, .spec/technical/TECH-010.md, tests[0].covers}`、証拠`platform::REQ-001:AC-01`）の1件。別のワークスペースの規範文を`covers`できるのは、宣言する文書が、その規範文またはそれを所有する文書を直接`refines`する場合に限る（関係・トレースモデル §9）。`bindingRefs`と`commands`は空。修正前のCoreは`passed`／0 |
+| `MULTI-062-05` | `MULTI-062-04`と同じ形で、`web::TECH-010`が`platform::REQ-001:AC-01`を直接`refines`する | verify REQ-001 | passed／0 | 対照: 直接`refines`していれば横断の`covers`は指定できる。`commands`は`platform::default`（`tests/root.py`）と`web::default`（`tests/web.py`）の2件。修正前のCoreも通る |
+| `MULTI-062-06` | `web`のREQ-101は`tests[1].path`が存在しない`tests/nope.py`（`tests[0]`は正しい）、`api`のREQ-201は`tests[0].path`が正しい。ルートは文書を持たない（`.`で実行） | verify --all-workspaces | failed／1 | `workspaces`は`platform`（`passed_with_warnings`、`SPEC-VERIFY-BLOCKED-002`の警告）、`api`（`passed`）、`web`（`failed`）の順。`web::REQ-101`は`failed`で`SPEC-PATH-INVALID-001`の1件、`api::REQ-201`は`passed`で`api::default`を起動する（`commands`は`api`に1件）。`web`は`commands`を持たない。修正前のCoreは`passed_with_warnings`／0 |
+| `MULTI-062-07` | `MULTI-062-05`の入力に、`web`のREQ-102（`approved`、`MUST`1件。`tests[0].path`が存在しない）を足す。REQ-001のどの検証対象も使わない | verify REQ-001 | passed／0 | 対照: 検証対象が使わないメンバーの文書のテスト対応は検査しない（`check`は検出する）。結果は`MULTI-062-05`と同じ。修正前のCoreも通る |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

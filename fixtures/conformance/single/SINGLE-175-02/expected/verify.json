@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "failed",
+      "contextDigest": "sha256:6cfd9227cd17e83925cb05551faf4a5e2fcf53bd3eb52b9f952f64909fcd0b08",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "テストのパスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[2].path"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

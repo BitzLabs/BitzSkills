@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "failed",
+      "contextDigest": "sha256:61e7f02b3d4f8079727a5fc8ed246491b08e40ca9e8bdb59ccfb61e7de9ecd1d",
+      "statements": [
+        "platform::REQ-001:AC-01"
+      ],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "パスapps/web/t.pyの解決先がワークスペースplatformの所有領域の外です",
+          "source": {
+            "kind": "file",
+            "workspaceId": "platform",
+            "path": ".spec/requirements/REQ-001.md",
+            "key": "tests[1].path"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}
