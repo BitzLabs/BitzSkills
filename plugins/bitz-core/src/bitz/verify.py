@@ -878,12 +878,15 @@ def _plan_and_run_bindings(
     ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
     実効`cwd`の解決先が所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
 
-    戻り値は``(commands_by_key, status_by_key, blocked, top_diagnostics)``。``blocked``は起動前に遮断したテスト割当ての
-    ``(workspace_id, コマンド名) -> 診断``で、その診断は``top_diagnostics``にも含む。
+    戻り値は``(commands_by_key, status_by_key, blocked, launched, top_diagnostics)``。``blocked``は起動前に遮断したテスト割当ての
+    ``(workspace_id, コマンド名) -> 診断``、``launched``は起動した後に検出した診断（タイムアウト・シグナル・起動失敗）の
+    ``(workspace_id, コマンド名) -> 診断``で、どちらの診断も``top_diagnostics``にも含む。単一ワークスペースと複合ワークスペースの単独の操作は
+    ``top_diagnostics``をそのまま最上位へ置き、``--all-workspaces``は両方をテスト割当てを所有するワークスペースへ置く（`verify` §6）。
     """
 
     plan: dict[tuple[str, str], dict] = {}
     blocked: dict[tuple[str, str], dict] = {}
+    launched: dict[tuple[str, str], dict] = {}
     top_diagnostics: list[dict] = []
     config_untracked_cache: dict[str, bool] = {}
 
@@ -996,7 +999,9 @@ def _plan_and_run_bindings(
             else:
                 summary = messages.verify_timeout(effective_timeout)
                 code = "SPEC-VERIFY-TIMEOUT-001"
-            top_diagnostics.append(_env_diag(code, "error", "error", summary, "command", f"{ws_id}::{name}"))
+            launched_diag = _env_diag(code, "error", "error", summary, "command", f"{ws_id}::{name}")
+            launched[(ws_id, name)] = launched_diag
+            top_diagnostics.append(launched_diag)
         status_by_key[(ws_id, name)] = status
         commands_by_key[(ws_id, name)] = {
             "bindingId": f"{ws_id}::{name}",
@@ -1017,7 +1022,7 @@ def _plan_and_run_bindings(
             "durationMs": outcome_run["duration_ms"],
         }
 
-    return commands_by_key, status_by_key, blocked, top_diagnostics
+    return commands_by_key, status_by_key, blocked, launched, top_diagnostics
 
 
 def _apply_binding_results(target_entries: list[dict], blocked_keys: dict[tuple[str, str], dict], status_by_key: dict[tuple[str, str], str]) -> None:
@@ -1306,7 +1311,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if limit_stop is not None:
         return limit_stop
 
-    commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
+    commands_by_key, status_by_key, blocked_keys, _launched_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for,
         multi_root_id=multi_pre.root_id if multi_active and multi_pre is not None else None,
@@ -1525,15 +1530,17 @@ def _run_all_workspaces_members(
             )
         )
 
-    commands_by_key, status_by_key, blocked_keys, binding_top_diags = _plan_and_run_bindings(
+    commands_by_key, status_by_key, blocked_keys, launched_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for, multi_root_id=pre.root_id,
     )
-    # 起動前に遮断した診断（skip-binding）は、テスト割当てを所有するワークスペースへ1件だけ置く（verify.md §6）。
-    blocked_diag_ids = {id(diag) for diag in blocked_keys.values()}
-    for (ws_id, _name), diag in blocked_keys.items():
+    # 起動前に遮断した診断（skip-binding）と、起動した後に検出した診断（タイムアウト・シグナル・起動失敗）は、
+    # テスト割当てを所有するワークスペースへ1件だけ置き、最上位へ複製しない（verify.md §6）。
+    owned_diags = {**blocked_keys, **launched_keys}
+    owned_diag_ids = {id(diag) for diag in owned_diags.values()}
+    for (ws_id, _name), diag in owned_diags.items():
         per_ws_extra_diags[ws_id].append(diag)
-    top_diagnostics.extend(d for d in binding_top_diags if id(d) not in blocked_diag_ids)
+    top_diagnostics.extend(d for d in binding_top_diags if id(d) not in owned_diag_ids)
 
     all_target_entries = [e for wid, _, _ in workspaces for e in per_ws_target_entries[wid]]
     _apply_binding_results(all_target_entries, blocked_keys, status_by_key)
