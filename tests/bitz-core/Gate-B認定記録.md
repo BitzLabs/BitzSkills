@@ -1259,3 +1259,24 @@ Core固有の単体試験は1158件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1200件がすべて成功した。
+
+## 2026-11-08: verifyがテスト対応のパスとcoversを検査するようにした後のStep 1〜5の再判定
+
+`verify.py`（`_make_test_checker`）と`relations.check_coverage`で、`verify`がその検証対象が使うテスト対応のテストのパスの存在と所有境界、`covers`の妥当性を検査し、
+違反は`check`と同じ診断で検証対象を`failed`、`skip-target`とするようにした（N2、実装の確認事項C92、PR-cの独立レビューのM1）。これを固定する
+`SINGLE-175-01`〜`08`（Step 4）と`MULTI-062-01`〜`07`（Step 5）を追加し、不正な`covers`を入力に持っていた`MULTI-039-03`・`04`の入力を適法な形に直した
+（診断と状態の期待値は保つ）。修正前のCore（コミット`bd1aa8a0`の版）では、追加した15件のうち陽性の11件が非成功となり、対照の4件と既存のfixtureは通過する
+（訂正後の`MULTI-039-03`・`04`の入力は、修正前のCoreでも通過する）。修正後のCoreでは678件すべてが`passed`となる。
+
+コミット`95561a74d7e7feeb8f7d0b1e9dc1a490545c2916`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 678件（`SINGLE-175-01`〜`08`、`MULTI-062-01`〜`07`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`946738c49fb696ea1250236701aa777ff846e2df679f72e4d81f2cf3dc3cda3f` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1220件がすべて成功した。
