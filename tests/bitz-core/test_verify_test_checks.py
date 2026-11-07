@@ -9,7 +9,7 @@
 - テストのパスの存在と所有境界は`check`と同じ規則、`covers`の妥当性は文書仕様のテスト対応の規則（(a)〜(c)、複合の横断は直接`refines`だけ）で判定する。
 - 違反は`check`と同じ診断（不在・不正は`SPEC-PATH-INVALID-001`、複合ワークスペースで所有領域の外は`SPEC-MULTI-OWNERSHIP-001`、
   `covers`は`SPEC-TEST-COVERAGE-001`。文言と発生元は同じ）を検証対象の`diagnostics`へ返し、その検証対象は`failed`、`bindingRefs: []`で、
-  テストを起動せず、カバレッジにも数えない（`skip-target`）。独立した検証対象は続ける。
+  テストを起動しない（`skip-target`）。カバレッジ（§4の3.）は宣言どおりのテスト対応で数える。独立した検証対象は続ける。
 - 検証対象が使わないテスト対応と`implements`は検査しない（`check`の責務）。
 
 試験名の接頭辞: `test_defect_`は修正前のCoreで失敗する（欠陥の検出）、`test_control_`は修正前のCoreでも通る（対照）。
