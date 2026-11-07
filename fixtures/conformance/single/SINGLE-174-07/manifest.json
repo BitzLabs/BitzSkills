@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-174-07",
+  "description": "cwdがシンボリックリンクで、テストが字句ではcwdの外でも実パスでは配下なら通し、引数列は実パスどうしの相対にする",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

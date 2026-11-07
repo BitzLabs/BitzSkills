@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      "pkg": {
+        "kind": "directory"
+      },
+      "pkg/.spec": {
+        "kind": "directory"
+      },
+      "pkg/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      "pkg/.spec/requirements": {
+        "kind": "directory"
+      },
+      "pkg/.spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "33956754ed1764080a4f44b9744218eda184a677c01126f49b25f22b0e933df0"
+      },
+      "pkg/ext": {
+        "kind": "symlink",
+        "target": "../shared"
+      },
+      "shared": {
+        "kind": "directory"
+      },
+      "shared/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\tpkg/.spec/bitz.yaml\n100644 fa0cfcbe6ed46344e450231e00594fcb83e92e7f 0\tpkg/.spec/requirements/REQ-001.md\n120000 8fba6b66ae1b3d5c30626aa5a86283c4e96d80b2 0\tpkg/ext\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tshared/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      "pkg": {
+        "kind": "directory"
+      },
+      "pkg/.spec": {
+        "kind": "directory"
+      },
+      "pkg/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      "pkg/.spec/requirements": {
+        "kind": "directory"
+      },
+      "pkg/.spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "33956754ed1764080a4f44b9744218eda184a677c01126f49b25f22b0e933df0"
+      },
+      "pkg/ext": {
+        "kind": "symlink",
+        "target": "../shared"
+      },
+      "shared": {
+        "kind": "directory"
+      },
+      "shared/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\tpkg/.spec/bitz.yaml\n100644 fa0cfcbe6ed46344e450231e00594fcb83e92e7f 0\tpkg/.spec/requirements/REQ-001.md\n120000 8fba6b66ae1b3d5c30626aa5a86283c4e96d80b2 0\tpkg/ext\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tshared/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
