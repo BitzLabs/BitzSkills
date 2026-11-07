@@ -29,6 +29,7 @@ from . import gitutil
 from . import messages
 from . import multirelate
 from . import multiws
+from . import pathown
 from . import procrun
 from . import relations as relations_mod
 from . import reportio
@@ -481,6 +482,10 @@ def _expand_argv(argv_template: list[str], tests_workspace_rel: list[str], cwd_a
     for t in tests_workspace_rel:
         test_abs = os.path.normpath(os.path.join(workspace_root, t))
         rel = os.path.relpath(test_abs, cwd_abs)
+        if rel == os.pardir or rel.startswith(os.pardir + os.sep) or os.path.isabs(rel):
+            # 字句では`cwd`の外だが、実パスでは配下にあるテスト（`cwd`がシンボリックリンクのとき）。プロセスの`cwd`は実体の
+            # ディレクトリなので、実パスどうしの相対パスで示す（字句の相対パスは実体の`..`と一致しない）。
+            rel = os.path.relpath(pathown.real_path(test_abs), pathown.real_path(cwd_abs))
         rel_tests.append(rel.replace(os.sep, "/"))
     index = argv_template.index("{tests}")
     return list(argv_template[:index]) + rel_tests + list(argv_template[index + 1 :])
@@ -507,7 +512,8 @@ def _process_single_target(
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
     ``needed_pairs``は``(コマンドを所有するワークスペースのID, コマンド名, ワークスペースからの相対パスで示したテストのパス,
-    複合ワークスペースの正規形式の`covers`のタグ)``。呼び出し側がこれを``needs``（テスト割当ての計画）へ集約する。
+    複合ワークスペースの正規形式の`covers`のタグ, テストのパスを宣言した仕様文書のパス, その文書の`tests`の添字)``。
+    呼び出し側がこれを``needs``（テスト割当ての計画）へ集約する。
     ``entry_out``はテスト割当ての実行前の中間の形で、``bindingRefs``に必要なテスト割当てを列挙し、
     ``_needed``（``(ws, name)``の集合）を一時的なフィールドとして持つ（呼び出し側がテスト割当ての停止（`blocked`）や
     実行結果を反映した後に取り除く）。
@@ -521,7 +527,7 @@ def _process_single_target(
         "bindingRefs": [],
         "diagnostics": [],
     }
-    needed_pairs: list[tuple[str, str, str, str]] = []
+    needed_pairs: list[tuple[str, str, str, str, str, int]] = []
 
     def _canon_id(x: str) -> str:
         return context_mod._canon(x, workspace_id) if multi_active else x
@@ -682,7 +688,7 @@ def _process_single_target(
                 _add_binding_missing(owner, doc_entry.path, idx, name)
                 continue
             for c in (t.get("covers") or []):
-                needed_pairs.append((owner, name, t["path"], _canon_id(c)))
+                needed_pairs.append((owner, name, t["path"], _canon_id(c), doc_entry.path, idx))
     if target_statements:
         cover_ids = list(target_statements)
         for cover_id in cover_ids:
@@ -692,7 +698,7 @@ def _process_single_target(
                 if not name or name not in cmds:
                     _add_binding_missing(owner, doc_entry.path, idx, name)
                     continue
-                needed_pairs.append((owner, name, t["path"], _canon_id(cover_id)))
+                needed_pairs.append((owner, name, t["path"], _canon_id(cover_id), doc_entry.path, idx))
 
     if binding_missing_diags:
         _finish(binding_missing_diags, "blocked")
@@ -700,8 +706,8 @@ def _process_single_target(
         entry_out["contextDigest"] = context_digest
         return entry_out, []
 
-    entry_out["bindingRefs"] = sorted({f"{ws}::{name}" for ws, name, _p, _c in needed_pairs})
-    entry_out["_needed"] = sorted({(ws, name) for ws, name, _p, _c in needed_pairs})
+    entry_out["bindingRefs"] = sorted({f"{ws}::{name}" for ws, name, *_rest in needed_pairs})
+    entry_out["_needed"] = sorted({(ws, name) for ws, name, *_rest in needed_pairs})
     if should_untested or relation_warning_diags:
         _finish(coverage_diags if should_untested else [], "passed_with_warnings" if should_untested else None)
     return entry_out, needed_pairs
@@ -712,22 +718,16 @@ def _cwd_ownership_diag(
 ) -> dict | None:
     """実効`cwd`の実パスが所有領域の外なら、起動を遮断する診断を返す（ワークスペース・設定仕様 §6、複合ワークスペース仕様 §5・§5.1）。
 
-    所有領域は、テスト割当てを所有するワークスペースのルートの実パスの配下（境界を含む）とし、パスのセグメントの境界で
-    包含を判定する。複合ワークスペースのルートワークスペースは、メンバーのルートの配下を所有しない。字句の検査は設定の
-    検査（config._cwd_lexically_valid）が済ませている。単一ワークスペースは`SPEC-VERIFY-BLOCKED-001`、複合ワークスペースは
-    `SPEC-MULTI-OWNERSHIP-001`とする。
+    所有領域は、テスト割当てを所有するワークスペースのルートの実パスの配下（境界を含む）とし、実パスのファイルシステム上の
+    同一性でセグメントの境界の包含を判定する（:func:`bitz.pathown.owns`）。複合ワークスペースのルートワークスペースは、
+    メンバーのルートの配下を所有しない。字句の検査は設定の検査（config._cwd_lexically_valid）が済ませている。
+    単一ワークスペースは`SPEC-VERIFY-BLOCKED-001`、複合ワークスペースは`SPEC-MULTI-OWNERSHIP-001`とする。
     """
 
-    def _within(path: str, base: str) -> bool:
-        return path == base or path.startswith(base.rstrip(os.sep) + os.sep)
-
-    real = os.path.realpath(cwd_abs)
-    outside = not _within(real, os.path.realpath(ws_root_by_id[ws_id]))
-    if not outside and multi_root_id is not None and ws_id == multi_root_id:
-        outside = any(
-            _within(real, os.path.realpath(root)) for other, root in ws_root_by_id.items() if other != ws_id
-        )
-    if not outside:
+    real = pathown.real_path(cwd_abs)
+    own_real = pathown.real_path(ws_root_by_id[ws_id])
+    roots_real = [pathown.real_path(root) for root in ws_root_by_id.values()]
+    if pathown.owns(real, own_real, roots_real):
         return None
     key = f"verify.commands.{name}.cwd"
     if multi_root_id is None:
@@ -760,7 +760,8 @@ def _plan_and_run_bindings(
     effective_timeout_for,
     multi_root_id: str | None = None,
 ):
-    """``needs``（``(workspace_id, コマンド名) -> {"tests": set, "covers": set}``）からテスト割当ての実行計画を
+    """``needs``（``(workspace_id, コマンド名) -> {"tests": set, "covers": set, "decls": set}``。``decls``は
+    ``(宣言した仕様文書のパス, その文書の`tests`の添字, テストのパス)``の集合）からテスト割当ての実行計画を
     作り、ワークスペースの処理順（``ws_root_by_id``の挿入順）、コマンド名の辞書順で逐次実行する。
 
     ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
@@ -809,16 +810,19 @@ def _plan_and_run_bindings(
         elif (ownership := _cwd_ownership_diag(ws_id, name, cmd_cwd_rel, cwd_abs, ws_root_by_id, multi_root_id)) is not None:
             diag = ownership
         else:
-            outside = []
-            for t in tests_sorted:
-                test_abs = os.path.normpath(os.path.join(workspace_root, t))
-                rel = os.path.relpath(test_abs, cwd_abs)
-                if rel.startswith("..") or os.path.isabs(rel):
-                    outside.append(t)
+            # テストのパスと実効`cwd`の包含は、両方を実パスにして判定する（ワークスペース・設定仕様 §6）。
+            real_cwd = pathown.real_path(cwd_abs)
+            outside = {
+                t for t in tests_sorted
+                if not pathown.within(pathown.real_path(os.path.join(workspace_root, t)), real_cwd)
+            }
             if outside:
+                # 発生元は、配下にないテストのパスを宣言した仕様文書のうち、パスの辞書順で最初の文書とし、`key`はその文書の
+                # `tests[i].path`（iは最も小さい添字）とする（verify.md §5.1）。
+                doc_path, test_index, _test_path = min(d for d in bucket["decls"] if d[2] in outside)
                 diag = _file_diag(
                     "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_TEST_OUTSIDE_CWD,
-                    ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.cwd",
+                    ws_id, doc_path, key=f"tests[{test_index}].path",
                 )
             else:
                 argv_template = cmd_def["argv"]
@@ -1170,10 +1174,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             cycle_diagnostics_for=cycle_diagnostics_for,
         )
         target_entries.append(entry_out)
-        for ws_id, name, path, cover in needed_pairs:
-            bucket = needs.setdefault((ws_id, name), {"tests": set(), "covers": set()})
+        for ws_id, name, path, cover, doc_path, test_index in needed_pairs:
+            bucket = needs.setdefault((ws_id, name), {"tests": set(), "covers": set(), "decls": set()})
             bucket["tests"].add(path)
             bucket["covers"].add(cover)
+            bucket["decls"].add((doc_path, test_index, path))
 
     # 対象展開とテスト割当ての重複排除が終わった実行計画を確定した後、コマンドを1件も起動する前に上限を判定する。
     limit_stop = _plan_limit_stop(len(needs))
@@ -1355,10 +1360,11 @@ def _run_all_workspaces_members(
                 cycle_diagnostics_for=cycle_diagnostics_for,
             )
             per_ws_target_entries[wid].append(entry_out)
-            for cws, name, path, cover in needed_pairs:
-                bucket = needs.setdefault((cws, name), {"tests": set(), "covers": set()})
+            for cws, name, path, cover, doc_path, test_index in needed_pairs:
+                bucket = needs.setdefault((cws, name), {"tests": set(), "covers": set(), "decls": set()})
                 bucket["tests"].add(path)
                 bucket["covers"].add(cover)
+                bucket["decls"].add((doc_path, test_index, path))
 
     # 実行計画（`needs`）を確定した後、コマンドを1件も起動する前（`_plan_and_run_bindings`より前）に上限を判定する。
     limit_diag = _plan_limit_diagnostic(len(needs), config_by_ws, workspaces, pre.root_id)

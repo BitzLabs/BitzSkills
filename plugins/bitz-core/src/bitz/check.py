@@ -29,6 +29,7 @@ from . import gitutil
 from . import messages
 from . import multirelate
 from . import multiws
+from . import pathown
 from . import relations as relations_mod
 from . import reportio
 from . import targetexpand
@@ -102,13 +103,14 @@ def _task_change_ownership_diag(
     """TASKの変更パスの所有境界を、基準版と現在版の双方のシンボリックリンクで判定する（複合ワークスペース仕様 §5.2）。
 
     ``status``が``"A"``（追加）なら現在版だけ、``"D"``（削除）なら基準版だけを検査する。それ以外
-    （変更・リネーム）は基準版と現在版の双方を検査する。シンボリックリンクでなければ所有境界違反は成立しない
-    （宣言済みのパスは既にワークスペースのルートからの相対で構成されているため）。
+    （変更・リネーム）は基準版と現在版の双方を検査する。現在版は上位のディレクトリのシンボリックリンクも解決した実パスで、
+    基準版はシンボリックリンクのエントリのリンク先を実パスにして、所有領域（:func:`bitz.pathown.owns`）の内か判定する。
     """
 
     own_real = real_roots.get(workspace_id)
     if own_real is None:
         return None
+    all_roots_real = list(real_roots.values())
 
     base_violation = False
     if status != "A" and base_commit is not None and git.available and git.executable:
@@ -123,18 +125,19 @@ def _task_change_ownership_diag(
                     target_text = None
             if target_text:
                 base_dir = os.path.dirname(os.path.join(workspace_root, path))
-                resolved = os.path.normpath(os.path.join(base_dir, target_text))
+                resolved = os.path.join(base_dir, target_text)
                 if os.path.exists(resolved):
-                    real = os.path.realpath(resolved)
-                    if not (real == own_real or real.startswith(own_real + os.sep)):
+                    real = pathown.real_path(resolved)
+                    if not pathown.owns(real, own_real, all_roots_real):
                         base_violation = True
 
     current_violation = False
     if status != "D":
         abs_current = os.path.join(workspace_root, path)
-        if os.path.islink(abs_current):
-            real = os.path.realpath(abs_current)
-            if os.path.exists(real) and not (real == own_real or real.startswith(own_real + os.sep)):
+        # 末端だけでなく上位のディレクトリのシンボリックリンクも解決した実パスで判定する（手順4）。
+        if os.path.lexists(abs_current):
+            real = pathown.real_path(abs_current)
+            if os.path.exists(real) and not pathown.owns(real, own_real, all_roots_real):
                 current_violation = True
 
     if base_violation:
