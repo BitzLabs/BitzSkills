@@ -106,6 +106,7 @@ from conformance import frontmatter_glob_fixtures
 from conformance import path_lexical_fixtures
 from conformance import real_path_ownership_fixtures
 from conformance import verify_test_check_fixtures
+from conformance import multi_all_workspaces_output_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -10037,6 +10038,262 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(len(outcome["errors"]), 1)
                 self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
                 self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def copy_all_workspaces_output_fixture(self, temporary, identifier):
+        """検査対象のfixtureと、既存のfixtureの入力と結果を使うケースの元のfixtureを複製する。"""
+        module = multi_all_workspaces_output_fixtures
+        root = Path(temporary)
+        names = [identifier] + ([module.DERIVED[identifier]["source"]] if identifier in module.DERIVED else [])
+        for name in names:
+            shutil.copytree(audit.FIXTURES / "multi" / name, root / "multi" / name, symlinks=True)
+        for name in ("manifest", "result", "side-effects", "frontmatter"):
+            shutil.copy2(schema_path(audit.FIXTURES, name), root)
+        return root
+
+    def test_multi_all_workspaces_output_fixtures(self):
+        """`MULTI-063-01`〜`06`: 全体操作のtext出力と、全体のverifyの起動した後の診断の置き場所を固定する（確認事項C94・C89）。"""
+        module = multi_all_workspaces_output_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"MULTI-063-{number:02d}" for number in range(1, 7)])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_all_workspaces_output_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_multi_all_workspaces_output_expected_results(self):
+        """期待結果の要点（生成器の関数を介さないリテラル）: textの全文、件数の導出、起動した後の診断の置き場所、対照。"""
+        def fixture(identifier):
+            return audit.FIXTURES / "multi" / identifier
+
+        def text(identifier, operation):
+            return (fixture(identifier) / f"expected/{operation}.txt").read_text()
+
+        self.assertEqual(text("MULTI-063-01", "check"), (
+            "check failed scope=all-workspaces targets=3 diagnostics=3 (0ms)\n"
+            "api:.spec/bitz.yaml::: warning: SPEC-CONFIG-UNKNOWN-001: 未知の設定キーです\n"
+            "api:.spec/requirements/REQ-001.md::: error: SPEC-RELATION-MISSING-001: 強い関係の参照先が存在しません\n"
+            "web:.spec/bitz.yaml::: warning: SPEC-INPUT-BOM-001: 設定ファイル先頭のBOMを除いて解析を続行します\n"))
+        self.assertEqual(text("MULTI-063-03", "verify"), (
+            "verify blocked scope=all-workspaces targets=0 diagnostics=4 (0ms)\n"
+            "platform:.spec/bitz.yaml::: error: SPEC-VERIFY-BLOCKED-002: 検証対象がありません\n"
+            "platform:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません\n"
+            "api:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません\n"
+            "web:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません\n"))
+        second = text("MULTI-063-02", "verify").splitlines()
+        self.assertEqual(second[0], "verify blocked scope=all-workspaces targets=3 diagnostics=5 (0ms)")
+        self.assertEqual([line.split(":", 1)[0] for line in second[1:]], ["platform", "api", "api", "web", "web"])
+        launch = [
+            "command:::: error: SPEC-VERIFY-COMMAND-001: コマンドがシグナルで終了しました",
+            "command:::: error: SPEC-VERIFY-COMMAND-001: コマンドの実行形式をOSが拒否しプロセスを生成できません",
+            "command:::: error: SPEC-VERIFY-TIMEOUT-001: コマンドが実効タイムアウト1秒で終了しませんでした",
+        ]
+        self.assertEqual(text("MULTI-063-05", "verify").splitlines(), ["verify error scope=all-workspaces targets=3 diagnostics=3 (0ms)", *launch])
+        # 件数の導出: textの対象数は、すべてのワークスペースの`checkedDocumentCount`または`targetResults`の和。
+        check = json.loads((fixture("MULTI-063-01") / "expected/check.json").read_text())
+        self.assertEqual(sum(w["checkedDocumentCount"] for w in check["workspaces"]), 3)
+        self.assertEqual(sum(len(w["diagnostics"]) for w in check["workspaces"]) + len(check["diagnostics"]), 3)
+        # 起動した後の診断は、テスト割当てを所有するワークスペースへ1件ずつあり、最上位は空である。
+        for identifier in ("MULTI-063-04", "MULTI-063-05"):
+            result = json.loads((fixture(identifier) / "expected/verify.json").read_text())
+            self.assertEqual((result["status"], result["diagnostics"]), ("error", []))
+            self.assertEqual([(w["id"], [(d["code"], d["source"]["identifier"]) for d in w["diagnostics"]], [c["termination"] for c in w["commands"]],
+                               [c["timeoutSeconds"] for c in w["commands"]]) for w in result["workspaces"]], [
+                ("platform", [("SPEC-VERIFY-COMMAND-001", "platform::default")], ["signal"], [300]),
+                ("api", [("SPEC-VERIFY-COMMAND-001", "api::default")], ["spawn_error"], [300]),
+                ("web", [("SPEC-VERIFY-TIMEOUT-001", "web::default")], ["timeout"], [1])])
+            self.assertTrue(all(entry["status"] == "error" for w in result["workspaces"] for entry in [w, *w["targetResults"]]))
+        # 対照: 複合ワークスペースの単独の操作は最上位へ置く。
+        control = json.loads((fixture("MULTI-063-06") / "expected/verify.json").read_text())
+        self.assertNotIn("workspaces", control)
+        self.assertEqual([(d["code"], d["source"]["identifier"]) for d in control["diagnostics"]], [("SPEC-VERIFY-TIMEOUT-001", "web::default")])
+        # 起動条件: textの3件は`--format`を省略し、JSONの3件は`--format json`を持つ。
+        manifests = {name: json.loads((fixture(name) / "manifest.json").read_text()) for name in ("MULTI-063-0%d" % n for n in range(1, 7))}
+        self.assertEqual({name: (m["expect"]["stdout"], "--format" in m["invocation"]["argv"], m["expect"]["exitCode"]) for name, m in manifests.items()}, {
+            "MULTI-063-01": ("text", False, 1), "MULTI-063-02": ("text", False, 2), "MULTI-063-03": ("text", False, 2),
+            "MULTI-063-04": ("json", True, 3), "MULTI-063-05": ("text", False, 3), "MULTI-063-06": ("json", True, 3)})
+        # 実行ビットを持つのは、シグナルのスクリプトと、実行形式のないファイルだけ。
+        self.assertEqual(sorted(path.relative_to(fixture("MULTI-063-04") / "repo").as_posix() for path in (fixture("MULTI-063-04") / "repo").rglob("*")
+                                if path.is_file() and path.stat().st_mode & 0o111), ["bin/signal.sh", "services/api/bin/badformat"])
+        # 承認済みの文言だけ（新しい文言はない）。
+        record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
+        for phrase in ("コマンドがシグナルで終了しました", "コマンドの実行形式をOSが拒否しプロセスを生成できません", "コマンドが実効タイムアウト{seconds}秒で終了しませんでした"):
+            self.assertIn(phrase, record)
+
+    def test_multi_all_workspaces_output_reference_text(self):
+        """参照計算の規則: 最上位が先、続けてワークスペースの処理順にワークスペースの診断と検証対象の診断、制御文字は小文字のUnicodeエスケープ。"""
+        module = multi_all_workspaces_output_fixtures
+
+        def diag(workspace, summary):
+            return {"code": "C", "severity": "error", "resultStatus": "failed", "summary": summary, "source": {"kind": "file", "workspaceId": workspace, "path": "p"}}
+
+        def target(name, diagnostics):
+            return {"target": name, "diagnostics": diagnostics}
+
+        result = {"operation": "verify", "status": "failed", "scope": "all-workspaces", "durationMs": 1, "diagnostics": [diag("z", "top")],
+                  "workspaces": [{"id": "z", "diagnostics": [diag("z", "ws-z")], "targetResults": [target("z::B", [diag("z", "tb")]), target("z::A", [diag("z", "ta")])]},
+                                 {"id": "a", "diagnostics": [diag("a", "ws-a")], "targetResults": []}]}
+        lines = module.reference_text(result).splitlines()
+        self.assertEqual(lines[0], "verify failed scope=all-workspaces targets=2 diagnostics=5 (1ms)")
+        # ワークスペースの処理順（zの次にa）を保ち、検証対象はID順（z::A、z::B）。
+        self.assertEqual([line.rsplit(": ", 1)[1] for line in lines[1:]], ["top", "ws-z", "ta", "tb", "ws-a"])
+        check = {"operation": "check", "status": "passed", "scope": "all-workspaces", "durationMs": 0, "diagnostics": [],
+                 "workspaces": [{"id": "a", "checkedDocumentCount": 2, "diagnostics": []}, {"id": "b", "checkedDocumentCount": 5, "diagnostics": []}]}
+        self.assertEqual(module.reference_text(check), "check passed scope=all-workspaces targets=7 diagnostics=0 (0ms)\n")
+        escaped = {"operation": "check", "status": "failed", "scope": "all-workspaces", "durationMs": 0, "diagnostics": [],
+                   "workspaces": [{"id": "a", "checkedDocumentCount": 1, "diagnostics": [
+                       {**diag("a", "x\u001b[31m\ty\u007f\u0085"), "suggestedAction": "do\nit"}]}]}
+        self.assertEqual(module.reference_text(escaped).splitlines()[1:], [
+            "a:p:::" + " error: C: x\\u001b[31m\\u0009y\\u007f\\u0085", "  -> do\\u000ait"])
+
+    def test_multi_all_workspaces_output_audit_rejects_changes(self):
+        """text・結果・起動条件・入力・実行ビットの改変（修正前のCoreの出力への取り違えを含む）を拒否する（陰性対照）。"""
+        module = multi_all_workspaces_output_fixtures
+
+        def text_edit(old, new):
+            def edit(fixture, operation):
+                path = fixture / f"expected/{operation}.txt"
+                self.assertIn(old, path.read_text())
+                path.write_text(path.read_text().replace(old, new, 1))
+            return edit
+
+        def lines_swap(first, second):
+            def edit(fixture, operation):
+                path = fixture / f"expected/{operation}.txt"
+                lines = path.read_text().splitlines(keepends=True)
+                lines[first], lines[second] = lines[second], lines[first]
+                path.write_text("".join(lines))
+            return edit
+
+        def result_edit(change):
+            def edit(fixture, operation):
+                path = fixture / f"expected/{operation}.json"
+                value = json.loads(path.read_text())
+                change(value)
+                path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+            return edit
+
+        def move_to_top(value):
+            workspace = value["workspaces"][-1]
+            value["diagnostics"].append(workspace["diagnostics"].pop())
+
+        def duplicate_to_top(value):
+            value["diagnostics"].append(copy.deepcopy(value["workspaces"][-1]["diagnostics"][0]))
+
+        def manifest_edit(change):
+            def edit(fixture, operation):
+                path = fixture / "manifest.json"
+                value = json.loads(path.read_text())
+                change(value)
+                path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+            return edit
+
+        def drop_file(name):
+            return lambda fixture, operation: (fixture / name).unlink()
+
+        def chmod(name, mode):
+            return lambda fixture, operation: (fixture / name).chmod(mode)
+
+        cases = [
+            # 修正前のCoreの出力への取り違え: 件数が0、ワークスペースの診断の行がない、最上位へ置く。
+            ("MULTI-063-01", "check", text_edit("diagnostics=3", "diagnostics=0")),
+            ("MULTI-063-01", "check", text_edit("targets=3", "targets=1")),
+            ("MULTI-063-01", "check", text_edit("\nweb:.spec/bitz.yaml::: warning: SPEC-INPUT-BOM-001: 設定ファイル先頭のBOMを除いて解析を続行します\n", "\n")),
+            ("MULTI-063-02", "verify", text_edit("targets=3", "targets=0")),
+            ("MULTI-063-02", "verify", lines_swap(1, 2)),
+            ("MULTI-063-03", "verify", lines_swap(1, 2)),
+            ("MULTI-063-03", "verify", lines_swap(1, 4)),
+            ("MULTI-063-05", "verify", text_edit("targets=3", "targets=0")),
+            ("MULTI-063-05", "verify", lines_swap(1, 3)),
+            ("MULTI-063-05", "verify", text_edit("command::::", "command:::")),
+            ("MULTI-063-05", "verify", drop_file("expected/verify.txt")),
+            ("MULTI-063-04", "verify", result_edit(move_to_top)),
+            ("MULTI-063-04", "verify", result_edit(duplicate_to_top)),
+            ("MULTI-063-04", "verify", result_edit(lambda v: v["workspaces"][0]["diagnostics"].clear())),
+            ("MULTI-063-04", "verify", result_edit(lambda v: v["workspaces"][2]["commands"][0].update(timeoutSeconds=300))),
+            ("MULTI-063-05", "verify", result_edit(move_to_top)),
+            ("MULTI-063-06", "verify", result_edit(lambda v: v.update(diagnostics=[]))),
+            ("MULTI-063-06", "verify", manifest_edit(lambda v: v["invocation"]["argv"].__setitem__(1, "--all-workspaces"))),
+            ("MULTI-063-01", "check", manifest_edit(lambda v: v["invocation"]["argv"].extend(["--format", "json"]))),
+            ("MULTI-063-05", "verify", manifest_edit(lambda v: v["expect"].update(exitCode=2))),
+            ("MULTI-063-04", "verify", drop_file("repo/bin/signal.sh")),
+            ("MULTI-063-04", "verify", chmod("repo/bin/signal.sh", 0o644)),
+            ("MULTI-063-04", "verify", chmod("repo/services/api/bin/badformat", 0o644)),
+            ("MULTI-063-04", "verify", chmod("repo/tests/ok.py", 0o755)),
+            ("MULTI-063-04", "verify", lambda fixture, operation: (fixture / "repo/extra.txt").write_text("x")),
+            ("MULTI-063-01", "check", lambda fixture, operation: (fixture / "repo/extra.txt").write_text("x")),
+        ]
+        for identifier, operation, edit in cases:
+            with self.subTest(identifier=identifier, edit=edit.__qualname__ if hasattr(edit, "__qualname__") else str(edit)), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_all_workspaces_output_fixture(temporary, identifier)
+                edit(root / "multi" / identifier, operation)
+                outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed", outcome)
+                self.assertEqual(len(outcome["errors"]), 1)
+        # 元のfixtureの入力・結果が変わったときも、textの期待値を持つfixtureが追随を要求する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_all_workspaces_output_fixture(temporary, "MULTI-063-02")
+            source = root / "multi/MULTI-039-02/expected/verify.json"
+            value = json.loads(source.read_text())
+            value["workspaces"][0]["diagnostics"].clear()
+            source.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+            self.assertEqual(module.validate(root, {"MULTI-063-02"})["status"], "Failed")
+
+    def test_multi_all_workspaces_output_reference_rejects_rewritten_expectations(self):
+        """期待値のリテラルと結果のファイルを同じ内容へ書き直しても、結果から導く参照計算と入力の検査が拒否する（リテラルの一致だけに頼らない）。"""
+        module = multi_all_workspaces_output_fixtures
+        original_launch_result = module.launch_result
+
+        def fixed_launch(change):
+            def build(form):
+                value = original_launch_result(form)
+                change(value)
+                return value
+            return build
+
+        def move_to_top(value):
+            value["diagnostics"].append(value["workspaces"][-1]["diagnostics"].pop())
+
+        def duplicate_to_top(value):
+            value["diagnostics"].append(copy.deepcopy(value["workspaces"][-1]["diagnostics"][0]))
+
+        rewritten = [("MULTI-063-04", fixed_launch(move_to_top), "全体のverifyは、起動した後の診断を最上位へ置いてはいけません"),
+                     ("MULTI-063-04", fixed_launch(duplicate_to_top), "起動した後の診断は、コマンドごとに1件だけ必要です"),
+                     # textを持つfixtureは、結果を書き直すと、結果から導くtextの参照計算が先に拒否する。
+                     ("MULTI-063-05", fixed_launch(move_to_top), "textが参照計算またはレビュー済みの期待値と異なります"),
+                     ("MULTI-063-04", fixed_launch(lambda v: v["workspaces"][0]["diagnostics"].clear()), "起動した後の診断は、コマンドごとに1件だけ必要です"),
+                     ("MULTI-063-04", fixed_launch(lambda v: v["workspaces"][1]["targetResults"][0].update(contextDigest="sha256:" + "0" * 64)), "ハッシュ値が参照計算Bと一致しません")]
+        for identifier, build, phrase in rewritten:
+            with self.subTest(identifier=identifier, phrase=phrase), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_all_workspaces_output_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                with patch.object(module, "launch_result", build):
+                    (fixture / "expected/verify.json").write_text(json.dumps(module.reviewed_result(identifier, root)))
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(len(outcome["errors"]), 1, outcome)
+                self.assertIn(phrase, outcome["errors"][0])
+        # textのリテラルと期待値のファイルを、件数の違う内容へ書き直しても、結果から導く参照計算が拒否する。
+        for identifier, operation, old, new in (("MULTI-063-01", "check", "diagnostics=3", "diagnostics=0"), ("MULTI-063-05", "verify", "targets=3", "targets=0")):
+            with self.subTest(identifier=identifier, text=new), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_all_workspaces_output_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                if identifier in module.DERIVED:
+                    cases = copy.deepcopy(module.DERIVED)
+                    cases[identifier]["expected_text"] = cases[identifier]["expected_text"].replace(old, new)
+                    changed = cases[identifier]["expected_text"]
+                    patches = [patch.object(module, "DERIVED", cases)]
+                else:
+                    changed = module.LAUNCH_TEXT.replace(old, new)
+                    patches = [patch.object(module, "LAUNCH_TEXT", changed)]
+                (fixture / f"expected/{operation}.txt").write_text(changed)
+                with patches[0]:
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(len(outcome["errors"]), 1, outcome)
+                self.assertIn("textが参照計算またはレビュー済みの期待値と異なります", outcome["errors"][0])
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

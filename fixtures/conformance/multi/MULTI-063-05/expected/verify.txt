@@ -1,0 +1,4 @@
+verify error scope=all-workspaces targets=3 diagnostics=3 (0ms)
+command:::: error: SPEC-VERIFY-COMMAND-001: コマンドがシグナルで終了しました
+command:::: error: SPEC-VERIFY-COMMAND-001: コマンドの実行形式をOSが拒否しプロセスを生成できません
+command:::: error: SPEC-VERIFY-TIMEOUT-001: コマンドが実効タイムアウト1秒で終了しませんでした

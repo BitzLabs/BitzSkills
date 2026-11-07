@@ -1,0 +1,4 @@
+check failed scope=all-workspaces targets=3 diagnostics=3 (0ms)
+api:.spec/bitz.yaml::: warning: SPEC-CONFIG-UNKNOWN-001: 未知の設定キーです
+api:.spec/requirements/REQ-001.md::: error: SPEC-RELATION-MISSING-001: 強い関係の参照先が存在しません
+web:.spec/bitz.yaml::: warning: SPEC-INPUT-BOM-001: 設定ファイル先頭のBOMを除いて解析を続行します

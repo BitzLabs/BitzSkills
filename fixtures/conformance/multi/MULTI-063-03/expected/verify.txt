@@ -1,0 +1,5 @@
+verify blocked scope=all-workspaces targets=0 diagnostics=4 (0ms)
+platform:.spec/bitz.yaml::: error: SPEC-VERIFY-BLOCKED-002: 検証対象がありません
+platform:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません
+api:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません
+web:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません

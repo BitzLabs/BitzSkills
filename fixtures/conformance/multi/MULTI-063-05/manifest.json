@@ -1,0 +1,31 @@
+{
+  "fixtureId": "MULTI-063-05",
+  "description": "全体のverifyのtext出力が、起動した後の診断を所有するワークスペースの診断として数え、ワークスペースの処理順に出す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "text",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0,
+    "textFile": "expected/verify.txt"
+  }
+}

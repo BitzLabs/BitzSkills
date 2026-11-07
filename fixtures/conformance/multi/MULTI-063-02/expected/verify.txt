@@ -1,0 +1,6 @@
+verify blocked scope=all-workspaces targets=3 diagnostics=5 (0ms)
+platform:.spec/bitz.yaml::: warning: SPEC-VERIFY-BLOCKED-002: 検証対象がありません
+api:.spec/technical/TECH-001.md::: error: SPEC-VERIFY-BLOCKED-001: コマンド名absentが設定に定義されていません
+api:.spec/technical/TECH-001.md::: error: SPEC-VERIFY-BLOCKED-001: コマンド名absentが設定に定義されていません
+web:.spec/technical/TECH-001.md::: error: SPEC-VERIFY-BLOCKED-001: コマンド名missingが設定に定義されていません
+web:.spec/technical/TECH-001.md::: error: SPEC-VERIFY-BLOCKED-001: コマンド名missingが設定に定義されていません

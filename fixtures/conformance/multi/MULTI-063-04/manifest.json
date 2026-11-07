@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-063-04",
+  "description": "全体のverifyで、起動した後の診断（シグナル・起動失敗・タイムアウト）を、テスト割当てを所有するワークスペースのdiagnosticsへ1件だけ置き、最上位へ残さない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

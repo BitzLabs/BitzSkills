@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "failed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-CONFIG-UNKNOWN-001",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "未知の設定キーです",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/bitz.yaml",
+            "key": "futureOption"
+          }
+        },
+        {
+          "code": "SPEC-RELATION-MISSING-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "強い関係の参照先が存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/requirements/REQ-001.md",
+            "key": "relations.requires"
+          },
+          "evidence": "REQ-999"
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed_with_warnings",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-INPUT-BOM-001",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "設定ファイル先頭のBOMを除いて解析を続行します",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
