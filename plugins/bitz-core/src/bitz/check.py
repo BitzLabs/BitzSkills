@@ -103,8 +103,10 @@ def _task_change_ownership_diag(
     """TASKの変更パスの所有境界を、基準版と現在版の双方のシンボリックリンクで判定する（複合ワークスペース仕様 §5.2）。
 
     ``status``が``"A"``（追加）なら現在版だけ、``"D"``（削除）なら基準版だけを検査する。それ以外
-    （変更・リネーム）は基準版と現在版の双方を検査する。現在版は上位のディレクトリのシンボリックリンクも解決した実パスで、
-    基準版はシンボリックリンクのエントリのリンク先を実パスにして、所有領域（:func:`bitz.pathown.owns`）の内か判定する。
+    （変更・リネーム）は基準版と現在版の双方を検査する。どちらもシンボリックリンクのエントリだけを対象にし、そのリンク先の実パスが
+    所有領域（:func:`bitz.pathown.owns`）の内か判定する。シンボリックリンクでない変更パスは所有境界違反にせず、TASKの境界
+    （`SPEC-TASK-BOUNDARY-001`）で扱う。Gitは上位のディレクトリのシンボリックリンクの先のパスを変更パスとして報告しないので、
+    上位のリンクを経由した変更は、そのリンク自身の変更として末端のリンクの検査に現れる。
     """
 
     own_real = real_roots.get(workspace_id)
@@ -134,8 +136,7 @@ def _task_change_ownership_diag(
     current_violation = False
     if status != "D":
         abs_current = os.path.join(workspace_root, path)
-        # 末端だけでなく上位のディレクトリのシンボリックリンクも解決した実パスで判定する（手順4）。
-        if os.path.lexists(abs_current):
+        if os.path.islink(abs_current):
             real = pathown.real_path(abs_current)
             if os.path.exists(real) and not pathown.owns(real, own_real, all_roots_real):
                 current_violation = True
