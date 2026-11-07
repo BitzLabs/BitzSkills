@@ -2253,3 +2253,23 @@ commit `d8a367a4c187c3060f6c83a92abf22be4b2268f9`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 2、Step 4、Step 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-07: `SINGLE-174`と`MULTI-061`を追加した後のGate Aの再認定
+
+所有と包含の判定を、字句ではなく実パスとファイルシステムの同一性で行うようにした（実装の確認事項C88・C90の手順4・5、新しく見つかったN1・N3、ユーザーの決定）。
+`implements`と`tests[].path`の上位のディレクトリのシンボリックリンクを解決して所有を判定し、テストのパスと実効`cwd`の包含を実パスで判定し、
+`VERIFY-TEST-OUTSIDE-CWD`の発生元を規範どおりテストを宣言した仕様文書にした。複合ワークスペース仕様 §5.1、ワークスペース・設定仕様 §6・§9、`verify` §5.1に明記した。
+これを固定する`SINGLE-174-01`〜`10`（Step 2・4）と`MULTI-061-01`〜`07`（Step 5）を追加した（ADR-051の追加、群`real_path_ownership_fixtures`）。
+matrix、Stepの割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+`SINGLE-174-01`・`02`と`MULTI-061-06`は、リポジトリの外のディレクトリとしてホストの`/usr/bin`を指す絶対パスのシンボリックリンクを使い、`/usr/bin/env`がファイルへ解決することを前提にする。
+
+commit `05a4d97bb558b50bd2c2a3e27c1643bb634362ae`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`ff33dbe873c940b577d3c1b114986da7336e3bd10b08497f08cd1f9835718255`。前回から変わったのは次の値だけである: 17件の追加によるmatrixと網羅の件数（646件→663件）、Step 2の件数（121件→127件）、Step 4の件数（90件→94件）、Step 5の件数（282件→289件）、群`real_path_ownership_fixtures`の追加、実行ビットを確かめたファイル数（3638件→3721件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2、Step 4、Step 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
