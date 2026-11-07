@@ -88,6 +88,8 @@ class SchemaAgreementTests(unittest.TestCase):
         path_pattern = re.compile(defs["pathString"]["pattern"])
         changes_pattern = re.compile(defs["changesPathString"]["pattern"])
         samples = EMPTY_SEGMENTS + ACCEPTED + ["src/a/", "./a", "a/./b", "a/..", "/abs", "a]b", "src//a/"]
+        # U+2028とU+2029は制御文字ではない。スキーマは`.`でなく`[\s\S]`を使い、ECMA-262の読み方でもCoreと同じく受理する。
+        samples += ["src/a\u2028b.py", "src/a\u2029b.py", "src/a\u2028/./b.py"]
         samples += [f"src/a{ch}b.py" for ch in CONTROL] + [f"src/a.py{ch}" for ch in CONTROL]
         for path in samples:
             with self.subTest(path=path):
