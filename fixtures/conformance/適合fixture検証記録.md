@@ -2273,3 +2273,23 @@ commit `05a4d97bb558b50bd2c2a3e27c1643bb634362ae`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 2、Step 4、Step 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-08: `SINGLE-175`と`MULTI-062`を追加し、`MULTI-039-03`・`04`の入力を訂正した後のGate Aの再認定
+
+`verify`が、その検証対象が使うテスト対応のテストのパスの存在と所有境界、`covers`の妥当性を自分で検査し、違反は`check`と同じ診断
+（`SPEC-PATH-INVALID-001`、`SPEC-TEST-COVERAGE-001`、複合ワークスペースは`SPEC-MULTI-OWNERSHIP-001`）を検証対象へ返して`failed`、`skip-target`とするようにした
+（新しく見つかったN2、実装の確認事項C92、PR-cの独立レビューのM1、ユーザーの決定）。`verify` §4・§9に明記し、診断レジストリに`VERIFY-TEST-PATH-INVALID`と
+`VERIFY-TEST-COVERAGE-INVALID`を加えた（網羅表は124条件）。これを固定する`SINGLE-175-01`〜`08`（Step 4）と`MULTI-062-01`〜`07`（Step 5）を追加した
+（ADR-051の追加、群`verify_test_check_fixtures`）。`MULTI-039-03`・`04`は、入力のTECH-001が`refines`していない規範文を`covers`する不正な入力を持っていたので、
+入力を適法な形（`refines`を文書`REQ-001`へ）に直し、診断、状態、終了コードの期待値は保った（ADR-051の期待値の訂正。変わったのは`contextDigest`と`side-effects.json`だけ）。
+
+commit `95561a74d7e7feeb8f7d0b1e9dc1a490545c2916`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`200946f4cf31f4ffa3964d4ca70013bd3b504c4f9f07d100324ca2f39a1bc39a`。前回から変わったのは次の値だけである: 15件の追加によるmatrixと網羅の件数（663件→678件）、Step 4の件数（94件→102件）、Step 5の件数（289件→296件）、群`verify_test_check_fixtures`の追加、網羅表の条件の件数（122件→124件）、実行ビットを確かめたファイル数（3721件→3841件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加・訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
