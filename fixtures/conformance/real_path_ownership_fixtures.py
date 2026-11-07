@@ -44,7 +44,7 @@ Coreの出力は根拠にしない。fixtureは、1つの原因だけを持つ�
 - 失敗した文書も数える（`SINGLE-024`は`checkedDocumentCount`が1、`checkedStatementCount`が1。`MULTI-008`の`web`は文書1件）。
 - `VERIFY-TEST-OUTSIDE-CWD`の結果の形（`blocked`、`bindingRefs`は空、`commands`は空、診断は最上位に1件）は、`SINGLE-167-07`の形（`skip-binding`）を引き継いだ。
 - リポジトリの外のディレクトリは、サンドボックスの外へfixtureが書けないので、ホストの`/usr/bin`（ほとんどのLinuxとmacOSが持つ）を指す絶対パスのシンボリックリンクで置く。
-  `/usr/bin/env`は通常のファイルである必要がある（監査が確かめる）。ホストに依存しない同じ性質（リポジトリの中でワークスペースの外）を`SINGLE-174-05`・`06`が押さえる。
+  `/usr/bin/env`はファイルへ解決する必要がある（シンボリックリンクでもよい。監査が確かめる）。ホストに依存しない同じ性質（リポジトリの中でワークスペースの外）を`SINGLE-174-05`・`06`が押さえる。
 """
 import copy
 import json
@@ -488,10 +488,10 @@ def check_conditions(identifier, repository, manifest, result):
         if {line.split("\t", 1)[1] for line in tree} != set(entries):
             raise ValueError("基準版のコミットとインデックスの追跡するパスが異なります")
     if case["link"] is not None and os.path.isabs(case["link"][1]):
-        # リポジトリの外のディレクトリは、ホストのディレクトリで、宣言するファイルは通常のファイルである必要がある。
+        # リポジトリの外のディレクトリは、ホストのディレクトリで、宣言するファイルはファイルへ解決する必要がある（シンボリックリンクでもよい）。
         target = Path(case["link"][1]) / EXTERNAL_FILE
-        if not target.is_file() or target.is_symlink() or within(os.path.realpath(repository), os.path.realpath(case["link"][1])):
-            raise ValueError("リポジトリの外のディレクトリのファイルが通常のファイルとして存在する必要があります")
+        if not target.is_file() or within(os.path.realpath(repository), os.path.realpath(case["link"][1])):
+            raise ValueError("リポジトリの外のディレクトリのファイルがファイルとして存在する必要があります")
     if case["group"] in ("check", "multi"):
         outcome = reference_outcome(identifier, repository)
         if outcome != case["outcome"]:

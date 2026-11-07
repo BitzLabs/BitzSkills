@@ -9382,8 +9382,8 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(found, expected)
         self.assertEqual({identifier for identifier, expected in links.items() if any(target.startswith("/") for target in expected.values())},
                          {"SINGLE-174-01", "SINGLE-174-02", "MULTI-061-06"})
-        # ホストの`/usr/bin/env`は通常のファイルで、リポジトリの外にある。
-        self.assertTrue(Path("/usr/bin/env").is_file() and not Path("/usr/bin/env").is_symlink())
+        # ホストの`/usr/bin/env`はリポジトリの外にあり、ファイルへ解決する（シンボリックリンクでもよい。期待値は、実パスがルートの外であることだけに依存する）。
+        self.assertTrue(Path("/usr/bin/env").is_file())
         # 承認済みの文言だけ（新しい文言はない）。
         record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
         for phrase in ("テストのパスが実効の作業ディレクトリの配下にありません", "実装パスが存在しません", "テストのパスが存在しません",
