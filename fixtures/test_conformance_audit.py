@@ -104,6 +104,7 @@ from conformance import multi_doctor_git_catalog_fixtures
 from conformance import workspace_selection_fixtures
 from conformance import frontmatter_glob_fixtures
 from conformance import path_lexical_fixtures
+from conformance import real_path_ownership_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -9271,6 +9272,432 @@ class AuditTests(unittest.TestCase):
             for path in paths:
                 check_rejected(identifier, {**module.reviewed_inputs(identifier), path: module.CODE_CONTENT}, (path, "create"))
         self.assertEqual(len(rejections), 54)
+
+    def copy_real_path_fixture(self, temporary, identifier):
+        if identifier.startswith("MULTI-"):
+            return self.copy_multi_fixture(temporary, identifier)
+        return self.copy_single_fixture(temporary, identifier)
+
+    def test_real_path_ownership_fixtures(self):
+        """`SINGLE-174-01`〜`10`と`MULTI-061-01`〜`07`: 所有と包含は、上位のディレクトリのシンボリックリンクを解決した実パスで判定する（確認事項C88・C90、N1・N3）。"""
+        module = real_path_ownership_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-174-{number:02d}" for number in range(1, 11)), *(f"MULTI-061-{number:02d}" for number in range(1, 8))])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_real_path_ownership_expected_results(self):
+        """期待結果の要点: 承認済みの文言と診断コード、キーの形、発生元の選び方、引数列、入力のシンボリックリンクの向き先。"""
+        module = real_path_ownership_fixtures
+
+        def fixture(identifier):
+            return audit.FIXTURES / ("multi" if identifier.startswith("MULTI-") else "single") / identifier
+
+        def read(identifier, name="check"):
+            return json.loads((fixture(identifier) / f"expected/{name}.json").read_text())
+
+        def manifest(identifier):
+            return json.loads((fixture(identifier) / "manifest.json").read_text())
+
+        spec = {"implements": ("実装パスが存在しません", "implements"), "tests": ("テストのパスが存在しません", "tests[0].path")}
+        for identifier in ("SINGLE-174-01", "SINGLE-174-02", "SINGLE-174-05", "SINGLE-174-06"):
+            with self.subTest(identifier=identifier):
+                summary, key = spec[module.CASES[identifier]["field"]]
+                result = read(identifier)
+                self.assertEqual(result["diagnostics"], [{"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": summary,
+                                                          "source": {"kind": "file", "workspaceId": "root", "path": ".spec/requirements/REQ-001.md", "key": key}}])
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"]), ("failed", 1))
+                self.assertEqual((result["checkedDocumentCount"], result["checkedStatementCount"]), (1, 1))
+                self.assertEqual(manifest(identifier)["invocation"]["cwd"], "pkg" if identifier in ("SINGLE-174-05", "SINGLE-174-06") else ".")
+                self.assertEqual(manifest(identifier)["invocation"]["argv"], ["check", "--full", "--base", "HEAD", "--format", "json"])
+        for identifier in ("SINGLE-174-03", "SINGLE-174-04"):
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], result["diagnostics"], manifest(identifier)["expect"]["exitCode"]), ("passed", [], 0))
+        # 通す`verify`: 引数列は、字句の相対パスが`cwd`の外を指すときだけ実パスどうしの相対にする。
+        for identifier, cwd, argv in (("SINGLE-174-07", "inner", ["/bin/true", "test_auth.py", "test_session.py"]),
+                                      ("SINGLE-174-10", ".", ["/bin/true", "ext/test_auth.py", "ext/test_session.py"])):
+            with self.subTest(identifier=identifier):
+                result = read(identifier, "verify")
+                self.assertEqual((result["status"], result["diagnostics"], result["commands"][0]["cwd"], result["commands"][0]["argv"]), ("passed", [], cwd, argv))
+                self.assertEqual(result["commands"][0]["tests"], sorted(module.declared_tests(identifier)))
+        self.assertEqual(read("SINGLE-174-07", "verify")["commands"][0]["tests"], ["real/test_auth.py", "real/test_session.py"])
+        # 遮断する`verify`: 診断は最上位に1件で、発生元は設定ファイルではなく、宣言した仕様文書とキー`tests[i].path`。テスト割当ては起動しない。
+        for identifier, source in (("SINGLE-174-08", (".spec/technical/TECH-001.md", "tests[0].path")), ("SINGLE-174-09", (".spec/technical/TECH-001.md", "tests[1].path"))):
+            with self.subTest(identifier=identifier):
+                result = read(identifier, "verify")
+                self.assertEqual(result["diagnostics"], [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
+                                                          "summary": "テストのパスが実効の作業ディレクトリの配下にありません",
+                                                          "source": {"kind": "file", "workspaceId": "root", "path": source[0], "key": source[1]}}])
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"], result["commands"]), ("blocked", 2, []))
+                self.assertEqual((result["targetResults"][0]["status"], result["targetResults"][0]["bindingRefs"], result["targetResults"][0]["diagnostics"]), ("blocked", [], []))
+        # `SINGLE-174-09`は、別の選び方（全体の最小の添字、最後の文書）と区別できる: TECH-002の`tests[0]`が全体の最小の添字になる。
+        technical = lambda name: (fixture("SINGLE-174-09") / f"repo/.spec/technical/{name}.md").read_text()
+        self.assertIn("  - path: tests/test_ok.py\n", technical("TECH-001"))
+        self.assertIn("  - path: tests/link/test_auth.py\n", technical("TECH-001"))
+        self.assertLess(technical("TECH-001").index("tests/test_ok.py"), technical("TECH-001").index("tests/link/test_auth.py"))
+        self.assertIn("refines: [REQ-001]", technical("TECH-002"))
+        self.assertTrue(technical("TECH-002").split("tests:\n")[1].startswith("  - path: tests/link/test_auth.py\n"))
+        # 複合ワークスペース: 宣言したワークスペースだけが`failed`で、診断は所有境界の違反の1件。承認済みの文言「パス{path}の解決先がワークスペース{ID}の所有領域の外です」。
+        for identifier in ("MULTI-061-01", "MULTI-061-02", "MULTI-061-04", "MULTI-061-05", "MULTI-061-06"):
+            with self.subTest(identifier=identifier):
+                case = module.CASES[identifier]
+                result = read(identifier)
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"], result["diagnostics"]), ("failed", 1, []))
+                self.assertEqual([(entry["id"], entry["status"]) for entry in result["workspaces"]],
+                                 [(workspace, "failed" if workspace == case["owner"] else "passed") for workspace in ("platform", "api", "web")])
+                declaring = [entry for entry in result["workspaces"] if entry["id"] == case["owner"]][0]
+                key = "implements" if case["field"] == "implements" else "tests[0].path"
+                document = "REQ-001" if case["owner"] == "platform" else "REQ-101"
+                self.assertEqual(declaring["diagnostics"], [{"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
+                                                             "summary": f"パス{case['path']}の解決先がワークスペース{case['owner']}の所有領域の外です",
+                                                             "source": {"kind": "file", "workspaceId": case["owner"], "path": f".spec/requirements/{document}.md", "key": key}}])
+                self.assertEqual((declaring["checkedDocumentCount"], declaring["checkedStatementCount"]), (1, 1))
+                self.assertEqual([entry["diagnostics"] for entry in result["workspaces"] if entry["id"] != case["owner"]], [[], []])
+        for identifier in ("MULTI-061-03", "MULTI-061-07"):
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"]), ("passed", 0))
+                self.assertEqual([item for entry in result["workspaces"] for item in entry["diagnostics"]], [])
+                self.assertEqual([entry["status"] for entry in result["workspaces"]], ["passed"] * 3)
+        # 入力のシンボリックリンク。向き先は絶対パスのホストのディレクトリが3件だけ（リポジトリの外。それ以外は相対パス）。
+        links = {"SINGLE-174-01": {"ext": "/usr/bin"}, "SINGLE-174-02": {"ext": "/usr/bin"}, "SINGLE-174-03": {"ext": "real"}, "SINGLE-174-04": {"ext": "real"},
+                 "SINGLE-174-05": {"pkg/ext": "../shared"}, "SINGLE-174-06": {"pkg/ext": "../shared"}, "SINGLE-174-07": {"inner": "real"},
+                 "SINGLE-174-08": {"tests/link": "../other"}, "SINGLE-174-09": {"tests/link": "../other"}, "SINGLE-174-10": {"ext": "real"},
+                 "MULTI-061-01": {"apps/web/ext": "../../tests"}, "MULTI-061-02": {}, "MULTI-061-03": {"apps/web/ext": "real"},
+                 "MULTI-061-04": {"apps/web/ext": "../../services/api/src"}, "MULTI-061-05": {"lk": "apps/web/src"},
+                 "MULTI-061-06": {"apps/web/ext": "/usr/bin"}, "MULTI-061-07": {"lib": "shared"}}
+        self.assertEqual(set(links), set(module.CASES))
+        for identifier, expected in links.items():
+            with self.subTest(identifier=identifier):
+                found = {path.relative_to(fixture(identifier) / "repo").as_posix(): os.readlink(path)
+                         for path in (fixture(identifier) / "repo").rglob("*") if path.is_symlink()}
+                self.assertEqual(found, expected)
+        self.assertEqual({identifier for identifier, expected in links.items() if any(target.startswith("/") for target in expected.values())},
+                         {"SINGLE-174-01", "SINGLE-174-02", "MULTI-061-06"})
+        # ホストの`/usr/bin/env`は通常のファイルで、リポジトリの外にある。
+        self.assertTrue(Path("/usr/bin/env").is_file() and not Path("/usr/bin/env").is_symlink())
+        # 承認済みの文言だけ（新しい文言はない）。
+        record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
+        for phrase in ("テストのパスが実効の作業ディレクトリの配下にありません", "実装パスが存在しません", "テストのパスが存在しません",
+                       "パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"):
+            self.assertIn(phrase, record)
+        # 失敗した文書も数える（`SINGLE-024`と同じ形）。
+        self.assertEqual((read("SINGLE-024")["checkedDocumentCount"], read("SINGLE-024")["checkedStatementCount"]), (1, 1))
+
+    def test_real_path_ownership_reference_rules(self):
+        """参照計算: 包含はセグメントの境界、所有者は最も深いルート、引数列は字句の相対パスが外を指すときだけ実パスどうしの相対。修正前の読み方は欠陥の有無と一致する。"""
+        module = real_path_ownership_fixtures
+        self.assertTrue(module.within("/r", "/r"))
+        self.assertTrue(module.within("/r/a", "/r"))
+        self.assertFalse(module.within("/r2", "/r"))
+        self.assertFalse(module.within("/r/ab", "/r/a"))
+        self.assertFalse(module.within("/", "/r"))
+        roots = {"platform": "/r", "web": "/r/apps/web", "api": "/r/services/api"}
+        self.assertEqual(module.real_owner("/r/tests/t.py", roots), "platform")
+        self.assertEqual(module.real_owner("/r/apps/web/src/a.py", roots), "web")
+        self.assertEqual(module.real_owner("/r/apps/web", roots), "web")
+        self.assertEqual(module.real_owner("/r/apps/webx/a.py", roots), "platform")
+        self.assertIsNone(module.real_owner("/usr/bin/env", roots))
+        self.assertIsNone(module.real_owner("/rr/a.py", roots))
+        self.assertEqual(module.lexical_relative("tests", "tests/a.py"), "a.py")
+        self.assertEqual(module.lexical_relative("inner", "real/a.py"), "../real/a.py")
+        self.assertEqual(module.lexical_relative(".", "ext/a.py"), "ext/a.py")
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary).resolve() / "repo"
+            for path in ("real/t.py", "other/t.py", "tests/ok.py"):
+                (repository / path).parent.mkdir(parents=True, exist_ok=True)
+                (repository / path).write_text("x")
+            (repository / "inner").symlink_to("real")
+            (repository / "ext").symlink_to("real")
+            (repository / "tests/link").symlink_to("../other")
+            # 字句では外でも実パスで配下: 実パスどうしの相対。
+            self.assertEqual(module.reference_argv(repository, "inner", ["real/t.py"]), ["t.py"])
+            # 字句でも実パスでも配下: 字句の相対パス。
+            self.assertEqual(module.reference_argv(repository, ".", ["ext/t.py"]), ["ext/t.py"])
+            self.assertEqual(module.reference_argv(repository, "tests", ["tests/ok.py"]), ["ok.py"])
+            # 字句では配下でも実パスで外: 配下にない。
+            self.assertIsNone(module.reference_argv(repository, "tests", ["tests/link/t.py"]))
+            self.assertIsNone(module.reference_argv(repository, "tests", ["tests/ok.py", "tests/link/t.py"]))
+            # 通常のディレクトリで、字句でも実パスでも外。
+            self.assertIsNone(module.reference_argv(repository, "tests", ["real/t.py"]))
+        # 修正前のCoreは、字句の相対パスで判定する。通すのは`SINGLE-174-10`だけでなく、`SINGLE-174-08`・`09`も通す（欠陥）。
+        self.assertEqual({identifier: module.old_verify_outcome(identifier) for identifier in module.CASES if module.CASES[identifier]["group"] == "verify"},
+                         {"SINGLE-174-07": "blocked", "SINGLE-174-08": "passed", "SINGLE-174-09": "passed", "SINGLE-174-10": "passed"})
+        self.assertEqual([identifier for identifier, case in module.CASES.items() if case["defective"]],
+                         ["SINGLE-174-01", "SINGLE-174-02", "SINGLE-174-05", "SINGLE-174-06", "SINGLE-174-07", "SINGLE-174-08", "SINGLE-174-09",
+                          "MULTI-061-01", "MULTI-061-02", "MULTI-061-04", "MULTI-061-05", "MULTI-061-06"])
+        for identifier, case in module.CASES.items():
+            if case["group"] == "verify":
+                continue
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                directory = audit.FIXTURES / module.directory_of(identifier) / identifier
+                manifest = json.loads((directory / "manifest.json").read_text())
+                repository = fixture_setup(directory, manifest, Path(temporary) / "repo")
+                self.assertEqual(module.reference_outcome(identifier, repository), case["outcome"])
+                self.assertEqual(module.old_outcome(identifier, repository) != case["outcome"], case["defective"])
+        # 各fixtureのStepは、同じ操作・同じ診断の既存のfixtureと同じである。
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        for identifier, case in module.CASES.items():
+            self.assertEqual(placed[identifier], case["step"], identifier)
+        self.assertEqual((placed["SINGLE-024"], placed["SINGLE-167-09"], placed["MULTI-008"]), (2, 4, 5))
+
+    def test_real_path_ownership_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）を拒否する（陰性対照）。"""
+        module = real_path_ownership_fixtures
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "failed"),
+            "status-error": lambda v: v.update(status="error"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear() if v["diagnostics"] else v["workspaces"][-1]["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code": lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-OWNERSHIP-001" if v["diagnostics"][0]["code"] != "SPEC-MULTI-OWNERSHIP-001" else "SPEC-PATH-INVALID-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary=v["diagnostics"][0]["summary"] + "。"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="passed"),
+            "source-path": lambda v: v["diagnostics"][0]["source"].update(path=".spec/technical/TECH-002.md"),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="web"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="tests[0].path" if v["diagnostics"][0]["source"]["key"] != "tests[0].path" else "tests[1].path"),
+            "source-config": lambda v: v["diagnostics"][0]["source"].update(path=".spec/bitz.yaml", key="verify.commands.default.cwd"),
+            "documents": lambda v: v.update(checkedDocumentCount=0),
+            "statements": lambda v: v.update(checkedStatementCount=0),
+            "workspace": lambda v: v["workspace"].update(id="app"),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "ws-status": lambda v: v["workspaces"][1].update(status="failed"),
+            "ws-diagnostics": lambda v: v["workspaces"][1]["diagnostics"].append({}),
+            "ws-counts": lambda v: v["workspaces"][-1].update(checkedDocumentCount=0),
+            "ws-drop": lambda v: v["workspaces"].pop(),
+            "multi-id": lambda v: v["multiWorkspace"].update(id="root"),
+            "target-status": lambda v: v["targetResults"][0].update(status="passed" if v["targetResults"][0]["status"] != "passed" else "blocked"),
+            "target-binding": lambda v: v["targetResults"][0]["bindingRefs"].append("root::default"),
+            "target-digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            "target-statements": lambda v: v["targetResults"][0]["statements"].pop(),
+            "commands-add": lambda v: v["commands"].append({}),
+            "command-cwd": lambda v: v["commands"][0].update(cwd="."),
+            "command-argv": lambda v: v["commands"][0]["argv"].__setitem__(1, "../real/" + v["commands"][0]["argv"][1]),
+            "command-tests": lambda v: v["commands"][0]["tests"].pop(),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0 if v["expect"]["exitCode"] != 0 else 1),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "doctor"),
+            "argv-drop": lambda v: v["invocation"]["argv"].pop(1),
+            "cwd": lambda v: v["invocation"].update(cwd="src" if v["invocation"]["cwd"] != "src" else "."),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "base-commit": lambda v: v["setup"].update(baseCommit={"message": "base", "paths": ["."]}) if "baseCommit" not in v["setup"] else v["setup"].pop("baseCommit"),
+        }
+        effects = {
+            "policy": lambda v: v.update(policy="read-write"),
+            "after": lambda v: v["after"]["repository"].update(extra={"kind": "directory"}),
+            "extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            name = Path(module.result_name(identifier)).name
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations += [(f"expected/{name}", label, change) for label, change in results.items()]
+            mutations += [("side-effects.json", label, change) for label, change in effects.items()]
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    path = root / module.directory_of(identifier) / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 250)
+        # 欠陥を検出するケースの期待を、修正前のCoreの出力へ取り違える改変を拒否する。`check`と複合は受理（対照の結果）、`verify`は設定ファイルを発生元にした`blocked`と、字句どおりに通した結果。
+        accepted = {"SINGLE-174-01": "SINGLE-174-03", "SINGLE-174-02": "SINGLE-174-04", "SINGLE-174-05": "SINGLE-174-03", "SINGLE-174-06": "SINGLE-174-04"}
+        for identifier, control in accepted.items():
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                (fixture / "expected/check.json").write_text((audit.FIXTURES / "single" / control / "expected/check.json").read_text())
+                value = json.loads((fixture / "manifest.json").read_text())
+                value["expect"].update(status="passed", exitCode=0)
+                (fixture / "manifest.json").write_text(json.dumps(value))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        for identifier in ("MULTI-061-01", "MULTI-061-02", "MULTI-061-04", "MULTI-061-05", "MULTI-061-06"):
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / "multi" / identifier
+                value = json.loads((fixture / "expected/check.json").read_text())
+                value["status"] = "passed"
+                for entry in value["workspaces"]:
+                    entry.update(status="passed", diagnostics=[])
+                (fixture / "expected/check.json").write_text(json.dumps(value))
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                manifest["expect"].update(status="passed", exitCode=0)
+                (fixture / "manifest.json").write_text(json.dumps(manifest))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        with self.subTest(identifier="SINGLE-174-07", swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_real_path_fixture(temporary, "SINGLE-174-07")
+            fixture = root / "single/SINGLE-174-07"
+            value = json.loads((fixture / "expected/verify.json").read_text())
+            value.update(status="blocked", commands=[], diagnostics=[{
+                "code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked", "summary": "テストのパスが実効の作業ディレクトリの配下にありません",
+                "source": {"kind": "file", "workspaceId": "root", "path": ".spec/bitz.yaml", "key": "verify.commands.default.cwd"}}])
+            value["targetResults"][0].update(status="blocked", bindingRefs=[])
+            (fixture / "expected/verify.json").write_text(json.dumps(value))
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            manifest["expect"].update(status="blocked", exitCode=2)
+            (fixture / "manifest.json").write_text(json.dumps(manifest))
+            self.assertEqual(module.validate(root, {"SINGLE-174-07"})["status"], "Failed")
+        for identifier in ("SINGLE-174-08", "SINGLE-174-09"):
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                value = json.loads((fixture / "expected/verify.json").read_text())
+                reference = json.loads((audit.FIXTURES / "single/SINGLE-174-07/expected/verify.json").read_text())
+                value.update(status="passed", diagnostics=[], commands=reference["commands"])
+                value["targetResults"][0].update(status="passed", bindingRefs=["root::default"])
+                (fixture / "expected/verify.json").write_text(json.dumps(value))
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                manifest["expect"].update(status="passed", exitCode=0)
+                (fixture / "manifest.json").write_text(json.dumps(manifest))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_real_path_ownership_audit_rejects_changed_cases(self):
+        """ケースの定義（扱い、結果の種類、発生元）を替えて期待結果を書き直しても、入力から導く参照計算が拒否する（Coreの出力でも期待値でもなく、規範から導く）。"""
+        module = real_path_ownership_fixtures
+        technical = ".spec/technical/TECH-001.md"
+        altered = [
+            ("SINGLE-174-01", dict(outcome="inside"), "入力から導く扱い"), ("SINGLE-174-03", dict(outcome="outside"), "入力から導く扱い"),
+            ("SINGLE-174-05", dict(outcome="inside"), "入力から導く扱い"), ("SINGLE-174-06", dict(outcome="inside"), "入力から導く扱い"),
+            ("SINGLE-174-02", dict(defective=False), "修正前のCore"), ("SINGLE-174-04", dict(defective=True), "修正前のCore"),
+            ("MULTI-061-01", dict(outcome="ok"), "入力から導く扱い"), ("MULTI-061-02", dict(outcome="ok"), "入力から導く扱い"),
+            ("MULTI-061-03", dict(outcome="violation"), "入力から導く扱い"), ("MULTI-061-05", dict(outcome="ok"), "入力から導く扱い"),
+            ("MULTI-061-06", dict(outcome="ok"), "入力から導く扱い"), ("MULTI-061-07", dict(outcome="violation"), "入力から導く扱い"),
+            ("SINGLE-174-07", dict(kind="blocked", source=(technical, 0)), "入力から導く結果の種類"),
+            ("SINGLE-174-10", dict(kind="blocked", source=(technical, 0)), "入力から導く結果の種類"),
+            ("SINGLE-174-08", dict(source=(technical, 1)), "発生元"), ("SINGLE-174-08", dict(source=(".spec/technical/TECH-002.md", 0)), "発生元"),
+            ("SINGLE-174-09", dict(source=(".spec/technical/TECH-002.md", 0)), "発生元"), ("SINGLE-174-09", dict(source=(technical, 0)), "発生元"),
+        ]
+        for identifier, changes, phrase in altered:
+            with self.subTest(identifier=identifier, changes=changes), tempfile.TemporaryDirectory() as temporary:
+                cases = copy.deepcopy(module.CASES)
+                cases[identifier].update(changes)
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / module.directory_of(identifier) / identifier
+                with patch.object(module, "CASES", cases):
+                    (fixture / "manifest.json").write_text(json.dumps(module.reviewed_manifest(identifier)))
+                    (fixture / module.result_name(identifier)).write_text(json.dumps(module.reviewed_result(identifier)))
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertIn(phrase, outcome["errors"][0])
+                self.assertNotIn("レビュー済みの期待値と異なります", outcome["errors"][0])
+
+    def test_real_path_ownership_audit_rejects_changed_corpus(self):
+        """入力の欠落・追加・実行ビットを拒否する。シンボリックリンクと実ファイルの書換えは、バイト列の照合以外の検査（参照計算）が拒否する。"""
+        module = real_path_ownership_fixtures
+        for identifier in module.CASES:
+            for name in [*sorted(f"repo/{path}" for path in module.reviewed_inputs(identifier)), *sorted(f"repo/{path}" for path in module.reviewed_links(identifier)),
+                         "extra", "extra-link", "stray-changes", "stray-cli-output", "other-result"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    fixture = root / module.directory_of(identifier) / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif name == "extra-link":
+                        (fixture / "repo/extra-link").symlink_to(".")
+                    elif name == "stray-changes":
+                        (fixture / "changes").mkdir()
+                        (fixture / "changes/a.py").write_text("x")
+                    elif name == "stray-cli-output":
+                        (fixture / "cli-output.json").write_text("{}")
+                    elif name == "other-result":
+                        (fixture / "expected/doctor.json").write_text((fixture / module.result_name(identifier)).read_text())
+                    else:
+                        (fixture / name).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            with self.subTest(identifier=identifier, file="mode"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                sorted(path for path in (root / module.directory_of(identifier) / identifier / "repo").rglob("*.md"))[0].chmod(0o755)
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        byte_phrases = ("入力がレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+        # (fixture, 実ファイルの移動(旧, 新)の列, 書換え(パス, 旧, 新)の列, シンボリックリンクの書換え(パス, 新しい向き先)の列)。書換えた入力を新しい期待として固定しても、参照計算が拒否する。
+        edits = [
+            ("SINGLE-174-01", [], [], [("ext", "real")]),
+            ("SINGLE-174-03", [], [], [("ext", "/usr/bin")]),
+            ("SINGLE-174-05", [], [], [("pkg/ext", "../pkg")]),
+            ("SINGLE-174-07", [], [], [("inner", ".")]),
+            ("SINGLE-174-07", [], [], [("inner", "real/..")]),
+            ("SINGLE-174-08", [], [], [("tests/link", ".")]),
+            ("SINGLE-174-08", [("other/test_auth.py", "tests/test_auth.py"), ("other/test_session.py", "tests/test_session.py")], [], [("tests/link", ".")]),
+            ("SINGLE-174-09", [("other/test_auth.py", "tests/test_auth.py")], [], [("tests/link", ".")]),
+            ("SINGLE-174-10", [], [(".spec/bitz.yaml", "cwd: .\n", "cwd: ext\n")], []),
+            ("MULTI-061-01", [("tests/test_x.py", "apps/web/tests/test_x.py")], [], [("apps/web/ext", "tests")]),
+            ("MULTI-061-02", [("apps/web/src/a.py", "src/a.py")], [(".spec/requirements/REQ-001.md", "apps/web/src/a.py", "src/a.py")], []),
+            ("MULTI-061-04", [("services/api/src/session.py", "apps/web/src/session.py")], [], [("apps/web/ext", "../src")]),
+            ("MULTI-061-05", [("apps/web/src/a.py", "src/a.py")], [], [("lk", "src")]),
+            ("MULTI-061-06", [], [], [("apps/web/ext", "real")]),
+            ("MULTI-061-03", [("apps/web/real/a.py", "services/api/real/a.py")], [], [("apps/web/ext", "../../services/api/real")]),
+            ("MULTI-061-07", [("shared/test_x.py", "apps/web/shared/test_x.py")], [], [("lib", "apps/web/shared")]),
+        ]
+        for identifier, moves, changes, links in edits:
+            with self.subTest(identifier=identifier, moves=moves, changes=changes, links=links), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / module.directory_of(identifier) / identifier
+                edited, edited_links = dict(module.reviewed_inputs(identifier)), dict(module.reviewed_links(identifier))
+                for old, new in moves:
+                    (fixture / "repo" / new).parent.mkdir(parents=True, exist_ok=True)
+                    (fixture / "repo" / old).rename(fixture / "repo" / new)
+                    edited[new] = edited.pop(old)
+                for relative, old, new in changes:
+                    path = fixture / "repo" / relative
+                    self.assertIn(old, path.read_text())
+                    path.write_text(path.read_text().replace(old, new, 1))
+                    edited[relative] = path.read_bytes()
+                for relative, target in links:
+                    link = fixture / "repo" / relative
+                    link.unlink()
+                    link.symlink_to(target)
+                    edited_links[relative] = target
+                self.regenerate_effects(module, fixture, temporary)
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited), \
+                        patch.object(module, "reviewed_links", lambda _identifier, edited_links=edited_links: edited_links):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                self.assertNotIn("KeyError", outcome["errors"][0])
+
+    def test_real_path_ownership_digest_inputs_reflect_the_declarations(self):
+        """ハッシュ値の材料は`cwd`、宣言したテストのパス、TECH-002を反映する。反映しない材料は、参照計算AとBの食い違いで拒否される（陰性対照）。"""
+        module = real_path_ownership_fixtures
+        digests = {identifier: module.verify_digest(identifier) for identifier, case in module.CASES.items() if case["group"] == "verify"}
+        self.assertEqual(len(set(digests.values())), 4)
+        with patch.object(module, "verify_digest", lambda identifier: digests["SINGLE-174-07"]):
+            self.assertEqual(module.validate(audit.FIXTURES, {"SINGLE-174-08"})["status"], "Failed")
+        original = module.verify_digest_input
+
+        def without_second_document(identifier):
+            payload = original(identifier)
+            payload["documents"] = payload["documents"][:2]
+            return payload
+        with patch.object(module, "verify_digest_input", without_second_document):
+            self.assertEqual(module.validate(audit.FIXTURES, {"SINGLE-174-09"})["status"], "Failed")
+            # TECH-002を持たない`SINGLE-174-08`は影響を受けない（材料の差し替えが、ほかのケースを巻き込んでいないことの対照）。
+            self.assertEqual(module.validate(audit.FIXTURES, {"SINGLE-174-08"})["status"], "Passed")
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

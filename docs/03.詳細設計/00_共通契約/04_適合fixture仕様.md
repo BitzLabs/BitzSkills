@@ -799,6 +799,32 @@ NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を�
 | `SINGLE-173-11` | `SINGLE-167-01`と同じ入力（`SINGLE-042`のcorpus。インデックスにステージ）の`cwd`を`"tests\t"`（タブ）に替える | verify REQ-001 | error／3 | 制御文字を含む`cwd`は、設定の検査で止まる。結果は`SINGLE-167-01`と同じ（`SPEC-CONFIG-SCHEMA-001`の1件、summary「作業ディレクトリのパスの形式が不正です」）。修正前のCoreは設定の検査を通し、「コマンドの作業ディレクトリが利用できません」（`SPEC-VERIFY-BLOCKED-001`、`blocked`／2） |
 | `SINGLE-173-12` | `SINGLE-173-11`と同じ入力。`cwd`が`"tests\0"`（NUL） | verify REQ-001 | error／3 | 対照: 結果は`SINGLE-173-11`と同じ。修正前のCoreも拒否する |
 
+### 6.17 実パスでの所有と包含（上位のディレクトリのシンボリックリンク、テストと実効`cwd`の包含）
+
+所有と包含は、字句のパスではなく、上位のディレクトリのシンボリックリンクを解決した実パスで判定する（ワークスペース・設定仕様 §6・§9、複合ワークスペース仕様 §5.1の手順4・5。
+実装の確認事項C88・C90、N1・N3）。単一ワークスペースの`implements`と`tests[].path`は、実パスがワークスペースのルートの外（リポジトリの外を含む）なら、存在しないパスと同じに扱い、
+診断`SPEC-PATH-INVALID-001`（`error`／`failed`、summaryは承認済みの「実装パスが存在しません」「テストのパスが存在しません」。キーは`implements`、`tests[0].path`）とする。
+テストのパスと実効`cwd`の包含は、両方を実パスにして判定する。字句では配下でも実パスが外なら`VERIFY-TEST-OUTSIDE-CWD`（`SPEC-VERIFY-BLOCKED-001`、`blocked`、
+summaryは承認済みの「テストのパスが実効の作業ディレクトリの配下にありません」）、字句では外でも実パスが配下なら通す。通すときの引数列は、字句の相対パスが実効`cwd`の外を指す場合だけ、
+実パスどうしの相対で展開する（配下を指すなら字句の相対パス）。`VERIFY-TEST-OUTSIDE-CWD`の`source`は、配下にないテストのパスを宣言した仕様文書（複数あればパスの辞書順で最初の文書）、
+`key`はその文書の`tests[i].path`（その文書で配下にないテストが複数あれば最小の添字）で、テスト割当てごとに1件とする（`verify` §5.1）。
+修正前のCoreは、上位のディレクトリのシンボリックリンクを解決せず（宣言したパスの末端だけを見た）、包含を字句の相対パスで判定し、`VERIFY-TEST-OUTSIDE-CWD`の`source`を設定ファイルにした。
+リポジトリの外のディレクトリは、fixtureがサンドボックスの外へ書けないので、ホストの`/usr/bin`を指す絶対パスのシンボリックリンクで置く（`/usr/bin/env`は通常のファイルで、監査が確かめる）。
+同じ性質をホストに依存せず押さえるのが、ワークスペースのルートを`pkg`にした`SINGLE-174-05`・`06`である。入力は`SINGLE-001`の最小設定と対象のREQ 1件（`check`）、`SINGLE-042`のcorpus（`verify`）。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-174-01` | `approved`のREQ-001（規範文`AC-01`）の`tests[0].path`が`ext/env`。`ext`は`/usr/bin`を指すシンボリックリンク（リポジトリの外）。設定にコマンド`default`を定義する | check --full --base HEAD | failed／1 | 診断は`SPEC-PATH-INVALID-001`（キー`tests[0].path`、summary「テストのパスが存在しません」）の1件だけ。`checkedDocumentCount`と`checkedStatementCount`は1。修正前のCoreは`passed`／0 |
+| `SINGLE-174-02` | REQ-001の`implements: [ext/env]`。`ext -> /usr/bin` | check --full --base HEAD | failed／1 | 診断は`SPEC-PATH-INVALID-001`（キー`implements`、summary「実装パスが存在しません」）の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-174-03` | REQ-001の`tests[0].path`が`ext/t.py`。`ext -> real`（ワークスペースの中）、`real/t.py`は通常のファイル | check --full --base HEAD | passed／0 | 対照: 上位のディレクトリのシンボリックリンクがワークスペースの中へ解決するパスは通る。診断は0件。修正前のCoreも通る |
+| `SINGLE-174-04` | REQ-001の`implements: [ext/a.py]`。`ext -> real`、`real/a.py`は通常のファイル | check --full --base HEAD | passed／0 | 対照: `implements`も同じ。修正前のCoreも通る |
+| `SINGLE-174-05` | ワークスペースのルートが`pkg`（リポジトリのルートの下。`pkg/.spec/`を持つ）。REQ-001の`tests[0].path`が`ext/t.py`。`pkg/ext -> ../shared`（リポジトリの中でワークスペースの外）、`shared/t.py`は通常のファイル（`pkg`で実行） | check --full --base HEAD | failed／1 | 診断は`SPEC-PATH-INVALID-001`（キー`tests[0].path`）の1件だけ。ワークスペースのルートが基準になり、リポジトリの中でも外へ解決すれば存在しないパスと同じ。修正前のCoreは`passed`／0 |
+| `SINGLE-174-06` | `SINGLE-174-05`と同じ配置で、REQ-001の`implements: [ext/a.py]`、`shared/a.py` | check --full --base HEAD | failed／1 | 診断は`SPEC-PATH-INVALID-001`（キー`implements`）の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-174-07` | `SINGLE-042`のcorpusで、コマンド`default`の`cwd`が`inner`（`inner -> real`）、TECH-001のテストが`real/test_auth.py`、`real/test_session.py`（字句では`cwd`の外、実パスでは配下） | verify REQ-001 | passed／0 | 実パスでは配下なので通す（確認事項C88）。`commands[]`は1件で、`cwd`は`inner`、`argv`は`["/bin/true", "test_auth.py", "test_session.py"]`（実パスどうしの相対）、`tests`は宣言したパス。修正前のCoreは`blocked`／2 |
+| `SINGLE-174-08` | `cwd`が`tests`、TECH-001のテストが`tests/link/test_auth.py`、`tests/link/test_session.py`（`tests/link -> ../other`。字句では配下、実パスでは外。`other`はワークスペースの中） | verify REQ-001 | blocked／2 | 字句では配下でも実パスが外なら遮断する（N3）。診断は`SPEC-VERIFY-BLOCKED-001`の最上位に1件だけで、`source`は宣言したTECH-001（`.spec/technical/TECH-001.md`）、キーは`tests[0].path`（設定ファイルではない）。`REQ-001`は`blocked`、`bindingRefs`と`commands`は空。修正前のCoreは`passed`／0 |
+| `SINGLE-174-09` | `cwd`が`tests`、TECH-001の`tests[0]`が`tests/test_ok.py`（配下）、`tests[1]`が`tests/link/test_auth.py`（配下にない）、TECH-002（`REQ-001`を`refines`）の`tests[0]`が`tests/link/test_auth.py`。同じコマンド`default`。`tests/link -> ../other` | verify REQ-001 | blocked／2 | 同じテスト割当てを複数の文書が宣言するときは、パスの辞書順で最初の文書（TECH-001）を発生元にし、キーは配下にないテストの添字（`tests[1].path`）にする（全体の最小の添字`tests[0]`のTECH-002ではない）。診断は1件。修正前のCoreは`passed`／0 |
+| `SINGLE-174-10` | `cwd`が`.`、TECH-001のテストが`ext/test_auth.py`、`ext/test_session.py`（`ext -> real`。字句でも実パスでも配下） | verify REQ-001 | passed／0 | 対照: 字句の相対パスが`cwd`の外を指さなければ、引数列は字句の相対パス（`["/bin/true", "ext/test_auth.py", "ext/test_session.py"]`）のままにする。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1081,6 +1107,13 @@ NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を�
 | `MULTI-059-03` | ルート`zeta`（`.`）、メンバー`alpha`（`apps/alpha`）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`を`requires`し、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が`REQ-001:AC-01`を`refines`する（`.`で実行） | verify --workspace alpha alpha::TECH-001 | passed／0 | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`だけ。参照先の`REQ-001`が`requires`する`zeta::REQ-002`は辿らない（関係・トレースモデル §6.1の3.）。ハッシュ値の材料のワークスペースは`alpha`、`zeta`の順で、`zeta`のコマンドは閉包の文書（`REQ-001`）が使う`p`だけである |
 | `MULTI-060-01` | `MULTI-037-09`と同じ入力。`exclude: ["cases\tx"]`（タブを含む。除外のパスは実在しなくてよい）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 除外のパスの制御文字の違反（確認事項C102）。診断は`MULTI-037-09`と同じ（`SPEC-MULTI-CONFIG-001`の1件、summary「除外のパスの形式が不正です」）。修正前のCoreは除外を受理して`passed`／0（`workspaces`は3件） |
 | `MULTI-060-02` | `MULTI-037-09`と同じ入力から`exclude`を除き、メンバー`web`のパスを`"apps/we\nb"`（改行を含む）にする。`web`の設定は置かない（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | メンバーのパスの制御文字の違反（確認事項C102）。診断は`SPEC-MULTI-PATH-001`の1件（summary「メンバーのパスの形式が不正です」、`source`は`{file, platform, .spec/bitz.yaml, multiWorkspace.members}`）で、形は`MULTI-037-16`と同じ（全体事前検査の停止。`workspaces`は空）。修正前のCoreはパスを受理し、メンバーの設定の不在（`SPEC-MULTI-MEMBER-001`、summary「メンバーの.spec/bitz.yamlがありません」） |
+| `MULTI-061-01` | ルート`platform`（`.`）、メンバー`web`（`apps/web`）、`api`（`services/api`）。ルートの領域に`tests/test_x.py`（通常のファイル）。`web`のREQ-101（`approved`、規範文`AC-01`）の`tests[0].path`が`ext/test_x.py`で、`apps/web/ext -> ../../tests`（ルートの領域へ解決）。`web`の設定にコマンド`default`を定義する（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 実パスがルートの領域（別のワークスペース）なので、`web`の`diagnostics`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/test_x.pyの解決先がワークスペースwebの所有領域の外です」、`source`は`{file, web, .spec/requirements/REQ-101.md, tests[0].path}`）の1件を置く（N1）。`web`は`failed`（文書1件・規範文1件）、`platform`と`api`は`passed`。修正前のCoreは`passed`／0 |
+| `MULTI-061-02` | ルート`platform`、メンバー`web`、`api`。`apps/web/src/a.py`は通常のファイル。ルートのREQ-001の`implements: [apps/web/src/a.py]`（字句でメンバーの配下）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | ルートワークスペースはメンバーの配下を所有しない（複合ワークスペース仕様 §5.1）。`platform`の`diagnostics`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスapps/web/src/a.pyの解決先がワークスペースplatformの所有領域の外です」、キー`implements`）の1件。修正前のCoreは`passed`／0 |
+| `MULTI-061-03` | `MULTI-061-01`と同じ形で、`web`のREQ-101の`implements: [ext/a.py]`、`apps/web/ext -> real`、`apps/web/real/a.py`は通常のファイル（`.`で実行） | check --all-workspaces --base HEAD | passed／0 | 対照: メンバーの上位のディレクトリのシンボリックリンクが、そのメンバーの中へ解決するなら通る。診断は0件。修正前のCoreも通る |
+| `MULTI-061-04` | `MULTI-061-01`と同じ形で、`web`のREQ-101の`implements: [ext/session.py]`、`apps/web/ext -> ../../services/api/src`（別のメンバー）、`services/api/src/session.py`は通常のファイル（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 別のメンバーへ解決するので、`web`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/session.pyの解決先がワークスペースwebの所有領域の外です」、キー`implements`）の1件。`MULTI-008`は末端のシンボリックリンクで、これは上位のディレクトリ。修正前のCoreは`passed`／0 |
+| `MULTI-061-05` | `MULTI-061-01`と同じ形で、ルートのREQ-001の`implements: [lk/a.py]`、`lk -> apps/web/src`（ルートの領域から、メンバーの配下へ解決）、`apps/web/src/a.py`は通常のファイル（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | ルートがメンバーの配下へ解決するシンボリックリンクを経由しても、所有しない。`platform`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスlk/a.pyの解決先がワークスペースplatformの所有領域の外です」、キー`implements`）の1件。修正前のCoreは`passed`／0 |
+| `MULTI-061-06` | `MULTI-061-01`と同じ形で、`web`のREQ-101の`implements: [ext/env]`、`apps/web/ext -> /usr/bin`（リポジトリの外）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | リポジトリの外へ解決するので、`web`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/envの解決先がワークスペースwebの所有領域の外です」、キー`implements`）の1件。修正前のCoreは`passed`／0 |
+| `MULTI-061-07` | `MULTI-061-01`と同じ形で、ルートのREQ-001の`tests[0].path`が`lib/test_x.py`、`lib -> shared`（ルートの領域の中）、`shared/test_x.py`は通常のファイル。ルートの設定にコマンド`default`を定義する（`.`で実行） | check --all-workspaces --base HEAD | passed／0 | 対照: ルートの領域の中へ解決するシンボリックリンクは通る。診断は0件。修正前のCoreも通る |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

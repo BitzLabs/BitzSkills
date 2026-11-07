@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-174-09",
+  "description": "配下にないテストを複数の文書が宣言するとき、パスの辞書順で最初の文書と、その文書の最小の添字を発生元にして1件で遮断する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

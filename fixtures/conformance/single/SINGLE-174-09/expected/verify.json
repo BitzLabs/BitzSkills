@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:2635d534448e907f1e2a30154c30d7635638c671a161332c290a8de9abb2fecc",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "テストのパスが実効の作業ディレクトリの配下にありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-001.md",
+        "key": "tests[1].path"
+      }
+    }
+  ]
+}

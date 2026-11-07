@@ -178,7 +178,13 @@
         "SINGLE-173-07",
         "SINGLE-173-08",
         "SINGLE-173-09",
-        "SINGLE-173-10"
+        "SINGLE-173-10",
+        "SINGLE-174-01",
+        "SINGLE-174-02",
+        "SINGLE-174-03",
+        "SINGLE-174-04",
+        "SINGLE-174-05",
+        "SINGLE-174-06"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -395,7 +401,11 @@
         "SINGLE-127-10",
         "SINGLE-170-04",
         "SINGLE-173-11",
-        "SINGLE-173-12"
+        "SINGLE-173-12",
+        "SINGLE-174-07",
+        "SINGLE-174-08",
+        "SINGLE-174-09",
+        "SINGLE-174-10"
       ]
     },
     {
@@ -682,7 +692,14 @@
         "MULTI-059-02",
         "MULTI-059-03",
         "MULTI-060-01",
-        "MULTI-060-02"
+        "MULTI-060-02",
+        "MULTI-061-01",
+        "MULTI-061-02",
+        "MULTI-061-03",
+        "MULTI-061-04",
+        "MULTI-061-05",
+        "MULTI-061-06",
+        "MULTI-061-07"
       ]
     }
   ]
