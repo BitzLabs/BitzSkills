@@ -55,12 +55,22 @@
     "pathString": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\u0000)(?!.*[*?\\[\\]]).+$"
+      "pattern": "^(?!/)(?![\\s\\S]*[\\u0000-\\u001f\\u007f])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*/$)(?!.*[*?\\[\\]]).+$"
     },
     "pathArray": {
       "type": "array",
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/pathString" }
+    },
+    "changesPathString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![\\s\\S]*[\\u0000-\\u001f\\u007f])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[*?\\[\\]]).+$"
+    },
+    "changesPathArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/changesPathString" }
     },
     "relations": {
       "type": "object",
@@ -104,7 +114,7 @@
         "implements": { "$ref": "#/$defs/pathArray" },
         "tests": { "$ref": "#/$defs/tests" },
         "verify": { "$ref": "#/$defs/commandName" },
-        "changes": { "$ref": "#/$defs/pathArray" },
+        "changes": { "$ref": "#/$defs/changesPathArray" },
         "refs": { "$ref": "#/$defs/scalarArray" }
       },
       "additionalProperties": { "$ref": "#/$defs/extensionValue" }
