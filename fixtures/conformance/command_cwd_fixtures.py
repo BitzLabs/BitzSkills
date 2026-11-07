@@ -4,7 +4,7 @@
 シンボリックリンクの`cwd`でも、どの操作も止まらず、`verify`がテストのコマンドを所有領域の外で起動していた。
 規範は次のとおり定めた。
 
-- ワークスペース・設定仕様 §6: `cwd`の字句は、単独の`.`、または空のセグメント、`.`、`..`、NUL、globの文字`*?[]`を含まず、`/`で始まらない
+- ワークスペース・設定仕様 §6: `cwd`の字句は、単独の`.`、または空のセグメント、`.`、`..`、NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を含まず、`/`で始まらない
   パスに限る。字句の違反は設定の検査で診断`SPEC-CONFIG-SCHEMA-001`とし、どの操作もコマンドの実行へ進まない。実パスの所有は`verify`が
   テスト割当ての起動前に判定し、単一ワークスペースで実パスがワークスペースのルートの外なら診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とする。
 - 診断レジストリ: `CONFIG-FIELD-TYPE`系の`SPEC-CONFIG-SCHEMA-001`（重大度`error`、結果への効果`error`）、
@@ -98,7 +98,7 @@ def lexical_violation(cwd):
     """ワークスペース・設定仕様 §6の`cwd`の字句の規則（参照計算）。違反なら`True`。"""
     if cwd == ".":
         return False
-    if cwd.startswith("/") or "\0" in cwd:
+    if cwd.startswith("/") or any(ord(char) < 0x20 or ord(char) == 0x7F for char in cwd):
         return True
     return any(segment in ("", ".", "..") or any(char in segment for char in GLOB_CHARACTERS) for segment in cwd.split("/"))
 
