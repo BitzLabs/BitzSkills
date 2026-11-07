@@ -11,7 +11,7 @@
     {
       "target": "REQ-001",
       "status": "blocked",
-      "contextDigest": "sha256:57f44d3760caa69503bc6bc22056af76986dacbd824cb3db5aa59968ac4a896e",
+      "contextDigest": "sha256:6d66288798b3142a8c4b984869a95ff8d425d57c8e7f3163e359f576570a88ef",
       "statements": [
         "REQ-001:AC-01",
         "REQ-001:AC-02"

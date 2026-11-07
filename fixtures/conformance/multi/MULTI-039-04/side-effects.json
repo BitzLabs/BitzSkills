@@ -25,7 +25,7 @@
       ".spec/technical/TECH-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "b8bda751c68cd6158a155ce83e3a70759a9745f8ff20353b6965609671b2947e"
+        "sha256": "846af539806fdfb27b5068b95219c0c6cd0c59ebdee1df7a37f841d8da297dcf"
       },
       "tests": {
         "kind": "directory"
@@ -38,7 +38,7 @@
     },
     "git": {
       "status": "",
-      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 0f06d320baf35d114226056631eb5dbff4359eee 0\t.spec/requirements/REQ-001.md\n100644 780237c7da128530d6990f0152fc330d265d1d19 0\t.spec/technical/TECH-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 0f06d320baf35d114226056631eb5dbff4359eee 0\t.spec/requirements/REQ-001.md\n100644 dc1a2db92d8e6041d26a58ad18ccfb4a8ef4bff6 0\t.spec/technical/TECH-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
     },
     "home": {},
     "cache": {},
@@ -68,7 +68,7 @@
       ".spec/technical/TECH-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "b8bda751c68cd6158a155ce83e3a70759a9745f8ff20353b6965609671b2947e"
+        "sha256": "846af539806fdfb27b5068b95219c0c6cd0c59ebdee1df7a37f841d8da297dcf"
       },
       "tests": {
         "kind": "directory"
@@ -81,7 +81,7 @@
     },
     "git": {
       "status": "",
-      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 0f06d320baf35d114226056631eb5dbff4359eee 0\t.spec/requirements/REQ-001.md\n100644 780237c7da128530d6990f0152fc330d265d1d19 0\t.spec/technical/TECH-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+      "index": "100644 77bad7de58ed984d8b63eb2fff2ad1ccbd459f5b 0\t.spec/bitz.yaml\n100644 0f06d320baf35d114226056631eb5dbff4359eee 0\t.spec/requirements/REQ-001.md\n100644 dc1a2db92d8e6041d26a58ad18ccfb4a8ef4bff6 0\t.spec/technical/TECH-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
     },
     "home": {},
     "cache": {},

@@ -3,7 +3,7 @@ id: TECH-001
 title: 実装方針
 status: approved
 relations:
-  refines: [REQ-001:AC-01]
+  refines: [REQ-001]
 tests:
   - path: tests/test_login.py
     covers: [REQ-001:AC-01, REQ-001:AC-02]
