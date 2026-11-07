@@ -244,7 +244,7 @@ def _path_lexically_valid(path: str) -> bool:
         return False
     if os.path.isabs(path) or path.startswith("/"):
         return False
-    if "\x00" in path:
+    if lex.has_control_character(path):
         return False
     segments = path.split("/")
     for seg in segments:
