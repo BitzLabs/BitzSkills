@@ -655,7 +655,7 @@ class FilesystemIdentityTests(unittest.TestCase):
 
 
 class OwnershipResolutionStaysWithinCheckedScopeTests(_MultiBase):
-    """TASKの`changes`の所有（複合ワークスペース仕様 §5.2）は、上位のシンボリックリンクでも外へ逃げない。"""
+    """TASKの`changes`の所有（複合ワークスペース仕様 §5.2）は、シンボリックリンクのエントリのリンク先の実パスで判定し、通常のファイルの変更はTASKの境界で扱う。"""
 
     def test_task_change_of_a_symlink_to_another_workspace_is_an_ownership_violation(self):
         from bitz import check as check_mod_local
