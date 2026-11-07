@@ -22,6 +22,12 @@ WORKSPACE_ID_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 _QUALIFIER_RE = re.compile(r"^([a-z][a-z0-9-]{0,31})::(.+)$")
 
 
+def has_control_character(s: str) -> bool:
+    """パスの字句が禁止する制御文字（U+0000〜U+001F、U+007F）を含むか（ワークスペース・設定仕様 §9、確認事項C102）。"""
+
+    return any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in s)
+
+
 def _doc_kind(s: str) -> str | None:
     m = _DOC_ID_RE.match(s)
     return m.group(1) if m else None

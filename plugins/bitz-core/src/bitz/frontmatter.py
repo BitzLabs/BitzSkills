@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from . import lex
 from . import messages
 
 ARRAY_ITEM_LIMIT = 1000
@@ -87,16 +88,22 @@ def _has_duplicates(items: list) -> bool:
     return False
 
 
-def _is_bad_path(p: object) -> bool:
+def _is_bad_path(p: object, *, allow_directory_prefix: bool = False) -> bool:
+    """パスの字句の規則（ワークスペース・設定仕様 §9）に反するか。
+
+    ``allow_directory_prefix``（TASKの`changes`）だけは、末尾の`/`1つをディレクトリの接頭辞として許す。
+    """
+
     if not isinstance(p, str) or p == "":
         return True
     if p.startswith("/"):
         return True
-    if "\x00" in p:
+    if lex.has_control_character(p):
         return True
     if any(ch in p for ch in "*?[]"):
         return True
-    if any(seg in (".", "..") for seg in p.split("/")):
+    body = p[:-1] if allow_directory_prefix and p.endswith("/") else p
+    if any(seg in ("", ".", "..") for seg in body.split("/")):
         return True
     return False
 
@@ -165,13 +172,16 @@ def _unknown_warning(key: str) -> FieldIssue:
     )
 
 
-def _check_path_array(value: object, key: str, limits: list[FieldIssue], hard: list[FieldIssue], label: str) -> bool:
+def _check_path_array(
+    value: object, key: str, limits: list[FieldIssue], hard: list[FieldIssue], label: str,
+    *, allow_directory_prefix: bool = False,
+) -> bool:
     """``key``がパスの配列として妥当か検査する。型が不正なら``True``を返し、呼び出し側で打ち切る。"""
 
     if not isinstance(value, list) or any(not isinstance(p, str) for p in value):
         hard.append(_schema_error(key, messages.fm_type_error(key, "文字列の配列")))
         return True
-    if any(_is_bad_path(p) for p in value):
+    if any(_is_bad_path(p, allow_directory_prefix=allow_directory_prefix) for p in value):
         # 型は正しいが、パスの字句の規則（ワークスペース・設定仕様 §9）に反する（確認事項C85）。
         hard.append(_schema_error(key, messages.fm_path_form_error(key)))
         return True
@@ -349,7 +359,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("changes", messages.fm_null_forbidden("changes")))
         else:
-            _check_path_array(v, "changes", limits, hard, "changes")
+            _check_path_array(v, "changes", limits, hard, "changes", allow_directory_prefix=True)
 
     # --- refs（旧フィールド。型だけ検証し、旧形式の検出（SPEC-RELATION-LEGACY-001）はフェーズCが行う） ---
     if "refs" in value:
