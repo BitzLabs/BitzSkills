@@ -87,7 +87,7 @@
    4.で違反が見つかった検証対象は`failed`」と明記した（2026-11-08、司令塔の判断。違反したエントリだけが唯一のカバーでも、`CTX-COVERAGE-TEST-001`ではなく本当の原因の診断で`failed`になる）。
    fixtureは、違反したエントリのほかに正しいエントリが全規範文を`covers`する入力にしてあり、この判断に依存しない。
 3. **違反と、ほかのテスト割当ての欠落**。`verify` §4に明記した。違反したテスト対応はテスト割当ての解決から外すので、同じテスト対応のコマンドの定義の不足は判定しない。
-   別のテスト対応でコマンドの定義の不足（`VERIFY-BINDING-MISSING`、`blocked`）が重なれば両方の診断を返し、`failed`が`blocked`より重いので検証対象は`failed`にする。fixtureは、この重なりを持たない（単体試験が押さえる）。
+   別のテスト対応でコマンドの定義の不足（`VERIFY-BINDING-MISSING`、`blocked`）が重なれば両方の診断を返し、`failed`が`blocked`より重いので検証対象は`failed`にする。fixtureは、この重なりを持たない。単体試験が、別のテスト対応で重なる場合（両方の診断）と同じテスト対応で重なる場合（違反の診断だけ）の両方を押さえる。
 4. **`key`の形**。`SPEC-PATH-INVALID-001`と`SPEC-MULTI-OWNERSHIP-001`は`tests[i].path`、`SPEC-TEST-COVERAGE-001`は`tests[i].covers`（`check`と同じ。`SINGLE-026`、`MULTI-008`）にした。
    発生元は、テスト対応を宣言した仕様文書（`verify` §4の4.）。複合ワークスペースの`workspaceId`は、その文書を所有するワークスペース。
 5. **`workspace`、`scope`、`revision`**。`verify`の最上位の形は既存のfixture（`SINGLE-174-07`〜`10`、`MULTI-039`）に合わせた。単一はインデックスにステージだけでコミットがないので`revision`は`null`、複合は基準版のコミットを置く。
