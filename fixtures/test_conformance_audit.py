@@ -103,6 +103,7 @@ from conformance import multi_member_config_source_fixtures
 from conformance import multi_doctor_git_catalog_fixtures
 from conformance import workspace_selection_fixtures
 from conformance import frontmatter_glob_fixtures
+from conformance import path_lexical_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -8705,12 +8706,15 @@ class AuditTests(unittest.TestCase):
         validator = Draft202012Validator({"$ref": "#/$defs/pathString", "$defs": schema["$defs"]})
         # (パス, 拒否するか, 修正前の3文字の読み方でも拒否するか)
         table = [
-            ("src/a.py", False, False), ("src/", False, False), ("a b.py", False, False), ("src/a(1){2}!.py", False, False),
+            ("src/a.py", False, False), ("a b.py", False, False), ("src/a(1){2}!.py", False, False),
             ("src/a#b$c&d'e,f;g.py", False, False), ("src/日本語.py", False, False), ("src/.hidden", False, False), ("src/a..b.py", False, False),
             ("src/a*b.py", True, True), ("src/a?b.py", True, True), ("src/a[b.py", True, True), ("src/a]b.py", True, False),
             ("]", True, False), ("a[1].py", True, True), ("*", True, True), ("src/[a]b.py", True, True),
             ("/src/a.py", True, True), ("../a.py", True, True), ("src/../a.py", True, True), ("src/./a.py", True, True),
             ("src/..", True, True), ("src/a\x00b.py", True, True), ("", True, True), (".", True, True),
+            # 空のセグメントと制御文字（確認事項C101・C102）。この表の「修正前」は、glob の文字の集合だけを3文字に替えた読み方で、そのほかの規則は同じである。
+            ("src/", True, True), ("src//a.py", True, True), ("src/a.py/", True, True), ("src/a\tb.py", True, True), ("src/a\nb.py", True, True),
+            ("src/a\x1fb.py", True, True), ("src/a\x7fb.py", True, True), ("src/a\x80b.py", False, False),
         ]
         for path, expected, old in table:
             with self.subTest(path=path):
@@ -8923,6 +8927,350 @@ class AuditTests(unittest.TestCase):
             for path in paths:
                 check_rejected(identifier, {**module.reviewed_inputs(identifier), path: module.CODE_CONTENT}, (path, "create"))
         self.assertEqual(len(rejections), 34)
+
+    def copy_path_lexical_fixture(self, temporary, identifier):
+        if identifier.startswith("MULTI-"):
+            return self.copy_multi_fixture(temporary, identifier)
+        return self.copy_single_fixture(temporary, identifier)
+
+    def test_path_lexical_fixtures(self):
+        """`SINGLE-173-01`〜`12`と`MULTI-060-01`〜`02`: パスの字句は、空のセグメント、末尾の`/`、制御文字を拒否する（確認事項C101〜C103）。"""
+        module = path_lexical_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-173-{number:02d}" for number in range(1, 13)), "MULTI-060-01", "MULTI-060-02"])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_path_lexical_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_path_lexical_expected_results(self):
+        """期待結果の要点: フロントマターの違反は承認済みの文言の`SPEC-FM-SCHEMA-001`、`cwd`・除外のパス・メンバーのパスは既存のfixtureの形を引き継ぎ、対照は受理する。"""
+        def fixture(identifier):
+            return audit.FIXTURES / ("multi" if identifier.startswith("MULTI-") else "single") / identifier
+
+        def read(identifier, name="check"):
+            return json.loads((fixture(identifier) / f"expected/{name}.json").read_text())
+
+        def manifest(identifier):
+            return json.loads((fixture(identifier) / "manifest.json").read_text())
+
+        spec = {"REQ": ".spec/requirements/REQ-001.md", "TASK": ".spec/tasks/TASK-001.md"}
+        approved = {"implements": "フロントマターのフィールドimplementsのパスの形式が不正です",
+                    "changes": "フロントマターのフィールドchangesのパスの形式が不正です",
+                    "tests[0].path": "フロントマターのフィールドtests[0].pathのパスの形式が不正です"}
+        # 識別子: (文書の種類, キー)。拒否するフロントマター。
+        rejected = {"SINGLE-173-01": ("REQ", "implements"), "SINGLE-173-02": ("REQ", "tests[0].path"), "SINGLE-173-03": ("TASK", "changes"),
+                    "SINGLE-173-05": ("REQ", "implements"), "SINGLE-173-06": ("TASK", "changes"), "SINGLE-173-07": ("REQ", "tests[0].path"),
+                    "SINGLE-173-08": ("REQ", "implements"), "SINGLE-173-10": ("REQ", "implements")}
+        for identifier, (kind, key) in rejected.items():
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], manifest(identifier)["expect"]["exitCode"]), ("failed", 1))
+                self.assertEqual(result["diagnostics"], [{"code": "SPEC-FM-SCHEMA-001", "severity": "error", "resultStatus": "failed",
+                                                          "summary": approved[key],
+                                                          "source": {"kind": "file", "workspaceId": "root", "path": spec[kind], "key": key}}])
+                self.assertEqual((result["checkedDocumentCount"], result["checkedStatementCount"]), (0, 0))
+                self.assertEqual(manifest(identifier)["invocation"]["argv"], ["check", "--full", "--base", "HEAD", "--format", "json"])
+        # 受理する対照: 診断なし、文書は受理して数える（REQは規範文1件、TASKは0件）。`SINGLE-035-02`も`changes: [src/]`を受理する。
+        for identifier, counts in (("SINGLE-173-04", (1, 0)), ("SINGLE-173-09", (1, 1))):
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], result["diagnostics"], manifest(identifier)["expect"]["exitCode"]), ("passed", [], 0))
+                self.assertEqual((result["checkedDocumentCount"], result["checkedStatementCount"]), counts)
+        # 入力のフロントマターの行。制御文字は、YAMLの二重引用符のエスケープで書く（生のDELは書かない）。
+        text = lambda identifier, name: (fixture(identifier) / "repo/.spec" / name).read_text()
+        self.assertIn('implements: ["src//a.py"]\n', text("SINGLE-173-01", "requirements/REQ-001.md"))
+        self.assertIn('"path": "tests/t.py/"', text("SINGLE-173-02", "requirements/REQ-001.md"))
+        self.assertIn('changes: ["src//"]\n', text("SINGLE-173-03", "tasks/TASK-001.md"))
+        self.assertIn('changes: ["src/"]\n', text("SINGLE-173-04", "tasks/TASK-001.md"))
+        self.assertIn('implements: ["src/a\\tb.py"]\n', text("SINGLE-173-05", "requirements/REQ-001.md"))
+        self.assertIn('changes: ["src/a\\nb/"]\n', text("SINGLE-173-06", "tasks/TASK-001.md"))
+        self.assertIn('"path": "tests/t\\u007f.py"', text("SINGLE-173-07", "requirements/REQ-001.md"))
+        self.assertIn('implements: ["src/a\\u0000b.py"]\n', text("SINGLE-173-08", "requirements/REQ-001.md"))
+        self.assertIn('implements: ["src/a b.py"]\n', text("SINGLE-173-09", "requirements/REQ-001.md"))
+        self.assertIn('implements: ["src/./a.py"]\n', text("SINGLE-173-10", "requirements/REQ-001.md"))
+        for identifier in (i for i in path_lexical_fixtures.CASES if i.startswith("SINGLE-173-")):
+            raw = b"".join(path.read_bytes() for path in (fixture(identifier) / "repo").rglob("*") if path.is_file())
+            self.assertFalse(re.search(rb"[\x00-\x08\x0b-\x1f\x7f]", raw), identifier)  # 生の制御文字は入力へ書かない（改行とタブを除く）
+        # 実ファイルの名前に制御文字は使わない。
+        for identifier in path_lexical_fixtures.CASES:
+            names = [path.name for path in (fixture(identifier) / "repo").rglob("*")]
+            self.assertFalse(any(ord(character) < 0x20 or ord(character) == 0x7F for name in names for character in name), identifier)
+        self.assertTrue((fixture("SINGLE-173-09") / "repo/src/a b.py").is_file())
+        # 承認済みの文言だけ: `SINGLE-171`と同じ形、同じ`changes`の文言。
+        self.assertEqual(read("SINGLE-173-03")["diagnostics"][0]["summary"], read("SINGLE-171-02")["diagnostics"][0]["summary"])
+        self.assertEqual(read("SINGLE-173-07")["diagnostics"][0]["summary"], read("SINGLE-171-03")["diagnostics"][0]["summary"])
+        # `cwd`: `SINGLE-167-01`と同じ結果・同じ起動条件で、`cwd`だけが違う。
+        config = lambda identifier: (fixture(identifier) / "repo/.spec/bitz.yaml").read_text()
+        for identifier, line in (("SINGLE-173-11", '      cwd: "tests\\t"\n'), ("SINGLE-173-12", '      cwd: "tests\\u0000"\n')):
+            with self.subTest(identifier=identifier):
+                self.assertIn(line, config(identifier))
+                self.assertEqual(read(identifier, "verify"), read("SINGLE-167-01", "verify"))
+                self.assertEqual({**manifest(identifier), "fixtureId": "", "description": ""},
+                                 {**manifest("SINGLE-167-01"), "fixtureId": "", "description": ""})
+                self.assertEqual(config(identifier).replace(line, "      cwd: \"../..\"\n"), config("SINGLE-167-01"))
+        self.assertEqual(read("SINGLE-173-11", "verify")["diagnostics"][0]["summary"], "作業ディレクトリのパスの形式が不正です")
+        self.assertEqual(read("SINGLE-173-11", "verify")["diagnostics"][0]["code"], "SPEC-CONFIG-SCHEMA-001")
+        self.assertEqual(manifest("SINGLE-173-11")["expect"]["exitCode"], 3)
+        # 複合ワークスペース: 除外のパスは`MULTI-037-09`と同じ結果、メンバーのパスは`MULTI-037-16`と同じ形でsummaryだけが違う。
+        self.assertEqual(read("MULTI-060-01"), read("MULTI-037-09"))
+        self.assertIn('    - "cases\\tx"\n', (fixture("MULTI-060-01") / "repo/.spec/bitz.yaml").read_text())
+        self.assertIn('      path: "apps/we\\nb"\n', (fixture("MULTI-060-02") / "repo/.spec/bitz.yaml").read_text())
+        self.assertFalse((fixture("MULTI-060-02") / "repo/apps").exists())
+        expected = read("MULTI-037-16")
+        expected["diagnostics"][0]["summary"] = "メンバーのパスの形式が不正です"
+        self.assertEqual(read("MULTI-060-02"), expected)
+        self.assertEqual(read("MULTI-060-02")["diagnostics"][0]["code"], "SPEC-MULTI-PATH-001")
+        self.assertEqual(read("MULTI-060-02")["workspaces"], [])
+        for identifier in ("MULTI-060-01", "MULTI-060-02"):
+            self.assertEqual((read(identifier)["status"], manifest(identifier)["expect"]["exitCode"]), ("failed", 1))
+
+    def test_path_lexical_reference_rules(self):
+        """参照計算: パスの字句の判定は、`frontmatter.schema.json`の`pathString`と`changesPathString`と一致し、修正前の読み方はケースの欠陥の有無と一致する。"""
+        module = path_lexical_fixtures
+        schema = json.loads(schema_path(audit.FIXTURES, "frontmatter").read_text())
+        path_validator = Draft202012Validator({"$ref": "#/$defs/pathString", "$defs": schema["$defs"]})
+        changes_validator = Draft202012Validator({"$ref": "#/$defs/changesPathString", "$defs": schema["$defs"]})
+        # (パス, 違反の集合, `changes`のときの違反の集合)
+        table = [
+            ("src/a.py", set(), set()), ("src/a b.py", set(), set()), ("src/日本語.py", set(), set()), ("src/a(1){2}!.py", set(), set()),
+            ("src/\x80.py", set(), set()), ("src/.hidden", set(), set()), ("src/a..b.py", set(), set()),
+            ("src/", {"trailing-slash"}, set()), ("src/a/", {"trailing-slash"}, set()),
+            ("src//", {"empty-segment", "trailing-slash"}, {"empty-segment"}), ("src//a.py", {"empty-segment"}, {"empty-segment"}),
+            ("src/a.py/", {"trailing-slash"}, set()), ("/", {"absolute", "trailing-slash"}, {"absolute"}), ("/src/a.py", {"absolute"}, {"absolute"}),
+            ("src/./a.py", {"dot-segment"}, {"dot-segment"}), ("./a", {"dot-segment"}, {"dot-segment"}), (".", {"dot-segment"}, {"dot-segment"}),
+            ("src/../a.py", {"dotdot-segment"}, {"dotdot-segment"}), ("src/..", {"dotdot-segment"}, {"dotdot-segment"}),
+            ("src/./", {"dot-segment", "trailing-slash"}, {"dot-segment"}),
+            ("src/a\tb.py", {"control"}, {"control"}), ("src/a\nb.py", {"control"}, {"control"}), ("src/a\rb.py", {"control"}, {"control"}),
+            ("src/a\x00b.py", {"control"}, {"control"}), ("src/a\x1fb.py", {"control"}, {"control"}), ("src/a\x7fb.py", {"control"}, {"control"}),
+            ("src/a\nb/", {"control", "trailing-slash"}, {"control"}),
+            ("src/a*b.py", {"glob"}, {"glob"}), ("src/a]b.py", {"glob"}, {"glob"}), ("", {"empty"}, {"empty"}),
+        ]
+        for path, expected, expected_changes in table:
+            with self.subTest(path=path):
+                self.assertEqual(module.violations(path), expected)
+                self.assertEqual(module.violations(path, directory_prefix=True), expected_changes)
+                self.assertEqual(not path_validator.is_valid(path), bool(expected))
+                self.assertEqual(not changes_validator.is_valid(path), bool(expected_changes))
+        # 修正前のCoreの読み方: NUL以外の制御文字と、フロントマターの空のセグメント・末尾の`/`を拒否しない。
+        for path, frontmatter, other in (("src//a.py", False, True), ("src/a.py/", False, True), ("src/a\tb.py", False, False),
+                                         ("src/a\x00b.py", True, True), ("src/./a.py", True, True), ("src/a.py", False, False)):
+            with self.subTest(old=path):
+                self.assertEqual(module.old_rejected(path, empty_segments=False), frontmatter)
+                self.assertEqual(module.old_rejected(path, empty_segments=True), other)
+        # 欠陥を検出するケースは、修正前の読み方と結果が異なる9件（NULと`.`のセグメント、空白、`src/`は修正前も同じ結果の対照）。
+        self.assertEqual([identifier for identifier, case in module.CASES.items() if case["defective"]],
+                         ["SINGLE-173-01", "SINGLE-173-02", "SINGLE-173-03", "SINGLE-173-05", "SINGLE-173-06", "SINGLE-173-07",
+                          "SINGLE-173-11", "MULTI-060-01", "MULTI-060-02"])
+        for identifier, case in module.CASES.items():
+            with self.subTest(identifier=identifier):
+                old = any(module.old_rejected(path, module.old_empty_segments(identifier)) for path in module.case_paths(identifier))
+                self.assertEqual(old != case["rejected"], case["defective"])
+                self.assertEqual(module.reference_rejected(identifier), case["rejected"])
+                paths = module.case_paths(identifier)
+                if case["rejected"]:
+                    self.assertEqual(module.violations(paths[0], module.is_changes(identifier)), {case["cause"]})
+                else:
+                    self.assertFalse(module.reference_rejected(identifier))
+        # 制御文字を含むフロントマターのフローの値は、YAMLの印字可能文字だけで書く。
+        self.assertEqual(module.flow("src/a\x7fb"), '"src/a\\u007fb"')
+        self.assertEqual(module.flow("src/a\tb\x00"), '"src/a\\tb\\u0000"')
+        self.assertEqual(module.flow("日本語"), '"日本語"')
+        # 各fixtureのStepは、同じ操作・同じ診断の既存のfixtureと同じである。
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        for identifier, case in module.CASES.items():
+            self.assertEqual(placed[identifier], case["step"], identifier)
+        self.assertEqual((placed["SINGLE-171-01"], placed["SINGLE-167-01"], placed["MULTI-037-09"]), (2, 4, 5))
+
+    def test_path_lexical_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）と、入力の欠落・余りを拒否する（陰性対照）。"""
+        module = path_lexical_fixtures
+        results = {
+            "status": lambda v: v.update(status="passed"),
+            "status-blocked": lambda v: v.update(status="blocked"),
+            "diagnostics-clear": lambda v: v["diagnostics"].clear(),
+            "diagnostics-add": lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+            "code": lambda v: v["diagnostics"][0].update(code="SPEC-FM-UNKNOWN-001"),
+            "code-type": lambda v: v["diagnostics"][0].update(code="SPEC-FM-REQUIRED-001"),
+            "summary": lambda v: v["diagnostics"][0].update(summary="パスに制御文字があります"),
+            "severity": lambda v: v["diagnostics"][0].update(severity="warning"),
+            "result-status": lambda v: v["diagnostics"][0].update(resultStatus="passed"),
+            "source-path": lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-002.md"),
+            "source-workspace": lambda v: v["diagnostics"][0]["source"].update(workspaceId="app"),
+            "source-key": lambda v: v["diagnostics"][0]["source"].update(key="tests" if v["diagnostics"][0]["source"]["key"] != "tests" else "implements"),
+            "source-key-drop": lambda v: v["diagnostics"][0]["source"].pop("key"),
+            "documents": lambda v: v.update(checkedDocumentCount=1 - v["checkedDocumentCount"]),
+            "statements": lambda v: v.update(checkedStatementCount=1 - v["checkedStatementCount"]),
+            "scope": lambda v: v.update(scope="selected"),
+            "revision-dirty": lambda v: v["revision"].update(dirty=True),
+            "workspace": lambda v: v["workspace"].update(id="app"),
+            "workspaces-add": lambda v: v["workspaces"].append({"id": "web", "path": "apps/web", "status": "passed", "checkedDocumentCount": 0,
+                                                                  "checkedStatementCount": 0, "durationMs": 0, "diagnostics": []}),
+            "target-results": lambda v: v["targetResults"].append({"target": "REQ-001", "status": "passed", "contextDigest": None,
+                                                                    "statements": [], "bindingRefs": [], "diagnostics": []}),
+            "commands": lambda v: v["commands"].append({}),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0 if v["expect"]["exitCode"] != 0 else 1),
+            "exit-code-4": lambda v: v["expect"].update(exitCode=4),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "doctor"),
+            "argv-drop": lambda v: v["invocation"]["argv"].pop(1),
+            "cwd": lambda v: v["invocation"].update(cwd="src"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "no-base-commit": lambda v: v["setup"].pop("baseCommit"),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            name = Path(module.result_name(identifier)).name
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations += [(f"expected/{name}", label, change) for label, change in results.items()]
+            mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
+            mutations.append(("side-effects.json", "after", lambda v: v["after"]["cache"].update(index={"kind": "directory"})))
+            mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_path_lexical_fixture(temporary, identifier)
+                    path = root / module.directory_of(identifier) / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+            for relative in [*sorted(f"repo/{name}" for name in module.reviewed_inputs(identifier)), "extra", "stray-changes", "stray-cli-output", "other-result"]:
+                with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_path_lexical_fixture(temporary, identifier)
+                    fixture = root / module.directory_of(identifier) / identifier
+                    if relative == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif relative == "stray-changes":
+                        (fixture / "changes").mkdir()
+                        (fixture / "changes/a.py").write_text("x")
+                    elif relative == "stray-cli-output":
+                        (fixture / "cli-output.json").write_text("{}")
+                    elif relative == "other-result":
+                        (fixture / "expected/doctor.json").write_text((fixture / "expected" / name).read_text())
+                    else:
+                        (fixture / relative).unlink()
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 欠陥を検出するケースの期待を、修正前のCoreの出力へ取り違える改変を拒否する。フロントマターは受理（対照の結果）、`cwd`は`blocked`（`SINGLE-167-07`）。
+        swaps = {"SINGLE-173-01": "SINGLE-173-09", "SINGLE-173-02": "SINGLE-173-09", "SINGLE-173-05": "SINGLE-173-09", "SINGLE-173-07": "SINGLE-173-09",
+                 "SINGLE-173-03": "SINGLE-173-04", "SINGLE-173-06": "SINGLE-173-04"}
+        for identifier, accepted in swaps.items():
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_path_lexical_fixture(temporary, identifier)
+                fixture = root / "single" / identifier
+                result = json.loads((audit.FIXTURES / "single" / accepted / "expected/check.json").read_text())
+                manifest = json.loads((audit.FIXTURES / "single" / accepted / "manifest.json").read_text())
+                (fixture / "expected/check.json").write_text(json.dumps(result))
+                (fixture / "manifest.json").write_text(json.dumps({**manifest, "fixtureId": identifier, "description": module.CASES[identifier]["description"]}))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        with self.subTest(identifier="SINGLE-173-11", swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_path_lexical_fixture(temporary, "SINGLE-173-11")
+            fixture = root / "single/SINGLE-173-11"
+            result = json.loads((audit.FIXTURES / "single/SINGLE-167-07/expected/verify.json").read_text())
+            manifest = json.loads((audit.FIXTURES / "single/SINGLE-167-07/manifest.json").read_text())
+            (fixture / "expected/verify.json").write_text(json.dumps(result))
+            (fixture / "manifest.json").write_text(json.dumps({**manifest, "fixtureId": "SINGLE-173-11", "description": module.CASES["SINGLE-173-11"]["description"]}))
+            self.assertEqual(module.validate(root, {"SINGLE-173-11"})["status"], "Failed")
+        # 修正前のCoreの出力（メンバーの設定の不在）への取り違えも拒否する。
+        with self.subTest(identifier="MULTI-060-02", swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_path_lexical_fixture(temporary, "MULTI-060-02")
+            path = root / "multi/MULTI-060-02/expected/check.json"
+            value = json.loads(path.read_text())
+            value["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001", summary="メンバーの.spec/bitz.yamlがありません")
+            path.write_text(json.dumps(value))
+            self.assertEqual(module.validate(root, {"MULTI-060-02"})["status"], "Failed")
+        self.assertGreater(applied, 200)
+
+    def test_path_lexical_audit_rejects_changed_causes(self):
+        """原因を消す、または別の原因を重ねる入力の書換えを、入力のバイト列の照合を通した上で、参照計算と原因の構成の検査が拒否する。"""
+        module = path_lexical_fixtures
+        requirement, task, config = ".spec/requirements/REQ-001.md", ".spec/tasks/TASK-001.md", ".spec/bitz.yaml"
+        edits = {
+            # 原因を取り除く（欠陥を検出できない）、別の原因を重ねる、別の原因へ替える。
+            "SINGLE-173-01": [(requirement, b"src//a.py", b"src/a.py"), (requirement, b"src//a.py", b"src//a.py/"), (requirement, b"src//a.py", b"/src//a.py"),
+                              (requirement, b"src//a.py", b"src//a*.py"), (requirement, b"src//a.py", b"src//a\\tb.py"), (requirement, b"src//a.py", b"src//./a.py")],
+            "SINGLE-173-02": [(requirement, b"tests/t.py/", b"tests/t.py"), (requirement, b"tests/t.py/", b"tests//t.py/"), (requirement, b"tests/t.py/", b"tests/t.py?/")],
+            "SINGLE-173-03": [(task, b"src//", b"src/"), (task, b"src//", b"src//a/..//"), (task, b"src//", b"src//\\n")],
+            "SINGLE-173-04": [(task, b'["src/"]', b'["src//"]'), (task, b'["src/"]', b'["src/\\t"]'), (task, b'["src/"]', b'["/src/"]')],
+            "SINGLE-173-05": [(requirement, b"src/a\\tb.py", b"src/ab.py"), (requirement, b"src/a\\tb.py", b"src/a\\tb//c.py"), (requirement, b"src/a\\tb.py", b"src/a\\tb*.py")],
+            "SINGLE-173-06": [(task, b"src/a\\nb/", b"src/ab/"), (task, b"src/a\\nb/", b"src/a\\nb//"), (task, b"src/a\\nb/", b"src/a\\nb/..")],
+            "SINGLE-173-07": [(requirement, b"tests/t\\u007f.py", b"tests/t.py"), (requirement, b"tests/t\\u007f.py", b"tests/t\\u007f/.py"),
+                              (requirement, b"tests/t\\u007f.py", b"tests/t\\u0080.py")],
+            "SINGLE-173-08": [(requirement, b"src/a\\u0000b.py", b"src/ab.py"), (requirement, b"src/a\\u0000b.py", b"src/a\\u0000b/./c.py")],
+            "SINGLE-173-09": [(requirement, b"src/a b.py", b"src/a\\tb.py"), (requirement, b"src/a b.py", b"src/a b.py/"), (requirement, b"src/a b.py", b"src/a  b.py")],
+            "SINGLE-173-10": [(requirement, b"src/./a.py", b"src/a.py"), (requirement, b"src/./a.py", b"src/./a.py/"), (requirement, b"src/./a.py", b"src//a.py")],
+            "SINGLE-173-11": [(config, b'cwd: "tests\\t"', b'cwd: "tests"'), (config, b'cwd: "tests\\t"', b'cwd: "tests\\t//"'), (config, b'cwd: "tests\\t"', b'cwd: "tests\\u0000"'),
+                              (config, b'cwd: "tests\\t"', b'cwd: "tests\\u0080"')],
+            "SINGLE-173-12": [(config, b'cwd: "tests\\u0000"', b'cwd: "tests"'), (config, b'cwd: "tests\\u0000"', b'cwd: "tests\\u0000/./x"')],
+            "MULTI-060-01": [(config, b'- "cases\\tx"', b"- cases"), (config, b'- "cases\\tx"', b'- "cases\\tx/"'), (config, b'- "cases\\tx"', b'- "cases\\tx/.."')],
+            "MULTI-060-02": [(config, b'path: "apps/we\\nb"', b"path: apps/web"), (config, b'path: "apps/we\\nb"', b'path: "apps/we\\nb/"'),
+                             (config, b'path: "apps/we\\nb"', b'path: "apps//we\\nb"')],
+        }
+        # 実ファイルの有無を変える（既存のファイルの書換えではないので、別に扱う）。
+        deletions = {"SINGLE-173-01": ["src/a.py"], "SINGLE-173-02": ["tests/t.py"], "SINGLE-173-03": ["src/a.py"], "SINGLE-173-09": ["src/a b.py"],
+                     "SINGLE-173-10": ["src/a.py"], "MULTI-060-02": ["services/api/.spec/bitz.yaml"]}
+        creations = {"SINGLE-173-05": ["src/a\tb.py"], "SINGLE-173-06": ["src/ab/c.py"], "SINGLE-173-07": ["tests/t.py"], "MULTI-060-02": ["apps/web/.spec/bitz.yaml"]}
+        byte_phrases = ("入力のバイト列またはファイルモードがレビュー済みのcorpusと異なります", "隔離した準備手順が固定したスナップショットと異なります")
+
+        rejections = []
+
+        def check_rejected(identifier, edited, label):
+            rejections.append((identifier, label))
+            with self.subTest(identifier=identifier, change=label), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_path_lexical_fixture(temporary, identifier)
+                fixture = root / module.directory_of(identifier) / identifier
+                for relative in list(module.reviewed_inputs(identifier)):
+                    if relative not in edited:
+                        (fixture / "repo" / relative).unlink()
+                for relative, data in edited.items():
+                    (fixture / "repo" / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (fixture / "repo" / relative).write_bytes(data)
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "regen" / "repo")
+                external = {key: Path(temporary) / "regen" / key for key in ("home", "cache", "temporary")}
+                for directory in external.values():
+                    directory.mkdir(parents=True)
+                state = observe_single(repository, external)
+                (fixture / "side-effects.json").write_text(json.dumps({"schemaVersion": "1.0", "policy": "read-only", "before": state, "after": state}))
+                with patch.object(module, "reviewed_inputs", lambda _identifier, edited=edited: edited):
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed")
+                self.assertEqual(len(outcome["errors"]), 1)
+                self.assertFalse(any(phrase in outcome["errors"][0] for phrase in byte_phrases), outcome["errors"][0])
+                self.assertNotIn("KeyError", outcome["errors"][0])
+
+        for identifier, changes in edits.items():
+            for relative, old, new in changes:
+                inputs = dict(module.reviewed_inputs(identifier))
+                self.assertIn(old, inputs[relative])
+                check_rejected(identifier, {**inputs, relative: inputs[relative].replace(old, new, 1)}, (relative, old[:30], new[:30]))
+        for identifier, paths in deletions.items():
+            for path in paths:
+                inputs = dict(module.reviewed_inputs(identifier))
+                del inputs[path]
+                check_rejected(identifier, inputs, (path, "delete"))
+        for identifier, paths in creations.items():
+            for path in paths:
+                check_rejected(identifier, {**module.reviewed_inputs(identifier), path: module.CODE_CONTENT}, (path, "create"))
+        self.assertEqual(len(rejections), 54)
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

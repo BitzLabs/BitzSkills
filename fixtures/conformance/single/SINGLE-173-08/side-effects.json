@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "76bc50e807ffc37fc6329956b1a5fddc6dbcb68f4a12b80c4cbe7455b67a0dd2"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 209decffb48233ecfeeb4f1857aa1a50628f877f 0\t.spec/requirements/REQ-001.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "76bc50e807ffc37fc6329956b1a5fddc6dbcb68f4a12b80c4cbe7455b67a0dd2"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 209decffb48233ecfeeb4f1857aa1a50628f877f 0\t.spec/requirements/REQ-001.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

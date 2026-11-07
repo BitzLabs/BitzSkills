@@ -107,6 +107,7 @@ from conformance.multi_member_config_source_fixtures import validate as validate
 from conformance.workspace_selection_fixtures import validate as validate_workspace_selection_fixtures
 from conformance.multi_doctor_git_catalog_fixtures import validate as validate_multi_doctor_git_catalog_fixtures
 from conformance.frontmatter_glob_fixtures import validate as validate_frontmatter_glob_fixtures
+from conformance.path_lexical_fixtures import validate as validate_path_lexical_fixtures
 from conformance.multi_closure_origin_fixtures import validate as validate_multi_closure_origin_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -419,6 +420,7 @@ def main():
     checks["workspace_selection_fixtures"] = validate_workspace_selection_fixtures()
     checks["multi_doctor_git_catalog_fixtures"] = validate_multi_doctor_git_catalog_fixtures()
     checks["frontmatter_glob_fixtures"] = validate_frontmatter_glob_fixtures()
+    checks["path_lexical_fixtures"] = validate_path_lexical_fixtures()
     checks["multi_closure_origin_fixtures"] = validate_multi_closure_origin_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)

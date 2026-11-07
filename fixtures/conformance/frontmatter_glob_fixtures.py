@@ -94,13 +94,15 @@ CASES = {
 def path_rejected(path, characters=GLOB_CHARACTERS):
     """仕様文書に記録するパスの字句の違反（ワークスペース・設定仕様 §9、文書・フロントマター・状態仕様のスキーマ）。
 
-    空、絶対パス、NUL、globの文字、`.`または`..`のセグメントを違反とする。`characters`は、globの文字とみなす集合である。
+    空、絶対パス、制御文字（U+0000〜U+001F、U+007F）、globの文字、空のセグメント（`a//b`と末尾の`/`）、`.`または`..`のセグメントを違反とする
+    （空のセグメントと制御文字は、確認事項C101・C102の規範の明記による。`path_lexical_fixtures.violations`が詳細な参照計算）。
+    `characters`は、globの文字とみなす集合である。TASKの`changes`のディレクトリの接頭辞の末尾の`/`は、この関数の対象外である（`SINGLE-171`は使わない）。
     """
-    if not isinstance(path, str) or path == "" or path.startswith("/") or "\x00" in path:
+    if not isinstance(path, str) or path == "" or path.startswith("/") or any(ord(character) < 0x20 or ord(character) == 0x7F for character in path):
         return True
     if any(character in path for character in characters):
         return True
-    return any(segment in (".", "..") for segment in path.split("/"))
+    return any(segment in ("", ".", "..") for segment in path.split("/"))
 
 
 def single_cause(path):

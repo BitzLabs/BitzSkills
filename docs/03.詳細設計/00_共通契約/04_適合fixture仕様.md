@@ -774,6 +774,31 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-171-07` | `approved`のREQ-001の`implements: ["src/a(1){2}!.py"]`と、`tests[0].path`が`tests/t(1){2}!.py`（`*?[]`以外の記号`(){}!`を含む。実ファイルは基準版のコミットに含み、設定にコマンド`default`を定義する） | check --full --base HEAD | passed／0 | 対照: globの文字は`*?[]`の4つだけで、ほかの記号は拒否しない。診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は1。修正前のCoreも通る |
 | `SINGLE-171-08` | `open`のTASK-001の`changes: ["src/a(1){2}!.py"]`（実ファイルは基準版のコミットに含む） | check --full --base HEAD | passed／0 | 対照: `changes`も`*?[]`以外の記号を拒否しない。診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は0。修正前のCoreも通る |
 
+### 6.16 パスの字句（空のセグメント、末尾の`/`、制御文字、`.`のセグメント）
+
+仕様文書に記録するパスは、絶対パス、`.`と`..`のセグメント、空のセグメント（`a//b`と末尾の`/`。TASKの`changes`のディレクトリの接頭辞の末尾の`/`1つだけを除く）、
+NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を禁止する（ワークスペース・設定仕様 §9。実装の確認事項C101〜C103）。制御文字は`cwd`
+（同 §6）、メンバーのパスと除外のパス（複合ワークスペース仕様 §2）にも禁止する。修正前のCoreは、フロントマターのパスの空のセグメントと末尾の`/`、NUL以外の制御文字
+（`cwd`、メンバーのパス、除外のパスを含む）を受理した。制御文字は、YAMLの二重引用符のエスケープ（`\t`、`\n`、`\0`、`\u007f`）で書く。制御文字を含むファイル名は置かない
+（パスに対応する実ファイルがなければ、修正前のCoreは字句を通した後の実在の検査で別の診断になる）。フロントマターのケースの入力は、基準版のコミットへ入れた最小設定と対象の文書1件で、
+操作は`check --full --base HEAD`、違反の診断は`SPEC-FM-SCHEMA-001`（`error`／`failed`、summaryは承認済みの「フロントマターのフィールド{key}のパスの形式が不正です」）の1件、
+文書をスキップするので`checkedDocumentCount`と`checkedStatementCount`は0（`SINGLE-171`と同じ形）である。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-173-01` | `approved`のREQ-001（規範文`AC-01`）の`implements: ["src//a.py"]`（空のセグメント）。`src/a.py`は通常のファイルとして基準版のコミットに含む | check --full --base HEAD | failed／1 | 診断は`SPEC-FM-SCHEMA-001`（キー`implements`）の1件だけ。修正前のCoreは文書を受理して`passed`／0 |
+| `SINGLE-173-02` | `approved`のREQ-001の`tests[0].path`が`tests/t.py/`（末尾の`/`。`tests/t.py`は通常のファイルとして基準版のコミットに含み、設定にコマンド`default`を定義する） | check --full --base HEAD | failed／1 | 診断はキー`tests[0].path`の1件だけ。修正前のCoreは「テストのパスが存在しません」（`SPEC-PATH-INVALID-001`） |
+| `SINGLE-173-03` | `open`のTASK-001の`changes: ["src//"]`（空のセグメント。`src/a.py`を基準版のコミットに含む） | check --full --base HEAD | failed／1 | 末尾の`/`1つを許す`changes`でも、空のセグメントは拒否する。診断はキー`changes`の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-173-04` | `open`のTASK-001の`changes: ["src/"]`（ディレクトリの接頭辞の末尾の`/`1つ。`src/a.py`を基準版のコミットに含む） | check --full --base HEAD | passed／0 | 対照: 診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は0。`SINGLE-035-02`も`changes: [src/]`を受理する。修正前のCoreも通る |
+| `SINGLE-173-05` | `approved`のREQ-001の`implements: ["src/a\tb.py"]`（タブ。実ファイルなし） | check --full --base HEAD | failed／1 | 制御文字を拒否する。診断はキー`implements`の1件だけ。修正前のCoreは「実装パスが存在しません」（`SPEC-PATH-INVALID-001`） |
+| `SINGLE-173-06` | `open`のTASK-001の`changes: ["src/a\nb/"]`（改行。`changes`は対象の存在を要求しない） | check --full --base HEAD | failed／1 | 診断はキー`changes`の1件だけ。修正前のCoreは`passed`／0 |
+| `SINGLE-173-07` | `approved`のREQ-001の`tests[0].path`が`tests/t\u007f.py`（DEL U+007F。実ファイルなし。設定にコマンド`default`を定義する） | check --full --base HEAD | failed／1 | 制御文字の上限（U+007F）を拒否する。診断はキー`tests[0].path`の1件だけ。修正前のCoreは「テストのパスが存在しません」 |
+| `SINGLE-173-08` | `approved`のREQ-001の`implements: ["src/a\0b.py"]`（NUL。実ファイルなし） | check --full --base HEAD | failed／1 | 対照: 診断はキー`implements`の1件だけ。修正前のCoreも拒否する |
+| `SINGLE-173-09` | `approved`のREQ-001の`implements: ["src/a b.py"]`（空白U+0020は制御文字ではない。実ファイルあり） | check --full --base HEAD | passed／0 | 対照: 診断は0件。`checkedDocumentCount`は1、`checkedStatementCount`は1。修正前のCoreも通る |
+| `SINGLE-173-10` | `approved`のREQ-001の`implements: ["src/./a.py"]`（`.`のセグメント。確認事項C103。`src/a.py`を基準版のコミットに含む） | check --full --base HEAD | failed／1 | 対照: 診断はキー`implements`の1件だけ。`.`のセグメントは修正前から拒否する |
+| `SINGLE-173-11` | `SINGLE-167-01`と同じ入力（`SINGLE-042`のcorpus。インデックスにステージ）の`cwd`を`"tests\t"`（タブ）に替える | verify REQ-001 | error／3 | 制御文字を含む`cwd`は、設定の検査で止まる。結果は`SINGLE-167-01`と同じ（`SPEC-CONFIG-SCHEMA-001`の1件、summary「作業ディレクトリのパスの形式が不正です」）。修正前のCoreは設定の検査を通し、「コマンドの作業ディレクトリが利用できません」（`SPEC-VERIFY-BLOCKED-001`、`blocked`／2） |
+| `SINGLE-173-12` | `SINGLE-173-11`と同じ入力。`cwd`が`"tests\0"`（NUL） | verify REQ-001 | error／3 | 対照: 結果は`SINGLE-173-11`と同じ。修正前のCoreも拒否する |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1054,6 +1079,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-059-01` | ルート`zeta`（`.`）、メンバー`beta`（`apps/beta`）、`alpha`（`apps/alpha`）をこの順でカタログに宣言する。ルートの`REQ-001`（AC-01、AC-02。コマンド`p`が両方を`covers`）を、`alpha`の`TECH-001`が`REQ-001:AC-01`、`beta`の`TECH-001`が`REQ-001:AC-02`について`refines`する（どちらも規範文なし、コマンド`t`。`.`で実行） | verify --all-workspaces | passed／0 | 検証対象は3件。`zeta::REQ-001`の閉包は3文書で、メンバーの`TECH-001`を起点にした閉包は、自身と`zeta::REQ-001`だけで、同じ`REQ`を具体化する別のメンバーの文書を含まない（逆参照の出発点は起点を所有する文書だけ。関係・トレースモデル §6.1の4.）。コンテキストのハッシュ値は、リテラルの参照計算Aと、直した参照計算Bの両方と一致する（実装の確認事項C91。Coreは修正前も通る） |
 | `MULTI-059-02` | ルート`zeta`（`.`）、メンバー`beta`、`alpha`（この順で宣言）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`（AC-01）を`requires`し、`alpha`と`beta`の`TECH-001`が、どちらも`REQ-002:AC-01`を`refines`する（コマンド`t`。`.`で実行） | verify REQ-001 | passed／0 | 閉包は`zeta::REQ-001`と`zeta::REQ-002`だけ。`requires`で到達した`REQ-002`は逆参照の出発点にならず、それを`refines`するメンバーの`TECH-001`2件も、`alpha`と`beta`の設定とコマンドも、閉包とハッシュ値の材料に含まない。`commands[]`は`zeta::p`の1件だけ。`requires`を持つ構成は、閉包の外の文書が閉包内の文書を`requires`する辺を参照計算Bが拒否するため、全体の`verify`にせず単独の起点にする |
 | `MULTI-059-03` | ルート`zeta`（`.`）、メンバー`alpha`（`apps/alpha`）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`を`requires`し、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が`REQ-001:AC-01`を`refines`する（`.`で実行） | verify --workspace alpha alpha::TECH-001 | passed／0 | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`だけ。参照先の`REQ-001`が`requires`する`zeta::REQ-002`は辿らない（関係・トレースモデル §6.1の3.）。ハッシュ値の材料のワークスペースは`alpha`、`zeta`の順で、`zeta`のコマンドは閉包の文書（`REQ-001`）が使う`p`だけである |
+| `MULTI-060-01` | `MULTI-037-09`と同じ入力。`exclude: ["cases\tx"]`（タブを含む。除外のパスは実在しなくてよい）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 除外のパスの制御文字の違反（確認事項C102）。診断は`MULTI-037-09`と同じ（`SPEC-MULTI-CONFIG-001`の1件、summary「除外のパスの形式が不正です」）。修正前のCoreは除外を受理して`passed`／0（`workspaces`は3件） |
+| `MULTI-060-02` | `MULTI-037-09`と同じ入力から`exclude`を除き、メンバー`web`のパスを`"apps/we\nb"`（改行を含む）にする。`web`の設定は置かない（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | メンバーのパスの制御文字の違反（確認事項C102）。診断は`SPEC-MULTI-PATH-001`の1件（summary「メンバーのパスの形式が不正です」、`source`は`{file, platform, .spec/bitz.yaml, multiWorkspace.members}`）で、形は`MULTI-037-16`と同じ（全体事前検査の停止。`workspaces`は空）。修正前のCoreはパスを受理し、メンバーの設定の不在（`SPEC-MULTI-MEMBER-001`、summary「メンバーの.spec/bitz.yamlがありません」） |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

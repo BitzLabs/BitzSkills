@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "60db9ad5172caae4d38338362b0164240e7b66bc5caa334544b73c7c293b7f6d"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "66767d183e5015d9456de27bf06c3e93e4099dd518149005f2b0c86e51827c49"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 06dce44316629e7c54e636a0d366384495b3e7f1 0\t.spec/requirements/REQ-001.md\n100644 bc053c16bc71e47b24cac098fc98e5276a2d7554 0\ttests/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "60db9ad5172caae4d38338362b0164240e7b66bc5caa334544b73c7c293b7f6d"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "66767d183e5015d9456de27bf06c3e93e4099dd518149005f2b0c86e51827c49"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 06dce44316629e7c54e636a0d366384495b3e7f1 0\t.spec/requirements/REQ-001.md\n100644 bc053c16bc71e47b24cac098fc98e5276a2d7554 0\ttests/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
