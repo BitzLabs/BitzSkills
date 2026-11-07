@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "error",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "error",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "error",
+          "contextDigest": "sha256:727596293a7bc4b6a3df547b58433c1c2cb5cae5453588e999d394598ae6e9fb",
+          "statements": [
+            "platform::REQ-001:AC-01"
+          ],
+          "bindingRefs": [
+            "platform::default"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "platform::default",
+          "workspaceId": "platform",
+          "name": "default",
+          "status": "error",
+          "termination": "signal",
+          "cwd": ".",
+          "argv": [
+            "bin/signal.sh",
+            "tests/ok.py"
+          ],
+          "tests": [
+            "tests/ok.py"
+          ],
+          "covers": [
+            "platform::REQ-001:AC-01"
+          ],
+          "exitCode": null,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-COMMAND-001",
+          "severity": "error",
+          "resultStatus": "error",
+          "summary": "コマンドがシグナルで終了しました",
+          "source": {
+            "kind": "environment",
+            "component": "command",
+            "identifier": "platform::default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "error",
+      "targetResults": [
+        {
+          "target": "api::REQ-201",
+          "status": "error",
+          "contextDigest": "sha256:9e19b4e812263f5a9ca3c07729dc77db5e06ce04025bb8702596ca8a1f85c0ad",
+          "statements": [
+            "api::REQ-201:AC-01"
+          ],
+          "bindingRefs": [
+            "api::default"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "api::default",
+          "workspaceId": "api",
+          "name": "default",
+          "status": "error",
+          "termination": "spawn_error",
+          "cwd": ".",
+          "argv": [
+            "bin/badformat",
+            "tests/ok.py"
+          ],
+          "tests": [
+            "tests/ok.py"
+          ],
+          "covers": [
+            "api::REQ-201:AC-01"
+          ],
+          "exitCode": null,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-COMMAND-001",
+          "severity": "error",
+          "resultStatus": "error",
+          "summary": "コマンドの実行形式をOSが拒否しプロセスを生成できません",
+          "source": {
+            "kind": "environment",
+            "component": "command",
+            "identifier": "api::default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "error",
+      "targetResults": [
+        {
+          "target": "web::REQ-101",
+          "status": "error",
+          "contextDigest": "sha256:6985bd7e45cf0f2f3327dd9374f7fc2ed3bf31c5adf166fae1bf6df03dbeda64",
+          "statements": [
+            "web::REQ-101:AC-01"
+          ],
+          "bindingRefs": [
+            "web::default"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "web::default",
+          "workspaceId": "web",
+          "name": "default",
+          "status": "error",
+          "termination": "timeout",
+          "cwd": ".",
+          "argv": [
+            "/bin/sleep",
+            "60"
+          ],
+          "tests": [
+            "tests/ok.py"
+          ],
+          "covers": [
+            "web::REQ-101:AC-01"
+          ],
+          "exitCode": null,
+          "timeoutSeconds": 1,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-TIMEOUT-001",
+          "severity": "error",
+          "resultStatus": "error",
+          "summary": "コマンドが実効タイムアウト1秒で終了しませんでした",
+          "source": {
+            "kind": "environment",
+            "component": "command",
+            "identifier": "web::default"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

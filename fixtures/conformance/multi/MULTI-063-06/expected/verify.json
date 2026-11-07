@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "error",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-101",
+      "status": "error",
+      "contextDigest": "sha256:6985bd7e45cf0f2f3327dd9374f7fc2ed3bf31c5adf166fae1bf6df03dbeda64",
+      "statements": [
+        "web::REQ-101:AC-01"
+      ],
+      "bindingRefs": [
+        "web::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "web::default",
+      "workspaceId": "web",
+      "name": "default",
+      "status": "error",
+      "termination": "timeout",
+      "cwd": ".",
+      "argv": [
+        "/bin/sleep",
+        "60"
+      ],
+      "tests": [
+        "tests/ok.py"
+      ],
+      "covers": [
+        "web::REQ-101:AC-01"
+      ],
+      "exitCode": null,
+      "timeoutSeconds": 1,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-TIMEOUT-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "コマンドが実効タイムアウト1秒で終了しませんでした",
+      "source": {
+        "kind": "environment",
+        "component": "command",
+        "identifier": "web::default"
+      }
+    }
+  ]
+}

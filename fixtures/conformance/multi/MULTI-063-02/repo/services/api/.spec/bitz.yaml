@@ -1,0 +1,10 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: api
+verify:
+  commands:
+    backend:
+      argv: ["/bin/true", "{tests}"]
+      cwd: .

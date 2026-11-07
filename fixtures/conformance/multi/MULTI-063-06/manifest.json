@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-063-06",
+  "description": "対照: 複合ワークスペースの単独のverifyでは、起動した後の診断を最上位の診断へ置く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "web::REQ-101",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

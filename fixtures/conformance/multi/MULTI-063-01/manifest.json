@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-063-01",
+  "description": "全体のcheckのtext出力が、ワークスペースの診断を数えて出し、件数をJSONの結果と一致させる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "text",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0,
+    "textFile": "expected/check.txt"
+  }
+}

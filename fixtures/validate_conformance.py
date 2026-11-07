@@ -111,6 +111,7 @@ from conformance.path_lexical_fixtures import validate as validate_path_lexical_
 from conformance.multi_closure_origin_fixtures import validate as validate_multi_closure_origin_fixtures
 from conformance.real_path_ownership_fixtures import validate as validate_real_path_ownership_fixtures
 from conformance.verify_test_check_fixtures import validate as validate_verify_test_check_fixtures
+from conformance.multi_all_workspaces_output_fixtures import validate as validate_multi_all_workspaces_output_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -426,6 +427,7 @@ def main():
     checks["multi_closure_origin_fixtures"] = validate_multi_closure_origin_fixtures()
     checks["real_path_ownership_fixtures"] = validate_real_path_ownership_fixtures()
     checks["verify_test_check_fixtures"] = validate_verify_test_check_fixtures()
+    checks["multi_all_workspaces_output_fixtures"] = validate_multi_all_workspaces_output_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
