@@ -478,15 +478,23 @@ def _covers_allowed_refs(
 
 
 def check_coverage(
-    entries: list[DocEntry], workspace_id: str, *, source_ids: set[str] | None = None
+    entries: list[DocEntry],
+    workspace_id: str,
+    *,
+    source_ids: set[str] | None = None,
+    id_index: dict[str, DocEntry] | None = None,
+    statement_index: dict[str, dict] | None = None,
 ) -> list[Diagnostic]:
     """`tests[].covers`が妥当な規範文または文書IDを参照することを検査する（:func:`_covers_allowed_refs`）。
 
     ``source_ids``の意味は :func:`check_relations` と同じ（`scope: selected`の絞り込み）。
+    ``id_index``と``statement_index``は``entries``全体から作る索引で、呼び出し側が構築済みなら再利用できる（省略すれば作る）。
     """
 
-    id_index = build_id_index(entries)
-    statement_index = build_statement_index(entries)
+    if id_index is None:
+        id_index = build_id_index(entries)
+    if statement_index is None:
+        statement_index = build_statement_index(entries)
 
     diags: list[Diagnostic] = []
     for entry in _source_entries(entries, source_ids):

@@ -259,6 +259,76 @@ def _make_covering_tests(context_documents, id_index: dict[str, DocEntry], works
     return _covering_tests
 
 
+def _make_test_checker(
+    *,
+    multi_active: bool,
+    ws_root_by_id: dict[str, str],
+    entries_by_ws: dict[str, list[DocEntry]],
+    id_index: dict[str, DocEntry],
+    statement_index: dict[str, dict],
+    local_id_indices: dict[str, dict[str, DocEntry]],
+    local_stmt_indices: dict[str, dict[str, dict]],
+    known_ws_ids: set[str],
+    originals: dict[str, dict[str, DocEntry]] | None = None,
+    real_roots: dict[str, str] | None = None,
+):
+    """検証対象が使うテスト対応の検査（`bitz verify`仕様 §4の4.）を行う関数を返す。
+
+    戻り値の関数``check(owner, doc_entry, index)``は、所有ワークスペース``owner``の仕様文書``doc_entry``の`tests[index]`が
+    `check`と同じ規則（テストのパスの存在と所有境界、`covers`の妥当性）に違反するとき、`check`と同じ診断（コード、文言、
+    発生元は宣言した仕様文書、`key`は`tests[index].path`または`tests[index].covers`、`covers`は`evidence`）を辞書で返す。
+    違反がなければ空のリストを返す。検査は`check`が使う関数（単一ワークスペースは`relations.check_paths`・`check_coverage`、
+    複合ワークスペースは`multirelate.path_diagnostics`・`coverage_diagnostics`）をそのまま呼ぶ。診断は宣言どおりの
+    表記を保つため、修飾する前の元の文書（``entries_by_ws``）に対して呼ぶ。文書ごとの結果は1度だけ求めて再利用する。
+    ``entries_by_ws``は``{ワークスペースID: カタログの文書}``で、単一ワークスペースでは所有ワークスペース1件だけを持つ。
+    ``originals``（ワークスペースIDと文書IDで引く元の文書）と``real_roots``（ワークスペースのルートの実パス）は、
+    索引の違う複数の検査関数（`--all-workspaces`の作業ワークスペースごと）で共有できる。
+    """
+
+    by_doc: dict[tuple[str, str], list[dict]] = {}
+    if originals is None:
+        originals = {}
+    if real_roots is None:
+        real_roots = {}
+
+    def _original(owner: str, doc_entry: DocEntry) -> DocEntry:
+        if owner not in originals:
+            originals[owner] = {
+                e.doc_id: e for e in relations_mod.valid_entries(entries_by_ws.get(owner, [])) if e.doc_id is not None
+            }
+        return originals[owner].get(doc_entry.doc_id, doc_entry)
+
+    def _document_diagnostics(owner: str, doc_entry: DocEntry) -> list[dict]:
+        key = (owner, doc_entry.doc_id)
+        if key in by_doc:
+            return by_doc[key]
+        entry = _original(owner, doc_entry)
+        if multi_active:
+            if not real_roots:
+                real_roots.update({wid: os.path.realpath(root) for wid, root in ws_root_by_id.items()})
+            found = multirelate.path_diagnostics([entry], owner, ws_root_by_id[owner], real_roots)
+            found += multirelate.coverage_diagnostics(
+                [entry], owner, local_id_indices, local_stmt_indices, known_ws_ids
+            )
+        else:
+            found = relations_mod.check_paths(
+                [entry], ws_root_by_id[owner], owner, source_ids={entry.doc_id}
+            )
+            found += relations_mod.check_coverage(
+                entries_by_ws[owner], owner, source_ids={entry.doc_id}, id_index=id_index, statement_index=statement_index
+            )
+        # 検証対象が使うのは`tests[]`のエントリだけで、`implements`は検査しない（`check`の責務）。`approved`でない文書の
+        # `warning`は、状態の診断（`CTX-STATE-001`）が先に検証対象を止めるため、ここへは来ない。
+        by_doc[key] = [d.to_dict() for d in found if d.severity == "error" and str(d.source.get("key", "")).startswith("tests[")]
+        return by_doc[key]
+
+    def check(owner: str, doc_entry: DocEntry, index: int) -> list[dict]:
+        prefix = f"tests[{index}]."
+        return [d for d in _document_diagnostics(owner, doc_entry) if str(d["source"].get("key", "")).startswith(prefix)]
+
+    return check
+
+
 def _cycle_diagnostics_provider(entries_by_ws: dict[str, list[DocEntry]]):
     """複合ワークスペース全体の循環の診断を1度だけ計算し、ワークスペースID別に返す関数を返す。
 
@@ -507,8 +577,9 @@ def _process_single_target(
     invalid_by_ws: dict[str, set[str]] | None,
     digest_fn,
     resolved_commands_for,
+    test_check,
     cycle_diagnostics_for=None,
-) -> tuple[dict, list[tuple[str, str, str, str]]]:
+) -> tuple[dict, list[tuple[str, str, str, str, str, int]]]:
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
     ``needed_pairs``は``(コマンドを所有するワークスペースのID, コマンド名, ワークスペースからの相対パスで示したテストのパス,
@@ -659,9 +730,37 @@ def _process_single_target(
             if addressed.kind == "TECH" and not addressed.statements and ref not in doc_unit_ids:
                 doc_unit_ids.append(ref)
 
+    # この検証対象が使うテスト対応: 文書単位のテスト対応（規範文のないTECHの`tests[]`すべて）と、対象規範文を`covers`するテスト対応。
+    # 使わないテスト対応（対象規範文を`covers`しないもの）は検査しない（`bitz verify`仕様 §4の4.、`check`の責務）。
+    used_tests: list[tuple[DocEntry, int, dict, str]] = []
+    for doc_unit_id in doc_unit_ids:
+        doc_entry = id_index[doc_unit_id]
+        owner = context_mod._owner_of(doc_unit_id, workspace_id) if multi_active else workspace_id
+        for idx, t in enumerate(doc_entry.frontmatter.get("tests") or []):
+            used_tests.append((doc_entry, idx, t, owner))
+    for cover_id in target_statements:
+        used_tests.extend(covering_tests(cover_id))
+
+    # 継続単位`skip-target`（`VERIFY-TEST-PATH-INVALID`・`VERIFY-TEST-COVERAGE-INVALID`、複合ワークスペースの所有領域の外は
+    # `MULTI-OWNERSHIP`）: 使うテスト対応のテストのパスまたは`covers`が`check`と同じ規則に違反するとき、`check`と同じ診断を
+    # 検証対象の`diagnostics`へ返し、検証対象を`failed`にする。同じエントリを複数の規範文が使っても1度だけ検査する。
+    test_violation_diags: list[dict] = []
+    invalid_tests: set[tuple[str, str, int]] = set()
+    checked_tests: set[tuple[str, str, int]] = set()
+    for doc_entry, idx, _t, owner in used_tests:
+        test_key = (owner, doc_entry.path, idx)
+        if test_key in checked_tests:
+            continue
+        checked_tests.add(test_key)
+        found = test_check(owner, doc_entry, idx)
+        if found:
+            invalid_tests.add(test_key)
+            test_violation_diags.extend(found)
+
     # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
     # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
     # 複数の規範文が指しても、同じ元の原因（同じ所有ワークスペースの`path`／`key`）へは1件に畳む）。
+    # テスト対応の検査（上）に違反したエントリはテスト割当てを構成しない（その診断を返すので、ここでは数えない）。
     binding_missing_diags: list[dict] = []
     seen_missing_keys: set[tuple[str, str, str]] = set()
 
@@ -682,6 +781,8 @@ def _process_single_target(
         doc_entry = id_index[doc_unit_id]
         owner = context_mod._owner_of(doc_unit_id, workspace_id) if multi_active else workspace_id
         for idx, t in enumerate(doc_entry.frontmatter.get("tests") or []):
+            if (owner, doc_entry.path, idx) in invalid_tests:
+                continue
             name = t.get("command") or doc_entry.frontmatter.get("verify")
             cmds = resolved_commands_for(owner)
             if not name or name not in cmds:
@@ -693,12 +794,22 @@ def _process_single_target(
         cover_ids = list(target_statements)
         for cover_id in cover_ids:
             for doc_entry, idx, t, owner in covering_tests(cover_id):
+                if (owner, doc_entry.path, idx) in invalid_tests:
+                    continue
                 name = t.get("command") or doc_entry.frontmatter.get("verify")
                 cmds = resolved_commands_for(owner)
                 if not name or name not in cmds:
                     _add_binding_missing(owner, doc_entry.path, idx, name)
                     continue
                 needed_pairs.append((owner, name, t["path"], _canon_id(cover_id), doc_entry.path, idx))
+
+    if test_violation_diags:
+        # `failed`は`blocked`より重いので、同じ検証対象にテスト割当ての欠落があっても検証対象は`failed`になる。
+        # 検証対象はテストを起動せず（`needed_pairs`を返さない）、`bindingRefs`は空である。
+        _finish(test_violation_diags + binding_missing_diags, "failed")
+        entry_out["bindingRefs"] = []
+        entry_out["contextDigest"] = context_digest
+        return entry_out, []
 
     if binding_missing_diags:
         _finish(binding_missing_diags, "blocked")
@@ -1036,6 +1147,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     multi_active = multi_pre is not None and multi_pre.ok
 
     catalog = document_mod.build_catalog(workspace_root, workspace_id, qualify_summary_ids=multi_active)
+    # 検証対象が使うテスト対応の検査（`_make_test_checker`）が、修飾する前の元の文書を使うための、ワークスペースごとのカタログの文書。
+    member_catalogs: dict[str, document_mod.CatalogResult] = {}
     if multi_active:
         assert multi_pre is not None
         (
@@ -1044,7 +1157,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             local_id_indices,
             local_stmt_indices,
             known_ws_ids,
-        ) = multirelate.build_multi_context(workspace_id, catalog.entries, multi_pre, keep_body=True)
+        ) = multirelate.build_multi_context(
+            workspace_id, catalog.entries, multi_pre, keep_body=True, catalogs_out=member_catalogs
+        )
         ws_root_by_id = {wid: root for wid, root, _rel in multiws.ordered_workspaces(multi_pre)}
         ws_path_by_id = {wid: relpath for wid, _root, relpath in multiws.ordered_workspaces(multi_pre)}
     else:
@@ -1155,6 +1270,12 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if multi_active
         else None
     )
+    test_check = _make_test_checker(
+        multi_active=multi_active, ws_root_by_id=ws_root_by_id,
+        entries_by_ws={workspace_id: catalog.entries, **{wid: cat.entries for wid, cat in member_catalogs.items()}},
+        id_index=id_index, statement_index=statement_index,
+        local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices, known_ws_ids=known_ws_ids,
+    )
 
     for key, root_id, raw in pending:
         def digest_fn(exp, _root_id=root_id):
@@ -1170,7 +1291,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             known_ws_ids=known_ws_ids, catalog_entries=catalog.entries,
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
             multi_active=multi_active, invalid_by_ws=None,
-            digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+            digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
             cycle_diagnostics_for=cycle_diagnostics_for,
         )
         target_entries.append(entry_out)
@@ -1317,12 +1438,21 @@ def _run_all_workspaces_members(
     needs: dict[tuple[str, str], dict] = {}
     any_targets = False
     cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
+    test_check_originals: dict[str, dict[str, DocEntry]] = {}
+    test_check_real_roots: dict[str, str] = {}
 
     for wid, root, _rel in workspaces:
         id_index, statement_index, local_id_indices, local_stmt_indices, known_ws_ids = multirelate.merge_indices(
             wid, entries_by_ws
         )
         catalog = per_ws_catalog[wid]
+        # 検証対象が使うテスト対応の検査。索引は作業ワークスペースごとに違うので、ワークスペースごとに作る（検査自体は使うときまで走らない）。
+        test_check = _make_test_checker(
+            multi_active=True, ws_root_by_id=ws_root_by_id, entries_by_ws=entries_by_ws,
+            id_index=id_index, statement_index=statement_index,
+            local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices, known_ws_ids=known_ws_ids,
+            originals=test_check_originals, real_roots=test_check_real_roots,
+        )
         default_roots = _default_roots_all(catalog.entries, local_id_indices[wid])
         if not default_roots:
             per_ws_extra_diags[wid].append(
@@ -1356,7 +1486,7 @@ def _run_all_workspaces_members(
                 known_ws_ids=known_ws_ids, catalog_entries=catalog.entries,
                 local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
                 multi_active=True, invalid_by_ws=invalid_by_ws,
-                digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for,
+                digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
                 cycle_diagnostics_for=cycle_diagnostics_for,
             )
             per_ws_target_entries[wid].append(entry_out)
