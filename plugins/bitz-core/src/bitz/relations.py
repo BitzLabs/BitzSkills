@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 
 from . import messages
+from . import pathown
 from .config import Diagnostic
 from .document import DocEntry
 
@@ -357,8 +358,16 @@ def check_relations(
 
 
 def _path_exists_as_file(workspace_root: str, rel_path: str) -> bool:
+    """``rel_path``が、ワークスペースのルートの所有領域にある通常のファイルとして存在するか（ワークスペース・設定仕様 §9）。
+
+    上位のディレクトリのシンボリックリンクを解決した実パスがルートの配下にあるときだけ存在するとする。ルートの外
+    （リポジトリの外を含む）へ解決するパスと、末端がシンボリックリンクのパスは、存在しないパスと同じに扱う。
+    """
+
     abs_path = os.path.join(workspace_root, rel_path)
-    return os.path.isfile(abs_path) and not os.path.islink(abs_path)
+    if os.path.islink(abs_path) or not os.path.isfile(abs_path):
+        return False
+    return pathown.owns(pathown.real_path(abs_path), pathown.real_path(workspace_root))
 
 
 def _skip_path_and_coverage(entry: DocEntry) -> bool:

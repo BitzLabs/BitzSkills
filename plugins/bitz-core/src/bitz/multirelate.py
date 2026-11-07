@@ -16,12 +16,14 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from dataclasses import replace
 
 from . import document as document_mod
 from . import lex
 from . import messages
 from . import multiws
+from . import pathown
 from . import relations as relations_mod
 from .config import Diagnostic
 from .document import DocEntry
@@ -378,27 +380,26 @@ def _skip_path_and_coverage(entry: DocEntry) -> bool:
     return entry.status in ("rejected", "cancelled")
 
 
-def _resolve_owned_path(ws_root_abs: str, own_real: str, rel_path: str) -> tuple[bool, bool]:
-    """``(exists_ok, ownership_violation)``を返す（複合ワークスペース仕様 §5.1）。
+def _resolve_owned_path(
+    ws_root_abs: str, own_real: str, rel_path: str, all_roots_real: Iterable[str] = ()
+) -> tuple[bool, bool]:
+    """``(exists_ok, ownership_violation)``を返す（複合ワークスペース仕様 §5.1の手順4・5）。
 
-    末端のシンボリックリンクは、実パスを解決した後、自ワークスペースの実パスのルートの配下（境界を含む）にあるときだけ
-    許可する。上位のディレクトリにあるシンボリックリンクの追跡はStep 5Aのカタログの検証（メンバーのパス）の側の責務であり、
-    ここでは宣言したパスの末端のシンボリックリンクだけを判定する（fixtureが要求する範囲）。
+    宣言したパスの実パス（上位のディレクトリと末端のシンボリックリンクを解決したもの）が、自ワークスペースの所有領域
+    （実パスのルートの配下から、``all_roots_real``のうち自ルートの配下にある別のワークスペースの配下を除いたもの）に
+    あるときだけ存在するパスとして扱う。別のワークスペースやリポジトリの外へ解決すれば所有境界の違反とする。
+    包含は実パスのファイルシステム上の同一性で判定する（:mod:`bitz.pathown`）。
     """
 
     abs_path = os.path.join(ws_root_abs, rel_path)
     if not os.path.lexists(abs_path):
         return False, False
-    if os.path.islink(abs_path):
-        real = os.path.realpath(abs_path)
-        if not os.path.isfile(real):
-            return False, False
-        if real == own_real or real.startswith(own_real + os.sep):
-            return True, False
-        return False, True
-    if not os.path.isfile(abs_path):
+    real = pathown.real_path(abs_path)
+    if not os.path.isfile(real):
         return False, False
-    return True, False
+    if pathown.owns(real, own_real, all_roots_real):
+        return True, False
+    return False, True
 
 
 def path_diagnostics(
@@ -407,6 +408,7 @@ def path_diagnostics(
     """`implements`と`tests[].path`の存在と所有境界を検査する（関係・トレースモデル §9、複合ワークスペース仕様 §5.1）。"""
 
     own_real = real_roots[ws_id]
+    all_roots_real = list(real_roots.values())
     diags: list[Diagnostic] = []
     for entry in relations_mod.valid_entries(entries):
         if _skip_path_and_coverage(entry):
@@ -417,7 +419,7 @@ def path_diagnostics(
 
         implements = entry.frontmatter.get("implements") or []
         for p in implements:
-            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p)
+            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p, all_roots_real)
             if violation:
                 diags.append(
                     _mk(
@@ -441,7 +443,7 @@ def path_diagnostics(
             p = t.get("path") if isinstance(t, dict) else None
             if not p:
                 continue
-            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p)
+            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p, all_roots_real)
             if violation:
                 diags.append(
                     _mk(
