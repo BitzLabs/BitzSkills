@@ -88,7 +88,7 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 複合ワークスペースは全体事前検査で遮断する。テストのパスが所有境界・存在の検査を通過しても、実効`cwd`の配下に
 ない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。いずれも診断`SPEC-VERIFY-BLOCKED-001`（重大度`error`、
 結果への効果`blocked`）、`source.kind: file`とし、前者の`source`は設定ファイル、
-後者の`source`は該当するテスト対応を宣言した仕様文書（実効`cwd`の配下にないテストのパスを宣言した文書が複数あれば、パスの辞書順で最初の文書）とし、`key`はその`tests[i].path`とする。テスト割当てごとに1件とする。実効`cwd`の実パスが所有領域の外であれば、単一ワークスペースは
+後者の`source`は該当するテスト対応を宣言した仕様文書（実効`cwd`の配下にないテストのパスを宣言した文書が複数あれば、パスの辞書順で最初の文書）とし、`key`はその`tests[i].path`（その文書で配下にないテストのパスが複数あれば、最小の添字）とする。テスト割当てごとに1件とする。実効`cwd`の実パスが所有領域の外であれば、単一ワークスペースは
 `VERIFY-CWD-OUTSIDE`として診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）、複合ワークスペースは`MULTI-OWNERSHIP-CWD`として
 診断`SPEC-MULTI-OWNERSHIP-001`（`failed`）とし、`source`は設定ファイルの`verify.commands.<名前>.cwd`とする。独立したテスト割当ては継続し、後述する起動前検査の`blocked`と同じ証跡の規則を使う。
 
