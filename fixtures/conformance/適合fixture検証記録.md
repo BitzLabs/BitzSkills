@@ -2232,3 +2232,24 @@ commit `2510fb91b69fc9ee0f72a9d08cf64747b7c8cfa6`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-07: `SINGLE-173`と`MULTI-060`を追加した後のGate Aの再認定
+
+パスの字句の規則を明記し、そろえた（実装の確認事項C101〜C103、ユーザーの決定）。ワークスペース・設定仕様 §9の禁止に、`.`のセグメント、空のセグメント
+（`a//b`と末尾の`/`。`changes`のディレクトリの接頭辞の末尾の`/`を除く）、NULを含む制御文字（U+0000〜U+001F、U+007F）を加え、§6の`cwd`と複合ワークスペース仕様
+§2・§5.1のメンバーと除外のパスにも制御文字を加えた。`frontmatter.schema.json`の`pathString`を厳しくし、`changes`用の`changesPathString`を加えた。`check` §2に、
+CLIで指定する仕様文書のパスは§9の字句を検査せず、仕様文書のパスと完全一致で照合すると明記した（C104）。これを固定する`SINGLE-173-01`〜`12`（Step 2・4）と
+`MULTI-060-01`〜`02`（Step 5）を追加した（ADR-051の追加、群`path_lexical_fixtures`）。matrix、Stepの割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。
+既存のfixtureの入力と期待値は変えていない（参照計算`frontmatter_glob_fixtures.path_rejected`、`multi_exclude_fixtures.lexical_problem`、
+`command_cwd_fixtures.lexical_violation`を新しい規則に合わせたが、各群の入力は空のセグメントと制御文字を含まない）。
+
+commit `d8a367a4c187c3060f6c83a92abf22be4b2268f9`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`64ed909119bfe10a61783c0d806c91c604592538a8f583fae04409e6055c1b1f`。前回から変わったのは次の値だけである: 14件の追加によるmatrixと網羅の件数（632件→646件）、Step 2の件数（111件→121件）、Step 4の件数（88件→90件）、Step 5の件数（280件→282件）、群`path_lexical_fixtures`の追加、実行ビットを確かめたファイル数（3589件→3638件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2、Step 4、Step 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
