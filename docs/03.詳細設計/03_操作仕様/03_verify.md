@@ -166,6 +166,8 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 いずれの場合も、影響を受ける検証対象は診断を複製せず、状態を`blocked`、`bindingRefs: []`とする。
 起動後のコマンドの結果は、通常どおり1件を`commands[]`へ置き、参照する検証対象はその`bindingId`を保持して結果の
 状態を集約する。
+起動した後に検出して返す診断（`VERIFY-SPAWN-ERROR`、`VERIFY-SIGNAL`、`VERIFY-TIMEOUT`。継続単位は`skip-binding`）も、上の`skip-binding`と同じ場所
+（単一ワークスペースでは最上位、複合ワークスペースではテスト割当てを所有するワークスペース）へ1件だけ置き、最上位へ複製しない。
 
 ## 7. 引数なしの実行
 
