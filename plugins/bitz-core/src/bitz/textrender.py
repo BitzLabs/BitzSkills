@@ -44,6 +44,22 @@ def render_doctor_text(result: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _tree_diagnostics(result: dict) -> list[dict]:
+    """結果の木構造に実在する診断を、§7の順で集める（診断を複製しない）。
+
+    最上位の診断を先に置き、続けて最上位の検証対象（`targetResults`）の診断、その後にワークスペースの処理順で
+    各ワークスペースの診断と、そのワークスペースの検証対象の診断を、検証対象の並びのまま置く。
+    """
+    diagnostics = list(result.get("diagnostics", []))
+    for target in result.get("targetResults", []):
+        diagnostics.extend(target.get("diagnostics", []))
+    for workspace in result.get("workspaces", []):
+        diagnostics.extend(workspace.get("diagnostics", []))
+        for target in workspace.get("targetResults", []):
+            diagnostics.extend(target.get("diagnostics", []))
+    return diagnostics
+
+
 def render_check_text(result: dict) -> str:
     scope = result.get("scope")
     if scope == "changed":
@@ -52,26 +68,27 @@ def render_check_text(result: dict) -> str:
         n_targets = result.get("checkedDocumentCount", 0)
     else:
         n_targets = sum(w.get("checkedDocumentCount", 0) for w in result.get("workspaces", []))
-    n_diag = len(result.get("diagnostics", []))
+    diagnostics = _tree_diagnostics(result)
     lines = [
-        f"check {result['status']} scope={scope} targets={n_targets} diagnostics={n_diag} "
+        f"check {result['status']} scope={scope} targets={n_targets} diagnostics={len(diagnostics)} "
         f"({result['durationMs']}ms)"
     ]
-    for d in result.get("diagnostics", []):
+    for d in diagnostics:
         lines.extend(_diagnostic_line(d))
     return "\n".join(lines) + "\n"
 
 
 def render_verify_text(result: dict) -> str:
-    target_results = result.get("targetResults", [])
-    n_targets = len(target_results)
-    diags = list(result.get("diagnostics", []))
-    for t in target_results:
-        diags.extend(t.get("diagnostics", []))
+    scope = result.get("scope")
+    if scope == "all-workspaces":
+        n_targets = sum(len(w.get("targetResults", [])) for w in result.get("workspaces", []))
+    else:
+        n_targets = len(result.get("targetResults", []))
+    diagnostics = _tree_diagnostics(result)
     lines = [
-        f"verify {result['status']} scope={result.get('scope')} targets={n_targets} "
-        f"diagnostics={len(diags)} ({result['durationMs']}ms)"
+        f"verify {result['status']} scope={scope} targets={n_targets} "
+        f"diagnostics={len(diagnostics)} ({result['durationMs']}ms)"
     ]
-    for d in diags:
+    for d in diagnostics:
         lines.extend(_diagnostic_line(d))
     return "\n".join(lines) + "\n"
