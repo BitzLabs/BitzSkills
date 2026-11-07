@@ -313,13 +313,18 @@ class MultiPathOwnershipTests(_MultiBase):
         self.assertEqual((result["status"], code), ("passed", 0), result)
 
     def test_verify_does_not_pass_a_test_owned_through_an_upper_symlink_to_another_workspace(self):
-        # N1: 修正前は`check`も`verify`も通った。メンバーのcwd（`.`）の配下にない実パスのため、`verify`は起動を遮断する。
+        # N1: 修正前は`check`も`verify`も通った。`verify`は、検証対象が使うテスト対応のテストのパスを`check`と同じ規則で検査し
+        # （`bitz verify`仕様 §4の4.）、所有領域の外へ解決するパスは`SPEC-MULTI-OWNERSHIP-001`（`failed`）で、テストを起動しない。
         self.write(web_tests=["ext/test_platform.py"])
         self.link("apps/web/ext", "../../tests")
         self.commit()
         result, _code = self.run_op("verify", "web::REQ-101")
-        self.assertEqual(result["status"], "blocked", result)
+        self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["commands"], [])
+        self.assertEqual(
+            [c for c in self.codes(result) if c[0] == OWNERSHIP],
+            [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "tests[0].path")],
+        )
 
 
 class VerifyContainmentSingleTests(_SingleBase):
@@ -493,9 +498,9 @@ class VerifyOutsideCwdSourceTests(_SingleBase):
 
 class VerifyContainmentMultiTests(_MultiBase):
     def test_source_names_the_owning_workspace_and_its_relative_document_path(self):
-        # webのREQ-101がルート側のテストを上位のシンボリックリンクで宣言する。cwdはweb（`.`）。
-        self.write(web_tests=["ext/test_platform.py"])
-        self.link("apps/web/ext", "../../tests")
+        # webのREQ-101が、webの領域の中にあるが実効`cwd`（`src`）の配下にないテストを宣言する。所有領域の外のテストのパスは、
+        # テスト対応の検査（`SPEC-MULTI-OWNERSHIP-001`、`failed`）が先に止めるので、この診断はwebの領域の中のテストだけに出る。
+        self.write(web_tests=["tests/test_web.py"], web_cwd="src")
         self.commit()
         result, code = self.run_op("verify", "--all-workspaces")
         self.assertEqual(code, 2, result)

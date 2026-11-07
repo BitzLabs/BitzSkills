@@ -256,6 +256,10 @@ class CompositeRequiresTests(_Base):
     根拠は関係・トレースモデル §8のテスト済みの定義（対象規範文のうち、閉包に含まれる文書の`tests[].covers`のどれかがその規範文IDを含むもの）と、
     `requires`で到達した文書が閉包（§6.1の2.）に含まれることである。§8が禁じるのは`requires`の閉包の規範文を対象規範文（義務）へ昇格することで、
     閉包の文書のテスト対応を数えることではない。
+
+    ただし、`requires`で到達しただけのTECHは、REQの規範文を直接`refines`していないので、その規範文を`covers`に指定できない（文書・フロントマター・状態仕様のテスト対応の規則）。
+    `verify`は、検証対象が使うテスト対応の`covers`を`check`と同じ規則で検査し、指定できない値は`SPEC-TEST-COVERAGE-001`（`failed`）を発生元の仕様文書ごとに返す
+    （`bitz verify`仕様 §4の4.）。この入力は、コマンド名の欠落（`blocked`）より前にその検査で止まる。
     """
 
     def build(self) -> None:
@@ -269,14 +273,20 @@ class CompositeRequiresTests(_Base):
         _write(r, f"apps/api/{TECH_PATH}",
                _tech("TECH-001", refines=None, covers=["web::REQ-001:AC-01"], command="absent"))
 
-    def test_verify_returns_one_diagnostic_per_owning_workspace(self):
+    def test_verify_returns_one_coverage_diagnostic_per_declaring_workspace(self):
         for argv in (("web::REQ-001",), ("--all-workspaces",)):
             with self.subTest(argv=argv):
                 result, code = self.verify(*argv)
-                self.assertEqual((result["status"], code), ("blocked", 2))
+                self.assertEqual((result["status"], code), ("failed", 1))
+                target = self.target(result, "web::REQ-001")
+                self.assertEqual((target["status"], target["bindingRefs"]), ("failed", []))
+                self.assertEqual(self.blocked(target), [])
                 self.assertEqual(
-                    [(w, p) for w, p, *_ in self.blocked(self.target(result, "web::REQ-001"))],
-                    [("api", TECH_PATH), ("web", TECH_PATH)],
+                    [(d["code"], d["source"]["workspaceId"], d["source"]["path"], d["source"]["key"], d["evidence"]) for d in target["diagnostics"]],
+                    [
+                        ("SPEC-TEST-COVERAGE-001", "api", TECH_PATH, "tests[0].covers", "web::REQ-001:AC-01"),
+                        ("SPEC-TEST-COVERAGE-001", "web", TECH_PATH, "tests[0].covers", "REQ-001:AC-01"),
+                    ],
                 )
 
 
