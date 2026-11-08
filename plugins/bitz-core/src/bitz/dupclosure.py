@@ -60,6 +60,8 @@ class DuplicateTracker:
             for key, copies in sorted(groups.items())
         }
         self._referenced: set[tuple[str, str]] | None = None
+        self._candidate_groups: list[DuplicateGroup] | None = None
+        self._component: dict[tuple[str, str], tuple[str, str]] | None = None
         self._variants: dict[tuple[str, str, int], IndexPair] = {}
 
     def __bool__(self) -> bool:
@@ -84,14 +86,19 @@ class DuplicateTracker:
 
     # --- 閉包を作るときに辿るID -------------------------------------------------------------
 
-    def traversed(self, closure_ids: Callable[[dict[str, DocEntry], dict[str, dict]], Iterable[str]]) -> list[DuplicateGroup]:
+    def traversed(
+        self,
+        closure_ids: Callable[[dict[str, DocEntry], dict[str, dict]], Iterable[str]],
+        roots: Iterable[str] | None = None,
+    ) -> list[DuplicateGroup]:
         """``closure_ids(id_index, statement_index)``が返す閉包のID（索引のキーの表現）に入る重複を返す。
 
-        ``closure_ids``は、重複した文書の写しのうち1つを索引に置いた仮の索引で呼ばれる。
+        ``closure_ids``は、重複した文書の写しのうち1つを索引に置いた仮の索引で呼ばれる。``roots``（索引のキーの表現の起点）を渡すと、
+        閉包を作る起点から強い関係でつながらない重複を、閉包を作り直さずに除く（閉包は起点から強い関係を辿って得るので、つながらない文書は入らない）。
         """
 
         found: list[DuplicateGroup] = []
-        for group in self._candidates():
+        for group in self._candidates(roots):
             key = self.index_key(group)
             for position in range(len(group.entries)):
                 if key in set(closure_ids(*self._variant(group, position))):
@@ -114,7 +121,7 @@ class DuplicateTracker:
                     ids.update(expansion.traversed_documents)
             return ids
 
-        return self.traversed(closure_ids)
+        return self.traversed(closure_ids, roots)
 
     def index_key(self, group: DuplicateGroup) -> str:
         """統合索引でのキー。作業ワークスペースの文書は修飾のないID、他のワークスペースの文書は``ws::ID``。"""
@@ -159,13 +166,66 @@ class DuplicateTracker:
             self._referenced = referenced
         return self._referenced
 
-    def _candidates(self) -> list[DuplicateGroup]:
-        referenced = self._referenced_documents()
-        out: list[DuplicateGroup] = []
-        for key, group in self._groups.items():
-            if key in referenced or any(_declares_strong_relation(entry) for entry in group.entries):
-                out.append(group)
-        return out
+    def _candidates(self, roots: Iterable[str] | None = None) -> list[DuplicateGroup]:
+        if self._candidate_groups is None:
+            referenced = self._referenced_documents()
+            self._candidate_groups = [
+                group
+                for key, group in self._groups.items()
+                if key in referenced or any(_declares_strong_relation(entry) for entry in group.entries)
+            ]
+        if roots is None:
+            return self._candidate_groups
+        components = self._components()
+        reached = {components.get(self._node_of(root), self._node_of(root)) for root in roots}
+        return [group for group in self._candidate_groups if components[(group.workspace_id, group.doc_id)] in reached]
+
+    def _node_of(self, key: str) -> tuple[str, str]:
+        """索引のキー（文書ID、規範文ID、修飾ID）の所有文書を``(ワークスペースID, 文書ID)``にする。"""
+
+        ws_id, local = self._active, key
+        if self._multi:
+            qualified = multirelate.parse_qualified(key)
+            if qualified is not None:
+                ws_id, local = qualified
+        return ws_id, local.partition(":")[0]
+
+    def _components(self) -> dict[tuple[str, str], tuple[str, str]]:
+        """強い関係（重複した写しの宣言を含む）でつながる文書の連結成分（無向）。文書``(ワークスペースID, 文書ID)``から成分の代表を引く。"""
+
+        if self._component is None:
+            parent: dict[tuple[str, str], tuple[str, str]] = {}
+
+            def find(node: tuple[str, str]) -> tuple[str, str]:
+                parent.setdefault(node, node)
+                while parent[node] != node:
+                    parent[node] = parent[parent[node]]
+                    node = parent[node]
+                return node
+
+            for ws_id, entries in self._entries_by_ws.items():
+                for entry in entries:
+                    if entry.doc_id is None:
+                        continue
+                    relations = (entry.frontmatter or {}).get("relations")
+                    source = find((ws_id, entry.doc_id))
+                    if not isinstance(relations, dict):
+                        continue
+                    for relation in _STRONG_RELATIONS:
+                        for ref in relations.get(relation) or []:
+                            if not isinstance(ref, str):
+                                continue
+                            target_ws, local = ws_id, ref
+                            if self._multi:
+                                qualified = multirelate.parse_qualified(ref)
+                                if qualified is not None:
+                                    target_ws, local = qualified
+                            target = find((target_ws, local.partition(":")[0]))
+                            source = find(source)
+                            if target != source:
+                                parent[target] = source
+            self._component = {node: find(node) for node in list(parent)}
+        return self._component
 
     def _variant(self, group: DuplicateGroup, position: int) -> IndexPair:
         cache_key = (group.workspace_id, group.doc_id, position)
