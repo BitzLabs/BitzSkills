@@ -4,6 +4,7 @@ from pathlib import Path
 import time
 
 import production_matrix_capture as capture
+import production_matrix_rate_limits as rate_limits
 import production_matrix_score as score
 
 p = capture.p
@@ -121,7 +122,7 @@ def advance(instance, control, read_limits, verify, verify_completed, primary, i
             raise
 
 
-def run_next(repository: Path, bundle: Path, approved_condition: str, read_limits):
+def run_next(repository: Path, bundle: Path, approved_condition: str, read_limits=None):
     """独立検分された固定条件について、承認済みの実行器から呼び出す入口。"""
     require(bundle.is_relative_to(repository/'.venv') and '..' not in bundle.parts,
         'matrix continuation bundle boundary')
@@ -140,6 +141,18 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
         and own==p.guard.git(repository,'show',c['sourceCommit']+':evals/skills/routing/production_matrix_continuation.py'),
         'matrix continuation reviewed operator and approved condition required')
     d=p.deployment(bound,deployment)
+    if read_limits is None:
+        path = 'evals/skills/routing/production_matrix_rate_limits.py'
+        worker = io.read_regular(repository/path)
+        require(worker==p.guard.git(repository,'show',c['sourceCommit']+':'+path)
+            and io.sha(worker)==p.trace.strict_json(report).get('rateReaderSha256'),
+            'matrix continuation reviewed rate reader required')
+        sdk_path = repository/d['sdkRelativePath']
+
+        def read_limits():
+            capture.auth_metadata()
+            return rate_limits.read(repository,sdk_path,d['codexPath'],capture.AUTH,worker)
+
     artifact=io.common_ledger_path(repository).parent.parent
     control=score.control_root(artifact,bound)
     storage=matrix.shared_storage(repository,bound)
@@ -163,3 +176,14 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
         lambda n, proof:score.verify_completed(*scoring_args(n),resource_proof=proof), primary,
         lambda n,guard:score._run(*scoring_args(n),control_guard=guard),
         lambda n,guard:score._finalize(*scoring_args(n),control_guard=guard))
+
+
+
+def run_waiting(repository: Path, bundle: Path, approved_condition: str):
+    """待機した同じ枠を、日付を条件にせず再確認する。確定・停止は呼出し側へ返す。"""
+    while True:
+        result = run_next(repository,bundle,approved_condition)
+        if result['status'] != 'waiting_for_rate_window':
+            return result
+        while (remaining := result['waitUntilUnix']-time.time()) > 0:
+            time.sleep(min(remaining,60))
