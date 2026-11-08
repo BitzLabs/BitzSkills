@@ -22,11 +22,13 @@ trace = preflight.trace
 require = trace.require
 FINAL = dict(selectedEntry=None, selectedPath=None, outcome='not-applicable', events=[], rejectedEvents=[],
     readyClaimed=False, evidencePresent=False, reason='LOCAL_MATRIX_ISOLATION_ONLY')
-FIXED_FILES = {'contract.json', 'deployment.json', 'sdk-manifest.json', 'reservation.json',
+LEGACY_FIXED_FILES = {'contract.json', 'deployment.json', 'sdk-manifest.json', 'reservation.json',
     'resource-preflight.json', 'model-input.json', 'decision-schema.json', 'context-profile.json',
     'launch-settings.json', 'invocation.json', 'config.json', 'version.stdout', 'version.stderr',
     'rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-stderr.bin', 'trace-safe.jsonl', 'runtime-result.json',
     'isolated-result.json', 'request-1.json', 'namespace.stdout', 'namespace.stderr'}
+FIXED_FILES = LEGACY_FIXED_FILES | {preflight.model_catalog.FILE}
+CATALOG_SOURCE = 'evals/skills/routing/production_heldout_model_catalog.py'
 
 
 def isolated(base, *, calibration_only=False):
@@ -80,7 +82,8 @@ def isolated(base, *, calibration_only=False):
             self.wfile.write(body);self.wfile.flush()
     server = HTTPServer(('127.0.0.1',0), Handler)
     worker = threading.Thread(target=server.serve_forever, daemon=True);worker.start()
-    config = preflight.capture.config_for(base, d, repository=ROOT)
+    preflight.verify_model_catalog(io.read_regular(base/preflight.model_catalog.FILE))
+    config = preflight.config_for(base, d, repository=ROOT)
     config.update({'model_providers.bitz_openai_http.base_url':f'http://127.0.0.1:{server.server_port}/v1',
         'model_providers.bitz_openai_http.requires_openai_auth':False})
     io.exclusive(base/'config.json', io.encoded(config))
@@ -107,7 +110,9 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
                      calibration_only=False, calibration_date=None, source_files=None):
     require(type(calibration_only) is bool, 'matrix local calibration mode must be boolean')
     require(calibration_only or calibration_date is None, 'matrix normal probe cannot override context date')
-    require(isinstance(originals, dict) and set(originals) == FIXED_FILES
+    fixed_catalog = CATALOG_SOURCE in (preflight.SOURCE_FILES if source_files is None else source_files)
+    expected_files = FIXED_FILES if fixed_catalog else LEGACY_FIXED_FILES
+    require(isinstance(originals, dict) and set(originals) == expected_files
             and all(isinstance(raw,bytes) for raw in originals.values()), 'matrix local original inventory')
     require(isinstance(resource_proof_raw,bytes) and originals['resource-preflight.json'] == resource_proof_raw,
             'matrix local resource proof drift')
@@ -160,7 +165,11 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     import re
     require(isinstance(url,str) and re.fullmatch(r'http://127\.0\.0\.1:[1-9][0-9]{0,4}/v1',url) is not None
         and 1 <= int(url.split(':')[2].split('/')[0]) <= 65535, 'matrix local loopback URL')
-    expected_config=preflight.capture.config_for(base,d,repository=source_repository)
+    if fixed_catalog:
+        preflight.verify_model_catalog(originals[preflight.model_catalog.FILE])
+        expected_config=preflight.config_for(base,d,repository=source_repository)
+    else:
+        expected_config=preflight.capture.config_for(base,d,repository=source_repository)
     expected_config.update({'model_providers.bitz_openai_http.base_url':url,'model_providers.bitz_openai_http.requires_openai_auth':False})
     require(trace.json_equal(config,expected_config), 'matrix local complete config drift')
     sent=primary.json_lines(originals['rpc-in.jsonl']);received=primary.json_lines(originals['rpc-out.jsonl'])
@@ -236,6 +245,7 @@ def _run_probe(source_repository,bound,deployment_raw,sdk_manifest_raw,output_re
     schema_raw=preflight.decision_schema(preflight.guard.git(source_repository,'show',source+':'+preflight.inventory.SCHEMA))
     context_raw=preflight.guard.git(source_repository,'show',source+':'+preflight.inventory.CONTEXT)
     for name,raw in [('contract.json',bound.execution_raw),('deployment.json',deployment_raw),('sdk-manifest.json',sdk_manifest_raw),
+        (preflight.model_catalog.FILE,preflight.model_catalog.fixed_catalog()),
         ('reservation.json',io.encoded(slot)),('resource-preflight.json',io.encoded(before)),('model-input.json',bound.matrix.payloads[0]),
         ('decision-schema.json',schema_raw),('context-profile.json',context_raw),('launch-settings.json',launch.launch_settings(bound.execution_raw,deployment_raw))]:
         io.exclusive(base/name,raw)

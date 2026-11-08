@@ -66,8 +66,13 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
             snapshotRelativePath='.venv/matrix-routing-preparation-synthetic/snapshot',manifestSha256=c['pins']['snapshotManifest'],snapshotResourceCount=len(old_manifest['resources']),
             runtimeManifestSha256=c['pins']['runtimeManifest'],contextProfileSha256=c['pins']['contextProfile'],calibrationManifestSha256=c['pins']['calibrationManifest'],certifiesSkillGate=False)
         self.originals=copy.deepcopy(base.originals);self.receipt=copy.deepcopy(base.receipt)
+        self.catalog_raw=provider.io.encoded(dict(models=[dict(slug='gpt-6.1-sol')]))
+        for name,value in [('SELECTED_BYTES',len(self.catalog_raw)),('SELECTED_SHA256',provider.io.sha(self.catalog_raw)),
+                ('fixed_catalog',lambda:self.catalog_raw)]:
+            item=patch.object(provider.preflight.model_catalog,name,value);item.start();self.addCleanup(item.stop)
         self.receipt.update(version=provider.evidence.PROVIDER_VERSION,slot=self.bound.slot(1))
         self.originals.update({'contract.json':self.bound.execution_raw,'reservation.json':provider.io.encoded(self.bound.slot(1)),
+            provider.preflight.model_catalog.FILE:self.catalog_raw,
             'deployment.json':provider.io.encoded(self.deployment),'sdk-manifest.json':self.sdk_raw,'runtime-manifest.json':self.runtime_raw,
             'launch-settings.json':provider.io.encoded(dict(codexPath=self.deployment['codexPath'],diagnosticTracing=provider.preflight.capture.sdk.DIAGNOSTIC_TRACING))})
         profile=provider.trace.strict_json(base.profile)
@@ -79,7 +84,7 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
         self.originals['resource-guards.json']=provider.io.encoded(dict.fromkeys(['before','invoke','after'],proof))
         from types import SimpleNamespace
         self.originals['capture-environment.json']=provider.io.encoded(provider.environment_spec(SimpleNamespace(bound=self.bound,ordinal=1),self.source_repository,self.artifact_repository))
-        self.originals['config.json']=provider.io.encoded(provider.preflight.capture.config_for(base.capture.base,self.deployment,repository=self.source_repository))
+        self.originals['config.json']=provider.io.encoded(provider.preflight.config_for(base.capture.base,self.deployment,repository=self.source_repository))
         self.rehash()
 
     def rehash(self):self.receipt['artifactSha256']={n:provider.io.sha(raw) for n,raw in self.originals.items()}
@@ -88,6 +93,17 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
         return provider.evidence.bind_originals(self.bound,1,self.originals,provider.io.encoded(self.receipt),self.base.manifest,self.base.schema,self.base.profile)
 
     def verify(self):return provider.verify_bytes(self.bind(),source_repository=self.source_repository,artifact_repository=self.artifact_repository)
+
+    def legacy_provider(self):
+        self.receipt['version']=provider.evidence.LEGACY_PROVIDER_VERSION
+        self.originals.pop(provider.preflight.model_catalog.FILE)
+        config=provider.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
+        self.originals['config.json']=provider.io.encoded(config)
+        guards=provider.trace.strict_json(self.originals['resource-guards.json'])
+        path='evals/skills/routing/production_heldout_model_catalog.py'
+        for proof in guards.values():proof['sourceSha256'].pop(path,None)
+        self.originals['resource-guards.json']=provider.io.encoded(guards);self.rehash()
+        return tuple(n for n in provider.preflight.SOURCE_FILES if n!=path)
 
     def test_complete_provider_configuration_does_not_claim_live_environment_or_measurement(self):
         result=self.verify();self.assertTrue(result['providerConfigurationBytesMatched']);self.assertTrue(result['rawPayloadCorrelationVerified'])
@@ -105,6 +121,21 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
 
     def test_legacy_original_context_is_diagnostic_only(self):
         with self.assertRaisesRegex(ValueError,'legacy'):provider.verify_bytes(self.legacy_context,source_repository=self.source_repository,artifact_repository=self.artifact_repository)
+
+    def test_provider_catalog_mutation_or_version_downgrade_is_rejected(self):
+        before=copy.deepcopy(self.originals)
+        self.originals[provider.preflight.model_catalog.FILE]+=b' ';self.rehash()
+        with self.assertRaisesRegex(ValueError,'catalog drift'):self.verify()
+        self.originals=before;self.rehash();self.receipt['version']=provider.evidence.LEGACY_PROVIDER_VERSION
+        with self.assertRaises(ValueError):self.bind()
+
+    def test_legacy_provider_is_verified_without_adding_catalog_or_changing_source(self):
+        names=self.legacy_provider()
+        with patch('production_matrix_calibration.source_files',return_value=names):
+            self.assertTrue(self.verify()['providerConfigurationBytesMatched'])
+        with patch('production_matrix_calibration.source_files',return_value=provider.preflight.SOURCE_FILES),\
+                self.assertRaisesRegex(ValueError,'version and catalog producer mismatch'):
+            self.verify()
 
     def test_rehashed_deployment_launch_sdk_runtime_environment_and_full_config_drift_rejected(self):
         before=copy.deepcopy(self.originals)

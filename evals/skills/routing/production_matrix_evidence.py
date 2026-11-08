@@ -16,9 +16,15 @@ import production_trace as trace
 io = matrix.io
 require = trace.require
 VERSION = 'public-matrix-original-binding-0.1.0'
-PROVIDER_VERSION = 'public-matrix-original-binding-0.1.1'
-PROVIDER_ARTIFACTS = frozenset({'deployment.json','sdk-manifest.json','runtime-manifest.json',
+LEGACY_PROVIDER_VERSION = 'public-matrix-original-binding-0.1.1'
+PROVIDER_VERSION = 'public-matrix-original-binding-0.1.2'
+LEGACY_PROVIDER_ARTIFACTS = frozenset({'deployment.json','sdk-manifest.json','runtime-manifest.json',
     'launch-settings.json','resource-guards.json','capture-environment.json'})
+PROVIDER_ARTIFACTS = LEGACY_PROVIDER_ARTIFACTS | {'public-model-catalog.json'}
+
+
+def provider_artifacts(version):
+    return PROVIDER_ARTIFACTS if version == PROVIDER_VERSION else LEGACY_PROVIDER_ARTIFACTS
 RECEIPT_KEYS = {'version', 'sourceCommit', 'slot', 'cwd', 'artifactSha256', 'elapsedSeconds',
                 'namespaceExitCode', 'timedOut', 'primaryModelTrajectories', 'independentReviewPerformed',
                 'automaticRetries', 'phaseComplete', 'certifiesSkillGate'}
@@ -46,7 +52,7 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
     require(all(isinstance(raw, bytes) for raw in [receipt_raw, manifest_raw, schema_raw, context_raw]),
             'matrix fixed original bytes')
     receipt = trace.strict_json(receipt_raw)
-    require(isinstance(receipt, dict) and set(receipt) == RECEIPT_KEYS and receipt['version'] in {VERSION,PROVIDER_VERSION},
+    require(isinstance(receipt, dict) and set(receipt) == RECEIPT_KEYS and receipt['version'] in {VERSION,LEGACY_PROVIDER_VERSION,PROVIDER_VERSION},
             'matrix receipt inventory')
     require(receipt['sourceCommit'] == slot['sourceCommit'] and trace.json_equal(receipt['slot'], slot),
             'matrix receipt slot or source drift')
@@ -63,7 +69,7 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
     require(type(seconds) in {int, float} and seconds >= 0 and (type(seconds) is int or math.isfinite(seconds)),
             'matrix finite capture elapsed')
     declared = receipt['artifactSha256']
-    additions = PROVIDER_ARTIFACTS if receipt['version'] == PROVIDER_VERSION else frozenset()
+    additions = provider_artifacts(receipt['version']) if receipt['version'] != VERSION else frozenset()
     require(isinstance(declared, dict) and inventory.FIXED_ARTIFACTS | additions <= set(declared),
             'matrix original required inventory')
     # 全名前を検査してから原内容を消費する。opaque・未知pathは受け取らない。

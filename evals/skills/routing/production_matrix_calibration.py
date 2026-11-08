@@ -8,7 +8,9 @@ import production_matrix_context_probe as probe
 p=probe.preflight
 io=p.io
 require=p.require
-VERSION='matrix-client-calibration-originals-0.1.0'
+LEGACY_VERSION='matrix-client-calibration-originals-0.1.0'
+VERSION='matrix-client-calibration-originals-0.2.0'
+LEGACY_FILES=probe.LEGACY_FIXED_FILES|{'receipt.json'}
 FILES=probe.FIXED_FILES|{'receipt.json'}
 MANIFEST_KEYS={'version','sourceCommit','sourceRepository','artifactRepository','outputRelativeRoot','artifactSha256'}
 
@@ -53,10 +55,11 @@ def source_files(repository,source):
 def verify(repository,manifest_raw,profile,contract):
     require(io.sha(manifest_raw)==io.pin(contract['calibrationManifestSha256']),'fixed matrix calibration manifest hash')
     m=p.trace.strict_json(manifest_raw)
-    require(isinstance(m,dict) and set(m)==MANIFEST_KEYS and m['version']==VERSION
+    require(isinstance(m,dict) and set(m)==MANIFEST_KEYS and m['version'] in {LEGACY_VERSION,VERSION}
         and isinstance(m['sourceCommit'],str) and re.fullmatch(r'[0-9a-f]{40}',m['sourceCommit']) is not None
         and m['sourceCommit']==profile.get('calibrationSource') and isinstance(m['artifactSha256'],dict)
-        and set(m['artifactSha256'])==FILES,'fixed matrix calibration inventory')
+        and set(m['artifactSha256'])==(FILES if m['version']==VERSION else LEGACY_FILES),
+        'fixed matrix calibration inventory')
     for digest in m['artifactSha256'].values():io.pin(digest)
     require(isinstance(m['sourceRepository'],str) and isinstance(m['artifactRepository'],str)
         and isinstance(m['outputRelativeRoot'],str) and re.fullmatch(
@@ -72,10 +75,12 @@ def verify(repository,manifest_raw,profile,contract):
         and io.common_ledger_path(source_repository).parent.parent==expected_artifact,'matrix calibration common repository drift')
     base=artifact_repository/m['outputRelativeRoot']
     # 宣言検査後、有限の公開固定名だけを読む。opaque内部は列挙しない。
-    originals={name:io.read_regular(base/name) for name in sorted(FILES)}
+    source=m['sourceCommit'];names=source_files(repository,source)
+    require((probe.CATALOG_SOURCE in names)==(m['version']==VERSION),
+        'matrix calibration catalog version and producer mismatch')
+    originals={name:io.read_regular(base/name) for name in sorted(m['artifactSha256'])}
     require({name:io.sha(raw) for name,raw in originals.items()}==m['artifactSha256'],'matrix calibration original bytes drift')
     receipt=p.trace.strict_json(originals.pop('receipt.json'))
-    source=m['sourceCommit'];names=source_files(repository,source)
     frozen={name:p.guard.git(repository,'show',source+':'+name) for name in names}
     require(originals['context-profile.json']==frozen[p.inventory.CONTEXT],'matrix calibration reference profile outside Git')
     execution_raw=originals['contract.json'];c=p.matrix.execution_contract(execution_raw)
