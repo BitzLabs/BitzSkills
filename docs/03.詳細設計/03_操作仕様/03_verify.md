@@ -53,7 +53,9 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 
 ## 4. 処理
 
-1. 正規化した検証対象ごとに、目的`verify`のコンテキストを完全解決する。
+1. 正規化した検証対象ごとに、目的`verify`のコンテキストを完全解決する。完全な閉包が上限（[`context` §8](01_context.md#8-上限)と同じ規則。
+   起点を所有するワークスペースの`context.maxDocuments`と`context.maxBytes`を使い、バイト数は詳細度`standard`の提示で測る）を超えた検証対象は、
+   診断`CTX-LIMIT-001`（`blocked`）とし、`contextDigest: null`、`bindingRefs: []`として、テストを起動しない。独立した検証対象は続ける。
 2. 各検証対象の起点と、強い関係の参照先の適用可能性、先行するTASKが状態`done`であることを確認する。
 3. 対象規範文を確定し、全`MUST`へ1件以上のテスト対応を要求する。
 4. コンテキストとカバレッジが通過状態の検証対象について、その検証対象が使うテスト対応を検査し（下記）、通過したものについて
@@ -282,8 +284,8 @@ TASKは診断`CTX-STATE-001`（`blocked`）とする。
 `SPEC-RELATION-MISSING-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
 `CTX-TASK-DEPENDENCY-001`を検証対象の`diagnostics`へ返し得る。これらの検証対象は`bindingRefs: []`とし、
 コンテキストを構成できない場合は`contextDigest: null`とする。閉包の文書（関係・トレースモデル §6.3が検査する範囲）が宣言する`related`の参照切れ
-（`SPEC-RELATION-ADVISORY-MISSING-001`、`passed_with_warnings`）は、検証対象を失敗させず、展開した後のどの結果にも
-その検証対象の`diagnostics`へ加える。全条件の診断コード、重大度、結果への効果、発生元、
+（`SPEC-RELATION-ADVISORY-MISSING-001`、`passed_with_warnings`）は、検証対象を失敗させず、展開した後の結果のうち、上限（`CTX-LIMIT-001`）で
+止まる結果を除くすべてで、その検証対象の`diagnostics`へ加える（`context` §10と同じ）。全条件の診断コード、重大度、結果への効果、発生元、
 継続単位、主診断の優先順位は[診断レジストリ](../00_共通契約/05_診断レジストリ.md)が所有する。
 
 ## 10. 全体操作での検証
