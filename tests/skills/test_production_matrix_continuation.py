@@ -68,6 +68,15 @@ class MatrixContinuationTests(unittest.TestCase):
     def finalize(self, ordinal, *, correct=True):
         self.calls.append(('parent', ordinal))
         review = self.f.review(ordinal, correct)
+        if self.f.bound.contract.get('independentScoring') == matrix.RUNNER_BOUND_SCORING:
+            ref = review['independentReceipt']
+            original = self.f.repository/ref['relativePath']
+            receipt = continuation.score.layout(self.f.repository,self.f.bound,ordinal)/'independent-receipt.json'
+            receipt.parent.mkdir(parents=True)
+            matrix.io.exclusive(receipt,original.read_bytes())
+            ref['relativePath'] = receipt.relative_to(self.f.repository).as_posix()
+            reservation = self.f.instance.read('independent',ordinal)
+            self.f.instance.record_independent_capture(ordinal,reservation,ref['sha256'])
         self.f.instance.record_review(ordinal, matrix.io.encoded(review))
         return dict(ledgerFinalized=True, verification=dict(proposedLedgerStatus=review['status']))
 
@@ -76,9 +85,14 @@ class MatrixContinuationTests(unittest.TestCase):
             lambda n,guard,admit:(primary or self.primary)(n),lambda n,guard:self.independent(n),
             lambda n,guard:(finalize or self.finalize)(n))
 
-    def test_cross_day_wait_and_process_restart_continue_exact_next_slot(self):
+    def test_cross_day_wait_and_process_restart_continue_with_runner_bound_receipt(self):
+        self.f.contract['independentScoring'] = matrix.RUNNER_BOUND_SCORING
+        self.f.bound = self.f.bind()
+        self.f.instance = self.f.open()
         self.assertEqual(self.advance(), dict(status='measured_correct', ordinal=1))
         first = self.f.instance.path('review', 1).read_bytes()
+        receipt_commit = self.f.instance.path(matrix.CAPTURED_STAGE,1)
+        committed = receipt_commit.read_bytes()
         reset = self.now+300
         self.read_limits.return_value = limits(reset, short=80)
         self.assertEqual(self.advance(), dict(status='waiting_for_rate_window', ordinal=2, waitUntilUnix=reset))
@@ -90,6 +104,9 @@ class MatrixContinuationTests(unittest.TestCase):
         self.assertEqual(self.advance(), dict(status='measured_correct', ordinal=2))
         self.assertEqual(self.advance(), dict(status='complete'))
         self.assertEqual(self.f.instance.path('review', 1).read_bytes(), first)
+        self.assertEqual(receipt_commit.read_bytes(), committed)
+        self.assertTrue(self.f.instance.path(matrix.CAPTURED_STAGE,2).is_file())
+        self.verify_completed.assert_any_call(1,self.verify.return_value)
         self.assertEqual(self.calls, [(stage,n) for n in (1,2) for stage in ('primary','independent','parent')])
         self.assertEqual(self.f.instance.summary()['primaryReserved'], 2)
 

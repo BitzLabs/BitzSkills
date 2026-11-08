@@ -275,6 +275,20 @@ class RunnerBoundMatrixScoreTests(unittest.TestCase):
         self.assertTrue(parent['ledgerFinalized'])
         self.assertEqual(parent['verification']['originalResponse'], f.answer)
 
+    def test_completed_runner_bound_capture_replays_and_rejects_receipt_binding_drift(self):
+        f = self.fixture
+        self.assertEqual(f.run_score()['status'], 'matrix_independent_captured')
+        self.assertTrue(f.finish()['ledgerFinalized'])
+        score.verify_completed(*f.args,resource_proof=f.proof)
+        path=f.instance.path(score.matrix.CAPTURED_STAGE,1)
+        original=score.io.read_regular(path)
+        capture=score.trace.strict_json(original)
+        capture['independentReservationSha256']='f'*64
+        path.write_bytes(score.io.encoded(capture))
+        with self.assertRaisesRegex(ValueError, 'capture reservation drift'):
+            score.verify_completed(*f.args,resource_proof=f.proof)
+        f.spawn.assert_called_once()
+
     def test_foreign_trace_and_response_with_rehashed_receipt_are_rejected(self):
         f = self.fixture
         self.assertEqual(f.run_score()['status'], 'matrix_independent_captured')
