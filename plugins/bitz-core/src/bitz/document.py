@@ -505,6 +505,21 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
     return entry
 
 
+def duplicate_diagnostic(doc_id: str, first_path: str, workspace_id: str, *, qualify_summary_ids: bool = False) -> Diagnostic:
+    """文書IDの重複の診断`SPEC-ID-DUPLICATE-001`を作る。発生元は重複した写しのうちパスの辞書順で最初のファイル（`key: id`）。
+
+    複合ワークスペース内では、`summary`に差し込む文書IDを所有ワークスペースのIDで修飾する（複合ワークスペース仕様 §4、確認事項C69）。
+    `check`の完全検査（:func:`build_catalog`）と、`context`・`verify`・`check`が閉包を作るときに辿るIDの重複を返す経路
+    （:mod:`bitz.dupclosure`。関係・トレースモデル §5.1、確認事項C96）が同じ診断を返すための唯一の組み立て。
+    """
+
+    return _mk(
+        "SPEC-ID-DUPLICATE-001", "error", "failed",
+        messages.doc_id_duplicate(f"{workspace_id}::{doc_id}" if qualify_summary_ids else doc_id),
+        first_path, workspace_id, key="id",
+    )
+
+
 def build_catalog(
     workspace_root: str,
     workspace_id: str,
@@ -583,14 +598,8 @@ def build_catalog(
             for e in group_sorted:
                 duplicate_entries.add(id(e))
                 e.duplicate = True
-            first = group_sorted[0]
             result.diagnostics.append(
-                # 複合ワークスペース内では、`summary`に差し込む文書IDを作業ワークスペースのIDで修飾する（複合ワークスペース仕様 §4、確認事項C69）。
-                _mk(
-                    "SPEC-ID-DUPLICATE-001", "error", "failed",
-                    messages.doc_id_duplicate(f"{workspace_id}::{doc_id}" if qualify_summary_ids else doc_id),
-                    first.path, workspace_id, key="id",
-                )
+                duplicate_diagnostic(doc_id, group_sorted[0].path, workspace_id, qualify_summary_ids=qualify_summary_ids)
             )
 
     for e in entries:
