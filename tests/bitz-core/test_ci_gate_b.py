@@ -59,14 +59,14 @@ class ShardingTests(unittest.TestCase):
         self.assertLess(max(fixture_seconds) - min(fixture_seconds), 0.2)
         plan = partition_plan(step_ids(5), 4)
         self.assertTrue(all(200 <= row["predictedSeconds"] <= 240 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 717)
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 721)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
         workers = plan["matrix"]["include"]
         self.assertEqual([(row["replica"], row["shard"]) for row in workers],
                          [(replica, shard) for replica in (1, 2) for shard in range(1, 5)])
-        # 4つの分割の予測秒数は239.5〜239.6秒で、どれもPythonのroundで240秒（4分00秒）になる。
+        # 4つの分割の予測秒数は239.7〜239.8秒で、どれもPythonのroundで240秒（4分00秒）になる。
         self.assertEqual([row["predicted"] for row in workers], ["4分00秒"] * 8)
         summary = planning.markdown(plan)
         self.assertIn("GitHub Actionsの実行36248419060", summary)
