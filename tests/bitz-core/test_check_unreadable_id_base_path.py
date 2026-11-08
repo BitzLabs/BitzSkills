@@ -100,7 +100,8 @@ class SingleWorkspaceTests(_Base):
 
         self.build()
         self.break_tech_1()
-        self.assertEqual(self.found(), [(SCHEMA, TECH_1)])
+        # `TECH-001`を`requires`する`TECH-002`は、その文書への直接の逆参照として完全検査の対象に入り、索引にない参照先の不在を返す（`check` §5）。
+        self.assertEqual(self.found(), [(SCHEMA, TECH_1), (MISSING, TECH_2)])
 
     def test_full_check_does_not_report_a_deletion_either(self):
         self.build()
@@ -113,7 +114,7 @@ class SingleWorkspaceTests(_Base):
 
         self.build()
         _write(self.root, TECH_1, "# TECH-001 TECH\n\n本文。\n")
-        self.assertEqual(self.found(), [(SCHEMA, TECH_1)])
+        self.assertEqual(self.found(), [(SCHEMA, TECH_1), (MISSING, TECH_2)])
 
     def test_approved_protection_is_not_compared(self):
         """承認済み要求の保護を比べない: `REQ-001`の意味（`title`）を変えて破損しても`SPEC-SAFETY-APPROVED-001`を返さない。"""
@@ -128,6 +129,38 @@ class SingleWorkspaceTests(_Base):
         self.build()
         _write(self.root, ".spec/technical/TECH-009.md", _tech("TECH-009", status=BROKEN_STATUS))
         self.assertEqual(self.found(), [(SCHEMA, ".spec/technical/TECH-009.md")])
+
+    def test_selection_counts_the_owner_of_the_broken_file_but_not_a_new_broken_file(self):
+        """引数なしの`check`は、IDを読めないファイルを基準版のIDの所有文書として`targetDocumentCount`に数える。基準版にない新規のファイルは数えない。"""
+
+        self.build()
+        self.break_tech_1()
+        self.assertEqual(self.check()["selection"], {"changedPathCount": 1, "targetDocumentCount": 1, "excludedCodeTestPathCount": 0})
+        _git(self.root, "checkout", "--", TECH_1)
+        _write(self.root, ".spec/technical/TECH-009.md", _tech("TECH-009", status=BROKEN_STATUS))
+        self.assertEqual(self.check()["selection"], {"changedPathCount": 1, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0})
+
+    def test_only_direct_references_to_the_unreadable_document_join_the_full_inspection(self):
+        """完全検査の対象に加えるのは、IDを読めない文書への直接の逆参照だけである。無関係な文書は検査しない。"""
+
+        _write(self.root, ".spec/technical/TECH-003.md", _tech("TECH-003", requires=["TECH-099"]))
+        self.build()
+        self.break_tech_1()
+        found = self.found()
+        self.assertIn((MISSING, TECH_2), found)
+        self.assertNotIn((MISSING, ".spec/technical/TECH-003.md"), found)
+
+    def test_moved_document_with_a_broken_file_left_behind_is_still_compared_by_id(self):
+        """基準版のIDが現在版の別のパスにあれば、元のパスに壊れたファイルがあっても、IDで対応付けて比べる（承認済み要求の保護と影響候補を失わない）。"""
+
+        _write(self.root, ".spec/technical/TECH-003.md", _tech("TECH-003").replace("status: approved\n", "status: approved\nrelations:\n  refines: [REQ-001]\n"))
+        self.build()
+        _write(self.root, ".spec/requirements/REQ-001-moved.md", _req("REQ-001", title="変えた"))
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", status=BROKEN_STATUS))
+        self.assertEqual(
+            self.found(),
+            [(SCHEMA, ".spec/requirements/REQ-001.md"), (IMPACT, ".spec/technical/TECH-003.md"), (SAFETY, ".spec/requirements/REQ-001-moved.md")],
+        )
 
     # --- 対照 -------------------------------------------------------------------------------
 
@@ -221,7 +254,23 @@ class MultiWorkspaceTests(_Base):
         self.build()
         _write(self.root, "apps/web/.spec/technical/TECH-001.md", _tech("TECH-001", status=BROKEN_STATUS))
         result = self.check("--workspace", "web")
-        self.assertEqual([(d["code"], d["source"]["path"]) for d in result["diagnostics"]], [(SCHEMA, ".spec/technical/TECH-001.md")])
+        self.assertEqual(
+            [(d["code"], d["source"]["path"]) for d in result["diagnostics"]],
+            [(SCHEMA, ".spec/technical/TECH-001.md"), (MISSING, ".spec/technical/TECH-002.md")],
+        )
+
+    def test_moved_member_document_with_a_broken_file_left_behind_is_still_compared_by_id(self):
+        """メンバーの比較（`--all-workspaces`と、複合ワークスペース内の単独操作）でも、基準版のIDが別のパスにあればIDで対応付けて比べる。"""
+
+        _write(self.root, "apps/web/.spec/requirements/REQ-100.md", _req("REQ-100"))
+        self.build()
+        _write(self.root, "apps/web/.spec/requirements/REQ-100-moved.md", _req("REQ-100", title="変えた"))
+        _write(self.root, "apps/web/.spec/requirements/REQ-100.md", _req("REQ-100", status=BROKEN_STATUS))
+        expected = [(SCHEMA, ".spec/requirements/REQ-100.md"), (SAFETY, ".spec/requirements/REQ-100-moved.md")]
+        web = next(w for w in self.check("--all-workspaces")["workspaces"] if w["id"] == "web")
+        self.assertEqual(sorted((d["code"], d["source"]["path"]) for d in web["diagnostics"]), expected)
+        single = self.check("--workspace", "web")
+        self.assertEqual(sorted((d["code"], d["source"]["path"]) for d in single["diagnostics"]), expected)
 
 
 if __name__ == "__main__":
