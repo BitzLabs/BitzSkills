@@ -8,6 +8,9 @@ import production_ledger as ledger
 import production_trace as trace
 
 INPUT_NAMES = ('routing', 'behaviorSafety', 'protocol', 'catalog', 'instructions', 'caseSchema')
+VERSION = 'public-production-matrix-inputs-0.1.0'
+SUBSET_VERSION = 'public-production-subset-inputs-0.1.0'
+
 CATEGORY_COUNTS = dict(explicit=6, implicit=6, contextual=6, negative=10, conflict=6, behavior=6, safety=6)
 
 
@@ -22,7 +25,7 @@ class MatrixInputs:
         return trace.strict_json(self.cases_raw)
 
     def slot(self, ordinal):
-        trace.require(type(ordinal) is int and 1 <= ordinal <= 92, 'matrix ordinal')
+        trace.require(type(ordinal) is int and 1 <= ordinal <= len(self.payloads)*2, 'matrix ordinal')
         index, repetition = divmod(ordinal - 1, 2)
         case = self.cases[index]
         return dict(ordinal=ordinal, caseId=case['caseId'], repetition=repetition+1,
@@ -34,17 +37,25 @@ def bind(contract_raw, **raw_inputs):
     trace.require(set(raw_inputs) == set(INPUT_NAMES) and isinstance(contract_raw, bytes)
                   and all(isinstance(raw, bytes) for raw in raw_inputs.values()), 'matrix raw inventory')
     contract = trace.strict_json(contract_raw)
+    subset = isinstance(contract, dict) and contract.get('version') == SUBSET_VERSION
+    extra = {'caseIds'} if subset else set()
     trace.require(isinstance(contract, dict) and set(contract) == {
         'version', 'scope', 'sourceCommit', 'model', 'repetitions', 'budget', 'inputSha256',
-        'certifiesBehavior', 'certifiesSkillGate'}, 'matrix contract inventory')
-    trace.require(contract['version'] == 'public-production-matrix-inputs-0.1.0'
-                  and contract['scope'] == 'public-six-skill-input-binding-only'
+        'certifiesBehavior', 'certifiesSkillGate'} | extra, 'matrix contract inventory')
+    trace.require(contract['version'] in {VERSION, SUBSET_VERSION}
+                  and contract['scope'] == ('public-six-skill-subset-input-binding-only' if subset
+                      else 'public-six-skill-input-binding-only')
                   and contract['model'] == 'gpt-6.1-sol'
                   and isinstance(contract['sourceCommit'], str)
                   and re.fullmatch(r'[0-9a-f]{40}', contract['sourceCommit']) is not None,
                   'matrix identity')
+    selected = contract.get('caseIds') if subset else [f'SE-{n:03d}' for n in range(1,47)]
+    trace.require(isinstance(selected, list) and (1 <= len(selected) < 46 if subset else len(selected) == 46)
+        and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
+        and selected == sorted(set(selected)), 'matrix selected case inventory')
+    maximum = len(selected)*2
     trace.require(type(contract['repetitions']) is int and contract['repetitions'] == 2
-                  and trace.json_equal(contract['budget'], dict(primary=92, independent=92, automaticRetries=0, delegations=0))
+                  and trace.json_equal(contract['budget'], dict(primary=maximum, independent=maximum, automaticRetries=0, delegations=0))
                   and contract['certifiesBehavior'] is False and contract['certifiesSkillGate'] is False,
                   'matrix finite limits')
     pins = contract['inputSha256']
@@ -80,5 +91,8 @@ def bind(contract_raw, **raw_inputs):
                   and trace.json_equal(protocol.get('minimumRepetitions'), {'prototype':2,'release':3}), 'matrix protocol version')
     instructions = raw_inputs['instructions'].decode('utf-8')
     trace.require(bool(instructions.strip()), 'matrix instructions')
+    if subset:
+        cases = [case for case in cases if case['caseId'] in selected]
+        trace.require([case['caseId'] for case in cases] == selected, 'matrix selected case identity')
     payloads = tuple(ledger.encoded(dict(instructions=instructions,eventCatalog=catalog,case=trace.project_case(c))) for c in cases)
     return MatrixInputs(contract_raw, ledger.encoded(cases), payloads)

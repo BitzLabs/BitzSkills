@@ -17,6 +17,7 @@ from production_trace import require, strict_json, json_equal
 
 
 VERSION = 'public-production-matrix-ledger-0.1.1'
+SUBSET_VERSION = 'public-production-subset-ledger-0.1.0'
 SURVEY_VERSION = 'public-production-matrix-survey-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli',
         'contextProfile', 'decisionSchema'}
@@ -49,12 +50,13 @@ def execution_contract(execution_raw):
     require(isinstance(execution_raw, bytes), 'matrix execution bytes required')
     c = strict_json(execution_raw)
     survey = isinstance(c, dict) and c.get('version') == SURVEY_VERSION
-    extra = {'surveyPolicySha256'} if survey else set()
+    subset = isinstance(c, dict) and c.get('version') == SUBSET_VERSION
+    extra = {'caseIds'} if subset else {'surveyPolicySha256'} if survey else set()
     require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
             'inputContractSha256', 'outputRelativeRoot', 'pins', 'budget', 'timeoutSeconds',
             'cliVersion', 'certifiesSkillGate'} | extra, 'matrix execution inventory')
     if survey:io.pin(c['surveyPolicySha256'])
-    require(c['version'] in {VERSION, SURVEY_VERSION} and isinstance(c['campaignId'], str)
+    require(c['version'] in {VERSION, SURVEY_VERSION, SUBSET_VERSION} and isinstance(c['campaignId'], str)
             and re.fullmatch(r'public-matrix-[a-z0-9]+(?:-[a-z0-9]+)*', c['campaignId']) is not None,
             'matrix campaign identity')
     require(isinstance(c['sourceCommit'], str) and re.fullmatch(r'[0-9a-f]{40}', c['sourceCommit']) is not None
@@ -66,7 +68,12 @@ def execution_contract(execution_raw):
     require(isinstance(c['pins'], dict) and set(c['pins']) == PINS, 'matrix runtime pin inventory')
     for value in c['pins'].values():
         io.pin(value)
-    require(json_equal(c['budget'], dict(primary=92, independent=92, automaticRetries=0, delegations=0)),
+    selected = c.get('caseIds') if subset else [f'SE-{n:03d}' for n in range(1,47)]
+    require(isinstance(selected, list) and (1 <= len(selected) < 46 if subset else len(selected) == 46)
+        and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
+        and selected == sorted(set(selected)), 'matrix selected case inventory')
+    maximum = len(selected)*2
+    require(json_equal(c['budget'], dict(primary=maximum, independent=maximum, automaticRetries=0, delegations=0)),
             'matrix execution limits')
     require(isinstance(c['timeoutSeconds'], dict) and set(c['timeoutSeconds']) == {'primary', 'independent'}
             and all(type(v) is int and 1 <= v <= 600 for v in c['timeoutSeconds'].values()),
@@ -78,6 +85,11 @@ def execution_contract(execution_raw):
 def bind(execution_raw, input_contract_raw, **raw_inputs):
     matrix = inputs.bind(input_contract_raw, **raw_inputs)
     c = execution_contract(execution_raw)
+    input_contract = strict_json(input_contract_raw)
+    subset = c['version'] == SUBSET_VERSION
+    require((input_contract['version'] == inputs.SUBSET_VERSION) == subset
+        and (not subset or c['caseIds'] == input_contract['caseIds'])
+        and json_equal(c['budget'], input_contract['budget']), 'matrix subset execution/input scope drift')
     require(c['sourceCommit'] == strict_json(input_contract_raw)['sourceCommit']
             and c['inputContractSha256'] == io.sha(input_contract_raw), 'matrix source and input binding')
     return BoundExecution(execution_raw, matrix, tuple(raw_inputs[name] for name in inputs.INPUT_NAMES))
@@ -96,7 +108,7 @@ class MatrixLedger:
         require(bound == bind(bound.execution_raw, bound.matrix.contract_raw,
                              **dict(zip(inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix bound bytes drift')
         self.storage, self.repository, self.bound = storage.absolute(), repository.absolute(), bound
-        self._slots = tuple(bound.slot(n) for n in range(1, 93))
+        self._slots = tuple(bound.slot(n) for n in range(1, self.maximum+1))
         require(self.storage.is_relative_to(self.repository / '.venv'), 'matrix storage outside repository')
         self.output = self.repository / bound.contract['outputRelativeRoot']
         require(not self.storage.is_relative_to(self.output) and not self.output.is_relative_to(self.storage),
@@ -107,6 +119,10 @@ class MatrixLedger:
         info = self.storage.stat()
         require(info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o700, 'matrix directory mode')
         io.sync_directory(self.storage.parent)
+
+    @property
+    def maximum(self):
+        return len(self.bound.matrix.payloads)*2
 
     @contextmanager
     def locked(self):
@@ -141,7 +157,7 @@ class MatrixLedger:
         return self.storage / f'{stage}-{ordinal:04d}.json'
 
     def slot(self, ordinal):
-        require(type(ordinal) is int and 1 <= ordinal <= 92, 'matrix ordinal')
+        require(type(ordinal) is int and 1 <= ordinal <= self.maximum, 'matrix ordinal')
         return dict(self._slots[ordinal-1])
 
     def read(self, stage, ordinal):
@@ -223,11 +239,11 @@ class MatrixLedger:
         ordinal = None
         try:
             files = {p.name for p in self.storage.iterdir()}
-            allowed = {'lock', 'campaign.json'} | {f'{stage}-{n:04d}.json' for stage in STAGES for n in range(1, 93)}
+            allowed = {'lock', 'campaign.json'} | {f'{stage}-{n:04d}.json' for stage in STAGES for n in range(1, self.maximum+1)}
             require(files <= allowed, 'unknown matrix ledger record')
             count = sum(name.startswith('attempt-') for name in files)
             require({f'attempt-{n:04d}.json' for n in range(1, count+1)} <= files, 'matrix reservation gap')
-            for ordinal in range(1, 93):
+            for ordinal in range(1, self.maximum+1):
                 if ordinal > count:
                     require(not any(present(self.path(stage, ordinal)) for stage in STAGES[1:]), 'unreserved matrix stage')
                     continue
@@ -254,7 +270,7 @@ class MatrixLedger:
         with self.locked():
             self.initialize()
             count = self.checked_count()
-            require(type(ordinal) is int and ordinal == count+1 and ordinal <= 92, 'matrix fixed order or limit')
+            require(type(ordinal) is int and ordinal == count+1 and ordinal <= self.maximum, 'matrix fixed order or limit')
             require(count == 0 or present(self.path('review', count)), 'matrix previous review pending')
             value = self.slot(ordinal)
             io.exclusive(self.path('attempt', ordinal), io.encoded(value))
@@ -324,7 +340,7 @@ class MatrixLedger:
             if not stopped:self.checked_count()
             counts = {stage: 0 for stage in STAGES}
             correct = incorrect = 0
-            for ordinal in range(1, 93):
+            for ordinal in range(1, self.maximum+1):
                 for stage in STAGES:
                     path = self.path(stage, ordinal)
                     if not present(path):continue
@@ -337,16 +353,16 @@ class MatrixLedger:
                         correct += value['accuracy'] is True
                         incorrect += value['accuracy'] is False
                     counts[stage] += 1
-            return dict(status='stopped' if stopped else 'complete' if counts['review'] == 92 else 'in_progress',
-                maximumPrimary=92, primaryReserved=counts['attempt'], primaryLaunchMarked=counts['started'],
+            return dict(status='stopped' if stopped else 'complete' if counts['review'] == self.maximum else 'in_progress',
+                maximumPrimary=self.maximum, primaryReserved=counts['attempt'], primaryLaunchMarked=counts['started'],
                 primaryCompleted=counts['primary'], independentReserved=counts['independent'],
                 parentVerified=counts['review'], measuredCorrect=correct, measuredIncorrect=incorrect,
-                missingMeasurements=92-counts['review'], certifiesSkillGate=False)
+                missingMeasurements=self.maximum-counts['review'], certifiesSkillGate=False)
 
 
 def open_ledger(storage, repository, bound):
     """明示的に束縛されたsurveyだけ失敗継続台帳を使う。旧版は従来どおり。"""
-    if bound.contract['version'] == VERSION:
+    if bound.contract['version'] in {VERSION, SUBSET_VERSION}:
         return MatrixLedger(storage, repository, bound)
     from production_matrix_survey import SurveyLedger
     policy_path = repository/'.venv/production-matrix-launch-controls'/bound.contract['campaignId']/'survey-policy.json'

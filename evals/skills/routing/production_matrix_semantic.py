@@ -72,7 +72,9 @@ def prepare(context,*,source_repository,artifact_repository):
         originalHost=provider.evidence.primary.json_lines(context.originals.get('host.jsonl',b''),empty=True),
         originalControlCalls=controls,originalControlResults=results,originalNativeFinal=finals[0],originalDecision=decision,
         mechanicalAccuracy=accuracy,parentVerification=parent,limitations=[
-            '公開46ケース×2の発火・停止判断。実操作成功/保持集合/releaseの証拠ではない。',
+            (f'選択された公開{len(context.bound.matrix.payloads)}ケース×2の発火・停止判断。実操作成功/保持集合/releaseの証拠ではない。'
+                if context.bound.contract['version']=='public-production-subset-ledger-0.1.0' else
+                '公開46ケース×2の発火・停止判断。実操作成功/保持集合/releaseの証拠ではない。'),
             '現物/argv/開始前の実起動許可は別工程。この入力束縛は実測適格性を認定しない。'])
     input_raw=io.encoded(data);binding={k:slot[k] for k in ['sourceCommit','ordinal','caseId','repetition','executionSha256']}
     binding.update(inputContractSha256=io.sha(context.bound.matrix.contract_raw),modelInputSha256=slot['payloadSha256'],
@@ -80,8 +82,10 @@ def prepare(context,*,source_repository,artifact_repository):
         primaryReceiptSha256=io.sha(context.receipt_raw),expectedSha256=io.sha(io.encoded(case['expected'])),reviewInputSha256=io.sha(input_raw))
     schema_raw=io.encoded(schema());trace.jsonschema.Draft202012Validator.check_schema(schema())
     contract=dict(version=VERSION,sourceCommit=slot['sourceCommit'],executionSha256=slot['executionSha256'],model='gpt-6.1-sol',
-        scope='public46-times2-semantic-response-binding-only',schemaSha256=io.sha(schema_raw),maximumInvocations=1,
-        maximumIndependentCampaignInvocations=92,maximumLogicalTurns=1,timeoutSeconds=context.bound.contract['timeoutSeconds']['independent'],
+        scope=('public-subset-times2-semantic-response-binding-only'
+            if context.bound.contract['version']=='public-production-subset-ledger-0.1.0'
+            else 'public46-times2-semantic-response-binding-only'),schemaSha256=io.sha(schema_raw),maximumInvocations=1,
+        maximumIndependentCampaignInvocations=context.bound.contract['budget']['independent'],maximumLogicalTurns=1,timeoutSeconds=context.bound.contract['timeoutSeconds']['independent'],
         automaticRetries=0,delegations=0,primaryModelTrajectories=0,certifiesBehavior=False,certifiesSkillGate=False)
     return Prepared(context,source_repository,artifact_repository,input_raw,io.encoded(binding),schema_raw,io.encoded(contract))
 
