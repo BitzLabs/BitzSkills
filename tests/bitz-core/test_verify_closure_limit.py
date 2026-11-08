@@ -204,6 +204,156 @@ class SingleWorkspaceTests(_Base):
         self.assert_same_as_context()
 
 
+def _normalized_size(text: str) -> int:
+    """ファイル全体のテキストから、フロントマターの終端より後の本文を取り、`bodyText`の正規化（§3.1.2。CRLFとCRをLFへ、行末の空白を除く、先頭と末尾の空行を除く、末尾にLFを付ける）
+    を適用したUTF-8のバイト数を返す。Coreの`digest.normalize_body_text`とは別に書いた参照計算。"""
+
+    body = text.split("\n---\n", 1)[1]
+    lines = [line.rstrip(" \t") for line in body.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    while lines and lines[0] == "":
+        lines.pop(0)
+    while lines and lines[-1] == "":
+        lines.pop()
+    return len(("\n".join(lines) + "\n").encode("utf-8")) if lines else 0
+
+
+# 全角文字、行末の空白とタブ、CRLFを含む詰め物。正規化の前後でバイト数が変わる（CRLFのCRと行末の空白を除く）。
+NORMALIZED_PADDING = "全角　の本文です。 \t\r\n" * 150
+
+
+class ByteBoundaryTests(_Base):
+    """バイト数の上限の境界（確認事項C95）。標準の提示のバイト数は、正規化した本文のUTF-8の長さの和（起点とそれを直接具体化する文書。ともに提示形式`full`）。
+
+    境界Tは、`context REQ-001 --purpose verify`の判定から求め（Tで通り、T-1で止まる最小の`maxBytes`）、入力から別に導く値と一致することも確かめる。
+    本文は全角文字と行末の空白とCRLFを含み、正規化を外した（本文の元の長さで測る）実装は、境界の近くでcontextと判定が分かれる。
+    """
+
+    def build(self, max_bytes: int) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", HEAD + f"context:\n  maxBytes: {max_bytes}\n" + COMMAND)
+        _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001", padding=NORMALIZED_PADDING))
+        _write(r, ".spec/technical/TECH-001.md", _tech("TECH-001", "REQ-001"))
+        _write(r, "tests/t.py", "x\n")
+        if not (r / ".git").exists():
+            self.commit()
+        else:
+            _git(r, "add", "-A")
+
+    def stopped_by_context(self, max_bytes: int) -> bool:
+        self.build(max_bytes)
+        result, _code = self.context("REQ-001", "--purpose", "verify")
+        return LIMIT in [d["code"] for d in result["diagnostics"]]
+
+    def boundary(self) -> int:
+        """contextの判定で、止まらない最小の`maxBytes`（設定できる最小値4096以上）。"""
+
+        low, high = 4096, 200000
+        self.assertTrue(self.stopped_by_context(low), "詰め物は、最小の上限を超える大きさにする")
+        self.assertFalse(self.stopped_by_context(high))
+        while low + 1 < high:
+            mid = (low + high) // 2
+            if self.stopped_by_context(mid):
+                low = mid
+            else:
+                high = mid
+        return high
+
+    def test_boundary_is_derived_from_normalized_bodies(self):
+        """Tは、入力から導くバイト数（正規化した本文の長さの和）と一致する。Tで通り（`>`であって`>=`ではない）、T-1で止まる。"""
+
+        threshold = self.boundary()
+        expected = sum(_normalized_size((self.root / path).read_text(encoding="utf-8"))
+                       for path in (".spec/requirements/REQ-001.md", ".spec/technical/TECH-001.md"))
+        self.assertEqual(threshold, expected)
+        raw = sum(len((self.root / path).read_bytes()) for path in (".spec/requirements/REQ-001.md", ".spec/technical/TECH-001.md"))
+        self.assertGreater(raw, threshold, "正規化の前後でバイト数が変わる入力にする")
+
+    def test_verify_boundary_at_T_minus_1_T_and_T_plus_1(self):
+        threshold = self.boundary()
+        for max_bytes, stopped in ((threshold - 1, True), (threshold, False), (threshold + 1, False)):
+            with self.subTest(maxBytes=max_bytes):
+                self.build(max_bytes)
+                (self.root / "ran.marker").unlink(missing_ok=True)
+                verified, code = self.verify("REQ-001")
+                entry = self.target(verified, "REQ-001")
+                if stopped:
+                    self.assertEqual((verified["status"], code), ("blocked", 2))
+                    self.assert_limit_target(entry, SUMMARY_BYTES, "root", ".spec/requirements/REQ-001.md")
+                    self.assertFalse((self.root / "ran.marker").exists())
+                else:
+                    self.assertEqual((verified["status"], code), ("passed", 0), verified)
+                    self.assertEqual(entry["bindingRefs"], ["root::default"])
+                    self.assertTrue((self.root / "ran.marker").exists())
+
+    def test_verify_matches_context_at_boundary(self):
+        """T-1・T・T+1で、verifyの判定（止まるか、診断の文言と発生元）がcontextと一致する。"""
+
+        threshold = self.boundary()
+        for max_bytes in (threshold - 1, threshold, threshold + 1):
+            with self.subTest(maxBytes=max_bytes):
+                self.build(max_bytes)
+                contextual, _ = self.context("REQ-001", "--purpose", "verify")
+                verified, _ = self.verify("REQ-001")
+                context_limit = [d for d in contextual["diagnostics"] if d["code"] == LIMIT]
+                verify_limit = [d for d in self.target(verified, "REQ-001")["diagnostics"] if d["code"] == LIMIT]
+                self.assertEqual(verify_limit, context_limit)
+                self.assertEqual(bool(context_limit), max_bytes < threshold)
+
+
+class CheckOrderTests(_Base):
+    """検査の順は、関係の診断（と状態の診断）、上限、カバレッジ。これらが上限の超過と同時に起きるとき、verifyはcontextと同じ診断だけを返し、`CTX-LIMIT-001`を返さない。"""
+
+    def codes(self, result: dict) -> list[str]:
+        return [d["code"] for d in result["diagnostics"]]
+
+    def assert_same_as_context(self, expected_code: str) -> None:
+        contextual, _ = self.context("REQ-001", "--purpose", "verify")
+        verified, code = self.verify("REQ-001")
+        entry = self.target(verified, "REQ-001")
+        self.assertEqual(self.codes(contextual), [expected_code])
+        self.assertEqual([d["code"] for d in entry["diagnostics"]], [expected_code])
+        self.assertNotIn(LIMIT, [d["code"] for d in entry["diagnostics"]])
+        self.assertEqual(entry["diagnostics"], contextual["diagnostics"])
+        self.assertIsNone(entry["contextDigest"])
+        self.assertEqual((entry["bindingRefs"], verified["commands"]), ([], []))
+        self.assertFalse((self.root / "ran.marker").exists())
+
+    def build(self, *, tech_requires: str | None = None) -> None:
+        r = self.root
+        _write(r, ".spec/bitz.yaml", HEAD + "context:\n  maxDocuments: 1\n" + COMMAND)
+        _write(r, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        tech = _tech("TECH-001", "REQ-001")
+        if tech_requires:
+            tech = tech.replace("  refines: [REQ-001]\n", f"  refines: [REQ-001]\n  requires: [{tech_requires}]\n", 1)
+        _write(r, ".spec/technical/TECH-001.md", tech)
+        _write(r, "tests/t.py", "x\n")
+        self.commit()
+
+    def test_missing_strong_relation_wins_over_limit(self):
+        """閉包は2文書で上限（1文書）を超えるが、強い関係の参照切れ（`SPEC-RELATION-MISSING-001`）があれば、それだけを返して`failed`にする。"""
+
+        self.build(tech_requires="REQ-099")
+        self.assert_same_as_context("SPEC-RELATION-MISSING-001")
+        verified, code = self.verify("REQ-001")
+        self.assertEqual((verified["status"], code), ("failed", 1))
+
+    def test_state_error_wins_over_limit(self):
+        """`requires`で到達する文書が`draft`（適用できない状態）なら、状態の診断を返し、上限は判定しない。閉包は3文書で上限（1文書）を超える。"""
+
+        self.build(tech_requires="REQ-002")
+        _write(self.root, ".spec/requirements/REQ-002.md", _req("REQ-002", test_path="tests/u.py").replace("status: approved", "status: draft", 1))
+        _write(self.root, "tests/u.py", "x\n")
+        _git(self.root, "add", "-A")
+        _git(self.root, "commit", "-q", "-m", "draft requires")
+        contextual, _ = self.context("REQ-001", "--purpose", "verify")
+        verified, _code = self.verify("REQ-001")
+        entry = self.target(verified, "REQ-001")
+        self.assertNotIn(LIMIT, self.codes(contextual))
+        self.assertTrue(contextual["diagnostics"], "前提: contextは状態の診断を返す")
+        self.assertEqual(entry["diagnostics"], contextual["diagnostics"])
+        self.assertNotEqual(verified["status"], "passed")
+
+
 class ControlTests(_Base):
     """対照: 上限の内側なら今までどおり通る（修正前のCoreも通る）。"""
 
