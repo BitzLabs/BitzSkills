@@ -10557,6 +10557,40 @@ class AuditTests(unittest.TestCase):
                 self.assertIn(phrase, outcome["errors"][0])
                 self.assertNotIn("レビュー済みの期待値と異なります", outcome["errors"][0])
 
+    def test_verify_closure_limit_check_related_rejects_vacuous_inputs(self):
+        """`related`の参照切れを入力から消した（警告の不在が恒真になる）ケースは、`check_related`だけが拒否する。
+        入力・期待結果・副作用の期待値を同じ内容へ書き直しても、ほかの検査（上限の判定、診断、ハッシュ値）は通る。`check_related`を外すと通ることも確かめる（陰性対照の鑑別力）。"""
+        module = verify_closure_limit_fixtures
+        original_single, original_multi = module.single_inputs, module.multi_inputs
+
+        def single_without_broken_reference(identifier):
+            inputs = original_single(identifier)
+            tech = inputs[".spec/technical/TECH-001.md"].decode()
+            self.assertIn("ADR-099", tech)
+            inputs[".spec/technical/TECH-001.md"] = tech.replace("related: [ADR-001, ADR-099]", "related: [ADR-001]").encode()
+            return inputs
+
+        def multi_without_related(identifier):
+            inputs = original_multi(identifier)
+            path = "apps/web/.spec/technical/TECH-101.md"
+            self.assertIn("related: [ADR-099]", inputs[path].decode())
+            inputs[path] = inputs[path].decode().replace("  related: [ADR-099]\n", "").encode()
+            return inputs
+
+        cases = [("SINGLE-176-03", "single_inputs", single_without_broken_reference, "`related`の参照切れが、入力と期待で異なります"),
+                 ("MULTI-064-06", "multi_inputs", multi_without_related, "TECH-101は、存在しない参照先をrelatedする必要があります")]
+        for identifier, name, replacement, phrase in cases:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                with patch.object(module, name, replacement), patch.object(module, "CASES", {identifier: module.CASES[identifier]}):
+                    module.generate(root)
+                    outcome = module.validate(root, {identifier})
+                    self.assertEqual(len(outcome["errors"]), 1, outcome)
+                    self.assertIn(phrase, outcome["errors"][0])
+                    # `check_related`だけが拒否する: 外せば、ほかの検査はすべて通る。
+                    with patch.object(module, "check_related", lambda *arguments: None):
+                        self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
     def test_verify_closure_limit_audit_rejects_changed_corpus(self):
         """入力の欠落・追加・改変を拒否する。上限の設定を入力から消す（または別のワークスペースへ移す）と、期待を書き直さない限り拒否する。"""
         module = verify_closure_limit_fixtures
