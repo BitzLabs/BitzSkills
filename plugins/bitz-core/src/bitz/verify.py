@@ -24,6 +24,7 @@ from . import config as config_mod
 from . import context as context_mod
 from . import digest as digest_mod
 from . import document as document_mod
+from . import dupclosure
 from . import execfile
 from . import gitutil
 from . import messages
@@ -580,6 +581,7 @@ def _process_single_target(
     test_check,
     config_for,
     cycle_diagnostics_for=None,
+    duplicates: dupclosure.DuplicateTracker | None = None,
 ) -> tuple[dict, list[tuple[str, str, str, str, str, int]]]:
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
@@ -592,6 +594,9 @@ def _process_single_target(
 
     ``config_for``は、ワークスペースのIDから設定を返す関数で、完全な閉包の上限（`context.maxDocuments`・`context.maxBytes`）を
     起点を所有するワークスペースの設定で判定するために使う（`bitz verify`仕様 §4の1.）。
+
+    ``duplicates``は、文書IDの重複を持つときだけ渡す。閉包を作るときに辿るIDの重複（`SPEC-ID-DUPLICATE-001`）を、当該の検証対象の
+    診断として返す（起点のIDが重複して索引にない場合は`CTX-ROOT-MISSING-001`へ併記する。関係・トレースモデル §5.1、確認事項C96）。
     """
 
     entry_out: dict = {
@@ -607,18 +612,27 @@ def _process_single_target(
     def _canon_id(x: str) -> str:
         return context_mod._canon(x, workspace_id) if multi_active else x
 
-    if root_id is None:
-        entry_out["diagnostics"] = [_invocation_diag("CTX-ROOT-MISSING-001", "error", "failed", messages.root_missing_explicit(raw), raw)]
+    def _root_missing() -> tuple[dict, list[tuple[str, str, str, str, str, int]]]:
+        diags = [_invocation_diag("CTX-ROOT-MISSING-001", "error", "failed", messages.root_missing_explicit(raw), raw)]
+        origin = duplicates.origin_group(raw) if duplicates is not None else None
+        if origin is not None:
+            diags = sort_diagnostics(diags + duplicates.diagnostics([origin]))
+        entry_out["diagnostics"] = diags
         entry_out["status"] = "failed"
         return entry_out, needed_pairs
+
+    if root_id is None:
+        return _root_missing()
 
     expansion = targetexpand.target_expansion(
         root_id, "verify", id_index, statement_index, active_ws_id=workspace_id if multi_active else None
     )
     if expansion is None:
-        entry_out["diagnostics"] = [_invocation_diag("CTX-ROOT-MISSING-001", "error", "failed", messages.root_missing_explicit(raw), raw)]
-        entry_out["status"] = "failed"
-        return entry_out, needed_pairs
+        return _root_missing()
+
+    duplicate_diags = (
+        duplicates.diagnostics(duplicates.traversed_by_roots([root_id], "verify")) if duplicates is not None else []
+    )
 
     # 強い関係（型制約）は展開が返した範囲（``relation_scope``）で、状態の診断の有無によらず検査し、独立した元の原因として
     # 両方を返す（診断レジストリ、関係・トレースモデル §4・§6.3）。
@@ -631,7 +645,8 @@ def _process_single_target(
             cycle_diagnostics_for,
         )
     ]
-    relation_error_diags = [d for d in relation_diags if d["severity"] == "error"]
+    # 閉包を作るときに辿るIDの重複も、関係の診断と同じく閉包を失敗にする（関係・トレースモデル §5.1）。
+    relation_error_diags = [d for d in relation_diags if d["severity"] == "error"] + duplicate_diags
     # `related`の参照切れ（`SPEC-RELATION-ADVISORY-MISSING-001`、継続単位`skip-edge`）は、検証対象を失敗させず、
     # 展開した後のどの結果にも検証対象の`diagnostics`として加える（関係・トレースモデル §3、診断レジストリ。確認事項C78）。
     relation_warning_diags = [d for d in relation_diags if d["severity"] == "warning"]
@@ -672,7 +687,7 @@ def _process_single_target(
                 "SPEC-MULTI-DEPENDENCY-001", "error", "blocked", messages.MULTI_DEPENDENCY_CONTEXT, workspace_id, root_entry.path
             )
             diag["evidence"] = {"stage": "context", **dep_evidence}
-            _finish([diag], "blocked")
+            _finish([diag] + duplicate_diags, "blocked")
             return entry_out, needed_pairs
 
     if relation_error_diags:
@@ -1292,9 +1307,12 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if multi_active
         else None
     )
+    entries_by_ws_single = {workspace_id: catalog.entries, **{wid: cat.entries for wid, cat in member_catalogs.items()}}
+    # 閉包を作るときに辿る文書IDの重複を、当該の検証対象へ返す（関係・トレースモデル §5.1、確認事項C96）。重複がなければ`None`。
+    duplicates = dupclosure.tracker_for(entries_by_ws_single, workspace_id, multi_active)
     test_check = _make_test_checker(
         multi_active=multi_active, ws_root_by_id=ws_root_by_id,
-        entries_by_ws={workspace_id: catalog.entries, **{wid: cat.entries for wid, cat in member_catalogs.items()}},
+        entries_by_ws=entries_by_ws_single,
         id_index=id_index, statement_index=statement_index,
         local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices, known_ws_ids=known_ws_ids,
     )
@@ -1316,6 +1334,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
             config_for=_config_for,
             cycle_diagnostics_for=cycle_diagnostics_for,
+            duplicates=duplicates,
         )
         target_entries.append(entry_out)
         for ws_id, name, path, cover, doc_path, test_index in needed_pairs:
@@ -1476,6 +1495,8 @@ def _run_all_workspaces_members(
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices, known_ws_ids=known_ws_ids,
             originals=test_check_originals, real_roots=test_check_real_roots,
         )
+        # 閉包を作るときに辿る文書IDの重複（作業ワークスペースごとに到達し得る範囲が違う）。重複がなければ`None`。
+        duplicates = dupclosure.tracker_for(entries_by_ws, wid, True)
         default_roots = _default_roots_all(catalog.entries, local_id_indices[wid])
         if not default_roots:
             per_ws_extra_diags[wid].append(
@@ -1512,6 +1533,7 @@ def _run_all_workspaces_members(
                 digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
                 config_for=lambda w: config_by_ws[w],
                 cycle_diagnostics_for=cycle_diagnostics_for,
+                duplicates=duplicates,
             )
             per_ws_target_entries[wid].append(entry_out)
             for cws, name, path, cover, doc_path, test_index in needed_pairs:

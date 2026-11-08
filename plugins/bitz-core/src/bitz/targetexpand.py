@@ -52,6 +52,10 @@ class TargetExpansionResult:
     #: §6.1「5.」: `interpret`で起点が置換済み（有効な後継が単一）のときの``(origin_id, successor_id)``。
     #: `context`は``origin``を参考（`advisory`）、``successor``を後継（`replacement`）として示す（暗黙に差し替えはしない）。
     superseded_origin: tuple[str, str] | None = None
+    #: 閉包を作るときに辿った文書のID（`contextDocuments`に加え、`verify`のTASK起点でコンテキストへ含めない起点の`requires`の閉包、
+    #: 有効な後継が複数あるときのすべての後継）。文書IDの重複を、閉包を作るときに辿るIDについて返すために使う
+    #: （関係・トレースモデル §5.1、確認事項C96。:mod:`bitz.dupclosure`）。`related`の参照先は辿らないので含まない。
+    traversed_documents: list[str] = field(default_factory=list)
 
 
 def _is_applicable(entry: DocEntry) -> bool:
@@ -428,6 +432,7 @@ def target_expansion(
         if root_entry.kind in ("REQ", "TECH"):
             successors = _successors(owning_id, id_index, statement_index, canonical)
             if len(successors) > 1:
+                result.traversed_documents = sorted(set(context_order) | set(successors))
                 result.errors = [
                     {
                         "code": "CTX-STATE-SUPERSEDED-002",
@@ -455,16 +460,20 @@ def target_expansion(
                 result.document_edges = edges
                 result.document_distance = distance
         result.errors = _adr_type_errors(context_order, set(context_order))
+        result.traversed_documents = list(result.context_documents)
         return result
 
     # --- implement／verify: 対象規範文の決定と、TASKを起点にした場合／状態検査の追加の規則。 -------
 
     errors: list[dict] = []
+    #: 状態の検査で`supersedes`により見つけた後継（コンテキストへは含めないが、閉包を作るときに辿る）。
+    successor_ids: set[str] = set()
 
     def _check_state(doc_id: str, *, is_root: bool) -> None:
         entry = id_index[doc_id]
         if entry.kind in ("REQ", "TECH"):
             successors = _successors(doc_id, id_index, statement_index, canonical)
+            successor_ids.update(successors)
             if len(successors) > 1:
                 errors.append(
                     {
@@ -793,6 +802,7 @@ def target_expansion(
         extra |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
     errors.extend(_adr_type_errors(context_order, extra))
     result.errors = errors
+    result.traversed_documents = sorted(extra | successor_ids)
     return result
 
 

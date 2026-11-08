@@ -25,6 +25,7 @@ from . import activews
 from . import basecompare
 from . import config as config_mod
 from . import document as document_mod
+from . import dupclosure
 from . import gitutil
 from . import messages
 from . import multirelate
@@ -353,7 +354,9 @@ def _resolve_selected_roots(
     のときの既存の挙動）。
     """
 
-    path_source = local_entries if local_entries is not None else list(id_index.values())
+    # 明示のパスは、索引に入る文書（重複でも`skip-document`でもない）のものだけを解決する。索引にない文書のパスは起点の不在として扱う
+    # （文書IDの重複した文書のパスで`id_index`を引いて失敗しない）。
+    path_source = relations_mod.valid_entries(local_entries) if local_entries is not None else list(id_index.values())
     path_index = {e.path: e.doc_id for e in path_source if e.doc_id is not None}
 
     diags: list[Diagnostic] = []
@@ -417,6 +420,55 @@ def _filter_catalog_diagnostics_for_scope(
         if path in checked_paths:
             out.append(d)
     return out
+
+
+def _other_member_duplicate_diagnostics(
+    scope: str,
+    parsed: ParsedArgs,
+    workspace_id: str,
+    catalog: document_mod.CatalogResult,
+    member_catalogs: dict[str, document_mod.CatalogResult],
+    normalize: Callable[[str], str] | None,
+    *,
+    start_ids: set[str],
+    owning_ids: set[str] | None,
+) -> list[dict]:
+    """複合ワークスペース内の単独操作で、閉包を作るときに辿る他のメンバーの文書IDの重複を返す（関係・トレースモデル §5.1、確認事項C96）。
+
+    作業ワークスペース自身の重複は、完全検査の文書の一覧の診断（``catalog_diags``）が返すので、ここでは扱わない。他のメンバーの文書は
+    その一覧の診断を返さない（到達した文書だけを検査する）ため、重複した文書は索引に入らず、閉包から黙って外れていた。辿るIDは、
+    スコープごとの閉包を作る規則に問う。`selected`は明示対象の`TargetExpansion(root, interpret)`、`changed`は変更から選んだ所有文書の強い関係の閉包、
+    `full`は作業ワークスペースのすべての文書の強い関係の閉包（`check` §3）。`related`の参照先と、閉包と無関係な重複は返さない。
+    """
+
+    tracker = dupclosure.tracker_for(
+        {workspace_id: catalog.entries, **{wid: cat.entries for wid, cat in member_catalogs.items()}}, workspace_id, True
+    )
+    if tracker is None:
+        return []
+
+    if scope == "selected":
+        path_index = {e.path: e.doc_id for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None}
+
+        def closure_ids(idx: dict[str, DocEntry], stmt: dict[str, dict]) -> set[str]:
+            ids: set[str] = set()
+            for target in parsed.positionals:
+                root_id = _resolve_target(target, idx, stmt, path_index, active_ws_id=workspace_id)
+                if root_id is None:
+                    continue
+                expansion = targetexpand.target_expansion(root_id, "interpret", idx, stmt)
+                if expansion is not None:
+                    ids.update(expansion.traversed_documents)
+            return ids
+
+    else:
+        starts = owning_ids if owning_ids is not None else start_ids
+
+        def closure_ids(idx: dict[str, DocEntry], stmt: dict[str, dict]) -> set[str]:
+            return starts | basecompare.strong_dependency_closure(starts, idx, normalize=normalize)
+
+    groups = [g for g in tracker.traversed(closure_ids) if g.workspace_id != workspace_id]
+    return tracker.diagnostics(groups)
 
 
 def _base_root_for_git(repo_root: str, base_path: str) -> str:
@@ -874,6 +926,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
             active_check_ids: set[str] | None = None
             other_check_ids: set[str] = set()
+            changed_owning_ids: set[str] | None = None
 
             if scope == "full":
                 # `--full`は作業ワークスペースの文書の一覧全体が完全検査の対象（check.md §3）。
@@ -938,6 +991,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
                     changed_paths, current_by_path, base_by_path, implements_index, tests_index
                 )
+                changed_owning_ids = owning_ids
                 strong_closure = basecompare.strong_dependency_closure(
                     owning_ids, id_index, normalize=normalize
                 )
@@ -1066,6 +1120,13 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 )
 
             diagnostics.extend(d.to_dict() for d in catalog_diags)
+            if multi_active:
+                diagnostics.extend(
+                    _other_member_duplicate_diagnostics(
+                        scope, parsed, workspace_id, catalog, member_catalogs, normalize,
+                        start_ids=set(active_index), owning_ids=changed_owning_ids,
+                    )
+                )
             diagnostics.extend(d.to_dict() for d in relation_diags)
             diagnostics.extend(d.to_dict() for d in path_diags)
             diagnostics.extend(d.to_dict() for d in coverage_diags)

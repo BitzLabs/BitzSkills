@@ -27,6 +27,7 @@ from . import activews
 from . import config as config_mod
 from . import digest as digest_mod
 from . import document as document_mod
+from . import dupclosure
 from . import gitutil
 from . import messages
 from . import multirelate
@@ -605,6 +606,8 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     assert loc.root is not None
 
     catalog = document_mod.build_catalog(loc.root, workspace_id, qualify_summary_ids=multi_active)
+    # 閉包を作るときに辿る文書IDの重複を求めるための、ワークスペースごとのカタログの文書（関係・トレースモデル §5.1、確認事項C96）。
+    member_catalogs: dict[str, document_mod.CatalogResult] = {}
 
     if multi_active:
         assert multi_pre is not None
@@ -614,7 +617,9 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             local_id_indices,
             local_stmt_indices,
             known_ws_ids,
-        ) = multirelate.build_multi_context(workspace_id, catalog.entries, multi_pre, keep_body=True)
+        ) = multirelate.build_multi_context(
+            workspace_id, catalog.entries, multi_pre, keep_body=True, catalogs_out=member_catalogs
+        )
     else:
         id_index = relations_mod.build_id_index(catalog.entries)
         statement_index = relations_mod.build_statement_index(catalog.entries)
@@ -651,6 +656,20 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
 
     # --- 起点の解決 ---------------------------------------------------------
     missing = [r for r in roots_raw if _lookup_key(r) not in id_index and _lookup_key(r) not in statement_index]
+
+    # 文書IDの重複のうち、閉包を作るときに辿るIDを、どの失敗の結果にも加える（関係・トレースモデル §5.1、確認事項C96）。起点のIDが重複して
+    # 索引にない起点は`CTX-ROOT-MISSING-001`へ併記し、索引で解決できた起点は`related`の参照先を除く閉包で辿るIDを調べる。
+    duplicates = dupclosure.tracker_for(
+        {workspace_id: catalog.entries, **{wid: cat.entries for wid, cat in member_catalogs.items()}},
+        workspace_id,
+        multi_active,
+    )
+    duplicate_diags: list[dict] = []
+    if duplicates is not None:
+        origin_groups = [g for g in (duplicates.origin_group(r) for r in missing) if g is not None]
+        resolved_keys = sorted({_lookup_key(r) for r in roots_raw if r not in set(missing)})
+        duplicate_diags = duplicates.diagnostics(origin_groups + duplicates.traversed_by_roots(resolved_keys, purpose))
+
     if missing:
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = "failed"
@@ -660,6 +679,8 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             )
             for m in missing
         ]
+        if duplicate_diags:
+            bundle["diagnostics"] = sort_diagnostics(bundle["diagnostics"] + duplicate_diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
@@ -756,6 +777,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
                 if err.get("suggestedAction") is not None:
                     diag["suggestedAction"] = err["suggestedAction"]
                 diags.append(diag)
+        diags.extend(duplicate_diags)
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
@@ -772,8 +794,8 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     context_documents = expansion.context_documents
 
     relation_error_diags, relation_warning_diags = _relation_diagnostics(relation_scope_ids | set(context_documents))
-    if relation_error_diags:
-        diags = [d.to_dict() for d in relation_error_diags + relation_warning_diags]
+    if relation_error_diags or duplicate_diags:
+        diags = [d.to_dict() for d in relation_error_diags + relation_warning_diags] + duplicate_diags
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
         bundle["status"] = worst
