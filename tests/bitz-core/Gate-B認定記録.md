@@ -1300,3 +1300,23 @@ Core固有の単体試験は1220件がすべて成功した。
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1237件がすべて成功した。
+
+## 2026-11-08: verifyが閉包の上限を判定するようにした後のStep 1〜5の再判定
+
+`context.py`から上限の判定（`closure_limit_summary`など）を共有の関数へくくり出し、`verify.py`の`_process_single_target`で使うようにした（実装の確認事項C95）。
+上限を超えた検証対象は`CTX-LIMIT-001`（`blocked`）で止め、テストを起動せず、`related`の参照切れの警告を加えない。これを固定する`SINGLE-176-01`〜`06`（Step 4）と
+`MULTI-064-01`〜`06`（Step 5）を追加した。修正前のCore（コミット`35d6b297`の版）では、追加した12件のうち陽性の8件が非成功となり、対照の4件と既存の684件は
+すべて通過することを確かめた。修正後のCoreでは696件すべてが`passed`となる。
+
+コミット`a4003a5dffa279267df466deb8ec0ca26a3f1a58`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 696件（`SINGLE-176-01`〜`06`、`MULTI-064-01`〜`06`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`dcba9a00f259c909b68925fbfe1459dd63c7b47265a754381d5c72900a99f07a` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1262件がすべて成功した。

@@ -2311,3 +2311,21 @@ commit `68ad1005dc597fd7750d7ae15e894e388d039879`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-08: `SINGLE-176`と`MULTI-064`を追加した後のGate Aの再認定
+
+`verify`が完全な閉包の上限（`CTX-LIMIT-001`）を判定せず、`maxDocuments`を超える閉包でも`passed`を返していた欠陥（実装の確認事項C95）を直した（ユーザーの決定）。
+`verify` §4の1.に`context` §8と同じ規則で上限を判定すること、§9に上限で止まる結果には`related`の参照切れの警告を加えないことを明記した。
+これを固定する`SINGLE-176-01`〜`06`（Step 4）と`MULTI-064-01`〜`06`（Step 5）を追加した（ADR-051の追加、群`verify_closure_limit_fixtures`）。
+matrix、Stepの割当て、実装計画の完了条件、網羅表のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `a4003a5dffa279267df466deb8ec0ca26a3f1a58`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`1973668b351c0f8e7cca11e15d5a4a420d8c323ae33d25a1d8483f4a2d0bc79b`。前回から変わったのは次の値だけである: 12件の追加によるmatrixと網羅の件数（684件→696件）、Step 4の件数（102件→108件）、Step 5の件数（302件→308件）、群`verify_closure_limit_fixtures`の追加、実行ビットを確かめたファイル数（3894件→3990件）、網羅表が固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
