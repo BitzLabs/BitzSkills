@@ -107,6 +107,7 @@ from conformance import path_lexical_fixtures
 from conformance import real_path_ownership_fixtures
 from conformance import verify_test_check_fixtures
 from conformance import multi_all_workspaces_output_fixtures
+from conformance import verify_closure_limit_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -10294,6 +10295,296 @@ class AuditTests(unittest.TestCase):
                     outcome = module.validate(root, {identifier})
                 self.assertEqual(len(outcome["errors"]), 1, outcome)
                 self.assertIn("textが参照計算またはレビュー済みの期待値と異なります", outcome["errors"][0])
+
+    def test_verify_closure_limit_fixtures(self):
+        """`SINGLE-176-01`〜`06`と`MULTI-064-01`〜`06`: `verify`が完全な閉包の上限を判定する（確認事項C95）。"""
+        module = verify_closure_limit_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-176-{number:02d}" for number in range(1, 7)), *(f"MULTI-064-{number:02d}" for number in range(1, 7))])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_verify_closure_limit_expected_results(self):
+        """期待結果の要点（生成器の関数を介さないリテラル）: 状態、診断のコード・文言・発生元、ハッシュ値の有無、起動するテスト、設定の値。"""
+        documents = "コンテキストの完全な閉包が文書数上限を超過しました"
+        size = "コンテキストの完全な閉包がバイト数上限を超過しました"
+
+        def fixture(identifier):
+            return audit.FIXTURES / ("multi" if identifier.startswith("MULTI-") else "single") / identifier
+
+        def result_of(identifier):
+            return json.loads((fixture(identifier) / "expected/verify.json").read_text())
+
+        def entries(value):
+            found = list(value.get("targetResults", []))
+            for workspace in value.get("workspaces", []):
+                found += workspace["targetResults"]
+            return {entry["target"]: entry for entry in found}
+
+        def commands(value):
+            found = list(value.get("commands", []))
+            for workspace in value.get("workspaces", []):
+                found += workspace["commands"]
+            return sorted((c["bindingId"], tuple(c["tests"])) for c in found)
+
+        def limit(workspace, path, summary):
+            return [{"code": "CTX-LIMIT-001", "severity": "error", "resultStatus": "blocked", "summary": summary,
+                     "source": {"kind": "file", "workspaceId": workspace, "path": path}}]
+
+        req001, req101 = ".spec/requirements/REQ-001.md", ".spec/requirements/REQ-101.md"
+        stopped = {
+            "SINGLE-176-01": ("REQ-001", "root", req001, documents), "SINGLE-176-02": ("REQ-001", "root", req001, size),
+            "SINGLE-176-03": ("REQ-001", "root", req001, documents), "SINGLE-176-04": ("REQ-001", "root", req001, documents),
+            "MULTI-064-01": ("web::REQ-101", "web", req101, documents), "MULTI-064-03": ("platform::REQ-001", "platform", req001, documents),
+            "MULTI-064-05": ("web::REQ-101", "web", req101, documents), "MULTI-064-06": ("web::REQ-101", "web", req101, documents),
+        }
+        for identifier, (target, workspace, path, summary) in stopped.items():
+            with self.subTest(identifier=identifier):
+                value = result_of(identifier)
+                self.assertEqual(value["status"], "blocked")
+                entry = entries(value)[target]
+                self.assertEqual((entry["status"], entry["contextDigest"], entry["statements"], entry["bindingRefs"]), ("blocked", None, [], []))
+                self.assertEqual(entry["diagnostics"], limit(workspace, path, summary))
+                self.assertEqual(value["diagnostics"], [])
+                manifest = json.loads((fixture(identifier) / "manifest.json").read_text())
+                self.assertEqual((manifest["expect"]["status"], manifest["expect"]["exitCode"]), ("blocked", 2))
+        # 上限で止まる結果は、テストを起動しない。独立した検証対象のテストだけが起動する。
+        for identifier in ("SINGLE-176-01", "SINGLE-176-02", "SINGLE-176-03", "MULTI-064-01", "MULTI-064-03", "MULTI-064-06"):
+            self.assertEqual(commands(result_of(identifier)), [], identifier)
+        self.assertEqual(commands(result_of("SINGLE-176-04")), [("root::default", ("tests/test_other.py",))])
+        self.assertEqual(commands(result_of("MULTI-064-05")), [("api::default", ("tests/ok.py",))])
+        # `related`の警告は、上限で止まる結果に加えない。対照は、上限の内側で警告を返す。
+        for identifier in ("SINGLE-176-03", "MULTI-064-06"):
+            self.assertNotIn("SPEC-RELATION-ADVISORY-MISSING-001", json.dumps(result_of(identifier)))
+        control = result_of("SINGLE-176-05")
+        self.assertEqual((control["status"], [d["code"] for d in entries(control)["REQ-001"]["diagnostics"]]), ("passed_with_warnings", ["SPEC-RELATION-ADVISORY-MISSING-001"]))
+        # 対照は通り、ハッシュ値と起動するテストを持つ。
+        for identifier, target, bindings in (("SINGLE-176-05", "REQ-001", ["root::default"]), ("SINGLE-176-06", "REQ-001", ["root::default"]),
+                                             ("MULTI-064-02", "web::REQ-101", ["web::default"]),
+                                             ("MULTI-064-04", "platform::REQ-001", ["platform::default", "web::default"])):
+            with self.subTest(identifier=identifier, control=True):
+                value = result_of(identifier)
+                entry = entries(value)[target]
+                self.assertEqual(value["status"], "passed_with_warnings" if identifier == "SINGLE-176-05" else "passed")
+                self.assertEqual(entry["bindingRefs"], bindings)
+                self.assertRegex(entry["contextDigest"], r"^sha256:[0-9a-f]{64}$")
+        self.assertEqual(commands(result_of("MULTI-064-04")), [("platform::default", ("tests/root.py",)), ("web::default", ("tests/web.py",))])
+        # 入力の設定: 上限を設定するワークスペースだけが、上限を持つ。
+        def config(identifier, path):
+            return (fixture(identifier) / "repo" / path).read_text()
+
+        self.assertIn("context:\n  maxDocuments: 1\n", config("SINGLE-176-01", ".spec/bitz.yaml"))
+        self.assertIn("context:\n  maxBytes: 4096\n", config("SINGLE-176-06", ".spec/bitz.yaml"))
+        self.assertNotIn("context:", config("MULTI-064-01", ".spec/bitz.yaml"))
+        self.assertIn("maxDocuments: 1", config("MULTI-064-01", "apps/web/.spec/bitz.yaml"))
+        self.assertIn("maxDocuments: 1", config("MULTI-064-02", ".spec/bitz.yaml"))
+        self.assertNotIn("context:", config("MULTI-064-02", "apps/web/.spec/bitz.yaml"))
+        self.assertIn("maxDocuments: 2", config("MULTI-064-03", ".spec/bitz.yaml"))
+        self.assertIn("maxDocuments: 3", config("MULTI-064-04", ".spec/bitz.yaml"))
+        self.assertIn("maxDocuments: 1", config("MULTI-064-04", "apps/web/.spec/bitz.yaml"))
+        # 承認済みの文言だけ（新しい文言はない）。
+        record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
+        for phrase in (documents, size):
+            self.assertIn(phrase, record)
+
+    def test_verify_closure_limit_reference_rules(self):
+        """参照計算: 文書数を先に判定し、上限ちょうどは超えない。バイト数は本文のUTF-8の長さ。設定は指定したものだけを既定へ重ねる。"""
+        module = verify_closure_limit_fixtures
+        statements = "- [r:AC-01] [ACTOR:A] [ALWAYS] [MUST] [CONSTRAINT] x。\n"
+
+        def document(identifier, kind, refines=(), body="あ" * 10):
+            return {"workspaceId": "root", "kind": kind, "body": body + "\n" + statements if kind == "requirement" else body,
+                    "path": f"{identifier}.md", "frontmatter": {"id": identifier, "title": "t", "status": "approved", "relations": {"refines": list(refines)}}}
+
+        documents = {"root::REQ-001": document("REQ-001", "requirement"), "root::TECH-001": document("TECH-001", "technical", ["REQ-001"])}
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxDocuments": 2})[0], "pass")
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxDocuments": 1})[0], "documents")
+        _, count, size = module.reference_outcome(documents, {}, "root::REQ-001", {})
+        self.assertEqual(count, 2)
+        self.assertEqual(size, sum(len(item["body"].encode("utf-8")) for item in documents.values()))
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxBytes": size})[0], "pass")
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxBytes": size - 1})[0], "bytes")
+        # 文書数と同時に超えるときは、文書数を報告する（`context`の判定順）。
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxDocuments": 1, "maxBytes": size - 1})[0], "documents")
+        # 設定の値は文字列でも整数として比べる。
+        self.assertEqual(module.reference_outcome(documents, {}, "root::REQ-001", {"maxDocuments": "1"})[0], "documents")
+
+    def test_verify_closure_limit_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・副作用の改変（修正前のCoreの出力への取り違えを含む）を拒否する（陰性対照）。"""
+        module = verify_closure_limit_fixtures
+
+        def entries(v):
+            found = list(v.get("targetResults", []))
+            for workspace in v.get("workspaces", []):
+                found += workspace["targetResults"]
+            return found
+
+        def first_stopped(v):
+            return [entry for entry in entries(v) if entry["status"] == "blocked"][0]
+
+        def first_target(v):
+            return sorted(entries(v), key=lambda entry: entry["target"])[0]
+
+        def all_commands(v):
+            found = v["commands"] if "commands" in v else []
+            for workspace in v.get("workspaces", []):
+                found = found + workspace["commands"]
+            return found
+
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "blocked"),
+            "target-status": lambda v: first_target(v).update(status="passed" if first_target(v)["status"] != "passed" else "blocked"),
+            "stopped-passed": lambda v: first_stopped(v).update(status="passed"),
+            "stopped-digest": lambda v: first_stopped(v).update(contextDigest="sha256:" + "0" * 64),
+            "stopped-statements": lambda v: first_stopped(v)["statements"].append("REQ-001:AC-01"),
+            "stopped-bindings": lambda v: first_stopped(v)["bindingRefs"].append("root::default"),
+            "diag-clear": lambda v: first_stopped(v)["diagnostics"].clear(),
+            "diag-duplicate": lambda v: first_stopped(v)["diagnostics"].append(copy.deepcopy(first_stopped(v)["diagnostics"][0])),
+            "diag-advisory": lambda v: first_stopped(v)["diagnostics"].append(
+                {"code": "SPEC-RELATION-ADVISORY-MISSING-001", "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "関係型relatedの参照先が存在しません",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-001.md", "key": "relations.related"}, "evidence": "ADR-099"}),
+            "diag-code": lambda v: first_stopped(v)["diagnostics"][0].update(code="CTX-PROJECTION-LIMIT-001"),
+            "diag-summary-swap": lambda v: first_stopped(v)["diagnostics"][0].update(summary=(
+                "コンテキストの完全な閉包がバイト数上限を超過しました" if "文書数" in first_stopped(v)["diagnostics"][0]["summary"] else "コンテキストの完全な閉包が文書数上限を超過しました")),
+            "diag-severity": lambda v: first_stopped(v)["diagnostics"][0].update(severity="warning"),
+            "diag-result-status": lambda v: first_stopped(v)["diagnostics"][0].update(resultStatus="failed"),
+            "diag-source-path": lambda v: first_stopped(v)["diagnostics"][0]["source"].update(path=".spec/bitz.yaml"),
+            "diag-source-workspace": lambda v: first_stopped(v)["diagnostics"][0]["source"].update(workspaceId="other"),
+            "diag-source-key": lambda v: first_stopped(v)["diagnostics"][0]["source"].update(key="context.maxDocuments"),
+            "top-diagnostics": lambda v: v["diagnostics"].append(copy.deepcopy(first_stopped(v)["diagnostics"][0])),
+            "commands-add": lambda v: (v["workspaces"][-1]["commands"] if "workspaces" in v else v["commands"]).append({}),
+            "commands-tests": lambda v: all_commands(v)[0]["tests"].pop(),
+            "commands-drop": lambda v: (v["workspaces"][1]["commands"] if "workspaces" in v else v["commands"]).clear(),
+            "revision": lambda v: v["revision"].update(dirty=True) if v["revision"] else v.update(revision={"commit": "0" * 40, "dirty": False}),
+            "ws-status": lambda v: v["workspaces"][-1].update(status="passed"),
+            "ws-drop": lambda v: v["workspaces"].pop(),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "blocked"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0 if v["expect"]["exitCode"] != 0 else 2),
+            "report": lambda v: v["expect"].update(reportFileCount=1),
+            "argv-operation": lambda v: v["invocation"]["argv"].__setitem__(0, "context"),
+            "argv-target": lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-999"),
+            "cwd": lambda v: v["invocation"].update(cwd="src"),
+            "env": lambda v: v["invocation"].update(env={"PATH": "/dev/null"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+            "operations": lambda v: v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+        }
+        effects = {
+            "policy": lambda v: v.update(policy="read-write"),
+            "after": lambda v: v["after"]["repository"].update(extra={"kind": "directory"}),
+            "extra": lambda v: v["before"]["repository"].update(extra={"kind": "directory"}),
+        }
+        applied = 0
+        for identifier in module.CASES:
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations += [("expected/verify.json", label, change) for label, change in results.items()]
+            mutations += [("side-effects.json", label, change) for label, change in effects.items()]
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    path = root / module.directory_of(identifier) / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 150)
+        # 欠陥を検出するケースの期待を、修正前のCoreの出力（上限を判定せず通す）へ取り違える改変を拒否する。
+        for identifier, case in module.CASES.items():
+            if "documents" not in case["expect"].values() and "bytes" not in case["expect"].values():
+                continue
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / module.directory_of(identifier) / identifier
+                value = json.loads((fixture / "expected/verify.json").read_text())
+                value["status"] = "passed"
+                for entry in entries(value):
+                    if entry["status"] == "blocked":
+                        entry.update(status="passed", diagnostics=[], bindingRefs=["root::default"] if identifier.startswith("SINGLE-") else ["web::default"])
+                for workspace in value.get("workspaces", []):
+                    workspace["status"] = "passed"
+                (fixture / "expected/verify.json").write_text(json.dumps(value))
+                manifest = json.loads((fixture / "manifest.json").read_text())
+                manifest["expect"].update(status="passed", exitCode=0)
+                (fixture / "manifest.json").write_text(json.dumps(manifest))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+
+    def test_verify_closure_limit_audit_rejects_changed_cases(self):
+        """ケースの定義（上限の設定、期待する判定）を替えて入力と期待結果を書き直しても、入力から導く参照計算が拒否する（Coreの出力でも期待値でもなく、規範から導く）。"""
+        module = verify_closure_limit_fixtures
+        altered = [
+            # 期待と入力の上限が食い違う（上限の内側の入力に、止まる期待を置く／止まる入力に、通る期待を置く）。
+            ("SINGLE-176-01", dict(limit={"maxDocuments": 2}), "上限の判定が、入力から導く結果と期待で異なります"),
+            ("SINGLE-176-05", dict(limit={"maxDocuments": 1}), "上限の判定が、入力から導く結果と期待で異なります"),
+            ("SINGLE-176-02", dict(limit={"maxBytes": 131072}), "上限の判定が、入力から導く結果と期待で異なります"),
+            ("SINGLE-176-06", dict(limit={"maxBytes": 100}), "上限の判定が、入力から導く結果と期待で異なります"),
+            # 設定を取り違える実装でも結果が変わらない入力（鑑別力がない）。
+            ("MULTI-064-01", dict(limits={"platform": {"maxDocuments": 1}, "web": {"maxDocuments": 1}}), "設定の取り違えを検出できません"),
+            ("MULTI-064-02", dict(limits={"platform": {"maxDocuments": 30}}), "設定の取り違えを検出できません"),
+            ("MULTI-064-03", dict(limits={"platform": {"maxDocuments": 2}, "web": {"maxDocuments": 2}}), "設定の取り違えを検出できません"),
+            # 設定する場所の取り違え（期待は止まるが、上限は起点を所有しないワークスペースに置く）。
+            ("MULTI-064-01", dict(limits={"platform": {"maxDocuments": 1}}), "上限の判定が、入力から導く結果と期待で異なります"),
+            ("MULTI-064-04", dict(limits={"platform": {"maxDocuments": 2}, "web": {"maxDocuments": 1}}), "上限の判定が、入力から導く結果と期待で異なります"),
+            ("MULTI-064-05", dict(limits={"api": {"maxDocuments": 1}}), "上限の判定が、入力から導く結果と期待で異なります"),
+        ]
+        for identifier, changes, phrase in altered:
+            with self.subTest(identifier=identifier, changes=changes), tempfile.TemporaryDirectory() as temporary:
+                cases = copy.deepcopy(module.CASES)
+                cases[identifier].update(changes)
+                root = self.copy_real_path_fixture(temporary, identifier)
+                fixture = root / module.directory_of(identifier) / identifier
+                with patch.object(module, "CASES", {identifier: cases[identifier]}):
+                    # 入力、起動条件、期待結果、副作用の期待値を、変えた定義から書き直す（レビュー済みの期待値との不一致で拒否されないようにする）。
+                    module.generate(root)
+                    outcome = module.validate(root, {identifier})
+                self.assertEqual(outcome["status"], "Failed", outcome)
+                self.assertEqual(len(outcome["errors"]), 1, outcome)
+                self.assertIn(phrase, outcome["errors"][0])
+                self.assertNotIn("レビュー済みの期待値と異なります", outcome["errors"][0])
+
+    def test_verify_closure_limit_audit_rejects_changed_corpus(self):
+        """入力の欠落・追加・改変を拒否する。上限の設定を入力から消す（または別のワークスペースへ移す）と、期待を書き直さない限り拒否する。"""
+        module = verify_closure_limit_fixtures
+        for identifier in module.CASES:
+            for name in [*sorted(f"repo/{path}" for path in module.reviewed_inputs(identifier)), "extra", "other-result"]:
+                with self.subTest(identifier=identifier, file=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    fixture = root / module.directory_of(identifier) / identifier
+                    if name == "extra":
+                        (fixture / "repo/extra.txt").write_text("x")
+                    elif name == "other-result":
+                        (fixture / "expected/check.json").write_text("{}")
+                    elif name.endswith("bitz.yaml"):
+                        # 設定の改変（キーの追加）は、バイト列の照合が拒否する。
+                        (fixture / name).write_text((fixture / name).read_text() + "x-extra: 1\n")
+                    else:
+                        (fixture / name).unlink()
+                    outcome = module.validate(root, {identifier})
+                    self.assertEqual(outcome["status"], "Failed", outcome)
+        # 上限の設定を別のワークスペースへ移して、期待結果も同じ結果へ書き直しても、入力から導く参照計算が拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_real_path_fixture(temporary, "MULTI-064-01")
+            fixture = root / "multi/MULTI-064-01"
+            (fixture / "repo/apps/web/.spec/bitz.yaml").write_text((fixture / "repo/apps/web/.spec/bitz.yaml").read_text().replace("context:\n  maxDocuments: 1\n", ""))
+            (fixture / "repo/.spec/bitz.yaml").write_text((fixture / "repo/.spec/bitz.yaml").read_text() + "context:\n  maxDocuments: 1\n")
+            outcome = module.validate(root, {"MULTI-064-01"})
+            self.assertEqual(outcome["status"], "Failed")
+            self.assertEqual(len(outcome["errors"]), 1)
 
     def copy_repo_root_fixture(self, temporary, identifier):
         root = Path(temporary)

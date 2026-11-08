@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-101",
+      "status": "passed",
+      "contextDigest": "sha256:330386301b320d0a423de6f666d237f4d272d9df85e7ee18c8e946ef01106c36",
+      "statements": [
+        "web::REQ-101:AC-01"
+      ],
+      "bindingRefs": [
+        "web::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "web::default",
+      "workspaceId": "web",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/ok.py"
+      ],
+      "tests": [
+        "tests/ok.py"
+      ],
+      "covers": [
+        "web::REQ-101:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
