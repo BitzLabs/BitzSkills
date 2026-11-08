@@ -26,6 +26,8 @@ from . import targetexpand
 from .document import DocEntry
 
 _STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
+#: 参照先から宣言した文書へも辿る関係（逆参照の具体化、起点を置換する後継、対象規範文を`addresses`するTASK）。
+_BACKWARD_RELATIONS = ("refines", "supersedes", "addresses")
 
 IndexPair = tuple[dict[str, DocEntry], dict[str, dict]]
 
@@ -61,7 +63,7 @@ class DuplicateTracker:
         }
         self._referenced: set[tuple[str, str]] | None = None
         self._candidate_groups: list[DuplicateGroup] | None = None
-        self._component: dict[tuple[str, str], tuple[str, str]] | None = None
+        self._adjacent: dict[tuple[str, str], set[tuple[str, str]]] | None = None
         self._variants: dict[tuple[str, str, int], IndexPair] = {}
 
     def __bool__(self) -> bool:
@@ -94,7 +96,7 @@ class DuplicateTracker:
         """``closure_ids(id_index, statement_index)``が返す閉包のID（索引のキーの表現）に入る重複を返す。
 
         ``closure_ids``は、重複した文書の写しのうち1つを索引に置いた仮の索引で呼ばれる。``roots``（索引のキーの表現の起点）を渡すと、
-        閉包を作る起点から強い関係でつながらない重複を、閉包を作り直さずに除く（閉包は起点から強い関係を辿って得るので、つながらない文書は入らない）。
+        閉包を作る起点から強い関係でつながらない重複を、閉包を作り直さずに除く（閉包は起点から、閉包を作る辺の向きにだけ辿って得るので、辿り着けない文書は入らない）。
         """
 
         found: list[DuplicateGroup] = []
@@ -176,9 +178,8 @@ class DuplicateTracker:
             ]
         if roots is None:
             return self._candidate_groups
-        components = self._components()
-        reached = {components.get(self._node_of(root), self._node_of(root)) for root in roots}
-        return [group for group in self._candidate_groups if components[(group.workspace_id, group.doc_id)] in reached]
+        reached = self._reachable([self._node_of(root) for root in roots])
+        return [group for group in self._candidate_groups if (group.workspace_id, group.doc_id) in reached]
 
     def _node_of(self, key: str) -> tuple[str, str]:
         """索引のキー（文書ID、規範文ID、修飾ID）の所有文書を``(ワークスペースID, 文書ID)``にする。"""
@@ -190,27 +191,21 @@ class DuplicateTracker:
                 ws_id, local = qualified
         return ws_id, local.partition(":")[0]
 
-    def _components(self) -> dict[tuple[str, str], tuple[str, str]]:
-        """強い関係（重複した写しの宣言を含む）でつながる文書の連結成分（無向）。文書``(ワークスペースID, 文書ID)``から成分の代表を引く。"""
+    def _adjacency(self) -> dict[tuple[str, str], set[tuple[str, str]]]:
+        """閉包を作る辺の向きに辿れる文書の隣接（重複した写しの宣言も含む）。閉包の上位の集合を作るための辺で、実際の閉包の規則は複製しない。
 
-        if self._component is None:
-            parent: dict[tuple[str, str], tuple[str, str]] = {}
+        前方は、宣言した文書から`requires`・`refines`・`addresses`・`supersedes`の参照先へ。後方は、`refines`・`supersedes`・`addresses`の参照先から宣言した文書へ
+        （逆参照の具体化、起点を置換する後継、`implement`で対象規範文を`addresses`するTASK）。`requires`は後方へ辿らない（閉包は、含めた文書の`requires`を前方へ辿るだけ）。
+        """
 
-            def find(node: tuple[str, str]) -> tuple[str, str]:
-                parent.setdefault(node, node)
-                while parent[node] != node:
-                    parent[node] = parent[parent[node]]
-                    node = parent[node]
-                return node
-
+        if self._adjacent is None:
+            adjacent: dict[tuple[str, str], set[tuple[str, str]]] = {}
             for ws_id, entries in self._entries_by_ws.items():
                 for entry in entries:
-                    if entry.doc_id is None:
-                        continue
                     relations = (entry.frontmatter or {}).get("relations")
-                    source = find((ws_id, entry.doc_id))
-                    if not isinstance(relations, dict):
+                    if entry.doc_id is None or not isinstance(relations, dict):
                         continue
+                    source = (ws_id, entry.doc_id)
                     for relation in _STRONG_RELATIONS:
                         for ref in relations.get(relation) or []:
                             if not isinstance(ref, str):
@@ -220,12 +215,26 @@ class DuplicateTracker:
                                 qualified = multirelate.parse_qualified(ref)
                                 if qualified is not None:
                                     target_ws, local = qualified
-                            target = find((target_ws, local.partition(":")[0]))
-                            source = find(source)
-                            if target != source:
-                                parent[target] = source
-            self._component = {node: find(node) for node in list(parent)}
-        return self._component
+                            target = (target_ws, local.partition(":")[0])
+                            adjacent.setdefault(source, set()).add(target)
+                            if relation in _BACKWARD_RELATIONS:
+                                adjacent.setdefault(target, set()).add(source)
+            self._adjacent = adjacent
+        return self._adjacent
+
+    def _reachable(self, nodes: Iterable[tuple[str, str]]) -> set[tuple[str, str]]:
+        """``nodes``から、:meth:`_adjacency`の辺の向きに辿って到達する文書（``nodes``自身を含む）。"""
+
+        adjacent = self._adjacency()
+        reached: set[tuple[str, str]] = set()
+        stack = list(nodes)
+        while stack:
+            node = stack.pop()
+            if node in reached:
+                continue
+            reached.add(node)
+            stack.extend(adjacent.get(node, ()))
+        return reached
 
     def _variant(self, group: DuplicateGroup, position: int) -> IndexPair:
         cache_key = (group.workspace_id, group.doc_id, position)
