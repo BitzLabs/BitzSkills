@@ -17,9 +17,11 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from bitz import check as check_mod
 from bitz import context as context_mod
+from bitz import targetexpand
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 
@@ -252,6 +254,72 @@ class SingleWorkspaceTests(_Base):
         diagnostics = self.context_diags("REQ-001", "REQ-099")
         self.assertEqual(sorted(d["code"] for d in diagnostics), [ROOT_MISSING, DUPLICATE])
 
+    def test_superseded_old_document_duplicate_is_returned_with_relation_missing(self):
+        """閉包の文書が`supersedes`で置き換える旧文書が重複していれば、`requires`の参照先の重複と同じく、`SPEC-RELATION-MISSING-001`と並べて返す。"""
+
+        files = {".spec/requirements/REQ-002.md": _req("REQ-002", test_path="tests/u.py", supersedes=["REQ-001"])}
+        files.update(self.duplicated("requirements", "REQ-001", _req("REQ-001")))
+        self.build(files)
+        expected = dup_diag("REQ-001", self.first_path("requirements", "REQ-001"))
+        for operation, diagnostics in {"context": self.context_diags("REQ-002"), "verify": self.verify_diags("REQ-002"),
+                                       "check": self.check_diags("REQ-002")}.items():
+            with self.subTest(operation=operation):
+                self.assertIn(expected, diagnostics)
+                if operation != "check":
+                    self.assertEqual(sorted(d["code"] for d in diagnostics), [DUPLICATE, "SPEC-RELATION-MISSING-001"])
+
+    def test_multiple_successors_duplicate_is_returned_by_interpret(self):
+        """目的`interpret`で、起点を置換する後継の1つが重複していれば返す（重複を解消すると後継が複数になる）。"""
+
+        files = {".spec/requirements/REQ-001.md": _req("REQ-001"),
+                 ".spec/requirements/REQ-002.md": _req("REQ-002", test_path="tests/u.py", supersedes=["REQ-001"])}
+        files.update(self.duplicated("requirements", "REQ-003", _req("REQ-003", test_path="tests/u.py", supersedes=["REQ-001"])))
+        self.build(files)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "interpret")["diagnostics"]
+        self.assertEqual(diagnostics, [dup_diag("REQ-003", self.first_path("requirements", "REQ-003"))])
+
+    def test_requires_closure_of_the_task_origin_is_traversed_by_verify(self):
+        """`verify`のTASK起点は、コンテキストへ含めない起点の`requires`の閉包も辿る。その参照先の重複を返す。"""
+
+        files = {
+            ".spec/requirements/REQ-001.md": _req("REQ-001"),
+            ".spec/tasks/TASK-001.md": _task("TASK-001", ["REQ-001:AC-01"]).replace(
+                "relations:\n", "relations:\n  requires: [REQ-005]\n", 1),
+        }
+        files.update(self.duplicated("requirements", "REQ-005", _req("REQ-005", test_path="tests/u.py")))
+        self.build(files)
+        self.assertIn(dup_diag("REQ-005", self.first_path("requirements", "REQ-005")), self.verify_diags("TASK-001"))
+        self.assertIn(dup_diag("REQ-005", self.first_path("requirements", "REQ-005")), self.context_diags("TASK-001"))
+
+    def test_duplicate_is_kept_with_state_errors_of_the_closure(self):
+        """閉包に状態の診断（状態`draft`の`requires`の参照先）があっても、辿る重複を落とさない。"""
+
+        draft = _tech("TECH-003").replace("status: approved", "status: draft")
+        files = {".spec/requirements/REQ-001.md": _req("REQ-001", requires=["TECH-003"]), ".spec/technical/TECH-003.md": draft}
+        files.update(self.duplicated("technical", "TECH-002", _tech("TECH-002", refines=["REQ-001"])))
+        self.build(files)
+        diagnostics = self.context_diags("REQ-001")
+        self.assertEqual(sorted(d["code"] for d in diagnostics), ["CTX-STATE-001", DUPLICATE])
+        self.assertIn(dup_diag("TECH-002", self.first_path("technical", "TECH-002")), diagnostics)
+
+    def test_verify_with_many_unrelated_duplicates_does_not_rebuild_every_closure(self):
+        """性能: 起点から強い関係でつながらない重複は、閉包を作り直さずに除く。結果は、つながる重複だけを各検証対象へ返す。"""
+
+        count = 30
+        files = {}
+        for number in range(1, count + 1):
+            files[f".spec/requirements/REQ-{number:03d}.md"] = _req(f"REQ-{number:03d}")
+            files.update(self.duplicated("technical", f"TECH-{number:03d}", _tech(f"TECH-{number:03d}", refines=[f"REQ-{number:03d}"])))
+        self.build(files)
+        real = targetexpand.target_expansion
+        with mock.patch.object(targetexpand, "target_expansion", wraps=real) as spy:
+            result = self.run_op(verify_mod, "verify")
+        for entry in result["targetResults"]:
+            number = entry["target"].partition("-")[2]
+            self.assertEqual(entry["diagnostics"], [dup_diag(f"TECH-{number}", self.first_path("technical", f"TECH-{number}"))], entry["target"])
+        # 検証対象ごとに、基準の1回と、つながる重複の写し2つ分だけ（全重複を試すと30 * (1 + 30 * 2) = 1830回になる）。
+        self.assertLessEqual(spy.call_count, count * 3)
+
     # --- 対照 -------------------------------------------------------------------------------
 
     def test_related_only_duplicate_is_not_returned(self):
@@ -276,14 +344,17 @@ class SingleWorkspaceTests(_Base):
         self.build(files)
         self.assert_not_returned("REQ-001", only=("context", "verify"))
 
-    def test_unrelated_duplicate_is_returned_only_by_the_full_check(self):
-        """対照: 閉包と無関係な重複は、`context`と`verify`に返さず、`check`の完全検査（`--full`）が返す。"""
+    def test_unrelated_duplicate_is_not_returned_by_context_and_verify_but_by_check_in_every_scope(self):
+        """対照: 閉包と無関係な重複は、`context`と`verify`に返さない。`check`は文書IDの一意性をカタログ全体の検査として扱い、スコープ（明示対象、引数なし、`--full`）によらず返す。"""
 
         files = {".spec/requirements/REQ-001.md": _req("REQ-001")}
         files.update(self.duplicated("technical", "TECH-008", _tech("TECH-008")))
         self.build(files)
         self.assert_not_returned("REQ-001", only=("context", "verify"))
-        self.assertIn(dup_diag("TECH-008", self.first_path("technical", "TECH-008")), self.check_diags("--full"))
+        expected = dup_diag("TECH-008", self.first_path("technical", "TECH-008"))
+        for scope in (("REQ-001",), (), ("--full",)):
+            with self.subTest(scope=scope):
+                self.assertEqual([d for d in self.check_diags(*scope) if d["code"] == DUPLICATE], [expected])
 
     def test_without_duplicates_nothing_is_added(self):
         """対照: 重複がなければ、3つの操作とも成功し、重複の診断を返さない。"""
@@ -369,6 +440,40 @@ class MultiWorkspaceTests(_Base):
         _write(self.root, "apps/web/.spec/technical/TECH-010.md", _tech("TECH-010", refines=["platform::REQ-001"]) + "\n追記。\n")
         diagnostics = self.check_diags("--workspace", "web")
         self.assertIn(dup_diag("REQ-001", ".spec/requirements/REQ-001-copy.md", "platform", qualified=True), diagnostics)
+
+    def test_working_workspace_duplicate_is_returned_once(self):
+        """作業ワークスペース自身の重複は、完全検査の一覧の診断だけが返し、他のメンバーの重複の経路で二重に返さない。"""
+
+        files = {".spec/technical/TECH-020.md": _tech("TECH-020", refines=["REQ-001"]),
+                 ".spec/technical/TECH-020-copy.md": _tech("TECH-020", refines=["REQ-001"])}
+        self.build({}, platform_files=files)
+        expected = dup_diag("TECH-020", ".spec/technical/TECH-020-copy.md", "platform", qualified=True)
+        for scope in (("REQ-001",), ("--full",)):
+            with self.subTest(scope=scope):
+                self.assertEqual([d for d in self.check_diags(*scope) if d["code"] == DUPLICATE], [expected])
+
+    def test_check_with_the_path_of_a_duplicate_document_does_not_fail(self):
+        """索引に入らない（重複した）文書のパスを明示しても落ちず、起点の不在に重複を併記する。"""
+
+        self.build({}, platform_files={".spec/requirements/REQ-001-copy.md": _req("REQ-001")})
+        diagnostics = self.check_diags(".spec/requirements/REQ-001.md")
+        self.assertEqual(sorted(d["code"] for d in diagnostics), [ROOT_MISSING, DUPLICATE])
+        self.assertIn(dup_diag("REQ-001", ".spec/requirements/REQ-001-copy.md", "platform", qualified=True), diagnostics)
+
+    def test_all_workspaces_verify_keeps_duplicate_with_dependency_on_an_invalid_document(self):
+        """`--all-workspaces`で、閉包が他のワークスペースの無効な文書に依存して遮断される検証対象にも、辿る重複を並べる。"""
+
+        invalid = _req("REQ-201").replace("[CONSTRAINT]", "[BOGUSTAG]")
+        platform_files = {"services/api/.spec/requirements/REQ-201.md": invalid}
+        web_files = {".spec/requirements/REQ-101.md": _req("REQ-101", requires=["api::REQ-201"]), "tests/t.py": "x\n"}
+        web_files.update(self.web_duplicated("TECH-105", _tech("TECH-105", refines=["REQ-101"])))
+        self.build(web_files, platform_files=platform_files)
+        result = self.run_op(verify_mod, "verify", "--all-workspaces")
+        web = next(w for w in result["workspaces"] if w["id"] == "web")
+        target = next(t for t in web["targetResults"] if t["target"] == "web::REQ-101")
+        codes = sorted(d["code"] for d in target["diagnostics"])
+        self.assertIn("SPEC-MULTI-DEPENDENCY-001", codes)
+        self.assertIn(self.web_dup("TECH-105"), target["diagnostics"])
 
     # --- 対照 -------------------------------------------------------------------------------
 
