@@ -178,7 +178,8 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     turns=[f['params']['turn']['id'] for f in received if f.get('method')=='turn/started'];require(len(turns)==1,'matrix local one turn')
     request=trace.strict_json(originals['request-1.json'])
     rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0],profile='local-calibration')
-    rollout.initial_context(request,sent,expected_context,turn=turns[0])
+    observe_date = not calibration_only and c.get('continuationPolicy') == preflight.matrix.CONTINUATION_POLICY
+    rollout.initial_context(request,sent,expected_context,turn=turns[0],observe_date=observe_date)
     require([f['method'] for f in raw] == [sdk_trace.RAW_METHODS[0]]*4+[sdk_trace.RAW_METHODS[1]],
             'matrix local complete raw notification inventory')
     for frame,item in zip(raw[:3],request['input'][2:]):

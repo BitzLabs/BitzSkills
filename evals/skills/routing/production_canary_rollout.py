@@ -1,8 +1,10 @@
 """固定された一次client contextと原rollout/raw/native usageを相関する。"""
 from __future__ import annotations
 
+from datetime import datetime
 import math
 import re
+from zoneinfo import ZoneInfo
 
 import production_sdk_trace as sdk
 import production_trace as trace
@@ -47,7 +49,7 @@ def counters(value, *, snake=False):
     return result
 
 
-def initial_context(request, sent, context_profile, *, turn):
+def initial_context(request, sent, context_profile, *, turn, observe_date=False, rollout_interval=None):
     require(context_profile.get('version') == 'primary-client-context-0.1.0' and
             context_profile.get('sdkVersion') == '0.160.1' and context_profile.get('codexVersion') == 'codex-cli 0.160.1',
             'fixed primary client context profile')
@@ -82,11 +84,18 @@ def initial_context(request, sent, context_profile, *, turn):
             sdk.digest(messages[1][1:]) == context_profile['supplementValueSha256'], 'fixed caller and SDK supplement')
     date = context_profile['date']
     require(isinstance(date, str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', date), 'fixed context date')
+    if observe_date:
+        created = inputs[3]['internal_chat_message_metadata_passthrough']['create_time']
+        if rollout_interval is not None:
+            started, ended = rollout_interval
+            require(started <= created*1000 <= ended+1, 'original environment timestamp outside rollout')
+        date = datetime.fromtimestamp(created, ZoneInfo('Asia/Tokyo')).date().isoformat()
     expected_env = sdk._diagnostic_environment(params['cwd'], date, {date})
     require(messages[2] == [dict(type='input_text', text=expected_env)] and
             messages[3] == [dict(type='input_text', text=sent[3]['params']['input'][0]['text'])],
             'fixed entire environment and model input')
     require(len({v['id'] for v in inputs}) == len(inputs), 'unique initial message IDs')
+    return date
 
 
 def request_policy(request, sent, *, thread, turn, mcp_sources=(), profile='public-primary'):
@@ -268,7 +277,7 @@ def original_item_equal(actual,expected):
     if 'content' in actual or 'content' not in expected or expected['content']!=[]:return False
     return trace.json_equal(actual,{k:v for k,v in expected.items() if k!='content'})
 
-def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events, capture_elapsed_ms):
+def correlate(manifest_raw, events_raw, payloads, sent, received, native, context_profile, *, host_events, capture_elapsed_ms, observe_date=False):
     """原artifact検査後の値比較。wire bytesやserver内部入力は認定しない。"""
     require(isinstance(host_events,list) and len(host_events) == len(native['nativeChildIds']), 'original host child body count')
     host_results = [event['result'] for event in host_events]
@@ -392,7 +401,8 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     require(protocols == ['session_configured','turn_started','turn_complete','shutdown_complete'], 'complete original protocol lifecycle')
     require(len({r['response_id'] for r in responses})==len(responses),'unique response IDs')
     code_proof=code_mode_events(code_records,requests,responses,native,host_events)
-    initial_context(requests[0],sent,context_profile,turn=turn)
+    context_date=initial_context(requests[0],sent,context_profile,turn=turn,observe_date=observe_date,
+        rollout_interval=(manifest['started_at_unix_ms'],last_wall))
     raw = [f for f in received if f.get('method') in sdk.RAW_METHODS]
     cursor = 0
     raw_ids = set()
@@ -510,7 +520,7 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
                    f['params']['item'].get('phase')=='final_answer']
     require(len(native_finals)==1 and native_finals[0]['id']==final_raw['id'] and
             native_finals[0]['text']==''.join(c['text'] for c in final_raw['content']), 'raw and native final identity')
-    return dict(status='primary_client_rollout_raw_usage_correlated',captureElapsedMilliseconds=capture_elapsed_ms,
+    result = dict(status='primary_client_rollout_raw_usage_correlated',captureElapsedMilliseconds=capture_elapsed_ms,
                 observedRolloutSpanMilliseconds=last_wall-manifest['started_at_unix_ms'],
                 manifestToFirstEventMilliseconds=events[0]['wall_time_unix_ms']-manifest['started_at_unix_ms'],inferences=len(requests),rolloutEvents=len(events),
         totalTokenUsage=total,modelContextWindow=context_window,codeModeOriginals=code_proof,parentHostBodiesVerified=True,
@@ -518,3 +528,6 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
         originalRequestValueSha256=[sdk.digest(x) for x in requests],originalResponseValueSha256=[sdk.digest(x) for x in responses],
         contextProfileValueSha256=sdk.digest(context_profile),certifiesProviderWireBodies=False,eligibleForMeasurement=False,
         certifiesBehavior=False,certifiesSkillGate=False)
+    if observe_date:
+        result['observedContextDate'] = context_date
+    return result

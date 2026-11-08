@@ -19,6 +19,7 @@ from production_trace import require, strict_json, json_equal
 VERSION = 'public-production-matrix-ledger-0.1.1'
 SUBSET_VERSION = 'public-production-subset-ledger-0.1.0'
 SURVEY_VERSION = 'public-production-matrix-survey-0.1.0'
+CONTINUATION_POLICY = 'fixed-resources-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli',
         'contextProfile', 'decisionSchema'}
 STAGES = ('attempt', 'started', 'primary', 'independent', 'review')
@@ -58,6 +59,10 @@ def execution_contract(execution_raw):
         require(not survey and c['independentScoring'] == RUNNER_BOUND_SCORING,
                 'matrix independent scoring format')
         extra.add('independentScoring')
+    if isinstance(c, dict) and 'continuationPolicy' in c:
+        require(subset and c['continuationPolicy'] == CONTINUATION_POLICY,
+                'matrix subset continuation policy')
+        extra.add('continuationPolicy')
     require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
             'inputContractSha256', 'outputRelativeRoot', 'pins', 'budget', 'timeoutSeconds',
             'cliVersion', 'certifiesSkillGate'} | extra, 'matrix execution inventory')
