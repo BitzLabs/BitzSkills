@@ -14,8 +14,8 @@ import test_production_matrix_semantic as fixture
 
 
 class MatrixScoreTests(unittest.TestCase):
-    def setUp(self):
-        f=fixture.MatrixSemanticTests(methodName='runTest');f.setUp();self.addCleanup(f.doCleanups)
+    def setUp(self, *, independent_scoring=None):
+        f=fixture.MatrixSemanticTests(methodName='runTest');f.setUp(independent_scoring=independent_scoring);self.addCleanup(f.doCleanups)
         self.f=f;self.provider=f.fixture;self.repository=self.provider.artifact_repository
         self.bound=self.provider.bound;self.primary_base=self.provider.base.capture.base
         for name,raw in self.provider.originals.items():
@@ -238,3 +238,75 @@ class MatrixScoreTests(unittest.TestCase):
         self.assertEqual(self.summary()['status'],'stopped')
         with self.assertRaisesRegex(ValueError,'permanently'):self.run_score()
         self.spawn.assert_not_called();self.assertEqual(self.summary()['independentReserved'],0)
+
+
+class RunnerBoundMatrixScoreTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = self.scoring_fixture()
+
+    def scoring_fixture(self):
+        f = MatrixScoreTests(methodName='runTest')
+        self.addCleanup(f.doCleanups)
+        f.setUp(independent_scoring=score.matrix.RUNNER_BOUND_SCORING)
+        return f
+
+    def test_runner_commits_receipt_with_judgment_only_response(self):
+        f = self.fixture
+        schema = score.trace.strict_json(f.prepared.schema_raw)
+        self.assertNotIn('bindings', schema['properties'])
+        self.assertNotIn(f.prepared.bindings['reviewInputSha256'].encode(), score.semantic.prompt(f.prepared))
+        self.assertEqual(f.run_score()['status'], 'matrix_independent_captured')
+        capture = f.instance.read(score.matrix.CAPTURED_STAGE, 1)
+        receipt = score.io.read_regular(f.base/'independent-receipt.json')
+        reservation = score.io.read_regular(f.instance.path('independent', 1))
+        self.assertEqual(capture['independentReceipt']['sha256'], score.io.sha(receipt))
+        self.assertEqual(capture['independentReservationSha256'], score.io.sha(reservation))
+        parent = f.finish()
+        self.assertTrue(parent['ledgerFinalized'])
+        self.assertEqual(parent['verification']['originalResponse'], f.answer)
+
+    def test_foreign_trace_and_response_with_rehashed_receipt_are_rejected(self):
+        f = self.fixture
+        self.assertEqual(f.run_score()['status'], 'matrix_independent_captured')
+        # 別の独立起動で得た応答と終端ログをまとめて差し替える。
+        other = self.scoring_fixture()
+        other.answer['limitations'] = ['別の合成評価の応答。']
+        self.assertEqual(other.run_score()['status'], 'matrix_independent_captured')
+        replacement = {name: (other.base/name).read_bytes() for name in ('trace.jsonl', 'response.json')}
+        other.doCleanups()
+        receipt_path = f.base/'independent-receipt.json'
+        receipt = score.trace.strict_json(receipt_path.read_bytes())
+        for name, raw in replacement.items():
+            (f.base/name).write_bytes(raw)
+            receipt['artifactSha256'][name] = score.io.sha(raw)
+        receipt_path.write_bytes(score.io.encoded(receipt))
+        with self.assertRaisesRegex(ValueError, 'original hash drift'):
+            score.verify_originals(f.prepared, f.instance)
+        with self.assertRaisesRegex(ValueError, 'original hash drift'):
+            f.finish()
+        self.assertFalse(f.instance.path('review', 1).exists())
+        self.assertTrue((f.instance.storage/'stop.json').exists())
+
+    def test_changed_input_is_rejected_and_reservation_is_preserved(self):
+        f = self.fixture
+        self.assertEqual(f.run_score()['status'], 'matrix_independent_captured')
+        path = f.base/'review-input.json'
+        path.write_bytes(path.read_bytes() + b' ')
+        parent = f.finish()
+        self.assertFalse(parent['ledgerFinalized'])
+        self.assertEqual(f.summary()['independentReserved'], 1)
+        self.assertEqual(f.summary()['status'], 'stopped')
+
+    def test_capture_interruption_cannot_be_finalized_or_retried(self):
+        f = self.fixture
+        with patch.object(score.matrix.MatrixLedger, 'record_independent_capture',
+                          side_effect=OSError('synthetic receipt commitment failure')):
+            self.assertEqual(f.run_score()['status'], 'matrix_independent_capture_stopped')
+        self.assertTrue((f.base/'independent-receipt.json').is_file())
+        self.assertFalse(f.instance.path(score.matrix.CAPTURED_STAGE, 1).exists())
+        with self.assertRaisesRegex(ValueError, 'permanently'):
+            f.finish()
+        with self.assertRaisesRegex(ValueError, 'permanently'):
+            f.run_score()
+        f.spawn.assert_called_once()
+        self.assertEqual(f.summary()['independentReserved'], 1)

@@ -13,7 +13,7 @@ import test_production_matrix_evidence as fixture
 
 
 class MatrixProviderEvidenceTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self, *, independent_scoring=None):
         base=fixture.MatrixEvidenceTests(methodName='runTest');base.setUp();self.addCleanup(base.doCleanups);self.base=base
         self.artifact_repository=base.capture.repository;self.source_repository=self.artifact_repository/'source-tree'
         self.legacy_context=base.bind()
@@ -57,6 +57,8 @@ class MatrixProviderEvidenceTests(unittest.TestCase):
         c['pins']['contextProfile']=provider.io.sha(base.profile)
         c['pins'].update(snapshotManifest=provider.io.sha(base.manifest),sdk=digest.hexdigest(),
             runtimeManifest=provider.io.sha(self.runtime_raw),cli=runtime_spec['files'][provider.preflight.capture.fixed_runtime.VENDOR+'bin/codex'])
+        if independent_scoring is not None:
+            c['independentScoring']=independent_scoring
         self.bound=provider.evidence.matrix.bind(provider.io.encoded(c),base.bound.matrix.contract_raw,**base.raws)
         self.deployment=dict(version=provider.preflight.VERSION,sourceCommit=c['sourceCommit'],executionSha256=provider.io.sha(self.bound.execution_raw),
             codexPath=str(provider.preflight.capture.fixed_runtime.ROOT/'bin/codex'),codexVersion='codex-cli 0.160.1',

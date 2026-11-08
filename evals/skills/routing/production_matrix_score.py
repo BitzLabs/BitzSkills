@@ -160,10 +160,15 @@ def execute_reserved(prepared,instance,reservation,before):
         require(calls==1 and exit_code==0 and not timed_out and guards['after']==before,
             'matrix score terminal or resource drift')
         names=artifact_names(base);originals={name:io.read_regular(base/name) for name in names}
+        if prepared.version == matrix.RUNNER_BOUND_SCORING:
+            require(originals['trace.jsonl']==stdout, 'matrix independent captured stdout drift')
         result=semantic.response(prepared,originals['trace.jsonl'],originals['response.json'])
         hashes={name:io.sha(raw) for name,raw in originals.items()}
         receipt=make_receipt(prepared,calls,exit_code,timed_out,time.monotonic()-started,None,hashes,True)
-        io.exclusive(base/'independent-receipt.json',io.encoded(receipt))
+        receipt_raw=io.encoded(receipt)
+        io.exclusive(base/'independent-receipt.json',receipt_raw)
+        if prepared.version == matrix.RUNNER_BOUND_SCORING:
+            instance.record_independent_capture(ordinal,reservation,io.sha(receipt_raw))
         return dict(status=receipt['status'],independentInvocations=calls,verification=result,
             ledgerFinalized=False,eligibleForMeasurement=False,certifiesSkillGate=False)
     except BaseException as exc:
@@ -200,6 +205,12 @@ def make_receipt(prepared,calls,exit_code,timed_out,seconds,error,hashes,ok):
 def verify_originals(prepared,instance):
     base=layout(prepared.artifact_repository,prepared.context.bound,prepared.context.ordinal)
     receipt_raw=io.read_regular(base/'independent-receipt.json');receipt=trace.strict_json(receipt_raw)
+    if prepared.version == matrix.RUNNER_BOUND_SCORING:
+        ordinal=prepared.context.ordinal
+        captured=instance.read(matrix.CAPTURED_STAGE,ordinal)
+        instance.independent_capture_valid(captured,ordinal)
+        require(captured['independentReceipt']['sha256']==io.sha(receipt_raw),
+            'matrix independent receipt differs from capture')
     require(isinstance(receipt,dict) and set(receipt)==RECEIPT_KEYS,'matrix independent receipt inventory')
     expected=make_receipt(prepared,1,0,False,receipt['elapsedSeconds'],None,receipt['artifactSha256'],True)
     require(trace.json_equal(receipt,expected),'matrix independent receipt scope or terminal drift')
