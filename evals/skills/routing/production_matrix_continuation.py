@@ -89,11 +89,14 @@ def advance(instance, control, read_limits, verify, verify_completed, primary, i
                 raise
         if terminal == 'complete':
             return dict(status=terminal)
-        require(time.monotonic()-started <= 60 and wait_until(snapshot,time.time()) is None,
-            'matrix continuation rate snapshot stale before reservation')
-        guard()
+        def admit():
+            require(time.monotonic()-started <= 60 and wait_until(snapshot,time.time()) is None,
+                'matrix continuation rate snapshot stale before reservation')
+            guard()
+
+        admit()
         try:
-            require(primary(ordinal,guard)['status']=='primary_capture_awaits_independent_review',
+            require(primary(ordinal,guard,admit)['status']=='primary_capture_awaits_independent_review',
                 'matrix continuation primary stopped')
             pace()
             guard()
@@ -147,8 +150,8 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
     def verify():
         return p.verify_resources(repository,bound,deployment,sdk)
 
-    def primary(ordinal, guard):
-        return capture._run(repository,bound,deployment,sdk,review,report,ordinal,control_guard=guard)
+    def primary(ordinal, guard, admit):
+        return capture._run(repository,bound,deployment,sdk,review,report,ordinal,control_guard=guard,before_reserve=admit)
 
     def scoring_args(ordinal):
         manifest=io.read_regular(repository/d['snapshotRelativePath']/'manifest.json')

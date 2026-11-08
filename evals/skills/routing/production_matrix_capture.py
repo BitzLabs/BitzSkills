@@ -172,7 +172,7 @@ def run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,revie
     return _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal)
 
 
-def _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal,*,control_guard=None):
+def _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal,*,control_guard=None,before_reserve=None):
     slot=bound.slot(ordinal);prelaunch_review(bound,deployment_raw,review_raw,review_report_raw)
     before=p.verify_resources(source_repository,bound,deployment_raw,sdk_manifest_raw)
     auth_metadata()
@@ -187,7 +187,10 @@ def _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,revi
         io.safe_tree(storage.parent);storage.parent.mkdir(mode=0o700,exist_ok=True)
         instance=p.matrix.open_ledger(storage,artifact_repository,bound)
         guard()
-        instance.reserve(ordinal)
+        if before_reserve is None:
+            instance.reserve(ordinal)
+        else:
+            instance.reserve(ordinal,before_commit=before_reserve)
         return _reserved_capture(source_repository,artifact_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,
             ordinal,slot,before,control,instance,guard)
 

@@ -73,7 +73,7 @@ class MatrixContinuationTests(unittest.TestCase):
 
     def advance(self, *, primary=None, finalize=None):
         return continuation.advance(self.f.instance,self.control,self.read_limits,self.verify,self.verify_completed,
-            lambda n,guard:(primary or self.primary)(n),lambda n,guard:self.independent(n),
+            lambda n,guard,admit:(primary or self.primary)(n),lambda n,guard:self.independent(n),
             lambda n,guard:(finalize or self.finalize)(n))
 
     def test_cross_day_wait_and_process_restart_continue_exact_next_slot(self):
@@ -186,6 +186,17 @@ class MatrixContinuationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'stale before reservation'):
                 self.advance()
         self.assertFalse(self.f.instance.path('attempt', 2).exists())
+        self.assertFalse((self.f.storage/'stop.json').exists())
+
+    def test_reservation_rechecks_quota_inside_the_ledger_lock(self):
+        def delayed_primary(ordinal, guard, admit):
+            self.now += 360
+            self.f.instance.reserve(ordinal,before_commit=admit)
+
+        with self.assertRaisesRegex(ValueError, 'rate window invalid or expired'):
+            continuation.advance(self.f.instance,self.control,self.read_limits,self.verify,
+                self.verify_completed,delayed_primary,self.independent,self.finalize)
+        self.assertFalse(self.f.instance.path('attempt', 1).exists())
         self.assertFalse((self.f.storage/'stop.json').exists())
 
     def test_completed_scope_rechecks_earlier_originals_without_quota(self):
