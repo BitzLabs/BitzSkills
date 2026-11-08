@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-064-01",
+  "description": "複合ワークスペースのverifyが、起点を所有するワークスペースの上限で閉包を判定し、超えた検証対象をblockedにする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "web::REQ-101",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

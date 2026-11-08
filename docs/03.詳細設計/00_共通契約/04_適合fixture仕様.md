@@ -845,6 +845,23 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `SINGLE-175-07` | `SINGLE-175-06`と同じ入力 | verify REQ-002 | passed／0 | 対照: `REQ-001`の不在のパスは、`REQ-002`が使わないので検査しない。`commands`は`tests/test_other.py`だけ。修正前のCoreも通る |
 | `SINGLE-175-08` | TECH-001の`implements`が存在しない`src/gone.py`。テスト対応は正しい | verify REQ-001 | passed／0 | 対照: `implements`の検査は`check`の責務で、`verify`は検査しない。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
 
+### 6.19 `verify`の完全な閉包の上限
+
+`verify`は、検証対象ごとに、`context` §8と同じ規則で完全な閉包の上限を判定する（[`verify` §4の1.](../03_操作仕様/03_verify.md#4-処理)と§9。実装の確認事項C95）。
+使う値は起点を所有するワークスペースの`context.maxDocuments`と`context.maxBytes`で、バイト数は詳細度`standard`の提示で測る。上限を超えた検証対象は、診断`CTX-LIMIT-001`（`blocked`。
+`source`は`{file, 起点を所有するワークスペース, 起点の文書}`、summaryは`context`の承認済みの文言「コンテキストの完全な閉包が文書数上限を超過しました」「コンテキストの完全な閉包がバイト数上限を超過しました」）の1件だけを
+検証対象の`diagnostics`へ返し、`contextDigest: null`、`statements: []`、`bindingRefs: []`で、テストを起動しない。独立した検証対象は続ける。`related`の参照切れの警告は、上限で止まる結果に加えない（`context` §10と同じ）。
+修正前のCoreは上限を判定せず、上限を超えた閉包を通過にしてテストを起動した。単一ワークスペースの入力は`SINGLE-042`のcorpus（閉包は`REQ-001`と`TECH-001`の2文書。コマンド`default`）を基にし、インデックスにステージする。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-176-01` | `SINGLE-042`のcorpusに`context.maxDocuments: 1`（`SINGLE-048-01`と同じ設定） | verify REQ-001 | blocked／2 | `REQ-001`は`blocked`で、診断は`CTX-LIMIT-001`（文書数のsummary、`source`は`{file, root, .spec/requirements/REQ-001.md}`）の1件。`contextDigest`は`null`、`statements`と`bindingRefs`は空、`commands`は空。修正前のCoreは`passed`／0（`tests/test_auth.py`と`tests/test_session.py`を起動） |
+| `SINGLE-176-02` | `SINGLE-048-02`の入力（REQ-001の本文を詰め物で増やす）に`context.maxBytes: 4096`。標準の提示（起点とTECH-001の本文）が4096バイトを超える | verify REQ-001 | blocked／2 | 診断は`CTX-LIMIT-001`（バイト数のsummary）の1件。結果は`SINGLE-176-01`と同じ形。修正前のCoreは`passed`／0 |
+| `SINGLE-176-03` | `SINGLE-168-03`の入力（`TECH-001`が存在しない`ADR-099`を`related`する。閉包に入らない`TECH-002`が存在しない`ADR-098`を`related`する）に`context.maxDocuments: 1` | verify REQ-001 | blocked／2 | 診断は`CTX-LIMIT-001`の1件だけで、`SPEC-RELATION-ADVISORY-MISSING-001`の警告を加えない。修正前のCoreは`passed_with_warnings`／0（警告を返し、テストを起動する） |
+| `SINGLE-176-04` | `SINGLE-042`のcorpusに、`TECH-001`を`refines`する`TECH-002`（`REQ-001`の閉包は3文書）と、独立した`REQ-002`・`TECH-003`（`tests/test_other.py`。`REQ-002`の閉包は2文書）を足す。`context.maxDocuments: 2` | verify REQ-001 REQ-002 | blocked／2 | `REQ-001`は`SINGLE-176-01`と同じ`blocked`、`REQ-002`は`passed`（`bindingRefs`は`root::default`、診断なし）。`commands`は1件で、`tests`は`tests/test_other.py`だけ（`REQ-001`のテストは起動しない）。修正前のCoreは`passed`／0（`REQ-001`のテストも起動） |
+| `SINGLE-176-05` | `SINGLE-176-03`と同じ入力で、`context.maxDocuments: 2`（閉包は2文書で、上限ちょうど） | verify REQ-001 | passed_with_warnings／0 | 対照: 上限ちょうどは超えない。`REQ-001`は`passed_with_warnings`で、診断は`SPEC-RELATION-ADVISORY-MISSING-001`（`ADR-099`）の1件。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
+| `SINGLE-176-06` | `SINGLE-042`のcorpusに`context.maxBytes: 4096`（標準の提示は4096バイト以下） | verify REQ-001 | passed／0 | 対照: バイト数の上限の内側は通る。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1147,6 +1164,12 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `MULTI-063-04` | ルート`platform`のコマンドは自分へ`SIGTERM`を送るシェルスクリプト、`api`のコマンドは実行形式をOSが拒否するファイル、`web`のコマンドは`/bin/sleep 60`で`verify.timeoutSeconds`が1。各ワークスペースにREQを1件ずつ置き、自分のコマンドを使う（`.`で実行） | verify --all-workspaces | error／3 | 起動した後の診断（`SPEC-VERIFY-COMMAND-001`のシグナルと起動失敗、`SPEC-VERIFY-TIMEOUT-001`）は、テスト割当てを所有するワークスペース（`platform`、`api`、`web`）の`diagnostics`へ1件ずつ置き、最上位の`diagnostics`は空である（`verify` §6）。各ワークスペースと検証対象の状態は`error`。修正前のCoreは3件を最上位へ置き、ワークスペースの`diagnostics`は空 |
 | `MULTI-063-05` | `MULTI-063-04`と同じ入力。`--format`を省略する | verify --all-workspaces | error／3 | text出力。要約行は`targets=3 diagnostics=3`。診断の行は、`platform`（シグナル）、`api`（起動失敗）、`web`（タイムアウト）のワークスペースの処理順に出す。いずれも発生元が`environment`なので先頭のフィールドは`command:::`で、`SPEC-VERIFY-COMMAND-001`、`SPEC-VERIFY-COMMAND-001`、`SPEC-VERIFY-TIMEOUT-001`。修正前のCoreは`targets=0 diagnostics=3`（診断は最上位の3件で、順は同じ） |
 | `MULTI-063-06` | `MULTI-063-04`と同じ入力 | verify web::REQ-101 | error／3 | 対照: 複合ワークスペースの単独の操作は、起動した後の診断を最上位の`diagnostics`へ置く（`SPEC-VERIFY-TIMEOUT-001`、発生元`web::default`）。`workspaces`を持たない。修正前のCoreも通る |
+| `MULTI-064-01` | ルート`platform`（`.`）、メンバー`web`（`apps/web`）、`api`（`services/api`）。`web`の`REQ-101`（`approved`、`MUST`1件、自身の`tests[0].path`が`tests/ok.py`）と、それを`refines`する`TECH-101`（`web`の閉包は2文書）。`web`の`context.maxDocuments: 1`、ルートは既定（`.`で実行） | verify web::REQ-101 | blocked／2 | `web::REQ-101`は`blocked`で、診断は`CTX-LIMIT-001`（文書数のsummary、`source`は`{file, web, .spec/requirements/REQ-101.md}`）の1件。`contextDigest`は`null`、`statements`と`bindingRefs`は空、`commands`は空。`workspace`は`web`。起点を所有するワークスペースの上限を使う。修正前のCoreは`passed`／0 |
+| `MULTI-064-02` | `MULTI-064-01`と同じ文書で、ルートの`context.maxDocuments: 1`、`web`は既定 | verify web::REQ-101 | passed／0 | 対照: 起点を所有する`web`の上限（既定）で判定し、ルートの上限は使わない。`web::REQ-101`は`passed`、`bindingRefs`は`web::default`。`contextDigest`の`settings.context`は`web`の設定（20文書、128 KiB）。修正前のCoreも通る |
+| `MULTI-064-03` | ルートのREQ-001（`MUST`1件、自身の`tests/root.py`が`covers`する）。`web::TECH-005`が`platform::REQ-001`を`refines`し、`web::TECH-010`が`platform::REQ-001:AC-01`を直接`refines`して`tests/web.py`が`covers`する（`MULTI-062-05`と同じ。閉包は3文書で、うち2文書は`web`が所有する）。ルートの`context.maxDocuments: 2`、`web`は既定 | verify REQ-001 | blocked／2 | `platform::REQ-001`は`blocked`で、診断は`CTX-LIMIT-001`（文書数のsummary、`source`は`{file, platform, .spec/requirements/REQ-001.md}`）の1件。他のワークスペースが所有する文書も閉包の文書数に数え、起点を所有するルートの上限で判定する。`workspace`は`platform`。修正前のCoreは`passed`／0 |
+| `MULTI-064-04` | `MULTI-064-03`と同じ文書で、ルートの`context.maxDocuments: 3`（閉包は3文書で、上限ちょうど）、`web`の`context.maxDocuments: 1` | verify REQ-001 | passed／0 | 対照: 上限ちょうどは超えず、`web`の上限は使わない。`commands`は`platform::default`（`tests/root.py`）と`web::default`（`tests/web.py`）の2件（`MULTI-062-05`と同じ）。修正前のCoreも通る |
+| `MULTI-064-05` | `web`のREQ-101とTECH-101（`web`の閉包は2文書、`web`の`context.maxDocuments: 1`）、`api`のREQ-201（`tests/ok.py`、閉包は1文書、`api`は既定）。ルートは文書を持たない（`.`で実行） | verify --all-workspaces | blocked／2 | `workspaces`は`platform`（`passed_with_warnings`、`SPEC-VERIFY-BLOCKED-002`の警告）、`api`（`passed`）、`web`（`blocked`）の順。`web::REQ-101`は`CTX-LIMIT-001`の1件で`blocked`、`api::REQ-201`は`passed`で`api::default`を起動する（`commands`は`api`に1件）。`web`は`commands`を持たない。最上位の`diagnostics`は空。修正前のCoreは`passed_with_warnings`／0 |
+| `MULTI-064-06` | `MULTI-064-01`と同じ文書で、`TECH-101`が存在しない`ADR-099`を`related`する | verify web::REQ-101 | blocked／2 | 診断は`CTX-LIMIT-001`の1件だけで、`SPEC-RELATION-ADVISORY-MISSING-001`の警告を加えない。修正前のCoreは`passed_with_warnings`／0 |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

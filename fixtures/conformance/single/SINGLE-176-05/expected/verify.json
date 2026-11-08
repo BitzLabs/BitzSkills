@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed_with_warnings",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "passed_with_warnings",
+      "contextDigest": "sha256:eefa544f4c302e0010397b51b8fc08af7a1edf883c9e7175e30001c01e8731d2",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": [
+        {
+          "code": "SPEC-RELATION-ADVISORY-MISSING-001",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "関係型relatedの参照先が存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "relations.related"
+          },
+          "evidence": "ADR-099"
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

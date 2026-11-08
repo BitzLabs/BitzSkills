@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:54db8523c5a88257e2bf52fa30af9546ad3a3abbdf7a9467c488855e90e7e20a",
+      "statements": [
+        "platform::REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "platform::default",
+        "web::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "platform::default",
+      "workspaceId": "platform",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/root.py"
+      ],
+      "tests": [
+        "tests/root.py"
+      ],
+      "covers": [
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "web::default",
+      "workspaceId": "web",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/web.py"
+      ],
+      "tests": [
+        "tests/web.py"
+      ],
+      "covers": [
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
