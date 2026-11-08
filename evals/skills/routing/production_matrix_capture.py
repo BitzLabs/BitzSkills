@@ -68,7 +68,7 @@ def namespace_command(source_repository,base,execution_raw,deployment_raw):
         and '..' not in source_repository.parts and '..' not in base.parts,'matrix absolute launch roots')
     require(base.parent.name==c['outputRelativeRoot'].split('/')[1]
         and base.parent.parent.name=='.venv' and base.name.startswith('attempt-')
-        and len(base.name)==12 and base.name[8:].isdigit() and 1<=int(base.name[8:])<=92,'matrix primary base path')
+        and len(base.name)==12 and base.name[8:].isdigit() and 1<=int(base.name[8:])<=c['budget']['primary'],'matrix primary base path')
     io.safe_tree(source_repository);io.safe_tree(base)
     args=['bwrap','--unshare-pid','--unshare-ipc','--new-session','--die-with-parent',
         '--ro-bind','/','/','--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run','--proc','/proc','--dev','/dev']
@@ -125,10 +125,12 @@ def invocation(source_repository,base,bound,deployment_raw,ordinal):
 def invocation_for_slot(source_repository,base,execution_raw,deployment_raw,slot):
     d=p.deployment_for_execution(execution_raw,deployment_raw);c=p.matrix.execution_contract(execution_raw)
     ordinal=slot.get('ordinal') if isinstance(slot,dict) else None
-    require(type(ordinal) is int and 1<=ordinal<=92 and base.name==f'attempt-{ordinal:04d}', 'matrix launch slot/base drift')
+    require(type(ordinal) is int and 1<=ordinal<=c['budget']['primary'] and base.name==f'attempt-{ordinal:04d}', 'matrix launch slot/base drift')
     io.pin(slot.get('payloadSha256'))
+    case_id = (c['caseIds'][(ordinal-1)//2] if c['version']==p.matrix.SUBSET_VERSION
+        else f'SE-{(ordinal-1)//2+1:03d}')
     require(set(slot)=={'ordinal','caseId','repetition','payloadSha256','contractSha256','campaignId','sourceCommit','executionSha256'}
-        and trace.json_equal(slot,dict(ordinal=ordinal,caseId=f'SE-{(ordinal-1)//2+1:03d}',repetition=(ordinal-1)%2+1,
+        and trace.json_equal(slot,dict(ordinal=ordinal,caseId=case_id,repetition=(ordinal-1)%2+1,
             payloadSha256=slot['payloadSha256'],contractSha256=c['inputContractSha256'],campaignId=c['campaignId'],
             sourceCommit=c['sourceCommit'],executionSha256=io.sha(execution_raw))),'matrix launch slot identity drift')
     return dict(version=VERSION,sourceCommit=c['sourceCommit'],slot=slot,
