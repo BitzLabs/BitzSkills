@@ -165,15 +165,38 @@ class MatrixContinuationTests(unittest.TestCase):
         self.assertEqual(self.f.instance.summary()['primaryReserved'], 0)
         self.assertEqual(self.calls, [])
 
-    def test_changed_completed_original_is_rejected_before_next_admission(self):
+    def test_changed_completed_original_is_rejected_before_next_reservation(self):
         self.assertEqual(self.advance()['status'], 'measured_correct')
-        self.read_limits.reset_mock()
-        self.verify_completed.side_effect = ValueError('completed original drift')
+
+        def change_during_rate_read():
+            self.verify_completed.side_effect = ValueError('completed original drift')
+            return limits(self.now+300)
+
+        self.read_limits.side_effect = change_during_rate_read
         with self.assertRaisesRegex(ValueError, 'completed original drift'):
             self.advance()
-        self.read_limits.assert_not_called()
         self.assertFalse(self.f.instance.path('attempt', 2).exists())
+        stop = matrix.io.read_owned(self.f.storage/'stop.json')
+        self.assertEqual(stop['ordinal'], 1)
         self.assertEqual(self.f.instance.summary()['status'], 'stopped')
+
+    def test_quota_snapshot_expiring_during_original_checks_does_not_reserve(self):
+        self.assertEqual(self.advance()['status'], 'measured_correct')
+        with patch.object(continuation.time,'monotonic',side_effect=[0,0,61]):
+            with self.assertRaisesRegex(ValueError, 'stale before reservation'):
+                self.advance()
+        self.assertFalse(self.f.instance.path('attempt', 2).exists())
+        self.assertFalse((self.f.storage/'stop.json').exists())
+
+    def test_completed_scope_rechecks_earlier_originals_without_quota(self):
+        self.advance()
+        self.advance()
+        self.read_limits.reset_mock()
+        self.verify_completed.side_effect = ValueError('oldest original drift')
+        with self.assertRaisesRegex(ValueError, 'oldest original drift'):
+            self.advance()
+        self.read_limits.assert_not_called()
+        self.assertEqual(matrix.io.read_owned(self.f.storage/'stop.json')['ordinal'], 1)
 
     def test_replaced_control_lock_does_not_reserve_or_stop_another_caller(self):
         lock = self.control/'launch.lock'
