@@ -1,4 +1,5 @@
 """公開92枠の単回独立採点と親原照合。一次原を置換せず、既定は恒久停止、明示surveyは局所失敗を分離する。"""
+from contextlib import nullcontext
 import math
 import os
 from pathlib import Path
@@ -118,8 +119,14 @@ def control_root(artifact_repository,bound):
 
 
 def run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw):
+    require('continuationPolicy' not in bound.contract, 'matrix continuation operator required')
+    return _run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw)
+
+
+def _run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw,*,control_guard=None):
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
-    with capture.locked_control(control_root(artifact_repository,bound)):
+    with (nullcontext(control_guard) if control_guard is not None else
+            capture.locked_control(control_root(artifact_repository,bound))) as guard:
         instance=matrix.open_ledger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
         with instance.locked():
             instance.initialize();instance.latest_pending(ordinal)
@@ -131,11 +138,12 @@ def run(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,revi
         except BaseException as exc:
             instance.stop(ordinal,'independent-prelaunch-or-primary-original-rejected',type(exc).__name__)
             raise
+        guard()
         reservation=instance.reserve_independent(ordinal,prepared.bindings['reviewInputSha256'])
-        return execute_reserved(prepared,instance,reservation,before)
+        return execute_reserved(prepared,instance,reservation,before,guard)
 
 
-def execute_reserved(prepared,instance,reservation,before):
+def execute_reserved(prepared,instance,reservation,before,guard):
     context=prepared.context;ordinal=context.ordinal;bound=context.bound
     base=layout(prepared.artifact_repository,bound,ordinal)
     process=None;created=False;calls=0;timed_out=False;exit_code=None;error=None;interruption=None
@@ -146,6 +154,7 @@ def execute_reserved(prepared,instance,reservation,before):
         for name,raw in input_originals(prepared,base,reservation).items():io.exclusive(base/name,raw)
         guards['invoke']=resources(prepared);require(guards['invoke']==before,'matrix score pre-invocation resource drift')
         inv=invocation(prepared,base)
+        guard()
         process=subprocess.Popen(inv['argv'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
             env=inv['environment'],start_new_session=True);calls=1
         try:stdout,stderr=process.communicate(semantic.prompt(prepared),timeout=inv['timeoutSeconds'])
@@ -202,7 +211,7 @@ def make_receipt(prepared,calls,exit_code,timed_out,seconds,error,hashes,ok):
         eligibleForMeasurement=False,certifiesBehavior=False,certifiesSkillGate=False)
 
 
-def verify_originals(prepared,instance):
+def verify_originals(prepared,instance,*,resource_proof=None):
     base=layout(prepared.artifact_repository,prepared.context.bound,prepared.context.ordinal)
     receipt_raw=io.read_regular(base/'independent-receipt.json');receipt=trace.strict_json(receipt_raw)
     if prepared.version == matrix.RUNNER_BOUND_SCORING:
@@ -225,16 +234,43 @@ def verify_originals(prepared,instance):
     require(reservation['reviewInputSha256']==prepared.bindings['reviewInputSha256'],'matrix independent reservation input drift')
     require(all(originals[name]==raw for name,raw in input_originals(prepared,base,reservation).items()),
         'matrix independent original input/argv/config drift')
-    current=resources(prepared);require(originals['resource-guards.json']==io.encoded(dict.fromkeys(['before','invoke','after'],current)),
+    current=resources(prepared) if resource_proof is None else resource_proof
+    require(originals['resource-guards.json']==io.encoded(dict.fromkeys(['before','invoke','after'],current)),
         'matrix independent current resources drift')
     result=semantic.response(prepared,originals['trace.jsonl'],originals['response.json'])
     return receipt_raw,result
 
 
+def parent_result(prepared,receipt_raw,result):
+    accepted=result['proposedLedgerStatus'] in {'measured_correct','measured_incorrect'}
+    return dict(version=VERSION,status='matrix_parent_originals_verified' if accepted else 'matrix_parent_stopped',
+        slot=prepared.context.bound.slot(prepared.context.ordinal),primaryReceiptSha256=io.sha(prepared.context.receipt_raw),
+        independentReceiptSha256=io.sha(receipt_raw),reviewInputSha256=prepared.bindings['reviewInputSha256'],
+        verification=result,independentContext=True,ledgerFinalized=False,
+        eligibleForMeasurement=accepted,certifiesSkillGate=False,certifiesRelease=False)
+
+
+def verify_completed(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw,*,resource_proof):
+    artifact,instance,prepared=load_primary(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw)
+    review=instance.read('review',ordinal)
+    instance.review_valid(review,ordinal)
+    receipt_raw,result=verify_originals(prepared,instance,resource_proof=resource_proof)
+    expected=parent_result(prepared,receipt_raw,result)
+    require(expected['eligibleForMeasurement'] and review['status']==result['proposedLedgerStatus']
+        and io.read_regular(layout(artifact,bound,ordinal)/'parent-verification.json')==io.encoded(expected),
+        'matrix completed parent original drift')
+
+
 def finalize(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw):
+    require('continuationPolicy' not in bound.contract, 'matrix continuation operator required')
+    return _finalize(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw)
+
+
+def _finalize(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw,review_raw,report_raw,*,control_guard=None):
     """親が取得原・採点原・現物・全argv・共有予約を再構成してから次枠を許可する。"""
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
-    with capture.locked_control(control_root(artifact_repository,bound)):
+    with (nullcontext(control_guard) if control_guard is not None else
+            capture.locked_control(control_root(artifact_repository,bound))) as guard:
         instance=matrix.open_ledger(matrix.shared_storage(source_repository,bound),artifact_repository,bound)
         with instance.locked():instance.initialize();instance.latest_pending(ordinal)
         prepared=None
@@ -243,12 +279,9 @@ def finalize(source_repository,bound,ordinal,manifest_raw,schema_raw,context_raw
                 manifest_raw,schema_raw,context_raw,review_raw,report_raw)
             receipt_raw,result=verify_originals(prepared,instance)
             base=layout(artifact_repository,bound,ordinal)
-            accepted=result['proposedLedgerStatus'] in {'measured_correct','measured_incorrect'}
-            parent=dict(version=VERSION,status='matrix_parent_originals_verified' if accepted else 'matrix_parent_stopped',
-                slot=bound.slot(ordinal),primaryReceiptSha256=io.sha(prepared.context.receipt_raw),
-                independentReceiptSha256=io.sha(receipt_raw),reviewInputSha256=prepared.bindings['reviewInputSha256'],
-                verification=result,independentContext=True,ledgerFinalized=False,
-                eligibleForMeasurement=accepted,certifiesSkillGate=False,certifiesRelease=False)
+            parent=parent_result(prepared,receipt_raw,result)
+            accepted=parent['eligibleForMeasurement']
+            guard()
             parent_raw=io.encoded(parent);io.exclusive(base/'parent-verification.json',parent_raw)
             if not accepted:
                 instance.stop(ordinal,'independent-safety-or-integrity-unresolved','Unresolved')

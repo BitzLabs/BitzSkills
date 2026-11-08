@@ -179,7 +179,7 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     request=trace.strict_json(originals['request-1.json'])
     rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0],profile='local-calibration')
     observe_date = not calibration_only and c.get('continuationPolicy') == preflight.matrix.CONTINUATION_POLICY
-    rollout.initial_context(request,sent,expected_context,turn=turns[0],observe_date=observe_date)
+    observed_date=rollout.initial_context(request,sent,expected_context,turn=turns[0],observe_date=observe_date)
     require([f['method'] for f in raw] == [sdk_trace.RAW_METHODS[0]]*4+[sdk_trace.RAW_METHODS[1]],
             'matrix local complete raw notification inventory')
     for frame,item in zip(raw[:3],request['input'][2:]):
@@ -193,6 +193,8 @@ def verify_originals(originals, *, execution_raw, deployment_raw, slot, cwd, sou
     result = dict(status='matrix_local_sdk_context_verified',rawNotificationCount=len(raw),primaryModelTrajectories=0,
         paidModelCalls=0,realReservations=0,localHttpRequests=1,launchEnabled=False,eligibleForMeasurement=False,
         certifiesSkillGate=False,certifiesRelease=False)
+    if observe_date:
+        result['observedContextDate']=observed_date
     if calibration_only:
         result.update(status='matrix_local_sdk_calibration_verified',calibrationOnly=True,
             calibrationDate=calibration_date,referenceContextDate=trace.strict_json(context_raw)['date'])

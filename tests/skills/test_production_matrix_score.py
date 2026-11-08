@@ -193,6 +193,16 @@ class MatrixScoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'permanently'):self.run_score()
         self.spawn.assert_not_called();self.assertFalse(self.instance.path('independent',1).exists())
 
+    def test_completed_originals_are_reconstructed_without_reopening_the_slot(self):
+        self.run_score()
+        self.assertTrue(self.finish()['ledgerFinalized'])
+        score.verify_completed(*self.args,resource_proof=self.proof)
+        original = self.base/'review-input.json'
+        original.write_bytes(original.read_bytes() + b' ')
+        with self.assertRaisesRegex(ValueError, 'independent original hash drift'):
+            score.verify_completed(*self.args,resource_proof=self.proof)
+        self.spawn.assert_called_once()
+
     def test_completed_parent_cannot_be_reapplied_or_replace_its_original_proof(self):
         self.run_score();self.finish();before=score.io.read_regular(self.base/'parent-verification.json')
         with self.assertRaisesRegex(ValueError,'already measured'):self.finish()

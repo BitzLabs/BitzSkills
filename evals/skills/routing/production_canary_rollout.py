@@ -88,7 +88,7 @@ def initial_context(request, sent, context_profile, *, turn, observe_date=False,
         created = inputs[3]['internal_chat_message_metadata_passthrough']['create_time']
         if rollout_interval is not None:
             started, ended = rollout_interval
-            require(started <= created*1000 <= ended+1, 'original environment timestamp outside rollout')
+            require(started <= math.floor(created*1000) <= ended, 'original environment timestamp outside rollout')
         date = datetime.fromtimestamp(created, ZoneInfo('Asia/Tokyo')).date().isoformat()
     expected_env = sdk._diagnostic_environment(params['cwd'], date, {date})
     require(messages[2] == [dict(type='input_text', text=expected_env)] and
@@ -401,8 +401,13 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
     require(protocols == ['session_configured','turn_started','turn_complete','shutdown_complete'], 'complete original protocol lifecycle')
     require(len({r['response_id'] for r in responses})==len(responses),'unique response IDs')
     code_proof=code_mode_events(code_records,requests,responses,native,host_events)
+    date_interval = None
+    if observe_date:
+        first_inference = next(event['wall_time_unix_ms'] for event in events
+                               if event['payload']['type'] == 'inference_started')
+        date_interval = (manifest['started_at_unix_ms'], first_inference)
     context_date=initial_context(requests[0],sent,context_profile,turn=turn,observe_date=observe_date,
-        rollout_interval=(manifest['started_at_unix_ms'],last_wall))
+        rollout_interval=date_interval)
     raw = [f for f in received if f.get('method') in sdk.RAW_METHODS]
     cursor = 0
     raw_ids = set()
@@ -416,7 +421,12 @@ def correlate(manifest_raw, events_raw, payloads, sent, received, native, contex
         require(nonempty(value.get('id')) and original_item_equal(
             {k:v for k,v in value.items() if k != 'id' or 'id' in expected}, expected), 'original raw item payload binding')
         return value
-    for item in requests[0]['input'][2:]:consume(item)
+    for index,item in enumerate(requests[0]['input'][2:]):
+        if observe_date and index == 1:
+            require(cursor < len(raw) and trace.json_equal(
+                raw[cursor]['params'].get('item',{}).get('internal_chat_message_metadata_passthrough'),
+                item['internal_chat_message_metadata_passthrough']), 'original raw environment timestamp drift')
+        consume(item)
     usage_frames = [f for f in received if f.get('method')=='thread/tokenUsage/updated']
     require(len(usage_frames)==len(responses),'one native usage update per inference')
     native_end = [i for i,f in enumerate(received) if f.get('method')=='turn/completed']
