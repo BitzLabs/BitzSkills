@@ -47,7 +47,7 @@ Coreが判定していなかった（`SINGLE-166-06`の入力で、`context REQ-
   `MULTI-064-04`は`web`だけが1文書で、起点を所有しないワークスペース（または既定）の設定で判定する実装は、結果が変わる。監査が、この鑑別力を入力から要求する。
 - **1つの原因だけを持つ**。上限で止まる検証対象は、テスト対応もカバレッジも満たす（`REQ-001`の`MUST`は自身または`TECH-001`のテストが`covers`する）ので、上限がなければ通過する。
   上限が閉包の文書数を超えるのは、文書数の上限のケースだけ、バイト数の上限のケースは文書数の内側で、標準の提示のバイト数だけが上限を超える。
-- 上限の境界（ちょうど）は`SINGLE-176-05`（2文書で上限2文書）と`MULTI-064-04`（3文書で上限3文書）が押さえる。バイト数の境界は押さえていない（下）。
+- 上限の境界（ちょうど）は`SINGLE-176-05`（2文書で上限2文書）と`MULTI-064-04`（3文書で上限3文書）が押さえる。バイト数の境界（ちょうど）は、適合fixtureでは押さえず、単体試験の`ByteBoundaryTests`が押さえる（下の6.）。
 
 ## 診断の文言
 
@@ -80,13 +80,22 @@ Coreが判定していなかった（`SINGLE-166-06`の入力で、`context REQ-
 1. **上限で止まる検証対象の`statements`**。`verify` §8の「コンテキストを構成できない検証対象は空の配列」に従い、空とした（`CTX-STATE-001`などの既存のfixtureと同じ形）。
 2. **診断の発生元**。`context`と同じく、起点を所有するワークスペースと起点の文書（`SINGLE-048-01`・`02`、`SINGLE-166-06`）。複合ワークスペースの`workspaceId`は、起点を所有するワークスペースのID
    （`MULTI-064-03`は`platform`、閉包に`web`の文書を含んでも`web`にしない）。
-3. **関係の診断との順**。上限は、強い関係の診断（関係の診断）の後、カバレッジの前に判定する（`context`の判定順に合わせた）。fixtureは関係の診断を持たない入力で、順の差を押さえていない。
+3. **関係の診断との順**。上限は、強い関係の診断（関係の診断）の後、カバレッジの前に判定する（`context`の判定順に合わせた）。適合fixtureは関係の診断を持たない入力で、順の差を押さえていない（単体試験が押さえる。下の7.）。
 4. **`workspace`、`scope`、`revision`**。`verify`の最上位の形は既存のfixture（`SINGLE-168-03`、`SINGLE-175`、`MULTI-062`）に合わせた。単一はインデックスにステージだけでコミットがないので`revision`は`null`、
    複合は基準版のコミットを置く。
 5. **Stepの割当て**。同じ操作・同じ診断の既存のfixtureに合わせた。単一の`verify`は`SINGLE-175`と同じStep 4、複合は`MULTI-062`と同じStep 5。実装計画の完了条件の2箇所に足した。
-6. **規範が列挙するが、fixtureで押さえなかったもの**。バイト数の上限の境界（ちょうど）と、提示形式`normative`・`reference`の文書をバイト数に数えない（詳細度`standard`の測り方）は、
-   `context`の既存のfixture（`SINGLE-048-02`、`SINGLE-106-02`）と単体試験が押さえる。複合ワークスペースのバイト数の上限と、`verify`の単独の操作で起点を所有するワークスペースが
-   作業ワークスペースと異なる場合（引数のエラーになるため到達しない）は押さえていない。
+6. **規範が列挙するが、適合fixtureで押さえなかったもの**。
+   - バイト数の上限の境界（ちょうど）。`context`の既存のfixture（`SINGLE-048-02`）と単体試験（`test_context.py`の`test_full_refinement_counts_toward_byte_limit`）は、上限を**超える**場合だけを押さえ、境界は押さえていない
+     （独立レビューで、`>`を`>=`にする変異が、`context`の適合fixture 123件、既存の単体試験、この群の12件をすべて通過することを確かめた）。境界は、`tests/bitz-core/test_verify_closure_limit.py`の
+     `ByteBoundaryTests`が押さえる。`test_boundary_is_derived_from_normalized_bodies`は、`context --purpose verify`の判定から求めた境界Tが、入力から別に導く正規化した本文のUTF-8の長さの和と一致し、
+     正規化の前後でバイト数が変わる入力であることを確かめる。`test_verify_boundary_at_T_minus_1_T_and_T_plus_1`は、`verify`がT-1で`CTX-LIMIT-001`（バイト数）、TとT+1で通過することを確かめる。
+     `test_verify_matches_context_at_boundary`は、T-1・T・T+1で`verify`の診断が`context`の診断と一致することを確かめる（本文の正規化を外した実装は、ここで`context`と判定が分かれる）。
+     適合fixtureとしては足していない（境界の入力が、全角文字・行末の空白・CRLFを含む長い本文になるため、単体試験に置いた）。
+   - 提示形式`normative`・`reference`の文書をバイト数に数えない（詳細度`standard`の測り方）。数えない側の境界は、適合fixtureにも単体試験にもない（`full`の文書を数える側は、`test_full_refinement_counts_toward_byte_limit`が押さえる）。
+   - 複合ワークスペースのバイト数の上限。
+   - `verify`の単独の操作で起点を所有するワークスペースが作業ワークスペースと異なる場合（引数のエラーになるため到達しない）。
+7. **検査の順**。関係の診断（強い関係の参照切れ）と状態の診断は、上限より先に判定する（`context`と同じ）。適合fixtureは、関係の診断を持たない入力で、順の差を押さえない。
+   単体試験の`CheckOrderTests`が、強い関係の参照切れと状態の診断が上限の超過と同時に起きるとき、`verify`が`context`と同じ診断だけを返し、`CTX-LIMIT-001`を返さないことを押さえる。
 
 ## 検証の記録
 
@@ -94,3 +103,10 @@ Coreが判定していなかった（`SINGLE-166-06`の入力で、`context REQ-
 - 修正前のCore（`origin/main`の`plugins/bitz-core`）では、欠陥の8件（`SINGLE-176-01`〜`04`、`MULTI-064-01`・`03`・`05`・`06`）が失敗し、対照の4件（`SINGLE-176-05`・`06`、`MULTI-064-02`・`04`）は通る。
   失敗の内訳は上の表のとおり（状態と終了コード、`commands`の件数、警告の有無）。
 - 既存の適合fixtureは、修正後のCoreですべて通過し、期待値は変わらない。
+
+## 独立レビュー（PR-f）への対応
+
+条件付きの判定を受け、試験と記録だけを足した（Coreは変えていない）。
+- 指摘1（バイト数の境界）、指摘2（測り方の一致）: `ByteBoundaryTests`（上の6.）。変異（`>=`、`closure_limit_summary`の本文の正規化の除去）で失敗する。
+- 指摘3（判定の順）: `CheckOrderTests`（上の7.）。変異（上限を関係のエラーの前、`expansion.errors`の前へ移す）で失敗する。
+- 指摘4（監査の`check_related`）: `test_conformance_audit.py`の`test_verify_closure_limit_check_related_rejects_vacuous_inputs`。`related`の参照切れを入力から消した入力は、`check_related`だけが拒否する。
