@@ -82,6 +82,32 @@ def load_base_catalog(
     return build_base_catalog(git.executable, cwd, env, base_commit, workspace_root, workspace_id)
 
 
+def unreadable_id_paths(entries: list[DocEntry]) -> set[str]:
+    """現在版で文書IDを読めない（フロントマターの不正などで``doc_id``を持たない）ファイルのパスの集合。
+
+    読み込みの不正、フロントマターの構文・スキーマの不正、サイズの上限などでIDを読めないファイルは索引に入らない。
+    ファイル名とIDの不一致、EARS-AI構文の不正、IDの重複は、IDを読めているので含まない（``current_ids_present``が扱う）。
+    """
+
+    return {e.path for e in entries if e.doc_id is None}
+
+
+def exclude_unreadable_paths(
+    base_by_id: dict[str, DocEntry], unreadable_paths: set[str]
+) -> dict[str, DocEntry]:
+    """基準版の文書のうち、同じパスに現在版でIDを読めないファイルが存在するものを除いた``doc_id -> DocEntry``を返す。
+
+    その文書は削除ではなく（`SPEC-STATE-TRANSITION-001`にしない）、状態遷移・承認済み要求の保護・影響候補のいずれも比べない
+    （比べる現在版がない。`check` §5、文書・フロントマター・状態仕様 §9。確認事項C105）。そのファイル自身の診断は、この比較とは別に、
+    呼び出し側が変更されたパスの診断として返す。IDでもパスでも現在版と対応しない文書（パスの変更とIDを読めない破損が同時に
+    起きた場合を含む）は除かないので、従来どおり削除になる。
+    """
+
+    if not unreadable_paths:
+        return base_by_id
+    return {doc_id: entry for doc_id, entry in base_by_id.items() if entry.path not in unreadable_paths}
+
+
 def state_transition_diagnostics(
     base_by_id: dict[str, DocEntry],
     current_by_id: dict[str, DocEntry],

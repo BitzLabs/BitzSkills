@@ -519,6 +519,9 @@ def _member_base_diagnostics(
     base_root = _base_root_for_git(repo_root, base_path)
     base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id)
     current_ids_present = {e.doc_id for e in entries if e.doc_id is not None}
+    # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にも比較にもしない（確認事項C105）。
+    unreadable_paths = basecompare.unreadable_id_paths(entries)
+    base_by_id = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths)
     diags: list[Diagnostic] = []
     diags.extend(
         basecompare.state_transition_diagnostics(
@@ -921,6 +924,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             base_by_path = {e.path: e for e in base_by_id.values()}
 
             current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
+            # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にせず、状態遷移・承認済み要求の保護・影響候補の比較もしない
+            # （`check` §5、確認事項C105）。対象の選択（`changed_selection`）は基準版の全体で行い、そのファイル自身の診断は下で返す。
+            unreadable_paths = basecompare.unreadable_id_paths(catalog.entries)
+            base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths)
+            base_by_path_cmp = {e.path: e for e in base_by_id_cmp.values()}
 
             # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
             # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
@@ -1004,6 +1012,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 active_check_ids = full_check_ids - other_check_ids
                 source_ids = active_check_ids
                 checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
+                # 変更されたパスのファイルでIDを読めないもの（基準版の文書と同じパスに壊れて残るものを含む）は、所有する文書を持たないので、
+                # そのファイル自身の診断（`SPEC-FM-SCHEMA-001`など）を、変更されたパスの診断として返す（`check` §5、確認事項C105）。
+                checked_paths |= {c.path for c in changed_paths if c.path in unreadable_paths}
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
                 extra_diags = []
                 selection = {
@@ -1097,7 +1108,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             if base_commit is not None:
                 base_diags.extend(
                     basecompare.state_transition_diagnostics(
-                        base_by_id,
+                        base_by_id_cmp,
                         active_index,
                         workspace_id,
                         current_ids_present=current_ids_present,
@@ -1106,11 +1117,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 )
                 base_diags.extend(
                     basecompare.approved_protection_diagnostics(
-                        base_by_id, active_index, workspace_id, source_ids=base_source_ids
+                        base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids
                     )
                 )
                 changed_doc_ids = basecompare.changed_spec_document_ids(
-                    changed_paths, current_by_path, base_by_path
+                    changed_paths, current_by_path, base_by_path_cmp
                 )
                 base_diags.extend(
                     basecompare.impact_candidate_diagnostics(
