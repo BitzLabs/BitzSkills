@@ -338,6 +338,41 @@ def _direct_reverse_references(
     return result
 
 
+def _reverse_references_to_ids(
+    target_ids: set[str],
+    id_index: dict[str, DocEntry],
+    *,
+    source_index: dict[str, DocEntry] | None = None,
+    normalize: Callable[[str], str] | None = None,
+) -> set[str]:
+    """``target_ids``の文書を、`relations`の5種のどれかで直接参照する文書IDの集合を返す（`check.md §3`の直接の逆参照）。
+
+    ``target_ids``は索引に入らない文書（現在版でIDを読めないファイルしかない文書）のIDで、参照先を索引で解決できないため、参照の文書ID部分の文字列で照合する。
+    ``normalize``と``source_index``の意味は:func:`_direct_reverse_references`と同じ。
+    """
+
+    if not target_ids:
+        return set()
+
+    def _norm(doc_id: str) -> str:
+        return normalize(doc_id) if normalize is not None else doc_id
+
+    result: set[str] = set()
+    for doc_id, entry in (source_index if source_index is not None else id_index).items():
+        source_id = _norm(doc_id)
+        if source_id in target_ids:
+            continue
+        relations = (entry.frontmatter or {}).get("relations") or {}
+        for relation_name in ("requires", "refines", "addresses", "supersedes", "related"):
+            if any(
+                isinstance(ref, str) and _norm(basecompare.ref_document_id(ref)) in target_ids
+                for ref in relations.get(relation_name) or []
+            ):
+                result.add(source_id)
+                break
+    return result
+
+
 def _resolve_selected_roots(
     parsed: ParsedArgs,
     id_index: dict[str, DocEntry],
@@ -449,6 +484,7 @@ def _other_member_duplicate_diagnostics(
 
     if scope == "selected":
         path_index = {e.path: e.doc_id for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None}
+        roots = [path_index.get(target, target) for target in parsed.positionals]
 
         def closure_ids(idx: dict[str, DocEntry], stmt: dict[str, dict]) -> set[str]:
             ids: set[str] = set()
@@ -463,11 +499,12 @@ def _other_member_duplicate_diagnostics(
 
     else:
         starts = owning_ids if owning_ids is not None else start_ids
+        roots = list(starts)
 
         def closure_ids(idx: dict[str, DocEntry], stmt: dict[str, dict]) -> set[str]:
             return starts | basecompare.strong_dependency_closure(starts, idx, normalize=normalize)
 
-    groups = [g for g in tracker.traversed(closure_ids) if g.workspace_id != workspace_id]
+    groups = [g for g in tracker.traversed(closure_ids, roots) if g.workspace_id != workspace_id]
     return tracker.diagnostics(groups)
 
 
@@ -521,7 +558,7 @@ def _member_base_diagnostics(
     current_ids_present = {e.doc_id for e in entries if e.doc_id is not None}
     # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にも比較にもしない（確認事項C105）。
     unreadable_paths = basecompare.unreadable_id_paths(entries)
-    base_by_id = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths)
+    base_by_id = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths, current_ids_present)
     diags: list[Diagnostic] = []
     diags.extend(
         basecompare.state_transition_diagnostics(
@@ -927,7 +964,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にせず、状態遷移・承認済み要求の保護・影響候補の比較もしない
             # （`check` §5、確認事項C105）。対象の選択（`changed_selection`）は基準版の全体で行い、そのファイル自身の診断は下で返す。
             unreadable_paths = basecompare.unreadable_id_paths(catalog.entries)
-            base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths)
+            base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths, current_ids_present)
+            # 現在版でIDを読めないファイルが基準版のIDの唯一の対応先である文書（比較しない）。引数なしの`check`は、その文書への直接の逆参照も完全検査の対象に加える。
+            unreadable_owner_ids = set(base_by_id) - set(base_by_id_cmp)
             base_by_path_cmp = {e.path: e for e in base_by_id_cmp.values()}
 
             # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
@@ -1007,6 +1046,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 full_check_ids |= _direct_reverse_references(
                     full_check_ids, id_index, statement_index,
                     source_index=reverse_source_index, normalize=normalize,
+                )
+                # 現在版でIDを読めないファイルしかない文書（索引に入らない）への直接の逆参照も、完全検査の対象に加える（`check` §5）。
+                full_check_ids |= _reverse_references_to_ids(
+                    unreadable_owner_ids & owning_ids, id_index, source_index=reverse_source_index, normalize=normalize,
                 )
                 other_check_ids = {i for i in full_check_ids if "::" in i}
                 active_check_ids = full_check_ids - other_check_ids
