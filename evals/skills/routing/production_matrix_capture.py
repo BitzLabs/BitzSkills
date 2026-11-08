@@ -60,7 +60,7 @@ def prelaunch_review(bound,deployment_raw,review_raw,review_report_raw):
     return value
 
 
-def namespace_command(source_repository,base,execution_raw,deployment_raw):
+def namespace_command(source_repository,base,execution_raw,deployment_raw,*,source_files=None):
     """標準CLI認証を委譲するargvだけを構築。認証内容の読取・コピー・hashは行わない。"""
     d=p.deployment_for_execution(execution_raw,deployment_raw)
     c=p.matrix.execution_contract(execution_raw)
@@ -74,7 +74,7 @@ def namespace_command(source_repository,base,execution_raw,deployment_raw):
         '--ro-bind','/','/','--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run','--proc','/proc','--dev','/dev']
     for path in [source_repository/p.capture.fixed_runtime.MANIFEST,source_repository/d['sdkRelativePath'],
         source_repository/d['snapshotRelativePath'],Path(d['codexPath']).parents[1],
-        *(source_repository/name for name in p.SOURCE_FILES if name.endswith('.py'))]:
+        *(source_repository/name for name in (p.SOURCE_FILES if source_files is None else source_files) if name.endswith('.py'))]:
         args+=['--ro-bind',str(path),str(path)]
     return args+['--bind',str(base),str(base),'--bind',str(base/'codex-home'),'/home/hide/.codex',
         '--ro-bind',str(AUTH),'/home/hide/.codex/auth.json','--chdir',str(base/'work'),'--','/usr/bin/python3','-B',
@@ -130,12 +130,12 @@ def collect_originals(base):
     return values
 
 
-def invocation(source_repository,base,bound,deployment_raw,ordinal):
+def invocation(source_repository,base,bound,deployment_raw,ordinal,*,source_files=None):
     p.deployment(bound,deployment_raw)
-    return invocation_for_slot(source_repository,base,bound.execution_raw,deployment_raw,bound.slot(ordinal))
+    return invocation_for_slot(source_repository,base,bound.execution_raw,deployment_raw,bound.slot(ordinal),source_files=source_files)
 
 
-def invocation_for_slot(source_repository,base,execution_raw,deployment_raw,slot):
+def invocation_for_slot(source_repository,base,execution_raw,deployment_raw,slot,*,source_files=None):
     d=p.deployment_for_execution(execution_raw,deployment_raw);c=p.matrix.execution_contract(execution_raw)
     ordinal=slot.get('ordinal') if isinstance(slot,dict) else None
     require(type(ordinal) is int and 1<=ordinal<=c['budget']['primary'] and base.name==f'attempt-{ordinal:04d}', 'matrix launch slot/base drift')
@@ -149,7 +149,7 @@ def invocation_for_slot(source_repository,base,execution_raw,deployment_raw,slot
     return dict(version=VERSION,sourceCommit=c['sourceCommit'],slot=slot,
         executionSha256=io.sha(execution_raw),deploymentSha256=io.sha(deployment_raw),
         prelaunchReviewSha256=c['pins']['prelaunchReview'],
-        argv=namespace_command(source_repository,base,execution_raw,deployment_raw),
+        argv=namespace_command(source_repository,base,execution_raw,deployment_raw,source_files=source_files),
         environment=environment(base,d),maximumLogicalTurns=1,automaticRetries=0,
         timeoutSeconds=c['timeoutSeconds']['primary'])
 
@@ -161,7 +161,8 @@ def verify_launch(context,source_repository,artifact_repository,review_raw,revie
     values=context.originals;d_raw=values['deployment.json']
     prelaunch_review(context.bound,d_raw,review_raw,review_report_raw)
     base=artifact_repository/context.bound.contract['outputRelativeRoot']/f'attempt-{context.ordinal:04d}'
-    require(values['invocation.json']==io.encoded(invocation(source_repository,base,context.bound,d_raw,context.ordinal)),
+    require(values['invocation.json']==io.encoded(invocation(source_repository,base,context.bound,d_raw,context.ordinal,
+        source_files=provider.producer_sources(context,source_repository))),
         'matrix actual invocation declaration drift')
     return dict(proof,invocationArgvBytesMatched=True,prelaunchReviewSha256=io.sha(review_raw),
         independentModelExecutionVerified=False,ledgerFinalized=False,eligibleForMeasurement=False)
@@ -209,6 +210,7 @@ def _reserved_capture(source_repository,artifact_repository,bound,d_raw,sdk_raw,
         capture_env=originals_reader.provider.environment_spec(SimpleNamespace(bound=bound,ordinal=ordinal),source_repository,artifact_repository)
         plan=invocation(source_repository,base,bound,d_raw,ordinal)
         for name,raw in [('contract.json',bound.execution_raw),('deployment.json',d_raw),('sdk-manifest.json',sdk_raw),
+            (p.model_catalog.FILE,p.model_catalog.fixed_catalog()),
             ('reservation.json',io.encoded(slot)),('model-input.json',bound.matrix.payloads[(ordinal-1)//2]),
             ('decision-schema.json',schema_raw),('runtime-manifest.json',p.guard.git(source_repository,'show',source+':'+p.capture.fixed_runtime.MANIFEST)),
             ('launch-settings.json',launch.launch_settings(bound.execution_raw,d_raw)),('capture-environment.json',io.encoded(capture_env)),
@@ -286,6 +288,7 @@ def isolated(base):
     sdk_files=p.sdk_manifest(io.read_regular(base/'sdk-manifest.json'),d)
     require({name:io.sha(raw) for name,raw in p.exact_tree(ROOT/d['sdkRelativePath'],sdk_files).items()}==sdk_files,'matrix child SDK drift')
     p.capture.fixed_runtime.verify(io.read_regular(base/'runtime-manifest.json'),d)
+    p.verify_model_catalog(io.read_regular(base/p.model_catalog.FILE))
     schema_raw=io.read_regular(base/'decision-schema.json')
     require(io.sha(schema_raw)==c['pins']['decisionSchema'],'matrix child Schema drift')
     sys.path.insert(0,str(ROOT/d['sdkRelativePath']))
@@ -296,7 +299,7 @@ def isolated(base):
     io.exclusive(base/'version.stdout',version.stdout);io.exclusive(base/'version.stderr',version.stderr)
     require(version.returncode==0 and version.stdout==(d['codexVersion']+'\n').encode() and not version.stderr,'matrix child CLI version drift')
     require(io.read_regular(base/'launch-settings.json')==launch.launch_settings(execution_raw,d_raw),'matrix child launch settings drift')
-    io.exclusive(base/'config.json',io.encoded(p.capture.config_for(base,d,repository=ROOT)))
+    io.exclusive(base/'config.json',io.encoded(p.config_for(base,d,repository=ROOT)))
     def deny(*_):raise ValueError('unexpected matrix SDK request')
     client=CodexClient(CodexConfig(launch_args_override=(sys.executable,'-B',str(Path(__file__)),'--proxy',str(base)),
         cwd=str(base/'work')),approval_handler=deny)

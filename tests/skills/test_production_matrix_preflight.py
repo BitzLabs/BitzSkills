@@ -76,6 +76,10 @@ class MatrixPreflightTests(unittest.TestCase):
         self.patch(preflight.capture.fixed_runtime,'ROOT',self.runtime_root)
         self.git_mock = self.patch(preflight.guard,'git',side_effect=self.git)
         self.calibration_mock = self.patch(preflight.capture.calibration,'verify',return_value=dict(status='synthetic_old_calibration',sourceCommit='c'*40))
+        self.catalog_raw = preflight.io.encoded(dict(models=[dict(slug='gpt-6.1-sol')]))
+        self.patch(preflight.model_catalog,'SELECTED_BYTES',len(self.catalog_raw))
+        self.patch(preflight.model_catalog,'SELECTED_SHA256',preflight.io.sha(self.catalog_raw))
+        self.patch(preflight.model_catalog,'fixed_catalog',return_value=self.catalog_raw)
 
     def patch(self, target, name, *args, **kwargs):
         item=patch.object(target,name,*args,**kwargs);self.addCleanup(item.stop);return item.start()

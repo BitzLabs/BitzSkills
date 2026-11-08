@@ -60,12 +60,40 @@ class MatrixCalibrationTests(unittest.TestCase):
     def test_complete_matrix_originals_dispatch_and_historical_source_are_verified(self):
         result=self.verify();self.assertEqual(result['status'],'original_local_calibration_matches')
         self.assertEqual(result['calibrationManifestSha256'],cal.io.sha(self.manifest_raw))
-        self.assertEqual(len(cal.FILES),23);self.assertEqual(result['paidModelCalls'],0)
+        self.assertEqual(len(cal.FILES),24);self.assertEqual(result['paidModelCalls'],0)
         self.assertFalse(result['certifiesProviderWireBodies'])
         self.assertEqual(DISPATCH(self.repository,self.manifest_raw,self.profile,self.contract),result)
         # producerの確定Gitへ照合。後続作業treeの変更を過去source原へ付替えない。
         path=self.repository/'evals/skills/routing/production_matrix_preflight.py';path.write_bytes(b'public later working code')
         self.assertEqual(self.verify(),result)
+
+    def test_historical_manifest_keeps_legacy_inventory_config_and_source_proof(self):
+        path='evals/skills/routing/production_matrix_preflight.py'
+        resource=self.fixture.resource
+        resource.originals[path]=resource.originals[path].replace(b"'production_heldout_model_catalog', ",b'')
+        names=cal.source_files(self.repository,self.manifest['sourceCommit'])
+        self.assertNotIn(cal.probe.CATALOG_SOURCE,names)
+        self.originals.pop(cal.p.model_catalog.FILE)
+        config=cal.p.trace.strict_json(self.originals['config.json']);config.pop('model_catalog_json')
+        self.originals['config.json']=cal.io.encoded(config)
+        invocation=cal.p.trace.strict_json(self.originals['invocation.json'])
+        invocation['argv']=cal.probe.launch.local_namespace_command(self.repository,self.base,
+            self.fixture.bound.execution_raw,self.fixture.deployment_raw,calibration_only=True,source_files=names)
+        self.originals['invocation.json']=cal.io.encoded(invocation)
+        proof=cal.p.trace.strict_json(self.originals['resource-preflight.json'])
+        proof['sourceSha256']={name:cal.io.sha(resource.originals[name]) for name in names}
+        self.originals['resource-preflight.json']=cal.io.encoded(proof)
+        self.receipt['resourceGuards']=dict.fromkeys(['before','invoke','after'],proof)
+        self.receipt['artifactSha256']={name:cal.io.sha(raw) for name,raw in self.originals.items() if name!='receipt.json'}
+        self.manifest['version']=cal.LEGACY_VERSION;self.persist()
+        self.assertEqual(DISPATCH(self.repository,self.manifest_raw,self.profile,self.contract)['status'],
+            'original_local_calibration_matches')
+
+    def test_manifest_version_cannot_remove_catalog_from_new_producer(self):
+        self.manifest['version']=cal.LEGACY_VERSION;self.persist()
+        with self.assertRaisesRegex(ValueError,'inventory'):self.verify()
+        self.originals.pop(cal.p.model_catalog.FILE);self.persist()
+        with self.assertRaisesRegex(ValueError,'catalog version and producer mismatch'):self.verify()
 
     def test_unknown_inventory_or_root_is_rejected_before_original_read(self):
         for fault in ['unknown','root','source','absolute']:
