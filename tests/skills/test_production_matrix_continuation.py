@@ -44,6 +44,7 @@ class MatrixContinuationTests(unittest.TestCase):
         self.control = f.repository/'.venv/control'
         self.read_limits = Mock()
         self.verify = Mock()
+        self.verify_completed = Mock()
         self.calls = []
         self.now = datetime(2026, 11, 8, 23, 59, tzinfo=JST).timestamp()
         with_clock = patch.object(continuation.time, 'time', side_effect=lambda: self.now)
@@ -71,8 +72,9 @@ class MatrixContinuationTests(unittest.TestCase):
         return dict(ledgerFinalized=True, verification=dict(proposedLedgerStatus=review['status']))
 
     def advance(self, *, primary=None, finalize=None):
-        return continuation.advance(self.f.instance,self.control,self.read_limits,self.verify,
-                                    primary or self.primary,self.independent,finalize or self.finalize)
+        return continuation.advance(self.f.instance,self.control,self.read_limits,self.verify,self.verify_completed,
+            lambda n,guard:(primary or self.primary)(n),lambda n,guard:self.independent(n),
+            lambda n,guard:(finalize or self.finalize)(n))
 
     def test_cross_day_wait_and_process_restart_continue_exact_next_slot(self):
         self.assertEqual(self.advance(), dict(status='measured_correct', ordinal=1))
@@ -116,9 +118,9 @@ class MatrixContinuationTests(unittest.TestCase):
             patch.object(continuation.p,'verify_resources',self.verify),
             patch.object(matrix.io,'common_ledger_path',return_value=f.repository/'.venv/common.json'),
             patch.object(matrix,'shared_storage',return_value=f.storage),
-            patch.object(continuation.capture,'run',side_effect=lambda *args:self.primary(args[-1])),
-            patch.object(continuation.score,'run',side_effect=lambda *args:self.independent(args[2])),
-            patch.object(continuation.score,'finalize',side_effect=lambda *args:self.finalize(args[2])),
+            patch.object(continuation.capture,'_run',side_effect=lambda *args,**kwargs:self.primary(args[-1])),
+            patch.object(continuation.score,'_run',side_effect=lambda *args,**kwargs:self.independent(args[2])),
+            patch.object(continuation.score,'_finalize',side_effect=lambda *args,**kwargs:self.finalize(args[2])),
         ):
             with self.assertRaisesRegex(ValueError,'approved condition required'):
                 continuation.run_next(f.repository,bundle,'b'*64,self.read_limits)
@@ -162,6 +164,39 @@ class MatrixContinuationTests(unittest.TestCase):
             self.advance()
         self.assertEqual(self.f.instance.summary()['primaryReserved'], 0)
         self.assertEqual(self.calls, [])
+
+    def test_changed_completed_original_is_rejected_before_next_admission(self):
+        self.assertEqual(self.advance()['status'], 'measured_correct')
+        self.read_limits.reset_mock()
+        self.verify_completed.side_effect = ValueError('completed original drift')
+        with self.assertRaisesRegex(ValueError, 'completed original drift'):
+            self.advance()
+        self.read_limits.assert_not_called()
+        self.assertFalse(self.f.instance.path('attempt', 2).exists())
+        self.assertEqual(self.f.instance.summary()['status'], 'stopped')
+
+    def test_replaced_control_lock_does_not_reserve_or_stop_another_caller(self):
+        lock = self.control/'launch.lock'
+
+        def replace_lock():
+            lock.rename(self.control/'previous.lock')
+            lock.touch(mode=0o600)
+            return limits(self.now+300)
+
+        self.read_limits.side_effect = replace_lock
+        with self.assertRaisesRegex(ValueError, 'lock identity drift'):
+            self.advance()
+        self.assertFalse(self.f.instance.path('attempt', 1).exists())
+        self.assertFalse((self.f.storage/'stop.json').exists())
+
+    def test_opt_in_requires_the_coordinated_entry(self):
+        bound=self.f.bound
+        args=(self.f.repository,bound,1,b'',b'',b'',b'',b'')
+        with self.assertRaisesRegex(ValueError, 'continuation operator required'):
+            continuation.capture.run(self.f.repository,bound,b'',b'',b'',b'',1)
+        for entry in (continuation.score.run,continuation.score.finalize):
+            with self.assertRaisesRegex(ValueError, 'continuation operator required'):
+                entry(*args)
 
     def test_failed_acquisition_with_reservation_is_terminal(self):
         def failed(ordinal):
@@ -215,3 +250,39 @@ class MatrixContinuationContextTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'fixed entire environment'):
             rollout.initial_context(request,case['sent'],case['context_profile'],turn='turn',
                 observe_date=True,rollout_interval=interval)
+
+
+    def test_request_environment_must_precede_first_inference_across_midnight(self):
+        rollout = rollout_fixture.rollout
+        case = rollout_fixture.CanaryRolloutTests('runTest').fixture('no-exec')
+        midnight = datetime(2026,11,9,tzinfo=JST).timestamp()
+        first = next(event for event in case['events'] if event['payload']['type']=='inference_started')
+        offset = int(midnight*1000)-2-first['wall_time_unix_ms']
+        for event in case['events']:
+            event['wall_time_unix_ms'] += offset
+        case['manifest']['started_at_unix_ms'] += offset
+        request_path = first['payload']['request_payload']['path']
+        request = rollout.trace.strict_json(case['payloads'][request_path])
+        raw_environment = next(frame['params']['item'] for frame in case['received']
+                               if frame['params'].get('item',{}).get('id')=='env')
+
+        def recorded(date, created):
+            for item in (request['input'][3], raw_environment):
+                item['content'][0]['text'] = rollout.sdk._diagnostic_environment('/fixed/work',date,{date})
+                item['internal_chat_message_metadata_passthrough']['create_time'] = created
+            case['payloads'][request_path] = matrix.io.encoded(request)
+
+        def verify():
+            return rollout.correlate(matrix.io.encoded(case['manifest']),
+                b''.join(matrix.io.encoded(event)+b'\n' for event in case['events']),case['payloads'],
+                case['sent'],case['received'],case['native'],case['context_profile'],
+                host_events=case['host_events'],capture_elapsed_ms=5000,observe_date=True)
+
+        recorded('2026-11-08',midnight-0.003)
+        self.assertEqual(verify()['observedContextDate'],'2026-11-08')
+        raw_environment['internal_chat_message_metadata_passthrough']['create_time'] = midnight-0.004
+        with self.assertRaisesRegex(ValueError,'raw environment timestamp drift'):
+            verify()
+        recorded('2026-11-09',midnight)
+        with self.assertRaisesRegex(ValueError,'timestamp outside rollout'):
+            verify()

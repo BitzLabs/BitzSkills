@@ -1,6 +1,6 @@
 """公開行列の一次取得。予約後の単回起動・原保存・構造検査まで。意味採点は別工程。"""
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import fcntl
 import os
 from pathlib import Path
@@ -97,16 +97,29 @@ def auth_metadata():
 @contextmanager
 def locked_control(root):
     io.safe_tree(root);root.mkdir(parents=True,mode=0o700,exist_ok=True)
-    value=root.stat();require(value.st_uid==os.getuid() and stat.S_IMODE(value.st_mode)==0o700,'matrix control directory mode')
     with io.open_directory(root) as opened:
+        directory=os.fstat(opened)
+        require(directory.st_uid==os.getuid() and stat.S_IMODE(directory.st_mode)==0o700,
+            'matrix control directory mode')
         fd=os.open('launch.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600,dir_fd=opened)
-    with os.fdopen(fd,'r+b') as stream:
-        value=os.fstat(stream.fileno())
-        require(stat.S_ISREG(value.st_mode) and value.st_nlink==1 and value.st_uid==os.getuid()
-            and stat.S_IMODE(value.st_mode)==0o600,'matrix control lock mode')
-        try:fcntl.flock(stream.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
-        except BlockingIOError as error:raise ValueError('matrix launch already running') from error
-        yield
+        with os.fdopen(fd,'r+b') as stream:
+            value=os.fstat(stream.fileno())
+            require(stat.S_ISREG(value.st_mode) and value.st_nlink==1 and value.st_uid==os.getuid()
+                and stat.S_IMODE(value.st_mode)==0o600,'matrix control lock mode')
+            try:fcntl.flock(stream.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+            except BlockingIOError as error:raise ValueError('matrix launch already running') from error
+
+            def check():
+                named_directory=root.stat(follow_symlinks=False)
+                named_lock=os.stat('launch.lock',dir_fd=opened,follow_symlinks=False)
+                require(os.path.samestat(named_directory,directory) and os.path.samestat(named_lock,value)
+                    and named_lock.st_nlink==1,'matrix launch lock identity drift')
+
+            check()
+            try:
+                yield check
+            finally:
+                check()
 
 
 def collect_originals(base):
@@ -155,12 +168,17 @@ def verify_launch(context,source_repository,artifact_repository,review_raw,revie
 
 
 def run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal):
+    require('continuationPolicy' not in bound.contract, 'matrix continuation operator required')
+    return _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal)
+
+
+def _run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,ordinal,*,control_guard=None):
     slot=bound.slot(ordinal);prelaunch_review(bound,deployment_raw,review_raw,review_report_raw)
     before=p.verify_resources(source_repository,bound,deployment_raw,sdk_manifest_raw)
     auth_metadata()
     artifact_repository=io.common_ledger_path(source_repository).parent.parent
     control=artifact_repository/'.venv/production-matrix-launch-controls'/bound.contract['campaignId']
-    with locked_control(control):
+    with (nullcontext(control_guard) if control_guard is not None else locked_control(control)) as guard:
         for name,raw in [('prelaunch-review.json',review_raw),('prelaunch-report.json',review_report_raw)]:
             saved=control/name
             if p.matrix.present(saved):require(io.read_regular(saved)==raw,'matrix stored prelaunch review drift')
@@ -168,12 +186,13 @@ def run(source_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,revie
         storage=p.matrix.shared_storage(source_repository,bound)
         io.safe_tree(storage.parent);storage.parent.mkdir(mode=0o700,exist_ok=True)
         instance=p.matrix.open_ledger(storage,artifact_repository,bound)
+        guard()
         instance.reserve(ordinal)
         return _reserved_capture(source_repository,artifact_repository,bound,deployment_raw,sdk_manifest_raw,review_raw,review_report_raw,
-            ordinal,slot,before,control,instance)
+            ordinal,slot,before,control,instance,guard)
 
 
-def _reserved_capture(source_repository,artifact_repository,bound,d_raw,sdk_raw,review_raw,review_report_raw,ordinal,slot,before,control,instance):
+def _reserved_capture(source_repository,artifact_repository,bound,d_raw,sdk_raw,review_raw,review_report_raw,ordinal,slot,before,control,instance,guard):
     base=artifact_repository/bound.contract['outputRelativeRoot']/f'attempt-{ordinal:04d}'
     process=None;started=False;created=False;timed_out=False;error=None;values={};result=None;after=None;invoke=None
     stdout=stderr=b'';begin=time.monotonic();caught=None
@@ -193,6 +212,7 @@ def _reserved_capture(source_repository,artifact_repository,bound,d_raw,sdk_raw,
             ('invocation.json',io.encoded(plan))]:io.exclusive(base/name,raw)
         invoke=p.verify_resources(source_repository,bound,d_raw,sdk_raw)
         require(invoke==before,'matrix resources changed before invocation; reservation consumed')
+        guard()
         instance.mark_primary_started(ordinal);started=True
         begin=time.monotonic()
         process=subprocess.Popen(plan['argv'],env=plan['environment'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
@@ -212,6 +232,7 @@ def _reserved_capture(source_repository,artifact_repository,bound,d_raw,sdk_raw,
         context=originals_reader.load_provider_capture(bound,ordinal,source_repository=source_repository,
             artifact_repository=artifact_repository,manifest_raw=manifest_raw,schema_raw=schema_raw,context_raw=context_raw)
         result=verify_launch(context,source_repository,artifact_repository,review_raw,review_report_raw)
+        guard()
         instance.record_primary(ordinal,dict(slot,actualInvocations=1,normalTerminal=True,nativeExitCode=0,integrityPassed=True,
             receipt=dict(relativePath=(base/'receipt.json').relative_to(artifact_repository).as_posix(),sha256=io.sha(context.receipt_raw)),
             trace=dict(relativePath=(base/'rpc-out.jsonl').relative_to(artifact_repository).as_posix(),sha256=io.sha(values['rpc-out.jsonl']))))

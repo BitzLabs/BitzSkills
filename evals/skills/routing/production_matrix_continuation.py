@@ -57,35 +57,46 @@ def next_ordinal(instance):
             instance.stop(last, 'continuation-measured-incorrect', 'MeasuredIncorrect')
             return None, 'stopped'
     if last == instance.maximum:
-        return None, 'complete'
+        return last+1, 'complete'
     return last+1, None
 
 
-def advance(instance, control, read_limits, verify, primary, independent, finalize):
+def advance(instance, control, read_limits, verify, verify_completed, primary, independent, finalize):
     """1枠進めるか、予約せず待機を返す。起動中断後の再起動は予約から検知する。"""
-    io.safe_tree(control)
-    control.mkdir(parents=True,mode=0o700,exist_ok=True)
-    with capture.locked_control(control/'continuation'):
-        with capture.locked_control(control), instance.locked():
+    with capture.locked_control(control) as guard:
+        with instance.locked():
             ordinal, terminal = next_ordinal(instance)
-        if terminal is not None:
+        if terminal == 'stopped':
             return dict(status=terminal)
+        proof = verify()
         if ordinal > 1:
+            try:
+                for completed in range(1, ordinal):
+                    verify_completed(completed, proof)
+            except Exception as error:
+                guard()
+                with instance.locked():
+                    instance.stop(ordinal-1, 'continuation-completed-original-rejected', type(error).__name__)
+                raise
+            if terminal == 'complete':
+                return dict(status=terminal)
             pace()
-        verify()
         started = time.monotonic()
         snapshot = read_limits()
         require(time.monotonic()-started <= 60, 'matrix continuation rate snapshot stale')
         until = wait_until(snapshot, time.time())
         if until is not None:
             return dict(status='waiting_for_rate_window', ordinal=ordinal, waitUntilUnix=until)
+        guard()
         try:
-            require(primary(ordinal)['status']=='primary_capture_awaits_independent_review',
+            require(primary(ordinal,guard)['status']=='primary_capture_awaits_independent_review',
                 'matrix continuation primary stopped')
             pace()
-            require(independent(ordinal)['status']=='matrix_independent_captured',
+            guard()
+            require(independent(ordinal,guard)['status']=='matrix_independent_captured',
                 'matrix continuation independent stopped')
-            result=finalize(ordinal)
+            result=finalize(ordinal,guard)
+            guard()
             require(result.get('ledgerFinalized') is True, 'matrix continuation parent stopped')
             with instance.locked():
                 require(instance.checked_count()==ordinal, 'matrix continuation ledger count drift')
@@ -96,6 +107,7 @@ def advance(instance, control, read_limits, verify, primary, independent, finali
                     instance.stop(ordinal, 'continuation-measured-incorrect', 'MeasuredIncorrect')
             return dict(status=status, ordinal=ordinal)
         except BaseException as error:
+            guard()
             with instance.locked():
                 if matrix.present(instance.path('attempt', ordinal)):
                     instance.stop(ordinal, 'continuation-evaluation-stopped', type(error).__name__)
@@ -129,10 +141,10 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
     instance=matrix.open_ledger(storage,artifact,bound)
 
     def verify():
-        p.verify_resources(repository,bound,deployment,sdk)
+        return p.verify_resources(repository,bound,deployment,sdk)
 
-    def primary(ordinal):
-        return capture.run(repository,bound,deployment,sdk,review,report,ordinal)
+    def primary(ordinal, guard):
+        return capture._run(repository,bound,deployment,sdk,review,report,ordinal,control_guard=guard)
 
     def scoring_args(ordinal):
         manifest=io.read_regular(repository/d['snapshotRelativePath']/'manifest.json')
@@ -140,5 +152,7 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
         context=p.guard.git(repository,'show',c['sourceCommit']+':'+p.inventory.CONTEXT)
         return repository,bound,ordinal,manifest,schema,context,review,report
 
-    return advance(instance,control,read_limits,verify,primary,
-        lambda n:score.run(*scoring_args(n)), lambda n:score.finalize(*scoring_args(n)))
+    return advance(instance,control,read_limits,verify,
+        lambda n, proof:score.verify_completed(*scoring_args(n),resource_proof=proof), primary,
+        lambda n,guard:score._run(*scoring_args(n),control_guard=guard),
+        lambda n,guard:score._finalize(*scoring_args(n),control_guard=guard))
