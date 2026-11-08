@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-177-16",
+  "description": "contextは、閉包の文書がsupersedesで置き換える旧文書のIDの重複を、強い関係の参照先の不在と並べて返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-002",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

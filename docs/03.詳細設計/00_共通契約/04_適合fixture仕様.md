@@ -864,13 +864,14 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 
 ### 6.20 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイル
 
-文書IDの重複（`SPEC-ID-DUPLICATE-001`、`failed`）は、`context`、`verify`、`check`のどれでも、閉包を作るときに辿るID（起点、`requires`、`refines`、`addresses`、置換の参照先、
+文書IDの重複（`SPEC-ID-DUPLICATE-001`、`failed`）は、`context`と`verify`では、閉包を作るときに辿るID（起点、`requires`、`refines`、`addresses`の参照先、置換の参照先（`supersedes`の参照先の旧文書と、起点を置換する後継）、
 逆参照で閉包に入る文書のID。`related`の参照先は含めない）が重複していれば、その結果（`verify`は当該の検証対象）へ返す。起点のIDが重複している場合は`CTX-ROOT-MISSING-001`に併記する。
-閉包と無関係な重複は返さない（[関係・トレースモデル §5.1](../02_仕様文書モデル/04_関係・トレースモデル.md#51-関係の診断の優先順位)。実装の確認事項C96）。診断の文言と発生元は`check`の完全検査と同じである。
-基準版の文書と同じパスに、現在版でIDを読めないファイルがある場合は、削除（`SPEC-STATE-TRANSITION-001`）とせず、その文書の状態遷移、承認済み要求の保護、影響候補の比較も行わず、そのファイル自身の診断を
-引数なしの`check`でも変更されたパスの診断として返す。パスの変更とIDを読めない破損が同時に起きた場合は削除とする（[`check` §5](../03_操作仕様/02_check.md#5-git基準版と変更集合)。確認事項C105）。
+`check`は文書IDの一意性をカタログ全体の検査として扱い、スコープによらず作業ワークスペースのすべての重複を返す。閉包と無関係な重複は`context`と`verify`には返さない（[関係・トレースモデル §5.1](../02_仕様文書モデル/04_関係・トレースモデル.md#51-関係の診断の優先順位)。実装の確認事項C96）。診断の文言と発生元は`check`の完全検査と同じである。
+基準版のIDが現在版のどこにもなく、基準版の文書と同じパスに、現在版でIDを読めないファイルがある場合は、削除（`SPEC-STATE-TRANSITION-001`）とせず、その文書の状態遷移、承認済み要求の保護、影響候補の比較も行わない。
+基準版のIDが現在版の別のパスにあれば、通常どおりIDで対応付けて比べる。引数なしの`check`は、そのファイルを基準版のIDの所有文書として`targetDocumentCount`に数え、その文書への直接の逆参照も完全検査の対象に加え、
+そのファイル自身の診断を変更されたパスの診断として返す（IDを読めない新規のファイルも返す）。パスの変更とIDを読めない破損が同時に起きた場合は削除とする（[`check` §5](../03_操作仕様/02_check.md#5-git基準版と変更集合)。確認事項C105）。
 修正前のCoreは、閉包を作るときに重複したIDを黙って辿らず、IDを読めない現在版を削除として返し、依存元へ影響候補を返し、そのファイル自身の診断を返さなかった。
-単一ワークスペースの入力は`SINGLE-042`のcorpus（`SINGLE-177-10`〜`13`は`REQ-001`と、それを`refines`する`TECH-001`だけの最小の入力）を基にする。重複した文書は、同じ内容の`<ID>.md`と`<ID>-copy.md`の2ファイルで、
+単一ワークスペースの入力は`SINGLE-042`のcorpus（`SINGLE-177-10`〜`15`は`REQ-001`と、それを`refines`する`TECH-001`だけの最小の入力、`SINGLE-177-16`・`17`は`REQ-002`と旧文書`REQ-001`だけの入力）を基にする。重複した文書は、同じ内容の`<ID>.md`と`<ID>-copy.md`の2ファイルで、
 診断の発生元は、パスの辞書順で最初の`<ID>-copy.md`である。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -884,10 +885,14 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `SINGLE-177-07` | 閉包の`REQ-001`を`related`で指すだけの`TECH-009`が2ファイル | verify REQ-001 | passed／0 | 対照: 重複を返さない。`SINGLE-042`と同じ`contextDigest`。修正前のCoreも通る |
 | `SINGLE-177-08` | `SINGLE-168-03`の入力に、`TECH-001`が`related`で指す`ADR-099`が2ファイル | verify REQ-001 | passed_with_warnings／0 | 対照: `SINGLE-168-03`と同じ結果。`related`の参照先の重複は辿らず、参照切れの警告だけ。修正前のCoreも通る |
 | `SINGLE-177-09` | `SINGLE-042`の入力に、閉包と無関係な`TECH-008`が2ファイル | context REQ-001 --purpose verify | passed／0 | 対照: `SINGLE-042`と同じ結果。重複を返さない。修正前のCoreも通る |
-| `SINGLE-177-10` | 基準版は`REQ-001`と、それを`refines`する`TECH-001`（ともに`approved`）。作業ツリーで`REQ-001`の`title`が不正なYAML | check --base HEAD | failed／1 | 診断は`REQ-001`自身の`SPEC-FM-SCHEMA-001`の1件だけ。削除と`TECH-001`への影響候補を返さない。`selection`は`changedPathCount: 1`、`targetDocumentCount: 1`。修正前のCoreは削除と影響候補を返し、自身の診断を返さない |
+| `SINGLE-177-10` | 基準版は`REQ-001`と、それを`refines`する`TECH-001`（ともに`approved`）。作業ツリーで`REQ-001`の`title`が不正なYAML | check --base HEAD | failed／1 | 診断は`REQ-001`自身の`SPEC-FM-SCHEMA-001`と、その文書への直接の逆参照`TECH-001`の`SPEC-RELATION-MISSING-001`（索引にない`REQ-001`を`refines`する）。削除と`TECH-001`への影響候補を返さない。`selection`は`changedPathCount: 1`、`targetDocumentCount: 1`（基準版のIDの所有文書として数える）。修正前のCoreは削除と影響候補を返し、自身の診断を返さない |
 | `SINGLE-177-11` | `SINGLE-177-10`と同じ入力 | check --full --base HEAD | failed／1 | `REQ-001`の`SPEC-FM-SCHEMA-001`と、索引にない`REQ-001`を`refines`する`TECH-001`の`SPEC-RELATION-MISSING-001`。削除を返さない。修正前のCoreは削除も返す |
 | `SINGLE-177-12` | `SINGLE-177-10`の基準版。作業ツリーで`REQ-001.md`を削除し、別のパス`REQ-001-moved.md`にフロントマターが不正な文書を置く | check --base HEAD | failed／1 | IDでもパスでも対応しないので削除（`REQ-001.md`）と影響候補（`TECH-001`）に加え、`REQ-001-moved.md`自身の`SPEC-FM-SCHEMA-001`。修正前のCoreは自身の診断を返さない |
 | `SINGLE-177-13` | `SINGLE-177-10`の基準版。作業ツリーで`REQ-001`の`status`を`approved`から`outdated`へ | check --base HEAD | passed_with_warnings／0 | 対照: IDを読める変更は影響候補（`TECH-001`）を返す。修正前のCoreも通る |
+| `SINGLE-177-14` | `SINGLE-177-10`の基準版。作業ツリーで、基準版にない新規の`TECH-009.md`のフロントマターが不正 | check --base HEAD | failed／1 | 診断は`TECH-009.md`自身の`SPEC-FM-SCHEMA-001`の1件。`selection`は`changedPathCount: 1`、`targetDocumentCount: 0`（所有文書がない）。修正前のCoreは診断を返さず`passed` |
+| `SINGLE-177-15` | `SINGLE-177-10`の基準版。作業ツリーで`REQ-001.md`の内容を`REQ-001-moved.md`へ移して`title`を変え、元の`REQ-001.md`に壊れたファイルを置く | check --base HEAD | failed／1 | 基準版のIDが現在版の別のパスにあるので、IDで対応付けて比べる。移動後の`SPEC-SAFETY-APPROVED-001`、元のパスの`SPEC-FM-SCHEMA-001`、`TECH-001`への影響候補。削除は返さない。`selection`は`changedPathCount: 2`、`targetDocumentCount: 1`。修正前のCoreは元のパスの診断を返さない |
+| `SINGLE-177-16` | 設定、`REQ-002`（`REQ-001`を`supersedes`する）、旧文書`REQ-001`が2ファイル | context REQ-002 --purpose verify | failed／1 | `requires`の参照先の重複（`SINGLE-177-06`）と同じ形。`SPEC-ID-DUPLICATE-001`（`REQ-001`）と、`REQ-002`の`SPEC-RELATION-MISSING-001`（`key`は`relations.supersedes`）。`unresolvedStrongRelations`は1。修正前のCoreは後者だけ |
+| `SINGLE-177-17` | `SINGLE-177-16`と同じ入力 | verify REQ-002 | failed／1 | `REQ-002`の`diagnostics`に重複と`SPEC-RELATION-MISSING-001`。修正前のCoreは後者だけ |
 
 ## 7. 最小matrix: 複合ワークスペース
 

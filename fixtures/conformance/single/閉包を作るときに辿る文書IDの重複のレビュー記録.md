@@ -1,7 +1,7 @@
 # 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルのfixtureのレビュー記録
 
 [適合fixture仕様 §6.20](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#620-閉包を作るときに辿る文書idの重複とidを読めない現在版のファイル)の
-`SINGLE-177-01`〜`SINGLE-177-13`と、[§7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
+`SINGLE-177-01`〜`SINGLE-177-17`と、[§7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-065-01`〜`MULTI-065-08`（置き場は`fixtures/conformance/multi/`）を扱う。いずれもレビュー済みの期待値であり、Coreの挙動を観測したものではない
 （[ADR-051](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)の追加）。
 生成器と監査は`fixtures/conformance/duplicate_closure_fixtures.py`である。
@@ -42,10 +42,14 @@
 | `SINGLE-177-07` | `REQ-001`を`related`で指すだけの`TECH-009`が2ファイル。`verify`（対照） | `passed`／0 | 同じ |
 | `SINGLE-177-08` | `SINGLE-168-03`の入力に、`related`の参照先`ADR-099`が2ファイル。`verify`（対照） | `passed_with_warnings`／0。参照切れの警告だけ | 同じ |
 | `SINGLE-177-09` | `SINGLE-042`の入力に、無関係な`TECH-008`が2ファイル。`context`（対照） | `SINGLE-042`と同じ | 同じ |
-| `SINGLE-177-10` | `REQ-001`の`title`が不正なYAML（基準版は`approved`）。`check` | `failed`／1。`SPEC-FM-SCHEMA-001`の1件だけ | 削除と影響候補。自身の診断なし |
+| `SINGLE-177-10` | `REQ-001`の`title`が不正なYAML（基準版は`approved`）。`check` | `failed`／1。`SPEC-FM-SCHEMA-001`と、直接の逆参照`TECH-001`の`SPEC-RELATION-MISSING-001`（訂正済み。下の「訂正」） | 削除と影響候補。自身の診断なし |
 | `SINGLE-177-11` | 同上。`check --full` | `failed`／1。`SPEC-FM-SCHEMA-001`と`SPEC-RELATION-MISSING-001` | 削除も返す |
 | `SINGLE-177-12` | `REQ-001.md`を削除し、`REQ-001-moved.md`に不正な文書。`check` | `failed`／1。自身の診断、削除、影響候補 | 自身の診断なし |
 | `SINGLE-177-13` | `REQ-001`を`outdated`へ（読める変更）。`check`（対照） | `passed_with_warnings`／0。影響候補 | 同じ |
+| `SINGLE-177-14` | 基準版にない新規の`TECH-009.md`でフロントマターが不正。`check` | `failed`／1。`SPEC-FM-SCHEMA-001`の1件。`targetDocumentCount`は0 | `passed`（診断なし） |
+| `SINGLE-177-15` | `REQ-001`を`REQ-001-moved.md`へ移して`title`を変え、元の`REQ-001.md`に壊れたファイルを置く。`check` | `failed`／1。移動後の`SPEC-SAFETY-APPROVED-001`、元のパスの`SPEC-FM-SCHEMA-001`、`TECH-001`の影響候補 | 元のパスの診断なし |
+| `SINGLE-177-16` | `REQ-002`が`supersedes`する旧文書`REQ-001`が2ファイル。`context REQ-002` | `failed`／1。重複と`SPEC-RELATION-MISSING-001` | 後者だけ |
+| `SINGLE-177-17` | 同上。`verify REQ-002` | `failed`／1。検証対象に重複と`SPEC-RELATION-MISSING-001` | 後者だけ |
 | `MULTI-065-01` | `platform::REQ-001`を`refines`する`web::TECH-005`が2ファイル。`context REQ-001` | `failed`／1。`web`が所有する重複 | `passed`／0 |
 | `MULTI-065-02` | 同上。`verify REQ-001` | `failed`／1。検証対象に重複 | `passed`／0 |
 | `MULTI-065-03` | 同上。`check REQ-001` | `failed`／1。重複 | `passed`／0 |
@@ -55,13 +59,13 @@
 | `MULTI-065-07` | 無関係な`web::TECH-008`が2ファイル。`check REQ-001`（対照） | `passed`／0 | 同じ |
 | `MULTI-065-08` | `web::TECH-001`の`title`が不正（基準版は有効）。`check --all-workspaces` | `failed`／1。`web`に`SPEC-FM-SCHEMA-001`だけ | 削除も返す |
 
-欠陥の14件は修正前のCoreが失敗し、対照の7件は通る。修正前のCoreは、`git archive origin/main`の`plugins/bitz-core`で確かめた。
+欠陥の18件は修正前のCoreが失敗し、対照の7件は通る。修正前のCoreは、`git archive origin/main`の`plugins/bitz-core`で確かめた。
 
 - **1つの原因だけを持つ**。重複のケースは、重複した文書の内容が同じ2ファイルで、閉包に入る経路は1つ（逆参照、起点、`requires`、`refines`のいずれか）だけである。
   対照は、重複した文書を置いたまま、辿る関係の種類（`related`）か、閉包との距離（無関係）だけを替える。
 - **発生元は所有ワークスペースの相対パス**。複合ワークスペースでは、`summary`の文書IDを所有ワークスペースで修飾する（`web::TECH-005`）。`MULTI-065-05`は、重複を所有する`platform`が
   作業ワークスペース`web`と異なる。
-- **範囲外の挙動は固定しない**。閉包と無関係な重複を、単一ワークスペースの`check`の明示対象と引数なしに常に返す今の挙動（`_ALWAYS_KEEP_CATALOG_CODES`）、`addresses`の参照先の重複、置換の参照先は、
+- **範囲外の挙動は固定しない**。`check`が閉包と無関係な重複をスコープによらず返す挙動（`_ALWAYS_KEEP_CATALOG_CODES`。規範で確定した）と、`addresses`の参照先の重複は、
   fixtureでは押さえず、単体試験が押さえる。
 - 同じパスの破損のケースは、`SINGLE-177-12`だけが削除を期待する。パスの変更と破損が同時に起きた場合は、IDでもパスでも対応しないので削除（`check` §5）である。
 
@@ -85,4 +89,18 @@
   置換の後継。`related`は辿らない。写しのどれか1つでも辿れば辿る）を求め、期待する重複の診断の集合と一致することを要求する。`reference_base_comparison`は、基準版と現在版の入力から、
   削除とみなす文書のパスとIDを読めないファイルのパスを求め、期待する削除と`SPEC-FM-SCHEMA-001`の診断と一致することを要求する。どちらもCoreを呼ばない。
 - 回帰試験（`fixtures/test_conformance_audit.py`）は、リテラルの期待、参照計算の規則、期待結果・起動条件・入力・副作用の改変と、修正前のCoreの出力への取り違えの拒否を押さえる。
-- 総数の期待値（696件から717件）の更新は別のコミットにする。Gate AとGate Bの再認定は、この作業の外である。
+- 総数の期待値は、最初の追加で696件から717件、訂正の追加で721件になった。更新は別のコミットにする。Gate AとGate Bの再認定は、この作業の外である。
+
+## 訂正（独立レビューの指摘に対する、この変更の中の訂正）
+
+規範を書き直した（コミット`9543de42`。関係・トレースモデル §5.1、`check` §5）のに合わせ、次を直した。
+
+- **`SINGLE-177-10`の期待値**: 引数なしの`check`は、IDを読めない`REQ-001`を基準版のIDの所有文書として数え（`targetDocumentCount`は1のまま）、その文書への直接の逆参照である`TECH-001`
+  （`REQ-001`を`refines`する）も完全検査の対象に加える。`REQ-001`は索引に入らないので、`TECH-001`は`SPEC-RELATION-MISSING-001`（`key: relations.refines`、`evidence: REQ-001`）を返す。
+  最初の期待値は、`SPEC-FM-SCHEMA-001`の1件だけで、完全検査の対象を所有文書の閉包と索引で解決できる逆参照に限っていた。規範が定めた直接の逆参照の範囲より狭く、誤っていた。
+  発生元は`.spec/technical/TECH-001.md`で、パスの辞書順は`.spec/requirements/`が`.spec/technical/`より前である。
+- **比較から外す条件**: 基準版のIDが現在版のどこにもない場合に限る。最初の実装は、同じパスにIDを読めないファイルがあれば外していたので、文書を別のパスへ移して元のパスに壊れたファイルを置くと、
+  承認済み要求の保護と影響候補を失った。`SINGLE-177-15`が押さえる。
+- **IDを読めない新規のファイル**: 引数なしの`check`が自身の診断を返すことを、規範に明記した。`SINGLE-177-14`が押さえる。
+- **置換の旧文書**: `supersedes`の参照先の旧文書の重複を、`requires`の参照先の重複と同じ形で返す。`SINGLE-177-16`・`17`が押さえる。
+
