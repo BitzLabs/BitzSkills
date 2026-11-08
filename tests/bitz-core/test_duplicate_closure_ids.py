@@ -1,12 +1,13 @@
 """閉包を作るときに辿る文書IDの重複を、`context`・`verify`・`check`が返す単体試験（確認事項C96、関係・トレースモデル §5.1）。
 
-規範（§5.1）: 文書IDの重複（`SPEC-ID-DUPLICATE-001`、`failed`）は、`context`、`verify`、`check`のどれでも、閉包を作るときに辿るID
-（起点、`requires`、`refines`、`addresses`、置換の参照先、逆参照で閉包に入る文書のID。`related`の参照先は含めない）が重複していれば、その結果
-（`verify`は当該の検証対象）へ返す。起点のIDが重複している場合は`CTX-ROOT-MISSING-001`に併記する。閉包と無関係な重複は、`check`の完全検査の対象
-（`check` §3）にだけ返す。診断の文言と発生元は`check`の完全検査の診断と同じ（複合ワークスペースでは、重複した文書を所有するワークスペース）。
+規範（§5.1。コミット`9543de42`の書き直し）: 文書IDの重複（`SPEC-ID-DUPLICATE-001`、`failed`）は、`context`と`verify`では、閉包を作るときに辿るID
+（起点、`requires`、`refines`、`addresses`の参照先、置換の参照先（`supersedes`の参照先の旧文書と、起点を置換する後継）、逆参照で閉包に入る文書のID。
+`related`の参照先は含めない）が重複していれば、その結果（`verify`は当該の検証対象）へ返す。起点のIDが重複している場合は`CTX-ROOT-MISSING-001`に併記する。
+`check`は、文書IDの一意性をカタログ全体の検査として扱い、スコープ（明示対象、引数なし、`--full`）によらず作業ワークスペースのすべての重複を返し、閉包で辿る他のワークスペースの
+重複も返す。診断の文言と発生元は`check`の完全検査の診断と同じ（複合ワークスペースでは、重複した文書を所有するワークスペース）。
 
 修正前のCoreは、閉包を作るときに重複したIDを黙って辿らず（重複した文書はどちらも索引に入らない）、`context`と`verify`は`passed`を返した。
-各試験の期待値は規範と承認済みの文言のリテラルで、Coreの出力からは導かない。対照の試験（`related`だけで指す重複、閉包と無関係な重複、重複していない場合）は、
+各試験の期待値は規範と承認済みの文言のリテラルで、Coreの出力からは導かない。対照の試験（`related`だけで指す重複、閉包と無関係な重複（`context`と`verify`）、重複していない場合）は、
 修正前のCoreも通る。
 """
 
@@ -319,6 +320,34 @@ class SingleWorkspaceTests(_Base):
             self.assertEqual(entry["diagnostics"], [dup_diag(f"TECH-{number}", self.first_path("technical", f"TECH-{number}"))], entry["target"])
         # 検証対象ごとに、基準の1回と、つながる重複の写し2つ分だけ（全重複を試すと30 * (1 + 30 * 2) = 1830回になる）。
         self.assertLessEqual(spy.call_count, count * 3)
+
+    def test_verify_with_a_shared_required_document_does_not_rebuild_every_closure(self):
+        """性能: 多くの文書が共通の文書を`requires`するだけでは、重複は起点から辿り着けない（閉包の辺の向きにだけ辿る）。共通の文書から他の起点へ逆戻りして試さない。"""
+
+        count = 30
+        files = {".spec/technical/TECH-900.md": _tech("TECH-900")}
+        for number in range(1, count + 1):
+            files[f".spec/requirements/REQ-{number:03d}.md"] = _req(f"REQ-{number:03d}", requires=["TECH-900"])
+            files.update(self.duplicated("technical", f"TECH-{number:03d}", _tech(f"TECH-{number:03d}", refines=[f"REQ-{number:03d}"])))
+        self.build(files)
+        real = targetexpand.target_expansion
+        with mock.patch.object(targetexpand, "target_expansion", wraps=real) as spy:
+            result = self.run_op(verify_mod, "verify")
+        for entry in result["targetResults"]:
+            number = entry["target"].partition("-")[2]
+            if number == "900":
+                continue
+            self.assertEqual(entry["diagnostics"], [dup_diag(f"TECH-{number}", self.first_path("technical", f"TECH-{number}"))], entry["target"])
+        self.assertLessEqual(spy.call_count, (count + 1) * 3)
+
+    def test_implement_traverses_the_open_task_that_addresses_a_target_statement(self):
+        """目的`implement`では、対象規範文を`addresses`する状態`open`のTASKが逆参照で閉包に入る。そのTASKのIDの重複を返す。"""
+
+        files = {".spec/requirements/REQ-001.md": _req("REQ-001")}
+        files.update(self.duplicated("tasks", "TASK-001", _task("TASK-001", ["REQ-001:AC-01"])))
+        self.build(files)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "implement")["diagnostics"]
+        self.assertIn(dup_diag("TASK-001", self.first_path("tasks", "TASK-001")), diagnostics)
 
     # --- 対照 -------------------------------------------------------------------------------
 
