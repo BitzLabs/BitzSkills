@@ -195,7 +195,8 @@ Coreは意味的な影響を断定せず、状態を自動で変更しない。`
 
 `scope: changed`では`selection`を必須とする。テキストの出力も同じ3つの件数を使う。
 `selection.targetDocumentCount`は、§6の表で変更されたパスから写像した所有文書の数とする。作業ツリーで削除した仕様文書も、削除の検出（§5）のために
-基準版のフロントマターのIDへ写像して数える。削除した文書は完全検査の対象にならない。
+基準版のフロントマターのIDへ写像して数える。削除した文書は完全検査の対象にならない。基準版と同じパスで現在版のIDを読めない文書も、
+基準版のIDへ写像して数える（§5）。
 明示対象は`scope: selected`、`--full`とGit不在またはコミットのないリポジトリのときの全体への縮退は`scope: full`とし、両方のスコープでは
 `checkedDocumentCount`と`checkedStatementCount`を必須にする。`selection`は`changed`だけで出力する。
 `--all-workspaces`では`scope: all-workspaces`と、共通の`multiWorkspace`、`workspaces`の外形を使用し、各ワークスペースの
