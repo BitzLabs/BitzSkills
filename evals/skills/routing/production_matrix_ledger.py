@@ -301,13 +301,15 @@ class MatrixLedger:
             self.stop(ordinal, 'stored-evidence-rejected', type(error).__name__)
             raise
 
-    def reserve(self, ordinal):
+    def reserve(self, ordinal, *, before_commit=None):
         with self.locked():
             self.initialize()
             count = self.checked_count()
             require(type(ordinal) is int and ordinal == count+1 and ordinal <= self.maximum, 'matrix fixed order or limit')
             require(count == 0 or present(self.path('review', count)), 'matrix previous review pending')
             value = self.slot(ordinal)
+            if before_commit is not None:
+                before_commit()
             io.exclusive(self.path('attempt', ordinal), io.encoded(value))
             return value
 
