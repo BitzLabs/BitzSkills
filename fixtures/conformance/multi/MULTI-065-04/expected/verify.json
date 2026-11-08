@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "failed",
+          "contextDigest": null,
+          "statements": [],
+          "bindingRefs": [],
+          "diagnostics": [
+            {
+              "code": "SPEC-ID-DUPLICATE-001",
+              "severity": "error",
+              "resultStatus": "failed",
+              "summary": "文書ID web::TECH-005が重複しています",
+              "source": {
+                "kind": "file",
+                "workspaceId": "web",
+                "path": ".spec/technical/TECH-005-copy.md",
+                "key": "id"
+              }
+            }
+          ]
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-ID-DUPLICATE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "文書ID web::TECH-005が重複しています",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-005-copy.md",
+            "key": "id"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

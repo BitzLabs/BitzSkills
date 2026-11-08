@@ -1,0 +1,43 @@
+{
+  "fixtureId": "SINGLE-177-12",
+  "description": "パスの変更とIDを読めない破損が同時に起きた場合は削除とし、破損したファイル自身の診断も返す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "delete",
+        "path": ".spec/requirements/REQ-001.md"
+      },
+      {
+        "op": "create",
+        "path": ".spec/requirements/REQ-001-moved.md",
+        "source": "changes/REQ-001-moved.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

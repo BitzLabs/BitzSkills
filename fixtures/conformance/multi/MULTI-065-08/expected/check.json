@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-FM-SCHEMA-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "フロントマターのYAMLの構文が不正です",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "title"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

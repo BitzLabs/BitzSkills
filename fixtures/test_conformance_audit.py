@@ -108,6 +108,7 @@ from conformance import real_path_ownership_fixtures
 from conformance import verify_test_check_fixtures
 from conformance import multi_all_workspaces_output_fixtures
 from conformance import verify_closure_limit_fixtures
+from conformance import duplicate_closure_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance.initial_fixtures import observe as observe_single
 
@@ -14594,6 +14595,240 @@ class AuditTests(unittest.TestCase):
         with patch.object(harness.subprocess, "check_output", return_value=b"") as check_output:
             harness.git(Path("."), "status")
         self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
+
+    def test_duplicate_closure_fixtures(self):
+        """`SINGLE-177-01`〜`13`と`MULTI-065-01`〜`08`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""
+        module = duplicate_closure_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-177-{number:02d}" for number in range(1, 14)), *(f"MULTI-065-{number:02d}" for number in range(1, 9))])
+        self.assertEqual(result["setups_per_fixture"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_duplicate_closure_expected_results(self):
+        """期待結果の要点（生成器の関数を介さないリテラル）: 重複の診断のコード・文言・発生元、併記、対照が重複を返さないこと。"""
+        duplicate = "SPEC-ID-DUPLICATE-001"
+
+        def load(identifier, operation):
+            directory = "multi" if identifier.startswith("MULTI-") else "single"
+            return json.loads((audit.FIXTURES / directory / identifier / f"expected/{operation}.json").read_text())
+
+        def diagnostics(value):
+            found = list(value["diagnostics"])
+            for entry in value.get("targetResults", []):
+                found += entry["diagnostics"]
+            for workspace in value.get("workspaces", []):
+                found += workspace["diagnostics"]
+                for entry in workspace.get("targetResults", []):
+                    found += entry["diagnostics"]
+            return found
+
+        def codes(value):
+            return [item["code"] for item in diagnostics(value)]
+
+        dup_source = lambda workspace, path: {"kind": "file", "workspaceId": workspace, "path": path, "key": "id"}
+        # 欠陥: 逆参照のrefinesで閉包に入る文書の重複。context・verify・checkとも、発生元は重複した写しのうちパスの辞書順で最初のファイル。
+        for identifier, operation in (("SINGLE-177-01", "context"), ("SINGLE-177-02", "verify"), ("SINGLE-177-03", "check")):
+            value = load(identifier, operation)
+            self.assertEqual((value["status"], diagnostics(value)), ("failed", [{
+                "code": duplicate, "severity": "error", "resultStatus": "failed", "summary": "文書ID TECH-002が重複しています",
+                "source": dup_source("root", ".spec/technical/TECH-002-copy.md")}]), identifier)
+        verified = load("SINGLE-177-02", "verify")
+        self.assertEqual((verified["targetResults"][0]["status"], verified["targetResults"][0]["contextDigest"], verified["commands"]), ("failed", None, []))
+        # 起点の重複はCTX-ROOT-MISSING-001へ併記する。
+        for identifier, operation in (("SINGLE-177-04", "context"), ("SINGLE-177-05", "verify")):
+            self.assertEqual(codes(load(identifier, operation)), ["CTX-ROOT-MISSING-001", duplicate], identifier)
+        # requiresの参照先の重複は、強い関係の参照先の不在と並ぶ（パスの順: requirementsはtechnicalより前）。
+        self.assertEqual(codes(load("SINGLE-177-06", "context")), ["SPEC-RELATION-MISSING-001", duplicate])
+        # 対照: relatedで指すだけ、閉包と無関係な重複は返さない。
+        for identifier, operation in (("SINGLE-177-07", "verify"), ("SINGLE-177-08", "verify"), ("SINGLE-177-09", "context"), ("MULTI-065-06", "check"), ("MULTI-065-07", "check")):
+            self.assertNotIn(duplicate, codes(load(identifier, operation)), identifier)
+        self.assertEqual(load("SINGLE-177-07", "verify")["status"], "passed")
+        self.assertEqual(codes(load("SINGLE-177-08", "verify")), ["SPEC-RELATION-ADVISORY-MISSING-001"])
+        self.assertEqual(load("SINGLE-177-09", "context"), json.loads((audit.FIXTURES / "single/SINGLE-042/expected/context.json").read_text()))
+        # 複合ワークスペース: 重複した文書を所有するワークスペースの発生元と、修飾IDの文言。
+        for identifier, operation in (("MULTI-065-01", "context"), ("MULTI-065-02", "verify"), ("MULTI-065-03", "check"), ("MULTI-065-04", "verify")):
+            self.assertEqual([d for d in diagnostics(load(identifier, operation)) if d["code"] == duplicate], [{
+                "code": duplicate, "severity": "error", "resultStatus": "failed", "summary": "文書ID web::TECH-005が重複しています",
+                "source": dup_source("web", ".spec/technical/TECH-005-copy.md")}], identifier)
+        forward = diagnostics(load("MULTI-065-05", "context"))
+        self.assertEqual([(d["code"], d["source"]["workspaceId"]) for d in forward], [(duplicate, "platform"), ("SPEC-RELATION-MISSING-001", "web")])
+        self.assertEqual(forward[0]["summary"], "文書ID platform::REQ-001が重複しています")
+        # IDを読めない現在版: 削除にも影響候補にもせず、自身の診断だけ。パスの変更と破損の同時は削除と自身の診断。
+        for identifier in ("SINGLE-177-10", "SINGLE-177-11", "MULTI-065-08"):
+            found = codes(load(identifier, "check"))
+            self.assertIn("SPEC-FM-SCHEMA-001", found, identifier)
+            self.assertNotIn("SPEC-STATE-TRANSITION-001", found, identifier)
+            self.assertNotIn("SPEC-IMPACT-OUTDATED-001", found, identifier)
+        self.assertEqual(codes(load("SINGLE-177-10", "check")), ["SPEC-FM-SCHEMA-001"])
+        self.assertEqual(codes(load("SINGLE-177-12", "check")), ["SPEC-FM-SCHEMA-001", "SPEC-STATE-TRANSITION-001", "SPEC-IMPACT-OUTDATED-001"])
+        self.assertEqual(codes(load("SINGLE-177-13", "check")), ["SPEC-IMPACT-OUTDATED-001"])
+
+    def test_duplicate_closure_reference_rules(self):
+        """参照計算: relatedは辿らない。逆参照は起点から推移的、前方のrequires・refinesは辿る。写しの1つでも辿れば辿る。基準版との比較は、同じパスの破損を削除にしない。"""
+        module = duplicate_closure_fixtures
+
+        def doc(doc_id, status="approved", **relations):
+            return module.text_of(doc_id, "technical", status=status, relations={name: refs for name, refs in relations.items() if refs}).encode()
+
+        def tree(**files):
+            return {f".spec/technical/{name}.md": content for name, content in files.items()}
+
+        root = ("root", "TECH-001")
+        base = {"TECH-001": doc("TECH-001"), "TECH-002": doc("TECH-002", refines=["TECH-001"]), "TECH-002-copy": doc("TECH-002", refines=["TECH-001"])}
+        self.assertEqual(module.reference_duplicates(tree(**base), root), {("root", "TECH-002")})
+        # 推移的な逆参照（TECH-003がTECH-002をrefines。TECH-002は重複、TECH-003は一意で辿り着かないが、重複しているTECH-004は辿る）。
+        chain = {**base, "TECH-004": doc("TECH-004", refines=["TECH-001"]), "TECH-004-copy": doc("TECH-004")}
+        self.assertEqual(module.reference_duplicates(tree(**chain), root), {("root", "TECH-002"), ("root", "TECH-004")})
+        # relatedは辿らない。
+        related = {"TECH-001": doc("TECH-001", related=["TECH-009"]), "TECH-009": doc("TECH-009"), "TECH-009-copy": doc("TECH-009"),
+                   "TECH-010": doc("TECH-010", related=["TECH-001"]), "TECH-010-copy": doc("TECH-010", related=["TECH-001"])}
+        self.assertEqual(module.reference_duplicates(tree(**related), root), set())
+        # 前方のrequires（推移的）とrefines、起点自身の重複。
+        forward = {"TECH-001": doc("TECH-001", requires=["TECH-005"], refines=["TECH-006"]), "TECH-005": doc("TECH-005", requires=["TECH-007"]),
+                   "TECH-007": doc("TECH-007"), "TECH-007-copy": doc("TECH-007"), "TECH-006": doc("TECH-006"), "TECH-006-copy": doc("TECH-006")}
+        self.assertEqual(module.reference_duplicates(tree(**forward), root), {("root", "TECH-006"), ("root", "TECH-007")})
+        self.assertEqual(module.reference_duplicates(tree(**base), ("root", "TECH-002")), {("root", "TECH-002")})
+        # 置換の後継。
+        successor = {"TECH-001": doc("TECH-001"), "TECH-008": doc("TECH-008", supersedes=["TECH-001"]), "TECH-008-copy": doc("TECH-008")}
+        self.assertEqual(module.reference_duplicates(tree(**successor), root), {("root", "TECH-008")})
+        # 基準版との比較。
+        before = {".spec/technical/TECH-001.md": doc("TECH-001"), ".spec/technical/TECH-002.md": doc("TECH-002")}
+        broken = doc("TECH-001", status="bogus")
+        self.assertEqual(module.reference_base_comparison(before, {**before, ".spec/technical/TECH-001.md": broken}),
+                         ([], [".spec/technical/TECH-001.md"]))
+        self.assertEqual(module.reference_base_comparison(before, {".spec/technical/TECH-002.md": before[".spec/technical/TECH-002.md"]}),
+                         ([".spec/technical/TECH-001.md"], []))
+        moved = {".spec/technical/TECH-002.md": before[".spec/technical/TECH-002.md"], ".spec/technical/TECH-001-moved.md": broken}
+        self.assertEqual(module.reference_base_comparison(before, moved), ([".spec/technical/TECH-001.md"], [".spec/technical/TECH-001-moved.md"]))
+        renamed = {".spec/technical/TECH-002.md": before[".spec/technical/TECH-002.md"], ".spec/technical/TECH-001-moved.md": before[".spec/technical/TECH-001.md"]}
+        self.assertEqual(module.reference_base_comparison(before, renamed), ([], []))
+
+    def test_duplicate_closure_audit_rejects_changed_expectations(self):
+        """期待結果・起動条件・入力・副作用の改変（修正前のCoreの出力への取り違えを含む）を拒否する（陰性対照）。"""
+        module = duplicate_closure_fixtures
+
+        def every(value):
+            found = list(value["diagnostics"])
+            for entry in value.get("targetResults", []):
+                found += entry["diagnostics"]
+            for workspace in value.get("workspaces", []):
+                found += workspace["diagnostics"]
+                for entry in workspace.get("targetResults", []):
+                    found += entry["diagnostics"]
+            return found
+
+        def holder(value, code):
+            """`code`の診断を持つ診断の配列（最上位、検証対象、ワークスペースの順）。"""
+            lists = [value["diagnostics"], *(entry["diagnostics"] for entry in value.get("targetResults", []))]
+            for workspace in value.get("workspaces", []):
+                lists.append(workspace["diagnostics"])
+                lists += [entry["diagnostics"] for entry in workspace.get("targetResults", [])]
+            return next(items for items in lists if any(item["code"] == code for item in items))
+
+        def drop(code):
+            def mutate(value):
+                items = holder(value, code)
+                items[:] = [item for item in items if item["code"] != code]
+            return mutate
+
+        def first(value, code):
+            return next(item for item in every(value) if item["code"] == code)
+
+        results = {
+            "status": lambda v: v.update(status="passed" if v["status"] != "passed" else "failed"),
+            "drop-duplicate": drop("SPEC-ID-DUPLICATE-001"),
+            "drop-root-missing": drop("CTX-ROOT-MISSING-001"),
+            "drop-schema": drop("SPEC-FM-SCHEMA-001"),
+            "drop-transition": drop("SPEC-STATE-TRANSITION-001"),
+            "duplicate-workspace": lambda v: first(v, "SPEC-ID-DUPLICATE-001")["source"].update(workspaceId="platform"),
+            "duplicate-path": lambda v: first(v, "SPEC-ID-DUPLICATE-001")["source"].update(path=".spec/technical/TECH-002.md"),
+            "duplicate-summary": lambda v: first(v, "SPEC-ID-DUPLICATE-001").update(summary="文書ID TECH-999が重複しています"),
+            "duplicate-added": lambda v: v["diagnostics"].append(
+                {"code": "SPEC-ID-DUPLICATE-001", "severity": "error", "resultStatus": "failed", "summary": "文書ID TECH-009が重複しています",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-009-copy.md", "key": "id"}}),
+            "deletion-added": lambda v: v["diagnostics"].append(
+                {"code": "SPEC-STATE-TRANSITION-001", "severity": "error", "resultStatus": "failed", "summary": "管理済みの仕様文書が削除されています",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/requirements/REQ-001.md"}}),
+            "impact-added": lambda v: v["diagnostics"].append(
+                {"code": "SPEC-IMPACT-OUTDATED-001", "severity": "warning", "resultStatus": "passed_with_warnings",
+                 "summary": "TECH-001が強く依存するREQ-001が変更されています。再確認してください",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-001.md", "key": "relations.refines"}}),
+            "digest": lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64),
+            "target-status": lambda v: v["targetResults"][0].update(status="passed"),
+            "commands": lambda v: v.update(commands=[{}]),
+            "revision": lambda v: v.update(revision={"commit": "0" * 40, "dirty": True}),
+            "count": lambda v: v.update(checkedDocumentCount=v["checkedDocumentCount"] + 1),
+            "selection": lambda v: v["selection"].update(changedPathCount=v["selection"]["changedPathCount"] + 1),
+            "ws-status": lambda v: v["workspaces"][0].update(status="failed" if v["workspaces"][0]["status"] != "failed" else "passed"),
+            "unresolved": lambda v: v["resolution"].update(unresolvedStrongRelations=v["resolution"]["unresolvedStrongRelations"] + 1),
+        }
+        manifests = {
+            "status": lambda v: v["expect"].update(status="passed" if v["expect"]["status"] != "passed" else "failed"),
+            "exit-code": lambda v: v["expect"].update(exitCode=0 if v["expect"]["exitCode"] != 0 else 1),
+            "argv-target": lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-999"),
+            "cwd": lambda v: v["invocation"].update(cwd="src"),
+            "operations": lambda v: v["setup"]["operations"].clear() if v["setup"]["operations"] else v["setup"]["operations"].append({"op": "delete", "path": ".spec/bitz.yaml"}),
+            "no-git": lambda v: v["setup"].update(git=False),
+        }
+        effects = {"policy": lambda v: v.update(policy="read-write"), "after": lambda v: v["after"]["repository"].update(extra={"kind": "directory"})}
+        applied = 0
+        for identifier in module.CASES:
+            operation = module.CASES[identifier]["op"]
+            mutations = [("manifest.json", label, change) for label, change in manifests.items()]
+            mutations += [(f"expected/{operation}.json", label, change) for label, change in results.items()]
+            mutations += [("side-effects.json", label, change) for label, change in effects.items()]
+            for relative, label, mutate in mutations:
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    path = root / module.directory_of(identifier) / identifier / relative
+                    value = json.loads(path.read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError, StopIteration):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
+                    path.write_text(json.dumps(value))
+                    with self.subTest(identifier=identifier, file=relative, mutation=label):
+                        self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        self.assertGreater(applied, 150)
+        # 入力の改変: 重複した写しの片方を消す（重複でなくなる）、関係を変える（辿らない／辿る）と、期待結果と参照計算が食い違う。
+        edits = {
+            "SINGLE-177-01": [(".spec/technical/TECH-002-copy.md", None), (".spec/technical/TECH-002.md", b"")],
+            "SINGLE-177-04": [(".spec/requirements/REQ-001-copy.md", None)],
+            "SINGLE-177-07": [(".spec/technical/TECH-009.md", None)],
+            "MULTI-065-01": [("apps/web/.spec/technical/TECH-005-copy.md", None)],
+            "MULTI-065-06": [("apps/web/.spec/technical/TECH-007-copy.md", None)],
+        }
+        for identifier, changes in edits.items():
+            for relative, content in changes:
+                with self.subTest(identifier=identifier, input=relative), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_real_path_fixture(temporary, identifier)
+                    target = root / module.directory_of(identifier) / identifier / "repo" / relative
+                    if content is None:
+                        target.unlink()
+                    else:
+                        target.write_bytes(content)
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 欠陥を検出するケースの期待を、修正前のCoreの出力（重複を返さない／削除と影響候補を返す）へ取り違える改変を拒否する。
+        for identifier in ("SINGLE-177-01", "SINGLE-177-02", "SINGLE-177-04", "MULTI-065-01", "MULTI-065-05"):
+            with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_real_path_fixture(temporary, identifier)
+                operation = module.CASES[identifier]["op"]
+                path = root / module.directory_of(identifier) / identifier / f"expected/{operation}.json"
+                value = json.loads(path.read_text())
+                for items in [value["diagnostics"], *(entry["diagnostics"] for entry in value.get("targetResults", []))]:
+                    items[:] = [item for item in items if item["code"] != "SPEC-ID-DUPLICATE-001"]
+                path.write_text(json.dumps(value))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
     def test_gate_a_certification_requires_a_committed_worktree(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,0 +1,40 @@
+{
+  "fixtureId": "MULTI-065-08",
+  "description": "全体のcheckでも、メンバーの基準版の文書と同じパスでIDを読めない現在版を削除とみなさない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "apps/web/.spec/technical/TECH-001.md",
+        "source": "changes/TECH-001-broken.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

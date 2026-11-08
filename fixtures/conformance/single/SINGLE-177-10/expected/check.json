@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-FM-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "フロントマターのYAMLの構文が不正です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "key": "title"
+      }
+    }
+  ],
+  "scope": "changed",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "selection": {
+    "changedPathCount": 1,
+    "targetDocumentCount": 1,
+    "excludedCodeTestPathCount": 0
+  }
+}
