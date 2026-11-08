@@ -98,7 +98,12 @@ class MatrixContinuationTests(unittest.TestCase):
         bundle = f.repository/'.venv/bound'
         bundle.mkdir()
         condition = 'a'*64
-        report = dict(continuationOperatorSha256=matrix.io.sha(Path(continuation.__file__).read_bytes()))
+        worker_path=f.repository/'evals/skills/routing/production_matrix_rate_limits.py'
+        worker_path.parent.mkdir(parents=True)
+        worker=b'# fixed synthetic rate worker'
+        worker_path.write_bytes(worker)
+        report = dict(continuationOperatorSha256=matrix.io.sha(Path(continuation.__file__).read_bytes()),
+                      rateReaderSha256=matrix.io.sha(worker))
         files = {'execution.json':f.bound.execution_raw, 'input-contract.json':f.input_raw,
                  'deployment.json':b'{}', 'sdk-manifest.json':b'{}', 'prelaunch-review.json':b'{}',
                  'code-review.json':matrix.io.encoded(report),
@@ -111,11 +116,15 @@ class MatrixContinuationTests(unittest.TestCase):
         with (
             patch.object(continuation.capture,'prelaunch_review',return_value=dict(
                 scope=continuation.score.SCOPE,conditionSha256=condition)),
-            patch.object(continuation.p,'deployment',return_value=dict(snapshotRelativePath='.venv/snapshot')),
+            patch.object(continuation.p,'deployment',return_value=dict(
+                snapshotRelativePath='.venv/snapshot',sdkRelativePath='.venv/sdk',codexPath='/fixed/bin/codex')),
             patch.object(continuation.p.guard,'git',side_effect=lambda *args:
-                Path(continuation.__file__).read_bytes() if args[-1].endswith('continuation.py') else b'{}'),
+                Path(continuation.__file__).read_bytes() if args[-1].endswith('continuation.py')
+                else worker if args[-1].endswith('rate_limits.py') else b'{}'),
             patch.object(continuation.p,'decision_schema',return_value=b'{}'),
             patch.object(continuation.p,'verify_resources',self.verify),
+            patch.object(continuation.capture,'auth_metadata'),
+            patch.object(continuation.rate_limits,'read',side_effect=lambda *args:self.read_limits()) as reader,
             patch.object(matrix.io,'common_ledger_path',return_value=f.repository/'.venv/common.json'),
             patch.object(matrix,'shared_storage',return_value=f.storage),
             patch.object(continuation.capture,'_run',side_effect=lambda *args,**kwargs:self.primary(args[-1])),
@@ -123,11 +132,41 @@ class MatrixContinuationTests(unittest.TestCase):
             patch.object(continuation.score,'_finalize',side_effect=lambda *args,**kwargs:self.finalize(args[2])),
         ):
             with self.assertRaisesRegex(ValueError,'approved condition required'):
-                continuation.run_next(f.repository,bundle,'b'*64,self.read_limits)
-            self.read_limits.assert_not_called()
-            self.assertEqual(continuation.run_next(f.repository,bundle,condition,self.read_limits),
+                continuation.run_next(f.repository,bundle,'b'*64)
+            worker_path.write_bytes(b'changed synthetic worker')
+            with self.assertRaisesRegex(ValueError,'reviewed rate reader required'):
+                continuation.run_next(f.repository,bundle,condition)
+            reader.assert_not_called()
+            worker_path.write_bytes(worker)
+            self.assertEqual(continuation.run_next(f.repository,bundle,condition),
                              dict(status='measured_correct',ordinal=1))
+            reader.assert_called_once_with(f.repository,f.repository/'.venv/sdk','/fixed/bin/codex',
+                                           continuation.capture.AUTH,worker)
         self.assertEqual(self.calls,[('primary',1),('independent',1),('parent',1)])
+
+    def test_waiting_entry_crosses_midnight_and_rechecks_only_after_reset(self):
+        self.advance()
+        reset = self.now+300
+        check_times = []
+
+        def read():
+            check_times.append(self.now)
+            return limits(reset,short=80) if self.now < reset else limits(self.now+300)
+
+        def sleep(seconds):
+            self.assertFalse(self.f.instance.path('attempt',2).exists())
+            self.now += seconds
+
+        self.read_limits.side_effect = read
+        repository, bundle, condition = self.f.repository,self.f.repository/'.venv/bound','a'*64
+        with (
+            patch.object(continuation,'run_next',side_effect=lambda *args:self.advance()) as entry,
+            patch.object(continuation.time,'sleep',side_effect=sleep),
+        ):
+            result=continuation.run_waiting(repository,bundle,condition)
+        self.assertEqual(result,dict(status='measured_correct',ordinal=2))
+        self.assertEqual([call.args for call in entry.call_args_list],[(repository,bundle,condition)]*2)
+        self.assertEqual(check_times,[reset-300,reset])
 
     def test_reserved_but_unfinished_slot_stops_without_second_launch(self):
         self.f.instance.reserve(1)
