@@ -69,24 +69,28 @@ def advance(instance, control, read_limits, verify, verify_completed, primary, i
         if terminal == 'stopped':
             return dict(status=terminal)
         proof = verify()
-        if ordinal > 1:
+        if terminal != 'complete':
+            if ordinal > 1:
+                pace()
+            started = time.monotonic()
+            snapshot = read_limits()
+            require(time.monotonic()-started <= 60, 'matrix continuation rate snapshot stale')
+            guard()
+            until = wait_until(snapshot, time.time())
+            if until is not None:
+                return dict(status='waiting_for_rate_window', ordinal=ordinal, waitUntilUnix=until)
+        for completed in range(1, ordinal):
             try:
-                for completed in range(1, ordinal):
-                    verify_completed(completed, proof)
+                verify_completed(completed, proof)
             except Exception as error:
                 guard()
                 with instance.locked():
-                    instance.stop(ordinal-1, 'continuation-completed-original-rejected', type(error).__name__)
+                    instance.stop(completed, 'continuation-completed-original-rejected', type(error).__name__)
                 raise
-            if terminal == 'complete':
-                return dict(status=terminal)
-            pace()
-        started = time.monotonic()
-        snapshot = read_limits()
-        require(time.monotonic()-started <= 60, 'matrix continuation rate snapshot stale')
-        until = wait_until(snapshot, time.time())
-        if until is not None:
-            return dict(status='waiting_for_rate_window', ordinal=ordinal, waitUntilUnix=until)
+        if terminal == 'complete':
+            return dict(status=terminal)
+        require(time.monotonic()-started <= 60 and wait_until(snapshot,time.time()) is None,
+            'matrix continuation rate snapshot stale before reservation')
         guard()
         try:
             require(primary(ordinal,guard)['status']=='primary_capture_awaits_independent_review',
