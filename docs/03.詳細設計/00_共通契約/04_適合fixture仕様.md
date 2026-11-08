@@ -862,6 +862,33 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `SINGLE-176-05` | `SINGLE-176-03`と同じ入力で、`context.maxDocuments: 2`（閉包は2文書で、上限ちょうど） | verify REQ-001 | passed_with_warnings／0 | 対照: 上限ちょうどは超えない。`REQ-001`は`passed_with_warnings`で、診断は`SPEC-RELATION-ADVISORY-MISSING-001`（`ADR-099`）の1件。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
 | `SINGLE-176-06` | `SINGLE-042`のcorpusに`context.maxBytes: 4096`（標準の提示は4096バイト以下） | verify REQ-001 | passed／0 | 対照: バイト数の上限の内側は通る。`commands`は`tests/test_auth.py`と`tests/test_session.py`。修正前のCoreも通る |
 
+### 6.20 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイル
+
+文書IDの重複（`SPEC-ID-DUPLICATE-001`、`failed`）は、`context`、`verify`、`check`のどれでも、閉包を作るときに辿るID（起点、`requires`、`refines`、`addresses`、置換の参照先、
+逆参照で閉包に入る文書のID。`related`の参照先は含めない）が重複していれば、その結果（`verify`は当該の検証対象）へ返す。起点のIDが重複している場合は`CTX-ROOT-MISSING-001`に併記する。
+閉包と無関係な重複は返さない（[関係・トレースモデル §5.1](../02_仕様文書モデル/04_関係・トレースモデル.md#51-関係の診断の優先順位)。実装の確認事項C96）。診断の文言と発生元は`check`の完全検査と同じである。
+基準版の文書と同じパスに、現在版でIDを読めないファイルがある場合は、削除（`SPEC-STATE-TRANSITION-001`）とせず、その文書の状態遷移、承認済み要求の保護、影響候補の比較も行わず、そのファイル自身の診断を
+引数なしの`check`でも変更されたパスの診断として返す。パスの変更とIDを読めない破損が同時に起きた場合は削除とする（[`check` §5](../03_操作仕様/02_check.md#5-git基準版と変更集合)。確認事項C105）。
+修正前のCoreは、閉包を作るときに重複したIDを黙って辿らず、IDを読めない現在版を削除として返し、依存元へ影響候補を返し、そのファイル自身の診断を返さなかった。
+単一ワークスペースの入力は`SINGLE-042`のcorpus（`SINGLE-177-10`〜`13`は`REQ-001`と、それを`refines`する`TECH-001`だけの最小の入力）を基にする。重複した文書は、同じ内容の`<ID>.md`と`<ID>-copy.md`の2ファイルで、
+診断の発生元は、パスの辞書順で最初の`<ID>-copy.md`である。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-177-01` | `TECH-001`を`refines`する`TECH-002`が2ファイル（`REQ-001`の閉包に逆参照で入る） | context REQ-001 --purpose verify | failed／1 | 診断は`SPEC-ID-DUPLICATE-001`（`文書ID TECH-002が重複しています`）の1件。修正前のCoreは`passed`／0 |
+| `SINGLE-177-02` | `SINGLE-177-01`と同じ入力 | verify REQ-001 | failed／1 | `REQ-001`の`diagnostics`に重複の1件。`contextDigest`は`null`、`commands`は空。修正前のCoreは`passed`／0 |
+| `SINGLE-177-03` | `SINGLE-177-01`と同じ入力 | check REQ-001 --base HEAD | failed／1 | 重複の1件。`checkedDocumentCount`は2。対照: 修正前のCoreも通る |
+| `SINGLE-177-04` | 起点`REQ-001`が2ファイル | context REQ-001 --purpose verify | failed／1 | `CTX-ROOT-MISSING-001`と`SPEC-ID-DUPLICATE-001`の2件。修正前のCoreは前者だけ |
+| `SINGLE-177-05` | `SINGLE-177-04`と同じ入力 | verify REQ-001 | failed／1 | `REQ-001`の`diagnostics`に`CTX-ROOT-MISSING-001`と重複。修正前のCoreは前者だけ |
+| `SINGLE-177-06` | `REQ-001`が`requires`する`TECH-003`が2ファイル | context REQ-001 --purpose verify | failed／1 | `SPEC-RELATION-MISSING-001`（`TECH-003`）と重複。`unresolvedStrongRelations`は1。修正前のCoreは前者だけ |
+| `SINGLE-177-07` | 閉包の`REQ-001`を`related`で指すだけの`TECH-009`が2ファイル | verify REQ-001 | passed／0 | 対照: 重複を返さない。`SINGLE-042`と同じ`contextDigest`。修正前のCoreも通る |
+| `SINGLE-177-08` | `SINGLE-168-03`の入力に、`TECH-001`が`related`で指す`ADR-099`が2ファイル | verify REQ-001 | passed_with_warnings／0 | 対照: `SINGLE-168-03`と同じ結果。`related`の参照先の重複は辿らず、参照切れの警告だけ。修正前のCoreも通る |
+| `SINGLE-177-09` | `SINGLE-042`の入力に、閉包と無関係な`TECH-008`が2ファイル | context REQ-001 --purpose verify | passed／0 | 対照: `SINGLE-042`と同じ結果。重複を返さない。修正前のCoreも通る |
+| `SINGLE-177-10` | 基準版は`REQ-001`と、それを`refines`する`TECH-001`（ともに`approved`）。作業ツリーで`REQ-001`の`title`が不正なYAML | check --base HEAD | failed／1 | 診断は`REQ-001`自身の`SPEC-FM-SCHEMA-001`の1件だけ。削除と`TECH-001`への影響候補を返さない。`selection`は`changedPathCount: 1`、`targetDocumentCount: 1`。修正前のCoreは削除と影響候補を返し、自身の診断を返さない |
+| `SINGLE-177-11` | `SINGLE-177-10`と同じ入力 | check --full --base HEAD | failed／1 | `REQ-001`の`SPEC-FM-SCHEMA-001`と、索引にない`REQ-001`を`refines`する`TECH-001`の`SPEC-RELATION-MISSING-001`。削除を返さない。修正前のCoreは削除も返す |
+| `SINGLE-177-12` | `SINGLE-177-10`の基準版。作業ツリーで`REQ-001.md`を削除し、別のパス`REQ-001-moved.md`にフロントマターが不正な文書を置く | check --base HEAD | failed／1 | IDでもパスでも対応しないので削除（`REQ-001.md`）と影響候補（`TECH-001`）に加え、`REQ-001-moved.md`自身の`SPEC-FM-SCHEMA-001`。修正前のCoreは自身の診断を返さない |
+| `SINGLE-177-13` | `SINGLE-177-10`の基準版。作業ツリーで`REQ-001`の`status`を`approved`から`outdated`へ | check --base HEAD | passed_with_warnings／0 | 対照: IDを読める変更は影響候補（`TECH-001`）を返す。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1170,6 +1197,14 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `MULTI-064-04` | `MULTI-064-03`と同じ文書で、ルートの`context.maxDocuments: 3`（閉包は3文書で、上限ちょうど）、`web`の`context.maxDocuments: 1` | verify REQ-001 | passed／0 | 対照: 上限ちょうどは超えず、`web`の上限は使わない。`commands`は`platform::default`（`tests/root.py`）と`web::default`（`tests/web.py`）の2件（`MULTI-062-05`と同じ）。修正前のCoreも通る |
 | `MULTI-064-05` | `web`のREQ-101とTECH-101（`web`の閉包は2文書、`web`の`context.maxDocuments: 1`）、`api`のREQ-201（`tests/ok.py`、閉包は1文書、`api`は既定）。ルートは文書を持たない（`.`で実行） | verify --all-workspaces | blocked／2 | `workspaces`は`platform`（`passed_with_warnings`、`SPEC-VERIFY-BLOCKED-002`の警告）、`api`（`passed`）、`web`（`blocked`）の順。`web::REQ-101`は`CTX-LIMIT-001`の1件で`blocked`、`api::REQ-201`は`passed`で`api::default`を起動する（`commands`は`api`に1件）。`web`は`commands`を持たない。最上位の`diagnostics`は空。修正前のCoreは`passed_with_warnings`／0 |
 | `MULTI-064-06` | `MULTI-064-01`と同じ文書で、`TECH-101`が存在しない`ADR-099`を`related`する | verify web::REQ-101 | blocked／2 | 診断は`CTX-LIMIT-001`の1件だけで、`SPEC-RELATION-ADVISORY-MISSING-001`の警告を加えない。修正前のCoreは`passed_with_warnings`／0 |
+| `MULTI-065-01` | ルート`platform`の`REQ-001`と、それを`refines`する`web`の`TECH-005`が2ファイル | context REQ-001 --purpose verify | failed／1 | 診断は`SPEC-ID-DUPLICATE-001`（`文書ID web::TECH-005が重複しています`、`source.workspaceId`は重複した文書を所有する`web`、`path`は`.spec/technical/TECH-005-copy.md`）の1件。`resolution.workspaces`は`platform`だけ。修正前のCoreは`passed`／0 |
+| `MULTI-065-02` | `MULTI-065-01`と同じ入力 | verify REQ-001 | failed／1 | `platform::REQ-001`の`diagnostics`に重複の1件（`web`が所有）。`commands`は空。修正前のCoreは`passed`／0 |
+| `MULTI-065-03` | `MULTI-065-01`と同じ入力 | check REQ-001 --base HEAD | failed／1 | 重複の1件（`web`が所有）。`checkedDocumentCount`は1。修正前のCoreは`passed`／0 |
+| `MULTI-065-04` | `MULTI-065-01`と同じ入力 | verify --all-workspaces | failed／1 | `platform`の検証対象`platform::REQ-001`の`diagnostics`に重複の1件（`web`が所有）。`api`と`web`は検証対象なしの警告（`SPEC-VERIFY-BLOCKED-002`）。修正前のCoreは`passed_with_warnings`／0 |
+| `MULTI-065-05` | ルート`platform`の`REQ-001`が2ファイル。`web`の`TECH-010`が`platform::REQ-001`を`refines`する | context web::TECH-010 --purpose verify | failed／1 | 診断は重複（`文書ID platform::REQ-001が重複しています`、`platform`が所有）と、`web`の`TECH-010`の`SPEC-RELATION-MISSING-001`（`platform::REQ-001`）。ワークスペースIDの辞書順。修正前のCoreは後者だけ |
+| `MULTI-065-06` | `platform`の`REQ-001`が`related`で指す`web::TECH-007`が2ファイル | check REQ-001 --base HEAD | passed_with_warnings／0 | 対照: `related`の参照先の重複は辿らず、重複を返さない。`SPEC-RELATION-ADVISORY-MISSING-001`（`web::TECH-007`）だけ。修正前のCoreも通る |
+| `MULTI-065-07` | 閉包と無関係な`web`の`TECH-008`が2ファイル | check REQ-001 --base HEAD | passed／0 | 対照: 重複を返さない。`checkedDocumentCount`は1。修正前のCoreも通る |
+| `MULTI-065-08` | 基準版は`web`の`TECH-001`。作業ツリーで`web::TECH-001`の`title`が不正なYAML | check --all-workspaces --base HEAD | failed／1 | `web`の`diagnostics`は`SPEC-FM-SCHEMA-001`の1件だけ（削除を返さない）。`platform`と`api`は通過。修正前のCoreは削除も返す |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

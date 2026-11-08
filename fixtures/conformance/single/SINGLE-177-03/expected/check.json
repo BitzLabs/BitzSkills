@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-ID-DUPLICATE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "文書ID TECH-002が重複しています",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-002-copy.md",
+        "key": "id"
+      }
+    }
+  ],
+  "scope": "selected",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 2,
+  "checkedStatementCount": 2
+}

@@ -419,7 +419,20 @@
         "SINGLE-176-03",
         "SINGLE-176-04",
         "SINGLE-176-05",
-        "SINGLE-176-06"
+        "SINGLE-176-06",
+        "SINGLE-177-01",
+        "SINGLE-177-02",
+        "SINGLE-177-03",
+        "SINGLE-177-04",
+        "SINGLE-177-05",
+        "SINGLE-177-06",
+        "SINGLE-177-07",
+        "SINGLE-177-08",
+        "SINGLE-177-09",
+        "SINGLE-177-10",
+        "SINGLE-177-11",
+        "SINGLE-177-12",
+        "SINGLE-177-13"
       ]
     },
     {
@@ -732,7 +745,15 @@
         "MULTI-064-03",
         "MULTI-064-04",
         "MULTI-064-05",
-        "MULTI-064-06"
+        "MULTI-064-06",
+        "MULTI-065-01",
+        "MULTI-065-02",
+        "MULTI-065-03",
+        "MULTI-065-04",
+        "MULTI-065-05",
+        "MULTI-065-06",
+        "MULTI-065-07",
+        "MULTI-065-08"
       ]
     }
   ]

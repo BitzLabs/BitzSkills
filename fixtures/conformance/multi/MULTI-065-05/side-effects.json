@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a9abc54d128a89c5953d8c6000d16de3d0bd3a372237619ab4dce34a4ef26a6"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001-copy.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e24db67f19ad88532bea801971de0cd9b392c09b0a9c7808d2b66af3eefa16f4"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e24db67f19ad88532bea801971de0cd9b392c09b0a9c7808d2b66af3eefa16f4"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ac44f7f4d8e141615daea6c027b2126bb7afded121036144b3ea01545118ac68"
+      },
+      "apps/web/.spec/technical": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6c59e540cf3f680ec757015532278eafe666ea99f9bac99e7e537ce1bc151580"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eed8d6ff738866b58ca05af89e7ab4e2380c4f1bf8f407b22c3ba54335a05e98"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9e26bf369911c45c243c684147b23fc9e1dcfcf257d299a1c632016a6fcd33f4"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 2e6be50696ef59a3a0272d7eb35a8e493c1ac721 0\t.spec/bitz.yaml\n100644 fbaf016d263b9cbb2b02aa89e8e7600fc03d0e09 0\t.spec/requirements/REQ-001-copy.md\n100644 fbaf016d263b9cbb2b02aa89e8e7600fc03d0e09 0\t.spec/requirements/REQ-001.md\n100644 b294b26e57e718ea7f903fe9debd2c8c1695af7c 0\tapps/web/.spec/bitz.yaml\n100644 84da6da4d7ab5e6a1cb457e04e5980eb7870738b 0\tapps/web/.spec/technical/TECH-010.md\n100644 38fd3228ae34bd0714d5983074d98468d6518a7a 0\tservices/api/.spec/bitz.yaml\n100644 7d4290a117a4ddcc11daae7ea675841033830c8f 0\ttests/root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5a9abc54d128a89c5953d8c6000d16de3d0bd3a372237619ab4dce34a4ef26a6"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001-copy.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e24db67f19ad88532bea801971de0cd9b392c09b0a9c7808d2b66af3eefa16f4"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e24db67f19ad88532bea801971de0cd9b392c09b0a9c7808d2b66af3eefa16f4"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ac44f7f4d8e141615daea6c027b2126bb7afded121036144b3ea01545118ac68"
+      },
+      "apps/web/.spec/technical": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6c59e540cf3f680ec757015532278eafe666ea99f9bac99e7e537ce1bc151580"
+      },
+      "services": {
+        "kind": "directory"
+      },
+      "services/api": {
+        "kind": "directory"
+      },
+      "services/api/.spec": {
+        "kind": "directory"
+      },
+      "services/api/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "eed8d6ff738866b58ca05af89e7ab4e2380c4f1bf8f407b22c3ba54335a05e98"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9e26bf369911c45c243c684147b23fc9e1dcfcf257d299a1c632016a6fcd33f4"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 2e6be50696ef59a3a0272d7eb35a8e493c1ac721 0\t.spec/bitz.yaml\n100644 fbaf016d263b9cbb2b02aa89e8e7600fc03d0e09 0\t.spec/requirements/REQ-001-copy.md\n100644 fbaf016d263b9cbb2b02aa89e8e7600fc03d0e09 0\t.spec/requirements/REQ-001.md\n100644 b294b26e57e718ea7f903fe9debd2c8c1695af7c 0\tapps/web/.spec/bitz.yaml\n100644 84da6da4d7ab5e6a1cb457e04e5980eb7870738b 0\tapps/web/.spec/technical/TECH-010.md\n100644 38fd3228ae34bd0714d5983074d98468d6518a7a 0\tservices/api/.spec/bitz.yaml\n100644 7d4290a117a4ddcc11daae7ea675841033830c8f 0\ttests/root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
