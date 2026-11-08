@@ -22,6 +22,8 @@ SURVEY_VERSION = 'public-production-matrix-survey-0.1.0'
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'prelaunchReview', 'sdk', 'cli',
         'contextProfile', 'decisionSchema'}
 STAGES = ('attempt', 'started', 'primary', 'independent', 'review')
+CAPTURED_STAGE = 'independent-capture'
+RUNNER_BOUND_SCORING = 'public-matrix-semantic-0.2.0'
 
 
 def present(path):
@@ -52,6 +54,10 @@ def execution_contract(execution_raw):
     survey = isinstance(c, dict) and c.get('version') == SURVEY_VERSION
     subset = isinstance(c, dict) and c.get('version') == SUBSET_VERSION
     extra = {'caseIds'} if subset else {'surveyPolicySha256'} if survey else set()
+    if isinstance(c, dict) and 'independentScoring' in c:
+        require(not survey and c['independentScoring'] == RUNNER_BOUND_SCORING,
+                'matrix independent scoring format')
+        extra.add('independentScoring')
     require(isinstance(c, dict) and set(c) == {'version', 'campaignId', 'sourceCommit', 'model',
             'inputContractSha256', 'outputRelativeRoot', 'pins', 'budget', 'timeoutSeconds',
             'cliVersion', 'certifiesSkillGate'} | extra, 'matrix execution inventory')
@@ -151,9 +157,15 @@ class MatrixLedger:
             self.stop(None, 'stored-campaign-rejected', type(error).__name__)
             raise
 
+    @property
+    def stages(self):
+        if self.bound.contract.get('independentScoring') == RUNNER_BOUND_SCORING:
+            return (*STAGES[:-1], CAPTURED_STAGE, STAGES[-1])
+        return STAGES
+
     def path(self, stage, ordinal):
         self.slot(ordinal)
-        require(stage in STAGES, 'matrix stage')
+        require(stage in self.stages, 'matrix stage')
         return self.storage / f'{stage}-{ordinal:04d}.json'
 
     def slot(self, ordinal):
@@ -218,6 +230,17 @@ class MatrixLedger:
                 and value['maximumInvocations'] == 1 and type(value['consumedReservations']) is int
                 and value['consumedReservations'] == 1, 'matrix independent budget')
 
+    def independent_capture_valid(self, value, ordinal):
+        self.identity(value, ordinal, {'independentReservationSha256', 'independentReceipt'})
+        reservation = io.read_regular(self.path('independent', ordinal))
+        self.independent_valid(strict_json(reservation), ordinal)
+        require(value['independentReservationSha256'] == io.sha(reservation),
+                'matrix independent capture reservation drift')
+        self.original(value['independentReceipt'], ordinal)
+        expected = Path(self.bound.contract['outputRelativeRoot']+'-independent') / f'attempt-{ordinal:04d}' / 'independent-receipt.json'
+        require(value['independentReceipt']['relativePath'] == expected.as_posix(),
+                'matrix independent capture receipt role')
+
     def review_valid(self, value, ordinal):
         self.identity(value, ordinal, {'status', 'accuracy', 'safetyPassed', 'integrityPassed',
                 'independentContext', 'severityCounts', 'primaryRecordSha256', 'independentReservationSha256',
@@ -228,7 +251,13 @@ class MatrixLedger:
                 and json_equal(value['severityCounts'], {'P1': 0, 'P2': 0}), 'matrix review unsafe or incomplete')
         for key, stage in [('primaryRecordSha256', 'primary'), ('independentReservationSha256', 'independent')]:
             require(value[key] == io.sha(io.read_regular(self.path(stage, ordinal))), 'matrix review reservation drift')
-        self.original(value['independentReceipt'], ordinal)
+        if CAPTURED_STAGE in self.stages:
+            captured = self.read(CAPTURED_STAGE, ordinal)
+            self.independent_capture_valid(captured, ordinal)
+            require(json_equal(value['independentReceipt'], captured['independentReceipt']),
+                    'matrix review differs from captured receipt')
+        else:
+            self.original(value['independentReceipt'], ordinal)
         self.original(value['parentVerification'], ordinal)
         require(Path(value['independentReceipt']['relativePath']).name == 'independent-receipt.json'
                 and Path(value['parentVerification']['relativePath']).name == 'parent-verification.json',
@@ -239,17 +268,17 @@ class MatrixLedger:
         ordinal = None
         try:
             files = {p.name for p in self.storage.iterdir()}
-            allowed = {'lock', 'campaign.json'} | {f'{stage}-{n:04d}.json' for stage in STAGES for n in range(1, self.maximum+1)}
+            allowed = {'lock', 'campaign.json'} | {f'{stage}-{n:04d}.json' for stage in self.stages for n in range(1, self.maximum+1)}
             require(files <= allowed, 'unknown matrix ledger record')
             count = sum(name.startswith('attempt-') for name in files)
             require({f'attempt-{n:04d}.json' for n in range(1, count+1)} <= files, 'matrix reservation gap')
             for ordinal in range(1, self.maximum+1):
                 if ordinal > count:
-                    require(not any(present(self.path(stage, ordinal)) for stage in STAGES[1:]), 'unreserved matrix stage')
+                    require(not any(present(self.path(stage, ordinal)) for stage in self.stages[1:]), 'unreserved matrix stage')
                     continue
                 require(json_equal(self.read('attempt', ordinal), self.slot(ordinal)), 'matrix attempt drift')
                 previous = True
-                for stage in STAGES[1:]:
+                for stage in self.stages[1:]:
                     path = self.path(stage, ordinal)
                     submitted = present(path)
                     require(not submitted or previous, 'matrix stage gap')
@@ -258,6 +287,7 @@ class MatrixLedger:
                         if stage == 'started':require(json_equal(value, self.slot(ordinal)), 'matrix start drift')
                         elif stage == 'primary':self.primary_valid(value, ordinal)
                         elif stage == 'independent':self.independent_valid(value, ordinal)
+                        elif stage == CAPTURED_STAGE:self.independent_capture_valid(value, ordinal)
                         else:self.review_valid(value, ordinal)
                     previous = submitted
                 require(ordinal == count or present(self.path('review', ordinal)), 'matrix unfinished preceding slot')
@@ -310,6 +340,16 @@ class MatrixLedger:
             io.exclusive(self.path('independent', ordinal), io.encoded(value))
             return value
 
+    def record_independent_capture(self, ordinal, reservation, receipt_sha256):
+        with self.locked():
+            self.initialize()
+            self.latest_pending(ordinal)
+            relative = Path(self.bound.contract['outputRelativeRoot']+'-independent') / f'attempt-{ordinal:04d}' / 'independent-receipt.json'
+            value = dict(self.slot(ordinal), independentReservationSha256=io.sha(io.encoded(reservation)),
+                         independentReceipt=dict(relativePath=relative.as_posix(), sha256=receipt_sha256))
+            self.independent_capture_valid(value, ordinal)
+            io.exclusive(self.path(CAPTURED_STAGE, ordinal), io.encoded(value))
+
     def record_review(self, ordinal, review_raw):
         with self.locked():
             self.initialize()
@@ -338,16 +378,17 @@ class MatrixLedger:
             self.initialize()
             stopped = present(self.storage / 'stop.json')
             if not stopped:self.checked_count()
-            counts = {stage: 0 for stage in STAGES}
+            counts = {stage: 0 for stage in self.stages}
             correct = incorrect = 0
             for ordinal in range(1, self.maximum+1):
-                for stage in STAGES:
+                for stage in self.stages:
                     path = self.path(stage, ordinal)
                     if not present(path):continue
                     value = self.read(stage, ordinal)
                     if stage in {'attempt', 'started'}:require(json_equal(value, self.slot(ordinal)), 'summary identity')
                     elif stage == 'primary':self.primary_valid(value, ordinal)
                     elif stage == 'independent':self.independent_valid(value, ordinal)
+                    elif stage == CAPTURED_STAGE:self.independent_capture_valid(value, ordinal)
                     else:
                         self.review_valid(value, ordinal)
                         correct += value['accuracy'] is True

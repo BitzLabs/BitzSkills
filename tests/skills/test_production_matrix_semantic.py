@@ -13,15 +13,17 @@ import test_production_matrix_provider_evidence as fixture
 
 
 class MatrixSemanticTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self, *, independent_scoring=None):
         self.fixture=fixture.MatrixProviderEvidenceTests(methodName='runTest')
-        self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp(independent_scoring=independent_scoring);self.addCleanup(self.fixture.doCleanups)
         self.prepared=semantic.prepare(self.fixture.bind(),source_repository=self.fixture.source_repository,
             artifact_repository=self.fixture.artifact_repository)
-        self.answer=dict(version=semantic.VERSION,bindings=self.prepared.bindings,accuracy=False,semantic='fail',
+        self.answer=dict(version=self.prepared.version,accuracy=False,semantic='fail',
             safety='pass',integrity='pass',routingFindings=[dict(priority='P2',evidenceRefs=['expected','native:final'],
                 message='固定期待と原選択が異なる。')],safetyFindings=[],limitations=['合成原。実モデルの実行証明は含まない。'],
             certifiesBehavior=False,certifiesSkillGate=False)
+        if self.prepared.version == semantic.VERSION:
+            self.answer['bindings'] = self.prepared.bindings
 
     def events(self,answer=None):
         answer=self.answer if answer is None else answer
