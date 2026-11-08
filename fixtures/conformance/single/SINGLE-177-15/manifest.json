@@ -1,0 +1,44 @@
+{
+  "fixtureId": "SINGLE-177-15",
+  "description": "基準版のIDが現在版の別のパスにあれば、元のパスに壊れたファイルがあっても、IDで対応付けて承認済み要求の保護と影響候補を返す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/REQ-001-broken.md"
+      },
+      {
+        "op": "create",
+        "path": ".spec/requirements/REQ-001-moved.md",
+        "source": "changes/REQ-001-moved.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

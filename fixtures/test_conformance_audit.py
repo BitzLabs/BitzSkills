@@ -14597,11 +14597,11 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
 
     def test_duplicate_closure_fixtures(self):
-        """`SINGLE-177-01`〜`13`と`MULTI-065-01`〜`08`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""
+        """`SINGLE-177-01`〜`17`と`MULTI-065-01`〜`08`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""
         module = duplicate_closure_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [*(f"SINGLE-177-{number:02d}" for number in range(1, 14)), *(f"MULTI-065-{number:02d}" for number in range(1, 9))])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-177-{number:02d}" for number in range(1, 18)), *(f"MULTI-065-{number:02d}" for number in range(1, 9))])
         self.assertEqual(result["setups_per_fixture"], 2)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -14665,7 +14665,21 @@ class AuditTests(unittest.TestCase):
             self.assertIn("SPEC-FM-SCHEMA-001", found, identifier)
             self.assertNotIn("SPEC-STATE-TRANSITION-001", found, identifier)
             self.assertNotIn("SPEC-IMPACT-OUTDATED-001", found, identifier)
-        self.assertEqual(codes(load("SINGLE-177-10", "check")), ["SPEC-FM-SCHEMA-001"])
+        # 引数なしのcheckは、IDを読めない文書を基準版のIDの所有文書として数え、その文書への直接の逆参照（TECH-001）も検査する。
+        self.assertEqual(codes(load("SINGLE-177-10", "check")), ["SPEC-FM-SCHEMA-001", "SPEC-RELATION-MISSING-001"])
+        self.assertEqual(load("SINGLE-177-10", "check")["selection"], {"changedPathCount": 1, "targetDocumentCount": 1, "excludedCodeTestPathCount": 0})
+        # 基準版にない新規のファイルは所有文書を持たない。
+        self.assertEqual(codes(load("SINGLE-177-14", "check")), ["SPEC-FM-SCHEMA-001"])
+        self.assertEqual(load("SINGLE-177-14", "check")["selection"], {"changedPathCount": 1, "targetDocumentCount": 0, "excludedCodeTestPathCount": 0})
+        # 基準版のIDが別のパスにあれば、IDで対応付けて比べる（削除を返さず、承認済み要求の保護と影響候補を返す）。
+        moved = load("SINGLE-177-15", "check")
+        self.assertEqual([(d["code"], d["source"]["path"]) for d in moved["diagnostics"]], [
+            ("SPEC-SAFETY-APPROVED-001", ".spec/requirements/REQ-001-moved.md"), ("SPEC-FM-SCHEMA-001", ".spec/requirements/REQ-001.md"),
+            ("SPEC-IMPACT-OUTDATED-001", ".spec/technical/TECH-001.md")])
+        # 置換の旧文書の重複は、requiresの参照先の重複（SINGLE-177-06）と同じ形で返す。
+        self.assertEqual(codes(load("SINGLE-177-16", "context")), [duplicate, "SPEC-RELATION-MISSING-001"])
+        self.assertEqual(codes(load("SINGLE-177-17", "verify")), [duplicate, "SPEC-RELATION-MISSING-001"])
+        self.assertEqual(load("SINGLE-177-16", "context")["resolution"]["unresolvedStrongRelations"], 1)
         self.assertEqual(codes(load("SINGLE-177-12", "check")), ["SPEC-FM-SCHEMA-001", "SPEC-STATE-TRANSITION-001", "SPEC-IMPACT-OUTDATED-001"])
         self.assertEqual(codes(load("SINGLE-177-13", "check")), ["SPEC-IMPACT-OUTDATED-001"])
 
@@ -14694,6 +14708,9 @@ class AuditTests(unittest.TestCase):
                    "TECH-007": doc("TECH-007"), "TECH-007-copy": doc("TECH-007"), "TECH-006": doc("TECH-006"), "TECH-006-copy": doc("TECH-006")}
         self.assertEqual(module.reference_duplicates(tree(**forward), root), {("root", "TECH-006"), ("root", "TECH-007")})
         self.assertEqual(module.reference_duplicates(tree(**base), ("root", "TECH-002")), {("root", "TECH-002")})
+        # 置換の旧文書（起点が`supersedes`で置き換える先）。
+        old = {"TECH-001": doc("TECH-001", supersedes=["TECH-011"]), "TECH-011": doc("TECH-011"), "TECH-011-copy": doc("TECH-011")}
+        self.assertEqual(module.reference_duplicates(tree(**old), root), {("root", "TECH-011")})
         # 置換の後継。
         successor = {"TECH-001": doc("TECH-001"), "TECH-008": doc("TECH-008", supersedes=["TECH-001"]), "TECH-008-copy": doc("TECH-008")}
         self.assertEqual(module.reference_duplicates(tree(**successor), root), {("root", "TECH-008")})
