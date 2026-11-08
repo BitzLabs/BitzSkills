@@ -60,7 +60,7 @@ def native(originals, manifest_raw, catalog_raw, schema_raw, *, cwd,path_policy=
     return dict(native=result,rawNotificationsValueSha256=sdk.digest(raw),rawNotificationCount=len(raw))
 
 
-def correlate_rollout(originals,native_result,context_profile_raw,receipt_raw,receipt_sha256,seconds):
+def correlate_rollout(originals,native_result,context_profile_raw,receipt_raw,receipt_sha256,seconds,*,observe_date=False):
     require(io.sha(receipt_raw)==io.pin(receipt_sha256),'consumed elapsed receipt hash drift')
     require(trace.json_equal(seconds,trace.strict_json(receipt_raw).get('elapsedSeconds')),'consumed elapsed receipt value drift')
     require(type(seconds) in {int,float} and seconds>=0 and (type(seconds) is int or math.isfinite(seconds)),
@@ -75,4 +75,4 @@ def correlate_rollout(originals,native_result,context_profile_raw,receipt_raw,re
     payloads={name.removeprefix(prefix):raw for name,raw in originals.items() if name.startswith(prefix+'payloads/')}
     return rollout.correlate(originals[prefix+'manifest.json'],originals[prefix+'trace.jsonl'],payloads,
         json_lines(originals['rpc-in.jsonl']),json_lines(originals['rpc-out.jsonl']),native_result,
-        trace.strict_json(context_profile_raw),host_events=json_lines(originals.get('host.jsonl',b''),empty=True),capture_elapsed_ms=elapsed_ms)
+        trace.strict_json(context_profile_raw),host_events=json_lines(originals.get('host.jsonl',b''),empty=True),capture_elapsed_ms=elapsed_ms,observe_date=observe_date)

@@ -199,7 +199,7 @@ def _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, *, ca
     context_raw = originals[inventory.CONTEXT]
     context = capture.context_profile(context_raw, d)
     today = datetime.now(ZoneInfo('Asia/Tokyo')).date().isoformat()
-    if calibration_only:
+    if calibration_only or bound.contract.get('continuationPolicy') == matrix.CONTINUATION_POLICY:
         require(context['date'] <= today, 'matrix reference context date is in future')
     else:
         require(context['date'] == today, 'matrix calibrated context date differs')

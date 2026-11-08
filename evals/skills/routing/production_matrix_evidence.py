@@ -105,7 +105,8 @@ def verify_complete(context):
     native = primary.native(context.originals, context.manifest_raw, catalog_raw, context.schema_raw,
                             cwd=receipt['cwd'],path_policy='six-skill')
     rollout = primary.correlate_rollout(context.originals, native['native'], context.context_raw,
-                                       context.receipt_raw, io.sha(context.receipt_raw), receipt['elapsedSeconds'])
+                                       context.receipt_raw, io.sha(context.receipt_raw), receipt['elapsedSeconds'],
+                                       observe_date=context.bound.contract.get('continuationPolicy') == matrix.CONTINUATION_POLICY)
     return dict(status='matrix_original_bytes_and_native_correlated', slot=context.bound.slot(context.ordinal),
         receiptSha256=io.sha(context.receipt_raw), artifactSha256=receipt['artifactSha256'], **native, rollout=rollout,
         originalInputMatched=True, rawPayloadCorrelationVerified=True, sourceRuntimeOnDiskVerified=False,
