@@ -578,6 +578,7 @@ def _process_single_target(
     digest_fn,
     resolved_commands_for,
     test_check,
+    config_for,
     cycle_diagnostics_for=None,
 ) -> tuple[dict, list[tuple[str, str, str, str, str, int]]]:
     """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
@@ -588,6 +589,9 @@ def _process_single_target(
     ``entry_out``はテスト割当ての実行前の中間の形で、``bindingRefs``に必要なテスト割当てを列挙し、
     ``_needed``（``(ws, name)``の集合）を一時的なフィールドとして持つ（呼び出し側がテスト割当ての停止（`blocked`）や
     実行結果を反映した後に取り除く）。
+
+    ``config_for``は、ワークスペースのIDから設定を返す関数で、完全な閉包の上限（`context.maxDocuments`・`context.maxBytes`）を
+    起点を所有するワークスペースの設定で判定するために使う（`bitz verify`仕様 §4の1.）。
     """
 
     entry_out: dict = {
@@ -673,6 +677,19 @@ def _process_single_target(
 
     if relation_error_diags:
         _finish(relation_error_diags)
+        return entry_out, needed_pairs
+
+    # 完全な閉包の上限（`bitz verify`仕様 §4の1.。`context` §8と同じ規則）。関係の診断の後、カバレッジの前に判定する。
+    # 上限で止まる結果は、`related`の参照切れの警告を加えず（§9。`context` §10と同じ）、`contextDigest: null`、`bindingRefs: []`で、
+    # テストを起動しない。
+    root_owner = context_mod._owner_of(expansion.root_documents[0], workspace_id) if multi_active else workspace_id
+    limit_summary = context_mod.closure_limit_summary(expansion, id_index, config_for(root_owner))
+    if limit_summary is not None:
+        limit_diag = _file_diag(
+            "CTX-LIMIT-001", "error", "blocked", limit_summary, root_owner, id_index[expansion.root_documents[0]].path
+        )
+        entry_out["diagnostics"] = [limit_diag]
+        entry_out["status"] = "blocked"
         return entry_out, needed_pairs
 
     target_statements = expansion.target_statements
@@ -1297,6 +1314,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
             multi_active=multi_active, invalid_by_ws=None,
             digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
+            config_for=_config_for,
             cycle_diagnostics_for=cycle_diagnostics_for,
         )
         target_entries.append(entry_out)
@@ -1492,6 +1510,7 @@ def _run_all_workspaces_members(
                 local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices,
                 multi_active=True, invalid_by_ws=invalid_by_ws,
                 digest_fn=digest_fn, resolved_commands_for=_resolved_commands_for, test_check=test_check,
+                config_for=lambda w: config_by_ws[w],
                 cycle_diagnostics_for=cycle_diagnostics_for,
             )
             per_ws_target_entries[wid].append(entry_out)

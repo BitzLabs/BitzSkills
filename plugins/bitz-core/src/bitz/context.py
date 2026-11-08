@@ -395,6 +395,121 @@ def _merge_expansions(
     return merged
 
 
+def assign_roles(expansion: targetexpand.TargetExpansionResult, id_index: dict[str, DocEntry]) -> dict[str, str]:
+    """閉包の各文書の役割（`bitz context`仕様 §7）を割り当てる。`context`と`verify`の上限検査が共有する。"""
+
+    root_id_set = set(expansion.root_documents)
+    superseded_origin_id, superseded_successor_id = (
+        expansion.superseded_origin if expansion.superseded_origin is not None else (None, None)
+    )
+    roles: dict[str, str] = {}
+    for doc_id in expansion.context_documents:
+        entry = id_index[doc_id]
+        if doc_id == superseded_origin_id:
+            # §6.1「5.」: 置換済みの起点は、役割を`root`から`advisory`へ差し替える。
+            roles[doc_id] = "advisory"
+        elif doc_id == superseded_successor_id:
+            roles[doc_id] = "replacement"
+        elif doc_id in root_id_set:
+            roles[doc_id] = "root"
+        elif doc_id in expansion.draft_advisory:
+            roles[doc_id] = "advisory"
+        elif entry.kind == "TASK":
+            roles[doc_id] = "work"
+        else:
+            edge_relations = {rel for rel, _src in expansion.document_edges.get(doc_id, [])}
+            if "refines" in edge_relations:
+                roles[doc_id] = "refinement"
+            elif entry.kind == "REQ":
+                roles[doc_id] = "requirement"
+            else:
+                roles[doc_id] = "constraint"
+    return roles
+
+
+def projection_for(
+    doc_id: str,
+    use_detail: str,
+    roles: dict[str, str],
+    expansion: targetexpand.TargetExpansionResult,
+    id_index: dict[str, DocEntry],
+) -> str:
+    """文書の提示形式（`full`・`normative`・`reference`、`bitz context`仕様 §5）を返す。`context`と`verify`の上限検査が共有する。"""
+
+    if use_detail == "full":
+        return "full"
+    if use_detail == "compact":
+        return "reference"
+    role = roles[doc_id]
+    if role == "advisory":
+        return "reference"
+    # 提示形式`full`にするのは、起点・TASK（役割`work`）・役割`replacement`・役割`requirement`・役割`constraint`の文書と、
+    # それら以外の距離1の文書（`bitz context`仕様 §5）。役割`requirement`・`constraint`の文書を距離で
+    # 提示形式`normative`へ落とさないのは、`requires`・`addresses`で到達したそれらの規範文が
+    # `targetStatements`へ昇格せず制約台帳へ収録されないため（ADR-014の`Decision` 4）。
+    if role in ("root", "work", "replacement", "requirement", "constraint"):
+        return "full"
+    if expansion.document_distance.get(doc_id, 0) <= 1:
+        return "full"
+    # 提示形式`normative`は本文を省き、規範文を制約台帳だけに残す。所有する規範文が1件でも対象規範文（制約台帳）にない
+    # 文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも失われる（ADR-014の`Decision`の4番目の項目）。
+    # そのため、`normative`にできるのは、所有する規範文がすべて対象規範文に含まれる具体化文書だけとする（`bitz context`仕様 §5）。
+    # 他のワークスペースの文書の規範文は、対象規範文と同じ`ws::local`の表現にそろえて比べる。
+    if role == "refinement" and _statements_in_ledger(doc_id, expansion, id_index):
+        return "normative"
+    return "full"
+
+
+def _statements_in_ledger(
+    doc_id: str, expansion: targetexpand.TargetExpansionResult, id_index: dict[str, DocEntry]
+) -> bool:
+    entry = id_index[doc_id]
+    prefix = doc_id.partition("::")[0] if "::" in doc_id else None
+    target_statement_set = set(expansion.target_statements)
+    return all(
+        (f"{prefix}::{stmt['id']}" if prefix is not None else stmt["id"]) in target_statement_set
+        for stmt in entry.statements
+    )
+
+
+def closure_limit_summary(
+    expansion: targetexpand.TargetExpansionResult,
+    id_index: dict[str, DocEntry],
+    config_raw: dict,
+    *,
+    body_texts: dict[str, str] | None = None,
+) -> str | None:
+    """完全な閉包が上限（`bitz context`仕様 §8）を超えていれば、診断`CTX-LIMIT-001`の`summary`を返し、超えていなければ``None``を返す。
+
+    上限は起点を所有するワークスペースの設定（``config_raw``の`context.maxDocuments`・`context.maxBytes`、絶対上限で頭打ち）、
+    バイト数は詳細度`standard`の提示で測る（既定・設定・`--detail`に依存しない基準）。`context`と`verify`が共有する
+    （`bitz verify`仕様 §4の1.）。``body_texts``は正規化した本文（``doc_id``ごと）で、省略すると必要な文書だけを求める。
+    """
+
+    context_documents = expansion.context_documents
+    ctx_cfg = config_raw.get("context") or {}
+    max_documents = min(ctx_cfg.get("maxDocuments", DEFAULT_MAX_DOCUMENTS), HARD_MAX_DOCUMENTS)
+    max_bytes = min(ctx_cfg.get("maxBytes", DEFAULT_MAX_BYTES), HARD_MAX_BYTES)
+    if len(context_documents) > max_documents:
+        return messages.CTX_LIMIT_DOCUMENTS
+
+    roles = assign_roles(expansion, id_index)
+
+    def _body(doc_id: str) -> str:
+        if body_texts is not None:
+            return body_texts[doc_id]
+        return digest_mod.normalize_body_text(id_index[doc_id].body or "")
+
+    standard_bytes = sum(
+        len(_body(d).encode("utf-8"))
+        for d in context_documents
+        if projection_for(d, "standard", roles, expansion, id_index) == "full"
+    )
+    if standard_bytes > max_bytes:
+        return messages.CTX_LIMIT_BYTES
+    return None
+
+
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     """`bitz context`を実行する。設定の警告（`SPEC-CONFIG-UNKNOWN-001`、`SPEC-INPUT-BOM-001`。診断レジストリで全操作の
     `continue`）は、どの結果にも加える（設定を解釈できず停止した結果は、停止の経路で警告も返す）。"""
@@ -673,79 +788,18 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         doc_id: digest_mod.normalize_body_text(id_index[doc_id].body or "") for doc_id in context_documents
     }
 
-    # --- 役割の割当て（§7） ----------------------------------------------------
+    # --- 役割の割当て（§7）、上限検査（§8） ----------------------------------------
     root_id_set = set(expansion.root_documents)
-    superseded_origin_id, superseded_successor_id = (
-        expansion.superseded_origin if expansion.superseded_origin is not None else (None, None)
-    )
-    roles: dict[str, str] = {}
-    for doc_id in context_documents:
-        entry = id_index[doc_id]
-        if doc_id == superseded_origin_id:
-            # §6.1「5.」: 置換済みの起点は、役割を`root`から`advisory`へ差し替える。
-            roles[doc_id] = "advisory"
-        elif doc_id == superseded_successor_id:
-            roles[doc_id] = "replacement"
-        elif doc_id in root_id_set:
-            roles[doc_id] = "root"
-        elif doc_id in expansion.draft_advisory:
-            roles[doc_id] = "advisory"
-        elif entry.kind == "TASK":
-            roles[doc_id] = "work"
-        else:
-            edge_relations = {rel for rel, _src in expansion.document_edges.get(doc_id, [])}
-            if "refines" in edge_relations:
-                roles[doc_id] = "refinement"
-            elif entry.kind == "REQ":
-                roles[doc_id] = "requirement"
-            else:
-                roles[doc_id] = "constraint"
-
-    # 提示形式`normative`は本文を省き、規範文を制約台帳だけに残す。所有する規範文が1件でも対象規範文（制約台帳）にない
-    # 文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも失われる（ADR-014の`Decision`の4番目の項目）。
-    # そのため、`normative`にできるのは、所有する規範文がすべて対象規範文に含まれる具体化文書だけとする（`bitz context`仕様 §5）。
-    # 他のワークスペースの文書の規範文は、対象規範文と同じ`ws::local`の表現にそろえて比べる。
-    target_statement_set = set(expansion.target_statements)
-
-    def _statements_in_ledger(doc_id: str) -> bool:
-        entry = id_index[doc_id]
-        prefix = doc_id.partition("::")[0] if "::" in doc_id else None
-        return all(
-            (f"{prefix}::{stmt['id']}" if prefix is not None else stmt["id"]) in target_statement_set
-            for stmt in entry.statements
-        )
+    roles = assign_roles(expansion, id_index)
 
     def _projection_for(doc_id: str, use_detail: str) -> str:
-        if use_detail == "full":
-            return "full"
-        if use_detail == "compact":
-            return "reference"
-        role = roles[doc_id]
-        if role == "advisory":
-            return "reference"
-        # 提示形式`full`にするのは、起点・TASK（役割`work`）・役割`replacement`・役割`requirement`・役割`constraint`の文書と、
-        # それら以外の距離1の文書（`bitz context`仕様 §5）。役割`requirement`・`constraint`の文書を距離で
-        # 提示形式`normative`へ落とさないのは、`requires`・`addresses`で到達したそれらの規範文が
-        # `targetStatements`へ昇格せず制約台帳へ収録されないため（ADR-014の`Decision` 4）。
-        if role in ("root", "work", "replacement", "requirement", "constraint"):
-            return "full"
-        if expansion.document_distance.get(doc_id, 0) <= 1:
-            return "full"
-        if role == "refinement" and _statements_in_ledger(doc_id):
-            return "normative"
-        return "full"
+        return projection_for(doc_id, use_detail, roles, expansion, id_index)
 
-    # --- 上限検査（§8）。閉包の規模は、詳細度`standard`での提示量（既定・設定に依存しない基準）で測る。 ---
-    ctx_cfg = config_raw.get("context") or {}
-    max_documents = min(ctx_cfg.get("maxDocuments", DEFAULT_MAX_DOCUMENTS), HARD_MAX_DOCUMENTS)
-    max_bytes = min(ctx_cfg.get("maxBytes", DEFAULT_MAX_BYTES), HARD_MAX_BYTES)
+    # 閉包の規模は、詳細度`standard`での提示量（既定・設定に依存しない基準）で測る。
+    limit_summary = closure_limit_summary(expansion, id_index, config_raw, body_texts=body_texts)
 
-    standard_bytes = sum(
-        len(body_texts[d].encode("utf-8")) for d in context_documents if _projection_for(d, "standard") == "full"
-    )
-
-    if len(context_documents) > max_documents or standard_bytes > max_bytes:
-        summary = messages.CTX_LIMIT_DOCUMENTS if len(context_documents) > max_documents else messages.CTX_LIMIT_BYTES
+    if limit_summary is not None:
+        summary = limit_summary
         root_owner = _owner_of(expansion.root_documents[0], workspace_id) if multi_active else workspace_id
         root_path = id_index[expansion.root_documents[0]].path
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out, revision=revision)
@@ -1013,6 +1067,7 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             }
         )
 
+    ctx_cfg = config_raw.get("context") or {}
     digest_materials = {
         "digestVersion": digest_mod.DIGEST_VERSION,
         "specSchemaVersion": str(config_raw.get("schemaVersion", "1.0")),
