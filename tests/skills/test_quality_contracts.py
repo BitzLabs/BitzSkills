@@ -101,6 +101,70 @@ class QualityContractTests(unittest.TestCase):
         value["flow"] = "full"
         self.assertEqual([], quality.validate("plan", value))
 
+    def partial_risk_plan(self, minimum="Q3"):
+        value = example("local-change-plan.json")
+        value["risk"]["band"] = None
+        for area in value["risk"]["areas"].values():
+            area.update(minimumBand=None, rationale="未確認の合成入力", openQuestions=["根拠の確認"])
+        value["risk"]["areas"]["security"].update(minimumBand=minimum, rationale="合成一次資料で申告された下限")
+        value.update(planningStatus="needs_information", flow="full", independentReviewPlanned=True)
+        return value
+
+    def test_known_minimum_with_unknown_overall_retains_obligations_without_assigning_band(self):
+        value = self.partial_risk_plan()
+        original = copy.deepcopy(value)
+        self.assertEqual([], quality.validate("plan", value))
+        self.assertEqual(original, value)
+        self.assertIsNone(value["risk"]["band"])
+        self.assertEqual("Q3", value["risk"]["areas"]["security"]["minimumBand"])
+        self.assertIsNone(value["risk"]["areas"]["data"]["minimumBand"])
+        self.assertTrue(value["humanDecisionPending"])
+
+    def test_known_high_minimum_requires_review_while_overall_is_unknown(self):
+        for minimum in ("Q2", "Q3"):
+            for status in ("needs_information", "blocked"):
+                value = self.partial_risk_plan(minimum)
+                value.update(independentReviewPlanned=False, planningStatus=status)
+                with self.subTest(minimum=minimum, status=status):
+                    self.assert_invalid("plan", value, "independent")
+
+    def test_known_high_minimum_requires_full_or_isolated_spike_while_overall_is_unknown(self):
+        for minimum in ("Q2", "Q3"):
+            for flow in (None, "simple"):
+                value = self.partial_risk_plan(minimum)
+                value["flow"] = flow
+                with self.subTest(minimum=minimum, flow=flow):
+                    self.assert_invalid("plan", value, "full flow")
+            for flow in ("full", "spike"):
+                value = self.partial_risk_plan(minimum)
+                value["flow"] = flow
+                with self.subTest(minimum=minimum, flow=flow):
+                    self.assertEqual([], quality.validate("plan", value))
+
+    def test_unknown_risk_or_security_words_do_not_invent_a_minimum(self):
+        value = self.partial_risk_plan(None)
+        value.update(flow=None, independentReviewPlanned=False)
+        value["risk"]["areas"]["security"]["rationale"] = "資格情報とコマンド実行は質問の候補であり変更範囲は未確認"
+        self.assertEqual([], quality.validate("plan", value))
+        self.assertTrue(all(area["minimumBand"] is None for area in value["risk"]["areas"].values()))
+        value["planningStatus"] = "proposed"
+        self.assert_invalid("plan", value, "unknown risk")
+
+    def test_known_low_minimum_does_not_force_high_risk_requirements(self):
+        value = self.partial_risk_plan("Q1")
+        value.update(flow=None, independentReviewPlanned=False)
+        self.assertEqual([], quality.validate("plan", value))
+        self.assertIsNone(value["risk"]["band"])
+
+    def test_explicit_overall_downgrade_still_requires_human_approval_record(self):
+        value = self.partial_risk_plan()
+        value["risk"]["band"] = "Q1"
+        value.update(flow="simple", independentReviewPlanned=False)
+        self.assert_invalid("plan", value, "downgrade")
+        value["risk"]["downgradeApproval"] = {"reason": "合成の再評価理由", "approvedBy": "synthetic human", "approvalReference": "synthetic-only"}
+        self.assertEqual([], quality.validate("plan", value))
+        self.assertEqual("Q3", value["risk"]["areas"]["security"]["minimumBand"])
+
     def test_all_evidence_cannot_be_demoted_to_recommended(self):
         value = example("local-change-plan.json")
         for item in value["evidencePlan"]:
