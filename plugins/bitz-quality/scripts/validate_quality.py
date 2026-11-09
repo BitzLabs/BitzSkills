@@ -56,11 +56,14 @@ def validate_plan(document: dict) -> list[str]:
     if band is None or any(a["minimumBand"] is None for a in areas):
         if document["planningStatus"] == "proposed":
             errors.append("unknown risk needs information or blocked status")
+    minimum = max((BANDS[a["minimumBand"]] for a in areas if a["minimumBand"] is not None), default=0)
     if band is not None:
-        minimum = max((BANDS[a["minimumBand"]] for a in areas if a["minimumBand"] is not None), default=0)
         if BANDS[band] < minimum and risk["downgradeApproval"] is None:
             errors.append("risk downgrade requires explicit human approval record")
-    if band in {"Q2", "Q3"}:
+    # 未確定な全体分類でも、既に申告された観点の下限による義務は保持する。
+    # 根拠の真偽を推論せず、確定帯を承認付きで下げる既存契約は変更しない。
+    review_level = minimum if band is None else BANDS[band]
+    if review_level >= BANDS["Q2"]:
         if not document["independentReviewPlanned"]:
             errors.append("Q2/Q3 require independent quality review plan")
         if document["flow"] not in {"full", "spike"}:
