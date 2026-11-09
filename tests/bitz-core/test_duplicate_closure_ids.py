@@ -340,6 +340,32 @@ class SingleWorkspaceTests(_Base):
             self.assertEqual(entry["diagnostics"], [dup_diag(f"TECH-{number}", self.first_path("technical", f"TECH-{number}"))], entry["target"])
         self.assertLessEqual(spy.call_count, (count + 1) * 3)
 
+    def test_verify_with_a_shared_refined_document_does_not_rebuild_every_closure(self):
+        """性能（確認事項C112）: 共通のREQを多数の文書が`refines`し、その具体化文書に重複がある構成で、重複は起点から辿り着けるものだけを試す。
+
+        閉包は、下方向の出発点から具体化を辿り、そこから上方向へ依存を辿る（ADR-071）。具体化文書を起点にしたとき、共通のREQへ上がっても、
+        同じREQを`refines`する兄弟の文書（重複した写しを含む）へ下りない。共通のREQを起点にしたときだけ、すべての具体化文書の重複を返す。
+        """
+
+        count = 30
+        files = {".spec/requirements/REQ-900.md": _req("REQ-900")}
+        for number in range(1, count + 1):
+            files[f".spec/requirements/REQ-{number:03d}.md"] = _req(f"REQ-{number:03d}", refines=["REQ-900"])
+            files.update(self.duplicated("technical", f"TECH-{number:03d}", _tech(f"TECH-{number:03d}", refines=["REQ-900"])))
+        self.build(files)
+        real = targetexpand.target_expansion
+        with mock.patch.object(targetexpand, "target_expansion", wraps=real) as spy:
+            result = self.run_op(verify_mod, "verify")
+        by_target = {entry["target"]: entry["diagnostics"] for entry in result["targetResults"]}
+        self.assertEqual(
+            by_target["REQ-900"],
+            [dup_diag(f"TECH-{n:03d}", self.first_path("technical", f"TECH-{n:03d}")) for n in range(1, count + 1)],
+        )
+        for number in range(1, count + 1):
+            self.assertEqual(by_target[f"REQ-{number:03d}"], [], number)
+        # 検証対象ごとに基準の1回。共通のREQを起点にしたときだけ、写し2つ分の仮の索引で試す（全重複を全対象で試すと(count + 1) * (1 + count * 2)回になる）。
+        self.assertLessEqual(spy.call_count, (count + 1) + count * 2)
+
     def test_implement_traverses_the_open_task_that_addresses_a_target_statement(self):
         """目的`implement`では、対象規範文を`addresses`する状態`open`のTASKが逆参照で閉包に入る。そのTASKのIDの重複を返す。"""
 
