@@ -1,0 +1,241 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TASK-001"
+  ],
+  "contextDigest": "sha256:d0e6fe8356b3d122505f2e48351c475e58c64f33822d78a6595e236527ed941a",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 8,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "root",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-001",
+        "title": "作業",
+        "status": "open",
+        "relations": {
+          "requires": [
+            "TASK-002"
+          ],
+          "addresses": [
+            "REQ-001:AC-01"
+          ]
+        }
+      },
+      "bodyText": "# TASK-001 作業\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "REQ-004"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TASK-002",
+      "kind": "task",
+      "status": "done",
+      "role": "work",
+      "path": ".spec/tasks/TASK-002.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TASK-001"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-002",
+        "title": "先行作業",
+        "status": "done",
+        "relations": {
+          "addresses": [
+            "REQ-009:AC-01"
+          ]
+        }
+      },
+      "bodyText": "# TASK-002 先行作業\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-004",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-004.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:REQ-001"
+      ],
+      "statementRefs": [
+        "REQ-004:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-004",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-004 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-004:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-009",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-009.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-002"
+      ],
+      "statementRefs": [
+        "REQ-009:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-009",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "REQ-008"
+          ]
+        }
+      },
+      "bodyText": "# REQ-009 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-009:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "statementRefs": [],
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-008",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-008.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:REQ-009"
+      ],
+      "statementRefs": [
+        "REQ-008:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-008",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-008 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-008:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-007",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-007.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TECH-002"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-007",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# TECH-007 文書\n\n## Context\n\n規範文を持たない。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

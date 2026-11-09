@@ -11,7 +11,7 @@
     {
       "target": "alpha::TECH-001",
       "status": "passed",
-      "contextDigest": "sha256:83ded5bc1d8eb10e0a50e3662101a433b9606627522be546d6cd210e01829f11",
+      "contextDigest": "sha256:52a6e7297feaad7def496aa04f056c2e5302c77ca62ca96eaeb7921ce3c9d641",
       "statements": [
         "alpha::TECH-001:C-01"
       ],

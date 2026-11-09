@@ -137,3 +137,11 @@ CoreのJSON出力、状態の判定、テスト割当て、コンテキストの
 `contractSha256`を新しい文書のハッシュ値（`0eac94dafdab7a86e59afd8254c6e2757e295fcfacf3be36a059239894bd4fa5`）へ更新した。
 
 同日、独立レビューの指摘で§5.1の重複の範囲を書き直したため、`contractSha256`を新しい文書のハッシュ値（`d5b88af4b001292b07ab27407a2bfb00309d9387321b21b545ec143ddc0900ef`）へ更新した。期待集合は変えない。
+
+2026-11-09: 関係・トレースモデル §6.1〜§6.3と§7を、ADR-071に従って書き直した（閉包を、下方向の出発点から具体化を辿り上方向へ依存を辿る到達可能性で定める。ユーザーの決定）ため、
+`contractSha256`が失効した。25ケースの期待集合を、新しい規則（下方向の出発点とその具体化文書をSとし、Sから`requires`・`refines`・`addresses`の参照先を終端まで辿る。
+TASKを起点にすると、`addresses`の参照先の所有文書を距離1の出発点にし、目的`verify`以外は起点のTASKの`requires`も辿る）で導き直した。
+変わったのは`BASIC-TASK-interpret`の1ケースだけで、`contextDocuments`が`TASK-001`だけから`TASK-001`と`addresses`の参照先を所有する`REQ-001`になった
+（目的`interpret`でTASKを起点にしても、`addresses`の参照先の所有文書を下方向の出発点として閉包に含める。ADR-051の期待値の訂正）。残りの24ケースの期待集合、
+`targetStatements`、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
+（`9319906d705640e52b6d19534c5df70b0febf184506fb39c09caf8dd4ec3873c`）へ更新した。参照計算（`target_vectors.py`の閉包の距離）も、この規則に書き直した。

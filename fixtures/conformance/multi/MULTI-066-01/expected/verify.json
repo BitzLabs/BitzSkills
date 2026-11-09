@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "alpha",
+    "path": "apps/alpha"
+  },
+  "targetResults": [
+    {
+      "target": "alpha::TECH-001",
+      "status": "passed",
+      "contextDigest": "sha256:0c2faa16ce6d5210706d2f16ec13db4c596fada38e9aa4bfce31e71267b4deb1",
+      "statements": [
+        "alpha::TECH-001:C-01"
+      ],
+      "bindingRefs": [
+        "alpha::t"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [
+    {
+      "bindingId": "alpha::t",
+      "workspaceId": "alpha",
+      "name": "t",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/t.py"
+      ],
+      "tests": [
+        "tests/t.py"
+      ],
+      "covers": [
+        "alpha::TECH-001:C-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

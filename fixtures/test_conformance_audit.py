@@ -110,6 +110,7 @@ from conformance import multi_all_workspaces_output_fixtures
 from conformance import verify_closure_limit_fixtures
 from conformance import duplicate_closure_fixtures
 from conformance import multi_closure_origin_fixtures
+from conformance import closure_reachability_fixtures, closure_reference
 from conformance.initial_fixtures import observe as observe_single
 
 
@@ -511,9 +512,10 @@ class AuditTests(unittest.TestCase):
         return result
 
     def test_reference_closure_starts_reverse_references_only_from_the_origin_document(self):
-        """参照計算Bの閉包は、逆参照の出発点を起点を所有する文書だけにし、`refines`の参照先の`requires`を辿らない
-        （関係・トレースモデル §6.1の3.・4.、実装の確認事項C91）。陽性対照（起点を`refines`する文書、推移的な具体化文書とその`requires`）と
-        陰性対照（`requires`で到達した文書、`refines`の参照先を`refines`する文書）を置く。Coreの閉包とも一致を確かめた入力である。"""
+        """参照計算Bの閉包は、逆参照の出発点を起点を所有する文書だけにし、上方向では`refines`の参照先の`requires`も辿る
+        （関係・トレースモデル §6.1、ADR-071 Decision 2、実装の確認事項C91）。陽性対照（起点を`refines`する文書、推移的な具体化文書とその`requires`、
+        `refines`の参照先の`requires`、具体化文書が`refines`する別の文書）と陰性対照（`requires`で到達した文書、`refines`の参照先を`refines`する文書）を置く。
+        Coreの閉包とも一致を確かめた入力である。"""
         approved = ("approved", {})
         closure = lambda documents, root, purpose: digest_crosscheck.closure(documents, root, purpose)
         # `requires`で到達した文書（REQ-002）を`refines`するTECH-001は含めず、起点を`refines`するTECH-002は含める。目的を問わない。
@@ -532,25 +534,31 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(closure(documents, "REQ-002", "interpret")[0], ["REQ-002", "TECH-001", "TECH-003"])
         # 起点が`refines`する側のとき、同じ文書を`refines`する別の文書は含めない（陰性対照）。
         self.assertEqual(closure(documents, "TECH-001", "interpret")[0], ["TECH-001", "REQ-002"])
-        # `refines`の参照先の`requires`は辿らない（§6.1の3.）。起点が参照先を所有する文書のときは辿る。
+        # `refines`の参照先の`requires`も上方向に辿る（ADR-071 Decision 2。以前の§6.1の3.をやめた）。起点が参照先を所有する文書のときは、具体化文書も含める。
         documents = self.closure_corpus(**{
             "REQ-001": ("approved", {"requires": ["REQ-002"]}), "REQ-002": approved, "TECH-001": ("approved", {"refines": ["REQ-001"]})})
-        self.assertEqual(closure(documents, "TECH-001", "interpret")[0], ["TECH-001", "REQ-001"])
+        self.assertEqual(closure(documents, "TECH-001", "interpret")[0], ["TECH-001", "REQ-001", "REQ-002"])
         self.assertEqual(closure(documents, "REQ-001", "interpret")[0], ["REQ-001", "REQ-002", "TECH-001"])
-        # 推移的な具体化文書と、その`requires`を含める（§6.1の4.）。具体化文書が`refines`する別の文書は含めない。
+        # 推移的な具体化文書と、その`requires`を含める。具体化文書が`refines`する別の文書（REQ-007）も上方向に含める。
         documents = self.closure_corpus(**{
             "REQ-001": approved, "REQ-007": approved, "REQ-009": approved,
             "TECH-002": ("approved", {"refines": ["REQ-001", "REQ-007"]}),
             "TECH-003": ("approved", {"refines": ["TECH-002"], "requires": ["REQ-009"]})})
-        self.assertEqual(closure(documents, "REQ-001", "interpret")[0], ["REQ-001", "TECH-002", "TECH-003", "REQ-009"])
-        # `requires`で到達した文書を`refines`する状態`draft`の文書は、目的`interpret`だけで役割`advisory`として保持する（§6.1の6.）。
+        self.assertEqual(closure(documents, "REQ-001", "interpret")[0], ["REQ-001", "TECH-002", "REQ-007", "TECH-003", "REQ-009"])
+        # 具体化文書が`refines`する別の文書（REQ-007）を具体化する兄弟の文書は、REQ-007が上方向に着いた文書なので含めない（陰性対照）。
+        documents["TECH-008"] = self.closure_corpus(**{"TECH-008": ("approved", {"refines": ["REQ-007"]})})["TECH-008"]
+        self.assertEqual(closure(documents, "REQ-001", "interpret")[0], ["REQ-001", "TECH-002", "REQ-007", "TECH-003", "REQ-009"])
+        # 下方向の出発点（S）の文書を`refines`する状態`draft`の文書だけが、目的`interpret`で役割`advisory`になる（ADR-071 Decision 2の3.）。
+        # `requires`で上方向に着いた文書（REQ-002）を`refines`する`draft`の文書は、閉包に入らない。
         documents = self.closure_corpus(**{
-            "REQ-001": ("approved", {"requires": ["REQ-002"]}), "REQ-002": approved, "TECH-005": ("draft", {"refines": ["REQ-002"]})})
+            "REQ-001": ("approved", {"requires": ["REQ-002"]}), "REQ-002": approved, "TECH-005": ("draft", {"refines": ["REQ-001"]}),
+            "TECH-006": ("draft", {"refines": ["REQ-002"]})})
         self.assertEqual(closure(documents, "REQ-001", "interpret"), (["REQ-001", "REQ-002", "TECH-005"], {"TECH-005"}))
         for purpose in ("implement", "verify"):
             self.assertEqual(closure(documents, "REQ-001", purpose), (["REQ-001", "REQ-002"], set()))
         # 状態`draft`以外の適用可能でない文書（`rejected`）が`requires`で到達した文書を`refines`する入力は、黙って捨てず拒否する。
-        documents["TECH-005"]["frontmatter"]["status"] = "rejected"
+        documents = self.closure_corpus(**{
+            "REQ-001": ("approved", {"requires": ["REQ-002"]}), "REQ-002": approved, "TECH-005": ("rejected", {"refines": ["REQ-002"]})})
         with self.assertRaisesRegex(ValueError, "閉包の外の強いエッジ"):
             closure(documents, "REQ-001", "verify")
         # TASKを起点にしたverifyは、`addresses`の参照先を所有する文書を起点を所有する文書とし、そこから同じ規則を適用する。
@@ -584,8 +592,8 @@ class AuditTests(unittest.TestCase):
                          ["TECH-009", "TECH-001", "TECH-002", "TASK-001"])
 
     def test_multi_reference_closure_starts_reverse_references_only_from_the_origin_document(self):
-        """複合ワークスペースの参照計算Bの閉包も、逆参照の出発点を起点を所有する文書だけにし、`refines`の参照先の`requires`を辿らない
-        （関係・トレースモデル §6.1の3.・4.、実装の確認事項C91）。`MULTI-059`の入力と、ワークスペースをまたぐ辺で確かめる。"""
+        """複合ワークスペースの参照計算Bの閉包も、逆参照の出発点を起点を所有する文書だけにし、上方向では`refines`の参照先の`requires`も辿る
+        （関係・トレースモデル §6.1、ADR-071 Decision 2、実装の確認事項C91）。`MULTI-059`の入力と、ワークスペースをまたぐ辺で確かめる。"""
         module = multi_closure_origin_fixtures
         for identifier, case in module.CASES.items():
             with self.subTest(identifier=identifier):
@@ -593,9 +601,12 @@ class AuditTests(unittest.TestCase):
                 for target in module.expected_targets(identifier):
                     selected = multi_crosscheck.closure(documents, target)[0]
                     self.assertEqual(selected, module.literal_closure(identifier, target))
-                    # 修正前の広い閉包は、欠陥の入力のある検証対象で異なる。
+                    # 修正前の広い閉包は、`MULTI-059-01`・`02`の欠陥の入力のある検証対象で異なる。ADR-071の前の狭い閉包は、`MULTI-059-03`で異なる。
                     wide = module.defective_closure(documents, target)
-                    self.assertEqual(wide != selected, (identifier, target) != ("MULTI-059-01", "zeta::REQ-001"), (identifier, target))
+                    self.assertEqual(wide != selected, (identifier, target) not in (
+                        ("MULTI-059-01", "zeta::REQ-001"), ("MULTI-059-03", "alpha::TECH-001"), ("MULTI-066-02", "zeta::REQ-001")), (identifier, target))
+                    if module.DETECT[identifier] == "narrow":
+                        self.assertNotEqual(module.narrow_closure(documents, target), selected)
         # 同じ`REQ`を2つのメンバーが具体化するとき、メンバーの文書を起点にした閉包は別のメンバーの文書を含まない。
         documents = multi_crosscheck.load_workspaces(audit.FIXTURES / "multi/MULTI-059-01/repo")[2]
         self.assertEqual(multi_crosscheck.closure(documents, "alpha::TECH-001")[0], ["alpha::TECH-001", "zeta::REQ-001"])
@@ -606,9 +617,9 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(multi_crosscheck.closure(documents, "zeta::REQ-001")[0], ["zeta::REQ-001", "zeta::REQ-002"])
         documents["alpha::TECH-001"]["frontmatter"]["relations"] = {"refines": ["zeta::REQ-001"]}
         self.assertEqual(multi_crosscheck.closure(documents, "zeta::REQ-001")[0], ["alpha::TECH-001", "zeta::REQ-001", "zeta::REQ-002"])
-        # `refines`の参照先の`requires`は辿らない。参照先を所有する文書が起点なら辿る。
+        # `refines`の参照先の`requires`も上方向に辿る（ADR-071）。参照先を所有する文書が起点でも同じ閉包になる。
         documents = multi_crosscheck.load_workspaces(audit.FIXTURES / "multi/MULTI-059-03/repo")[2]
-        self.assertEqual(multi_crosscheck.closure(documents, "alpha::TECH-001")[0], ["alpha::TECH-001", "zeta::REQ-001"])
+        self.assertEqual(multi_crosscheck.closure(documents, "alpha::TECH-001")[0], ["alpha::TECH-001", "zeta::REQ-001", "zeta::REQ-002"])
         self.assertEqual(multi_crosscheck.closure(documents, "zeta::REQ-001")[0], ["alpha::TECH-001", "zeta::REQ-001", "zeta::REQ-002"])
 
     def test_ordering_fixtures(self):
@@ -1605,7 +1616,8 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(module.validate(root, [identifier])["errors"])
 
     def test_multi_reference_closure_includes_the_addresses_of_a_task_root(self):
-        """複合ワークスペースの参照計算Bは、TASK起点の`addresses`の先を距離1で閉包へ含め、`requires`を持つTASK起点を拒否する。"""
+        """複合ワークスペースの参照計算Bは、TASK起点の`addresses`の先を距離1で閉包へ含め、存在しない`addresses`の先を拒否する。
+        目的`verify`の起点TASKの`requires`の上方向の範囲は、閉包へ含めない（関係・トレースモデル §6.3、ADR-071）。"""
         fixture = audit.FIXTURES / "multi/MULTI-028"
         payload = multi_crosscheck.build(fixture / "repo", root="web::TASK-001")
         self.assertEqual([item["id"] for item in payload["documents"]], ["api::TECH-020", "web::TASK-001"])
@@ -1617,8 +1629,8 @@ class AuditTests(unittest.TestCase):
             shutil.copytree(fixture / "repo", repository)
             path = repository / verify_task_tech_fixtures.M_TASK_PATH
             path.write_text(path.read_text().replace("addresses:", "requires: [api::TECH-020]\n  addresses:"))
-            with self.assertRaises(ValueError):
-                multi_crosscheck.build(repository, root="web::TASK-001")
+            self.assertEqual([item["id"] for item in multi_crosscheck.build(repository, root="web::TASK-001")["documents"]],
+                             [item["id"] for item in payload["documents"]])
             path.write_text(path.read_text().replace("requires: [api::TECH-020]\n  ", "").replace(
                 "addresses: [api::TECH-020]", "addresses: [api::TECH-999]"))
             with self.assertRaises(ValueError):
@@ -8475,11 +8487,11 @@ class AuditTests(unittest.TestCase):
                 check_rejected(identifier, inputs, (relative, "create" if data is not None else "delete"))
 
     def test_multi_closure_origin_fixtures(self):
-        """`MULTI-059-01`〜`03`: 閉包の逆参照の出発点は起点を所有する文書だけで、`refines`の参照先の`requires`を辿らない（確認事項C91）。"""
+        """`MULTI-059-01`〜`03`と`MULTI-066-01`〜`02`: 閉包の逆参照の出発点は起点を所有する文書だけで、上方向では`refines`の参照先の`requires`も辿る（確認事項C91、ADR-071）。"""
         module = multi_closure_origin_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"MULTI-059-{number:02d}" for number in range(1, 4)])
+        self.assertEqual(result["prepared"], [*(f"MULTI-059-{number:02d}" for number in range(1, 4)), "MULTI-066-01", "MULTI-066-02"])
         self.assertEqual(result["setups_per_fixture"], 2)
         self.assertEqual(result["references"], 2)
         self.assertEqual(result["core_execution"], "Not run")
@@ -8518,13 +8530,14 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(material["crossWorkspaceEdges"], [])
         material = module.reviewed_digest_input("MULTI-059-03", "alpha::TECH-001")
         self.assertEqual([entry["id"] for entry in material["workspaces"]], ["alpha", "zeta"])
-        self.assertEqual([entry["id"] for entry in material["documents"]], ["alpha::TECH-001", "zeta::REQ-001"])
+        # 起点が`refines`する`zeta::REQ-001`と、その`requires`の先`zeta::REQ-002`を上方向の閉包として含める（ADR-071。`MULTI-059-03`の期待値の訂正）。
+        self.assertEqual([entry["id"] for entry in material["documents"]], ["alpha::TECH-001", "zeta::REQ-001", "zeta::REQ-002"])
         self.assertEqual(material["crossWorkspaceEdges"], [{"relation": "refines", "source": "alpha::TECH-001", "target": "zeta::REQ-001:AC-01"}])
 
     def test_multi_closure_origin_audit_rejects_changed_expectations(self):
         """期待結果・起動条件・入力の改変（修正前の広い閉包の取り違えを含む）を拒否する。"""
         module = multi_closure_origin_fixtures
-        # 修正前の参照計算Bの広い閉包に差し替えると、閉包とハッシュ値がレビュー済みの期待値と異なる。
+        # 修正前の参照計算Bの広い閉包（`MULTI-059-03`はADR-071の前の狭い閉包）に差し替えると、閉包とハッシュ値がレビュー済みの期待値と異なる。
         defect_targets = {"MULTI-059-01": "alpha::TECH-001", "MULTI-059-02": "zeta::REQ-001", "MULTI-059-03": "alpha::TECH-001"}
         for identifier, target in defect_targets.items():
             with self.subTest(identifier=identifier, mutation="wide-closure"), tempfile.TemporaryDirectory() as temporary:
@@ -8535,7 +8548,8 @@ class AuditTests(unittest.TestCase):
                 expected = {entry["target"]: entry["contextDigest"] for entry in entries}
 
                 def wide(documents, start):
-                    return module.defective_closure(documents, start), {}
+                    replaced = module.narrow_closure if identifier == "MULTI-059-03" else module.defective_closure
+                    return replaced(documents, start), {}
                 with patch.object(multi_crosscheck, "closure", wide):
                     derived = multi_crosscheck.digest(multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, target)))
                     self.assertNotEqual(derived, expected[target])
@@ -8573,8 +8587,8 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
 
     def test_multi_closure_origin_conditions_reject_an_input_that_cannot_detect_the_wide_closure(self):
-        """`check_conditions`は、修正前の広い閉包と、どの検証対象の閉包も同じになる入力を、入力の完全一致の検査とは別に拒否する（この入力は欠陥を検出できない）。
-        修正前の広い閉包の再現を、参照計算Bの閉包と同じにして直接呼ぶ。再現が異なる通常の入力は通る（陽性対照）。"""
+        """`check_conditions`は、修正前の広い閉包（`MULTI-059-03`はADR-071の前の狭い閉包）と、どの検証対象の閉包も同じになる入力を、入力の完全一致の検査とは別に拒否する（この入力は欠陥を検出できない）。
+        修正前の閉包の再現を、参照計算Bの閉包と同じにして直接呼ぶ。再現が異なる通常の入力は通る（陽性対照）。"""
         module = multi_closure_origin_fixtures
         for identifier in module.CASES:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
@@ -8583,8 +8597,13 @@ class AuditTests(unittest.TestCase):
                 result = json.loads((fixture / "expected/verify.json").read_text())
                 repository = fixture_setup(fixture, manifest, Path(temporary) / "repo")
                 module.check_conditions(identifier, repository, result)
-                with patch.object(module, "defective_closure", lambda documents, target: multi_crosscheck.closure(documents, target)[0]):
-                    with self.assertRaisesRegex(ValueError, "修正前の広い閉包を検出できません"):
+                if module.DETECT[identifier] is None:
+                    continue  # 対照（修正前も同じ閉包）は、欠陥を検出する条件を持たない
+                narrow = module.DETECT[identifier] == "narrow"
+                replaced = "narrow_closure" if narrow else "defective_closure"
+                message = "ADR-071の前の狭い閉包を検出できる必要があります" if narrow else "修正前の広い閉包を検出できません"
+                with patch.object(module, replaced, lambda documents, target: multi_crosscheck.closure(documents, target)[0]):
+                    with self.assertRaisesRegex(ValueError, message):
                         module.check_conditions(identifier, repository, result)
 
     def test_multi_closure_origin_audit_rejects_changed_corpus(self):
@@ -12750,8 +12769,9 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-138"])["errors"])
 
     def test_closure_accepts_only_the_verify_task_root_prerequisite_addresses(self):
-        """参照計算Bの`closure`は、閉包の外のTASKの`addresses`を一律には受理しない。受理するのは、目的`verify`で
-        TASKを起点にしたときの、起点が`requires`する先行TASKの`addresses`だけである（関係・トレースモデル §6.3、§6.4の4.）。"""
+        """参照計算Bの`closure`は、閉包の外のTASKの`addresses`を一律には受理しない。受理するのは、TASKを起点にしたときの、起点が`requires`する先行TASKの
+        `addresses`だけである。目的`verify`は先行TASKを閉包へ含めず、目的`interpret`と`implement`は閉包へ含める（関係・トレースモデル §6.1の4.、§6.3、
+        §6.4の4.、ADR-071 Decision 2の4.）。"""
         requirement = (audit.FIXTURES / "single/SINGLE-138/repo/.spec/requirements/REQ-001.md").read_text()
         body = digest_crosscheck.normalize_body(requirement.split("---\n", 2)[2])
 
@@ -12770,12 +12790,22 @@ class AuditTests(unittest.TestCase):
         # 受理: verifyでTASKを起点にし、先行TASKが閉包の規範文を`addresses`する。先行TASKは閉包へ入らない。
         ordered, _ = digest_crosscheck.closure(corpus(root, done), "TASK-001", "verify")
         self.assertEqual(ordered, ["TASK-001", "REQ-001"])
+        # 受理: interpretとimplementでTASKを起点にすると、先行TASKを閉包へ含める（その`addresses`の参照先REQ-001は、すでに下方向の出発点として閉包にある）。
+        for purpose in ("interpret", "implement"):
+            ordered, _ = digest_crosscheck.closure(corpus(root, done), "TASK-001", purpose)
+            self.assertEqual(ordered, ["TASK-001", "REQ-001", "TASK-002"], purpose)
+        # 先行TASKの`addresses`が閉包の外の文書を指すなら、その文書も上方向の閉包として含める。
+        elsewhere = ("TASK-002", "done", {"addresses": ["REQ-001:AC-01", "REQ-005:AC-01"]})
+        documents = corpus(root, elsewhere)
+        documents["REQ-005"] = dict(documents["REQ-001"], frontmatter={"id": "REQ-005", "title": "t", "status": "approved"},
+                                    body=documents["REQ-001"]["body"].replace("REQ-001", "REQ-005"))
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "implement")[0],
+                         ["TASK-001", "REQ-001", "TASK-002", "REQ-005"])
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "verify")[0], ["TASK-001", "REQ-001"])
         # 受理（従来どおり）: implementで、閉包の規範文を`addresses`する`open`のTASKは閉包へ加える。
         ordered, _ = digest_crosscheck.closure(corpus(outside("open")), "REQ-001", "implement")
         self.assertEqual(ordered, ["REQ-001", "TASK-009"])
         rejected = {
-            "implementでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "implement"),
-            "interpretでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "interpret"),
             "verifyでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "verify"),
             "interpretでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "interpret"),
             "implementでREQを起点にし、`done`のTASKが`addresses`する": (corpus(outside("done")), "REQ-001", "implement"),
@@ -14595,6 +14625,143 @@ class AuditTests(unittest.TestCase):
         with patch.object(harness.subprocess, "check_output", return_value=b"") as check_output:
             harness.git(Path("."), "status")
         self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
+
+    def test_closure_reachability_fixtures(self):
+        """`SINGLE-178-01`〜`15`: 閉包を、下方向の出発点から具体化を辿り上方向へ依存を辿る到達可能性で定める規則（ADR-071 Decision 2）。"""
+        module = closure_reachability_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"SINGLE-178-{number:02d}" for number in range(1, 16)])
+        self.assertEqual((result["setups_per_fixture"], result["references"], result["core_execution"]), (2, 2, "Not run"))
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in module.CASES:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+
+    def test_closure_reachability_expected_results(self):
+        """期待結果の要点（生成器の関数を介さないリテラル）: 閉包の文書、役割、距離に対応する並び、`reachedBy`、提示形式、`blocked`の診断。"""
+        def documents(identifier):
+            value = json.loads((audit.FIXTURES / "single" / identifier / "expected/context.json").read_text())
+            return [(d["id"], d["role"], d["projection"], d["reachedBy"]) for d in value["documents"]]
+
+        self.assertEqual([d[0] for d in documents("SINGLE-178-01")], ["TECH-003", "TECH-002", "REQ-001", "REQ-002", "REQ-003"])
+        self.assertEqual([d[0] for d in documents("SINGLE-178-04")], ["TECH-010", "REQ-001", "REQ-002", "REQ-003"])
+        self.assertEqual([d[0] for d in documents("SINGLE-178-05")], ["TECH-010", "REQ-001"])
+        self.assertEqual(documents("SINGLE-178-06")[-1], ("TECH-013", "refinement", "normative", ["refines:TECH-013"]))
+        self.assertEqual(documents("SINGLE-178-08")[1], ("REQ-001", "requirement", "full", ["addresses:TASK-001"]))
+        self.assertEqual([d[0] for d in documents("SINGLE-178-09") if d[1] == "advisory"], ["TECH-006"])
+        self.assertEqual([d[0] for d in documents("SINGLE-178-10") if d[1] == "advisory"], ["TECH-005", "TECH-006"])
+        self.assertEqual([d[0] for d in documents("SINGLE-178-12")],
+                         ["TASK-001", "REQ-001", "TASK-002", "REQ-004", "REQ-009", "TECH-002", "REQ-008", "TECH-007"])
+        self.assertEqual([d[0] for d in documents("SINGLE-178-15")], ["TASK-001", "REQ-001", "REQ-004", "TECH-002", "TECH-007"])
+        value = json.loads((audit.FIXTURES / "single/SINGLE-178-12/expected/context.json").read_text())
+        self.assertEqual([item["id"] for item in value["constraintLedger"]["statements"]], ["REQ-001:AC-01"])
+        value = json.loads((audit.FIXTURES / "single/SINGLE-178-14/expected/context.json").read_text())
+        self.assertEqual((value["status"], value["documents"], [d["code"] for d in value["diagnostics"]]), ("blocked", [], ["CTX-STATE-001"]))
+        self.assertEqual(value["diagnostics"][0]["summary"], "REQ-009は状態outdatedのため目的verifyに適用できません")
+        # 対照（Sへ戻る辺のない`SINGLE-178-07`）は、欠陥の`SINGLE-178-06`と同じ文書、距離、`reachedBy`を期待する。
+        self.assertEqual(documents("SINGLE-178-06"), documents("SINGLE-178-07"))
+
+    def test_closure_reference_follows_the_reachability_rule(self):
+        """共有する参照計算`closure_reference.compute`の規則を、陽性対照と陰性対照で確かめる（ADR-071 Decision 2）。"""
+        def document(kind, status="approved", **relations):
+            rel = {key: [(ref.partition(":")[0], ref if ":" in ref else None, ref) for ref in relations.get(key, [])]
+                   for key in closure_reference.ALL_STRONG}
+            return {"kind": kind, "status": status, "statements": {"X"}, "rel": rel}
+
+        def run(documents, root, purpose, **kwargs):
+            return closure_reference.compute(documents, root, purpose, **kwargs)
+
+        # 上方向: refinesの参照先のrequires、祖父のrefines。
+        documents = {"T3": document("technical", refines=["T2"]), "T2": document("technical", refines=["R1"], requires=["R2"]),
+                     "R1": document("requirement", requires=["R3"]), "R2": document("requirement"), "R3": document("requirement")}
+        self.assertEqual(run(documents, "T3", "interpret")["distance"], {"T3": 0, "T2": 1, "R1": 2, "R2": 2, "R3": 3})
+        # 兄弟は含めない。起点が共通の親なら、すべて含める。
+        documents = {"R1": document("requirement"), "T1": document("technical", refines=["R1"]), "T2": document("technical", refines=["R1"])}
+        self.assertEqual(sorted(run(documents, "T1", "interpret")["distance"]), ["R1", "T1"])
+        self.assertEqual(sorted(run(documents, "R1", "interpret")["distance"]), ["R1", "T1", "T2"])
+        # Sへ戻る辺は距離にも到達したエッジにも使わない。
+        documents = {"R1": document("requirement"), "T1": document("technical", refines=["R1"], requires=["T4"]),
+                     "T2": document("technical", refines=["R1"]), "T3": document("technical", refines=["T2"]),
+                     "T4": document("technical", refines=["T3"])}
+        result = run(documents, "R1", "interpret")
+        self.assertEqual((result["distance"]["T4"], result["edges"]["T4"]), (3, {("refines", "T4")}))
+        # draftのadvisoryはSの文書だけから辿る。
+        documents = {"T1": document("technical", refines=["R1"]), "R1": document("requirement"),
+                     "D1": document("technical", "draft", refines=["R1"]), "D2": document("technical", "draft", refines=["T1"])}
+        self.assertEqual(run(documents, "T1", "interpret")["advisory"], {"D2"})
+        self.assertEqual(run(documents, "R1", "interpret")["advisory"], {"D1", "D2"})
+        self.assertEqual(run(documents, "R1", "verify")["advisory"], set())
+        # TASK起点: verifyは起点のrequiresの上方向の範囲をoutsideにし、interpretとimplementは閉包に含める。
+        documents = {"K1": document("task", "open", requires=["K2"], addresses=["R1:X"]), "K2": document("task", "done", addresses=["R9:X"]),
+                     "R1": document("requirement"), "R9": document("requirement", requires=["R8"]), "R8": document("requirement")}
+        self.assertEqual(sorted(run(documents, "K1", "verify")["distance"]), ["K1", "R1"])
+        self.assertEqual(run(documents, "K1", "verify")["outside"], {"K2", "R9", "R8"})
+        self.assertEqual(sorted(run(documents, "K1", "interpret")["distance"]), ["K1", "K2", "R1", "R8", "R9"])
+        # 規則で説明できない強いエッジは拒否する（陰性対照）。`requires`で到達した文書を`refines`する`rejected`の文書。
+        documents = {"R1": document("requirement", requires=["R2"]), "R2": document("requirement"),
+                     "T5": document("technical", "rejected", refines=["R2"])}
+        with self.assertRaisesRegex(ValueError, "閉包の外の強いエッジ"):
+            run(documents, "R1", "interpret")
+        self.assertEqual(sorted(run(documents, "R1", "interpret", strict=False)["distance"]), ["R1", "R2"])
+
+    def test_closure_reachability_audit_rejects_changed_expectations(self):
+        """期待結果の改変（修正前のCoreの出力への取り違えを含む）を拒否する（陰性対照）。"""
+        module = closure_reachability_fixtures
+
+        def drop(name):
+            def mutate(value):
+                value["documents"] = [d for d in value["documents"] if d["id"] != name]
+                value["resolution"]["documentCount"] = len(value["documents"])
+            return mutate
+
+        def edit(name, **fields):
+            def mutate(value):
+                next(d for d in value["documents"] if d["id"] == name).update(fields)
+            return mutate
+
+        mutations = {
+            "SINGLE-178-01": {"drop-parent-requires": drop("REQ-003"), "drop-grandparent": drop("REQ-001"), "role": edit("REQ-001", role="requirement")},
+            "SINGLE-178-02": {"projection": edit("TECH-002", projection="full"), "role": edit("REQ-001", role="requirement")},
+            "SINGLE-178-03": {"drop-other-parent": drop("REQ-002"), "drop-other-parent-requires": drop("REQ-003")},
+            "SINGLE-178-04": {"add-sibling": lambda v: v["documents"].append(dict(v["documents"][1], id="TECH-011")), "drop-requires": drop("REQ-003")},
+            "SINGLE-178-06": {"returning-edge": edit("TECH-013", reachedBy=["refines:TECH-013", "requires:TECH-010"]),
+                              "projection": edit("TECH-013", projection="full")},
+            "SINGLE-178-08": {"role": edit("REQ-001", role="refinement", reachedBy=["addresses:TASK-001", "refines:TECH-010"])},
+            "SINGLE-178-09": {"advisory-of-upward": lambda v: v["documents"].append(dict(v["documents"][2], id="TECH-005")),
+                              "drop-advisory": drop("TECH-006")},
+            "SINGLE-178-11": {"drop-prerequisite-addresses": drop("REQ-009"), "add-other-task": lambda v: v["documents"].append(dict(v["documents"][2], id="TASK-003"))},
+            "SINGLE-178-12": {"target-of-prerequisite": lambda v: v["constraintLedger"]["statements"].append(dict(v["constraintLedger"]["statements"][0], id="REQ-009:AC-01")),
+                              "add-other-task": lambda v: v["documents"].append(dict(v["documents"][2], id="TASK-003")),
+                              "drop-prerequisite-addresses": drop("REQ-009")},
+            "SINGLE-178-13": {"drop-other-task": drop("TASK-003")},
+            "SINGLE-178-14": {"status": lambda v: v.update(status="passed"), "drop-diagnostic": lambda v: v["diagnostics"].clear()},
+            "SINGLE-178-15": {"add-prerequisite-addresses": lambda v: v["documents"].append(dict(v["documents"][1], id="REQ-009"))},
+        }
+        for identifier, changes in mutations.items():
+            for name, mutate in changes.items():
+                with self.subTest(identifier=identifier, mutation=name), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_single_fixture(temporary, identifier)
+                    path = root / "single" / identifier / "expected/context.json"
+                    value = json.loads(path.read_text())
+                    mutate(value)
+                    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+                    self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        for identifier in ("SINGLE-178-04", "SINGLE-178-12"):
+            with self.subTest(identifier=identifier, mutation="manifest-purpose"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_single_fixture(temporary, identifier)
+                path = root / "single" / identifier / "manifest.json"
+                value = json.loads(path.read_text())
+                value["invocation"]["argv"][4] = "verify" if value["invocation"]["argv"][4] != "verify" else "interpret"
+                path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 入力の改変: 兄弟の文書を足すと、固定した入力から外れる。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_single_fixture(temporary, "SINGLE-178-05")
+            extra = root / "single/SINGLE-178-05/repo/.spec/technical/TECH-012.md"
+            extra.write_text((root / "single/SINGLE-178-05/repo/.spec/technical/TECH-011.md").read_text().replace("TECH-011", "TECH-012"))
+            self.assertEqual(module.validate(root, {"SINGLE-178-05"})["status"], "Failed")
 
     def test_duplicate_closure_fixtures(self):
         """`SINGLE-177-01`〜`17`と`MULTI-065-01`〜`08`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""

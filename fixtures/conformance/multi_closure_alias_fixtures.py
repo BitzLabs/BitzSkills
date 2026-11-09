@@ -56,7 +56,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from . import (digest_crosscheck, digest_reference, multi_crosscheck, multi_reference,
+from . import (closure_reference, digest_crosscheck, digest_reference, multi_crosscheck, multi_reference,
                multi_relation_type_fixtures as relation_type, multi_verify_fixtures as verify_fixtures)
 from .context_failure_fixtures import PROPOSED_ADR, PROPOSED_ADR_PATH
 from .digest_crosscheck import KIND_BY_DIRECTORY, KIND_RANK, normalize_body, read_statements, read_yaml, split_document
@@ -860,82 +860,40 @@ def statement_ids(documents, identifier):
     return [f"{document['workspaceId']}::{item['id']}" for item in read_statements(document["body"])]
 
 
+def closure_view(documents):
+    """`closure_reference.compute`の入力の形（種別、状態、所有する規範文、関係ごとの参照）にする。参照は修飾IDで持つ。"""
+    view = {}
+    for identifier, document in documents.items():
+        declared = multi_crosscheck.relations(document)
+        view[identifier] = {
+            "kind": document["kind"], "status": document["frontmatter"]["status"], "statements": set(statement_ids(documents, identifier)),
+            "rel": {key: [(multi_crosscheck.owner(reference), reference if reference != multi_crosscheck.owner(reference) else None, reference)
+                          for reference in declared[key]] for key in multi_crosscheck.STRONG}}
+    return view
+
+
+def selected_documents(documents, root, purpose="implement"):
+    """下方向の出発点（起点を所有する文書）と具体化文書の集合S。対象規範文は、この文書が所有する規範文から導く（関係・トレースモデル §6.4）。"""
+    return closure_reference.compute(closure_view(documents), root, purpose, missing="skip", strict=False)["selected"]
+
+
 def interpret_closure(documents, root, purpose="interpret"):
-    """目的`interpret`の閉包（関係・トレースモデル §6.1）。起点から`requires`を終端まで辿り、起点を所有する文書またはその規範文を`refines`する
-    適用可能な文書を逆参照で（推移的に）含めて、含めた文書の`requires`を辿る。置換済みの起点（有効な後継が1つ）は後継を距離1で含める。
+    """目的`interpret`と`implement`の閉包（関係・トレースモデル §6.1、§6.2、ADR-071 Decision 2）。規則は`closure_reference.compute`が持つ。
+
+    起点を所有する文書（下方向の出発点）から、その文書またはその規範文を`refines`する適用可能な文書を逆参照で（推移的に）含めてSとし、Sから
+    `requires`・`refines`・`addresses`の参照先を上方向へ終端まで辿る。起点が`refines`する文書と、その文書が`requires`する文書も含める
+    （§6.1の3.。以前の参照計算はこれを辿らなかった。確認事項C107）。Sへ戻る辺は着いたとみなさない。置換済みの起点（有効な後継が1つ）は後継を距離1で含める。
     目的`implement`は、起点と具体化文書の規範文を`addresses`する状態`open`のTASKを距離1で加える（同 §6.2）。
 
-    戻り値は(幅優先の順の文書, 文書→到達したエッジ{(関係型, 宣言した文書)}, 文書→起点からの最短の段数)。同じ文書が複数の経路や複数の表記で
-    到達しても1回だけ収録する（同 §7）。このcorpusは、状態`draft`の文書、置換、TASKを使わない。
+    戻り値は(見つけた順の文書, 文書→到達したエッジ{(関係型, 宣言した文書)}, 文書→起点からの最短の段数)。同じ文書が複数の経路や複数の表記で
+    到達しても1回だけ収録する（同 §7）。
     """
-    edges, distance, order = {root: set()}, {root: 0}, [root]
+    def targets_of(selected):
+        return {item for name in selected for item in statement_ids(documents, name)}
 
-    def follow_requires(start):
-        frontier = [start]
-        while frontier:
-            current = frontier.pop(0)
-            for _, target, exists in edges_of(documents, current, "requires"):
-                if not exists:
-                    continue
-                edges.setdefault(target, set()).add(("requires", current))
-                if target not in distance:
-                    distance[target] = distance[current] + 1
-                    order.append(target)
-                    frontier.append(target)
-
-    follow_requires(root)
-    refined, refiners = [root], []
-    while refined:
-        target = refined.pop(0)
-        mine = {target, *statement_ids(documents, target)}
-        for candidate in sorted(documents):
-            if candidate in distance or documents[candidate]["frontmatter"]["status"] != "approved":
-                continue
-            if documents[candidate]["kind"] not in {"requirement", "technical"}:
-                continue
-            declared = {multi_crosscheck.qualify(documents[candidate]["workspaceId"], text)
-                        for text in documents[candidate]["frontmatter"].get("relations", {}).get("refines", [])}
-            if declared & mine:
-                edges.setdefault(candidate, set()).add(("refines", candidate))
-                distance[candidate] = distance[target] + 1
-                order.append(candidate)
-                refined.append(candidate)
-                refiners.append(candidate)
-    for refiner in refiners:
-        follow_requires(refiner)
-    if purpose == "interpret":
-        # 閉包内の文書（またはその規範文）を`refines`する状態`draft`の文書は役割`advisory`として含め、その`requires`と具体化する文書は辿らない（§6.1の6.）。
-        context = list(order)
-        for name in context:
-            mine = {name, *statement_ids(documents, name)}
-            for candidate in sorted(documents):
-                document = documents[candidate]
-                if candidate in distance or document["kind"] not in {"requirement", "technical"} or document["frontmatter"]["status"] != "draft":
-                    continue
-                declared = {multi_crosscheck.qualify(document["workspaceId"], text)
-                            for text in document["frontmatter"].get("relations", {}).get("refines", [])}
-                if declared & mine:
-                    edges.setdefault(candidate, set()).add(("refines", candidate))
-                    distance[candidate] = distance[name] + 1
-                    order.append(candidate)
-        successor = successors_of(documents, root)
-        if len(successor) > 1:
-            raise ValueError("このcorpusは有効な後継が複数の入力を扱いません")
-        for name in successor:
-            edges.setdefault(name, set()).add(("supersedes", name))
-            distance[name] = 1
-            order.append(name)
-    elif purpose == "implement":
-        targets = {item for name in [root, *refiners] for item in statement_ids(documents, name)}
-        for name in sorted(documents):
-            document = documents[name]
-            declared = {multi_crosscheck.qualify(document["workspaceId"], text)
-                        for text in document["frontmatter"].get("relations", {}).get("addresses", [])}
-            if document["kind"] == "task" and document["frontmatter"]["status"] == "open" and declared & targets:
-                edges.setdefault(name, set()).add(("addresses", name))
-                distance[name] = 1
-                order.append(name)
-    return order, edges, distance
+    result = closure_reference.compute(closure_view(documents), root, purpose, missing="skip", targets_of=targets_of, strict=False)
+    edges = {name: set(result["edges"].get(name, set())) for name in result["found"]}
+    return result["found"], edges, result["distance"]
 
 
 def successors_of(documents, root):
