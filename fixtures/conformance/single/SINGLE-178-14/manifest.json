@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-178-14",
+  "description": "TASK起点のverifyは先行TASKのaddresses先の適用可能性を検査し、適用できなければblockedにする",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

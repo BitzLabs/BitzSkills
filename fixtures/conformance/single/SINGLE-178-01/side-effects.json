@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7bd31f88077a78dc32972075e4b1a8e659cce45577c61d55248b160b8f17756c"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7b652660d2c96aa020c6fcff1e5383d4f15429245fa78c7390d06d9df44d344b"
+      },
+      ".spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "141a633a92f801a81286de36a42a856d88a934c10b8c6bcd5def2715efd0abcf"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d598e32dbf06a3d797cad56c009939fd844157a84ad647f1b93da7c0f8c2e738"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f287b740ace4637c366f63c2559d9f9d4552c3f782911bb9f0e1c10398d34611"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n?? .spec/requirements/REQ-003.md\n?? .spec/technical/TECH-002.md\n?? .spec/technical/TECH-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7bd31f88077a78dc32972075e4b1a8e659cce45577c61d55248b160b8f17756c"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7b652660d2c96aa020c6fcff1e5383d4f15429245fa78c7390d06d9df44d344b"
+      },
+      ".spec/requirements/REQ-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "141a633a92f801a81286de36a42a856d88a934c10b8c6bcd5def2715efd0abcf"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d598e32dbf06a3d797cad56c009939fd844157a84ad647f1b93da7c0f8c2e738"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f287b740ace4637c366f63c2559d9f9d4552c3f782911bb9f0e1c10398d34611"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n?? .spec/requirements/REQ-003.md\n?? .spec/technical/TECH-002.md\n?? .spec/technical/TECH-003.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

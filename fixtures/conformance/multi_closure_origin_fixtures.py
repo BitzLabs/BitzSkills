@@ -1,11 +1,15 @@
-"""複合ワークスペースの閉包が、逆参照の出発点を起点を所有する文書だけにし、`refines`の参照先の`requires`を辿らないことを固定する（Coreの公開操作は実行しない）。
+"""複合ワークスペースの閉包が、逆参照の出発点を起点を所有する文書だけにし、上方向では`refines`の参照先の`requires`も辿ることを固定する（Coreの公開操作は実行しない）。
 
-実装の確認事項C91に対応する。参照計算B（`multi_crosscheck`と`digest_crosscheck`）の閉包は、到達したすべての文書から逆参照を辿り、`refines`の参照先の`requires`も辿っていたので、
-関係・トレースモデル §6.1の3.・4.より広い閉包を作った。Coreの閉包（`targetexpand`）は規範どおりであり、この群は、参照計算Bが規範どおりの閉包を導くことを固定する。
+実装の確認事項C91に対応する。参照計算B（`multi_crosscheck`と`digest_crosscheck`）の閉包は、到達したすべての文書から逆参照を辿っていたので、
+関係・トレースモデル §6.1の4.より広い閉包を作った。この群は、参照計算Bが規範どおりの閉包を導くことを固定する。
 `MULTI-052`の生成器は、この欠陥を避けるために閉包をリテラルで書いていた。
 
-- 関係・トレースモデル §6.1の3.: 起点を所有する文書の`refines`の参照先だけを含める。その参照先の`requires`は辿らない。
-- §6.1の4.: 起点を所有する文書またはその規範文を`refines`する適用可能な文書を逆参照で含める。逆参照の出発点は起点を所有する文書だけであり、
+2026-11-09のADR-071（閉包の書き直し）で、§6.1の3.（`refines`の参照先だけを含め、その`requires`は辿らない）をやめた（ユーザーの決定）。`MULTI-059-03`の期待値は
+この規則の変更に合わせて訂正した（ADR-051の期待値の訂正。ユーザーが承認済み）。
+
+- 関係・トレースモデル §6.1（ADR-071 Decision 2）: 閉包は、下方向の出発点（起点を所有する文書）から具体化文書を辿り、そこから上方向（`requires`・`refines`・`addresses`の参照先）を
+  終端まで辿る。起点が`refines`する文書の`requires`も辿る。
+- §6.1の2.: 起点を所有する文書またはその規範文を`refines`する適用可能な文書を逆参照で含める。逆参照の出発点は下方向の出発点だけであり、
   `requires`で到達した文書を`refines`する文書は含めない。
 - §6.3: `verify`は`interpret`の閉包に、対象規範文のテスト対応、コマンド、実装のパスを加える。複合ワークスペースでは、閉包に入った文書を所有するワークスペースの設定とコマンドだけを材料に含める
   （複合ワークスペース仕様 §6、正規化仕様 §3）。
@@ -14,10 +18,16 @@
 |---|---|---|---|
 | `MULTI-059-01` | `verify --all-workspaces`、`.` | ルート`zeta`、メンバー`beta`・`alpha`。ルートの`REQ-001`（`AC-01`、`AC-02`）を、`alpha`の`TECH-001`が`AC-01`、`beta`の`TECH-001`が`AC-02`について具体化する | 検証対象は3件。`REQ-001`の閉包は3文書、メンバーの`TECH-001`の閉包は自身と`zeta::REQ-001`だけで、同じ`REQ`を具体化する別のメンバーの文書を含まない |
 | `MULTI-059-02` | `verify REQ-001`、`.`（ルート） | ルート`zeta`。`REQ-001`が`REQ-002`を`requires`し、`alpha`と`beta`の`TECH-001`が、どちらも`REQ-002:AC-01`を具体化する | 閉包は`zeta::REQ-001`と`zeta::REQ-002`だけ。`requires`で到達した`REQ-002`を具体化するメンバーの文書も、そのワークスペースの設定とコマンドも含まない |
-| `MULTI-059-03` | `verify --workspace alpha alpha::TECH-001`、`.` | ルート`zeta`、メンバー`alpha`。`zeta`の`REQ-001`が`REQ-002`を`requires`し、`alpha`の`TECH-001`が`REQ-001:AC-01`を具体化する | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`だけ。参照先が`requires`する`zeta::REQ-002`を含まない |
+| `MULTI-059-03` | `verify --workspace alpha alpha::TECH-001`、`.` | ルート`zeta`、メンバー`alpha`。`zeta`の`REQ-001`が`REQ-002`を`requires`し、`alpha`の`TECH-001`が`REQ-001:AC-01`を具体化する | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`、参照先が`requires`する`zeta::REQ-002`（上方向の閉包） |
 
-どのケースも、Coreの閉包は修正前から同じなので、Coreは修正前も通る。欠陥は参照計算Bにあり、修正前の参照計算Bは、`01`でメンバーの`TECH-001`、`02`でメンバーの`TECH-001`2件、`03`で`zeta::REQ-002`を
+| `MULTI-066-01` | `verify --workspace alpha alpha::TECH-001`、`.` | ルート`zeta`、メンバー`alpha`・`beta`。`zeta`の`REQ-001`が`REQ-002`を`requires`し、`beta`の`TECH-002`・`TECH-003`が`REQ-001`を、`alpha`の`TECH-001`が`beta::TECH-002`を`refines`する | 上方向がワークスペースをまたいで連なる。閉包は`alpha::TECH-001`、`beta::TECH-002`、`zeta::REQ-001`、`zeta::REQ-002`。同じ`REQ-001`を具体化する兄弟の`beta::TECH-003`は含まない |
+| `MULTI-066-02` | `verify REQ-001`、`.` | `MULTI-066-01`と同じ入力 | 対照: 起点を`zeta::REQ-001`にすると、具体化文書を下方向に辿り、`alpha::TECH-001`、`beta::TECH-002`、`beta::TECH-003`と`zeta::REQ-002`を含む |
+
+`01`と`02`は、Coreの閉包は修正前から同じなので、Coreは修正前も通る。欠陥は参照計算Bにあり、修正前の参照計算Bは、`01`でメンバーの`TECH-001`、`02`でメンバーの`TECH-001`2件を
 閉包へ含めて、ハッシュ値が期待値と一致しない（`defective_closure`が、修正前の広い閉包の導出を再現し、この入力が欠陥を検出できることを要求する）。
+`03`は、ADR-071の前の規則（`refines`の参照先を1段だけ含め、その`requires`は辿らない）の閉包に`zeta::REQ-002`が入らないので、ハッシュ値が期待値と一致しない
+（`narrow_closure`が、ADR-071の前の閉包の導出を再現し、この入力が違いを検出できることを要求する）。修正前のCoreは`03`が失敗し、`01`と`02`は通る。
+`MULTI-066-01`は`refines`の参照先を1段だけ含める前の規則で`beta::TECH-002`の先を含めないので失敗し、対照の`MULTI-066-02`は通る。
 
 期待値の根拠は規範文と、このモジュールの参照計算だけである（Coreの出力は根拠にしない）。ハッシュ値は、独立に書いた2系統の参照計算
 （このモジュールのリテラルA、入力の木構造から導出するB。`multi_crosscheck`）のバイト列の一致を要求する。閉包は、リテラルと参照計算Bの一致を要求する
@@ -95,7 +105,7 @@ def requires_target_shape():
 
 def refines_target_shape():
     """ルートの`REQ-001`が`REQ-002`を`requires`し、`alpha`の`TECH-001`（規範文`C-01`）が`REQ-001:AC-01`を具体化する。
-    `REQ-001`は`alpha::TECH-001`の`refines`の参照先で、その`requires`は辿らない。"""
+    `REQ-001`は`alpha::TECH-001`の`refines`の参照先で、上方向の閉包として、その`requires`の先`REQ-002`も辿る（ADR-071）。"""
     documents = {
         ("zeta", "REQ-001"): dict(title="認証の基準", statements=[("AC-01", "秘密情報を出力しない")], requires=["REQ-002"],
                                   tests=[("tests/p.py", ["REQ-001:AC-01"], "p")]),
@@ -103,7 +113,26 @@ def refines_target_shape():
         ("alpha", "TECH-001"): dict(title="AC-01の実装方針", statements=[("C-01", "画面に利用者のIDを表示しない")], refines=["zeta::REQ-001:AC-01"],
                                     tests=[("tests/t.py", ["TECH-001:C-01"], "t")]),
     }
-    return documents, {"zeta": ["p"], "alpha": ["t"]}, {"alpha::TECH-001": ["alpha::TECH-001", "zeta::REQ-001"]}
+    return documents, {"zeta": ["p"], "alpha": ["t"]}, {"alpha::TECH-001": ["alpha::TECH-001", "zeta::REQ-001", "zeta::REQ-002"]}
+
+
+def upward_chain_shape():
+    """ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`を`requires`し、`beta`の`TECH-002`・`TECH-003`が`REQ-001`を、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が
+    `beta::TECH-002`を`refines`する。上方向の閉包が、ワークスペースをまたいで`refines`と`requires`を連ねて辿る（ADR-071）。"""
+    documents = {
+        ("zeta", "REQ-001"): dict(title="認証の基準", statements=[("AC-01", "秘密情報を出力しない")], requires=["REQ-002"],
+                                  tests=[("tests/p.py", ["REQ-001:AC-01"], "p")]),
+        ("zeta", "REQ-002"): dict(title="前提の基準", statements=[("AC-01", "入力を検証する")]),
+        ("beta", "TECH-002"): dict(title="認証の中間方針", refines=["zeta::REQ-001"]),
+        ("beta", "TECH-003"): dict(title="認証の別の方針", refines=["zeta::REQ-001"]),
+        ("alpha", "TECH-001"): dict(title="実装方針", statements=[("C-01", "画面に利用者のIDを表示しない")], refines=["beta::TECH-002"],
+                                    tests=[("tests/t.py", ["TECH-001:C-01"], "t")]),
+    }
+    closure = {
+        "alpha::TECH-001": ["alpha::TECH-001", "beta::TECH-002", "zeta::REQ-001", "zeta::REQ-002"],
+        "zeta::REQ-001": ["alpha::TECH-001", "beta::TECH-002", "beta::TECH-003", "zeta::REQ-001", "zeta::REQ-002"],
+    }
+    return documents, {"zeta": ["p"], "alpha": ["t"]}, closure
 
 
 # id: 説明、操作の引数、ルートのID、カタログの宣言の順のメンバー、構成。`target`は単独の操作の起点（修飾ID）、`None`は全体の操作。
@@ -114,8 +143,15 @@ CASES = {
                          description="verifyの閉包は、requiresで到達した文書を具体化する別のワークスペースの文書とそのコマンドを含めない"),
     "MULTI-059-03": dict(argv=["verify", "--workspace", "alpha", "alpha::TECH-001"], root="zeta", members=["alpha"], shape=refines_target_shape,
                          target="alpha::TECH-001",
-                         description="verifyの閉包は、起点がrefinesする文書のrequiresを辿らず、その参照先の文書を含めない"),
+                         description="verifyの閉包は、起点がrefinesする文書のrequiresも上方向に辿り、その参照先の文書を含める"),
+    "MULTI-066-01": dict(argv=["verify", "--workspace", "alpha", "alpha::TECH-001"], root="zeta", members=["beta", "alpha"], shape=upward_chain_shape,
+                         target="alpha::TECH-001",
+                         description="verifyの閉包は、上方向にワークスペースをまたいでrefinesとrequiresを終端まで辿り、兄弟の具体化文書を含めない"),
+    "MULTI-066-02": dict(argv=["verify", "REQ-001"], root="zeta", members=["beta", "alpha"], shape=upward_chain_shape, target="zeta::REQ-001",
+                         description="対照: verifyの起点を共通の親にすると、ワークスペースをまたぐ具体化文書をすべて下方向に含める"),
 }
+# 修正前の閉包を検出する種類: "wide"（C91の広い閉包）、"narrow"（ADR-071の前の狭い閉包）、`None`（対照。修正前も同じ閉包）。
+DETECT = {"MULTI-059-01": "wide", "MULTI-059-02": "wide", "MULTI-059-03": "narrow", "MULTI-066-01": "narrow", "MULTI-066-02": None}
 
 
 def is_all(identifier):
@@ -148,6 +184,15 @@ EXPECTED = {
         ["alpha::t"],
         {"alpha::t": (["tests/t.py"], ["alpha::TECH-001:C-01"])},
         {"alpha::TECH-001": (["alpha::TECH-001:C-01"], ["alpha::t"])}),
+    "MULTI-066-01": (
+        ["alpha::t"],
+        {"alpha::t": (["tests/t.py"], ["alpha::TECH-001:C-01"])},
+        {"alpha::TECH-001": (["alpha::TECH-001:C-01"], ["alpha::t"])}),
+    "MULTI-066-02": (
+        ["zeta::p", "alpha::t"],
+        {"zeta::p": (["tests/p.py"], ["zeta::REQ-001:AC-01"]),
+         "alpha::t": (["tests/t.py"], ["alpha::TECH-001:C-01"])},
+        {"zeta::REQ-001": (["alpha::TECH-001:C-01", "zeta::REQ-001:AC-01"], ["alpha::t", "zeta::p"])}),
 }
 
 
@@ -176,6 +221,22 @@ def defective_closure(documents, target):
         for name in sorted(found - reached):
             reached.add(name)
             frontier.append(name)
+    return sorted(reached)
+
+
+def narrow_closure(documents, target):
+    """ADR-071の前の閉包の再現（期待値の根拠にしない）: 起点を所有する文書の`requires`の閉包と、その`refines`の参照先（1段だけ。参照先の`requires`は辿らない）。
+    このcorpusは、起点を具体化する文書を持たない場合に使う。"""
+    reached, frontier = {target}, [target]
+    while frontier:
+        current = frontier.pop(0)
+        for reference in multi_crosscheck.relations(documents[current])["requires"]:
+            owner = multi_crosscheck.owner(reference)
+            if owner in documents and owner not in reached:
+                reached.add(owner)
+                frontier.append(owner)
+    reached |= {multi_crosscheck.owner(reference) for reference in multi_crosscheck.relations(documents[target])["refines"]
+                if multi_crosscheck.owner(reference) in documents}
     return sorted(reached)
 
 
@@ -357,13 +418,17 @@ def check_conditions(identifier, repository, result):
     if bindings != {binding: (list(tests), list(covers)) for binding, (tests, covers) in EXPECTED[identifier][1].items()}:
         raise ValueError("テストのパスまたはcoversが入力からの参照計算と異なります")
     # 閉包: リテラルと参照計算Bが一致し、修正前の広い閉包とは、欠陥の入力のある検証対象で異なる。
-    wide = 0
+    wide = narrow = 0
     for target in targets:
         selected, _ = multi_crosscheck.closure(documents, target)
         if selected != literal_closure(identifier, target):
             raise ValueError(f"{target}の閉包がレビュー済みの閉包と異なります")
         wide += defective_closure(documents, target) != selected
-    if not wide:
+        narrow += narrow_closure(documents, target) != selected
+    if DETECT[identifier] == "narrow":
+        if not narrow:
+            raise ValueError("この入力は、ADR-071の前の狭い閉包を検出できる必要があります")
+    elif DETECT[identifier] == "wide" and not wide:
         raise ValueError("この入力は、修正前の広い閉包を検出できません")
     if result["status"] != "passed":
         raise ValueError("この入力は診断を持たない通過の結果になります")

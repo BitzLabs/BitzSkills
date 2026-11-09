@@ -894,6 +894,36 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `SINGLE-177-16` | 設定、`REQ-002`（`REQ-001`を`supersedes`する）、旧文書`REQ-001`が2ファイル | context REQ-002 --purpose verify | failed／1 | `requires`の参照先の重複（`SINGLE-177-06`）と同じ形。`SPEC-ID-DUPLICATE-001`（`REQ-001`）と、`REQ-002`の`SPEC-RELATION-MISSING-001`（`key`は`relations.supersedes`）。`unresolvedStrongRelations`は1。修正前のCoreは後者だけ |
 | `SINGLE-177-17` | `SINGLE-177-16`と同じ入力 | verify REQ-002 | failed／1 | `REQ-002`の`diagnostics`に重複と`SPEC-RELATION-MISSING-001`。修正前のCoreは後者だけ |
 
+### 6.21 閉包の到達可能性（下方向の出発点、具体化文書、上方向の閉包）
+
+閉包は、下方向の出発点（起点がREQ・TECH・ADRなら起点文書、TASKならその`addresses`の参照先の所有文書）から`refines`の逆向きに具体化文書を辿り、出発点と具体化文書をSとして、
+Sから`requires`・`refines`・`addresses`の参照先を、辺の種類を区別せず終端まで辿って得る（[関係・トレースモデル §6.1](../02_仕様文書モデル/04_関係・トレースモデル.md#61-interpret)、
+[ADR-071](../../02.設計書/10_決定記録/ADR-071_パスと所有の境界をGitに倣い強い関係の閉包を辺の向きごとの到達可能性で定める.md) Decision 2）。
+上方向の辺がSの文書へ戻る場合は、その文書へ着いたとみなさず、役割・`reachedBy`・距離に使わない。状態`draft`のadvisoryは、Sの文書またはその規範文を`refines`する文書だけである。
+TASKを起点にすると、目的`interpret`・`implement`・`verify`のすべてで`addresses`の参照先の所有文書を下方向の出発点にし、起点のTASKの`requires`を、`interpret`と`implement`では上方向の辺として
+閉包に含め、`verify`ではコンテキストに含めず適用可能性だけを検査する。目的`implement`の起点がTASKのとき、ほかの状態`open`のTASKは加えない。
+修正前のCoreは、`refines`の参照先を1段だけ含めてその`requires`を辿らず、閉包の全文書から`draft`のadvisoryを辿り、TASK起点の`interpret`と`implement`で`addresses`の参照先の上方向を辿らず、
+`verify`で先行TASKの`addresses`の参照先の適用可能性を検査しなかった。欠陥は10件（01・02・03・04・06・08・09・11・12・14）、対照は5件である。
+入力は群のモジュール（`closure_reachability_fixtures`）が持つ小さなcorpusで、期待値は規範から導き、ハッシュ値は独立に書いた2系統の参照計算（リテラルA、入力の木構造から導出するB）の一致を要求する。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-178-01` | `TECH-003`が`TECH-002`を、`TECH-002`が`REQ-001`を`refines`し`REQ-002`を`requires`、`REQ-001`が`REQ-003`を`requires`する | context TECH-003 --purpose interpret | passed／0 | 閉包は5文書（`refines`の参照先の`requires`と祖父の`refines`も辿る）。`TECH-002`と`REQ-001`は役割`refinement`、`REQ-002`と`REQ-003`は`requirement`。修正前のCoreは`TECH-003`と`TECH-002`だけ |
+| `SINGLE-178-02` | `TECH-004`→`TECH-003`（規範文あり）→`TECH-002`（規範文なし）→`REQ-001`（規範文あり）と`refines`が連なる | context TECH-004 --purpose interpret | passed／0 | 上方向に`refines`で着いた文書は役割`refinement`。距離2で規範文を持たない`TECH-002`は`normative`、距離1の`TECH-003`と、規範文が制約台帳にない距離3の`REQ-001`は`full`。修正前のCoreは`TECH-004`と`TECH-003`だけ |
+| `SINGLE-178-03` | `TECH-010`が`REQ-001`と`REQ-002`を、`TECH-011`が`REQ-001`を`refines`し、`REQ-002`が`REQ-003`を`requires`する | context REQ-001 --purpose interpret | passed／0 | 具体化文書が`refines`する別の親`REQ-002`（役割`refinement`）と、その`requires`の`REQ-003`も含める。修正前のCoreは`REQ-002`と`REQ-003`を含めない |
+| `SINGLE-178-04` | `SINGLE-178-03`と同じ入力 | context TECH-010 --purpose interpret | passed／0 | `TECH-010`、`REQ-001`、`REQ-002`、`REQ-003`。兄弟の`TECH-011`を含めない。修正前のCoreは`REQ-003`を含めない |
+| `SINGLE-178-05` | `REQ-001`を`TECH-010`と`TECH-011`が`refines`する | context TECH-010 --purpose interpret | passed／0 | 対照: `TECH-010`と`REQ-001`だけ。同じ親を`refines`する兄弟の`TECH-011`を含めない。修正前のCoreも通る |
+| `SINGLE-178-06` | `TECH-010`・`TECH-011`が`REQ-001`を、`TECH-012`が`TECH-011`を、`TECH-013`が`TECH-012`を`refines`し、`TECH-010`が`REQ-001`と`TECH-013`を`requires`する | context REQ-001 --purpose interpret | passed／0 | Sへ戻る`requires`の辺は着いたとみなさない。`TECH-013`は距離3で`reachedBy`は`refines:TECH-013`だけ。修正前のCoreは`requires:TECH-010`も加え距離2 |
+| `SINGLE-178-07` | `SINGLE-178-06`から`TECH-010`の`requires`を除く | context REQ-001 --purpose interpret | passed／0 | 対照: `SINGLE-178-06`と同じ文書、距離、`reachedBy`。修正前のCoreも通る |
+| `SINGLE-178-08` | `TASK-001`が`REQ-001:AC-01`を`addresses`し、`TECH-010`が`REQ-001`を`refines`する | context TASK-001 --purpose interpret | passed／0 | `REQ-001`は距離1、役割`requirement`、`reachedBy`は`addresses:TASK-001`だけ（`TECH-010`の`refines`が戻る辺で役割を`refinement`にしない）。`TECH-010`は距離2。修正前のCoreは`TASK-001`だけ |
+| `SINGLE-178-09` | `TECH-001`が`REQ-001`を`refines`し、`draft`の`TECH-005`が`REQ-001`を、`draft`の`TECH-006`が`TECH-001`を`refines`する | context TECH-001 --purpose interpret | passed／0 | advisoryは`TECH-006`だけ。上方向で着いた`REQ-001`の`draft`の具体化文書`TECH-005`は含めない。修正前のCoreは`TECH-005`もadvisory |
+| `SINGLE-178-10` | `SINGLE-178-09`と同じ入力 | context REQ-001 --purpose interpret | passed／0 | 対照: `TECH-005`と`TECH-006`がどちらもadvisory。修正前のCoreも通る |
+| `SINGLE-178-11` | `TASK-001`が`TASK-002`（`done`）を`requires`し`REQ-001:AC-01`を`addresses`。`REQ-001`が`REQ-004`を`requires`し、`TECH-002`が`REQ-001`を`refines`して`TECH-007`を`requires`。`TASK-002`が`REQ-009:AC-01`を`addresses`し、`REQ-009`が`REQ-008`を`requires`する。`open`の`TASK-003`も`REQ-001:AC-01`を`addresses`する | context TASK-001 --purpose interpret | passed／0 | `addresses`の参照先の所有文書`REQ-001`、具体化文書`TECH-002`、先行TASK`TASK-002`が`addresses`する`REQ-009`と、それらの上方向の閉包を含める（8文書）。`TASK-003`は含めない。修正前のCoreは`TASK-001`と`TASK-002`だけ |
+| `SINGLE-178-12` | `SINGLE-178-11`と同じ入力。`REQ-001`は自身の規範文を`covers`するテスト対応を持つ | context TASK-001 --purpose implement | passed／0 | 閉包は`SINGLE-178-11`と同じ。先行TASKの`addresses`の参照先`REQ-009`は文書にあるが対象規範文にない（対象規範文は`REQ-001:AC-01`だけ）。`TASK-003`を加えない。修正前のCoreは`REQ-004`・`TECH-002`などを含めない |
+| `SINGLE-178-13` | `SINGLE-178-12`と同じ入力 | context REQ-001 --purpose implement | passed／0 | 対照: 対象規範文を`addresses`する状態`open`のTASK（`TASK-001`、`TASK-003`）を役割`work`で加え、`done`の`TASK-002`は加えない。加えたTASKからは辿らない。修正前のCoreも通る |
+| `SINGLE-178-14` | `SINGLE-178-11`と同じ入力で、`REQ-009`の状態が`outdated` | context TASK-001 --purpose verify | blocked／2 | 先行TASKが`addresses`する`REQ-009`は適用可能性の検査の範囲なので、`CTX-STATE-001`の1件（`REQ-009は状態outdatedのため目的verifyに適用できません`）。`REQ-009`をコンテキストに含めない。修正前のCoreは検査せず`passed`／0 |
+| `SINGLE-178-15` | `SINGLE-178-11`と同じ入力 | context TASK-001 --purpose verify | passed／0 | 対照: `REQ-009`・`REQ-008`・`TASK-002`をコンテキストに含めない。閉包は`TASK-001`、`REQ-001`、`REQ-004`、`TECH-002`、`TECH-007`。修正前のCoreも通る |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1173,7 +1203,7 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `MULTI-058-06` | `MULTI-058-01`と同じ入力（リポジトリのルートで実行） | check --all-workspaces | blocked／2 | 対照: `doctor`以外の操作は、Gitの境界を確定できずに止まる場合に`SPEC-MULTI-GIT-001`だけを返す（複合ワークスペース仕様 §3）。`SPEC-MULTI-CONFIG-001`を返さない。`multiWorkspace`は`{platform, .}`、`workspaces`は空配列、`revision`は`null`、`scope`は`all-workspaces`。レポートは作らない。修正前のCoreも通る |
 | `MULTI-059-01` | ルート`zeta`（`.`）、メンバー`beta`（`apps/beta`）、`alpha`（`apps/alpha`）をこの順でカタログに宣言する。ルートの`REQ-001`（AC-01、AC-02。コマンド`p`が両方を`covers`）を、`alpha`の`TECH-001`が`REQ-001:AC-01`、`beta`の`TECH-001`が`REQ-001:AC-02`について`refines`する（どちらも規範文なし、コマンド`t`。`.`で実行） | verify --all-workspaces | passed／0 | 検証対象は3件。`zeta::REQ-001`の閉包は3文書で、メンバーの`TECH-001`を起点にした閉包は、自身と`zeta::REQ-001`だけで、同じ`REQ`を具体化する別のメンバーの文書を含まない（逆参照の出発点は起点を所有する文書だけ。関係・トレースモデル §6.1の4.）。コンテキストのハッシュ値は、リテラルの参照計算Aと、直した参照計算Bの両方と一致する（実装の確認事項C91。Coreは修正前も通る） |
 | `MULTI-059-02` | ルート`zeta`（`.`）、メンバー`beta`、`alpha`（この順で宣言）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`（AC-01）を`requires`し、`alpha`と`beta`の`TECH-001`が、どちらも`REQ-002:AC-01`を`refines`する（コマンド`t`。`.`で実行） | verify REQ-001 | passed／0 | 閉包は`zeta::REQ-001`と`zeta::REQ-002`だけ。`requires`で到達した`REQ-002`は逆参照の出発点にならず、それを`refines`するメンバーの`TECH-001`2件も、`alpha`と`beta`の設定とコマンドも、閉包とハッシュ値の材料に含まない。`commands[]`は`zeta::p`の1件だけ。`requires`を持つ構成は、閉包の外の文書が閉包内の文書を`requires`する辺を参照計算Bが拒否するため、全体の`verify`にせず単独の起点にする |
-| `MULTI-059-03` | ルート`zeta`（`.`）、メンバー`alpha`（`apps/alpha`）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`を`requires`し、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が`REQ-001:AC-01`を`refines`する（`.`で実行） | verify --workspace alpha alpha::TECH-001 | passed／0 | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`だけ。参照先の`REQ-001`が`requires`する`zeta::REQ-002`は辿らない（関係・トレースモデル §6.1の3.）。ハッシュ値の材料のワークスペースは`alpha`、`zeta`の順で、`zeta`のコマンドは閉包の文書（`REQ-001`）が使う`p`だけである |
+| `MULTI-059-03` | ルート`zeta`（`.`）、メンバー`alpha`（`apps/alpha`）。ルートの`REQ-001`（AC-01、コマンド`p`）が`REQ-002`を`requires`し、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が`REQ-001:AC-01`を`refines`する（`.`で実行） | verify --workspace alpha alpha::TECH-001 | passed／0 | 閉包は`alpha::TECH-001`と、その`refines`の参照先`zeta::REQ-001`、参照先が`requires`する`zeta::REQ-002`である（上方向の閉包。関係・トレースモデル §6.1、ADR-071）。ハッシュ値の材料のワークスペースは`alpha`、`zeta`の順で、`zeta`のコマンドは閉包の文書（`REQ-001`）が使う`p`だけである。2026-11-09にADR-071の閉包の書き直しに合わせて期待値を訂正した（ADR-051。ユーザーが承認済み。修正前は`zeta::REQ-002`を含めず、ハッシュ値が異なる） |
 | `MULTI-060-01` | `MULTI-037-09`と同じ入力。`exclude: ["cases\tx"]`（タブを含む。除外のパスは実在しなくてよい）（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 除外のパスの制御文字の違反（確認事項C102）。診断は`MULTI-037-09`と同じ（`SPEC-MULTI-CONFIG-001`の1件、summary「除外のパスの形式が不正です」）。修正前のCoreは除外を受理して`passed`／0（`workspaces`は3件） |
 | `MULTI-060-02` | `MULTI-037-09`と同じ入力から`exclude`を除き、メンバー`web`のパスを`"apps/we\nb"`（改行を含む）にする。`web`の設定は置かない（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | メンバーのパスの制御文字の違反（確認事項C102）。診断は`SPEC-MULTI-PATH-001`の1件（summary「メンバーのパスの形式が不正です」、`source`は`{file, platform, .spec/bitz.yaml, multiWorkspace.members}`）で、形は`MULTI-037-16`と同じ（全体事前検査の停止。`workspaces`は空）。修正前のCoreはパスを受理し、メンバーの設定の不在（`SPEC-MULTI-MEMBER-001`、summary「メンバーの.spec/bitz.yamlがありません」） |
 | `MULTI-061-01` | ルート`platform`（`.`）、メンバー`web`（`apps/web`）、`api`（`services/api`）。ルートの領域に`tests/test_x.py`（通常のファイル）。`web`のREQ-101（`approved`、規範文`AC-01`）の`tests[0].path`が`ext/test_x.py`で、`apps/web/ext -> ../../tests`（ルートの領域へ解決）。`web`の設定にコマンド`default`を定義する（`.`で実行） | check --all-workspaces --base HEAD | failed／1 | 実パスがルートの領域（別のワークスペース）なので、`web`の`diagnostics`に`SPEC-MULTI-OWNERSHIP-001`（summary「パスext/test_x.pyの解決先がワークスペースwebの所有領域の外です」、`source`は`{file, web, .spec/requirements/REQ-101.md, tests[0].path}`）の1件を置く（N1）。`web`は`failed`（文書1件・規範文1件）、`platform`と`api`は`passed`。修正前のCoreは`passed`／0 |
@@ -1210,6 +1240,8 @@ summaryは承認済みの「テストのパスが実効の作業ディレクト�
 | `MULTI-065-06` | `platform`の`REQ-001`が`related`で指す`web::TECH-007`が2ファイル | check REQ-001 --base HEAD | passed_with_warnings／0 | 対照: `related`の参照先の重複は辿らず、重複を返さない。`SPEC-RELATION-ADVISORY-MISSING-001`（`web::TECH-007`）だけ。修正前のCoreも通る |
 | `MULTI-065-07` | 閉包と無関係な`web`の`TECH-008`が2ファイル | check REQ-001 --base HEAD | passed／0 | 対照: 重複を返さない。`checkedDocumentCount`は1。修正前のCoreも通る |
 | `MULTI-065-08` | 基準版は`web`の`TECH-001`。作業ツリーで`web::TECH-001`の`title`が不正なYAML | check --all-workspaces --base HEAD | failed／1 | `web`の`diagnostics`は`SPEC-FM-SCHEMA-001`の1件だけ（削除を返さない）。`platform`と`api`は通過。修正前のCoreは削除も返す |
+| `MULTI-066-01` | ルート`zeta`（`.`）、メンバー`beta`（`apps/beta`）、`alpha`（`apps/alpha`）をこの順でカタログに宣言する。`zeta`の`REQ-001`（AC-01、コマンド`p`）が`REQ-002`（AC-01）を`requires`し、`beta`の`TECH-002`・`TECH-003`が`zeta::REQ-001`を、`alpha`の`TECH-001`（規範文`C-01`、コマンド`t`）が`beta::TECH-002`を`refines`する（`.`で実行） | verify --workspace alpha alpha::TECH-001 | passed／0 | 上方向の閉包がワークスペースをまたいで`refines`と`requires`を連ねる。閉包は`alpha::TECH-001`、`beta::TECH-002`、`zeta::REQ-001`、`zeta::REQ-002`で、同じ`zeta::REQ-001`を具体化する兄弟の`beta::TECH-003`は含まない。コンテキストのハッシュ値は、リテラルの参照計算Aと参照計算Bの両方と一致する。修正前のCoreは`beta::TECH-002`の先を含めず失敗する |
+| `MULTI-066-02` | `MULTI-066-01`と同じ入力 | verify REQ-001 | passed／0 | 対照: 起点を共通の親`zeta::REQ-001`にすると、具体化文書を下方向に辿り、`alpha::TECH-001`、`beta::TECH-002`、`beta::TECH-003`と`zeta::REQ-002`を含める。対象規範文は`alpha::TECH-001:C-01`と`zeta::REQ-001:AC-01`、`commands[]`は`zeta::p`と`alpha::t`。修正前のCoreも通る |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。

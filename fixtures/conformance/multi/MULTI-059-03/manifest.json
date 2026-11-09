@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-059-03",
-  "description": "verifyの閉包は、起点がrefinesする文書のrequiresを辿らず、その参照先の文書を含めない",
+  "description": "verifyの閉包は、起点がrefinesする文書のrequiresも上方向に辿り、その参照先の文書を含める",
   "setup": {
     "git": true,
     "baseCommit": {

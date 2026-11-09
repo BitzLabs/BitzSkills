@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-178-09",
+  "description": "draftのadvisoryは下方向の出発点と具体化文書だけから辿り、上方向で着いた文書のdraftの具体化文書は含めない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TECH-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-178-11",
+  "description": "TASK起点のinterpretはaddressesの参照先の所有文書と具体化文書、先行TASKのaddressesの参照先とそれらの上方向の閉包を含める",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

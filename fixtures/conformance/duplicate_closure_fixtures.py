@@ -525,40 +525,52 @@ def owner_of(ref, workspace):
 
 
 def reference_duplicates(files, root, purpose="verify"):
-    """起点`(ワークスペース, ID)`の閉包を作るときに辿る重複したID（`related`は辿らない）。重複した文書は、写しのどれか1つでも辿れば辿る。"""
+    """起点`(ワークスペース, ID)`の閉包を作るときに辿る重複したID（`related`は辿らない）。重複した文書は、写しのどれか1つでも辿れば辿る。
+
+    閉包の規則はADR-071 Decision 2による。下方向の出発点（起点）から、`refines`を逆向きに具体化文書を推移的に辿り、そこから上方向
+    （`requires`・`refines`・`addresses`の参照先）を終端まで辿る。置換の参照先（起点が`supersedes`する旧文書）と、起点を置換する後継も辿る。
+    重複した文書は索引に入らず、1つずつ仮に置くので、その先は辿らない（重複した別の文書を経由して到達するものは、その文書の重複を解消した後に辿る）。
+    """
     documents, _ = load_documents(files)
     duplicated = {key for key, group in documents.items() if len(group) > 1}
     if root in duplicated:
         return {root}
     traversed = {root}
+    selected = {root}
 
     def declared(key):
         return [relations for relations in documents.get(key, [])]
 
-    # 起点から`requires`を終端まで、起点の`refines`の参照先（その`requires`は辿らない）。
-    stack = [root]
-    while stack:
-        current = stack.pop()
-        for relations in declared(current):
-            for ref in relations.get("requires", []):
-                target = owner_of(ref, current[0])
-                if target not in traversed:
-                    traversed.add(target)
-                    if target not in duplicated:
-                        stack.append(target)
-    for relations in declared(root):
-        for ref in relations.get("refines", []) + relations.get("supersedes", []):
-            traversed.add(owner_of(ref, root[0]))
-    # 逆参照: 起点を所有する文書を`refines`する文書を推移的に（出発点は起点だけ）。起点を`supersedes`する後継も辿る。
+    # 下方向: 起点を`refines`する文書を推移的に（出発点は起点だけ）。
     frontier = [root]
     while frontier:
         target = frontier.pop()
         for key, group in documents.items():
-            if key == root or key in traversed:
+            if key in traversed:
                 continue
             if any(owner_of(ref, key[0]) == target for relations in group for ref in relations.get("refines", [])):
                 traversed.add(key)
-                frontier.append(key)
+                if key not in duplicated:
+                    selected.add(key)
+                    frontier.append(key)
+    # 上方向: 起点と具体化文書（S）から`requires`・`refines`・`addresses`の参照先を終端まで。
+    stack, seen = sorted(selected), set()
+    while stack:
+        current = stack.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for relations in declared(current):
+            for relation in ("requires", "refines", "addresses"):
+                for ref in relations.get(relation, []):
+                    target = owner_of(ref, current[0])
+                    traversed.add(target)
+                    if target not in duplicated:
+                        stack.append(target)
+    # 置換の参照先（起点が`supersedes`する旧文書）と、起点を置換する後継。
+    for relations in declared(root):
+        for ref in relations.get("supersedes", []):
+            traversed.add(owner_of(ref, root[0]))
     for key, group in documents.items():
         if any(owner_of(ref, key[0]) == root for relations in group for ref in relations.get("supersedes", [])):
             traversed.add(key)

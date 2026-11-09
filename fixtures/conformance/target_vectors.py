@@ -98,24 +98,58 @@ def reference(case):
         changed = selected != previous
     targets = set() if purpose == "interpret" else selected & statements.keys()
 
-    # 目的ごとの、コンテキストの探索のグラフにおける最短距離。
+    # コンテキストの閉包（関係・トレースモデル §6.1、ADR-071 Decision 2）: 下方向の出発点から`refines`を逆向きに辿った具体化文書と出発点をSとし、
+    # Sから`requires`・`refines`・`addresses`の参照先を終端まで辿る（辺の種類を区別しない）。Sへ戻る辺は着いたとみなさない。
+    # TASKを起点にすると、下方向の出発点は`addresses`の参照先の所有文書（距離1）で、目的`interpret`と`implement`は起点のTASK自身も上方向へ辿る。
+    # 目的`verify`の起点TASKは辿らない（`requires`の上方向の範囲はコンテキストへ含めない）。
+    task_roots = [r for r in root_docs if nodes[r]["kind"] == "TASK"]
+    if purpose == "implement" and task_roots and len(task_roots) != len(root_docs):
+        raise ValueError("TASK起点とほかの起点が混在するケースは参照計算の対象外です")
+    reached = {}
+
+    def reach(source, target):
+        reached.setdefault(source, set()).add(target)
+
+    selected_docs = set()
+    for r in root_docs:
+        if nodes[r]["kind"] == "TASK":
+            for t in nodes[r]["addresses"]:
+                reach(r, owner(t))
+                selected_docs.add(owner(t))
+        else:
+            selected_docs.add(r)
+    queue = sorted(selected_docs)
+    while queue:
+        current = queue.pop(0)
+        for candidate in sorted(nodes.values(), key=lambda node: node["id"]):
+            if any(owner(t) == current for t in candidate["refines"]):
+                reach(current, candidate["id"])
+                if candidate["id"] not in selected_docs:
+                    selected_docs.add(candidate["id"])
+                    queue.append(candidate["id"])
+    walk = sorted(selected_docs) + ([r for r in task_roots] if purpose != "verify" else [])
+    seen = set()
+    while walk:
+        current = walk.pop(0)
+        if current in seen:
+            continue
+        seen.add(current)
+        n = nodes[current]
+        for t in n["requires"] + n["refines"] + n["addresses"]:
+            if owner(t) not in selected_docs:
+                reach(current, owner(t))
+                walk.append(owner(t))
+    if purpose == "implement" and not task_roots:
+        for candidate in nodes.values():
+            if candidate["kind"] == "TASK" and candidate["status"] == "open":
+                for t in candidate["addresses"]:
+                    if t in targets:
+                        reach(owner(t), candidate["id"])
     distances = {r: 0 for r in root_docs}
     queue = list(root_docs)
     while queue:
         current = queue.pop(0)
-        n = nodes[current]
-        task_root = current in root_docs and n["kind"] == "TASK" and purpose != "interpret"
-        # 関係・トレースモデル §6.3: `verify`の起点TASKは`requires`閉包を含めない。
-        followed = [] if task_root and purpose == "verify" else n["requires"]
-        neighbors = {owner(t) for t in followed + n["refines"]}
-        if task_root:
-            neighbors.update(owner(t) for t in n["addresses"])
-        for candidate in nodes.values():
-            if any(owner(t) == current for t in candidate["refines"]):
-                neighbors.add(candidate["id"])
-            if purpose == "implement" and candidate["kind"] == "TASK" and candidate["status"] == "open" and any(t in targets and owner(t) == current for t in candidate["addresses"]):
-                neighbors.add(candidate["id"])
-        for neighbor in sorted(neighbors):
+        for neighbor in sorted(reached.get(current, ())):
             if neighbor not in distances:
                 distances[neighbor] = distances[current] + 1
                 queue.append(neighbor)

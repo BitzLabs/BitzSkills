@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:ef1ceecf7e338f2622f47181ca1d2ba185d078c3722312c8820669d862ba935d",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 5,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-010"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-010",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001"
+          ]
+        }
+      },
+      "bodyText": "# TECH-010 文書\n\n## Context\n\n規範文を持たない。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-011",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-011.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-011"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-011",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001"
+          ]
+        }
+      },
+      "bodyText": "# TECH-011 文書\n\n## Context\n\n規範文を持たない。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-012",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-012.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-012"
+      ],
+      "statementRefs": [],
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-013",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-013.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-013"
+      ],
+      "statementRefs": [],
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

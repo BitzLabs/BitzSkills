@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-178-12",
+  "description": "TASK起点のimplementは先行TASKのaddresses先を文書に含めて対象規範文に入れず、ほかのopenのTASKを加えない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

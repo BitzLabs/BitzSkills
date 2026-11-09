@@ -342,10 +342,11 @@ def defective_order(documents, root, purpose, active):
 
 
 def reference_targets(documents, ordered, edges, root):
-    """目的`implement`の対象規範文（起点と具体化文書の規範文）を、文書の順、行番号の順に導く（関係・トレースモデル §6.4・§7の7.）。"""
+    """目的`implement`の対象規範文（起点と具体化文書の規範文。上方向に`refines`で着いた文書の規範文は含めない）を、文書の順、行番号の順に導く（関係・トレースモデル §6.4・§7の7.）。"""
     found = []
+    selected = alias.selected_documents(documents, root)
     for name in ordered:
-        if name == root or alias.role_of(documents, root, name, edges) == "refinement":
+        if name in selected:
             found += alias.statement_ids(documents, name)
     return found
 

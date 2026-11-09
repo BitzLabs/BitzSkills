@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:b26a6c83ed6c82c8f6c84ae173e719efdfecd01ec1627749f957d06b083674c1",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 5,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-010"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-010",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001",
+            "REQ-002"
+          ]
+        }
+      },
+      "bodyText": "# TECH-010 文書\n\n## Context\n\n規範文を持たない。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-011",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-011.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-011"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-011",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001"
+          ]
+        }
+      },
+      "bodyText": "# TECH-011 文書\n\n## Context\n\n規範文を持たない。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-002",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/requirements/REQ-002.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-010"
+      ],
+      "statementRefs": [
+        "REQ-002:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-002",
+        "title": "文書",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "REQ-003"
+          ]
+        }
+      },
+      "bodyText": "# REQ-002 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-003",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-003.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:REQ-002"
+      ],
+      "statementRefs": [
+        "REQ-003:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-003",
+        "title": "文書",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-003 文書\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-003:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
