@@ -205,6 +205,19 @@ class CanaryCaptureTests(unittest.TestCase):
         self.assertTrue(value.call('read_resource', {'path': path})['isError'])
         self.assertTrue((fixture.base / 'host-stop.json').exists())
 
+    def test_limited_host_rejects_uri_for_a_listed_skill(self):
+        fixture = host_fixture.RoutingHostTests(methodName='runTest')
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        value = limited.CanaryHost(fixture.snapshot, fixture.digest, fixture.log)
+        self.addCleanup(value.close)
+        self.assertFalse(value.call('list_resources', {})['isError'])
+        path = fixture.manifest['skills'][0]['path']
+        self.assertTrue(value.call('read_resource', {'uri': path})['isError'])
+        self.assertTrue(value.call('read_resource', {'path': path})['isError'])
+        marker = json.loads((fixture.base / 'host-stop.json').read_bytes())
+        self.assertEqual(marker, {'reason': 'bounded-host-policy', 'sequence': 2})
+
     def test_limited_host_rejects_first_read_unknown_path_and_second_listing(self):
         for tool, arguments, list_first in [('read_resource', {'path': 'unknown'}, False),
                                             ('read_resource', {'path': []}, True), ('list_resources', {}, True)]:
