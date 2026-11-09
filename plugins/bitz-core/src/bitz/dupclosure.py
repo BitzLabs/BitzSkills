@@ -11,7 +11,9 @@
 （重複した別の文書を経由して到達するものは、その文書の重複を解消した後に辿るIDになる）。
 
 重複は例外的な状態なので、仮の索引で閉包を作り直す前に、IDを参照する文書も、関係を宣言する写しもない重複を除く
-（閉包に入り得ない重複を、閉包の計算で調べない）。
+（閉包に入り得ない重複を、閉包の計算で調べない）。さらに、起点から閉包と同じ到達可能性（ADR-071 Decision 2。下方向の出発点から下方向へ具体化を辿り、
+そこから上方向へ依存を辿る。置換の参照先と、`implement`で対象規範文を`addresses`するTASKを加える）で辿り着けない重複を除く。共通の文書を多数の文書が
+`refines`する構成でも、起点から兄弟の文書へ逆戻りして調べない。
 """
 
 from __future__ import annotations
@@ -26,8 +28,13 @@ from . import targetexpand
 from .document import DocEntry
 
 _STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
-#: 参照先から宣言した文書へも辿る関係（逆参照の具体化、起点を置換する後継、対象規範文を`addresses`するTASK）。
-_BACKWARD_RELATIONS = ("refines", "supersedes", "addresses")
+#: 上方向に辿る関係（ADR-071 Decision 2の1.）。閉包は、下方向の出発点から下方向（`refines`の逆向き）に具体化を辿り、そこから上方向に依存を辿る。
+_UPWARD_RELATIONS = ("requires", "refines", "addresses")
+#: 辿り着き得る文書を求めるときに前方へ辿る関係。上方向の関係に加え、`supersedes`を前方へ辿る（`check`の変更・全体のスコープが使う強い関係の閉包は、`supersedes`も前方へ推移的に辿る）。
+_FORWARD_RELATIONS = (*_UPWARD_RELATIONS, "supersedes")
+
+#: 文書の``(ワークスペースID, 文書ID)``。
+Node = tuple[str, str]
 
 IndexPair = tuple[dict[str, DocEntry], dict[str, dict]]
 
@@ -63,7 +70,8 @@ class DuplicateTracker:
         }
         self._referenced: set[tuple[str, str]] | None = None
         self._candidate_groups: list[DuplicateGroup] | None = None
-        self._adjacent: dict[tuple[str, str], set[tuple[str, str]]] | None = None
+        self._adjacent: dict[str, dict[Node, set[Node]]] | None = None
+        self._upward: dict[Node, set[Node]] | None = None
         self._variants: dict[tuple[str, str, int], IndexPair] = {}
 
     def __bool__(self) -> bool:
@@ -96,7 +104,8 @@ class DuplicateTracker:
         """``closure_ids(id_index, statement_index)``が返す閉包のID（索引のキーの表現）に入る重複を返す。
 
         ``closure_ids``は、重複した文書の写しのうち1つを索引に置いた仮の索引で呼ばれる。``roots``（索引のキーの表現の起点）を渡すと、
-        閉包を作る起点から強い関係でつながらない重複を、閉包を作り直さずに除く（閉包は起点から、閉包を作る辺の向きにだけ辿って得るので、辿り着けない文書は入らない）。
+        閉包を作る起点から強い関係でつながらない重複を、閉包を作り直さずに除く（閉包は起点から、閉包を作る辺の向きにだけ辿って得るので、辿り着けない文書は入らない。
+        :meth:`_reachable`）。
         """
 
         found: list[DuplicateGroup] = []
@@ -181,7 +190,7 @@ class DuplicateTracker:
         reached = self._reachable([self._node_of(root) for root in roots])
         return [group for group in self._candidate_groups if (group.workspace_id, group.doc_id) in reached]
 
-    def _node_of(self, key: str) -> tuple[str, str]:
+    def _node_of(self, key: str) -> Node:
         """索引のキー（文書ID、規範文ID、修飾ID）の所有文書を``(ワークスペースID, 文書ID)``にする。"""
 
         ws_id, local = self._active, key
@@ -191,15 +200,14 @@ class DuplicateTracker:
                 ws_id, local = qualified
         return ws_id, local.partition(":")[0]
 
-    def _adjacency(self) -> dict[tuple[str, str], set[tuple[str, str]]]:
-        """閉包を作る辺の向きに辿れる文書の隣接（重複した写しの宣言も含む）。閉包の上位の集合を作るための辺で、実際の閉包の規則は複製しない。
+    def _edges(self) -> dict[str, dict[Node, set[Node]]]:
+        """強い関係の辺を、辺の向きごとに``{関係の名前: {宣言した文書: {参照先}}}``と``{関係の名前: {参照先: {宣言した文書}}}``で持つ（重複した写しの宣言も含む）。
 
-        前方は、宣言した文書から`requires`・`refines`・`addresses`・`supersedes`の参照先へ。後方は、`refines`・`supersedes`・`addresses`の参照先から宣言した文書へ
-        （逆参照の具体化、起点を置換する後継、`implement`で対象規範文を`addresses`するTASK）。`requires`は後方へ辿らない（閉包は、含めた文書の`requires`を前方へ辿るだけ）。
+        閉包を作る辺の向きの上位の集合を作るための索引で、実際の閉包の規則は複製しない。キーは、前方の辺が``<関係>``、逆向きの辺が``<関係>^``。
         """
 
         if self._adjacent is None:
-            adjacent: dict[tuple[str, str], set[tuple[str, str]]] = {}
+            edges: dict[str, dict[Node, set[Node]]] = {}
             for ws_id, entries in self._entries_by_ws.items():
                 for entry in entries:
                     relations = (entry.frontmatter or {}).get("relations")
@@ -216,25 +224,34 @@ class DuplicateTracker:
                                 if qualified is not None:
                                     target_ws, local = qualified
                             target = (target_ws, local.partition(":")[0])
-                            adjacent.setdefault(source, set()).add(target)
-                            if relation in _BACKWARD_RELATIONS:
-                                adjacent.setdefault(target, set()).add(source)
-            self._adjacent = adjacent
+                            edges.setdefault(relation, {}).setdefault(source, set()).add(target)
+                            edges.setdefault(relation + "^", {}).setdefault(target, set()).add(source)
+            self._adjacent = edges
         return self._adjacent
 
-    def _reachable(self, nodes: Iterable[tuple[str, str]]) -> set[tuple[str, str]]:
-        """``nodes``から、:meth:`_adjacency`の辺の向きに辿って到達する文書（``nodes``自身を含む）。"""
+    def _reachable(self, nodes: Iterable[Node]) -> set[Node]:
+        """``nodes``（起点の文書）から、閉包を作る辺の向きに辿って到達し得る文書（``nodes``自身を含む）。実際の閉包の上位の集合。
 
-        adjacent = self._adjacency()
-        reached: set[tuple[str, str]] = set()
-        stack = list(nodes)
-        while stack:
-            node = stack.pop()
-            if node in reached:
-                continue
-            reached.add(node)
-            stack.extend(adjacent.get(node, ()))
-        return reached
+        閉包と同じく、(1) 下方向の出発点（起点。起点がTASKなら`addresses`の参照先）から`refines`を逆向きに終端まで辿り、(2) そこから上方向（`requires`・`refines`・`addresses`の前方）を
+        終端まで辿る（`supersedes`の参照先の旧文書も前方に辿る）。(3) 閉包の文書を置換する後継と、`implement`で対象規範文を`addresses`するTASK
+        （下方向の文書を`addresses`する文書）を1段だけ加える。上方向で着いた文書からは、下方向（兄弟の具体化文書）へ辿らない。
+        """
+
+        edges = self._edges()
+        roots = set(nodes)
+        starts = set(roots)
+        for root in roots:
+            starts |= edges.get("addresses", {}).get(root, set())
+        downward = _walk(starts, edges.get("refines^", {}))
+        if self._upward is None:
+            self._upward = _merge(edges, _FORWARD_RELATIONS)
+        closure = _walk(downward | roots, self._upward)
+        extra: set[Node] = set()
+        for node in closure:
+            extra |= edges.get("supersedes^", {}).get(node, set())
+        for node in downward:
+            extra |= edges.get("addresses^", {}).get(node, set())
+        return closure | extra
 
     def _variant(self, group: DuplicateGroup, position: int) -> IndexPair:
         cache_key = (group.workspace_id, group.doc_id, position)
@@ -262,6 +279,30 @@ def _declares_strong_relation(entry: DocEntry) -> bool:
     if not isinstance(relations, dict):
         return False
     return any(relations.get(relation) for relation in _STRONG_RELATIONS)
+
+
+def _walk(starts: Iterable[Node], adjacent: dict[Node, set[Node]]) -> set[Node]:
+    """``starts``から``adjacent``の辺を終端まで辿って到達する文書（``starts``自身を含む）。"""
+
+    reached: set[Node] = set()
+    stack = list(starts)
+    while stack:
+        node = stack.pop()
+        if node in reached:
+            continue
+        reached.add(node)
+        stack.extend(adjacent.get(node, ()))
+    return reached
+
+
+def _merge(edges: dict[str, dict[Node, set[Node]]], relations: Iterable[str]) -> dict[Node, set[Node]]:
+    """``relations``の辺を1つの隣接にまとめる（辺の種類を区別せずに辿るため）。"""
+
+    merged: dict[Node, set[Node]] = {}
+    for relation in relations:
+        for source, targets in edges.get(relation, {}).items():
+            merged.setdefault(source, set()).update(targets)
+    return merged
 
 
 def tracker_for(entries_by_ws: dict[str, list[DocEntry]], active_ws_id: str, multi_active: bool) -> DuplicateTracker | None:
