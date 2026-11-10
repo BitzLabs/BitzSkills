@@ -20,6 +20,15 @@ DAILY_PROOF_KEYS = frozenset({'status', 'sourceCommit', 'executionSha256', 'depl
 DAILY_PINS = frozenset({'snapshotManifest', 'contextProfile', 'calibrationManifest'})
 CONTEXT_DATE_FIELDS = frozenset({'date', 'calibrationSource', 'calibrationRequestSha256', 'calibrationReceiptSha256'})
 DEPLOYMENT_VERSION = 'heldout-matrix-deployment-resources-0.1.0'
+CANDIDATE_DEPLOYMENT_VERSION = 'heldout-matrix-deployment-resources-0.2.0'
+PREPARATION_DEPLOYMENT_VERSION = 'heldout-matrix-deployment-resources-0.3.0'
+BASELINE_PRODUCT_SOURCE = 'b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3'
+CANDIDATE_PRODUCT_SOURCE = '88995d6c4c316026fab4a75bf66f534bd2ef277f'
+PRODUCT_BASELINES = {
+    DEPLOYMENT_VERSION: (BASELINE_PRODUCT_SOURCE, 72),
+    CANDIDATE_DEPLOYMENT_VERSION: (CANDIDATE_PRODUCT_SOURCE, 73),
+    PREPARATION_DEPLOYMENT_VERSION: ('ad850493c26699ce0c923676c2e7ab5a303c94c0', 75),
+}
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'sdk', 'cli',
     'contextProfile', 'decisionSchema'}
 DEPLOYMENT_KEYS = public.DEPLOYMENT_KEYS - {'executionSha256'}
@@ -68,7 +77,8 @@ def deployment_for_execution(execution_raw, deployment_raw):
     require(isinstance(deployment_raw, bytes) and io.sha(deployment_raw) == c['deploymentSha256'],
         'heldout deployment fixed bytes')
     d = inputs.parse(deployment_raw)
-    require(isinstance(d, dict) and set(d) == DEPLOYMENT_KEYS and d['version'] == DEPLOYMENT_VERSION
+    require(isinstance(d, dict) and set(d) == DEPLOYMENT_KEYS
+        and isinstance(d['version'], str) and d['version'] in PRODUCT_BASELINES
         and d['sourceCommit'] == c['sourceCommit'] and d['certifiesSkillGate'] is False,
         'heldout deployment identity')
     require(d['codexPath'] == str(public.capture.fixed_runtime.ROOT/'bin/codex')
@@ -80,7 +90,14 @@ def deployment_for_execution(execution_raw, deployment_raw):
     require(isinstance(d['snapshotRelativePath'], str) and re.fullmatch(
         r'\.venv/heldout-routing-preparation-[a-z0-9]+(?:-[a-z0-9]+)*/snapshot',
         d['snapshotRelativePath']) is not None, 'heldout snapshot path')
-    require(type(d['snapshotResourceCount']) is int and d['snapshotResourceCount'] == 72,
+    if d['version'] == CANDIDATE_DEPLOYMENT_VERSION:
+        # この移行は固定の継続台帳を起点とし、未着手分だけを消費する。
+        require(c['version'] == SUCCESSOR_VERSION and c['ledger']['harnessRetries'] == 0
+            and c['ledger']['predecessor'] is not None
+            and c['ledger']['predecessor']['kind'] == 'continuation-0.2.0',
+            'heldout candidate deployment requires continuation predecessor without retries')
+    _, resource_count = PRODUCT_BASELINES[d['version']]
+    require(type(d['snapshotResourceCount']) is int and d['snapshotResourceCount'] == resource_count,
         'heldout frozen product denominator')
     for key, pin in [('manifestSha256', 'snapshotManifest'), ('sdkTreeSha256', 'sdk'),
         ('runtimeManifestSha256', 'runtimeManifest'), ('contextProfileSha256', 'contextProfile'),
@@ -116,6 +133,9 @@ class BoundExecution:
         return inputs.PRIVATE_CASES.parent/self.contract['outputRelativeRoot']/role/f'attempt-{ordinal:04d}'
 
     def ledger_contract(self, resource_proof_raw):
+        deployment = deployment_for_execution(self.execution_raw, self.deployment_raw)
+        require(deployment['version'] != PREPARATION_DEPLOYMENT_VERSION,
+            'heldout preparation deployment cannot open a ledger')
         # resource proofの現物/意味の検証はpreflightの責務。ここでは同じ条件へ束縛する。
         require(self.contract['version'] != PHASE_VERSION,
             'heldout phase reviewed ledger admission not connected')

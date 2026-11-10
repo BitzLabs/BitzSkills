@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'evals/skills/routing'))
+import production_heldout_launch as launch
 import production_heldout_preflight as preflight
 import test_production_heldout_inputs as input_fixture
 import test_production_matrix_preflight as public_fixture
@@ -213,4 +214,97 @@ class HeldoutExecutionTests(unittest.TestCase):
         self.execution['pins']['snapshotManifest'] = io.sha(manifest_raw)
         self.repin_deployment()
         with self.assertRaisesRegex(ValueError,'frozen public product byte drift'):self.verify()
+        self.reader.assert_not_called()
+
+
+    def select_product(self, version, additional_count):
+        product_source, count = x.PRODUCT_BASELINES[version]
+        self.deployment.update(version=version, snapshotResourceCount=count)
+        for index in range(additional_count):
+            name = f'resources/bitz-core/support/candidate-{index}.txt'
+            raw = f'synthetic candidate resource {index}'.encode()
+            (self.snapshot/name).write_bytes(raw)
+            self.old.originals['plugins/'+name.removeprefix('resources/')] = raw
+            self.manifest['resources'][name] = io.sha(raw)
+        candidate = {key: value for key, value in self.old.originals.items() if key.startswith('plugins/')}
+        old_git = self.old.git_mock.side_effect
+
+        def git(repository, command, *args):
+            if command == 'show' and args[0].startswith(product_source+':'):
+                return candidate[args[0].split(':', 1)[1]]
+            if command == 'ls-tree' and product_source in args:
+                return b''.join(('100644 blob '+'0'*40+'\t'+key+'\0').encode() for key in candidate)
+            return old_git(repository, command, *args)
+
+        self.old.git_mock.side_effect = git
+        self.repin_manifest()
+
+    def repin_manifest(self):
+        manifest_raw = io.encoded(self.manifest)
+        (self.snapshot/'manifest.json').write_bytes(manifest_raw)
+        self.deployment['manifestSha256'] = self.execution['pins']['snapshotManifest'] = io.sha(manifest_raw)
+        self.repin_deployment()
+
+    def test_73_resource_deployment_preserves_existing_successor_restrictions(self):
+        self.select_product(x.CANDIDATE_DEPLOYMENT_VERSION, 1)
+        with self.assertRaisesRegex(ValueError, 'requires continuation predecessor'):
+            self.bind()
+        self.reader.assert_not_called()
+        context_raw = self.old.originals[preflight.public.inventory.CONTEXT]
+        context = preflight.public.capture.context_profile(context_raw, self.deployment)
+        self.execution.update(version=x.SUCCESSOR_VERSION, ledger=dict(harnessRetries=0, predecessor=dict(
+            kind='continuation-0.2.0', campaignId=x.successor.continuation.CAMPAIGN,
+            contractSha256='b'*64, headSha256='c'*64, events=14)),
+            conditionContextSha256=x.condition_context_sha256(context))
+        proof = self.verify()
+        self.assertEqual(proof['baselineProductSource'], x.CANDIDATE_PRODUCT_SOURCE)
+        self.assertEqual(proof['snapshotResourceCount'], 73)
+        ledger = x.successor.contract(self.bind().ledger_contract(io.encoded(proof)))
+        self.assertEqual(ledger['budget']['harnessRetries'], 0)
+        self.execution['ledger']['harnessRetries'] = 1
+        self.reader.reset_mock()
+        with self.assertRaisesRegex(ValueError, 'requires continuation predecessor'):
+            self.bind()
+        self.reader.assert_not_called()
+
+    def test_75_resource_deployment_can_verify_but_cannot_open_ledger_or_launch(self):
+        self.select_product(x.PREPARATION_DEPLOYMENT_VERSION, 3)
+        bound = self.bind()
+        proof = self.verify()
+        product_source, _ = x.PRODUCT_BASELINES[x.PREPARATION_DEPLOYMENT_VERSION]
+        self.assertEqual(proof['baselineProductSource'], product_source)
+        self.assertEqual(proof['snapshotResourceCount'], 75)
+        self.assertFalse(proof['launchEnabled'])
+        with self.assertRaisesRegex(ValueError, 'preparation deployment cannot open a ledger'):
+            bound.ledger_contract(io.encoded(proof))
+        with self.assertRaisesRegex(ValueError, 'preparation deployment cannot launch'):
+            launch.prelaunch_review(bound.execution_raw, bound.deployment_raw, b'', b'', b'')
+        self.reader.reset_mock()
+        for count in (72, 73, 76):
+            self.deployment['snapshotResourceCount'] = count
+            self.repin_deployment()
+            with self.subTest(count=count), self.assertRaisesRegex(ValueError, 'frozen product denominator'):
+                self.bind()
+        self.reader.assert_not_called()
+
+    def test_75_resource_deployment_rejects_same_count_inventory_and_rehashed_bytes(self):
+        self.select_product(x.PREPARATION_DEPLOYMENT_VERSION, 3)
+        name = 'resources/bitz-core/support/candidate-0.txt'
+        path = 'plugins/'+name.removeprefix('resources/')
+        raw = self.old.originals[path]
+        changed = raw + b' rehashed drift'
+        (self.snapshot/name).write_bytes(changed)
+        self.old.originals[path] = changed
+        self.manifest['resources'][name] = io.sha(changed)
+        self.repin_manifest()
+        with self.assertRaisesRegex(ValueError, 'frozen public product byte drift'):
+            self.verify()
+
+        replacement = name.replace('candidate-0', 'replacement')
+        (self.snapshot/name).rename(self.snapshot/replacement)
+        self.old.originals[path.replace('candidate-0', 'replacement')] = self.old.originals.pop(path)
+        self.manifest['resources'][replacement] = self.manifest['resources'].pop(name)
+        self.repin_manifest()
+        with self.assertRaisesRegex(ValueError, 'frozen public product inventory'):
+            self.verify()
         self.reader.assert_not_called()

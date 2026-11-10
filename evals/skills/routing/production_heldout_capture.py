@@ -50,7 +50,7 @@ def child_inputs(base):
     manifest_raw = io.read_regular(snapshot/'manifest.json')
     require(io.sha(manifest_raw) == d['manifestSha256'], 'heldout child snapshot drift')
     manifest, _, _ = trace.manifest_view(manifest_raw)
-    require(manifest['sourceCommit'] == c['sourceCommit'] and len(manifest['resources']) == 72,
+    require(manifest['sourceCommit'] == c['sourceCommit'] and len(manifest['resources']) == d['snapshotResourceCount'],
         'heldout child product identity')
     expected = dict(manifest['resources'], **{'manifest.json': d['manifestSha256']})
     require({name: io.sha(raw) for name, raw in p.exact_tree(snapshot, expected).items()} == expected,

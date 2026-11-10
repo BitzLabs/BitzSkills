@@ -69,10 +69,11 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
         and all(isinstance(raw, bytes) for raw in originals.values()), 'heldout original buffer inventory')
     require({name: io.sha(raw) for name, raw in originals.items()} == declared, 'heldout original hash drift')
     d = x.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
+    product_source, resource_count = x.PRODUCT_BASELINES[d['version']]
     for key, raw in [('snapshotManifest', manifest_raw), ('decisionSchema', schema_raw), ('contextProfile', context_raw)]:
         require(bound.contract['pins'][key] == io.sha(raw), 'heldout fixed resource hash')
     manifest, _, _ = trace.manifest_view(manifest_raw)
-    require(manifest['sourceCommit'] == bound.contract['sourceCommit'] and len(manifest['resources']) == 72,
+    require(manifest['sourceCommit'] == bound.contract['sourceCommit'] and len(manifest['resources']) == resource_count,
         'heldout original product identity')
     require(originals['contract.json'] == bound.execution_raw and originals['deployment.json'] == bound.deployment_raw
         and originals['reservation.json'] == io.encoded(launch.primary_identity(bound, ordinal))
@@ -98,8 +99,8 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
     bound.ledger_contract(io.encoded(proof))
     require(proof.get('deploymentSha256') == io.sha(bound.deployment_raw)
         and proof.get('casesSha256') == x.inputs.parse(bound.input_contract_raw)['inputSha256']['cases']
-        and proof.get('snapshotManifestSha256') == io.sha(manifest_raw) and proof.get('snapshotResourceCount') == 72
-        and proof.get('baselineProductSource') == preflight.BASELINE_PRODUCT_SOURCE
+        and proof.get('snapshotManifestSha256') == io.sha(manifest_raw) and proof.get('snapshotResourceCount') == resource_count
+        and proof.get('baselineProductSource') == product_source
         and proof.get('productResourcesSha256') == io.sha(io.encoded(manifest['resources']))
         and isinstance(proof.get('sourceSha256'), dict) and set(proof['sourceSha256']) == set(preflight.SOURCE_FILES)
         and proof.get('contextProfileSha256') == io.sha(context_raw)
