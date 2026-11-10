@@ -8,7 +8,7 @@ import production_heldout_execution as execution
 inputs, public = execution.inputs, execution.public
 io, require, trace = inputs.io, inputs.require, inputs.trace
 # 公開92枠の最終製品を固定する。新refの同数資源への再hashだけでは差替えを認めない。
-BASELINE_PRODUCT_SOURCE = 'b00589bac9bd9dc1f96a9e8b9f71654cad4af5e3'
+BASELINE_PRODUCT_SOURCE = execution.BASELINE_PRODUCT_SOURCE
 PROOF_KEYS = {'status', 'sourceCommit', 'executionSha256', 'deploymentSha256', 'inputContractSha256',
     'sourceSha256', 'casesSha256', 'snapshotManifestSha256', 'baselineProductSource', 'productResourcesSha256',
     'snapshotResourceCount', 'sdkManifestSha256', 'sdkFileCount', 'sdkTreeSha256', 'decisionSchemaSha256',
@@ -43,6 +43,7 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     c = bound.contract
     d = execution.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
     source = c['sourceCommit']
+    product_source, resource_count = execution.PRODUCT_BASELINES[d['version']]
     require(public.guard.git(repository, 'rev-parse', source+'^{commit}').decode().strip() == source,
         'heldout exact source commit')
     originals = {name: public.guard.git(repository, 'show', source+':'+name) for name in SOURCE_FILES}
@@ -69,10 +70,10 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     manifest_raw = io.read_regular(snapshot/'manifest.json')
     require(io.sha(manifest_raw) == d['manifestSha256'], 'heldout snapshot manifest drift')
     manifest, _, _ = trace.manifest_view(manifest_raw)
-    require(manifest['sourceCommit'] == source and len(manifest['resources']) == 72
+    require(manifest['sourceCommit'] == source and len(manifest['resources']) == resource_count
         and set(manifest['resources']) == public.public_resource_names(repository, source),
         'heldout product source and complete inventory')
-    require(set(manifest['resources']) == public.public_resource_names(repository, BASELINE_PRODUCT_SOURCE),
+    require(set(manifest['resources']) == public.public_resource_names(repository, product_source),
         'heldout frozen public product inventory')
     expected = dict(manifest['resources'], **{'manifest.json': d['manifestSha256']})
     for name, raw in public.exact_tree(snapshot, expected).items():
@@ -80,7 +81,7 @@ def verify_resources(repository, bound, sdk_manifest_raw):
         if name != 'manifest.json':
             path = 'plugins/'+Path(name).relative_to('resources').as_posix()
             require(raw == public.guard.git(repository, 'show', source+':'+path), 'heldout snapshot Git drift')
-            require(raw == public.guard.git(repository, 'show', BASELINE_PRODUCT_SOURCE+':'+path),
+            require(raw == public.guard.git(repository, 'show', product_source+':'+path),
                 'heldout frozen public product byte drift')
     sdk_files = public.sdk_manifest(sdk_manifest_raw, d)
     require({name: io.sha(raw) for name, raw in public.exact_tree(repository/d['sdkRelativePath'], sdk_files).items()}
@@ -95,9 +96,9 @@ def verify_resources(repository, bound, sdk_manifest_raw):
         inputContractSha256=io.sha(bound.input_contract_raw),
         sourceSha256={name: io.sha(raw) for name, raw in originals.items()},
         casesSha256=io.sha(raw_inputs['cases']), snapshotManifestSha256=io.sha(manifest_raw),
-        baselineProductSource=BASELINE_PRODUCT_SOURCE,
+        baselineProductSource=product_source,
         productResourcesSha256=io.sha(io.encoded(manifest['resources'])),
-        snapshotResourceCount=72, sdkManifestSha256=io.sha(sdk_manifest_raw), sdkFileCount=len(sdk_files),
+        snapshotResourceCount=resource_count, sdkManifestSha256=io.sha(sdk_manifest_raw), sdkFileCount=len(sdk_files),
         sdkTreeSha256=d['sdkTreeSha256'], decisionSchemaSha256=io.sha(schema_raw),
         contextProfileSha256=io.sha(context_raw), contextDate=context['date'], runtime=runtime,
         originalCalibration=calibration, models=0, reservations=0, launchEnabled=False,

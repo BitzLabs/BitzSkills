@@ -19,12 +19,19 @@ IDENTITY_KEYS = {'ordinal', 'repetition', 'payloadSha256', 'contractSha256', 'so
 
 def condition_sha256(execution_raw, deployment_raw):
     x.deployment_for_execution(execution_raw, deployment_raw)
+    return _condition_sha256(execution_raw, deployment_raw)
+
+
+def _condition_sha256(execution_raw, deployment_raw):
     return io.sha(io.encoded(dict(executionSha256=io.sha(execution_raw), deploymentSha256=io.sha(deployment_raw))))
 
 
 def prelaunch_review(execution_raw, deployment_raw, review_raw, report_raw, isolation_raw):
     c = x.execution_contract(execution_raw)
-    condition = condition_sha256(execution_raw, deployment_raw)
+    deployment = x.deployment_for_execution(execution_raw, deployment_raw)
+    require(deployment['version'] != x.PREPARATION_DEPLOYMENT_VERSION,
+        'heldout preparation deployment cannot launch')
+    condition = _condition_sha256(execution_raw, deployment_raw)
     review, report, isolation = (x.inputs.parse(raw) for raw in [review_raw, report_raw, isolation_raw])
     require(isinstance(review, dict) and set(review) == {'version', 'scope', 'sourceCommit', 'conditionSha256',
         'reviewReportSha256', 'independentContext', 'severityCounts', 'certifiesSkillGate', 'certifiesRelease'},

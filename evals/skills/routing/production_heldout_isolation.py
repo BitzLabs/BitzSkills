@@ -187,14 +187,14 @@ def probe(base):
     require(io.sha(manifest_raw) == d['manifestSha256'], 'heldout probe manifest drift')
     manifest = x.inputs.parse(manifest_raw)
     expected = dict(manifest['resources'], **{'manifest.json': d['manifestSha256']})
-    require(len(manifest['resources']) == 72 and
+    require(len(manifest['resources']) == d['snapshotResourceCount'] and
         {name: io.sha(raw) for name, raw in p.exact_tree(snapshot, expected).items()} == expected,
         'heldout probe resource drift')
     host_net = x.inputs.parse(io.read_regular(base/'parent-network.json'))['inode']
     isolated = type(host_net) is int and os.stat('/proc/self/ns/net').st_ino != host_net
     result = dict(status='heldout_primary_local_probe_completed', networkNamespaceIsolated=isolated,
         credentialsHidden=credentials_hidden, privateCorpusHidden=hidden, primaryPayloadProjectionVerified=True,
-        sdkFileCount=len(sdk), snapshotResourceCount=72, models=0, reservations=0)
+        sdkFileCount=len(sdk), snapshotResourceCount=d['snapshotResourceCount'], models=0, reservations=0)
     require(isolated and hidden and credentials_hidden, 'heldout probe isolation failed')
     io.exclusive(base/'probe-result.json', io.encoded(result))
 
