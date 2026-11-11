@@ -1,5 +1,7 @@
 """合成12件で非公開入力分離・採用hash・24分母・安全な読取りを検証。モデル0。"""
+from contextlib import redirect_stdout
 import copy
+from io import StringIO
 import os
 from pathlib import Path
 import sys
@@ -9,6 +11,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'evals/skills/routing'))
+import production_heldout_execution as execution
 import production_heldout_inputs as held
 
 
@@ -37,7 +40,7 @@ class HeldoutInputTests(unittest.TestCase):
         self.repin_cases()
 
     def repin_cases(self):
-        self.raws['cases'] = held.io.encoded(dict(setVersion=held.SET_VERSION, cases=self.cases))
+        self.raws['cases'] = held.io.encoded(dict(setVersion=self.contract['setVersion'], cases=self.cases))
         self.review['casesSha256'] = held.io.sha(self.raws['cases'])
         self.raws['reviewedSet'] = held.io.encoded(self.review)
         self.repin()
@@ -182,3 +185,77 @@ class HeldoutInputTests(unittest.TestCase):
         for raw in [b'{"SYNTHETIC_SECRET":"broken}', b'{"x":1,"x":2}', b'{"x":NaN}']:
             with self.assertRaises(ValueError) as error: held.parse(raw)
             self.assertEqual(str(error.exception), 'heldout JSON rejected')
+
+
+    def select_75_resources(self):
+        self.contract.update(version=held.VERSION_75, setVersion=held.SET_VERSION_75,
+            productSourceCommit=held.PRODUCT_SOURCE_75)
+        self.review.update(setVersion=held.SET_VERSION_75, productSourceCommit=held.PRODUCT_SOURCE_75)
+        self.review['independentReview'].update(novelNewCaseCount=12, receiptSha256='b'*64)
+        for index, case in enumerate(self.cases):
+            case.update(caseId=f'SE-{1300+index}', prompt=f'SYNTHETIC_75_PROMPT_{index}')
+        self.repin_cases()
+
+    def test_75_preparation_reads_fixed_review_and_explicit_private_input(self):
+        self.select_75_resources()
+        fixed = {path: self.raws[name] for name, path in held.PUBLIC_PATHS.items() if name != 'reviewedSet'}
+        fixed[held.REVIEW_PATH_75] = self.raws['reviewedSet']
+        fixed.update({path: (ROOT/path).read_bytes() for path in held.SOURCE_DEPENDENCIES})
+        source = self.contract['sourceCommit']
+        cases_path = ROOT/'.venv'/'synthetic-cases.json'
+        with patch.object(held.guard, 'git', side_effect=lambda _, command, ref: fixed[ref.removeprefix(source+':')]), \
+             patch.object(held.io, 'read_regular', side_effect=lambda path: fixed[path.relative_to(ROOT).as_posix()]), \
+             patch.object(held, 'private_bytes', return_value=self.raws['cases']) as reader:
+            prepared = held.prepare(ROOT, source, cases_75=cases_path)
+            reader.assert_called_once_with(cases_path)
+            with patch.object(sys, 'argv', ['prepare', '--source', source, '--cases-75', str(cases_path)]), \
+                 redirect_stdout(StringIO()) as output:
+                self.assertEqual(held.main(), 0)
+            self.assertEqual(held.parse(output.getvalue().encode()), prepared.public_summary())
+            reader.reset_mock()
+            fixed.pop(held.REVIEW_PATH_75)
+            with self.assertRaises(KeyError):
+                held.prepare(ROOT, source, cases_75=cases_path)
+            reader.assert_not_called()
+        self.assertEqual(prepared.contract_raw, held.io.encoded(self.contract))
+        self.assertEqual(prepared.public_summary()['setVersion'], held.SET_VERSION_75)
+        self.assertEqual(prepared.public_summary()['productSourceCommit'], held.PRODUCT_SOURCE_75)
+        self.assertEqual(prepared.public_summary()['plannedPrimary'], 24)
+        self.assertEqual(prepared.slot(24)['caseId'], 'SE-1311')
+        self.assertEqual(len({(prepared.slot(n)['caseId'], prepared.slot(n)['repetition'])
+            for n in range(1, 25)}), 24)
+        self.assertNotIn(b'SYNTHETIC_75_PROMPT', held.io.encoded(prepared.public_summary()))
+        self.assertEqual(set(held.parse(prepared.payloads[0])['case']), {'prompt', 'context'})
+        with patch.object(execution, 'execution_contract', return_value={}):
+            with self.assertRaisesRegex(ValueError, 'input version is preparation-only'):
+                execution.bind(b'', b'', prepared.contract_raw, **self.raws)
+
+    def test_75_preparation_requires_review_and_product_identity(self):
+        self.select_75_resources()
+        original = copy.deepcopy(self.review)
+        for key, value in [('productSourceCommit', 'f'*40), ('setVersion', held.SET_VERSION)]:
+            self.review = dict(original, **{key: value})
+            self.repin_cases()
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.bind()
+        self.review = original
+        self.review['independentReview']['novelNewCaseCount'] = 11
+        self.repin_cases()
+        with self.assertRaisesRegex(ValueError, 'novelty review'):
+            self.bind()
+
+    def test_75_preparation_rejects_invalid_case_order_and_distribution(self):
+        self.select_75_resources()
+        self.cases[1]['prompt'] = self.cases[0]['prompt']
+        self.repin_cases()
+        with self.assertRaisesRegex(ValueError, 'duplicate model input'):
+            self.bind()
+        self.cases[1]['prompt'] += '_distinct'
+        self.cases[1]['capability'] = self.cases[2]['capability']
+        self.repin_cases()
+        with self.assertRaisesRegex(ValueError, 'capability denominators'):
+            self.bind()
+        self.cases.reverse()
+        self.repin_cases()
+        with self.assertRaisesRegex(ValueError, 'identities and mandatory cases'):
+            self.bind()
