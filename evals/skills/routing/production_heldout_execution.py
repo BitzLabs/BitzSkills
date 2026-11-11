@@ -27,7 +27,7 @@ CANDIDATE_PRODUCT_SOURCE = '88995d6c4c316026fab4a75bf66f534bd2ef277f'
 PRODUCT_BASELINES = {
     DEPLOYMENT_VERSION: (BASELINE_PRODUCT_SOURCE, 72),
     CANDIDATE_DEPLOYMENT_VERSION: (CANDIDATE_PRODUCT_SOURCE, 73),
-    PREPARATION_DEPLOYMENT_VERSION: ('ad850493c26699ce0c923676c2e7ab5a303c94c0', 75),
+    PREPARATION_DEPLOYMENT_VERSION: (inputs.PRODUCT_SOURCE_75, 75),
 }
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'sdk', 'cli',
     'contextProfile', 'decisionSchema'}
@@ -189,7 +189,9 @@ def condition_context_sha256(context):
 def bind(execution_raw, deployment_raw, input_contract_raw, **raw_inputs):
     matrix = inputs.bind(input_contract_raw, **raw_inputs)
     c = execution_contract(execution_raw)
-    require(inputs.parse(input_contract_raw)['sourceCommit'] == c['sourceCommit']
+    input_contract = inputs.parse(input_contract_raw)
+    require(input_contract['version'] == inputs.VERSION, 'heldout input version is preparation-only')
+    require(input_contract['sourceCommit'] == c['sourceCommit']
         and io.sha(matrix.contract_raw) == c['inputContractSha256'], 'heldout execution input binding')
     deployment_for_execution(execution_raw, deployment_raw)
     return BoundExecution(execution_raw, deployment_raw, input_contract_raw,

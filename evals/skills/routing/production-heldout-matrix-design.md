@@ -198,3 +198,18 @@ production_heldout_runはcleanな固定sourceと公開metadata bundleを照合�
 
 75資源の配備は、旧台帳の結果や未着手枠を引き継ぐ前提を置かない。旧台帳は当時の条件と消費を
 保持する。75資源での評価対象枠・分母・承認範囲は、実評価の前に別途確定する。
+
+### 75資源向けの入力準備
+
+入力契約 `heldout-production-matrix-inputs-0.2.0` は、新集合
+`production-routing-held-out-0.6.0` と固定製品 `ad850493` を束縛する。
+新集合の12件を採用順に固定して各2反復とし、6スキルごとの正例と負例／安全境界を検査する。
+採用結果は `evals/skills/routing/held-out-75-reviewed-set.json` に、集合版・件数・集合のSHA-256・
+製品コミット・検分結果の件数とレシートのSHA-256を記録する。新規性の独立検分は公開と旧保持の集合を参照する。
+入力準備では、指定コミットの採用記録と非公開集合の原bytesを照合し、集計を標準出力へ返す。
+
+```text
+python -B evals/skills/routing/production_heldout_inputs.py --source <確定40桁commit> --cases-75 <非公開集合の絶対パス>
+```
+
+採用記録と非公開集合は作成・独立検分後に揃う。実行器への接続は、新集合向けの保存先と台帳の契約を定める工程で扱う。
