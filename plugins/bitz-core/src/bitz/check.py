@@ -74,87 +74,29 @@ def _resolve_target(
     stmt = statement_index.get(lookup)
     if stmt is not None:
         return stmt["documentId"]
-    return path_index.get(lookup)
+    # 仕様文書のパスは、NFCで完全一致するものだけを解決する（NFCで2つ以上の仕様文書に一致するパスは索引にない＝一致しない。安全な入出力・互換性 §6.1）。
+    return path_index.get(pathown.nfc(lookup))
 
 
 def _task_own_path_allows(path: str, allowed: list) -> bool:
+    """Gitのパス``path``が、TASKの`changes`の許可に一致するか（安全な入出力・互換性 §6.4）。
+
+    許可はNFCにした字句のパスで判定する。ファイルは完全一致、末尾が`/`のディレクトリはパスのセグメント単位の子孫一致とする
+    （許可の末尾が`/`なので、文字列の前方一致がセグメントの境界で成り立つ）。ファイルシステムは読まず、シンボリックリンクの解決先へ許可を広げない。
+    """
+
+    path_nfc = pathown.nfc(path)
     for a in allowed:
         if not isinstance(a, str):
             continue
-        if a.endswith("/"):
-            if path.startswith(a):
+        allowed_nfc = pathown.nfc(a)
+        if allowed_nfc.endswith("/"):
+            if path_nfc.startswith(allowed_nfc):
                 return True
         else:
-            if path == a:
+            if path_nfc == allowed_nfc:
                 return True
     return False
-
-
-def _task_change_ownership_diag(
-    git: gitutil.GitInfo,
-    cwd: str,
-    env: dict[str, str],
-    base_commit: str | None,
-    workspace_id: str,
-    workspace_root: str,
-    real_roots: dict[str, str],
-    path: str,
-    status: str,
-) -> Diagnostic | None:
-    """TASKの変更パスの所有境界を、基準版と現在版の双方のシンボリックリンクで判定する（複合ワークスペース仕様 §5.2）。
-
-    ``status``が``"A"``（追加）なら現在版だけ、``"D"``（削除）なら基準版だけを検査する。それ以外
-    （変更・リネーム）は基準版と現在版の双方を検査する。どちらもシンボリックリンクのエントリだけを対象にし、そのリンク先の実パスが
-    所有領域（:func:`bitz.pathown.owns`）の内か判定する。シンボリックリンクでない変更パスは所有境界違反にせず、TASKの境界
-    （`SPEC-TASK-BOUNDARY-001`）で扱う。Gitは上位のディレクトリのシンボリックリンクの先のパスを変更パスとして報告しないので、
-    上位のリンクを経由した変更は、そのリンク自身の変更として末端のリンクの検査に現れる。
-    """
-
-    own_real = real_roots.get(workspace_id)
-    if own_real is None:
-        return None
-    all_roots_real = list(real_roots.values())
-
-    base_violation = False
-    if status != "A" and base_commit is not None and git.available and git.executable:
-        mode = gitutil.base_tree_entry_mode(git.executable, cwd, env, base_commit, workspace_root, path)
-        if mode == "120000":
-            raw = gitutil.show_base_file(git.executable, cwd, env, base_commit, workspace_root, path)
-            target_text: str | None = None
-            if raw is not None:
-                try:
-                    target_text = raw.decode("utf-8")
-                except UnicodeDecodeError:
-                    target_text = None
-            if target_text:
-                base_dir = os.path.dirname(os.path.join(workspace_root, path))
-                resolved = os.path.join(base_dir, target_text)
-                if os.path.exists(resolved):
-                    real = pathown.real_path(resolved)
-                    if not pathown.owns(real, own_real, all_roots_real):
-                        base_violation = True
-
-    current_violation = False
-    if status != "D":
-        abs_current = os.path.join(workspace_root, path)
-        if os.path.islink(abs_current):
-            real = pathown.real_path(abs_current)
-            if os.path.exists(real) and not pathown.owns(real, own_real, all_roots_real):
-                current_violation = True
-
-    if base_violation:
-        return Diagnostic(
-            code="SPEC-MULTI-OWNERSHIP-001", severity="error", resultStatus="failed",
-            summary=messages.multi_ownership_symlink_base(path, workspace_id),
-            source={"kind": "file", "workspaceId": workspace_id, "path": path},
-        )
-    if current_violation:
-        return Diagnostic(
-            code="SPEC-MULTI-OWNERSHIP-001", severity="error", resultStatus="failed",
-            summary=messages.multi_ownership_symlink_current(path, workspace_id),
-            source={"kind": "file", "workspaceId": workspace_id, "path": path},
-        )
-    return None
 
 
 def _task_boundary_diagnostics(
@@ -166,17 +108,18 @@ def _task_boundary_diagnostics(
     workspace_id: str,
     workspace_root: str,
     *,
-    real_roots: dict[str, str] | None = None,
+    qualified_ids: bool = False,
 ) -> list[Diagnostic]:
     """TASKを明示した場合のTASK境界の検査（`check.md §7`）。TASKのIDまたはパスを明示した場合だけ呼び出す。
 
-    ``real_roots``（複合ワークスペース内での、TASKを明示した`check`）を渡すと、所有境界の不適合
-    （`SPEC-MULTI-OWNERSHIP-001`）をTASK境界外の変更より先に判定し、同じパスへ両方の診断を
-    重複させない（複合ワークスペース仕様 §5.2）。複合ワークスペース内では、`summary`に埋め込むTASKのIDを
+    許可の判定は、Gitのパスと`changes`をNFCにした字句のパスで比べるだけで、ファイルシステムは読まない
+    （安全な入出力・互換性 §6.4）。差分に現れたシンボリックリンクのエントリも、そのエントリ自身の字句のパスだけで判定し、
+    リンク先は使わない（基準版のツリーオブジェクトのリンク先も、現在版の`lstat`も読まない）。
+    ``qualified_ids``（複合ワークスペース内での、TASKを明示した`check`）が真なら、`summary`に埋め込むTASKのIDを
     複合ワークスペースの正規形式（`ws::local`）にする（複合ワークスペース仕様 §4）。
     """
 
-    display_doc_id = f"{workspace_id}::{entry.doc_id}" if real_roots is not None else entry.doc_id
+    display_doc_id = f"{workspace_id}::{entry.doc_id}" if qualified_ids else entry.doc_id
 
     if not git.available or git.executable is None or base_commit is None:
         return [
@@ -198,16 +141,8 @@ def _task_boundary_diagnostics(
         # リネームは移動元と移動先の2つのパスを検査する（安全な入出力・互換性 §6、check.md §7）。
         candidates = [c.old_path, c.path] if c.status == "R" else [c.path]
         for p in candidates:
-            if p is None or p == entry.path or p.startswith(".spec/reports/") or p in reported:
+            if p is None or pathown.nfc(p) == pathown.nfc(entry.path) or p.startswith(".spec/reports/") or p in reported:
                 continue
-            if real_roots is not None:
-                ownership_diag = _task_change_ownership_diag(
-                    git, cwd, env, base_commit, workspace_id, workspace_root, real_roots, p, c.status
-                )
-                if ownership_diag is not None:
-                    reported.add(p)
-                    diags.append(ownership_diag)
-                    continue
             if not _task_own_path_allows(p, allowed):
                 reported.add(p)
                 diags.append(
@@ -260,10 +195,12 @@ def _exclude_member_paths(
     （`gitutil.collect_changed_paths`がワークスペースの外との間のリネームを扱うのと同じ）。
     """
 
-    prefixes = tuple(p.rstrip("/") + "/" for p in member_paths)
+    # メンバーのパスとGitのパスは、どちらもNFCにしたセグメントで比べる（安全な入出力・互換性 §6.1）。末尾が`/`の接頭辞なので、
+    # 文字列の前方一致がセグメントの境界で成り立つ。
+    prefixes = tuple(pathown.nfc(p.rstrip("/")) + "/" for p in member_paths)
 
     def _inside(path: str | None) -> bool:
-        return path is not None and path.startswith(prefixes)
+        return path is not None and pathown.nfc(path).startswith(prefixes)
 
     out: list[gitutil.ChangedPath] = []
     for c in changed:
@@ -392,7 +329,7 @@ def _resolve_selected_roots(
     # 明示のパスは、索引に入る文書（重複でも`skip-document`でもない）のものだけを解決する。索引にない文書のパスは起点の不在として扱う
     # （文書IDの重複した文書のパスで`id_index`を引いて失敗しない）。
     path_source = relations_mod.valid_entries(local_entries) if local_entries is not None else list(id_index.values())
-    path_index = {e.path: e.doc_id for e in path_source if e.doc_id is not None}
+    path_index = pathown.build_nfc_path_index((e.path, e.doc_id) for e in path_source if e.doc_id is not None)
 
     diags: list[Diagnostic] = []
     context_ids: set[str] = set()
@@ -483,8 +420,10 @@ def _other_member_duplicate_diagnostics(
         return []
 
     if scope == "selected":
-        path_index = {e.path: e.doc_id for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None}
-        roots = [path_index.get(target, target) for target in parsed.positionals]
+        path_index = pathown.build_nfc_path_index(
+            (e.path, e.doc_id) for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None
+        )
+        roots = [path_index.get(pathown.nfc(target), target) for target in parsed.positionals]
 
         def closure_ids(idx: dict[str, DocEntry], stmt: dict[str, dict]) -> set[str]:
             ids: set[str] = set()
@@ -527,14 +466,14 @@ def _member_check_diagnostics(
     local_id_indices: dict[str, dict[str, DocEntry]],
     local_stmt_indices: dict[str, dict[str, dict]],
     known_ws_ids: set[str],
-    real_roots: dict[str, str],
+    area_roots: dict[str, str],
 ) -> list[Diagnostic]:
     diags: list[Diagnostic] = []
     for entry in relations_mod.valid_entries(entries):
         diags.extend(
             multirelate.field_diagnostics(entry, ws_id, local_id_indices, local_stmt_indices, known_ws_ids)
         )
-    diags.extend(multirelate.path_diagnostics(entries, ws_id, ws_root_abs, real_roots))
+    diags.extend(multirelate.path_diagnostics(entries, ws_id, ws_root_abs, area_roots))
     diags.extend(
         multirelate.coverage_diagnostics(entries, ws_id, local_id_indices, local_stmt_indices, known_ws_ids)
     )
@@ -566,8 +505,8 @@ def _member_base_diagnostics(
         )
     )
     diags.extend(basecompare.approved_protection_diagnostics(base_by_id, current_by_id, ws_id))
-    current_by_path = {e.path: e for e in relations_mod.valid_entries(entries)}
-    base_by_path = {e.path: e for e in base_by_id.values()}
+    current_by_path = basecompare.by_path(relations_mod.valid_entries(entries))
+    base_by_path = basecompare.by_path(base_by_id.values())
     changed_paths_ws: list[gitutil.ChangedPath] = []
     if git.available and git.executable:
         changed_paths_ws = gitutil.collect_changed_paths(git.executable, cwd, env, base_commit, ws_root_abs)
@@ -595,7 +534,7 @@ def _run_all_workspaces_members(
 
     workspaces = multiws.ordered_workspaces(pre)
     known_ws_ids = {wid for wid, _, _ in workspaces}
-    real_roots = {wid: os.path.realpath(root) for wid, root, _ in workspaces}
+    area_roots = {wid: os.path.abspath(root) for wid, root, _ in workspaces}
 
     per_ws_entries: dict[str, list[DocEntry]] = {}
     per_ws_catalog_diags: dict[str, list[Diagnostic]] = {}
@@ -647,7 +586,7 @@ def _run_all_workspaces_members(
         diags: list[Diagnostic] = multiws.config_warnings(root) + list(per_ws_catalog_diags[wid])
         diags.extend(
             _member_check_diagnostics(
-                entries, wid, root, local_id_indices, local_stmt_indices, known_ws_ids, real_roots
+                entries, wid, root, local_id_indices, local_stmt_indices, known_ws_ids, area_roots
             )
         )
         diags.extend(cycle_diags_by_ws.get(wid, []))
@@ -918,14 +857,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 ) = multirelate.build_multi_context(
                     workspace_id, catalog.entries, multi_pre, catalogs_out=member_catalogs
                 )
-                real_roots = {wid: os.path.realpath(root) for wid, root in ws_roots.items()}
+                area_roots = {wid: os.path.abspath(root) for wid, root in ws_roots.items()}
             else:
                 id_index = relations_mod.build_id_index(catalog.entries)
                 statement_index = relations_mod.build_statement_index(catalog.entries)
                 local_id_indices = {workspace_id: id_index}
                 local_stmt_indices = {workspace_id: statement_index}
                 known_ws_ids = {workspace_id}
-                real_roots = {}
+                area_roots = {}
             # 作業ワークスペース自身の文書の索引（修飾の別名と他のメンバーの文書を含まない）。
             # 基準版との比較・所有文書の逆索引は、作業ワークスペースの文書だけを対象にする。
             active_index = local_id_indices[workspace_id]
@@ -938,7 +877,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 if multi_active
                 else None
             )
-            current_by_path = {e.path: e for e in relations_mod.valid_entries(catalog.entries)}
+            current_by_path = basecompare.by_path(relations_mod.valid_entries(catalog.entries))
 
             # --- Gitの基準版を解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
             # 実際の診断の生成は、`scope`ごとの完全検査の対象（`full_check_ids`）を確定した後に行う
@@ -958,7 +897,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                         # ルートワークスペースは、登録したメンバーの配下を所有しない（複合ワークスペース仕様 §5）。
                         assert multi_pre is not None
                         changed_paths = _exclude_member_paths(changed_paths, [m.path for m in multi_pre.members])
-            base_by_path = {e.path: e for e in base_by_id.values()}
+            base_by_path = basecompare.by_path(base_by_id.values())
 
             current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
             # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にせず、状態遷移・承認済み要求の保護・影響候補の比較もしない
@@ -967,7 +906,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths, current_ids_present)
             # 現在版でIDを読めないファイルが基準版のIDの唯一の対応先である文書（比較しない）。引数なしの`check`は、その文書への直接の逆参照も完全検査の対象に加える。
             unreadable_owner_ids = set(base_by_id) - set(base_by_id_cmp)
-            base_by_path_cmp = {e.path: e for e in base_by_id_cmp.values()}
+            base_by_path_cmp = basecompare.by_path(base_by_id_cmp.values())
 
             # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
             # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
@@ -1024,7 +963,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     task_diags.extend(
                         _task_boundary_diagnostics(
                             task_entry, git, cwd, env, base_commit, workspace_id, loc.root,
-                            real_roots=real_roots if multi_active else None,
+                            qualified_ids=multi_active,
                         )
                     )
                 extra_diags = root_diags + task_diags
@@ -1057,7 +996,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
                 # 変更されたパスのファイルでIDを読めないもの（基準版の文書と同じパスに壊れて残るものを含む）は、所有する文書を持たないので、
                 # そのファイル自身の診断（`SPEC-FM-SCHEMA-001`など）を、変更されたパスの診断として返す（`check` §5、確認事項C105）。
-                checked_paths |= {c.path for c in changed_paths if c.path in unreadable_paths}
+                checked_paths |= {c.path for c in changed_paths if pathown.nfc(c.path) in unreadable_paths}
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
                 extra_diags = []
                 selection = {
@@ -1081,7 +1020,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     relation_diags.extend(
                         multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                     )
-                path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, real_roots)
+                path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, area_roots)
                 coverage_diags = multirelate.coverage_diagnostics(
                     scoped_entries, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids
                 )
@@ -1108,7 +1047,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                             multirelate.field_diagnostics(e, other_ws, local_id_indices, local_stmt_indices, known_ws_ids)
                         )
                     path_diags.extend(
-                        multirelate.path_diagnostics(other_entries, other_ws, ws_roots[other_ws], real_roots)
+                        multirelate.path_diagnostics(other_entries, other_ws, ws_roots[other_ws], area_roots)
                     )
                     coverage_diags.extend(
                         multirelate.coverage_diagnostics(

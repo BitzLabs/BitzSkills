@@ -380,35 +380,42 @@ def _skip_path_and_coverage(entry: DocEntry) -> bool:
     return entry.status in ("rejected", "cancelled")
 
 
-def _resolve_owned_path(
-    ws_root_abs: str, own_real: str, rel_path: str, all_roots_real: Iterable[str] = ()
-) -> tuple[bool, bool]:
-    """``(exists_ok, ownership_violation)``を返す（複合ワークスペース仕様 §5.1の手順4・5）。
+OWNERSHIP_VIOLATION = "ownership"
 
-    宣言したパスの実パス（上位のディレクトリと末端のシンボリックリンクを解決したもの）が、自ワークスペースの所有領域
-    （実パスのルートの配下から、``all_roots_real``のうち自ルートの配下にある別のワークスペースの配下を除いたもの）に
-    あるときだけ存在するパスとして扱う。別のワークスペースやリポジトリの外へ解決すれば所有境界の違反とする。
-    包含は実パスのファイルシステム上の同一性で判定する（:mod:`bitz.pathown`）。
+
+def _resolve_owned_path(resolver: pathown.PathResolver, rel_path: str, all_roots: Iterable[str] = ()) -> str:
+    """宣言したパスの状態を、``EXISTS``・``ABSENT``・``COLLISION``・:data:`OWNERSHIP_VIOLATION`のいずれかで返す
+    （複合ワークスペース仕様 §5.1の手順4・5、安全な入出力・互換性 §6）。
+
+    所有の判定を先に、NFCにした字句のパスのセグメント単位の包含で行う。自ワークスペースの所有領域
+    （ルートの配下から、``all_roots``のうち自ルートの配下にある別のワークスペースの配下を除いたもの）にない
+    パスは、存在の有無によらず所有境界の違反とする。所有領域の中のパスは、シンボリックリンクを辿らずに
+    通常のファイルとして存在するときだけ存在するパスとして扱う（途中または末端のリンクは不在、NFCの衝突は拒否）。
     """
 
-    abs_path = os.path.join(ws_root_abs, rel_path)
-    if not os.path.lexists(abs_path):
-        return False, False
-    real = pathown.real_path(abs_path)
-    if not os.path.isfile(real):
-        return False, False
-    if pathown.owns(real, own_real, all_roots_real):
-        return True, False
-    return False, True
+    abs_path = os.path.join(resolver.root, rel_path)
+    if not pathown.owns(abs_path, resolver.root, all_roots):
+        return OWNERSHIP_VIOLATION
+    return relations_mod.path_status(resolver, rel_path)
 
 
 def path_diagnostics(
-    entries: list[DocEntry], ws_id: str, ws_root_abs: str, real_roots: dict[str, str]
+    entries: list[DocEntry],
+    ws_id: str,
+    ws_root_abs: str,
+    roots: dict[str, str],
+    *,
+    resolver: pathown.PathResolver | None = None,
 ) -> list[Diagnostic]:
-    """`implements`と`tests[].path`の存在と所有境界を検査する（関係・トレースモデル §9、複合ワークスペース仕様 §5.1）。"""
+    """`implements`と`tests[].path`の存在と所有境界を検査する（関係・トレースモデル §9、複合ワークスペース仕様 §5.1）。
 
-    own_real = real_roots[ws_id]
-    all_roots_real = list(real_roots.values())
+    ``roots``は複合ワークスペースの全ワークスペースのルート（ワークスペースID → 絶対パス）。``resolver``は、
+    ``ws_root_abs``の :class:`bitz.pathown.PathResolver`で、ディレクトリの列挙のキャッシュを共有したいときに渡す。
+    """
+
+    if resolver is None:
+        resolver = pathown.PathResolver(ws_root_abs)
+    all_roots = list(roots.values())
     diags: list[Diagnostic] = []
     for entry in relations_mod.valid_entries(entries):
         if _skip_path_and_coverage(entry):
@@ -419,8 +426,8 @@ def path_diagnostics(
 
         implements = entry.frontmatter.get("implements") or []
         for p in implements:
-            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p, all_roots_real)
-            if violation:
+            found = _resolve_owned_path(resolver, p, all_roots)
+            if found == OWNERSHIP_VIOLATION:
                 diags.append(
                     _mk(
                         "SPEC-MULTI-OWNERSHIP-001", "error", "failed",
@@ -428,11 +435,11 @@ def path_diagnostics(
                     )
                 )
                 break
-            if not ok:
+            if found != pathown.EXISTS:
                 diags.append(
                     _mk(
                         "SPEC-PATH-INVALID-001", severity, status,
-                        messages.IMPLEMENTS_PATH_DRAFT if is_draft else messages.IMPLEMENTS_PATH_MISSING,
+                        relations_mod.path_message("implements", found, is_draft),
                         entry.path, ws_id, key="implements",
                     )
                 )
@@ -443,19 +450,19 @@ def path_diagnostics(
             p = t.get("path") if isinstance(t, dict) else None
             if not p:
                 continue
-            ok, violation = _resolve_owned_path(ws_root_abs, own_real, p, all_roots_real)
-            if violation:
+            found = _resolve_owned_path(resolver, p, all_roots)
+            if found == OWNERSHIP_VIOLATION:
                 diags.append(
                     _mk(
                         "SPEC-MULTI-OWNERSHIP-001", "error", "failed",
                         messages.multi_ownership_resolved(p, ws_id), entry.path, ws_id, key=f"tests[{idx}].path",
                     )
                 )
-            elif not ok:
+            elif found != pathown.EXISTS:
                 diags.append(
                     _mk(
                         "SPEC-PATH-INVALID-001", severity, status,
-                        messages.TEST_PATH_DRAFT if is_draft else messages.TEST_PATH_MISSING,
+                        relations_mod.path_message("tests", found, is_draft),
                         entry.path, ws_id, key=f"tests[{idx}].path",
                     )
                 )

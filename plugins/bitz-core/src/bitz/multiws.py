@@ -24,6 +24,7 @@ from . import config as config_mod
 from . import gitutil
 from . import lex
 from . import messages
+from . import pathown
 from .config import Diagnostic
 from .earsai.scanner import scan_candidates
 from .resultmodel import worst_status
@@ -432,18 +433,26 @@ def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tu
 
 
 def _member_config_check(
-    root_id: str, root: str, mid: str, mpath: str, *, check_id_match: bool = True
+    root_id: str, root: str, mid: str, mpath: str, member_root: str | None, *, check_id_match: bool = True
 ) -> tuple[Diagnostic | None, dict | None]:
     """メンバー自身の`.spec/bitz.yaml`を検証する（MEMBER段階、910）。``mpath``は字句として有効な前提。
+
+    ``member_root``は、メンバーのパスの存在の検査（安全な入出力・互換性 §6.2）が確かめた、ファイルシステム上の綴りのメンバーのルート。
+    メンバーのパスがディレクトリとして存在しなければ（不在、別の綴り）``None``で、メンバーの設定がない（`SPEC-MULTI-MEMBER-001`）ものとして扱う
+    （大文字と小文字を区別しないファイルシステムが別の綴りのパスを開けても、存在するとはみなさない）。
 
     ``check_id_match``は呼び出し側が``mid``自体の構文をすでに不正と判定済みのとき``False``にする
     （カタログのid形式の不正はID段階、920が単独の主診断になれるよう、無意味な不一致の比較を
     しない。`priority`どおりMEMBER(910)をID(920)より優先するのは、両者が独立に成立する場合だけに限る）。
     """
 
-    member_root = os.path.join(root, *mpath.split("/"))
-    member_cfg = os.path.join(member_root, ".spec", "bitz.yaml")
-    if not os.path.isfile(member_cfg) or os.path.islink(os.path.join(member_root, ".spec")):
+    member_cfg = os.path.join(member_root, ".spec", "bitz.yaml") if member_root is not None else None
+    if (
+        member_root is None
+        or member_cfg is None
+        or not os.path.isfile(member_cfg)
+        or os.path.islink(os.path.join(member_root, ".spec"))
+    ):
         return _diag(
             "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_CONFIG_MISSING,
             _root_source(root_id, "multiWorkspace.members"),
@@ -491,12 +500,20 @@ def _member_config_check(
 class _LocalMember:
     id: str
     path: str
+    #: メンバーのパスの、NFCにしたセグメント（重複・入れ子の判定に使う。安全な入出力・互換性 §6.1）。
     parts: tuple[str, ...]
     config: dict
+    #: 存在の検査が確かめた、ファイルシステム上の綴りのメンバーのルート（絶対パス）。
+    root: str
 
 
 def _evaluate_member_local(
-    root: str, root_id: str, mid: str, mpath: str, exclude_parts: list[tuple[str, ...]] | None = None
+    root: str,
+    root_id: str,
+    mid: str,
+    mpath: str,
+    exclude_parts: list[tuple[str, ...]] | None = None,
+    resolver: pathown.PathResolver | None = None,
 ) -> tuple[Diagnostic | None, _LocalMember | None]:
     """1つのメンバーについて、他のメンバーとの比較を伴わない候補を集め、最小の`priority`の1件を選ぶ。
 
@@ -520,7 +537,7 @@ def _evaluate_member_local(
         ))
 
     path_valid = _path_lexically_valid(mpath)
-    parts = tuple(mpath.split("/")) if path_valid else ()
+    parts = _nfc_parts(mpath) if path_valid else ()
     if not path_valid:
         candidates.append(_diag(
             "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_INVALID,
@@ -534,17 +551,35 @@ def _evaluate_member_local(
         ))
 
     config: dict | None = None
+    member_root: str | None = None
     if path_valid:
-        d, config = _member_config_check(root_id, root, mid, mpath, check_id_match=id_valid)
-        if d is not None:
-            candidates.append(d)
+        # メンバーのパスの存在の検査（安全な入出力・互換性 §6.2）。途中または末端のシンボリックリンクと、NFCで同じ名前になる項目が
+        # 複数あるパスは、`SPEC-MULTI-PATH-001`として拒否し、メンバーの設定は読まない。
+        if resolver is None:
+            resolver = pathown.PathResolver(root)
+        found = resolver.resolve(mpath, pathown.DIRECTORY)
+        if found.status == pathown.LINK:
+            candidates.append(_diag(
+                "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_SYMLINK,
+                _root_source(root_id, "multiWorkspace.members"),
+            ))
+        elif found.status == pathown.COLLISION:
+            candidates.append(_diag(
+                "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_NFC_COLLISION,
+                _root_source(root_id, "multiWorkspace.members"),
+            ))
+        else:
+            member_root = os.path.join(root, *found.actual) if found.exists else None
+            d, config = _member_config_check(root_id, root, mid, mpath, member_root, check_id_match=id_valid)
+            if d is not None:
+                candidates.append(d)
 
     if candidates:
         candidates.sort(key=lambda d: _PRIORITY.get(d.code, 0))
         return candidates[0], None
 
-    assert config is not None
-    return None, _LocalMember(id=mid, path=mpath, parts=parts, config=config)
+    assert config is not None and member_root is not None
+    return None, _LocalMember(id=mid, path=mpath, parts=parts, config=config, root=member_root)
 
 
 def _deep_path_check(
@@ -554,27 +589,20 @@ def _deep_path_check(
     submodule_paths: set[str],
     worktree_paths: set[str],
 ) -> Diagnostic | None:
-    """上位のディレクトリにあるシンボリックリンク・サブモジュール・別のワークツリー・別のリポジトリを検証する（PATH段階、930・Git依存）。"""
+    """サブモジュール・別のワークツリー・別のリポジトリを検証する（PATH段階、930・Git依存。Gitの境界の照合は存在の検査と独立に行う。
+    シンボリックリンクとNFCの衝突は、メンバーのパスの存在の検査が済ませている）。"""
 
     if rec.path in submodule_paths:
         return _diag(
             "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_SUBMODULE,
             _root_source(root_id, "multiWorkspace.members"),
         )
-    member_root = os.path.join(root, *rec.parts)
+    member_root = rec.root
     if os.path.abspath(member_root) in worktree_paths:
         return _diag(
             "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_WORKTREE,
             _root_source(root_id, "multiWorkspace.members"),
         )
-    cur = root
-    for seg in rec.parts:
-        cur = os.path.join(cur, seg)
-        if os.path.islink(cur):
-            return _diag(
-                "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_SYMLINK,
-                _root_source(root_id, "multiWorkspace.members"),
-            )
     if os.path.isdir(os.path.join(member_root, ".git")):
         return _diag(
             "SPEC-MULTI-PATH-001", "failed", messages.MULTI_PATH_SEPARATE_REPO,
@@ -620,8 +648,9 @@ def _validate_catalog(
 
     local_diags: list[Diagnostic] = []
     locals_: list[_LocalMember | None] = []
+    member_resolver = pathown.PathResolver(root)
     for mid, mpath in members_raw:
-        d, rec = _evaluate_member_local(root, root_id, mid, mpath, exclude_parts)
+        d, rec = _evaluate_member_local(root, root_id, mid, mpath, exclude_parts, member_resolver)
         if d is not None:
             local_diags.append(d)
         locals_.append(rec)
@@ -683,14 +712,14 @@ def _validate_catalog(
                 deep_diags.append(d)
             else:
                 members.append(MemberRecord(
-                    id=rec.id, path=rec.path, root=os.path.join(root, *rec.parts), config=rec.config
+                    id=rec.id, path=rec.path, root=rec.root, config=rec.config
                 ))
     else:
         for i in remaining:
             rec = locals_[i]
             assert rec is not None
             members.append(MemberRecord(
-                id=rec.id, path=rec.path, root=os.path.join(root, *rec.parts), config=rec.config
+                id=rec.id, path=rec.path, root=rec.root, config=rec.config
             ))
 
     all_diags = local_diags + exclude_diags + pairwise_diags + deep_diags
@@ -732,12 +761,12 @@ def _validate_catalog(
                 p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root, git_top)
                 if not _config_in_excluded_area(p, rev_exclude)
             }
-            extra_set |= rev_known - rev_catalog_paths
+            extra_set |= _without_nfc(rev_known, rev_catalog_paths)
         current_known = {
             p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root, git_top)
             if not _config_in_excluded_area(p, exclude_parts)
         }
-        extra_set |= current_known - catalog_paths
+        extra_set |= _without_nfc(current_known, catalog_paths)
         for p in extra_set:
             unregistered[p] = messages.MULTI_UNREGISTERED
     if unregistered:
@@ -757,6 +786,13 @@ def _validate_catalog(
         return [limit_diag], None
 
     return [], members
+
+
+def _without_nfc(known: set[str], declared: set[str]) -> set[str]:
+    """``known``（Gitから得たパス）のうち、``declared``（宣言したパス）にNFCで一致しないもの。Gitのパスは元の綴りで返す（安全な入出力・互換性 §6.1）。"""
+
+    declared_nfc = {pathown.nfc(p) for p in declared}
+    return {p for p in known if pathown.nfc(p) not in declared_nfc}
 
 
 def _config_in_excluded_area(config_path: str, exclude_parts: list[tuple[str, ...]]) -> bool:
