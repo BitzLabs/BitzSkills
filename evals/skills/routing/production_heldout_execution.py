@@ -29,6 +29,8 @@ PRODUCT_BASELINES = {
     CANDIDATE_DEPLOYMENT_VERSION: (CANDIDATE_PRODUCT_SOURCE, 73),
     PREPARATION_DEPLOYMENT_VERSION: (inputs.PRODUCT_SOURCE_75, 75),
 }
+EXECUTION_DEPLOYMENT_75 = 'heldout-matrix-deployment-resources-0.4.0'
+PRODUCT_BASELINES[EXECUTION_DEPLOYMENT_75] = (inputs.PRODUCT_SOURCE_75, 75)
 PINS = {'snapshotManifest', 'runtimeManifest', 'calibrationManifest', 'sdk', 'cli',
     'contextProfile', 'decisionSchema'}
 DEPLOYMENT_KEYS = public.DEPLOYMENT_KEYS - {'executionSha256'}
@@ -65,6 +67,9 @@ def execution_contract(raw):
             'heldout execution successor ledger')
         successor.predecessor_spec(c['ledger']['predecessor'], c['campaignId'])
         io.pin(c['conditionContextSha256'])
+    if c['campaignId'] == successor.CAMPAIGN_75:
+        require(succeeding and c['ledger'] == dict(harnessRetries=0, predecessor=None),
+            'heldout 75-resource execution ledger')
     if phased:
         from production_heldout_phases import phase_header, continuation
         require(c['campaignId'] == continuation.CAMPAIGN, 'heldout phase fixed campaign')
@@ -90,6 +95,8 @@ def deployment_for_execution(execution_raw, deployment_raw):
     require(isinstance(d['snapshotRelativePath'], str) and re.fullmatch(
         r'\.venv/heldout-routing-preparation-[a-z0-9]+(?:-[a-z0-9]+)*/snapshot',
         d['snapshotRelativePath']) is not None, 'heldout snapshot path')
+    require((d['version'] == EXECUTION_DEPLOYMENT_75) == (c['campaignId'] == successor.CAMPAIGN_75),
+        'heldout 75-resource deployment campaign')
     if d['version'] == CANDIDATE_DEPLOYMENT_VERSION:
         # この移行は固定の継続台帳を起点とし、未着手分だけを消費する。
         require(c['version'] == SUCCESSOR_VERSION and c['ledger']['harnessRetries'] == 0
@@ -105,6 +112,16 @@ def deployment_for_execution(execution_raw, deployment_raw):
         require(io.pin(d[key]) == c['pins'][pin], 'heldout deployment pin drift')
     io.pin(d['sdkManifestSha256'])
     return d
+
+
+def cases_path(c):
+    if c['campaignId'] == successor.CAMPAIGN_75:
+        return inputs.collection_75_root()/'cases.json'
+    return inputs.PRIVATE_CASES
+
+
+def output_root(c):
+    return cases_path(c).parent/c['outputRelativeRoot']
 
 
 @dataclass(frozen=True, repr=False)
@@ -130,7 +147,7 @@ class BoundExecution:
     def stage_root(self, ordinal, role):
         self.slot(ordinal)
         require(role in {'primary', 'independent'}, 'heldout stage role')
-        return inputs.PRIVATE_CASES.parent/self.contract['outputRelativeRoot']/role/f'attempt-{ordinal:04d}'
+        return output_root(self.contract)/role/f'attempt-{ordinal:04d}'
 
     def ledger_contract(self, resource_proof_raw):
         deployment = deployment_for_execution(self.execution_raw, self.deployment_raw)
@@ -148,7 +165,8 @@ class BoundExecution:
         c = self.contract
         if c['version'] == SUCCESSOR_VERSION:
             raw = io.encoded(dict(version=successor.VERSION, campaignId=c['campaignId'],
-                conditionSha256=self.condition_sha256(proof), model=c['model'], setVersion=inputs.SET_VERSION,
+                conditionSha256=self.condition_sha256(proof), model=c['model'],
+                setVersion=inputs.parse(self.input_contract_raw)['setVersion'],
                 budget=dict(c['budget'], harnessRetries=c['ledger']['harnessRetries']),
                 timeoutSeconds=c['timeoutSeconds'], predecessor=c['ledger']['predecessor'], certifiesSkillGate=False))
             successor.contract(raw)
@@ -190,7 +208,8 @@ def bind(execution_raw, deployment_raw, input_contract_raw, **raw_inputs):
     matrix = inputs.bind(input_contract_raw, **raw_inputs)
     c = execution_contract(execution_raw)
     input_contract = inputs.parse(input_contract_raw)
-    require(input_contract['version'] == inputs.VERSION, 'heldout input version is preparation-only')
+    expected_version = inputs.VERSION_75 if c.get('campaignId') == successor.CAMPAIGN_75 else inputs.VERSION
+    require(input_contract['version'] == expected_version, 'heldout input version is preparation-only for this campaign')
     require(input_contract['sourceCommit'] == c['sourceCommit']
         and io.sha(matrix.contract_raw) == c['inputContractSha256'], 'heldout execution input binding')
     deployment_for_execution(execution_raw, deployment_raw)

@@ -22,7 +22,7 @@ def child_inputs(base):
     ordinal = launch.checked_identity(execution_raw, identity)
     require(base == launch.stage_root(execution_raw, ordinal), 'heldout child canonical root')
     require(not any((ROOT/name).exists() for name in ['.git', '.spec', 'docs', 'tests', 'evals/skills/results'])
-        and not x.inputs.PRIVATE_CASES.exists(), 'heldout evaluation corpus visible in child')
+        and not any(path.exists() for path in (x.inputs.PRIVATE_CASES, x.cases_path(c))), 'heldout evaluation corpus visible in child')
     launch.prelaunch_review(execution_raw, deployment_raw, io.read_regular(base/'prelaunch-review.json'),
         io.read_regular(base/'prelaunch-report.json'), io.read_regular(base/'local-isolation-proof.json'))
     payload_raw = io.read_regular(base/'model-input.json')

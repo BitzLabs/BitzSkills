@@ -267,6 +267,37 @@ class HeldoutExecutionTests(unittest.TestCase):
             self.bind()
         self.reader.assert_not_called()
 
+    def select_75_execution(self):
+        self.input_fixture.select_75_resources()
+        self.input_raw = io.encoded(self.input_fixture.contract)
+        self.reader.return_value = self.raws['cases']
+        path = x.inputs.REVIEW_PATH_75
+        self.old.originals[path] = self.raws['reviewedSet']
+        (self.repository/path).write_bytes(self.raws['reviewedSet'])
+        self.select_product(x.EXECUTION_DEPLOYMENT_75, 3)
+        campaign = x.successor.CAMPAIGN_75
+        context = preflight.public.capture.context_profile(
+            self.old.originals[preflight.public.inventory.CONTEXT], self.deployment)
+        self.execution.update(version=x.SUCCESSOR_VERSION, campaignId=campaign,
+            outputRelativeRoot='measurements/'+campaign, inputContractSha256=io.sha(self.input_raw),
+            ledger=dict(harnessRetries=0, predecessor=None),
+            conditionContextSha256=x.condition_context_sha256(context))
+
+    def test_75_execution_binds_adopted_input_and_shared_condition(self):
+        self.select_75_execution()
+        proof = self.verify()
+        bound = self.bind()
+        contract = x.successor.contract(bound.ledger_contract(io.encoded(proof)))
+        self.assertEqual(contract['setVersion'], x.inputs.SET_VERSION_75)
+        self.assertEqual(bound.slot(24)['caseId'], 'SE-1311')
+        self.assertEqual(bound.stage_root(1, 'primary'),
+            x.inputs.collection_75_root()/bound.contract['outputRelativeRoot']/'primary/attempt-0001')
+        self.reader.assert_called_once_with(x.inputs.collection_75_root()/'cases.json')
+        self.deployment['version'] = x.PREPARATION_DEPLOYMENT_VERSION
+        self.repin_deployment()
+        with self.assertRaisesRegex(ValueError, 'deployment campaign'):
+            self.bind()
+
     def test_75_resource_deployment_can_verify_but_cannot_open_ledger_or_launch(self):
         self.select_product(x.PREPARATION_DEPLOYMENT_VERSION, 3)
         bound = self.bind()

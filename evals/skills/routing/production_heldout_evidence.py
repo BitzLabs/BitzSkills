@@ -102,7 +102,7 @@ def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_
         and proof.get('snapshotManifestSha256') == io.sha(manifest_raw) and proof.get('snapshotResourceCount') == resource_count
         and proof.get('baselineProductSource') == product_source
         and proof.get('productResourcesSha256') == io.sha(io.encoded(manifest['resources']))
-        and isinstance(proof.get('sourceSha256'), dict) and set(proof['sourceSha256']) == set(preflight.SOURCE_FILES)
+        and isinstance(proof.get('sourceSha256'), dict) and set(proof['sourceSha256']) == set(preflight.source_files(bound.contract))
         and proof.get('contextProfileSha256') == io.sha(context_raw)
         and proof.get('contextDate') == x.inputs.parse(context_raw)['date'], 'heldout resource proof binding')
     for value in proof['sourceSha256'].values():
