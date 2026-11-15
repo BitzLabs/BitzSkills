@@ -2,7 +2,7 @@
 
 参照計算B（`digest_crosscheck`と`multi_crosscheck`）と、閉包を導く各fixtureの参照計算が共有する。閉包は次の3つで説明できる。
 
-1. 下方向の出発点: 起点がREQ・TECH・ADRなら起点文書、TASKならそのTASKの`addresses`の参照先の所有文書（起点から`addresses`のエッジ1本の距離1）。
+1. 下方向の出発点: 起点がREQ・TECH・ADRなら起点文書、規範文なら所有文書（入力の`root_document`は所有文書）、TASKならそのTASKの`addresses`の参照先の所有文書（起点から`addresses`のエッジ1本の距離1）。
 2. 下方向: 出発点の文書またはそのいずれかの規範文を`refines`する適用可能な文書を、逆向きに終端まで辿る。出発点と合わせてSとする。
    上方向で着いた文書からは、下方向へ辿らない。
 3. 上方向: Sの文書から、`requires`・`refines`・`addresses`の参照先を、辺の種類を区別せず終端まで辿る。辺がSの文書へ戻る場合は、その文書へ着いたとはみなさず、

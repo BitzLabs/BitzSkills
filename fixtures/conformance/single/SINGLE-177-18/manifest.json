@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-177-18",
+  "description": "contextのinterpretは、起点を置換する後継がsupersedesで置き換える起点以外の旧文書のIDの重複を、強い関係の参照先の不在と並べて返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

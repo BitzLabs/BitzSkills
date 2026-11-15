@@ -1,8 +1,8 @@
 # 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルのfixtureのレビュー記録
 
 [適合fixture仕様 §6.20](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#620-閉包を作るときに辿る文書idの重複とidを読めない現在版のファイル)の
-`SINGLE-177-01`〜`SINGLE-177-17`と、[§7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
-`MULTI-065-01`〜`MULTI-065-08`（置き場は`fixtures/conformance/multi/`）を扱う。いずれもレビュー済みの期待値であり、Coreの挙動を観測したものではない
+`SINGLE-177-01`〜`SINGLE-177-18`と、[§7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
+`MULTI-065-01`〜`MULTI-065-09`（置き場は`fixtures/conformance/multi/`）を扱う。いずれもレビュー済みの期待値であり、Coreの挙動を観測したものではない
 （[ADR-051](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)の追加）。
 生成器と監査は`fixtures/conformance/duplicate_closure_fixtures.py`である。
 
@@ -50,6 +50,7 @@
 | `SINGLE-177-15` | `REQ-001`を`REQ-001-moved.md`へ移して`title`を変え、元の`REQ-001.md`に壊れたファイルを置く。`check` | `failed`／1。移動後の`SPEC-SAFETY-APPROVED-001`、元のパスの`SPEC-FM-SCHEMA-001`、`TECH-001`の影響候補 | 元のパスの診断なし |
 | `SINGLE-177-16` | `REQ-002`が`supersedes`する旧文書`REQ-001`が2ファイル。`context REQ-002` | `failed`／1。重複と`SPEC-RELATION-MISSING-001` | 後者だけ |
 | `SINGLE-177-17` | 同上。`verify REQ-002` | `failed`／1。検証対象に重複と`SPEC-RELATION-MISSING-001` | 後者だけ |
+| `SINGLE-177-18` | `REQ-001`を置換する後継`REQ-002`が、旧文書`REQ-003`（2ファイル）も`supersedes`する。`context REQ-001 --purpose interpret` | `failed`／1。`SPEC-RELATION-MISSING-001`（`REQ-003`）と重複 | 前者だけ |
 | `MULTI-065-01` | `platform::REQ-001`を`refines`する`web::TECH-005`が2ファイル。`context REQ-001` | `failed`／1。`web`が所有する重複 | `passed`／0 |
 | `MULTI-065-02` | 同上。`verify REQ-001` | `failed`／1。検証対象に重複 | `passed`／0 |
 | `MULTI-065-03` | 同上。`check REQ-001` | `failed`／1。重複 | `passed`／0 |
@@ -58,8 +59,12 @@
 | `MULTI-065-06` | `REQ-001`が`related`で指す`web::TECH-007`が2ファイル。`check REQ-001`（対照） | `passed_with_warnings`／0。重複を返さない | 同じ |
 | `MULTI-065-07` | 無関係な`web::TECH-008`が2ファイル。`check REQ-001`（対照） | `passed`／0 | 同じ |
 | `MULTI-065-08` | `web::TECH-001`の`title`が不正（基準版は有効）。`check --all-workspaces` | `failed`／1。`web`に`SPEC-FM-SCHEMA-001`だけ | 削除も返す |
+| `MULTI-065-09` | `platform::REQ-001`を置換する`api::REQ-030`が、`api`の旧文書`REQ-031`（2ファイル）も`supersedes`する。`context REQ-001 --purpose interpret` | `failed`／1。`api`が所有する重複の1件 | `passed`／0 |
 
-欠陥の18件は修正前のCoreが失敗し、対照の7件は通る。修正前のCoreは、`git archive origin/main`の`plugins/bitz-core`で確かめた。
+欠陥の20件は修正前のCoreが失敗し、対照の7件は通る。修正前のCoreは、`git archive origin/main`の`plugins/bitz-core`で確かめた。
+`SINGLE-177-18`と`MULTI-065-09`は、閉包の書き直し（ADR-071）の後、重複の候補の絞り込みが後継の置換の参照先を辿らず取りこぼした（独立レビューの指摘H1）ので、
+その修正前（`b217bff2`）のCoreが失敗し、書き直し前のCore（`7d653e12`）は返す。`interpret`は後継を閉包の文書として含めるので、後継が置き換える別の旧文書の重複も、
+置換の参照先として返す（実際の閉包が辿るIDと同じ）。
 
 - **1つの原因だけを持つ**。重複のケースは、重複した文書の内容が同じ2ファイルで、閉包に入る経路は1つ（逆参照、起点、`requires`、`refines`のいずれか）だけである。
   対照は、重複した文書を置いたまま、辿る関係の種類（`related`）か、閉包との距離（無関係）だけを替える。
@@ -102,5 +107,5 @@
 - **比較から外す条件**: 基準版のIDが現在版のどこにもない場合に限る。最初の実装は、同じパスにIDを読めないファイルがあれば外していたので、文書を別のパスへ移して元のパスに壊れたファイルを置くと、
   承認済み要求の保護と影響候補を失った。`SINGLE-177-15`が押さえる。
 - **IDを読めない新規のファイル**: 引数なしの`check`が自身の診断を返すことを、規範に明記した。`SINGLE-177-14`が押さえる。
-- **置換の旧文書**: `supersedes`の参照先の旧文書の重複を、`requires`の参照先の重複と同じ形で返す。`SINGLE-177-16`・`17`が押さえる。
+- **置換の旧文書**: `supersedes`の参照先の旧文書の重複を、`requires`の参照先の重複と同じ形で返す。`SINGLE-177-16`・`17`が押さえる。目的`interpret`で後継が置き換える別の旧文書の重複は、`SINGLE-177-18`・`MULTI-065-09`が押さえる。
 
