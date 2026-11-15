@@ -1,19 +1,17 @@
-"""所有と包含を実パスで判定する単体試験（確認事項 C88・C90・N1・N3）。
+"""パスの存在の検査と所有の判定を、シンボリックリンクを辿らず、NFCの字句のパスで行う単体試験（ADR-071。確認事項 C88・C90・N1・N3の後継）。
 
-欠陥:
-- N1: 複合ワークスペースの`implements`と`tests[].path`の所有は末端のシンボリックリンクしか見ず、上位のディレクトリの
-  シンボリックリンク（`apps/web/ext -> ../../tests`）でメンバーが別のワークスペースのテストを所有できた。単一ワークスペースの
-  パスの存在検査も上位を見ず、`ext -> <リポジトリの外>`の`ext/t.py`が通った。
-- C88: `VERIFY-TEST-OUTSIDE-CWD`の判定が`os.path.relpath`による字句の判定だった。
-- C90: 実効`cwd`とパスの所有の包含を文字列の前方一致で判定していた。
-- N3: `VERIFY-TEST-OUTSIDE-CWD`の発生元が設定ファイルの`verify.commands.<名前>.cwd`だった。
-
-規範:
-- 複合ワークスペース仕様 §5.1の手順4・5: 実パスを得て、各上位のディレクトリと所有領域のルートのファイルシステム上の同一性
-  （`os.path.samestat`）で包含を判定する。ルートワークスペースはメンバーの配下を所有しない。
-- ワークスペース・設定仕様 §6: テストのパスと実効`cwd`の包含は、両方を実パスにして判定する。
-- ワークスペース・設定仕様 §9: 単一ワークスペースの`implements`と`tests[].path`は、上位のシンボリックリンクを解決した実パスが
-  ルートの配下にあるときだけ存在するパスとして扱う。外へ解決するパスと、末端がシンボリックリンクのパスは`SPEC-PATH-INVALID-001`。
+規範（期待値はすべて次の文から導いたリテラルで、Coreの出力を写さない）:
+- 安全な入出力・互換性 §6.1: 宣言したパスとディレクトリの項目名は、どちらもUnicode NFCにしてから、セグメントごとにコードポイントの完全一致
+  （大文字と小文字を区別する）で比べる。包含はセグメントの境界で判定する。
+- 同 §6.2: パスの存在は、基準のルートから各セグメントを順に、親のディレクトリの項目名と照合して確かめる。0件は不在、2件以上はNFCの衝突で拒否、
+  1件ならリンクを辿らない`lstat`で調べる。途中のセグメントがシンボリックリンクならパスを拒否し、末端がシンボリックリンクなら通常のファイルにも
+  ディレクトリにも扱わない（不在）。`implements`と`tests[].path`の不在とリンクと別の綴りは`SPEC-PATH-INVALID-001`（「実装パスが存在しません」
+  「テストのパスが存在しません」。状態`draft`は`warning`で「状態draftの…は未作成です」）、NFCの衝突は同じコードの専用の文言
+  （重大度は不在と同じく状態で分ける）。`cwd`は不在、リンク、別の綴り、NFCの衝突のどれもが`VERIFY-CWD-UNAVAILABLE`
+  （`SPEC-VERIFY-BLOCKED-001`、「コマンドの作業ディレクトリが利用できません」）。
+- 同 §6.3・複合ワークスペース仕様 §5.1の手順5: 所有の判定はNFCにした字句のパスのセグメント単位の包含で行い、実パスと、デバイスとiノードは使わない。
+  ルートワークスペースはメンバーの配下を所有しない。存在する`cwd`だけを字句の包含で判定し、違反は`MULTI-OWNERSHIP-CWD`（`SPEC-MULTI-OWNERSHIP-001`）。
+- ワークスペース・設定仕様 §6: テストのパスと実効`cwd`の包含は、字句のパス（NFC）をセグメントの境界で比べ、`cwd`相対の展開も字句の相対とする。
 - verify §5.1: `VERIFY-TEST-OUTSIDE-CWD`の発生元は、配下にないテストのパスを宣言した仕様文書（複数ならパスの辞書順で最初）、
   `key`はその文書の`tests[i].path`、テスト割当てごとに1件。
 """
@@ -23,13 +21,12 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
-import types
 import unicodedata
 import unittest
 from pathlib import Path
-from unittest import mock
 
 from bitz import check as check_mod
+from bitz import pathown
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 
@@ -41,6 +38,20 @@ TEST_BODY = "def test_t():\n    assert True\n"
 # テストのパスの引数を、プロセスの作業ディレクトリから実際に開けるかを確かめる（argvの相対パスの検証）。
 _FIND_ARGV = '["/bin/sh", "-c", "for f in \\"$@\\"; do test -f \\"$f\\" || exit 1; done", "sh", "{tests}"]'
 _TRUE_ARGV = '["/bin/true", "{tests}"]'
+
+#: 「é」を1文字（NFC）と、「e」＋結合文字（NFD）で書いた名前。
+NFC_NAME = unicodedata.normalize("NFC", "café")
+NFD_NAME = unicodedata.normalize("NFD", "café")
+
+PATH_INVALID = "SPEC-PATH-INVALID-001"
+OWNERSHIP = "SPEC-MULTI-OWNERSHIP-001"
+BLOCKED = "SPEC-VERIFY-BLOCKED-001"
+CWD_UNAVAILABLE = "コマンドの作業ディレクトリが利用できません"
+TEST_MISSING = "テストのパスが存在しません"
+TEST_DRAFT = "状態draftのテストのパスは未作成です"
+TEST_COLLISION = "NFCで同じ名前になる項目が複数あり、テストのパスが一つに決まりません"
+IMPL_MISSING = "実装パスが存在しません"
+IMPL_COLLISION = "NFCで同じ名前になる項目が複数あり、実装パスが一つに決まりません"
 
 
 def _git(root: Path, *args: str) -> None:
@@ -59,15 +70,17 @@ def _commands(cwd: str, argv: str = _TRUE_ARGV) -> str:
     return f'verify:\n  commands:\n    t:\n      argv: {argv}\n      cwd: "{cwd}"\n'
 
 
-def _req(doc_id: str, test_paths: list[str], *, implements: list[str] | None = None) -> str:
-    """承認済みのREQ。``test_paths``の各パスを`tests[]`として宣言する（すべて同じ規範文をcoversする）。"""
+def _req(
+    doc_id: str, test_paths: list[str], *, implements: list[str] | None = None, status: str = "approved"
+) -> str:
+    """REQ。``test_paths``の各パスを`tests[]`として宣言する（すべて同じ規範文をcoversする）。"""
 
     tests = "".join(
         f"  - path: {p}\n    covers: [{doc_id}:AC-01]\n    command: t\n" for p in test_paths
     )
     impl = "" if implements is None else "implements:\n" + "".join(f"  - {p}\n" for p in implements)
     return (
-        f"---\nid: {doc_id}\ntitle: {doc_id}の文書\nstatus: approved\n{impl}tests:\n{tests}---\n\n"
+        f"---\nid: {doc_id}\ntitle: {doc_id}の文書\nstatus: {status}\n{impl}tests:\n{tests}---\n\n"
         f"# {doc_id} {doc_id}の文書\n\n## Intent\n\n意図。\n\n## Acceptance Criteria\n\n"
         f"- [{doc_id}:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] {doc_id}:AC-01を守る。\n\n"
         "## Verification\n\n未証明。\n"
@@ -83,11 +96,24 @@ def _tech(doc_id: str, refines: str, test_paths: list[str], *, implements: list[
     )
 
 
+def _require_nfc_nfd_distinct(directory: Path) -> None:
+    """ファイルシステムがNFCとNFDの名前を区別して保つ（Linuxなど）ことを確かめ、そうでなければ試験を飛ばす。"""
+
+    probe = directory / f"probe-{NFC_NAME}"
+    probe.write_text("")
+    try:
+        if (directory / f"probe-{NFD_NAME}").exists():
+            raise unittest.SkipTest("ファイルシステムがUnicodeの正規化の違いを同一視する")
+    finally:
+        probe.unlink()
+
+
 class _Base(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
-        # macOSなどで一時ディレクトリ自体がシンボリックリンクでも、実パスのルートを基準にする。
+        # 基準のルートへ至る上位のディレクトリは検査の対象外（安全な入出力・互換性 §6）。macOSなどで一時ディレクトリ自体が
+        # シンボリックリンクでも、基準のルートを一定にするため、先に解決した場所をリポジトリの親にする。
         self.tmp = Path(os.path.realpath(tmp.name))
         self.root = self.tmp / "repo"
         self.root.mkdir()
@@ -130,9 +156,15 @@ class _Base(unittest.TestCase):
 
 
 class _SingleBase(_Base):
-    def write(self, cwd: str = ".", argv: str = _TRUE_ARGV, tests: list[str] | None = None, implements=None):
+    def write(
+        self, cwd: str = ".", argv: str = _TRUE_ARGV, tests: list[str] | None = None, implements=None,
+        status: str = "approved",
+    ):
         _write(self.root, ".spec/bitz.yaml", CONFIG + _commands(cwd, argv))
-        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001", tests or ["tests/t.py"], implements=implements))
+        _write(
+            self.root, ".spec/requirements/REQ-001.md",
+            _req("REQ-001", tests or ["tests/t.py"], implements=implements, status=status),
+        )
 
 
 class _MultiBase(_Base):
@@ -141,43 +173,51 @@ class _MultiBase(_Base):
     def write(
         self, *, web_tests: list[str], web_cwd: str = ".", root_tests: list[str] | None = None,
         root_cwd: str = ".", web_implements=None, root_implements=None, argv: str = _TRUE_ARGV,
+        web_path: str = "apps/web",
     ):
         _write(
             self.root, ".spec/bitz.yaml",
-            CONFIG + "workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"
+            CONFIG + f"workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: {web_path}\n"
             + _commands(root_cwd, argv),
         )
-        _write(self.root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n" + _commands(web_cwd, argv))
+        _write(self.root, f"{web_path}/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n" + _commands(web_cwd, argv))
         _write(
             self.root, ".spec/requirements/REQ-001.md",
             _req("REQ-001", root_tests or ["tests/test_platform.py"], implements=root_implements),
         )
-        _write(self.root, "apps/web/.spec/requirements/REQ-101.md", _req("REQ-101", web_tests, implements=web_implements))
+        _write(
+            self.root, f"{web_path}/.spec/requirements/REQ-101.md",
+            _req("REQ-101", web_tests, implements=web_implements),
+        )
         _write(self.root, "tests/test_platform.py", TEST_BODY)
         _write(self.root, "src/platform.py", "x = 1\n")
-        _write(self.root, "apps/web/tests/test_web.py", TEST_BODY)
-        _write(self.root, "apps/web/src/web.py", "x = 1\n")
-
-
-PATH_INVALID = "SPEC-PATH-INVALID-001"
-OWNERSHIP = "SPEC-MULTI-OWNERSHIP-001"
-BLOCKED = "SPEC-VERIFY-BLOCKED-001"
+        _write(self.root, f"{web_path}/tests/test_web.py", TEST_BODY)
+        _write(self.root, f"{web_path}/src/web.py", "x = 1\n")
 
 
 class SinglePathExistenceTests(_SingleBase):
-    """単一ワークスペースの`implements`と`tests[].path`（ワークスペース・設定仕様 §9。N1）。"""
+    """単一ワークスペースの`implements`と`tests[].path`の存在の検査（安全な入出力・互換性 §6.2）。"""
 
-    def check_codes(self):
-        result, _code = self.run_op("check", "--full")
-        return result, [c for c in self.codes(result) if c[0] == PATH_INVALID]
+    def path_diagnostics(self, *argv: str):
+        result, _code = self.run_op("check", *(argv or ("--full",)))
+        diags = [d for d in self.all_diagnostics(result) if d["code"] == PATH_INVALID]
+        return result, [(d["severity"], d["summary"], d["source"].get("key")) for d in diags]
+
+    def test_plain_file_passes(self):
+        self.write(implements=["src/a.py"])
+        _write(self.root, "tests/t.py", TEST_BODY)
+        _write(self.root, "src/a.py", "x = 1\n")
+        self.commit()
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [], result)
 
     def test_test_path_through_an_upper_symlink_to_outside_the_repository_is_invalid(self):
         self.write(tests=["ext/t.py"])
         _write(self.outside, "t.py", TEST_BODY)
         self.link("ext", str(self.outside))
         self.commit()
-        result, invalid = self.check_codes()
-        self.assertEqual(invalid, [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "tests[0].path")], result)
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("error", TEST_MISSING, "tests[0].path")], result)
         self.assertEqual(result["status"], "failed")
 
     def test_implements_through_an_upper_symlink_to_outside_the_repository_is_invalid(self):
@@ -186,103 +226,199 @@ class SinglePathExistenceTests(_SingleBase):
         _write(self.outside, "a.py", "x = 1\n")
         self.link("ext", str(self.outside))
         self.commit()
-        _result, invalid = self.check_codes()
-        self.assertEqual(invalid, [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "implements")])
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("error", IMPL_MISSING, "implements")])
 
-    def test_test_path_through_an_upper_symlink_resolving_inside_the_root_passes(self):
-        # 対照: 中へ解決する上位のシンボリックリンクは通る。
+    def test_upper_symlink_resolving_inside_the_root_is_still_invalid(self):
+        # 実パスが同じワークスペースの中でも、途中のセグメントがシンボリックリンクならパスを拒否する（不在と同じ）。
         self.write(tests=["ext/t.py"], implements=["ext/a.py"])
         _write(self.root, "real/t.py", TEST_BODY)
         _write(self.root, "real/a.py", "x = 1\n")
         self.link("ext", "real")
         self.commit()
-        result, invalid = self.check_codes()
-        self.assertEqual(invalid, [], result)
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(
+            sorted(invalid), sorted([("error", IMPL_MISSING, "implements"), ("error", TEST_MISSING, "tests[0].path")])
+        )
 
-    def test_symlink_at_the_end_is_still_invalid(self):
+    def test_symlink_at_the_end_is_invalid_even_when_it_resolves_inside_the_root(self):
         self.write(tests=["tests/link.py"])
         _write(self.root, "tests/t.py", TEST_BODY)
         self.link("tests/link.py", "t.py")
         self.commit()
-        _result, invalid = self.check_codes()
-        self.assertEqual(invalid, [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "tests[0].path")])
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("error", TEST_MISSING, "tests[0].path")])
 
-    def test_plain_file_passes(self):
-        self.write()
-        _write(self.root, "tests/t.py", TEST_BODY)
+    def test_a_directory_is_not_a_regular_file(self):
+        self.write(tests=["tests/d"])
+        _write(self.root, "tests/d/x.py", TEST_BODY)
         self.commit()
-        result, invalid = self.check_codes()
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("error", TEST_MISSING, "tests[0].path")])
+
+    def test_different_case_spelling_does_not_exist(self):
+        # 大文字と小文字を区別するファイルシステムでも、区別しないファイルシステムでも、別の綴りのパスは存在しない。
+        self.write(tests=["Tests/T.py"], implements=["SRC/a.py"])
+        _write(self.root, "tests/T.py", TEST_BODY)
+        _write(self.root, "src/a.py", "x = 1\n")
+        self.commit()
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(
+            sorted(invalid), sorted([("error", IMPL_MISSING, "implements"), ("error", TEST_MISSING, "tests[0].path")])
+        )
+
+    def test_draft_document_reports_an_unlinked_path_as_a_warning(self):
+        self.write(tests=["ext/t.py"], status="draft")
+        _write(self.root, "real/t.py", TEST_BODY)
+        self.link("ext", "real")
+        self.commit()
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("warning", TEST_DRAFT, "tests[0].path")])
+        self.assertEqual(result["status"], "passed_with_warnings")
+
+    def test_nfd_name_on_disk_matches_an_nfc_declaration(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=[f"tests/{NFC_NAME}.py"], implements=[f"src/{NFC_NAME}/a.py"])
+        _write(self.root, f"tests/{NFD_NAME}.py", TEST_BODY)
+        _write(self.root, f"src/{NFD_NAME}/a.py", "x = 1\n")
+        self.commit()
+        result, invalid = self.path_diagnostics()
         self.assertEqual(invalid, [], result)
 
-    def test_sibling_directory_with_the_same_name_prefix_is_not_inside(self):
-        # 文字列の前方一致では、ワークスペースのルート`repo`の兄弟`repo-x`の配下が配下に見える。実体の比較では外。
-        sibling = self.tmp / (self.root.name + "-x")
-        sibling.mkdir()
-        _write(sibling, "t.py", TEST_BODY)
-        self.write(tests=["ext/t.py"])
-        self.link("ext", str(sibling))
+    def test_nfc_name_on_disk_matches_an_nfd_declaration(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=[f"tests/{NFD_NAME}.py"])
+        _write(self.root, f"tests/{NFC_NAME}.py", TEST_BODY)
         self.commit()
-        _result, invalid = self.check_codes()
-        self.assertEqual(len(invalid), 1)
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [], result)
+
+    def test_nfc_collision_in_the_last_segment_is_rejected_with_the_dedicated_message(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=[f"tests/{NFC_NAME}.py"], implements=[f"src/{NFD_NAME}.py"])
+        _write(self.root, f"tests/{NFC_NAME}.py", TEST_BODY)
+        _write(self.root, f"tests/{NFD_NAME}.py", TEST_BODY)
+        _write(self.root, f"src/{NFC_NAME}.py", "x = 1\n")
+        _write(self.root, f"src/{NFD_NAME}.py", "x = 1\n")
+        self.commit()
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(
+            sorted(invalid),
+            sorted([("error", IMPL_COLLISION, "implements"), ("error", TEST_COLLISION, "tests[0].path")]),
+            result,
+        )
+
+    def test_nfc_collision_in_a_directory_segment_is_rejected(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=[f"{NFC_NAME}/t.py"])
+        _write(self.root, f"{NFC_NAME}/t.py", TEST_BODY)
+        _write(self.root, f"{NFD_NAME}/t.py", TEST_BODY)
+        self.commit()
+        _result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("error", TEST_COLLISION, "tests[0].path")])
+
+    def test_nfc_collision_uses_the_same_message_for_a_draft_and_a_warning_severity(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=[f"tests/{NFC_NAME}.py"], status="draft")
+        _write(self.root, f"tests/{NFC_NAME}.py", TEST_BODY)
+        _write(self.root, f"tests/{NFD_NAME}.py", TEST_BODY)
+        self.commit()
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [("warning", TEST_COLLISION, "tests[0].path")])
+        self.assertEqual(result["status"], "passed_with_warnings")
+
+    def test_a_collision_elsewhere_in_the_directory_does_not_affect_other_names(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(tests=["tests/t.py"])
+        _write(self.root, "tests/t.py", TEST_BODY)
+        _write(self.root, f"tests/{NFC_NAME}.py", TEST_BODY)
+        _write(self.root, f"tests/{NFD_NAME}.py", TEST_BODY)
+        self.commit()
+        result, invalid = self.path_diagnostics()
+        self.assertEqual(invalid, [], result)
 
 
 class MultiPathOwnershipTests(_MultiBase):
-    """複合ワークスペースの`implements`と`tests[].path`の所有（複合ワークスペース仕様 §5.1。N1）。"""
+    """複合ワークスペースの`implements`と`tests[].path`の存在と所有（複合ワークスペース仕様 §5.1）。"""
 
     def ownership(self, result):
         return [c for c in self.codes(result) if c[0] == OWNERSHIP]
 
-    def test_member_cannot_own_another_workspace_test_through_an_upper_symlink(self):
+    def path_invalid(self, result):
+        return [c for c in self.codes(result) if c[0] == PATH_INVALID]
+
+    def test_member_test_path_through_an_upper_symlink_is_invalid_not_owned(self):
+        # 上位のディレクトリのシンボリックリンクは辿らない。別のワークスペースの領域へ向いていても、所有境界の違反ではなく不在と同じ。
         self.write(web_tests=["ext/test_platform.py"])
         self.link("apps/web/ext", "../../tests")
         self.commit()
         result, code = self.run_op("check", "--all-workspaces")
         self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(self.ownership(result), [])
         self.assertEqual(
-            self.ownership(result), [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
+            self.path_invalid(result), [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
         )
 
-    def test_member_cannot_own_another_workspace_implementation_through_an_upper_symlink(self):
+    def test_member_implements_through_an_upper_symlink_is_invalid_not_owned(self):
         self.write(web_tests=["tests/test_web.py"], web_implements=["ext/platform.py"])
         self.link("apps/web/ext", "../../src")
         self.commit()
         result, _code = self.run_op("check", "--all-workspaces")
+        self.assertEqual(self.ownership(result), [])
         self.assertEqual(
-            self.ownership(result), [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "implements")]
+            self.path_invalid(result), [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "implements")]
         )
 
-    def test_single_operation_from_the_member_also_reports_ownership(self):
+    def test_single_operation_from_the_member_reports_the_same(self):
         self.write(web_tests=["ext/test_platform.py"])
         self.link("apps/web/ext", "../../tests")
         self.commit()
         result, _code = self.run_op("check", "--full", cwd=self.root / "apps" / "web")
         self.assertEqual(
-            self.ownership(result), [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
+            self.path_invalid(result), [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
         )
+        self.assertEqual(self.ownership(result), [])
 
-    def test_upper_symlink_to_outside_the_repository_is_an_ownership_violation(self):
+    def test_upper_symlink_to_outside_the_repository_is_invalid(self):
         self.write(web_tests=["ext/t.py"])
         _write(self.outside, "t.py", TEST_BODY)
         self.link("apps/web/ext", str(self.outside))
         self.commit()
         result, _code = self.run_op("check", "--all-workspaces")
         self.assertEqual(
-            self.ownership(result), [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
+            self.path_invalid(result), [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
         )
+        self.assertEqual(self.ownership(result), [])
 
-    def test_upper_symlink_resolving_inside_the_member_passes(self):
-        # 対照: 同じ所有領域の中へ解決する上位のシンボリックリンクは通る。
+    def test_upper_symlink_resolving_inside_the_member_is_still_invalid(self):
         self.write(web_tests=["ext/test_web.py"], web_implements=["lib/web.py"])
         self.link("apps/web/ext", "tests")
         self.link("apps/web/lib", "src")
         self.commit()
         result, code = self.run_op("check", "--all-workspaces")
-        self.assertEqual((result["status"], code), ("passed", 0), result)
-        self.assertEqual(self.ownership(result), [])
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(
+            sorted(self.path_invalid(result)),
+            sorted([
+                (PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path"),
+                (PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "implements"),
+            ]),
+        )
 
-    def test_terminal_symlink_resolving_inside_the_member_still_passes(self):
+    def test_terminal_symlink_resolving_inside_the_member_is_invalid(self):
+        # 末端のシンボリックリンクは、同じ所有領域の中のファイルを指しても、通常のファイルとして扱わない（複合ワークスペース仕様 §5.1の手順4）。
         self.write(web_tests=["tests/alias.py"])
         self.link("apps/web/tests/alias.py", "test_web.py")
+        self.commit()
+        result, code = self.run_op("check", "--all-workspaces")
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(
+            self.path_invalid(result), [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path")]
+        )
+        self.assertEqual(self.ownership(result), [])
+
+    def test_plain_files_in_each_own_area_pass(self):
+        self.write(web_tests=["tests/test_web.py"], web_implements=["src/web.py"], root_implements=["src/platform.py"])
         self.commit()
         result, code = self.run_op("check", "--all-workspaces")
         self.assertEqual((result["status"], code), ("passed", 0), result)
@@ -295,26 +431,73 @@ class MultiPathOwnershipTests(_MultiBase):
             self.ownership(result), [(OWNERSHIP, "platform", ".spec/requirements/REQ-001.md", "tests[0].path")]
         )
 
-    def test_root_workspace_does_not_own_the_member_tree_through_an_upper_symlink(self):
+    def test_root_declaration_inside_the_member_tree_is_an_ownership_violation_even_when_the_file_is_absent(self):
+        # 字句のパスが別のワークスペースの所有領域にあれば、存在の有無によらず所有境界の違反（複合ワークスペース仕様 §5.1の手順5）。
+        self.write(web_tests=["tests/test_web.py"], root_implements=["apps/web/src/not_yet.py"])
+        self.commit()
+        result, _code = self.run_op("check", "--all-workspaces")
+        self.assertEqual(
+            self.ownership(result), [(OWNERSHIP, "platform", ".spec/requirements/REQ-001.md", "implements")]
+        )
+        self.assertEqual(self.path_invalid(result), [])
+
+    def test_root_workspace_reaching_the_member_tree_through_a_symlink_is_invalid(self):
+        # 字句のパス`lk/test_web.py`はルートの領域にあり、`lk`はシンボリックリンクなので存在しない。リンク先のメンバーの領域は使わない。
         self.write(web_tests=["tests/test_web.py"], root_tests=["lk/test_web.py"])
         self.link("lk", "apps/web/tests")
         self.commit()
         result, _code = self.run_op("check", "--all-workspaces")
+        self.assertEqual(self.ownership(result), [])
         self.assertEqual(
-            self.ownership(result), [(OWNERSHIP, "platform", ".spec/requirements/REQ-001.md", "tests[0].path")]
+            self.path_invalid(result), [(PATH_INVALID, "platform", ".spec/requirements/REQ-001.md", "tests[0].path")]
         )
 
-    def test_root_workspace_owns_its_own_tree_through_an_upper_symlink(self):
-        # 対照: ルートワークスペースは、自分の領域の中へ解決するパスを所有できる。
+    def test_root_workspace_symlink_inside_its_own_tree_is_invalid(self):
         self.write(web_tests=["tests/test_web.py"], root_tests=["lk/test_platform.py"])
         self.link("lk", "tests")
         self.commit()
         result, code = self.run_op("check", "--all-workspaces")
-        self.assertEqual((result["status"], code), ("passed", 0), result)
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(
+            self.path_invalid(result), [(PATH_INVALID, "platform", ".spec/requirements/REQ-001.md", "tests[0].path")]
+        )
+
+    def test_a_different_case_spelling_of_the_member_path_is_not_the_member_tree(self):
+        # 大文字と小文字を区別する。`Apps/web`は`apps/web`の配下ではないので、所有境界の違反ではなく、存在しないパスである。
+        self.write(web_tests=["tests/test_web.py"], root_implements=["Apps/web/src/web.py"])
+        self.commit()
+        result, _code = self.run_op("check", "--all-workspaces")
+        self.assertEqual(self.ownership(result), [])
+        self.assertEqual(
+            self.path_invalid(result), [(PATH_INVALID, "platform", ".spec/requirements/REQ-001.md", "implements")]
+        )
+
+    def test_an_nfd_spelling_of_a_nfc_member_path_is_the_member_tree(self):
+        # 宣言のNFDの綴りは、NFCへ正規化してから包含を判定するので、NFCで宣言したメンバーの領域に入る。
+        _require_nfc_nfd_distinct(self.root)
+        self.write(
+            web_tests=["tests/test_web.py"], web_path=f"apps/{NFC_NAME}",
+            root_implements=[f"apps/{NFD_NAME}/src/web.py"],
+        )
+        self.commit()
+        result, _code = self.run_op("check", "--all-workspaces")
+        self.assertEqual(
+            self.ownership(result), [(OWNERSHIP, "platform", ".spec/requirements/REQ-001.md", "implements")]
+        )
+
+    def test_nfc_collision_is_rejected_with_the_dedicated_message_in_a_member(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(web_tests=[f"tests/{NFC_NAME}.py"])
+        _write(self.root, f"apps/web/tests/{NFC_NAME}.py", TEST_BODY)
+        _write(self.root, f"apps/web/tests/{NFD_NAME}.py", TEST_BODY)
+        self.commit()
+        result, _code = self.run_op("check", "--all-workspaces")
+        diags = [d for d in self.all_diagnostics(result) if d["code"] == PATH_INVALID]
+        self.assertEqual([(d["severity"], d["summary"], d["source"]["key"]) for d in diags], [("error", TEST_COLLISION, "tests[0].path")])
 
     def test_verify_does_not_pass_a_test_owned_through_an_upper_symlink_to_another_workspace(self):
-        # N1: 修正前は`check`も`verify`も通った。`verify`は、検証対象が使うテスト対応のテストのパスを`check`と同じ規則で検査し
-        # （`bitz verify`仕様 §4の4.）、所有領域の外へ解決するパスは`SPEC-MULTI-OWNERSHIP-001`（`failed`）で、テストを起動しない。
+        # 検証対象が使うテスト対応のテストのパスを`check`と同じ規則で検査し（`bitz verify`仕様 §4の4.）、シンボリックリンクを辿るパスは
+        # `SPEC-PATH-INVALID-001`（`failed`）で、テストを起動しない。
         self.write(web_tests=["ext/test_platform.py"])
         self.link("apps/web/ext", "../../tests")
         self.commit()
@@ -322,67 +505,60 @@ class MultiPathOwnershipTests(_MultiBase):
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["commands"], [])
         self.assertEqual(
-            [c for c in self.codes(result) if c[0] == OWNERSHIP],
-            [(OWNERSHIP, "web", ".spec/requirements/REQ-101.md", "tests[0].path")],
+            [c for c in self.codes(result) if c[0] == PATH_INVALID],
+            [(PATH_INVALID, "web", ".spec/requirements/REQ-101.md", "tests[0].path")],
         )
 
 
 class VerifyContainmentSingleTests(_SingleBase):
-    """単一ワークスペースの`VERIFY-TEST-OUTSIDE-CWD`の包含の判定（C88）。"""
+    """単一ワークスペースの`cwd`の存在と、`VERIFY-TEST-OUTSIDE-CWD`の字句の包含の判定（C88）。"""
 
     def verify(self):
         return self.run_op("verify", "REQ-001")
 
-    def test_a_cwd_symlink_and_test_under_the_real_directory_passes(self):
-        # 字句ではテストがcwd（inner）の外にあるが、実パスはcwd（real）の配下。
+    def test_a_symlink_cwd_is_unavailable_even_when_it_resolves_inside_the_root(self):
         self.write(cwd="inner", tests=["real/t.py"], argv=_FIND_ARGV)
         _write(self.root, "real/t.py", TEST_BODY)
         self.link("inner", "real")
         self.commit()
         result, code = self.verify()
-        self.assertEqual((result["status"], code), ("passed", 0), result)
-        # プロセスの作業ディレクトリは実体の`real`なので、テストは実パスどうしの相対パスで渡す。
-        self.assertEqual([c["argv"][-1] for c in result["commands"]], ["t.py"])
-        self.assertEqual(result["commands"][0]["exitCode"], 0)
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/bitz.yaml", "verify.commands.t.cwd")])
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
+        self.assertEqual(result["commands"], [])
 
-    def test_b_real_cwd_and_test_through_the_symlink_passes(self):
+    def test_a_test_path_through_a_symlink_is_an_invalid_test_path(self):
+        # テストのパスの途中がシンボリックリンクなら、`cwd`が実在のディレクトリでも、テストのパスが存在しない（`failed`）。
         self.write(cwd="real", tests=["inner/t.py"], argv=_FIND_ARGV)
         _write(self.root, "real/t.py", TEST_BODY)
         self.link("inner", "real")
         self.commit()
         result, code = self.verify()
-        self.assertEqual((result["status"], code), ("passed", 0), result)
-        self.assertEqual(result["commands"][0]["exitCode"], 0)
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(self.codes(result), [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "tests[0].path")])
+        self.assertEqual(result["commands"], [])
 
-    def test_cwd_symlink_to_a_deeper_directory_gets_an_argv_the_process_can_open(self):
-        # cwdのシンボリックリンクが別の深さの実体を指すとき、字句の相対パス（`../a/b/t.py`）は実体の`..`と一致しない。
+    def test_a_symlink_cwd_to_a_deeper_directory_is_unavailable(self):
         self.write(cwd="lk", tests=["a/b/t.py"], argv=_FIND_ARGV)
         _write(self.root, "a/b/t.py", TEST_BODY)
         self.link("lk", "a/b")
         self.commit()
         result, code = self.verify()
-        self.assertEqual((result["status"], code), ("passed", 0), result)
-        self.assertEqual([c["argv"][-1] for c in result["commands"]], ["t.py"])
-        self.assertEqual(result["commands"][0]["exitCode"], 0)
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/bitz.yaml", "verify.commands.t.cwd")])
 
-    def test_c_lexically_inside_but_really_outside_is_blocked_with_the_declaring_document_as_source(self):
-        # 字句ではテストがcwd（sub）の配下だが、実パスは外（other）。
+    def test_a_test_through_a_symlink_that_really_leaves_the_cwd_is_an_invalid_test_path(self):
         self.write(cwd="sub", tests=["sub/link/t.py"], argv=_FIND_ARGV)
         _write(self.root, "other/t.py", TEST_BODY)
         _write(self.root, "sub/keep", "")
         self.link("sub/link", "../other")
         self.commit()
         result, code = self.verify()
-        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(self.codes(result), [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "tests[0].path")])
         self.assertEqual(result["commands"], [])
-        self.assertEqual(
-            self.codes(result),
-            [(BLOCKED, "root", ".spec/requirements/REQ-001.md", "tests[0].path")],
-        )
-        summaries = {d["summary"] for d in self.all_diagnostics(result)}
-        self.assertEqual(summaries, {"テストのパスが実効の作業ディレクトリの配下にありません"})
 
-    def test_cwd_outside_the_repository_is_blocked(self):
+    def test_cwd_outside_the_repository_through_a_symlink_is_unavailable(self):
         self.write(cwd="up", tests=["tests/t.py"])
         _write(self.root, "tests/t.py", TEST_BODY)
         self.link("up", str(self.outside))
@@ -390,18 +566,57 @@ class VerifyContainmentSingleTests(_SingleBase):
         result, code = self.verify()
         self.assertEqual((result["status"], code), ("blocked", 2), result)
         self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/bitz.yaml", "verify.commands.t.cwd")])
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
         self.assertEqual(result["commands"], [])
 
-    def test_cwd_sibling_with_the_same_name_prefix_is_outside_the_root(self):
-        # 文字列の前方一致では、ルート`repo`の兄弟`repo-x`が所有領域の中に見える。
-        sibling = self.tmp / (self.root.name + "-x")
-        sibling.mkdir()
-        self.write(cwd="up", tests=["tests/t.py"])
+    def test_absent_cwd_is_unavailable(self):
+        self.write(cwd="nowhere", tests=["tests/t.py"])
         _write(self.root, "tests/t.py", TEST_BODY)
-        self.link("up", str(sibling))
         self.commit()
-        result, _code = self.verify()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
+
+    def test_a_file_is_not_a_cwd(self):
+        self.write(cwd="tests/t.py", tests=["tests/t.py"])
+        _write(self.root, "tests/t.py", TEST_BODY)
+        self.commit()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
+
+    def test_a_different_case_spelling_of_the_cwd_is_unavailable(self):
+        self.write(cwd="Sub", tests=["sub/t.py"])
+        _write(self.root, "sub/t.py", TEST_BODY)
+        self.commit()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
         self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/bitz.yaml", "verify.commands.t.cwd")])
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
+
+    def test_nfc_collision_of_the_cwd_is_unavailable(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(cwd=NFC_NAME, tests=["tests/t.py"])
+        _write(self.root, "tests/t.py", TEST_BODY)
+        _write(self.root, f"{NFC_NAME}/keep", "")
+        _write(self.root, f"{NFD_NAME}/keep", "")
+        self.commit()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/bitz.yaml", "verify.commands.t.cwd")])
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
+        self.assertEqual(result["commands"], [])
+
+    def test_nfd_cwd_on_disk_with_an_nfc_declaration_runs_with_a_relative_argv_the_process_can_open(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(cwd=NFC_NAME, tests=[f"{NFC_NAME}/x/t.py"], argv=_FIND_ARGV)
+        _write(self.root, f"{NFD_NAME}/x/t.py", TEST_BODY)
+        self.commit()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("passed", 0), result)
+        # テストのパスは、宣言したとおりの綴りの`cwd`相対（`cwd`の綴りの差は相対化に影響しない）。
+        self.assertEqual([c["argv"][-1] for c in result["commands"]], ["x/t.py"])
+        self.assertEqual(result["commands"][0]["exitCode"], 0)
 
     def test_test_in_a_sibling_directory_with_the_cwd_name_prefix_is_outside_the_cwd(self):
         self.write(cwd="sub", tests=["sub2/t.py"])
@@ -411,6 +626,15 @@ class VerifyContainmentSingleTests(_SingleBase):
         result, _code = self.verify()
         self.assertEqual(self.codes(result), [(BLOCKED, "root", ".spec/requirements/REQ-001.md", "tests[0].path")])
 
+    def test_test_spelled_in_nfd_is_inside_an_nfc_cwd(self):
+        # 包含はNFCにした字句のパスで判定する。`cwd`をNFC、テストのパスをNFDで書いても、`cwd`の配下にある。
+        _require_nfc_nfd_distinct(self.root)
+        self.write(cwd=NFC_NAME, tests=[f"{NFD_NAME}/t.py"], argv=_TRUE_ARGV)
+        _write(self.root, f"{NFC_NAME}/t.py", TEST_BODY)
+        self.commit()
+        result, code = self.verify()
+        self.assertEqual((result["status"], code), ("passed", 0), result)
+
     def test_directory_whose_name_starts_with_two_dots_is_inside_the_cwd(self):
         # 相対パスが`..`で始まる文字列でも、`..data`はセグメントの境界では親ディレクトリではない。
         self.write(cwd="sub", tests=["sub/..data/t.py"], argv=_FIND_ARGV)
@@ -419,16 +643,16 @@ class VerifyContainmentSingleTests(_SingleBase):
         result, code = self.verify()
         self.assertEqual((result["status"], code), ("passed", 0), result)
         self.assertEqual(result["commands"][0]["exitCode"], 0)
+        self.assertEqual([c["argv"][-1] for c in result["commands"]], ["..data/t.py"])
 
-    def test_test_through_an_upper_symlink_resolving_inside_the_cwd_passes(self):
-        # 対照: 字句でも実パスでもcwdの配下。
+    def test_test_through_an_upper_symlink_resolving_inside_the_cwd_is_an_invalid_test_path(self):
         self.write(cwd="sub", tests=["sub/link/t.py"], argv=_FIND_ARGV)
         _write(self.root, "sub/real/t.py", TEST_BODY)
         self.link("sub/link", "real")
         self.commit()
         result, code = self.verify()
-        self.assertEqual((result["status"], code), ("passed", 0), result)
-        self.assertEqual(result["commands"][0]["exitCode"], 0)
+        self.assertEqual((result["status"], code), ("failed", 1), result)
+        self.assertEqual(self.codes(result), [(PATH_INVALID, "root", ".spec/requirements/REQ-001.md", "tests[0].path")])
 
 
 class VerifyOutsideCwdSourceTests(_SingleBase):
@@ -514,203 +738,173 @@ class VerifyContainmentMultiTests(_MultiBase):
         self.assertEqual(result["diagnostics"], [])
         self.assertEqual(by_id["platform"]["status"], "passed")
 
-    def test_cwd_into_another_member_through_a_symlink_is_an_ownership_violation(self):
+    def test_a_member_symlink_cwd_is_unavailable_in_the_owning_workspace(self):
         self.write(web_tests=["tests/test_web.py"], web_cwd="esc")
         self.link("apps/web/esc", "../../tests")
         self.commit()
         result, _code = self.run_op("verify", "--all-workspaces")
         self.assertEqual(
-            [c for c in self.codes(result) if c[0] == OWNERSHIP],
-            [(OWNERSHIP, "web", ".spec/bitz.yaml", "verify.commands.t.cwd")],
+            [c for c in self.codes(result) if c[0] in (BLOCKED, OWNERSHIP)],
+            [(BLOCKED, "web", ".spec/bitz.yaml", "verify.commands.t.cwd")],
         )
+        self.assertEqual({d["summary"] for d in self.all_diagnostics(result)}, {CWD_UNAVAILABLE})
 
-    def test_root_cwd_symlink_into_a_member_is_an_ownership_violation(self):
+    def test_a_root_symlink_cwd_toward_a_member_is_unavailable_not_owned(self):
+        # 存在しない（リンク）`cwd`は所有を判定しない。`VERIFY-CWD-UNAVAILABLE`だけを返す。
         self.write(web_tests=["tests/test_web.py"], root_cwd="lk")
         self.link("lk", "apps/web")
         self.commit()
         result, _code = self.run_op("verify", "--all-workspaces")
         self.assertEqual(
-            [c for c in self.codes(result) if c[0] == OWNERSHIP],
+            [c for c in self.codes(result) if c[0] in (BLOCKED, OWNERSHIP)],
+            [(BLOCKED, "platform", ".spec/bitz.yaml", "verify.commands.t.cwd")],
+        )
+
+    def test_a_member_cwd_symlink_inside_the_member_is_unavailable(self):
+        self.write(web_tests=["tests/test_web.py"], web_cwd="lk", argv=_FIND_ARGV)
+        self.link("apps/web/lk", "tests")
+        self.commit()
+        result, code = self.run_op("verify", "--all-workspaces")
+        self.assertEqual(code, 2, result)
+        self.assertEqual(
+            [c for c in self.codes(result) if c[0] in (BLOCKED, OWNERSHIP)],
+            [(BLOCKED, "web", ".spec/bitz.yaml", "verify.commands.t.cwd")],
+        )
+
+    def test_an_existing_root_cwd_inside_the_member_is_owned_by_the_member(self):
+        self.write(web_tests=["tests/test_web.py"], root_cwd="apps/web")
+        self.commit()
+        result, _code = self.run_op("verify", "--all-workspaces")
+        self.assertEqual(
+            [c for c in self.codes(result) if c[0] in (BLOCKED, OWNERSHIP)],
             [(OWNERSHIP, "platform", ".spec/bitz.yaml", "verify.commands.t.cwd")],
         )
 
-    def test_member_cwd_symlink_inside_the_member_passes(self):
-        # 対照。
-        self.write(web_tests=["lk/test_web.py"], web_cwd="lk", argv=_FIND_ARGV)
-        self.link("apps/web/lk", "tests")
+    def test_an_nfd_spelling_of_the_member_path_as_the_root_cwd_is_owned_by_the_member(self):
+        _require_nfc_nfd_distinct(self.root)
+        self.write(web_tests=["tests/test_web.py"], web_path=f"apps/{NFC_NAME}", root_cwd=f"apps/{NFD_NAME}")
+        self.commit()
+        result, _code = self.run_op("verify", "--all-workspaces")
+        self.assertEqual(
+            [c for c in self.codes(result) if c[0] in (BLOCKED, OWNERSHIP)],
+            [(OWNERSHIP, "platform", ".spec/bitz.yaml", "verify.commands.t.cwd")],
+        )
+
+    def test_a_member_cwd_inside_its_own_area_passes(self):
+        self.write(web_tests=["tests/test_web.py"], web_cwd="tests", argv=_FIND_ARGV)
         self.commit()
         result, code = self.run_op("verify", "--all-workspaces")
         self.assertEqual((result["status"], code), ("passed", 0), result)
 
 
-class RealPathPrimitivesTests(_Base):
-    """`bitz.pathown`の実体の比較（セグメント境界と所有領域）。"""
+class LexicalPrimitivesTests(unittest.TestCase):
+    """`bitz.pathown`の字句の判定（NFC、セグメントの境界、大文字と小文字の区別。ファイルシステムは読まない）。"""
 
     def test_within_uses_segment_boundaries(self):
-        from bitz import pathown
+        base = "/nowhere/web"
+        self.assertTrue(pathown.within("/nowhere/web", base))
+        self.assertTrue(pathown.within("/nowhere/web/f", base))
+        self.assertTrue(pathown.within("/nowhere/web/missing/x", base))
+        self.assertFalse(pathown.within("/nowhere/web2/f", base))
+        self.assertFalse(pathown.within("/nowhere/web2", base))
+        self.assertFalse(pathown.within("/nowhere", base))
 
-        (self.tmp / "web").mkdir()
-        (self.tmp / "web2").mkdir()
-        (self.tmp / "web" / "f").write_text("")
-        (self.tmp / "web2" / "f").write_text("")
-        base = str(self.tmp / "web")
-        self.assertTrue(pathown.within(str(self.tmp / "web"), base))
-        self.assertTrue(pathown.within(str(self.tmp / "web" / "f"), base))
-        self.assertTrue(pathown.within(str(self.tmp / "web" / "missing" / "x"), base))
-        self.assertFalse(pathown.within(str(self.tmp / "web2" / "f"), base))
-        self.assertFalse(pathown.within(str(self.tmp / "web2"), base))
-        self.assertFalse(pathown.within(str(self.tmp), base))
+    def test_within_distinguishes_case(self):
+        self.assertFalse(pathown.within("/r/Apps/Web/x.py", "/r/apps/web"))
+        self.assertFalse(pathown.within("/r/apps/web/x.py", "/r/Apps/Web"))
+
+    def test_within_compares_nfc_normalized_segments(self):
+        self.assertNotEqual(NFC_NAME, NFD_NAME)
+        self.assertTrue(pathown.within(f"/r/{NFD_NAME}/x.py", f"/r/{NFC_NAME}"))
+        self.assertTrue(pathown.within(f"/r/{NFC_NAME}/x.py", f"/r/{NFD_NAME}"))
+        self.assertFalse(pathown.within(f"/r/{NFC_NAME}x/x.py", f"/r/{NFD_NAME}"))
 
     def test_owns_excludes_nested_workspace_roots(self):
-        from bitz import pathown
+        roots = ["/r", "/r/apps/web"]
+        self.assertTrue(pathown.owns("/r/x", "/r", roots))
+        self.assertFalse(pathown.owns("/r/apps/web/x", "/r", roots))
+        self.assertFalse(pathown.owns("/r/apps/web", "/r", roots))
+        self.assertTrue(pathown.owns("/r/apps/web/x", "/r/apps/web", roots))
+        self.assertFalse(pathown.owns("/r/x", "/r/apps/web", roots))
+        self.assertTrue(pathown.owns("/r/apps/webx", "/r", roots))
 
-        (self.tmp / "r" / "apps" / "web").mkdir(parents=True)
-        root = str(self.tmp / "r")
-        member = str(self.tmp / "r" / "apps" / "web")
-        roots = [root, member]
-        self.assertTrue(pathown.owns(root + "/x", root, roots))
-        self.assertFalse(pathown.owns(member + "/x", root, roots))
-        self.assertTrue(pathown.owns(member + "/x", member, roots))
-        self.assertFalse(pathown.owns(root + "/x", member, roots))
+    def test_owns_uses_nfc_and_case_sensitive_segments(self):
+        roots = ["/r", f"/r/apps/{NFC_NAME}"]
+        self.assertFalse(pathown.owns(f"/r/apps/{NFD_NAME}/x", "/r", roots))
+        self.assertTrue(pathown.owns(f"/r/apps/{NFC_NAME.upper()}/x", "/r", roots))
 
+    def test_relative_to_returns_the_declared_spelling_after_the_base(self):
+        self.assertEqual(pathown.relative_to(f"/r/{NFD_NAME}/x/t.py", f"/r/{NFC_NAME}"), "x/t.py")
+        self.assertEqual(pathown.relative_to("/r/sub", "/r/sub"), ".")
+        self.assertIsNone(pathown.relative_to("/r/sub2/t.py", "/r/sub"))
 
-def _fake_stat(identity: dict[str, tuple[int, int]]):
-    def fake(path, *args, **kwargs):
-        key = os.fspath(path)
-        if key not in identity:
-            raise FileNotFoundError(key)
-        dev, ino = identity[key]
-        return types.SimpleNamespace(st_dev=dev, st_ino=ino, st_mode=0o040755)
-
-    return fake
-
-
-class FilesystemIdentityTests(unittest.TestCase):
-    """大文字と小文字・Unicodeの正規化の扱いはファイルシステムに任せる（複合ワークスペース仕様 §5.1の手順5）。
-
-    Linuxでは再現できないため、`os.stat`を差し替え、別の綴りが同じ実体（デバイスとiノード）を指すとき、同じと判定することを確かめる。
-    """
-
-    @property
-    def pathown(self):
-        from bitz import pathown
-
-        return pathown
-
-    def patch(self, identity):
-        return mock.patch("os.stat", _fake_stat(identity))
-
-    def test_case_variants_of_the_same_entity_are_inside(self):
-        identity = {
-            "/": (1, 1), "/r": (1, 10), "/r/apps": (1, 50), "/r/Apps": (1, 50),
-            "/r/apps/web": (1, 100), "/r/Apps/Web": (1, 100), "/r/apps/web/x.py": (1, 101),
-        }
-        with self.patch(identity):
-            # 綴りが違っても、同じ実体を指すディレクトリが祖先にある。
-            self.assertTrue(self.pathown.within("/r/Apps/Web/x.py", "/r/apps/web"))
-            self.assertTrue(self.pathown.within("/r/apps/web/x.py", "/r/Apps/Web"))
-            self.assertTrue(self.pathown.owns("/r/Apps/Web/x.py", "/r/apps/web", ["/r/apps/web"]))
-
-    def test_different_entities_with_case_variant_names_are_not_inside(self):
-        # 陰性対照: 大文字と小文字を区別するファイルシステムでは、綴りが違えば別の実体（iノードが違う）。
-        identity = {"/": (1, 1), "/r": (1, 10), "/r/apps": (1, 50), "/r/Apps": (1, 51), "/r/apps/web": (1, 100), "/r/Apps/Web": (1, 101)}
-        with self.patch(identity):
-            self.assertFalse(self.pathown.within("/r/Apps/Web/x.py", "/r/apps/web"))
-
-    def test_same_inode_on_another_device_is_a_different_entity(self):
-        identity = {"/": (1, 1), "/r": (1, 10), "/r/apps/web": (1, 100), "/m/web": (2, 100)}
-        with self.patch(identity):
-            self.assertFalse(self.pathown.within("/m/web/x.py", "/r/apps/web"))
-
-    def test_normalization_variants_of_the_same_entity_are_inside(self):
-        nfc = unicodedata.normalize("NFC", "café")
-        nfd = unicodedata.normalize("NFD", "café")
-        self.assertNotEqual(nfc, nfd)
-        identity = {"/": (1, 1), "/r": (1, 10), f"/r/{nfc}": (1, 70), f"/r/{nfd}": (1, 70)}
-        with self.patch(identity):
-            self.assertTrue(self.pathown.within(f"/r/{nfd}/x.py", f"/r/{nfc}"))
-            self.assertTrue(self.pathown.within(f"/r/{nfc}/x.py", f"/r/{nfd}"))
-
-    def test_cwd_ownership_uses_the_identity_for_the_root_workspace(self):
-        # ルートワークスペースのcwdが、綴りの違うメンバーのルートと同じ実体なら、メンバーの配下として所有領域の外。
-        identity = {"/": (1, 1), "/r": (1, 10), "/r/apps": (1, 50), "/r/Apps": (1, 50), "/r/apps/web": (1, 100), "/r/Apps/Web": (1, 100)}
-        roots = {"platform": "/r", "web": "/r/apps/web"}
-        with self.patch(identity):
-            diag = verify_mod._cwd_ownership_diag("platform", "t", "Apps/Web", "/r/Apps/Web", roots, "platform")
-            same = verify_mod._cwd_ownership_diag("platform", "t", "apps/web", "/r/apps/web", roots, "platform")
-        self.assertIsNotNone(diag)
-        self.assertEqual(diag["code"], OWNERSHIP)
-        self.assertIsNotNone(same)
-
-    def test_resolve_owned_path_uses_the_identity(self):
-        # `Apps/Web`と`apps/web`が同じ実体のとき、ルートワークスペースの`Apps/Web/..`の配下はメンバーの所有領域に入る。
-        from bitz import multirelate
-
-        identity = {
-            "/": (1, 1), "/r": (1, 10), "/r/apps": (1, 50), "/r/Apps": (1, 50), "/r/apps/web": (1, 100),
-            "/r/Apps/Web": (1, 100), "/r/Apps/Web/t.py": (1, 101), "/r/apps/web/t.py": (1, 101),
-        }
-        with self.patch(identity), mock.patch("os.path.lexists", return_value=True), mock.patch("os.path.isfile", return_value=True):
-            ok_root, violation_root = multirelate._resolve_owned_path("/r", "/r", "Apps/Web/t.py", ["/r", "/r/apps/web"])
-            ok_member, violation_member = multirelate._resolve_owned_path(
-                "/r/apps/web", "/r/apps/web", "t.py", ["/r", "/r/apps/web"]
-            )
-        self.assertEqual((ok_root, violation_root), (False, True))
-        self.assertEqual((ok_member, violation_member), (True, False))
-
-
-class OwnershipResolutionStaysWithinCheckedScopeTests(_MultiBase):
-    """TASKの`changes`の所有（複合ワークスペース仕様 §5.2）は、シンボリックリンクのエントリのリンク先の実パスで判定し、通常のファイルの変更はTASKの境界で扱う。"""
-
-    def test_task_change_of_a_symlink_to_another_workspace_is_an_ownership_violation(self):
-        from bitz import check as check_mod_local
-
-        self.write(web_tests=["tests/test_web.py"])
-        _write(self.root, "apps/web/src/a.py", "x = 1\n")
-        self.commit()
-        # 基準版の後に、`apps/web/src`を別のワークスペースを指すシンボリックリンクへ置き換える（Gitは`src`をリンクとして扱う）。
-        os.rename(self.root / "apps/web/src", self.root / "apps/web/src.bak")
-        os.symlink("../../src", self.root / "apps/web/src")
-        diag = check_mod_local._task_change_ownership_diag(
-            mock.Mock(available=False, executable=None), str(self.root), {}, None, "web",
-            str(self.root / "apps" / "web"), {"platform": str(self.root), "web": str(self.root / "apps" / "web")},
-            "src", "A",
+    def test_nfc_path_index_drops_paths_that_match_two_documents(self):
+        index = pathown.build_nfc_path_index(
+            [(f".spec/requirements/{NFC_NAME}.md", "A"), (f".spec/requirements/{NFD_NAME}.md", "B"), ("x.md", "C")]
         )
-        self.assertIsNotNone(diag)
-        self.assertEqual(diag.code, OWNERSHIP)
-        # 対照: 自分の所有領域の中へ解決するパスは違反ではない。
-        os.symlink("src.bak", self.root / "apps/web/inner")
-        inner = check_mod_local._task_change_ownership_diag(
-            mock.Mock(available=False, executable=None), str(self.root), {}, None, "web",
-            str(self.root / "apps" / "web"), {"platform": str(self.root), "web": str(self.root / "apps" / "web")},
-            "inner", "A",
-        )
-        self.assertIsNone(inner)
+        self.assertEqual(index, {"x.md": "C"})
 
-    def test_root_task_change_of_a_regular_file_under_a_member_is_not_an_ownership_violation(self):
-        """シンボリックリンクでない変更パスは所有境界違反にせず、TASKの境界で扱う（独立レビューのH1の回帰）。"""
-        from bitz import check as check_mod_local
 
-        self.write(web_tests=["tests/test_web.py"])
-        _write(self.root, "apps/web/src/a.py", "x = 1\n")
-        self.commit()
-        _write(self.root, "apps/web/src/b.py", "y = 1\n")
-        roots = {"platform": str(self.root), "web": str(self.root / "apps" / "web")}
-        for status, path in (("A", "apps/web/src/b.py"), ("M", "apps/web/src/a.py")):
-            with self.subTest(status=status):
-                diag = check_mod_local._task_change_ownership_diag(
-                    mock.Mock(available=False, executable=None), str(self.root), {}, None, "platform",
-                    str(self.root), roots, path, status,
-                )
-                self.assertIsNone(diag)
-        # 対照: ルートのシンボリックリンクがメンバーの配下を指せば、ルートはメンバーの配下を所有しないので違反である。
-        os.symlink("apps/web/src", self.root / "lk")
-        diag = check_mod_local._task_change_ownership_diag(
-            mock.Mock(available=False, executable=None), str(self.root), {}, None, "platform",
-            str(self.root), roots, "lk", "A",
-        )
-        self.assertIsNotNone(diag)
-        self.assertEqual(diag.code, OWNERSHIP)
+class PathResolverTests(_Base):
+    """:class:`bitz.pathown.PathResolver`の手順（安全な入出力・互換性 §6.2）。"""
+
+    def resolver(self) -> "pathown.PathResolver":
+        return pathown.PathResolver(str(self.root))
+
+    def test_exists_returns_the_spelling_on_disk(self):
+        _require_nfc_nfd_distinct(self.root)
+        _write(self.root, f"{NFD_NAME}/t.py", TEST_BODY)
+        found = self.resolver().resolve(f"{NFC_NAME}/t.py", pathown.FILE)
+        self.assertEqual((found.status, found.actual), (pathown.EXISTS, (NFD_NAME, "t.py")))
+
+    def test_absent_cases(self):
+        _write(self.root, "d/t.py", TEST_BODY)
+        resolver = self.resolver()
+        self.assertEqual(resolver.resolve("d/none.py", pathown.FILE).status, pathown.ABSENT)
+        self.assertEqual(resolver.resolve("none/t.py", pathown.FILE).status, pathown.ABSENT)
+        # 途中のセグメントがディレクトリでない。
+        self.assertEqual(resolver.resolve("d/t.py/x", pathown.FILE).status, pathown.ABSENT)
+        # 種別の不一致。
+        self.assertEqual(resolver.resolve("d", pathown.FILE).status, pathown.ABSENT)
+        self.assertEqual(resolver.resolve("d/t.py", pathown.DIRECTORY).status, pathown.ABSENT)
+        # 別の綴り。
+        self.assertEqual(resolver.resolve("D/t.py", pathown.FILE).status, pathown.ABSENT)
+
+    def test_links_are_rejected_in_the_middle_and_at_the_end(self):
+        _write(self.root, "real/t.py", TEST_BODY)
+        self.link("mid", "real")
+        self.link("real/end.py", "t.py")
+        self.link("dirlink", "real")
+        resolver = self.resolver()
+        self.assertEqual(resolver.resolve("mid/t.py", pathown.FILE).status, pathown.LINK)
+        self.assertEqual(resolver.resolve("real/end.py", pathown.FILE).status, pathown.LINK)
+        self.assertEqual(resolver.resolve("dirlink", pathown.DIRECTORY).status, pathown.LINK)
+        # 途中のリンクは、その先の名前が存在しなくても拒否される。
+        self.assertEqual(resolver.resolve("mid/none.py", pathown.FILE).status, pathown.LINK)
+
+    def test_dangling_symlink_is_a_link(self):
+        self.link("dangling", "no/such/target")
+        self.assertEqual(self.resolver().resolve("dangling", pathown.FILE).status, pathown.LINK)
+
+    def test_collision_is_not_absent(self):
+        _require_nfc_nfd_distinct(self.root)
+        _write(self.root, f"{NFC_NAME}.py", TEST_BODY)
+        _write(self.root, f"{NFD_NAME}.py", TEST_BODY)
+        self.assertEqual(self.resolver().resolve(f"{NFC_NAME}.py", pathown.FILE).status, pathown.COLLISION)
+        self.assertEqual(self.resolver().resolve(f"{NFD_NAME}.py", pathown.FILE).status, pathown.COLLISION)
+
+    def test_root_itself_is_a_directory(self):
+        self.assertEqual(self.resolver().resolve(".", pathown.DIRECTORY).status, pathown.EXISTS)
+        self.assertEqual(self.resolver().resolve(".", pathown.FILE).status, pathown.ABSENT)
+
+    def test_directory_listings_are_cached_within_one_resolver(self):
+        _write(self.root, "d/a.py", TEST_BODY)
+        resolver = self.resolver()
+        self.assertEqual(resolver.resolve("d/a.py", pathown.FILE).status, pathown.EXISTS)
+        _write(self.root, "d/b.py", TEST_BODY)
+        # 1回の実行の中では列挙のキャッシュを使う。新しいインスタンスは新しい列挙を読む。
+        self.assertEqual(resolver.resolve("d/b.py", pathown.FILE).status, pathown.ABSENT)
+        self.assertEqual(self.resolver().resolve("d/b.py", pathown.FILE).status, pathown.EXISTS)
 
 
 if __name__ == "__main__":
