@@ -33,7 +33,7 @@ bitz doctor [--format text|json]
 | 7 | スキーマのメジャーバージョン | `blocked` |
 | 8 | EARS-AIのメジャーバージョン | `blocked` |
 | 9 | Gitの利用可否と下限のバージョン | 単一ワークスペースは`warning`、複合ワークスペースは`blocked` |
-| 10 | コマンドの実行ファイルと`cwd` | `blocked` |
+| 10 | コマンドの実行ファイルと`cwd`（`cwd`は`verify`と同じ判定で、[安全な入出力・互換性 §6](../00_共通契約/02_安全な入出力・互換性.md#6-正規パス)の存在の検査でディレクトリとして存在しなければ使えない。途中または末端のシンボリックリンクを含む） | `blocked` |
 | 11 | 影響候補の件数 | `info` |
 
 独立した検査は、先行する失敗の後も可能な範囲で継続する。`--workspace`は指定したワークスペース、`--all-workspaces`は同じ複合ワークスペースの
@@ -171,7 +171,7 @@ earsAi: "1.0"
 | `SPEC-DOCTOR-WORKSPACE-001` | `blocked` | `.spec/bitz.yaml`が不在 |
 | `SPEC-DOCTOR-EARS-001` | `blocked` | EARS-AIのメジャーバージョンが非互換 |
 | `SPEC-DOCTOR-GIT-001` | `passed_with_warnings` | Git不在 |
-| `SPEC-DOCTOR-COMMAND-001` | `blocked` | コマンドの実行ファイルまたは作業ディレクトリを解決できない |
+| `SPEC-DOCTOR-COMMAND-001` | `blocked` | コマンドの実行ファイルまたは作業ディレクトリを解決できない（途中または末端がシンボリックリンクの作業ディレクトリを含む） |
 | `SPEC-MULTI-DEPENDENCY-001` | `blocked` | 先行する別の単位の出力の不足でワークスペース固有の検査項目を実行できない |
 
 §1の「貼付け可能な最小の修復手順」は、診断の`suggestedAction`として返す。上の表の診断のうち、`SPEC-DOCTOR-CORE-002`（Core実行体を観測できない）と
