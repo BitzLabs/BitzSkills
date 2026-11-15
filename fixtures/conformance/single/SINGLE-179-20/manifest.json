@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-179-20",
+  "description": "引数なしのcheckで、Gitが返す変更のパス（NFD）と、NFCで書いたtests[].pathを、NFCで照合して逆索引でREQを対象にする",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tests/n.py",
+        "to": "tests/cafe\u0301.py"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "tests/cafe\u0301.py",
+        "source": "changes/c.py"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

@@ -105,3 +105,13 @@
 
 `MULTI-039-03`と`04`の入力を訂正した。理由と内容は[複合ワークスペースのテスト割当ての欠落のレビュー記録](../multi/複合ワークスペースのテスト割当ての欠落のレビュー記録.md)の2026-11-08の節に記録した。
 ほかの適合fixtureは、修正後のCoreですべて通過し、期待値は変わらない。
+
+## 2026-11-15の訂正（ADR-071。ADR-051の期待値の訂正）
+
+管理者が方針を承認した（根拠はADR-071と書き直した規範文）。
+
+- `MULTI-062-01`（`web`のREQ-101の`tests[1].path`が`ext/test_x.py`。`apps/web/ext -> ../../tests`）: 上位のディレクトリのシンボリックリンクは、リンク先が別のワークスペースの領域でも辿らず、
+  存在しないパスと同じに扱う。診断は`SPEC-MULTI-OWNERSHIP-001`から`SPEC-PATH-INVALID-001`（summary「テストのパスが存在しません」、`source`は`{file, web, .spec/requirements/REQ-101.md, tests[1].path}`）へ訂正した。
+  `MULTI-062-03`（ルートが字句でメンバーの配下を宣言する）は、字句のパスが別の所有領域なので`SPEC-MULTI-OWNERSHIP-001`のままである。修正前のCoreは旧い期待どおりに返すので失敗する。
+- `SINGLE-175-03`（`ext -> /usr/bin`）は、結果が同じ（`SPEC-PATH-INVALID-001`）で、変わらない。
+- 参照計算（`reference_target`）は、`lexical_path_reference.lookup`と`owner`（NFCにしたセグメント。`realpath`を使わない）に書き直した。新しい文言はない。

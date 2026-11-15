@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "operation": "verify",
-  "status": "passed",
+  "status": "failed",
   "scope": "selected",
   "workspace": {
     "id": "root",
@@ -10,49 +10,43 @@
   "targetResults": [
     {
       "target": "REQ-001",
-      "status": "passed",
+      "status": "failed",
       "contextDigest": "sha256:3430daff5f5c841d60d04601986aeb36ba4be58741c976a74862401a247959c3",
       "statements": [
         "REQ-001:AC-01",
         "REQ-001:AC-02"
       ],
-      "bindingRefs": [
-        "root::default"
-      ],
-      "diagnostics": []
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "テストのパスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[0].path"
+          }
+        },
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "テストのパスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[1].path"
+          }
+        }
+      ]
     }
   ],
   "revision": null,
-  "commands": [
-    {
-      "bindingId": "root::default",
-      "workspaceId": "root",
-      "name": "default",
-      "status": "passed",
-      "termination": "exit",
-      "cwd": "inner",
-      "argv": [
-        "/bin/true",
-        "test_auth.py",
-        "test_session.py"
-      ],
-      "tests": [
-        "inner/test_auth.py",
-        "inner/test_session.py"
-      ],
-      "covers": [
-        "REQ-001:AC-01",
-        "REQ-001:AC-02"
-      ],
-      "exitCode": 0,
-      "timeoutSeconds": 300,
-      "stdoutExcerpt": "",
-      "stderrExcerpt": "",
-      "stdoutTruncated": false,
-      "stderrTruncated": false,
-      "durationMs": 0
-    }
-  ],
+  "commands": [],
   "durationMs": 0,
   "diagnostics": []
 }

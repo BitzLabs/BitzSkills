@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-174-08",
-  "description": "テストが字句ではcwdの配下でも実パスでは外なら、宣言した仕様文書とtests[i].pathを発生元にして遮断する",
+  "description": "テストのパスの途中がシンボリックリンクなら、リンク先がワークスペースの中でも、存在しないパスと同じにし、検証対象をfailedにする",
   "setup": {
     "git": true,
     "operations": [
@@ -24,8 +24,8 @@
     "env": {}
   },
   "expect": {
-    "status": "blocked",
-    "exitCode": 2,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

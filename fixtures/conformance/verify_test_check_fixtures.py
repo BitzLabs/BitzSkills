@@ -36,7 +36,7 @@ fixtureは、1つの原因だけを持つ。違反するエントリは、ほか
 `SINGLE-175-04`の入力は、TECH-001とTECH-002の正しいテストだけで全規範文が`covers`される。
 
 期待値は規範と承認済みの文言から導く参照計算（`reference_target`）で、Coreの出力は根拠にしない。`reference_target`は、入力の木構造から、閉包、対象規範文、
-使うテスト対応、テストのパスの扱い（`os.path.realpath`で求めた実パスのセグメントの境界の包含。Coreの`os.path.samestat`とは別）、`covers`の妥当性（(a)〜(c)）を導き、診断の`code`、`summary`、
+使うテスト対応、テストのパスの扱い（シンボリックリンクを辿らず、NFCにした字句のパスで存在と所有を判定する。ADR-071。`lexical_path_reference`）、`covers`の妥当性（(a)〜(c)）を導き、診断の`code`、`summary`、
 `source`、`evidence`を組み立てて、期待結果の診断と一致することを要求する。
 
 規範から決まらず、既存の形で決めた点:
@@ -57,6 +57,7 @@ import tempfile
 from jsonschema import Draft202012Validator, ValidationError
 
 from . import digest_crosscheck, digest_reference, multi_binding_missing_fixtures as binding_missing, multi_crosscheck, multi_reference
+from . import lexical_path_reference as lexical
 from . import multi_verify_fixtures as mverify
 from .harness import setup
 from .initial_fixtures import compare_state, observe
@@ -120,7 +121,7 @@ CASES = {
                           expect={"REQ-001": None}, runs={"REQ-001": BASE_TESTS}, defective=False, step=4,
                           description="対照: implementsが存在しないパスでも、verifyは検査しない"),
     "MULTI-062-01": dict(group="multi", argv=["web::REQ-101"], files=["tests/test_x.py", "apps/web/tests/ok.py"], link=("apps/web/ext", "../../tests"),
-                         expect={"web::REQ-101": dict(kind="ownership", workspace="web", doc=".spec/requirements/REQ-101.md", index=1, path="ext/test_x.py", evidence=None)},
+                         expect={"web::REQ-101": dict(kind="path", workspace="web", doc=".spec/requirements/REQ-101.md", index=1, path="ext/test_x.py", evidence=None)},
                          runs={}, defective=True, step=5,
                          description="複合ワークスペースで、使うテスト対応のテストのパスが所有領域の外へ解決するとき、検証対象をfailedにし、SPEC-MULTI-OWNERSHIP-001を返す"),
     "MULTI-062-02": dict(group="multi", argv=["web::REQ-101"], files=["apps/web/tests/ok.py"], link=None,
@@ -157,14 +158,8 @@ CASES = {
 # --- 参照計算（Coreにも`pathown`にも依存しない） ----------------------------------------------
 
 def within(path, base):
-    """実パスの文字列のセグメントの境界での包含（境界自身を含む）。"""
-    return path == base or path.startswith(base.rstrip("/") + "/")
-
-
-def real_owner(real, roots):
-    """実パス`real`を所有するワークスペースのID（最も深いルートが所有する）。どのルートの配下でもなければ`None`。"""
-    owners = [(len(root), identifier) for identifier, root in roots.items() if within(real, root)]
-    return max(owners)[1] if owners else None
+    """字句のパスのセグメントの境界での包含（境界自身を含む）。"""
+    return lexical.within(path, base)
 
 
 def allowed_covers(documents, name):
@@ -194,7 +189,7 @@ def used_entries(documents, root):
 
 def reference_target(repository, root, single, workspaces, documents):
     """検証対象`root`（修飾ID）の違反の診断（辞書の並び）と、通過した使うエントリ（[(文書, 添字, エントリ)]）を、入力の木構造から導く。"""
-    roots = {identifier: os.path.realpath(repository if info["path"] == "." else repository / info["path"]) for identifier, info in workspaces.items()}
+    roots = {identifier: info["path"] for identifier, info in workspaces.items()}
     _, entries = used_entries(documents, root)
     diagnostics, good = [], []
     for name, index, entry in entries:
@@ -202,13 +197,13 @@ def reference_target(repository, root, single, workspaces, documents):
         workspace = document["workspaceId"]
         source = {"kind": "file", "workspaceId": "root" if single else workspace, "path": document["path"]}
         declared = entry["path"]
-        real = os.path.realpath(os.path.join(roots[workspace], declared))
+        found = lexical.lookup(repository / roots[workspace], declared, "file")
         valid = True
-        if not os.path.isfile(real):
+        if found != "ok":
             valid = False
             diagnostics.append({"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY,
                                 "source": {**source, "key": f"tests[{index}].path"}})
-        elif real_owner(real, roots) != workspace:
+        elif lexical.owner(declared if roots[workspace] == "." else f"{roots[workspace]}/{declared}", roots) != workspace:
             valid = False
             if single:
                 diagnostics.append({"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY,
@@ -607,7 +602,7 @@ def check_conditions(identifier, repository, manifest, result):
             raise ValueError("作業ツリーのシンボリックリンクがレビュー済みの入力と異なります")
     if case["link"] is not None and os.path.isabs(case["link"][1]):
         target = Path(case["link"][1]) / EXTERNAL_FILE
-        if not target.is_file() or within(os.path.realpath(repository), os.path.realpath(case["link"][1])):
+        if not target.is_file():
             raise ValueError("リポジトリの外のディレクトリのファイルがファイルとして存在する必要があります")
     single, _root_id, workspaces, documents = load_tree(repository)
     if single != (case["group"] == "single"):

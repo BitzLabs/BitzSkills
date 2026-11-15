@@ -18,10 +18,10 @@
       "bindingRefs": [],
       "diagnostics": [
         {
-          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "code": "SPEC-PATH-INVALID-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "パスext/test_x.pyの解決先がワークスペースwebの所有領域の外です",
+          "summary": "テストのパスが存在しません",
           "source": {
             "kind": "file",
             "workspaceId": "web",

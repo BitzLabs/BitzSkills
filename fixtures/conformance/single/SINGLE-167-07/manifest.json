@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-167-07",
-  "description": "cwdの実パスがワークスペースのルートの外なら起動前にblockedとする",
+  "description": "cwdがシンボリックリンクなら、辿らずにcwdが利用できないものとして起動前にblockedとする",
   "setup": {
     "git": true,
     "operations": [

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-174-06",
-  "description": "implementsの上位のディレクトリが、リポジトリの中でワークスペースの外へ解決するなら、存在しないパスと同じにする",
+  "description": "implementsの上位のディレクトリが、リポジトリの中でワークスペースの外を指すシンボリックリンクなら、存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {

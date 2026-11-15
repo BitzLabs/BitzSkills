@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "check",
   "scope": "all-workspaces",
-  "status": "passed",
+  "status": "failed",
   "multiWorkspace": {
     "id": "platform",
     "path": "."
@@ -11,11 +11,24 @@
     {
       "id": "platform",
       "path": ".",
-      "status": "passed",
+      "status": "failed",
       "checkedDocumentCount": 1,
       "checkedStatementCount": 1,
       "durationMs": 0,
-      "diagnostics": []
+      "diagnostics": [
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "テストのパスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "platform",
+            "path": ".spec/requirements/REQ-001.md",
+            "key": "tests[0].path"
+          }
+        }
+      ]
     },
     {
       "id": "api",

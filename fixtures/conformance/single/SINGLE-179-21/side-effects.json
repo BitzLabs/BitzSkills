@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4e6e5c1f49067140b794d3ebc8a8652e25fa46023cd4db02de413845f64c48cc"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/café.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b2fbf1a801646ab15ddf227e01bb021e5680dad1431b2f012c2378e97312ed69"
+      }
+    },
+    "git": {
+      "status": " M \"src/caf\\303\\251.py\"\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 7f4f44ab2f54de647c49195478b775a425cbe198 0\t.spec/requirements/REQ-001.md\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"src/caf\\303\\251.py\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4e6e5c1f49067140b794d3ebc8a8652e25fa46023cd4db02de413845f64c48cc"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/café.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b2fbf1a801646ab15ddf227e01bb021e5680dad1431b2f012c2378e97312ed69"
+      }
+    },
+    "git": {
+      "status": " M \"src/caf\\303\\251.py\"\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 7f4f44ab2f54de647c49195478b775a425cbe198 0\t.spec/requirements/REQ-001.md\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"src/caf\\303\\251.py\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

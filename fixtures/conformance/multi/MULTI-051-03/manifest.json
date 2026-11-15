@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-051-03",
-  "description": "メンバーのcwdがメンバーのルートの外へ解決するシンボリックリンクなら、そのテスト割当てだけを起動せず独立したテスト割当てを続ける",
+  "description": "メンバーのcwdがシンボリックリンクなら、辿らず、cwdが利用できないものとして、そのテスト割当てだけを起動せず独立したテスト割当てを続ける",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -23,8 +23,8 @@
     "env": {}
   },
   "expect": {
-    "status": "failed",
-    "exitCode": 1,
+    "status": "blocked",
+    "exitCode": 2,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0
