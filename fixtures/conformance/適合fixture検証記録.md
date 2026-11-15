@@ -2349,3 +2349,24 @@ commit `9cddf41ad96c860cc437e4e40788b43b1d1eec1f`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-15: `SINGLE-178`、`SINGLE-177-18`、`MULTI-066`、`MULTI-065-09`を追加し、`MULTI-059-03`の期待値を訂正した後のGate Aの再認定
+
+ADR-071のとおり、閉包を、下方向の出発点から下方向へ具体化を辿り、上方向へ`requires`・`refines`・`addresses`を終端まで辿る到達可能性で定め直した（ユーザーの決定）。
+関係・トレースモデル §5.1、§6.1〜§6.3、§7、`context` §5、用語集、正規化仕様（`resolverVersion`は最初の公開まで`"1.0"`）を書き直した。
+これを固定する`SINGLE-178-01`〜`17`と`SINGLE-177-18`（Step 4）、`MULTI-066-01`・`02`と`MULTI-065-09`（Step 5）を追加した（ADR-051の追加、群`closure_reachability_fixtures`の新設と、
+群`duplicate_closure_fixtures`・`multi_closure_origin_fixtures`への追加）。
+`MULTI-059-03`（`refines`の参照先の`requires`を辿らないという廃止した規則を固定していた）と、対象展開のvectorの`BASIC-TASK-interpret`の期待値を、
+ADR-071と書き直した規範文を根拠に訂正した（ADR-051の期待値の訂正。管理者が承認）。参照計算を、共有の`closure_reference.py`へ書き直した（実装の確認事項C107）。
+matrix、Stepの割当て、実装計画の完了条件、網羅表のハッシュ値、対象展開のvectorの契約のハッシュ値を合わせた。そのほかの既存のfixtureの入力と期待値は変えていない。
+
+commit `9b5192497521ec5db785ea2ddd1a7c2055944252`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`314ffcb6ffc3834cf88e492f4416d0dfc2c41a1477ad3dbd751e7d978697fc25`。前回から変わったのは次の値だけである: 21件の追加によるmatrixと網羅の件数（721件→742件）、Step 4の件数（125件→143件）、Step 5の件数（316件→319件）、群`closure_reachability_fixtures`の追加、`MULTI-059-03`と`BASIC-TASK-interpret`の期待値、実行ビットを確かめたファイル数（4158件→4307件。mainの別作業のファイルを含む）、網羅表と対象展開のvectorが固定する根拠文書のハッシュ値、リンクを確かめた件数 |
+| 規模の検証 | 2つのクローンで28件すべて`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加・訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
