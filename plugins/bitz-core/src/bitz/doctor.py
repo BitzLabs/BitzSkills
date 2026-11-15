@@ -14,6 +14,7 @@ from . import execfile
 from . import gitutil
 from . import messages
 from . import multiws
+from . import pathown
 from .cliargs import ParsedArgs, api_version_key, parse_core_api_range
 from .errors import CliArgError
 from .resultmodel import doctor_status, sort_diagnostics, worst_status
@@ -400,11 +401,15 @@ def _diagnose_workspace(
     assert outcome.config is not None
     commands: dict = outcome.config.get("_resolvedCommands", {})
     command_status = "passed"
+    cwd_resolver = pathown.PathResolver(loc.root)
     for name in sorted(commands):
         cmd = commands[name]
         cmd_cwd = cmd["cwd"]
-        cwd_abs = cmd_cwd if os.path.isabs(cmd_cwd) else os.path.join(loc.root, cmd_cwd)
-        if not os.path.isdir(cwd_abs):
+        # `cwd`は、ワークスペースのルートからの相対パスをシンボリックリンクを辿らずに確かめる（安全な入出力・互換性 §6.2。`verify`と同じ判定）。
+        # 不在、別の綴り、途中または末端のシンボリックリンク、NFCの衝突は、どれも作業ディレクトリを解決できない。
+        cwd_found = cwd_resolver.resolve(cmd_cwd, pathown.DIRECTORY)
+        cwd_abs = os.path.join(loc.root, *cwd_found.actual)
+        if not cwd_found.exists:
             command_status = "blocked"
             diagnostics.append(
                 {

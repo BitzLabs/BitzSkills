@@ -196,6 +196,9 @@ IMPLEMENTS_PATH_MISSING = "実装パスが存在しません"
 IMPLEMENTS_PATH_DRAFT = "状態draftの実装パスは未作成です"
 TEST_PATH_MISSING = "テストのパスが存在しません"
 TEST_PATH_DRAFT = "状態draftのテストのパスは未作成です"
+# NFCで同じ名前になる項目が複数ある（NFCの衝突）。存在の有無を述べないので、状態draftにも同じ文言を使う（安全な入出力・互換性 §6.2。ユーザーが承認した値）。
+IMPLEMENTS_PATH_NFC_COLLISION = "NFCで同じ名前になる項目が複数あり、実装パスが一つに決まりません"
+TEST_PATH_NFC_COLLISION = "NFCで同じ名前になる項目が複数あり、テストのパスが一つに決まりません"
 
 # 参照先の不在と、対応できない参照（`refines`していない規範文など）の両方に使う（C67。2026-10-26に管理者が承認。一字も変えない）。
 TEST_COVERAGE_INVALID = "フィールドcoversの参照先が存在しないか、対応できません"
@@ -374,6 +377,7 @@ MULTI_PATH_INVALID = "メンバーのパスの形式が不正です"
 MULTI_PATH_DUPLICATE = "メンバーのパスが重複しています"
 MULTI_PATH_NESTED = "メンバーのパスが別のメンバーの配下にあります"
 MULTI_PATH_SYMLINK = "メンバーのパスの経路にシンボリックリンクが含まれています"
+MULTI_PATH_NFC_COLLISION = "NFCで同じ名前になる項目が複数あり、メンバーのパスが一つに決まりません"
 MULTI_PATH_SUBMODULE = "メンバーのパスがGitのサブモジュールです"
 MULTI_PATH_WORKTREE = "メンバーのパスが別のワークツリーです"
 MULTI_PATH_SEPARATE_REPO = "メンバーのパスが別のGitのリポジトリです"
@@ -418,14 +422,6 @@ MULTI_REF_WORKSPACE_UNKNOWN = "修飾したワークスペースがカタログ�
 
 def multi_ownership_resolved(path: str, workspace_id: str) -> str:
     return f"パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"
-
-
-def multi_ownership_symlink_base(path: str, workspace_id: str) -> str:
-    return f"パス{path}の基準版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します"
-
-
-def multi_ownership_symlink_current(path: str, workspace_id: str) -> str:
-    return f"パス{path}の現在版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します"
 
 
 # --- doctorのプラグインの要求（`SPEC-DOCTOR-PLUGIN-001`／`SPEC-DOCTOR-API-001`／`SPEC-DOCTOR-CAPABILITY-001`、ADR-061） ---
