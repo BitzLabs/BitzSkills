@@ -202,6 +202,9 @@ def _run_locked(bundle,proof,maximum_slots):
             require(result['ledgerFinalized'] is True and result['status'] in {'measured_correct','measured_incorrect'},
                 'heldout parent unresolved')
             results.append(dict(ordinal=ordinal,status=result['status'],phase='parent'))
+        except operator.QuotaDeferred as exc:
+            results.append(dict(ordinal=ordinal,status='waiting_for_quota',phase=stage,waitUntil=exc.wait_until))
+            break
         except BaseException as exc:
             stop(bundle,proof,ordinal,type(exc).__name__)
             results.append(dict(ordinal=ordinal,status='globally_stopped',errorType=type(exc).__name__))
@@ -209,7 +212,9 @@ def _run_locked(bundle,proof,maximum_slots):
             break
     _,summary=checkpoint(bundle,proof)
     result=dict(version=VERSION,status=('heldout_attempts_recorded_with_prior_stop' if summary.get('priorStoppedSlots') else 'heldout_attempts_recorded') if summary.get('accountedSlots',summary['terminalSlots'])==24 and summary['status']!='stopped'
-        else 'heldout_globally_stopped' if summary['status']=='stopped' else 'heldout_batch_recorded',
+        else 'heldout_globally_stopped' if summary['status']=='stopped'
+        else 'heldout_waiting_for_quota' if results and results[-1]['status']=='waiting_for_quota'
+        else 'heldout_batch_recorded',
         sourceCommit=bundle.bound.contract['sourceCommit'],executionSha256=io.sha(bundle.bound.execution_raw),
         slots=results,summary=summary,automaticRetries=0,certifiesFullR04=False,certifiesSkillGate=False)
     if interruption is not None:raise interruption

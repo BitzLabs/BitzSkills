@@ -274,6 +274,12 @@ class HeldoutExecutionTests(unittest.TestCase):
         path = x.inputs.REVIEW_PATH_75
         self.old.originals[path] = self.raws['reviewedSet']
         (self.repository/path).write_bytes(self.raws['reviewedSet'])
+        campaign_contract = dict(campaignId=x.successor.CAMPAIGN_75)
+        for name in preflight.source_files(campaign_contract):
+            if name not in self.old.originals:
+                raw = (ROOT/name).read_bytes()
+                self.old.originals[name] = raw
+                (self.repository/name).write_bytes(raw)
         self.select_product(x.EXECUTION_DEPLOYMENT_75, 3)
         campaign = x.successor.CAMPAIGN_75
         context = preflight.public.capture.context_profile(

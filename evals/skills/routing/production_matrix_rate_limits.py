@@ -48,7 +48,7 @@ def sdk_read(sdk_path, cli_path):
     return ordinary_snapshot(result)
 
 
-def read(repository, sdk_path, cli_path, auth_path, worker_raw):
+def read(repository, sdk_path, cli_path, auth_path, worker_raw, *, mount_boundary=()):
     """照合済みworkerを一時CODEX_HOMEで実行し、標準認証は読取り専用で委譲する。"""
     cli_path = Path(cli_path)
     env = dict(PATH=str(cli_path.parent)+':/usr/bin:/bin', LANG='C.UTF-8',
@@ -62,7 +62,7 @@ def read(repository, sdk_path, cli_path, auth_path, worker_raw):
             work.mkdir(mode=0o700)
             argv = ['bwrap','--unshare-pid','--unshare-ipc','--new-session','--die-with-parent',
                 '--ro-bind','/','/','--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run',
-                '--proc','/proc','--dev','/dev',
+                '--proc','/proc','--dev','/dev', *mount_boundary,
                 '--ro-bind',str(sdk_path),str(sdk_path),
                 '--ro-bind',str(cli_path.parents[1]),str(cli_path.parents[1]),
                 '--bind',str(home),env['CODEX_HOME'],

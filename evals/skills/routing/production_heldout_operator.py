@@ -86,6 +86,32 @@ def auth_metadata():
             'heldout standard CLI auth metadata unavailable')
 
 
+class QuotaDeferred(Exception):
+    def __init__(self, wait_until=None):
+        super().__init__('heldout provider quota deferred')
+        self.wait_until = wait_until
+
+
+def admit_quota(repository, bound):
+    if bound.contract['campaignId'] != x.successor.CAMPAIGN_75:
+        return
+    import production_matrix_continuation as continuation
+    import production_matrix_rate_limits as rate_limits
+
+    d = x.deployment_for_execution(bound.execution_raw, bound.deployment_raw)
+    worker = 'evals/skills/routing/production_matrix_rate_limits.py'
+    worker_raw = preflight.public.guard.git(repository, 'show', bound.contract['sourceCommit']+':'+worker)
+    require(io.read_regular(repository/worker) == worker_raw, 'heldout quota worker source drift')
+    try:
+        snapshot = rate_limits.read(repository, repository/d['sdkRelativePath'], d['codexPath'],
+            launch.AUTH, worker_raw, mount_boundary=launch.windows_mount_boundary(d))
+        next_check = continuation.wait_until(snapshot, time.time())
+    except (RuntimeError, ValueError):
+        raise QuotaDeferred() from None
+    if next_check is not None:
+        raise QuotaDeferred(next_check)
+
+
 def successor_ledger(ledger):
     return getattr(ledger, 'records_daily_proof', False)
 
@@ -393,6 +419,7 @@ def run_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, iso
     auth_metadata()
     ledger = x.ledger.open_shared(bound.ledger_contract(io.encoded(before)))
     with ledger.locked():
+        admit_quota(repository, bound)
         ledger.append(ordinal, 'primary_reserved', resource_proof_sha256=daily_proof(ledger, before))
         try:return _reserved_primary(repository, bound, ordinal, sdk_raw, review_raw, report_raw, isolation_raw, before, ledger)
         except BaseException as exc:

@@ -3,14 +3,20 @@ from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 import sys
+import time
 import unittest
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'evals/skills/routing'))
 import production_heldout_run as run
+import production_matrix_rate_limits as rate_limits
 import test_production_heldout_execution as fixture
 import test_production_heldout_launch as review_fixture
+
+
+RUN_PRIMARY = run.operator.run_primary
+RUN_INDEPENDENT = run.score.run_independent
 
 
 class HeldoutRunTests(unittest.TestCase):
@@ -53,13 +59,15 @@ class HeldoutRunTests(unittest.TestCase):
         self.append(args[2],['parent_verified'])
         return dict(status='measured_incorrect',ledgerFinalized=True)
 
-    def test_75_run_resumes_and_stops_after_incorrect_parent_verification(self):
+    def configure_75_bundle(self):
         self.fixture.select_75_execution()
         self.bound = self.fixture.bind()
         self.proof.update(executionSha256=run.io.sha(self.bound.execution_raw),
             inputContractSha256=run.io.sha(self.bound.input_contract_raw), sourceSha256={})
         review, report, isolation = review_fixture.review_bytes(self.bound)
         self.bundle = run.Bundle(self.repo, self.bound, self.fixture.old.sdk_manifest_raw, review, report, isolation)
+    def test_75_run_resumes_and_stops_after_incorrect_parent_verification(self):
+        self.configure_75_bundle()
         self.append(1, ['primary_reserved', 'primary_started', 'primary_captured'])
         outcome = run.run(self.bundle)
         self.assertEqual(outcome['summary']['incorrect'], 1)
@@ -68,6 +76,57 @@ class HeldoutRunTests(unittest.TestCase):
         self.assertEqual((self.primary.call_count, self.independent.call_count, self.parent.call_count), (0, 1, 1))
         self.assertEqual(run.run(self.bundle)['slots'], [])
         self.assertEqual(self.parent.call_count, 1)
+
+    def test_75_quota_wait_does_not_reserve_or_stop_and_pending_primary_resumes(self):
+        self.configure_75_bundle()
+        self.primary.side_effect = RUN_PRIMARY
+        self.independent.side_effect = RUN_INDEPENDENT
+        future = time.time() + 3600
+        def snapshot(used):
+            return dict(limitId='codex', spendControlReached=False, rateLimitReachedType=None,
+                primary=dict(usedPercent=used, resetsAt=future, windowDurationMins=300),
+                secondary=dict(usedPercent=0, resetsAt=future, windowDurationMins=10080))
+
+        def capture(*args):
+            ledger = args[-1]
+            ledger.append(1, 'primary_started')
+            ledger.append(1, 'primary_captured', 'd'*64)
+            return dict(status='heldout_primary_captured_awaits_independent')
+
+        def score(*args):
+            ledger = args[-1]
+            ledger.append(1, 'independent_started')
+            ledger.append(1, 'independent_captured', 'e'*64)
+            return dict(status='heldout_independent_captured')
+
+        with patch.object(rate_limits, 'read', side_effect=[snapshot(80), snapshot(0),
+                RuntimeError('synthetic unavailable'), snapshot(0)]) as quota, \
+             patch.object(run.operator, '_reserved_primary', side_effect=capture) as primary, \
+             patch.object(run.operator, 'same_execution_slot'), \
+             patch.object(run.score, 'primary'), \
+             patch.object(run.score, '_reserved', side_effect=score) as independent:
+            first = run.run(self.bundle, maximum_slots=1)
+            self.assertEqual(first['status'], 'heldout_waiting_for_quota')
+            self.assertEqual(first['slots'], [dict(ordinal=1, status='waiting_for_quota',
+                phase='primary', waitUntil=future)])
+            self.assertEqual(first['summary']['primaryReserved'], 0)
+            primary.assert_not_called()
+
+            second = run.run(self.bundle, maximum_slots=1)
+            self.assertEqual(second['status'], 'heldout_waiting_for_quota')
+            self.assertEqual(second['slots'], [dict(ordinal=1, status='waiting_for_quota',
+                phase='independent', waitUntil=None)])
+            self.assertEqual(second['summary']['primaryReserved'], 1)
+            self.assertEqual(second['summary']['independentReserved'], 0)
+            self.assertEqual(second['summary']['evaluationFailed'], 0)
+            independent.assert_not_called()
+
+            final = run.run(self.bundle, maximum_slots=1)
+            self.assertEqual(final['summary']['parentVerified'], 1)
+            self.assertEqual(final['summary']['independentReserved'], 1)
+            self.assertEqual(quota.call_count, 4)
+            primary.assert_called_once()
+            independent.assert_called_once()
 
     def test_two_slots_then_24_total_without_repeating_primary_or_independent(self):
         first=run.run(self.bundle)
