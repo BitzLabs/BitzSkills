@@ -138,6 +138,16 @@
         "treeDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
       }
     },
+    "materialize": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["from", "to"],
+        "properties": {
+          "from": { "$ref": "#/$defs/strictPath" },
+          "to": { "$ref": "#/$defs/strictPath" }
+        }
+      }
+    },
     "stage": {
       "type": "object",
       "additionalProperties": false,
@@ -163,6 +173,7 @@
       "properties": {
         "git": { "type": "boolean" },
         "generate": { "$ref": "#/$defs/generate" },
+        "materialize": { "$ref": "#/$defs/materialize" },
         "baseCommit": { "$ref": "#/$defs/baseCommit" },
         "operations": {
           "type": "array",

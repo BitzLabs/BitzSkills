@@ -1,0 +1,44 @@
+{
+  "fixtureId": "SINGLE-179-03",
+  "description": "implementsの途中のディレクトリがNFCで同じ名前になる2つの兄弟を持つとき、末端まで辿らず、専用の文言で拒否する",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "lib/dnfc",
+        "to": "lib/café"
+      },
+      {
+        "from": "lib/dnfd",
+        "to": "lib/cafe\u0301"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

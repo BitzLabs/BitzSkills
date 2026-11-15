@@ -1,0 +1,44 @@
+{
+  "fixtureId": "SINGLE-179-01",
+  "description": "implementsの末端の項目がNFCで同じ名前になる2つの兄弟を持つとき、存在しない扱いにせず、専用の文言で拒否する（状態approved）",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "src/nfc.py",
+        "to": "src/café.py"
+      },
+      {
+        "from": "src/nfd.py",
+        "to": "src/cafe\u0301.py"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

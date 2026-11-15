@@ -184,7 +184,17 @@
         "SINGLE-174-03",
         "SINGLE-174-04",
         "SINGLE-174-05",
-        "SINGLE-174-06"
+        "SINGLE-174-06",
+        "SINGLE-179-01",
+        "SINGLE-179-02",
+        "SINGLE-179-03",
+        "SINGLE-179-04",
+        "SINGLE-179-05",
+        "SINGLE-179-06",
+        "SINGLE-179-07",
+        "SINGLE-179-08",
+        "SINGLE-179-09",
+        "SINGLE-179-10"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -306,7 +316,17 @@
         "SINGLE-127-04",
         "SINGLE-127-12",
         "SINGLE-127-13",
-        "SINGLE-170-03"
+        "SINGLE-170-03",
+        "SINGLE-179-15",
+        "SINGLE-179-16",
+        "SINGLE-179-17",
+        "SINGLE-179-18",
+        "SINGLE-179-19",
+        "SINGLE-179-20",
+        "SINGLE-179-21",
+        "SINGLE-179-22",
+        "SINGLE-179-23",
+        "SINGLE-179-24"
       ]
     },
     {
@@ -352,6 +372,7 @@
         "SINGLE-167-07",
         "SINGLE-167-08",
         "SINGLE-167-09",
+        "SINGLE-167-10",
         "SINGLE-070-03",
         "SINGLE-070-04",
         "SINGLE-071-03",
@@ -454,7 +475,11 @@
         "SINGLE-178-14",
         "SINGLE-178-15",
         "SINGLE-178-16",
-        "SINGLE-178-17"
+        "SINGLE-178-17",
+        "SINGLE-179-11",
+        "SINGLE-179-12",
+        "SINGLE-179-13",
+        "SINGLE-179-14"
       ]
     },
     {
@@ -700,6 +725,7 @@
         "MULTI-051-04",
         "MULTI-051-05",
         "MULTI-051-06",
+        "MULTI-051-07",
         "MULTI-052-01",
         "MULTI-052-02",
         "MULTI-052-03",
@@ -778,7 +804,16 @@
         "MULTI-065-08",
         "MULTI-065-09",
         "MULTI-066-01",
-        "MULTI-066-02"
+        "MULTI-066-02",
+        "MULTI-067-01",
+        "MULTI-067-02",
+        "MULTI-067-03",
+        "MULTI-067-04",
+        "MULTI-067-05",
+        "MULTI-067-06",
+        "MULTI-067-07",
+        "MULTI-067-08",
+        "MULTI-067-09"
       ]
     }
   ]

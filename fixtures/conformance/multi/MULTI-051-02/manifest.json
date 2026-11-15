@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-051-02",
-  "description": "ルートワークスペースのcwdがメンバーのルートの配下へ解決するシンボリックリンクなら所有領域の外とする",
+  "description": "ルートワークスペースのcwdがシンボリックリンクなら、メンバーのルートの配下を指していても辿らず、cwdが利用できないものとして起動前にblockedとする",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -23,8 +23,8 @@
     "env": {}
   },
   "expect": {
-    "status": "failed",
-    "exitCode": 1,
+    "status": "blocked",
+    "exitCode": 2,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

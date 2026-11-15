@@ -75,6 +75,23 @@ def write_generated(entries, destination):
         path.write_bytes(content)
 
 
+def materialize(destination, renames):
+    """コピーした入力の名前を、Gitの準備より前に付け替える（適合fixture仕様 §3.1の1.5）。
+
+    `repo/`には、Unicodeの正規化形（NFC・NFD）だけが異なる名前や、NFCで同じ名前になる2つの兄弟の項目を、置けない
+    （macOSのファイルシステムとGitの既定の設定で、名前が正規化または衝突するため）。そのため`repo/`にはASCIIの名前で置き、
+    `setup.materialize`の`to`（JSONの`\\u`エスケープで書いた正規化形が異なる名前）へ、`git init`の前に付け替える。
+    付け替えの後の名前が基準版のコミットに入る。`to`は存在してはいけない。名前を付け替えるだけで、内容は変えない。
+    """
+    for rename in renames:
+        source = safe_path(destination, rename["from"])
+        target = safe_path(destination, rename["to"])
+        if not (source.exists() or source.is_symlink()) or target.exists() or target.is_symlink():
+            raise ValueError("`materialize`の前提条件を満たしていません")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source.rename(target)
+
+
 def setup(fixture, manifest, destination, generated=None):
     if destination.exists():
         raise ValueError("準備手順で作るディレクトリは存在してはいけません")
@@ -90,6 +107,7 @@ def setup(fixture, manifest, destination, generated=None):
         if (fixture / "repo/.git").exists():
             raise ValueError("fixtureの元のディレクトリはGitのメタデータを含んではいけません")
         shutil.copytree(fixture / "repo", destination, symlinks=True)
+    materialize(destination, plan.get("materialize", []))
     if plan["git"]:
         git(destination, "init", "--initial-branch=fixture")
     elif "baseCommit" in plan or any(op["op"] in {"stage", "submodule", "worktree"}

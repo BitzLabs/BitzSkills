@@ -5,6 +5,8 @@
 （[ADR-051](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)の追加）。
 生成器と監査は`fixtures/conformance/multi_command_cwd_fixtures.py`である。単一ワークスペースの対は[コマンドのcwdの字句と所有領域のレビュー記録](../single/コマンドのcwdの字句と所有領域のレビュー記録.md)に記録した。
 
+> **2026-11-15の訂正（ADR-071）。** `cwd`のシンボリックリンクは、単一ワークスペースと同じく辿らず、所有領域内へ解決する場合も許可しない。`cwd`がディレクトリとして存在しなければ`VERIFY-CWD-UNAVAILABLE`（`blocked`）、存在する`cwd`の字句のパスが別の所有領域にあれば`SPEC-MULTI-OWNERSHIP-001`（`failed`）。`MULTI-051-02`〜`04`は、末尾の「2026-11-15の訂正」が上書きする（[複合ワークスペース仕様 §5.1](../../../docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#51-正規パスの判定)）。
+
 ## 追加の理由
 
 複合ワークスペースでも、コマンドの`cwd`の所有は判定されていなかった。`../..`、絶対パス、所有領域の外へ解決するシンボリックリンク、
@@ -58,3 +60,21 @@
 - 違反の有無は、準備手順の後の入力から導く参照計算（`reference_violations`）が、設定の`cwd`と`realpath`から、字句の違反、自身のルートの外、ルートワークスペースがメンバーのルートの配下を指す、の順に判定し、
   fixtureが名乗る違反と一致することを要求する。起動するテスト割当ては違反していないワークスペースのもの（全体の`verify`のとき）だけである。
 - 検証対象のハッシュ値は、リテラルのA（`multi_verify_fixtures`の材料の組み立てを再利用）と、入力の木構造から導くB（`multi_crosscheck`）のバイト列の一致を要求する。コマンドの`cwd`は材料に入る。
+
+## 2026-11-15の訂正（ADR-071。ADR-051の期待値の訂正）
+
+管理者が方針を承認した（根拠はADR-071と書き直した規範文）。
+
+| fixture | 旧い期待 | 新しい期待 | 修正前のCore（`968bc84`）で |
+|---|---|---|---|
+| `MULTI-051-01` | `failed`／1。`platform`に`SPEC-MULTI-OWNERSHIP-001`（`cwd`が`apps/web`。字句のパスがメンバーの配下） | 同じ（変更なし） | 通る |
+| `MULTI-051-02` | `failed`／1。最上位に`SPEC-MULTI-OWNERSHIP-001`（`lk -> apps/web`） | `blocked`／2。最上位に`VERIFY-CWD-UNAVAILABLE`（`SPEC-VERIFY-BLOCKED-001`、`blocked`）。`lk`は末端のシンボリックリンク | 失敗する（`failed`／1） |
+| `MULTI-051-03` | `failed`／1。`web`に`SPEC-MULTI-OWNERSHIP-001`（`esc -> ../..`） | `blocked`／2。`web`に`VERIFY-CWD-UNAVAILABLE`。`platform::t`は独立しているので実行して`passed`。最上位は最悪値の`blocked` | 失敗する（`failed`／1） |
+| `MULTI-051-04` | `failed`／1。最上位に`SPEC-MULTI-OWNERSHIP-001` | `blocked`／2。最上位に`VERIFY-CWD-UNAVAILABLE` | 失敗する（`failed`／1） |
+| `MULTI-051-05`、`06` | 変更なし | 変更なし | 通る |
+| `MULTI-051-07`（新） | — | `blocked`／2。`web`の`cwd`が`ext/sub`（`apps/web/ext -> real`、`apps/web/real/sub/keep.txt`が実在）。途中のセグメントがシンボリックリンクなので`VERIFY-CWD-UNAVAILABLE`（結果の形は`MULTI-051-03`と同じ） | 失敗する（`VERIFY-TEST-OUTSIDE-CWD`を返す） |
+
+- 診断のsummaryは、既存の承認済みの文言「コマンドの作業ディレクトリが利用できません」。`source`は設定ファイルの`verify.commands.t.cwd`で、`workspaceId`は`cwd`を持つワークスペースのID。
+  `blocked`のワークスペースの状態は`blocked`、検証対象は`blocked`、`bindingRefs: []`、`commands`は空。独立したテスト割当てを継続する（`verify` §6）。
+- 参照計算は、`reference_violations`が(字句の違反, 利用できない`cwd`, 所有領域の外)の3つ組を、字句の規則だけで導く（`lexical_path_reference.lookup`と`owner`。`realpath`を使わない）。
+  存在の検査が所有の判定より前である。新しい文言はない。

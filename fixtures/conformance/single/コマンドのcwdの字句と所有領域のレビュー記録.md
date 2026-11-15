@@ -5,6 +5,8 @@
 （[ADR-051](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)の追加）。
 生成器と監査は`fixtures/conformance/command_cwd_fixtures.py`である。複合ワークスペースの対は[複合ワークスペースのコマンドのcwdの所有領域のレビュー記録](../multi/複合ワークスペースのコマンドのcwdの所有領域のレビュー記録.md)に記録した。
 
+> **2026-11-15の訂正（ADR-071）。** `cwd`のシンボリックリンクを辿らず、`cwd`がディレクトリとして存在しなければ`VERIFY-CWD-UNAVAILABLE`とする（[安全な入出力・互換性 §6](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#6-正規パス)）。`VERIFY-CWD-OUTSIDE`は診断レジストリから除いた。`SINGLE-167-07`・`09`の扱いは、末尾の「2026-11-15の訂正」が上書きする。
+
 ## 追加の理由
 
 `verify.commands.<名前>.cwd`は、設定の検査が型しか見なかった。そのため、`../..`、絶対パス、globの文字、ルートの外へ出るシンボリックリンクの`cwd`でも、
@@ -58,3 +60,19 @@
   （テストのパスが`cwd`の配下にない）と重ならない。包含は正規パスのセグメントの境界で判定する（ワークスペース・設定仕様 §6）ことが前提である。
 - `SINGLE-167-02`の`doctor`で、設定を解釈できないときのコマンドと作業ディレクトリの検査項目を実行しない（`doctor` §3）ことは、`SINGLE-092`の`checks`の形を引き継いで固定した。
   `cwd`の字句の違反が設定の型の不正と同じ`config`の`error`になることは、診断コードが同じ`SPEC-CONFIG-SCHEMA-001`であることから導いた。
+
+## 2026-11-15の訂正（ADR-071。ADR-051の期待値の訂正）
+
+管理者が方針を承認した（根拠はADR-071と書き直した規範文）。
+
+- `SINGLE-167-07`（`up -> ..`）: 末端がシンボリックリンクの`cwd`は、リンク先がルートの外でも中でも、リンクを辿らず、ディレクトリとして存在しない。診断は`VERIFY-CWD-UNAVAILABLE`
+  （`SPEC-VERIFY-BLOCKED-001`、`blocked`、summary「コマンドの作業ディレクトリが利用できません」、`source`は設定ファイルの`verify.commands.default.cwd`）。診断のJSONは訂正の前と同じで、
+  条件名だけが`VERIFY-CWD-OUTSIDE`から変わる（単一ワークスペースでは、字句の検査を通った`cwd`は常にルートの配下にあるので、所有の違反は生じない）。修正前のCoreも通る。
+- `SINGLE-167-09`（`inner -> real`、テストは`inner/`配下）: 対照（`passed`／0）だったが、テストのパスの途中のセグメントがシンボリックリンクになるので、存在しないパスと同じに扱う。
+  テストのパスの検査（`verify` §4の4.）は起動前の`cwd`の判定より前なので、検証対象が`failed`で、`SPEC-PATH-INVALID-001`が`TECH-001`の`tests[0].path`と`tests[1].path`に1件ずつ。`cwd`は判定しない。
+  修正前のCoreは`passed`／0を返すので失敗する。
+- 新しい`SINGLE-167-10`（`cwd: lnk/sub`、`lnk -> real`、`real/sub/keep.txt`が実在）: 途中のセグメントがシンボリックリンクの`cwd`は、リンク先に実在するディレクトリでも、存在しない。
+  `VERIFY-CWD-UNAVAILABLE`の1件。テストは`tests/`のままで、字句では`cwd`の外にもあるが、`cwd`の判定が前提なので重ならない。修正前のCoreは、`cwd`の実パスで包含を判定し、
+  `VERIFY-TEST-OUTSIDE-CWD`（`source`は`TECH-001`の`tests[0].path`）を返すので失敗する。
+- 参照計算は`reference_outcome(repository, tests)`に書き直した（`lexical_path_reference.lookup`。`realpath`を使わない）。テストのパスの検査を`cwd`の検査より前に行う。
+  新しい文言はない。

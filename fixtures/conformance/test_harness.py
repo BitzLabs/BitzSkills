@@ -111,6 +111,37 @@ class HarnessTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 setup(fixture, manifest, root / "missing")
 
+    def test_materialize_renames_before_the_base_commit(self):
+        """`setup.materialize`は、基準版のコミットの前に名前を付け替える。NFCの名前とNFDの名前の兄弟を共存させ、前提を満たさなければ拒否する。"""
+        nfc, nfd = "café", "café"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "fixture"
+            (fixture / "repo/src").mkdir(parents=True)
+            (fixture / "repo/src/a.py").write_text("a\n")
+            (fixture / "repo/src/b.py").write_text("b\n")
+            (fixture / "repo/dir/inner").mkdir(parents=True)
+            (fixture / "repo/dir/inner/c.py").write_text("c\n")
+            plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": [],
+                    "materialize": [{"from": "src/a.py", "to": f"src/{nfc}.py"}, {"from": "src/b.py", "to": f"src/{nfd}.py"},
+                                    {"from": "dir/inner", "to": f"dir/{nfd}"}]}
+            repository = setup(fixture, {"setup": plan}, root / "run")
+            names = sorted(path.name for path in (repository / "src").iterdir())
+            self.assertEqual(names, sorted([f"{nfc}.py", f"{nfd}.py"]))
+            self.assertEqual((repository / f"src/{nfc}.py").read_text(), "a\n")
+            self.assertEqual((repository / f"src/{nfd}.py").read_text(), "b\n")
+            self.assertTrue((repository / f"dir/{nfd}/c.py").is_file())
+            self.assertFalse((repository / "src/a.py").exists())
+            # 付け替えの後の名前が基準版のコミットに入り、作業ツリーはクリーンである。
+            tracked = git(repository, "ls-tree", "-r", "-z", "--name-only", "HEAD").decode().split("\0")[:-1]
+            self.assertEqual(sorted(tracked), sorted([f"src/{nfc}.py", f"src/{nfd}.py", f"dir/{nfd}/c.py"]))
+            self.assertEqual(git(repository, "status", "--porcelain=v1").decode(), "")
+            # 付け替え元が存在しない、付け替え先が存在する、安全でないパスは拒否する。
+            for index, renames in enumerate(([{"from": "src/missing.py", "to": "src/x.py"}], [{"from": "src/a.py", "to": "src/b.py"}],
+                                            [{"from": "src/a.py", "to": "../x.py"}], [{"from": "src/a.py", "to": "src/x.py"}, {"from": "src/a.py", "to": "src/y.py"}])):
+                with self.assertRaises(ValueError, msg=str(renames)):
+                    setup(fixture, {"setup": {**plan, "materialize": renames}}, root / f"rejected{index}")
+
     def test_tree_digest_depends_on_path_and_content(self):
         base = [("a.txt", b"one"), ("b.txt", b"two")]
         self.assertEqual(tree_digest_bytes(base), tree_digest_bytes(list(reversed(base))))

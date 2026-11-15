@@ -1,0 +1,44 @@
+{
+  "fixtureId": "SINGLE-179-04",
+  "description": "NFCの衝突の重大度は不在と同じく状態で分け、状態draftはwarningにし、専用の文言（未作成の文言ではない）を使う",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "src/nfc.py",
+        "to": "src/café.py"
+      },
+      {
+        "from": "src/nfd.py",
+        "to": "src/cafe\u0301.py"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

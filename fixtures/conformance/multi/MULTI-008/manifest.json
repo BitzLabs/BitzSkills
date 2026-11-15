@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-008",
-  "description": "symlinkで別memberのcodeを所有する宣言を拒否する",
+  "description": "implementsの末端がシンボリックリンクなら、別のメンバーのコードを指していても辿らず、存在しないパスとして拒否する",
   "setup": {
     "git": true,
     "baseCommit": {

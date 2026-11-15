@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-061-03",
-  "description": "対照: メンバーのimplementsの上位のディレクトリがメンバーの中へ解決するなら通る",
+  "description": "メンバーのimplementsの上位のディレクトリがメンバーの中を指すシンボリックリンクでも、辿らず、存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -25,8 +25,8 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
-    "exitCode": 0,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/check.json",
     "reportFileCount": 0

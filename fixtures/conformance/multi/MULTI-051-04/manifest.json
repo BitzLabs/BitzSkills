@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-051-04",
-  "description": "メンバーの単独のverifyも、cwdが所有領域の外へ解決するならテスト割当てを起動しない",
+  "description": "メンバーの単独のverifyも、cwdがシンボリックリンクならテスト割当てを起動しない",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -25,8 +25,8 @@
     "env": {}
   },
   "expect": {
-    "status": "failed",
-    "exitCode": 1,
+    "status": "blocked",
+    "exitCode": 2,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

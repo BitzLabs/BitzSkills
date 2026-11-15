@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-061-06",
-  "description": "メンバーのimplementsの上位のディレクトリがリポジトリの外へ解決するシンボリックリンクなら所有境界の違反にする",
+  "description": "メンバーのimplementsの上位のディレクトリがリポジトリの外を指すシンボリックリンクなら、存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {

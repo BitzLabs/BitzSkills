@@ -17,10 +17,10 @@
       "durationMs": 0,
       "diagnostics": [
         {
-          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "code": "SPEC-PATH-INVALID-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "パスlk/a.pyの解決先がワークスペースplatformの所有領域の外です",
+          "summary": "実装パスが存在しません",
           "source": {
             "kind": "file",
             "workspaceId": "platform",

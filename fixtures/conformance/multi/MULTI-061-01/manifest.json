@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-061-01",
-  "description": "メンバーのtests[].pathの上位のディレクトリがルートの領域へ解決するシンボリックリンクなら所有境界の違反にする",
+  "description": "メンバーのtests[].pathの上位のディレクトリがシンボリックリンクなら、ルートの領域へ解決するとしても存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {
