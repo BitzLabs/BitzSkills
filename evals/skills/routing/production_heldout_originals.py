@@ -13,8 +13,11 @@ MAX_ORIGINALS = 512
 
 
 def _open_root(root):
-    require(isinstance(root, Path) and root.is_absolute() and '..' not in root.parts
-        and root.is_relative_to(x.inputs.PRIVATE_CASES.parent), 'heldout private original root')
+    require(isinstance(root, Path) and root.is_absolute() and '..' not in root.parts,
+        'heldout private original root')
+    roots = (x.inputs.PRIVATE_CASES.parent, x.inputs.collection_75_root())
+    private_root = next((candidate for candidate in roots if root.is_relative_to(candidate)), None)
+    require(private_root is not None, 'heldout private original root')
     fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
     current = Path('/')
     try:
@@ -23,7 +26,7 @@ def _open_root(root):
             os.close(fd)
             fd = child
             current /= part
-            if current.is_relative_to(x.inputs.PRIVATE_CASES.parent):
+            if current.is_relative_to(private_root):
                 value = os.fstat(fd)
                 require(stat.S_IMODE(value.st_mode) == 0o700 and value.st_uid == os.getuid()
                     and value.st_nlink >= 2, 'heldout original private directory')

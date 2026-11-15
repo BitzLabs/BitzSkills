@@ -33,6 +33,10 @@ SOURCE_FILES = (*PUBLIC_PATHS.values(), *SOURCE_DEPENDENCIES)
 require = trace.require
 
 
+def collection_75_root():
+    return PRIVATE_CASES.parent.parent/'collection-07'
+
+
 def parse(raw):
     # JSON診断やschema例外に含まれる非公開の値を呼出し元へ伝えない。
     try:

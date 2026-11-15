@@ -62,7 +62,11 @@ class HeldoutLedger:
         self.digest = io.sha(contract_raw)
         self.directory = None
 
+    def _private_root(self):
+        return inputs.PRIVATE_CASES.parent
+
     def _directory(self):
+        private_root = self._private_root()
         directory = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
         try:
             current = Path('/')
@@ -76,7 +80,7 @@ class HeldoutLedger:
                 os.close(directory)
                 directory = child
                 current /= part
-                if current.is_relative_to(inputs.PRIVATE_CASES.parent):
+                if current.is_relative_to(private_root):
                     value = os.fstat(directory)
                     require(stat.S_IMODE(value.st_mode) == 0o700 and value.st_uid == os.getuid(),
                         'heldout private ancestor directory')
