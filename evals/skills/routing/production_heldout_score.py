@@ -192,8 +192,11 @@ def run_independent(repository,bound,ordinal,sdk_raw,review_raw,report_raw,isola
         try:
             operator.same_execution_slot(bound,ledger,ordinal)
             prepared=primary(repository,bound,ordinal,ledger)
+            operator.admit_quota(repository,bound)
             ledger.append(ordinal,'independent_reserved',resource_proof_sha256=operator.daily_proof(ledger,before))
             return _reserved(prepared,sdk_raw,before,ledger)
+        except operator.QuotaDeferred:
+            raise
         except BaseException as exc:
             stop(ledger,bound,ordinal,exc,operator.stop_reason(ledger,exc))
             raise

@@ -43,7 +43,9 @@ def public_paths(c):
 
 def source_files(c):
     if c['campaignId'] == execution.successor.CAMPAIGN_75:
-        return (*SOURCE_FILES, inputs.REVIEW_PATH_75)
+        return (*SOURCE_FILES, inputs.REVIEW_PATH_75,
+            'evals/skills/routing/production_matrix_rate_limits.py',
+            'evals/skills/routing/production_matrix_continuation.py')
     return SOURCE_FILES
 
 
