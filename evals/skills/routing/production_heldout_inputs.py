@@ -177,7 +177,11 @@ def private_bytes(path):
             with os.fdopen(fd, 'rb', closefd=False) as stream:
                 raw = stream.read(4*1024*1024+1)
             after = os.fstat(fd)
-            require(before == after and len(raw) == before.st_size, 'heldout private file drift')
+            # A read can update atime without changing file content or identity.
+            stable_fields = ('st_dev', 'st_ino', 'st_mode', 'st_uid', 'st_gid',
+                'st_nlink', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+            require(all(getattr(before, field) == getattr(after, field) for field in stable_fields)
+                and len(raw) == before.st_size, 'heldout private file drift')
             return raw
         finally:
             os.close(fd)
