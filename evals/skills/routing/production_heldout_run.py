@@ -36,14 +36,14 @@ def load(repository,base):
     execution_raw=io.read_regular(base/'execution.json');c=x.execution_contract(execution_raw)
     # metadataだけの後続commitは許す。実sourceは固定refの全原bytesへ直接照合する。
     require(preflight.public.guard.git(repository,'status','--porcelain')==b'', 'heldout clean source repository required')
-    preflight.public.guard.verify(repository,c['sourceCommit'],list(preflight.SOURCE_FILES))
+    preflight.public.guard.verify(repository,c['sourceCommit'],list(preflight.source_files(c)))
     deployment_raw=io.read_regular(base/'deployment.json');input_raw=io.read_regular(base/'input-contract.json')
     sdk_raw=io.read_regular(base/'sdk-manifest.json');review_raw=io.read_regular(base/'prelaunch-review.json')
     report_raw=io.read_regular(base/'prelaunch-report.json');isolation_raw=io.read_regular(base/'local-isolation-proof.json')
     launch.prelaunch_review(execution_raw,deployment_raw,review_raw,report_raw,isolation_raw)
     raws={name:preflight.public.guard.git(repository,'show',c['sourceCommit']+':'+path)
-        for name,path in x.inputs.PUBLIC_PATHS.items()}
-    raws['cases']=x.inputs.private_bytes(x.inputs.PRIVATE_CASES)
+        for name,path in preflight.public_paths(c).items()}
+    raws['cases']=x.inputs.private_bytes(x.cases_path(c))
     bound=x.bind(execution_raw,deployment_raw,input_raw,**raws)
     return Bundle(repository,bound,sdk_raw,review_raw,report_raw,isolation_raw)
 
@@ -143,7 +143,7 @@ def preflight_only(bundle):
 
 @contextmanager
 def batch_lock(bundle):
-    base=x.inputs.PRIVATE_CASES.parent/bundle.bound.contract['outputRelativeRoot']/'controls'
+    base=x.output_root(bundle.bound.contract)/'controls'
     operator.create_directory(base)
     directory=operator.originals._open_root(base)
     fd=None

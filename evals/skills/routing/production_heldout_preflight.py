@@ -35,6 +35,18 @@ SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
     'evals/skills/routing/production_heldout_run.py']))
 
 
+def public_paths(c):
+    if c['campaignId'] == execution.successor.CAMPAIGN_75:
+        return dict(inputs.PUBLIC_PATHS, reviewedSet=inputs.REVIEW_PATH_75)
+    return inputs.PUBLIC_PATHS
+
+
+def source_files(c):
+    if c['campaignId'] == execution.successor.CAMPAIGN_75:
+        return (*SOURCE_FILES, inputs.REVIEW_PATH_75)
+    return SOURCE_FILES
+
+
 def verify_resources(repository, bound, sdk_manifest_raw):
     execution.rebound(bound)
     require(isinstance(repository, Path) and repository.is_absolute() and '..' not in repository.parts,
@@ -46,11 +58,11 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     product_source, resource_count = execution.PRODUCT_BASELINES[d['version']]
     require(public.guard.git(repository, 'rev-parse', source+'^{commit}').decode().strip() == source,
         'heldout exact source commit')
-    originals = {name: public.guard.git(repository, 'show', source+':'+name) for name in SOURCE_FILES}
+    originals = {name: public.guard.git(repository, 'show', source+':'+name) for name in source_files(c)}
     for name, raw in originals.items():
         require(io.read_regular(repository/name) == raw, 'heldout fixed source drift')
     raw_inputs = dict(zip(inputs.INPUT_NAMES, bound.raw_inputs))
-    for name, path in inputs.PUBLIC_PATHS.items():
+    for name, path in public_paths(c).items():
         require(raw_inputs[name] == originals[path], 'heldout public input outside fixed Git')
     schema_raw = public.decision_schema(originals[public.inventory.SCHEMA])
     require(io.sha(schema_raw) == c['pins']['decisionSchema'], 'heldout decision schema drift')
@@ -90,7 +102,7 @@ def verify_resources(repository, bound, sdk_manifest_raw):
     calibration = public.capture.calibration.verify(repository,
         originals[public.capture.calibration.MANIFEST], context, d)
     # 公開sourceと全現物資源・校正の検査後だけ、既採用集合の原bytesを内部再照合する。
-    require(inputs.private_bytes(inputs.PRIVATE_CASES) == raw_inputs['cases'], 'heldout original set drift')
+    require(inputs.private_bytes(execution.cases_path(c)) == raw_inputs['cases'], 'heldout original set drift')
     return dict(status='heldout_resources_verified_not_launchable', sourceCommit=source,
         executionSha256=io.sha(bound.execution_raw), deploymentSha256=io.sha(bound.deployment_raw),
         inputContractSha256=io.sha(bound.input_contract_raw),

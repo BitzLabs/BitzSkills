@@ -13,11 +13,11 @@ BINDINGS={'sourceCommit','ordinal','caseId','repetition','executionSha256','inpu
 REFS=['input','expected','host:1','host:2','control:1','control:2','control-result:1','control-result:2','native:final','parent']
 
 
-def schema():
+def schema(input_version=evidence.x.inputs.VERSION):
     digest=dict(type='string',pattern='^[0-9a-f]{64}$')
     binding={k:digest for k in BINDINGS if k.endswith('Sha256')}
     binding.update(sourceCommit=dict(type='string',pattern='^[0-9a-f]{40}$'),ordinal=dict(type='integer',minimum=1,maximum=24),
-        caseId=dict(type='string',enum=[f'SE-{n}' for n in range(1200,1212)]),repetition=dict(type='integer',minimum=1,maximum=2))
+        caseId=dict(type='string',enum=[f'SE-{n}' for n in evidence.x.inputs.CASE_NUMBERS[input_version]]),repetition=dict(type='integer',minimum=1,maximum=2))
     finding=dict(type='object',additionalProperties=False,required=['priority','evidenceRefs','message'],properties=dict(
         priority=dict(type='string',enum=['P1','P2','P3']),evidenceRefs=dict(type='array',minItems=1,maxItems=10,uniqueItems=True,
             items=dict(type='string',enum=REFS)),message=dict(type='string',minLength=1,maxLength=2000)))
@@ -76,7 +76,9 @@ def prepare(context):
     binding.update(inputContractSha256=io.sha(context.bound.matrix.contract_raw),modelInputSha256=slot['payloadSha256'],
         nativeTraceSha256=io.sha(context.originals['rpc-out.jsonl']),decisionSha256=io.sha(io.encoded(decision)),
         primaryReceiptSha256=io.sha(context.receipt_raw),expectedSha256=io.sha(io.encoded(case['expected'])),reviewInputSha256=io.sha(input_raw))
-    schema_raw=io.encoded(schema());trace.jsonschema.Draft202012Validator.check_schema(schema())
+    response_schema = schema(evidence.x.inputs.parse(context.bound.input_contract_raw)['version'])
+    trace.jsonschema.Draft202012Validator.check_schema(response_schema)
+    schema_raw = io.encoded(response_schema)
     contract=dict(version=VERSION,sourceCommit=slot['sourceCommit'],executionSha256=slot['executionSha256'],model='gpt-6.1-sol',
         scope='heldout12-times2-semantic-response-binding-only',schemaSha256=io.sha(schema_raw),maximumInvocations=1,
         maximumIndependentCampaignInvocations=24,maximumLogicalTurns=1,timeoutSeconds=context.bound.contract['timeoutSeconds']['independent'],

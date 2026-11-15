@@ -33,6 +33,9 @@ SOURCE_FILES = (*PUBLIC_PATHS.values(), *SOURCE_DEPENDENCIES)
 require = trace.require
 
 
+CASE_NUMBERS = {VERSION: range(1200, 1212), VERSION_75: range(1300, 1312)}
+
+
 def collection_75_root():
     return PRIVATE_CASES.parent.parent/'collection-07'
 
@@ -123,8 +126,7 @@ def bind(contract_raw, **raw_inputs):
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
     require(all(validator.is_valid(case) for case in cases), 'heldout case schema')
-    first_case_number = 1300 if preparation_75 else 1200
-    require([case['caseId'] for case in cases] == [f'SE-{n}' for n in range(first_case_number, first_case_number+12)]
+    require([case['caseId'] for case in cases] == [f'SE-{n}' for n in CASE_NUMBERS[c['version']]]
         and all(case['mandatory'] is True for case in cases), 'heldout identities and mandatory cases')
     require(dict(Counter(case['category'] for case in cases)) == CATEGORY_COUNTS, 'heldout categories')
     for capability in trace.SKILLS:

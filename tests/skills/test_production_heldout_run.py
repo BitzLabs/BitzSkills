@@ -36,7 +36,9 @@ class HeldoutRunTests(unittest.TestCase):
             for stage in stages:
                 marker=stage.endswith('_reserved') or stage.endswith('_started')
                 kwargs={'measured_correct':correct} if stage=='parent_verified' else {}
-                if stage.endswith('_failed'):kwargs['resource_proof_sha256']=run.io.sha(run.io.encoded(self.proof))
+                if stage.endswith('_failed') or (stage.endswith('_reserved')
+                        and self.bundle.bound.contract['campaignId'] == run.x.successor.CAMPAIGN_75):
+                    kwargs['resource_proof_sha256']=run.io.sha(run.io.encoded(self.proof))
                 ledger.append(ordinal,stage,None if marker else 'd'*64,**kwargs)
 
     def fake_primary(self,*args):
@@ -50,6 +52,22 @@ class HeldoutRunTests(unittest.TestCase):
     def fake_parent(self,*args):
         self.append(args[2],['parent_verified'])
         return dict(status='measured_incorrect',ledgerFinalized=True)
+
+    def test_75_run_resumes_and_stops_after_incorrect_parent_verification(self):
+        self.fixture.select_75_execution()
+        self.bound = self.fixture.bind()
+        self.proof.update(executionSha256=run.io.sha(self.bound.execution_raw),
+            inputContractSha256=run.io.sha(self.bound.input_contract_raw), sourceSha256={})
+        review, report, isolation = review_fixture.review_bytes(self.bound)
+        self.bundle = run.Bundle(self.repo, self.bound, self.fixture.old.sdk_manifest_raw, review, report, isolation)
+        self.append(1, ['primary_reserved', 'primary_started', 'primary_captured'])
+        outcome = run.run(self.bundle)
+        self.assertEqual(outcome['summary']['incorrect'], 1)
+        self.assertEqual(outcome['summary']['status'], 'stopped')
+        self.assertEqual(outcome['summary']['primaryReserved'], 1)
+        self.assertEqual((self.primary.call_count, self.independent.call_count, self.parent.call_count), (0, 1, 1))
+        self.assertEqual(run.run(self.bundle)['slots'], [])
+        self.assertEqual(self.parent.call_count, 1)
 
     def test_two_slots_then_24_total_without_repeating_primary_or_independent(self):
         first=run.run(self.bundle)

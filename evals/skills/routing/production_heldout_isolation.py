@@ -89,7 +89,7 @@ def independent_command(repository,execution_raw,deployment_raw,base):
     d=x.deployment_for_execution(execution_raw,deployment_raw)
     args.insert(1,'--unshare-net')
     args+=['--','/usr/bin/python3','-B','-c',INDEPENDENT_PROBE,str(base),str(repository),d['codexPath'],
-        str(x.inputs.PRIVATE_CASES),str(launch.stage_root(execution_raw,1)),str(paid)]
+        str(x.cases_path(x.execution_contract(execution_raw))),str(launch.stage_root(execution_raw,1)),str(paid)]
     require(removed==1 and str(launch.AUTH) not in args and args.count('--unshare-net')==1,
         'heldout independent local credential/network boundary')
     return args
@@ -104,7 +104,7 @@ def independent_environment(execution_raw,deployment_raw,base):
 def run_independent(repository,execution_raw,deployment_raw,base):
     local_root(repository,base)
     c=x.execution_contract(execution_raw);d=x.deployment_for_execution(execution_raw,deployment_raw)
-    p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.SOURCE_FILES))
+    p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.source_files(c)))
     runtime_raw=p.guard.git(repository,'show',c['sourceCommit']+':'+p.capture.fixed_runtime.MANIFEST)
     p.capture.fixed_runtime.verify(runtime_raw,d)
     base.mkdir(mode=0o700)
@@ -128,7 +128,7 @@ def run_independent(repository,execution_raw,deployment_raw,base):
             'heldout independent local result')
         require(io.read_regular(base/'review-input.json')==io.encoded(INDEPENDENT_PROMPT)
             and io.read_regular(base/'invocation.json')==io.encoded(plan),'heldout independent actual local argv or payload drift')
-        p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.SOURCE_FILES))
+        p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.source_files(c)))
         p.capture.fixed_runtime.verify(runtime_raw,d)
     except Exception as exc:error=type(exc).__name__
     proof=dict(status='heldout_independent_local_isolation_verified' if error is None else 'heldout_independent_local_isolation_failed',
@@ -158,7 +158,7 @@ def pair_proof(execution_raw,deployment_raw,primary,independent):
 def run_pair(repository,execution_raw,deployment_raw,sdk_manifest_raw,base):
     local_root(repository,base)
     c=x.execution_contract(execution_raw)
-    p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.SOURCE_FILES))
+    p.guard.verify(repository,c['sourceCommit'],list(launch.preflight.source_files(c)))
     base.mkdir(mode=0o700)
     primary=run(repository,execution_raw,deployment_raw,sdk_manifest_raw,base.with_name(base.name+'-primary'))
     independent=run_independent(repository,execution_raw,deployment_raw,base.with_name(base.name+'-independent'))
@@ -173,7 +173,7 @@ def probe(base):
     execution_raw, deployment_raw = (io.read_regular(base/name) for name in ['contract.json', 'deployment.json'])
     d = x.deployment_for_execution(execution_raw, deployment_raw)
     hidden = not any((ROOT/name).exists() for name in ['.git', '.spec', 'docs', 'tests', 'evals/skills/results'])
-    hidden = hidden and not x.inputs.PRIVATE_CASES.exists()
+    hidden = hidden and not any(path.exists() for path in (x.inputs.PRIVATE_CASES, x.cases_path(x.execution_contract(execution_raw))))
     credentials_hidden = not launch.AUTH.exists()
     payload = x.inputs.parse(io.read_regular(base/'model-input.json'))
     require(payload == dict(instructions='LOCAL_ONLY_NO_MODEL', eventCatalog={}, case=dict(prompt=PROMPT, context=[])),
@@ -204,7 +204,7 @@ def run(repository, execution_raw, deployment_raw, sdk_manifest_raw, base):
     local_root(repository, base)
     c = x.execution_contract(execution_raw)
     x.deployment_for_execution(execution_raw, deployment_raw)
-    p.guard.verify(repository, c['sourceCommit'], list(launch.preflight.SOURCE_FILES))
+    p.guard.verify(repository, c['sourceCommit'], list(launch.preflight.source_files(c)))
     base.mkdir(mode=0o700)
     for name in ['work', 'tmp', 'codex-home', 'logs', 'state', 'rollout-traces']:
         (base/name).mkdir(mode=0o700)

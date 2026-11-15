@@ -98,7 +98,7 @@ def checked_identity(execution_raw, value):
 def stage_root(execution_raw, ordinal, role='primary'):
     c = x.execution_contract(execution_raw)
     require(type(ordinal) is int and 1 <= ordinal <= 24 and role in {'primary', 'independent'}, 'heldout stage identity')
-    return x.inputs.PRIVATE_CASES.parent/c['outputRelativeRoot']/role/f'attempt-{ordinal:04d}'
+    return x.output_root(c)/role/f'attempt-{ordinal:04d}'
 
 
 def namespace_command(repository, execution_raw, deployment_raw, ordinal):

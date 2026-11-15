@@ -32,9 +32,7 @@ def check_directory(base, fd):
 
 def create_directory(path):
     """既承認private境界内の新規dirだけ。既存fileを削除/上書きしない。"""
-    root = x.inputs.PRIVATE_CASES.parent
-    require(isinstance(path, Path) and path.is_absolute() and path.is_relative_to(root)
-        and '..' not in path.parts, 'heldout private write boundary')
+    root = originals.private_root(path)
     parent = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
     current = Path('/')
     try:
@@ -120,7 +118,7 @@ def same_resources(before, current, message):
 
 def control_root(bound, ordinal):
     bound.slot(ordinal)
-    return x.inputs.PRIVATE_CASES.parent/bound.contract['outputRelativeRoot']/'controls'/f'attempt-{ordinal:04d}'
+    return x.output_root(bound.contract)/'controls'/f'attempt-{ordinal:04d}'
 
 
 def read_control(base, name):
