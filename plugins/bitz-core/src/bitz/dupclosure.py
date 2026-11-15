@@ -235,6 +235,8 @@ class DuplicateTracker:
         閉包と同じく、(1) 下方向の出発点（起点。起点がTASKなら`addresses`の参照先）から`refines`を逆向きに終端まで辿り、(2) そこから上方向（`requires`・`refines`・`addresses`の前方）を
         終端まで辿る（`supersedes`の参照先の旧文書も前方に辿る）。(3) 閉包の文書を置換する後継と、`implement`で対象規範文を`addresses`するTASK
         （下方向の文書を`addresses`する文書）を1段だけ加える。上方向で着いた文書からは、下方向（兄弟の具体化文書）へ辿らない。
+        (4) 加えた後継とTASKからは、置換の参照先の旧文書だけを前方に1段辿る（実際の閉包は、後継をコンテキストへ加えた後に、その後継が`supersedes`する別の旧文書も辿る
+        IDに入れる。:func:`bitz.targetexpand._superseded_documents`）。後継とTASKからは、それ以外の関係を辿らない。
         """
 
         edges = self._edges()
@@ -251,7 +253,10 @@ class DuplicateTracker:
             extra |= edges.get("supersedes^", {}).get(node, set())
         for node in downward:
             extra |= edges.get("addresses^", {}).get(node, set())
-        return closure | extra
+        superseded: set[Node] = set()
+        for node in extra:
+            superseded |= edges.get("supersedes", {}).get(node, set())
+        return closure | extra | superseded
 
     def _variant(self, group: DuplicateGroup, position: int) -> IndexPair:
         cache_key = (group.workspace_id, group.doc_id, position)
