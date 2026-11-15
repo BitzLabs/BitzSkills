@@ -157,3 +157,7 @@ TASKを起点にすると、`addresses`の参照先の所有文書を距離1の�
 2026-11-15に、§9の`implements`と`tests[].path`の存在の検査を、安全な入出力・互換性 §6の手順（ADR-071。シンボリックリンクを辿らず、NFCで厳密に比べる）に直し、`changes`は存在の検査を行わないと書いたため、
 `contractSha256`が失効した。§6の閉包の規則、25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
 （`22edd268f1c93d089e491a71c91bd9d547affded635a6d22801f67f8d19b185f`）へ更新した。
+
+同日、ユーザーの決定で§9に、NFCで同じ名前になる項目が複数あるパスの重大度を不在と同じく状態で分けること（`draft`は`warning`、`approved`は`error`）を書き足したため、`contractSha256`が失効した。
+§6の閉包の規則、25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
+（`ba2beb97c8fcc876862aadebd2e37fd063661a0ba31e6a42d224db4352edc618`）へ更新した。
