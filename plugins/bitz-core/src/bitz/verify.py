@@ -558,17 +558,30 @@ def _compute_verify_digest(
     return digest_mod.compute_digest(digest_materials)
 
 
-def _expand_argv(argv_template: list[str], tests_workspace_rel: list[str], cwd_abs: str, workspace_root: str) -> list[str]:
+def _expand_argv(
+    argv_template: list[str],
+    tests_workspace_rel: list[str],
+    cwd_abs: str,
+    workspace_root: str,
+    *,
+    disk_tests: dict[str, tuple[str, ...]] | None = None,
+    cwd_depth: int = 0,
+) -> list[str]:
     """``{tests}``を、実効`cwd`相対のテストのパスへ展開する。相対化は字句のパス（NFCのセグメント）で行う（ワークスペース・設定仕様 §6）。
 
     呼び出し側は、すべてのテストのパスが実効`cwd`の配下にあることを検査済みである。``cwd_abs``は字句の実効`cwd`（NFCで比べるので、
-    宣言の綴りの違いは影響しない）。相対パスは、テストのパスを宣言したとおりの綴りで返す。
+    宣言の綴りの違いは影響しない）。既定では、相対パスをテストのパスを宣言したとおりの綴りで返す（公開結果の`argv`の綴り）。
+    ``disk_tests``（宣言したテストのパス→存在の検査で一致した、ワークスペースのルートからのファイルシステム上の綴りのセグメントの列）を渡すと、
+    そのテストは実在の綴りの先頭``cwd_depth``個（実効`cwd`の分）を除いたセグメントを使う（プロセスへ渡す引数の綴り）。
     """
 
     if "{tests}" not in argv_template:
         return list(argv_template)
     rel_tests = []
     for t in tests_workspace_rel:
+        if disk_tests is not None and t in disk_tests and len(disk_tests[t]) > cwd_depth:
+            rel_tests.append("/".join(disk_tests[t][cwd_depth:]))
+            continue
         rel = pathown.relative_to(os.path.join(workspace_root, t), cwd_abs)
         rel_tests.append(rel if rel is not None else t)
     index = argv_template.index("{tests}")
@@ -959,6 +972,7 @@ def _plan_and_run_bindings(
 
         diag: dict | None = None
         expanded: list[str] = []
+        spawn_argv: list[str] = []
         cwd_found = _resolver(ws_id).resolve(cmd_cwd_rel, pathown.DIRECTORY)
         if _config_untracked(ws_id):
             diag = _file_diag("SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_CONFIG_UNTRACKED, ws_id, config_mod.CONFIG_PATH)
@@ -989,7 +1003,17 @@ def _plan_and_run_bindings(
                 )
             else:
                 argv_template = cmd_def["argv"]
+                # 公開結果の`argv`と上限の判定は宣言の綴り（環境によらず同じ値）、プロセスへ渡す引数は、存在の検査で一致した
+                # ファイルシステム上の綴りで組み立てる（NFDで名前を返すファイルシステムでも、渡したパスで開ける。ワークスペース・設定仕様 §6）。
                 expanded = _expand_argv(argv_template, tests_sorted, cwd_lexical, workspace_root)
+                disk_tests = {}
+                for t in tests_sorted:
+                    test_found = _resolver(ws_id).resolve(t, pathown.FILE)
+                    if test_found.exists:
+                        disk_tests[t] = test_found.actual
+                spawn_argv = _expand_argv(
+                    argv_template, tests_sorted, cwd_lexical, workspace_root, disk_tests=disk_tests, cwd_depth=len(cwd_found.actual)
+                )
                 total_bytes = sum(len(a.encode("utf-8")) for a in expanded)
                 if len(expanded) > _ARGV_COUNT_LIMIT:
                     diag = _file_diag(
@@ -1022,7 +1046,7 @@ def _plan_and_run_bindings(
             continue
 
         plan[(ws_id, name)] = {
-            "argv": expanded, "cwd_rel": cmd_cwd_rel, "cwd_abs": cwd_abs, "tests": tests_sorted, "covers": covers_sorted,
+            "argv": expanded, "spawn_argv": spawn_argv, "cwd_rel": cmd_cwd_rel, "cwd_abs": cwd_abs, "tests": tests_sorted, "covers": covers_sorted,
         }
 
     commands_by_key: dict[tuple[str, str], dict] = {}
@@ -1032,7 +1056,7 @@ def _plan_and_run_bindings(
         effective_timeout = effective_timeout_for(ws_id)
         child_env = dict(env)
         child_env["PWD"] = info["cwd_abs"]
-        outcome_run = procrun.run(info["argv"], info["cwd_abs"], child_env, effective_timeout)
+        outcome_run = procrun.run(info["spawn_argv"], info["cwd_abs"], child_env, effective_timeout)
         termination = outcome_run["termination"]
         exit_code = outcome_run["exit_code"]
         if termination == "exit":
