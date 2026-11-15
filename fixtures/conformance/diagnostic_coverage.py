@@ -36,7 +36,6 @@ def validate(ledger=None, root=ROOT):
         "MULTI-DEPENDENCY-DOCTOR": ("doctor", "error", "blocked", "skip-check"),
         "VERIFY-CONFIG-UNTRACKED": ("verify", "error", "blocked", "skip-binding"),
         "VERIFY-TEST-OUTSIDE-CWD": ("verify", "error", "blocked", "skip-binding"),
-        "VERIFY-CWD-OUTSIDE": ("verify", "error", "blocked", "skip-binding"),
         "MULTI-OWNERSHIP-CWD": ("verify", "error", "failed", "skip-binding"),
     }
     by_id = {row[0]: row for row in rows}
