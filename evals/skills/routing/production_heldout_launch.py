@@ -101,6 +101,16 @@ def stage_root(execution_raw, ordinal, role='primary'):
     return x.output_root(c)/role/f'attempt-{ordinal:04d}'
 
 
+def windows_mount_boundary(deployment):
+    if deployment['version'] != x.EXECUTION_DEPLOYMENT_75:
+        return []
+    args = ['--tmpfs', '/mnt']
+    resolver = Path('/mnt/wsl/resolv.conf')
+    if Path('/etc/resolv.conf').resolve() == resolver:
+        args.extend(['--ro-bind', str(resolver), str(resolver)])
+    return args
+
+
 def namespace_command(repository, execution_raw, deployment_raw, ordinal):
     """argvだけを作る。認証内容は検査・出力・コピー・hashしない。"""
     require(isinstance(repository, Path) and repository.is_absolute() and '..' not in repository.parts,
@@ -109,7 +119,7 @@ def namespace_command(repository, execution_raw, deployment_raw, ordinal):
     base = stage_root(execution_raw, ordinal)
     args = ['bwrap', '--unshare-pid', '--unshare-ipc', '--new-session', '--die-with-parent',
         '--ro-bind', '/', '/', '--tmpfs', '/home', '--tmpfs', '/root', '--tmpfs', '/tmp', '--tmpfs', '/run',
-        '--proc', '/proc', '--dev', '/dev']
+        '--proc', '/proc', '--dev', '/dev', *windows_mount_boundary(d)]
     paths = [repository/preflight.public.capture.fixed_runtime.MANIFEST,
         repository/d['sdkRelativePath'], repository/d['snapshotRelativePath'], Path(d['codexPath']).parents[1],
         *(repository/name for name in preflight.SOURCE_FILES if name.endswith('.py'))]

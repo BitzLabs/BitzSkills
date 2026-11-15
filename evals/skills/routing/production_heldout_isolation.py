@@ -22,6 +22,8 @@ read=lambda name:json.loads((base/name).read_bytes())
 assert read('review-input.json')=={'instructions':'LOCAL_ONLY_NO_MODEL_NO_TOOLS','original':'SYNTHETIC_PRIMARY','expected':'SYNTHETIC_EXPECTED'}
 hidden=not any((repo/name).exists() for name in ['.git','.spec','docs','tests','evals/skills/results'])
 hidden=hidden and not any(p.exists() for p in [corpus,primary,independent,primary.parent,independent.parent])
+if corpus.parent.name=='collection-07':
+    hidden=hidden and not pathlib.Path('/mnt/c').exists()
 credentials_hidden=not pathlib.Path('/home/hide/.codex/auth.json').exists()
 isolated=os.stat('/proc/self/ns/net').st_ino!=read('parent-network.json')['inode']
 assert hidden and credentials_hidden and isolated
@@ -174,6 +176,8 @@ def probe(base):
     d = x.deployment_for_execution(execution_raw, deployment_raw)
     hidden = not any((ROOT/name).exists() for name in ['.git', '.spec', 'docs', 'tests', 'evals/skills/results'])
     hidden = hidden and not any(path.exists() for path in (x.inputs.PRIVATE_CASES, x.cases_path(x.execution_contract(execution_raw))))
+    if d['version'] == x.EXECUTION_DEPLOYMENT_75:
+        hidden = hidden and not Path('/mnt/c').exists()
     credentials_hidden = not launch.AUTH.exists()
     payload = x.inputs.parse(io.read_regular(base/'model-input.json'))
     require(payload == dict(instructions='LOCAL_ONLY_NO_MODEL', eventCatalog={}, case=dict(prompt=PROMPT, context=[])),

@@ -41,6 +41,7 @@ def namespace_for_execution(execution_raw,deployment_raw,ordinal):
     argv+=['-']
     return ['bwrap','--unshare-pid','--unshare-ipc','--new-session','--die-with-parent','--ro-bind','/','/',
         '--tmpfs','/home','--tmpfs','/root','--tmpfs','/tmp','--tmpfs','/run','--proc','/proc','--dev','/dev',
+        *launch.windows_mount_boundary(d),
         '--ro-bind',str(Path(d['codexPath']).parents[1]),str(Path(d['codexPath']).parents[1]),
         '--bind',str(base),str(base),'--bind',str(base/'codex-home'),'/home/hide/.codex',
         '--ro-bind',str(launch.AUTH),'/home/hide/.codex/auth.json','--chdir',str(base/'work'),'--',*argv]
