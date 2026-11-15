@@ -161,3 +161,7 @@ TASKを起点にすると、`addresses`の参照先の所有文書を距離1の�
 同日、ユーザーの決定で§9に、NFCで同じ名前になる項目が複数あるパスの重大度を不在と同じく状態で分けること（`draft`は`warning`、`approved`は`error`）を書き足したため、`contractSha256`が失効した。
 §6の閉包の規則、25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
 （`ba2beb97c8fcc876862aadebd2e37fd063661a0ba31e6a42d224db4352edc618`）へ更新した。
+
+同日、ユーザーの決定で§9に、複合ワークスペースの`implements`と`tests[].path`は所有の判定を存在の検査より先に行うことを書き足し、`changes`の別の所有領域の扱いの文を削ったため、`contractSha256`が失効した。
+§6の閉包の規則、25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
+（`1d04cd220700ff32eed69d57a85634f471a97cd68f099f434244fd20801e6838`）へ更新した。
