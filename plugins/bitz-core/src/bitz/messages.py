@@ -421,7 +421,7 @@ MULTI_REF_WORKSPACE_UNKNOWN = "修飾したワークスペースがカタログ�
 
 
 def multi_ownership_resolved(path: str, workspace_id: str) -> str:
-    return f"パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"
+    return f"パス{path}がワークスペース{workspace_id}の所有領域の外です"
 
 
 # --- doctorのプラグインの要求（`SPEC-DOCTOR-PLUGIN-001`／`SPEC-DOCTOR-API-001`／`SPEC-DOCTOR-CAPABILITY-001`、ADR-061） ---
