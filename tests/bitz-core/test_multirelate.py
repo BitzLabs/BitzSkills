@@ -6,9 +6,12 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
 import unittest
 
 from bitz import multirelate
+from bitz import pathown
 from bitz.document import DocEntry
 
 
@@ -156,12 +159,15 @@ class FieldDiagnosticsPriorityTests(unittest.TestCase):
 
 
 class PathOwnershipTests(unittest.TestCase):
-    """`_resolve_owned_path`（複合ワークスペース仕様 §5.1）の所有境界の判定を確認する。"""
+    """`_resolve_owned_path`（複合ワークスペース仕様 §5.1・安全な入出力・互換性 §6）の所有境界と存在の判定を確認する。
 
-    def test_symlink_outside_ownership_is_violation(self):
-        import os
-        import tempfile
+    所有はNFCにした字句のパスのセグメント単位の包含で判定し、シンボリックリンクは辿らない。
+    """
 
+    def resolve(self, root: str, rel_path: str, roots: list[str]) -> str:
+        return multirelate._resolve_owned_path(pathown.PathResolver(root), rel_path, roots)
+
+    def test_symlink_to_another_workspace_is_absent_not_an_ownership_violation(self):
         with tempfile.TemporaryDirectory() as tmp:
             web = os.path.join(tmp, "web")
             api = os.path.join(tmp, "api")
@@ -171,14 +177,10 @@ class PathOwnershipTests(unittest.TestCase):
                 f.write("x")
             os.symlink(os.path.join(api, "src", "session.py"), os.path.join(web, "src", "shared.py"))
 
-            ok, violation = multirelate._resolve_owned_path(web, os.path.realpath(web), "src/shared.py")
-            self.assertFalse(ok)
-            self.assertTrue(violation)
+            # 字句のパス`src/shared.py`は`web`の所有領域にあり、末端がシンボリックリンクなので存在しない。リンク先は使わない。
+            self.assertEqual(self.resolve(web, "src/shared.py", [web, api]), pathown.ABSENT)
 
-    def test_symlink_inside_ownership_is_ok(self):
-        import os
-        import tempfile
-
+    def test_symlink_inside_ownership_is_absent(self):
         with tempfile.TemporaryDirectory() as tmp:
             web = os.path.join(tmp, "web")
             os.makedirs(os.path.join(web, "src"))
@@ -186,18 +188,32 @@ class PathOwnershipTests(unittest.TestCase):
                 f.write("x")
             os.symlink(os.path.join(web, "src", "real.py"), os.path.join(web, "src", "alias.py"))
 
-            ok, violation = multirelate._resolve_owned_path(web, os.path.realpath(web), "src/alias.py")
-            self.assertTrue(ok)
-            self.assertFalse(violation)
+            self.assertEqual(self.resolve(web, "src/alias.py", [web]), pathown.ABSENT)
+            self.assertEqual(self.resolve(web, "src/real.py", [web]), pathown.EXISTS)
 
-    def test_missing_path_is_neither_ok_nor_violation(self):
-        import os
-        import tempfile
-
+    def test_missing_path_is_absent(self):
         with tempfile.TemporaryDirectory() as tmp:
-            ok, violation = multirelate._resolve_owned_path(tmp, os.path.realpath(tmp), "no/such/file.py")
-            self.assertFalse(ok)
-            self.assertFalse(violation)
+            self.assertEqual(self.resolve(tmp, "no/such/file.py", [tmp]), pathown.ABSENT)
+
+    def test_root_workspace_path_inside_a_member_is_an_ownership_violation_whether_or_not_it_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            member = os.path.join(tmp, "apps", "web")
+            os.makedirs(os.path.join(member, "src"))
+            with open(os.path.join(member, "src", "a.py"), "w") as f:
+                f.write("x")
+            roots = [tmp, member]
+            self.assertEqual(self.resolve(tmp, "apps/web/src/a.py", roots), multirelate.OWNERSHIP_VIOLATION)
+            self.assertEqual(self.resolve(tmp, "apps/web/src/absent.py", roots), multirelate.OWNERSHIP_VIOLATION)
+            self.assertEqual(self.resolve(member, "src/a.py", roots), pathown.EXISTS)
+
+    def test_sibling_with_the_member_name_prefix_is_owned_by_the_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            member = os.path.join(tmp, "apps", "web")
+            os.makedirs(member)
+            os.makedirs(os.path.join(tmp, "apps", "web2"))
+            with open(os.path.join(tmp, "apps", "web2", "a.py"), "w") as f:
+                f.write("x")
+            self.assertEqual(self.resolve(tmp, "apps/web2/a.py", [tmp, member]), pathown.EXISTS)
 
 
 class CoversAllowedRefsTests(unittest.TestCase):
