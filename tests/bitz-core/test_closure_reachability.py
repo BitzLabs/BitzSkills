@@ -252,6 +252,38 @@ class DraftAdvisoryTests(_Workspace):
         self.assertEqual(result.draft_advisory, {"TECH-006"})
         self.assertEqual(result.document_distance["TECH-006"], 2)
 
+    def test_draft_refining_a_selected_document_and_also_reached_upward_is_an_upward_document(self):
+        """関係・トレースモデル §6.1の6.の但し書き: Sの文書を`refines`する`draft`の文書でも、3.または4.の上方向でも着くなら、`advisory`にせず上方向で着いた文書として扱う。
+
+        TECH-020（`draft`）は起点REQ-001を`refines`し、REQ-001の具体化文書TECH-010の`requires`の参照先でもある。強い関係を優先し、役割`constraint`、提示形式`full`、
+        `reachedBy`は`requires:TECH-010`だけ（`refines`の辺は戻る辺なので記録しない）、距離2。対照は、`requires`がなければ`advisory`で`reference`。
+        """
+
+        files = {
+            ".spec/requirements/REQ-001.md": _req("REQ-001"),
+            ".spec/technical/TECH-010.md": _tech("TECH-010", refines=["REQ-001"], requires=["TECH-020"]),
+            ".spec/technical/TECH-020.md": _tech("TECH-020", "draft", refines=["REQ-001"]),
+        }
+        self.build(files)
+        result = self.expand("REQ-001", "interpret")
+        self.assertEqual(result.draft_advisory, set())
+        self.assertEqual(result.context_documents, ["REQ-001", "TECH-010", "TECH-020"])
+        self.assertEqual(result.document_distance["TECH-020"], 2)
+        documents = {d["id"]: d for d in self.context("REQ-001")["documents"]}
+        self.assertEqual(
+            (documents["TECH-020"]["role"], documents["TECH-020"]["projection"], documents["TECH-020"]["reachedBy"]),
+            ("constraint", "full", ["requires:TECH-010"]),
+        )
+        files[".spec/technical/TECH-010.md"] = _tech("TECH-010", refines=["REQ-001"])
+        self.build(files)
+        result = self.expand("REQ-001", "interpret")
+        self.assertEqual(result.draft_advisory, {"TECH-020"})
+        documents = {d["id"]: d for d in self.context("REQ-001")["documents"]}
+        self.assertEqual(
+            (documents["TECH-020"]["role"], documents["TECH-020"]["projection"], documents["TECH-020"]["reachedBy"]),
+            ("advisory", "reference", ["refines:TECH-020"]),
+        )
+
 
 class TaskRootTests(_Workspace):
     def shape(self) -> None:

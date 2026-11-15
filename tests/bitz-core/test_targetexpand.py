@@ -146,7 +146,7 @@ class RefinesTests(unittest.TestCase):
     def test_backward_applicable_refinement_and_its_requires_included(self):
         # TECH-001 `refines` REQ-001（`applicable`）。TECH-001はTECH-002を`requires`する。
         # REQ-001を起点にすると、逆参照でTECH-001を含め、さらにTECH-001の`requires`の閉包
-        # （TECH-002）も含める（§6.1「4.」）。
+        # （TECH-002）も含める（§6.1の2.・3.）。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
@@ -472,8 +472,9 @@ class ShortestDistanceTests(unittest.TestCase):
                 self.assertEqual(result.document_distance["REQ-009"], 1)
 
     def test_draft_refining_another_draft_is_not_counted_through_it(self):
-        # REQ-008（draft）はREQ-007（draft、距離1）とREQ-001（起点）を`refines`する。`advisory`の文書を`refines`するエッジは
-        # 辿らない（§6.1の6.）ので、REQ-007を経由せず、起点から数えた距離1。REQ-003（上方向で着いた距離2の文書）だけを
+        # REQ-007（draft）は起点REQ-001を`refines`するので、advisory（距離1）。REQ-008（draft）が`refines`するのはREQ-007だけである。
+        # `advisory`の文書を`refines`するエッジは辿らない（§6.1の6.）ので、REQ-008は閉包にもadvisoryにも入らない。REQ-009（draft）は
+        # REQ-007と起点REQ-001の両方を`refines`し、起点から数えた距離1のadvisoryになる（REQ-007を経由しない）。REQ-003（上方向で着いた距離2の文書）だけを
         # `refines`するREQ-006（draft）は、Sの文書を`refines`しないのでadvisoryにも閉包にも入らない。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
@@ -487,13 +488,37 @@ class ShortestDistanceTests(unittest.TestCase):
             _write(root, ".spec/requirements/REQ-007.md",
                    _req("REQ-007", status="draft", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
             _write(root, ".spec/requirements/REQ-008.md",
-                   _req("REQ-008", status="draft", extra_frontmatter="relations:\n  refines: [REQ-007, REQ-001]\n"))
+                   _req("REQ-008", status="draft", extra_frontmatter="relations:\n  refines: [REQ-007]\n"))
+            _write(root, ".spec/requirements/REQ-009.md",
+                   _req("REQ-009", status="draft", extra_frontmatter="relations:\n  refines: [REQ-007, REQ-001]\n"))
             id_index, stmt_index = _indexes(root)
             result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
             self.assertEqual(result.document_distance["REQ-007"], 1)
-            self.assertEqual(result.document_distance["REQ-008"], 1)
-            self.assertEqual(result.draft_advisory, {"REQ-007", "REQ-008"})
+            self.assertEqual(result.document_distance["REQ-009"], 1)
+            self.assertEqual(result.draft_advisory, {"REQ-007", "REQ-009"})
+            self.assertNotIn("REQ-008", result.context_documents)
+            self.assertNotIn("REQ-008", result.draft_advisory)
             self.assertNotIn("REQ-006", result.context_documents)
+
+    def test_upward_document_reached_by_a_shorter_path_found_later_takes_the_minimum(self):
+        # REQ-001は`requires`の鎖REQ-002、REQ-003を経てREQ-004へ着く（距離3）。具体化文書TECH-001（距離1）は、REQ-004を直接`requires`する（距離2）。
+        # 起点から先に辿る長い経路で着いた後に、具体化文書からのより短い経路が見つかっても、距離は最短の2になる。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-003.md",
+                   _req("REQ-003", extra_frontmatter="relations:\n  requires: [REQ-004]\n"))
+            _write(root, ".spec/requirements/REQ-004.md", _req("REQ-004"))
+            _write(root, ".spec/technical/TECH-001.md",
+                   _tech("TECH-001", extra_frontmatter="relations:\n  refines: [REQ-001]\n  requires: [REQ-004]\n"))
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
+            self.assertEqual(
+                result.document_distance, {"REQ-001": 0, "REQ-002": 1, "REQ-003": 2, "TECH-001": 1, "REQ-004": 2}
+            )
 
     def test_refining_document_reached_from_two_refined_documents_takes_the_minimum(self):
         # TECH-030はTECH-010（距離2）とTECH-001（距離1）を`refines`する。後から見つかった参照先からの到達も数え、宣言の順によらず距離2。

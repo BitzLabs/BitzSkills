@@ -303,6 +303,25 @@ class SingleWorkspaceTests(_Base):
         self.assertEqual(sorted(d["code"] for d in diagnostics), ["CTX-STATE-001", DUPLICATE])
         self.assertIn(dup_diag("TECH-002", self.first_path("technical", "TECH-002")), diagnostics)
 
+    def test_superseded_old_document_of_the_successor_is_returned_by_interpret(self):
+        """目的`interpret`で、起点を置換する後継（閉包の文書）が`supersedes`で置き換える、起点以外の旧文書が重複していれば返す。
+
+        実際の閉包は、後継を加えた後にその後継の置換の参照先も辿る。重複の候補の絞り込みが、後継から前方の`supersedes`を辿らず取りこぼした（レビューの指摘H1）。
+        対照: 後継が起点だけを置き換えるなら、無関係の重複は返さない。
+        """
+
+        files = {".spec/requirements/REQ-001.md": _req("REQ-001"),
+                 ".spec/requirements/REQ-002.md": _req("REQ-002", test_path="tests/u.py", supersedes=["REQ-001", "REQ-003"])}
+        files.update(self.duplicated("requirements", "REQ-003", _req("REQ-003")))
+        self.build(files)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "interpret")["diagnostics"]
+        self.assertEqual(sorted(d["code"] for d in diagnostics), [DUPLICATE, "SPEC-RELATION-MISSING-001"])
+        self.assertIn(dup_diag("REQ-003", self.first_path("requirements", "REQ-003")), diagnostics)
+        files[".spec/requirements/REQ-002.md"] = _req("REQ-002", test_path="tests/u.py", supersedes=["REQ-001"])
+        self.build(files)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "interpret")["diagnostics"]
+        self.assertEqual(diagnostics, [])
+
     def test_verify_with_many_unrelated_duplicates_does_not_rebuild_every_closure(self):
         """性能: 起点から強い関係でつながらない重複は、閉包を作り直さずに除く。結果は、つながる重複だけを各検証対象へ返す。"""
 
@@ -425,7 +444,7 @@ class SingleWorkspaceTests(_Base):
 class MultiWorkspaceTests(_Base):
     """複合ワークスペース。ルート`platform`の`REQ-001`と、`web`の`TECH-005`（`platform::REQ-001`を`refines`）など。"""
 
-    def build(self, web_files: dict[str, str], platform_files: dict[str, str] | None = None) -> None:
+    def build(self, web_files: dict[str, str], platform_files: dict[str, str] | None = None, api_files: dict[str, str] | None = None) -> None:
         _write(
             self.root, ".spec/bitz.yaml",
             HEAD + "workspace:\n  id: platform\nmultiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n"
@@ -439,6 +458,8 @@ class MultiWorkspaceTests(_Base):
             _write(self.root, rel, content)
         for rel, content in web_files.items():
             _write(self.root, f"apps/web/{rel}", content)
+        for rel, content in (api_files or {}).items():
+            _write(self.root, f"services/api/{rel}", content)
         self.commit()
 
     @staticmethod
@@ -477,6 +498,19 @@ class MultiWorkspaceTests(_Base):
         self.assertIn(expected, self.context_diags("web::TECH-010"))
         self.assertIn(expected, self.verify_diags("web::TECH-010"))
         self.assertIn(expected, self.check_diags("web::TECH-010"))
+
+    def test_superseded_old_document_of_a_successor_in_another_member_is_returned_by_interpret(self):
+        """他のメンバー`api`の後継`REQ-030`が、起点`platform::REQ-001`のほかに`api::REQ-031`も`supersedes`し、`REQ-031`が重複している（レビューの指摘H1。複合ワークスペース）。"""
+
+        api = {".spec/requirements/REQ-030.md": _req("REQ-030", test_path="tests/u.py", supersedes=["platform::REQ-001", "REQ-031"]),
+               ".spec/requirements/REQ-031.md": _req("REQ-031"), ".spec/requirements/REQ-031-copy.md": _req("REQ-031")}
+        self.build({}, api_files=api)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "interpret")["diagnostics"]
+        self.assertIn(dup_diag("REQ-031", ".spec/requirements/REQ-031-copy.md", "api", qualified=True), diagnostics)
+        api[".spec/requirements/REQ-030.md"] = _req("REQ-030", test_path="tests/u.py", supersedes=["platform::REQ-001"])
+        self.build({}, api_files=api)
+        diagnostics = self.run_op(context_mod, "context", "REQ-001", "--purpose", "interpret")["diagnostics"]
+        self.assertNotIn(DUPLICATE, [d["code"] for d in diagnostics])
 
     def test_origin_duplicate_in_the_working_member(self):
         self.build(self.web_duplicated("TECH-005", _tech("TECH-005", refines=["platform::REQ-001"])))
