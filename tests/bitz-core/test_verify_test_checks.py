@@ -365,7 +365,7 @@ class MultiWorkspaceTests(_Base):
         target = self.targets(result)["platform::REQ-001"]
         self.assertSkippedTarget(target)
         self.assertEqual(self.codes(target), [("SPEC-MULTI-OWNERSHIP-001", ".spec/requirements/REQ-001.md", "tests[0].path")])
-        self.assertEqual(target["diagnostics"][0]["summary"], "パスapps/web/t.pyの解決先がワークスペースplatformの所有領域の外です")
+        self.assertEqual(target["diagnostics"][0]["summary"], "パスapps/web/t.pyがワークスペースplatformの所有領域の外です")
         self.assertEqual((result["status"], code, result["commands"]), ("failed", 1, []))
         self.assertSameAsCheck(target, "--all-workspaces")
 
