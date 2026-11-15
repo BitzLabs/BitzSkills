@@ -3,7 +3,7 @@
 規範（期待値は次の文から導いたリテラルで、Coreの出力を写さない）:
 - 安全な入出力・互換性 §6.4: `changes`の許可はNFCにした字句のパスで判定する（ファイルは完全一致、末尾が`/`のディレクトリはセグメント単位の子孫一致）。
   シンボリックリンクの解決先へ許可を広げず、`changes`に書いたパスについてファイルシステムを読まない。差分に現れたシンボリックリンクのエントリは、
-  そのエントリ自身の字句のパスだけで許可と所有を判定し、リンク先は使わない。
+  そのエントリ自身の字句のパスだけで許可を判定し、リンク先は使わない。複合ワークスペースでも、`changes`に所有境界の診断は出さず、TASK境界だけで判定する。
 - 複合ワークスペース仕様 §2・§5.1・§5.2: メンバーのパスは、シンボリックリンクを辿らずに存在するディレクトリとする。途中または末端のシンボリックリンクと、
   NFCで同じ名前になる項目が複数あるパスは`SPEC-MULTI-PATH-001`。メンバーのパスどうしの同一と親子関係は、NFCにしたセグメントの完全一致
   （大文字と小文字を区別する）で判定する。別の綴りのパスは存在しない（メンバーの設定がない）。
@@ -388,6 +388,70 @@ class GitPathMatchingTests(_TmpBase):
                 self.assertIsNone(resolve(f".spec/requirements/{NFC_NAME}.md", {}, {}, index))
                 self.assertIsNone(resolve(f".spec/requirements/{NFD_NAME}.md", {}, {}, index))
                 self.assertEqual(resolve(".spec/requirements/REQ-003.md", {}, {}, index), "REQ-003")
+
+
+class ProcessArgvSpellingTests(_TmpBase):
+    """`{tests}`の展開: プロセスへ渡す引数は、存在の検査で一致したファイルシステム上の綴りで組み立てる。公開結果の`argv`・`tests`は宣言の綴り（ワークスペース・設定仕様 §6）。
+
+    Linuxの一時ディレクトリにNFDの名前のファイルとディレクトリを作り、宣言はNFCにして、プロセスが実際に受け取った引数を標準出力から読む。
+    """
+
+    PRINT = 'for f; do printf "%s\\n" "$f"; done'
+
+    def start(self, tests_path: str, on_disk: str, cwd: str = ".", cwd_on_disk: str | None = None) -> None:
+        _require_nfc_nfd_distinct(self.root)
+        config = (
+            CONFIG
+            + f"verify:\n  commands:\n    t:\n      argv: [\"/bin/sh\", \"-c\", '{self.PRINT}', \"sh\", \"{{tests}}\"]\n"
+            + f"      cwd: \"{cwd}\"\n"
+        )
+        _write(self.root, ".spec/bitz.yaml", config)
+        _write(
+            self.root,
+            ".spec/requirements/REQ-001.md",
+            f"---\nid: REQ-001\ntitle: 引数の綴り\nstatus: approved\ntests:\n  - path: \"{tests_path}\"\n    covers: [REQ-001:AC-01]\n    command: t\n---\n\n"
+            "# REQ-001 引数の綴り\n\n## Intent\n\n意図。\n\n## Acceptance Criteria\n\n"
+            "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n## Verification\n\n未証明。\n",
+        )
+        _write(self.root, on_disk, "x\n")
+        _commit(self.root)
+
+    def run_verify(self):
+        result, code = _run("verify", self.root, "REQ-001")
+        self.assertEqual((result["status"], code, result["diagnostics"]), ("passed", 0, []))
+        self.assertEqual(len(result["commands"]), 1)
+        return result["commands"][0]
+
+    def test_a_declared_nfc_file_is_passed_to_the_process_in_the_disk_nfd_spelling(self):
+        self.start(f"tests/{NFC_NAME}.py", f"tests/{NFD_NAME}.py")
+        # 宣言の綴り（NFC）では、このファイルシステムでは開けない（前提）。
+        self.assertFalse((self.root / f"tests/{NFC_NAME}.py").exists())
+        command = self.run_verify()
+        self.assertEqual(command["stdoutExcerpt"], f"tests/{NFD_NAME}.py\n")
+        # 公開結果は宣言の綴り。
+        self.assertEqual(command["argv"][-1], f"tests/{NFC_NAME}.py")
+        self.assertEqual(command["tests"], [f"tests/{NFC_NAME}.py"])
+
+    def test_a_disk_nfd_directory_in_the_middle_is_used_for_the_cwd_relative_argument(self):
+        self.start(f"tests/{NFC_NAME}/a.py", f"tests/{NFD_NAME}/a.py", cwd="tests")
+        self.assertFalse((self.root / f"tests/{NFC_NAME}").exists())
+        command = self.run_verify()
+        self.assertEqual(command["stdoutExcerpt"], f"{NFD_NAME}/a.py\n")
+        self.assertEqual(command["argv"][-1], f"{NFC_NAME}/a.py")
+        self.assertEqual(command["cwd"], "tests")
+
+    def test_a_disk_nfd_cwd_directory_is_used_for_the_process_and_the_argument_is_cwd_relative(self):
+        self.start(f"{NFC_NAME}/t.py", f"{NFD_NAME}/t.py", cwd=NFC_NAME)
+        self.assertFalse((self.root / NFC_NAME).exists())
+        command = self.run_verify()
+        # `cwd`は実在の綴りで起動し、相対の引数は`cwd`の下の名前だけなので、綴りが分かれない。
+        self.assertEqual(command["stdoutExcerpt"], "t.py\n")
+        self.assertEqual((command["cwd"], command["argv"][-1]), (NFC_NAME, "t.py"))
+
+    def test_an_ascii_path_is_unchanged(self):
+        self.start("tests/t.py", "tests/t.py")
+        command = self.run_verify()
+        self.assertEqual((command["stdoutExcerpt"], command["argv"][-1]), ("tests/t.py\n", "tests/t.py"))
 
 
 if __name__ == "__main__":

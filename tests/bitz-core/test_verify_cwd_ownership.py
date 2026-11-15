@@ -258,7 +258,7 @@ class MultiWorkspaceOwnershipTests(_Base):
 
     def ownership(self, path: str, ws: str):
         return [(
-            "SPEC-MULTI-OWNERSHIP-001", f"パス{path}の解決先がワークスペース{ws}の所有領域の外です", ws,
+            "SPEC-MULTI-OWNERSHIP-001", f"パス{path}がワークスペース{ws}の所有領域の外です", ws,
             "verify.commands.t.cwd",
         )]
 
