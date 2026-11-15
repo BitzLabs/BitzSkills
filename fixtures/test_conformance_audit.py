@@ -283,7 +283,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-113", "expected/verify.json", lambda v: v["targetResults"].pop()),
             ("SINGLE-113", "expected/verify.json",
              lambda v: v["commands"][0]["tests"].append("tests/test_root.py")),
-            # 172: `requires`で到達した文書を`refines`する文書（TECH-001）は、閉包にも対象規範文にも入らない（関係・トレースモデル §6.1の4.、実装の確認事項C91）。
+            # 172: `requires`で到達した文書を`refines`する文書（TECH-001）は、閉包にも対象規範文にも入らない（関係・トレースモデル §6.1の2.、実装の確認事項C91）。
             ("SINGLE-172-01", "expected/context.json",
              lambda v: v["documents"].insert(2, expansion_fixtures.bundle_document(
                  "SINGLE-172-01", "TECH-001", "refinement", "full", ["refines:TECH-001"]))),
@@ -14627,11 +14627,11 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
 
     def test_closure_reachability_fixtures(self):
-        """`SINGLE-178-01`〜`15`: 閉包を、下方向の出発点から具体化を辿り上方向へ依存を辿る到達可能性で定める規則（ADR-071 Decision 2）。"""
+        """`SINGLE-178-01`〜`17`: 閉包を、下方向の出発点から具体化を辿り上方向へ依存を辿る到達可能性で定める規則（ADR-071 Decision 2）。"""
         module = closure_reachability_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [f"SINGLE-178-{number:02d}" for number in range(1, 16)])
+        self.assertEqual(result["prepared"], [f"SINGLE-178-{number:02d}" for number in range(1, 18)])
         self.assertEqual((result["setups_per_fixture"], result["references"], result["core_execution"]), (2, 2, "Not run"))
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
         for identifier in module.CASES:
@@ -14660,6 +14660,11 @@ class AuditTests(unittest.TestCase):
         value = json.loads((audit.FIXTURES / "single/SINGLE-178-14/expected/context.json").read_text())
         self.assertEqual((value["status"], value["documents"], [d["code"] for d in value["diagnostics"]]), ("blocked", [], ["CTX-STATE-001"]))
         self.assertEqual(value["diagnostics"][0]["summary"], "REQ-009は状態outdatedのため目的verifyに適用できません")
+        # 関係・トレースモデル §6.1の6.の但し書き: 上方向でも着く`draft`の文書はadvisoryにせず、上方向で着いた文書として扱う。対照は、上方向で着かなければadvisory。
+        self.assertEqual(documents("SINGLE-178-16")[1:], [("TECH-010", "refinement", "full", ["refines:TECH-010"]),
+                                                          ("TECH-020", "constraint", "full", ["requires:TECH-010"])])
+        self.assertEqual(documents("SINGLE-178-17")[1:], [("TECH-010", "refinement", "full", ["refines:TECH-010"]),
+                                                          ("TECH-020", "advisory", "reference", ["refines:TECH-020"])])
         # 対照（Sへ戻る辺のない`SINGLE-178-07`）は、欠陥の`SINGLE-178-06`と同じ文書、距離、`reachedBy`を期待する。
         self.assertEqual(documents("SINGLE-178-06"), documents("SINGLE-178-07"))
 
@@ -14738,6 +14743,10 @@ class AuditTests(unittest.TestCase):
             "SINGLE-178-13": {"drop-other-task": drop("TASK-003")},
             "SINGLE-178-14": {"status": lambda v: v.update(status="passed"), "drop-diagnostic": lambda v: v["diagnostics"].clear()},
             "SINGLE-178-15": {"add-prerequisite-addresses": lambda v: v["documents"].append(dict(v["documents"][1], id="REQ-009"))},
+            "SINGLE-178-16": {"advisory-of-upward": edit("TECH-020", role="advisory", projection="reference", reachedBy=["refines:TECH-020"]),
+                              "drop-upward": drop("TECH-020"), "role": edit("TECH-020", role="requirement")},
+            "SINGLE-178-17": {"upward-of-advisory": edit("TECH-020", role="constraint", projection="full", reachedBy=["requires:TECH-010"]),
+                              "drop-advisory": drop("TECH-020")},
         }
         for identifier, changes in mutations.items():
             for name, mutate in changes.items():
@@ -14764,11 +14773,11 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(module.validate(root, {"SINGLE-178-05"})["status"], "Failed")
 
     def test_duplicate_closure_fixtures(self):
-        """`SINGLE-177-01`〜`17`と`MULTI-065-01`〜`08`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""
+        """`SINGLE-177-01`〜`18`と`MULTI-065-01`〜`09`: 閉包を作るときに辿る文書IDの重複と、IDを読めない現在版のファイルの扱い（確認事項C96・C105）。"""
         module = duplicate_closure_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [*(f"SINGLE-177-{number:02d}" for number in range(1, 18)), *(f"MULTI-065-{number:02d}" for number in range(1, 9))])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-177-{number:02d}" for number in range(1, 19)), *(f"MULTI-065-{number:02d}" for number in range(1, 10))])
         self.assertEqual(result["setups_per_fixture"], 2)
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
@@ -14847,6 +14856,13 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(codes(load("SINGLE-177-16", "context")), [duplicate, "SPEC-RELATION-MISSING-001"])
         self.assertEqual(codes(load("SINGLE-177-17", "verify")), [duplicate, "SPEC-RELATION-MISSING-001"])
         self.assertEqual(load("SINGLE-177-16", "context")["resolution"]["unresolvedStrongRelations"], 1)
+        # 目的`interpret`は後継を閉包の文書に含めるので、後継が置き換える起点以外の旧文書の重複も返す（単一ワークスペースでは強い関係の参照先の不在と並ぶ。他のメンバーの文書の参照先の不在は検査しない）。
+        successor = load("SINGLE-177-18", "context")
+        self.assertEqual((successor["purpose"], successor["roots"], [(d["code"], d["summary"]) for d in successor["diagnostics"]]), (
+            "interpret", ["REQ-001"], [("SPEC-RELATION-MISSING-001", "強い関係の参照先が存在しません"), (duplicate, "文書ID REQ-003が重複しています")]))
+        other_member = load("MULTI-065-09", "context")
+        self.assertEqual((other_member["purpose"], [(d["code"], d["summary"], d["source"]["workspaceId"]) for d in other_member["diagnostics"]]), (
+            "interpret", [(duplicate, "文書ID api::REQ-031が重複しています", "api")]))
         self.assertEqual(codes(load("SINGLE-177-12", "check")), ["SPEC-FM-SCHEMA-001", "SPEC-STATE-TRANSITION-001", "SPEC-IMPACT-OUTDATED-001"])
         self.assertEqual(codes(load("SINGLE-177-13", "check")), ["SPEC-IMPACT-OUTDATED-001"])
 
@@ -14881,6 +14897,11 @@ class AuditTests(unittest.TestCase):
         # 置換の後継。
         successor = {"TECH-001": doc("TECH-001"), "TECH-008": doc("TECH-008", supersedes=["TECH-001"]), "TECH-008-copy": doc("TECH-008")}
         self.assertEqual(module.reference_duplicates(tree(**successor), root), {("root", "TECH-008")})
+        # 目的`interpret`だけ、後継が置き換える起点以外の旧文書も辿る（`implement`と`verify`では後継は閉包の文書に入らない）。
+        both = {"TECH-001": doc("TECH-001"), "TECH-008": doc("TECH-008", supersedes=["TECH-001", "TECH-012"]),
+                "TECH-012": doc("TECH-012"), "TECH-012-copy": doc("TECH-012")}
+        self.assertEqual(module.reference_duplicates(tree(**both), root, "interpret"), {("root", "TECH-012")})
+        self.assertEqual(module.reference_duplicates(tree(**both), root, "verify"), set())
         # 基準版との比較。
         before = {".spec/technical/TECH-001.md": doc("TECH-001"), ".spec/technical/TECH-002.md": doc("TECH-002")}
         broken = doc("TECH-001", status="bogus")
@@ -14991,6 +15012,8 @@ class AuditTests(unittest.TestCase):
             "SINGLE-177-07": [(".spec/technical/TECH-009.md", None)],
             "MULTI-065-01": [("apps/web/.spec/technical/TECH-005-copy.md", None)],
             "MULTI-065-06": [("apps/web/.spec/technical/TECH-007-copy.md", None)],
+            "SINGLE-177-18": [(".spec/requirements/REQ-003-copy.md", None)],
+            "MULTI-065-09": [("services/api/.spec/requirements/REQ-031-copy.md", None)],
         }
         for identifier, changes in edits.items():
             for relative, content in changes:
@@ -15003,7 +15026,7 @@ class AuditTests(unittest.TestCase):
                         target.write_bytes(content)
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
         # 欠陥を検出するケースの期待を、修正前のCoreの出力（重複を返さない／削除と影響候補を返す）へ取り違える改変を拒否する。
-        for identifier in ("SINGLE-177-01", "SINGLE-177-02", "SINGLE-177-04", "MULTI-065-01", "MULTI-065-05"):
+        for identifier in ("SINGLE-177-01", "SINGLE-177-02", "SINGLE-177-04", "SINGLE-177-18", "MULTI-065-01", "MULTI-065-05", "MULTI-065-09"):
             with self.subTest(identifier=identifier, swap="old-core-output"), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_real_path_fixture(temporary, identifier)
                 operation = module.CASES[identifier]["op"]

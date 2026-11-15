@@ -15,7 +15,7 @@
 
 修正前のCoreは、閉包を作るときに重複したIDを黙って辿らず（重複した文書はどちらも索引に入らない）、`context`と`verify`は重複を返さずに通過した。IDを読めない現在版は
 削除として返し、依存元へ影響候補を返し、そのファイル自身の診断を引数なしの`check`で返さなかった。
-欠陥の18件（SINGLE-177-01・02・04・05・06・10・11・12・14〜17、MULTI-065-01〜05・08）は修正前のCoreが失敗し、対照の7件（SINGLE-177-03・07・08・09・13、MULTI-065-06・07）は通る。
+欠陥の20件（SINGLE-177-01・02・04・05・06・10・11・12・14〜18、MULTI-065-01〜05・08・09）は修正前のCoreが失敗し、対照の7件（SINGLE-177-03・07・08・09・13、MULTI-065-06・07）は通る。
 
 | fixture | 操作 | 入力 | 期待 | 修正前のCore |
 |---|---|---|---|---|
@@ -44,6 +44,8 @@
 | `MULTI-065-06` | `check REQ-001` | `REQ-001`が`related`で指す`web::TECH-007`が2ファイル | `passed_with_warnings`／0。重複を返さない（対照） | 通る |
 | `MULTI-065-07` | `check REQ-001` | 閉包と無関係な`web::TECH-008`が2ファイル | `passed`／0（対照） | 通る |
 | `MULTI-065-08` | `check --all-workspaces` | 作業ツリーで`web::TECH-001`のフロントマターが不正 | `failed`／1。`web`に`SPEC-FM-SCHEMA-001`だけ。削除を返さない | 削除も返す |
+| `SINGLE-177-18` | `context REQ-001 --purpose interpret` | 起点`REQ-001`を置換する後継`REQ-002`が、旧文書`REQ-003`（2ファイル）も`supersedes`する | `failed`／1。`REQ-002`の`SPEC-RELATION-MISSING-001`（`REQ-003`）と重複。`interpret`は後継を閉包の文書に含めるので、後継の置換の参照先も辿る | 後者だけ（閉包の書き直し後の取りこぼし） |
+| `MULTI-065-09` | `context REQ-001 --purpose interpret` | `platform::REQ-001`を置換する`api::REQ-030`が、`api`の旧文書`REQ-031`（2ファイル）も`supersedes`する | `failed`／1。`api`が所有する重複の1件 | `passed`／0 |
 
 期待値は、規範と承認済みの文言から導く。参照計算（`reference_duplicates`、`reference_base_comparison`）は、入力の木構造だけから、閉包を作るときに辿る重複と、
 基準版の文書の削除の有無を求め、期待する診断の集合と一致することを要求する（Coreの出力は根拠にしない）。ハッシュ値は、`SINGLE-042`と`SINGLE-168-03`の
@@ -116,6 +118,8 @@ CASES = {
                           description="contextは、閉包の文書がsupersedesで置き換える旧文書のIDの重複を、強い関係の参照先の不在と並べて返す"),
     "SINGLE-177-17": dict(op="verify", argv=["verify", "REQ-002"], defect=True,
                           description="verifyは、閉包の文書がsupersedesで置き換える旧文書のIDの重複を、当該の検証対象へ返す"),
+    "SINGLE-177-18": dict(op="context", argv=["context", "REQ-001", "--purpose", "interpret"], defect=True,
+                          description="contextのinterpretは、起点を置換する後継がsupersedesで置き換える起点以外の旧文書のIDの重複を、強い関係の参照先の不在と並べて返す"),
     "MULTI-065-01": dict(op="context", argv=["context", "REQ-001", "--purpose", "verify"], defect=True,
                          description="複合ワークスペースのcontextは、他のメンバーが所有する、逆参照で閉包に入る文書の重複を返す"),
     "MULTI-065-02": dict(op="verify", argv=["verify", "REQ-001"], defect=True,
@@ -132,6 +136,8 @@ CASES = {
                          description="対照: 閉包と無関係な他のメンバーの重複はcheckの明示対象へ返さない"),
     "MULTI-065-08": dict(op="check", argv=["check", "--all-workspaces", "--base", "HEAD"], defect=True,
                          description="全体のcheckでも、メンバーの基準版の文書と同じパスでIDを読めない現在版を削除とみなさない"),
+    "MULTI-065-09": dict(op="context", argv=["context", "REQ-001", "--purpose", "interpret"], defect=True,
+                         description="複合ワークスペースのcontextのinterpretは、他のメンバーの後継がsupersedesで置き換える起点以外の旧文書のIDの重複を返す"),
 }
 
 
@@ -141,6 +147,11 @@ def directory_of(identifier):
 
 def number(identifier):
     return int(identifier.rpartition("-")[2])
+
+
+def interprets(identifier):
+    """目的`interpret`で起点を置換する後継の`supersedes`も閉包の文書の置換の参照先に数えるfixture（`SINGLE-177-18`、`MULTI-065-09`）。"""
+    return identifier in ("SINGLE-177-18", "MULTI-065-09")
 
 
 # --- 入力 -------------------------------------------------------------------------------------
@@ -197,6 +208,10 @@ def single_inputs(identifier):
         inputs = {digest_reference.CONFIG_PATH: digest_reference.CONFIG.encode(),
                   ".spec/requirements/REQ-002.md": text_of("REQ-002", "requirement", title="後継の基準", relations={"supersedes": ["REQ-001"]}).encode()}
         inputs.update(copies(REQ_PATH, DOCUMENT))
+    elif n == 18:
+        inputs = {digest_reference.CONFIG_PATH: digest_reference.CONFIG.encode(), REQ_PATH: DOCUMENT.encode(),
+                  ".spec/requirements/REQ-002.md": text_of("REQ-002", "requirement", title="後継の基準", relations={"supersedes": ["REQ-001", "REQ-003"]}).encode()}
+        inputs.update(copies(".spec/requirements/REQ-003.md", text_of("REQ-003", "requirement", title="別の旧文書の基準")))
     else:
         inputs = {digest_reference.CONFIG_PATH: CONFIGS["SINGLE-001"].encode(), REQ_PATH: DOCUMENT.encode(),
                   TECH_PATH: text_of("TECH-001", "technical", relations={"refines": ["REQ-001"]}).encode()}
@@ -238,6 +253,11 @@ def multi_inputs(identifier):
     elif n == 8:
         platform_req = None
         web["apps/web/" + WEB_TECH] = text_of("TECH-001", "technical").encode()
+    elif n == 9:
+        # 起点`platform::REQ-001`を置換する後継`api::REQ-030`が、別の旧文書`api::REQ-031`（2ファイル）も置き換える。
+        inputs["services/api/.spec/requirements/REQ-030.md"] = text_of(
+            "REQ-030", "requirement", title="後継の基準", relations={"supersedes": ["platform::REQ-001", "REQ-031"]}).encode()
+        inputs.update(copies("services/api/.spec/requirements/REQ-031.md", text_of("REQ-031", "requirement", title="別の旧文書の基準")))
     if platform_req is not None:
         inputs[REQ_PATH] = platform_req.encode()
     inputs.update(web)
@@ -264,7 +284,7 @@ def reviewed_manifest(identifier):
     n = number(identifier)
     status = reviewed_result(identifier)["status"]
     operations = []
-    if directory_of(identifier) == "single" and (n <= 9 or n in (16, 17)) and case["op"] != "check":
+    if directory_of(identifier) == "single" and (n <= 9 or n in (16, 17, 18)) and case["op"] != "check":
         # `verify`は、テスト割当てを所有するワークスペースの設定がインデックスで未追跡だと起動を遮断するため、入力をステージする（`SINGLE-176`と同じ）。
         setup_plan = {"git": True, "operations": [{"op": "stage", "paths": ["."]}] if case["op"] == "verify" else []}
     else:
@@ -342,6 +362,9 @@ def reviewed_diagnostics(identifier):
             return related.reviewed_diagnostics("SINGLE-168-03")
         if n in (16, 17):
             return [duplicate("REQ-001", first_copy(REQ_PATH)), relation_missing("REQ-001", ".spec/requirements/REQ-002.md", "root", "relations.supersedes")]
+        if n == 18:
+            return [relation_missing("REQ-003", ".spec/requirements/REQ-002.md", "root", "relations.supersedes"),
+                    duplicate("REQ-003", first_copy(".spec/requirements/REQ-003.md"))]
         if n == 10:
             # `TECH-001`は索引に入らない`REQ-001`を`refines`する、その文書への直接の逆参照として完全検査の対象に入る（`check` §5）。
             return [schema_error(REQ_PATH), relation_missing("REQ-001", TECH_PATH, "root", "relations.refines")]
@@ -361,6 +384,8 @@ def reviewed_diagnostics(identifier):
     if n == 5:
         return [duplicate("REQ-001", first_copy(REQ_PATH), "platform", True),
                 relation_missing("platform::REQ-001", ".spec/technical/TECH-010.md", "web", "relations.refines")]
+    if n == 9:
+        return [duplicate("REQ-031", first_copy(".spec/requirements/REQ-031.md"), "api", True)]
     if n == 6:
         return [{"code": ADVISORY, "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "関係型relatedの参照先が存在しません",
                  "source": {"kind": "file", "workspaceId": "platform", "path": REQ_PATH, "key": "relations.related"}, "evidence": "web::TECH-007"}]
@@ -375,9 +400,9 @@ def status_of(diagnostics):
     return "passed_with_warnings" if diagnostics else "passed"
 
 
-def context_failure(roots, diagnostics, workspace, unresolved, multi=False, revision=None):
+def context_failure(roots, diagnostics, workspace, unresolved, multi=False, revision=None, purpose="verify"):
     result = {
-        "schemaVersion": "1.0", "operation": "context", "status": "failed", "purpose": "verify", "workspace": workspace, "roots": roots,
+        "schemaVersion": "1.0", "operation": "context", "status": "failed", "purpose": purpose, "workspace": workspace, "roots": roots,
         "contextDigest": None, "revision": revision,
         "resolution": {"complete": False, "documentCount": 0, "unresolvedStrongRelations": unresolved},
         "projection": {"detail": "standard", "expanded": []}, "documents": [], "constraintLedger": {"statements": []},
@@ -403,6 +428,8 @@ def reviewed_single_result(identifier):
             return digest_result("SINGLE-042", single_digest())
         if n == 16:
             return context_failure(["REQ-002"], diagnostics, root, 1)
+        if n == 18:
+            return context_failure(["REQ-001"], diagnostics, root, 1, purpose="interpret")
         return context_failure(["REQ-001"], diagnostics, root, 1 if n == 6 else 0)
     if case["op"] == "verify":
         if n == 8:
@@ -446,7 +473,7 @@ def reviewed_multi_result(identifier):
     if case["op"] == "context":
         if n == 5:
             return context_failure(["web::TECH-010"], diagnostics, {"id": "web", "path": "apps/web"}, 1, True, revision)
-        return context_failure(["platform::REQ-001"], diagnostics, platform, 0, True, revision)
+        return context_failure(["platform::REQ-001"], diagnostics, platform, 0, True, revision, purpose="interpret" if n == 9 else "verify")
     if case["op"] == "verify" and n == 2:
         entry = {"target": "platform::REQ-001", "status": "failed", "contextDigest": None, "statements": [], "bindingRefs": [], "diagnostics": diagnostics}
         return {"schemaVersion": "1.0", "operation": "verify", "status": "failed", "scope": "selected", "workspace": platform,
@@ -530,6 +557,8 @@ def reference_duplicates(files, root, purpose="verify"):
     閉包の規則はADR-071 Decision 2による。下方向の出発点（起点）から、`refines`を逆向きに具体化文書を推移的に辿り、そこから上方向
     （`requires`・`refines`・`addresses`の参照先）を終端まで辿る。置換の参照先（起点が`supersedes`する旧文書）と、起点を置換する後継も辿る。
     重複した文書は索引に入らず、1つずつ仮に置くので、その先は辿らない（重複した別の文書を経由して到達するものは、その文書の重複を解消した後に辿る）。
+    目的`interpret`は、起点を置換する後継を閉包の文書（役割`replacement`）に含めるので、その後継が`supersedes`で置き換える旧文書も、置換の参照先として辿る
+    （後継からは、置換の参照先のほかを辿らない）。`implement`と`verify`では後継は閉包の文書に入らない（置換済みの起点は`CTX-STATE-SUPERSEDED-001`で`blocked`にする）ので、後継の置換の参照先は辿らない。
     """
     documents, _ = load_documents(files)
     duplicated = {key for key, group in documents.items() if len(group) > 1}
@@ -574,6 +603,10 @@ def reference_duplicates(files, root, purpose="verify"):
     for key, group in documents.items():
         if any(owner_of(ref, key[0]) == root for relations in group for ref in relations.get("supersedes", [])):
             traversed.add(key)
+            if purpose == "interpret" and key not in duplicated:
+                for relations in declared(key):
+                    for ref in relations.get("supersedes", []):
+                        traversed.add(owner_of(ref, key[0]))
     return traversed & duplicated
 
 
@@ -618,13 +651,13 @@ def check_conditions(identifier, repository, manifest, result):
     n = number(identifier)
     files = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*") if p.is_file() and ".git" not in p.relative_to(repository).parts}
     codes = [d["code"] for d in result_diagnostics(result)]
-    if (directory_of(identifier) == "single" and (n <= 9 or n in (16, 17))) or (directory_of(identifier) == "multi" and n <= 7):
+    if (directory_of(identifier) == "single" and (n <= 9 or n in (16, 17, 18))) or (directory_of(identifier) == "multi" and (n <= 7 or n == 9)):
         documents, _ = load_documents(files)
         if not any(len(group) > 1 for group in documents.values()):
             raise ValueError("文書IDが重複した入力が必要です")
         returned = {(d["source"]["workspaceId"], d["summary"].rpartition("::")[2].replace("文書ID ", "").replace("が重複しています", ""))
                     for d in result_diagnostics(result) if d["code"] == DUPLICATE}
-        derived = reference_duplicates(files, duplicate_roots(identifier))
+        derived = reference_duplicates(files, duplicate_roots(identifier), "interpret" if interprets(identifier) else "verify")
         if derived != returned:
             raise ValueError(f"閉包を作るときに辿る重複が、入力から導く結果と期待で異なります: {sorted(derived)} / {sorted(returned)}")
         if CASES[identifier]["defect"] and not returned:

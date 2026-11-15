@@ -1,9 +1,10 @@
 """閉包を、下方向の出発点から具体化を辿り上方向へ依存を辿る到達可能性で定める規則を固定する（Coreの公開操作は実行しない）。
 
 実装の確認事項C106・C107・C112と、ADR-071 Decision 2の閉包の規則に対応する（ADR-051の追加）。閉包は、下方向の出発点（起点がREQ・TECH・ADRなら起点文書、
-TASKならその`addresses`の参照先の所有文書）から`refines`の逆向きに具体化文書を辿り、出発点と具体化文書をSとして、Sから`requires`・`refines`・`addresses`の
+規範文なら所有文書、TASKならその`addresses`の参照先の所有文書）から`refines`の逆向きに具体化文書を辿り、出発点と具体化文書をSとして、Sから`requires`・`refines`・`addresses`の
 参照先を、辺の種類を区別せず終端まで辿って得る。上方向の辺がSの文書へ戻る場合は、その文書へ着いたとはみなさず、役割・`reachedBy`・距離に使わない。
-状態`draft`のadvisoryは、Sの文書またはその規範文を`refines`する文書だけである。TASKを起点にすると、目的`interpret`・`implement`・`verify`のすべてで、
+状態`draft`のadvisoryは、Sの文書またはその規範文を`refines`する文書だけで、上方向でも着く文書（起点のTASKの`requires`の上方向を含む）はadvisoryにせず、上方向で着いた文書として扱う
+（強い関係を優先する。§6.1の6.）。TASKを起点にすると、目的`interpret`・`implement`・`verify`のすべてで、
 `addresses`の参照先の所有文書を下方向の出発点にする。起点のTASKの`requires`は、`interpret`と`implement`では上方向の辺として閉包に含め、`verify`では
 コンテキストに含めず、同じ範囲の文書（TASKとADRを除く）の適用可能性だけを検査する。目的`implement`の起点がTASKのとき、ほかの状態`open`のTASKは加えない。
 
@@ -24,11 +25,13 @@ TASKならその`addresses`の参照先の所有文書）から`refines`の逆�
 | `SINGLE-178-13` | `context REQ-001 --purpose implement` | `SINGLE-178-12`と同じ入力 | 対象規範文を`addresses`する状態`open`のTASK（`TASK-001`、`TASK-003`）を役割`work`で加え、`done`の`TASK-002`は加えない。加えたTASKからは辿らない（対照） | 通る |
 | `SINGLE-178-14` | `context TASK-001 --purpose verify` | `SINGLE-178-11`と同じ入力で、`REQ-009`の状態が`outdated` | 先行TASKが`addresses`する`REQ-009`は適用可能性の検査の範囲なので、`CTX-STATE-001`（`blocked`）の1件。`REQ-009`をコンテキストに含めない | 検査せず通過 |
 | `SINGLE-178-15` | `context TASK-001 --purpose verify` | `SINGLE-178-11`と同じ入力 | `REQ-009`・`REQ-008`・`TASK-002`をコンテキストに含めない。閉包は`TASK-001`、`REQ-001`、`REQ-004`、`TECH-002`、`TECH-007`（対照） | 通る |
+| `SINGLE-178-16` | `context REQ-001 --purpose interpret` | `TECH-010`が`REQ-001`を`refines`して`TECH-020`を`requires`し、`draft`の`TECH-020`も`REQ-001`を`refines`する | 上方向の`requires`でも着く`draft`の`TECH-020`は`advisory`にせず、上方向で着いた文書として扱う。役割`constraint`、提示形式`full`、`reachedBy`は`requires:TECH-010`だけ、距離2（強い関係を優先する。§6.1の6.） | 通る（今の挙動の固定） |
+| `SINGLE-178-17` | `context REQ-001 --purpose interpret` | `SINGLE-178-16`から`TECH-010`の`requires`を除く | 上方向で着かない`draft`の`TECH-020`は、Sの文書`REQ-001`を`refines`するので役割`advisory`、提示形式`reference`、`reachedBy`は`refines:TECH-020`（対照） | 通る |
 
 期待値は、規範（関係・トレースモデル §6.1〜§6.3・§7、`context` §5、ADR-071 Decision 2）から導く。Coreの出力は根拠にしない。ハッシュ値の材料は、独立に書いた2系統の参照計算
 （このモジュールのリテラルA、入力の木構造から導出するB。`digest_crosscheck`が`closure_reference`で閉包を導く）のバイト列の一致を要求する。
 修正前のCoreは、`refines`の参照先を1段だけ含めてその`requires`を辿らず、閉包の全文書から`draft`のadvisoryを辿り、TASK起点の`interpret`と`implement`で
-`addresses`の参照先の上方向を辿らず、`verify`で先行TASKの`addresses`の参照先の適用可能性を検査しなかった。欠陥は10件（01・02・03・04・06・08・09・11・12・14）、対照は5件である。
+`addresses`の参照先の上方向を辿らず、`verify`で先行TASKの`addresses`の参照先の適用可能性を検査しなかった。欠陥は10件（01・02・03・04・06・08・09・11・12・14）、対照は7件である（16・17は、上方向でも着く`draft`の文書を`advisory`にしない今の挙動の固定で、修正前のCoreも通る）。
 """
 import json
 from pathlib import Path
@@ -125,6 +128,12 @@ def corpus_draft():
             entry("TECH-006", status="draft", relations={"refines": ["TECH-001"]})]
 
 
+def corpus_draft_upward(required=True):
+    """16・17: `TECH-010`が`REQ-001`を`refines`し、`draft`の`TECH-020`も`REQ-001`を`refines`する。16は`TECH-010`が`TECH-020`を`requires`する（上方向でも着く）。17は`requires`がない（対照）。"""
+    ten = {"refines": ["REQ-001"], **({"requires": ["TECH-020"]} if required else {})}
+    return [entry("REQ-001"), entry("TECH-010", relations=ten), entry("TECH-020", status="draft", relations={"refines": ["REQ-001"]})]
+
+
 def corpus_task(outdated=False):
     """11〜15: `TASK-001`が`TASK-002`（`done`）を`requires`し`REQ-001:AC-01`を`addresses`する。`REQ-001`（テスト対応あり）は`REQ-004`を`requires`し、
     `TECH-002`が`REQ-001`を`refines`して`TECH-007`を`requires`する。`TASK-002`は`REQ-009:AC-01`を`addresses`し、`REQ-009`は`REQ-008`を`requires`する。
@@ -169,6 +178,10 @@ CASES = {
                       "TASK起点のverifyは先行TASKのaddresses先の適用可能性を検査し、適用できなければblockedにする", True),
     "SINGLE-178-15": (corpus_task, ["context", "TASK-001", "--purpose", "verify", "--format", "json"],
                       "対照: TASK起点のverifyは先行TASKのaddresses先と先行TASKをコンテキストに含めない", False),
+    "SINGLE-178-16": (corpus_draft_upward, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
+                      "Sの文書をrefinesするdraftの文書でも、上方向のrequiresで着くならadvisoryにせず、上方向で着いた文書として扱う（強い関係を優先する）", False),
+    "SINGLE-178-17": (lambda: corpus_draft_upward(False), ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
+                      "対照: 上方向で着かないdraftの文書は、Sの文書をrefinesするのでadvisoryにする", False),
 }
 BLOCKED = {"SINGLE-178-14": ("REQ-009", "verify")}
 PLANS_ROOT = {"SINGLE-178-14": "TASK-001"}
@@ -263,6 +276,14 @@ PLANS = {
                                     ("REQ-004", "requirement", "full", ["requires:REQ-001"]),
                                     ("TECH-002", "refinement", "normative", ["refines:TECH-002"]),
                                     ("TECH-007", "constraint", "full", ["requires:TECH-002"])]},
+    "SINGLE-178-16": {"purpose": "interpret", "root": "REQ-001",
+                      "documents": [("REQ-001", "root", "full", ["root"]),
+                                    ("TECH-010", "refinement", "full", ["refines:TECH-010"]),
+                                    ("TECH-020", "constraint", "full", ["requires:TECH-010"])]},
+    "SINGLE-178-17": {"purpose": "interpret", "root": "REQ-001", "advisory": ["TECH-020"],
+                      "documents": [("REQ-001", "root", "full", ["root"]),
+                                    ("TECH-010", "refinement", "full", ["refines:TECH-010"]),
+                                    ("TECH-020", "advisory", "reference", ["refines:TECH-020"])]},
 }
 # 4つの集合の要点: (rootDocuments, contextDocuments, targetStatements)。`context`の結果から独立に読み戻す。
 LITERAL_SETS = {identifier: ([plan["root"].partition(":")[0]], [row[0] for row in plan["documents"]], plan.get("ledger", []))
@@ -419,6 +440,10 @@ def check_contract(identifier, result):
             raise ValueError("先行TASKの`addresses`の参照先は役割`requirement`で文書に含める必要があります")
     if identifier == "SINGLE-178-13" and {d["id"] for d in result["documents"] if d["role"] == "work"} != {"TASK-001", "TASK-003"}:
         raise ValueError("対象規範文を`addresses`する状態`open`のTASKだけを役割`work`で加える必要があります")
+    if identifier == "SINGLE-178-16" and ([d["id"] for d in result["documents"] if d["role"] == "advisory"]
+                                          or (lookup["TECH-020"]["role"], lookup["TECH-020"]["projection"], lookup["TECH-020"]["reachedBy"])
+                                          != ("constraint", "full", ["requires:TECH-010"])):
+        raise ValueError("上方向でも着く`draft`の文書は`advisory`にせず、上方向で着いた文書（役割`constraint`、`reachedBy`は`requires`だけ）として扱う必要があります")
     if identifier == "SINGLE-178-15" and {"REQ-009", "REQ-008", "TASK-002"} & set(lookup):
         raise ValueError("目的`verify`の起点TASKの`requires`の上方向の範囲をコンテキストに含めてはいけません")
 
