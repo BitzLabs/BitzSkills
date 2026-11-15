@@ -145,3 +145,7 @@ TASKを起点にすると、`addresses`の参照先の所有文書を距離1の�
 （目的`interpret`でTASKを起点にしても、`addresses`の参照先の所有文書を下方向の出発点として閉包に含める。ADR-051の期待値の訂正）。残りの24ケースの期待集合、
 `targetStatements`、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
 （`9319906d705640e52b6d19534c5df70b0febf184506fb39c09caf8dd4ec3873c`）へ更新した。参照計算（`target_vectors.py`の閉包の距離）も、この規則に書き直した。
+
+同日、独立レビューの指摘とユーザーの決定で、§6.1に上方向でも着く状態`draft`の文書を`advisory`にしないこと、§6.2の対象規範文は§6.4に従うこと、§6.3の型制約の範囲を書き足したため、
+`contractSha256`が失効した。25ケースの期待集合、グラフ、`matrixFamilies`の参照は変えない。`contractSha256`を新しい文書のハッシュ値
+（`aa60523b31bff9ff8b533b94b78d8f76fa775421198d75c9a4f25f110dfd7b26`）へ更新した。
