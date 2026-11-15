@@ -34,13 +34,16 @@ PREDECESSOR_KINDS = frozenset({'continuation-0.2.0', 'successor-0.3.0'})
 RETRYABLE = frozenset({'primary_failed', 'independent_failed', 'interrupted'})
 
 
+CAMPAIGN_75 = 'heldout-matrix-75-collection-07'
+
+
 def predecessor_spec(value, campaign_id):
     if value is None:
         return None
     require(isinstance(value, dict) and set(value) == {'kind', 'campaignId', 'contractSha256',
         'headSha256', 'events'} and value['kind'] in PREDECESSOR_KINDS
         and isinstance(value['campaignId'], str) and CAMPAIGN.fullmatch(value['campaignId']) is not None
-        and value['campaignId'] != campaign_id and type(value['events']) is int
+        and value['campaignId'] not in {campaign_id, CAMPAIGN_75} and type(value['events']) is int
         and 0 <= value['events'] <= MAX_EVENTS, 'heldout successor predecessor')
     require(value['kind'] != 'continuation-0.2.0' or value['campaignId'] == continuation.CAMPAIGN,
         'heldout successor continuation predecessor campaign')
@@ -53,9 +56,11 @@ def contract(raw):
     require(isinstance(raw, bytes), 'heldout successor contract bytes')
     value = inputs.parse(raw)
     require(isinstance(value, dict) and set(value) == CONTRACT_KEYS, 'heldout successor contract inventory')
+    campaign_75 = value['campaignId'] == CAMPAIGN_75
+    set_version = inputs.SET_VERSION_75 if campaign_75 else inputs.SET_VERSION
     require(value['version'] == VERSION and isinstance(value['campaignId'], str)
         and CAMPAIGN.fullmatch(value['campaignId']) is not None and value['model'] == 'gpt-6.1-sol'
-        and value['setVersion'] == inputs.SET_VERSION and value['certifiesSkillGate'] is False,
+        and value['setVersion'] == set_version and value['certifiesSkillGate'] is False,
         'heldout successor contract identity')
     io.pin(value['conditionSha256'])
     budget = value['budget']
@@ -67,6 +72,10 @@ def contract(raw):
     timeout = value['timeoutSeconds']
     require(isinstance(timeout, dict) and set(timeout) == {'primary', 'independent'}
         and all(type(x) is int and 1 <= x <= 600 for x in timeout.values()), 'heldout successor timeout')
+    if campaign_75:
+        require(inputs.trace.json_equal(budget, dict(primary=24, independent=24,
+            automaticRetries=0, delegations=0, harnessRetries=0))
+            and value['predecessor'] is None, 'heldout 75-resource campaign budget and predecessor')
     predecessor_spec(value['predecessor'], value['campaignId'])
     return value
 
@@ -74,6 +83,8 @@ def contract(raw):
 def root_for(campaign_id):
     require(isinstance(campaign_id, str) and CAMPAIGN.fullmatch(campaign_id) is not None,
         'heldout successor campaign root')
+    if campaign_id == CAMPAIGN_75:
+        return inputs.collection_75_root()/ROOT_PARENT/campaign_id
     return inputs.PRIVATE_CASES.parent/ROOT_PARENT/campaign_id
 
 
@@ -178,6 +189,13 @@ def open_for(raw):
     return SuccessorLedger(root_for(contract(raw)['campaignId']), raw)
 
 
+def _measurement_stopped(campaign_id, rows):
+    if campaign_id != CAMPAIGN_75 or not rows:
+        return False
+    last = rows[-1]
+    return last['stage'] in FAILURES.values() or last['measuredCorrect'] is False
+
+
 class SuccessorLedger(legacy.HeldoutLedger):
     """root引数は隔離試験用。製品のfactoryはcampaignIdから導いたrootだけを使う。"""
     records_daily_proof = True
@@ -187,6 +205,11 @@ class SuccessorLedger(legacy.HeldoutLedger):
         self.root, self.directory, self.depth = root, None, depth
         require(self.root.is_absolute() and '..' not in self.root.parts, 'heldout successor absolute root')
         self.sealed = False
+
+    def _private_root(self):
+        if self.contract['campaignId'] == CAMPAIGN_75:
+            return inputs.collection_75_root()
+        return super()._private_root()
 
     def base_state(self):
         """読むたびに前の台帳と印を再照合する。条件の比較可能性は開始前の独立検分が判断する。"""
@@ -313,6 +336,7 @@ class SuccessorLedger(legacy.HeldoutLedger):
                 'heldout successor global stop')
             io.pin(value['artifactSha256'])
             return
+        require(not _measurement_stopped(own, rows), 'heldout 75-resource measurement stopped')
         require(type(ordinal) is int and 1 <= ordinal <= SLOTS, 'heldout successor slot')
         previous = rows[-1] if rows else None
         at_boundary = previous is None or previous['stage'] in TERMINALS
@@ -380,7 +404,8 @@ class SuccessorLedger(legacy.HeldoutLedger):
         correct, incorrect = count('correct'), count('incorrect')
         failed, interrupted, pending = count(*FAILURES.values()), count('interrupted'), count('pending')
         accounted = correct+incorrect+failed+interrupted
-        stopped = bool(rows and rows[-1]['stage'] == 'global_stop')
+        stopped = bool(rows and rows[-1]['stage'] == 'global_stop') or _measurement_stopped(
+            self.contract['campaignId'], rows)
         remaining = self.contract['budget']['harnessRetries']-state['retriesUsed']
         eligible = [] if remaining <= 0 or pending or (rows and rows[-1]['stage'] not in TERMINALS) else sorted(
             n for n, values in state['attempts'].items() if len(values) == 1

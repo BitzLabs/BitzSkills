@@ -72,6 +72,45 @@ class SuccessorLedgerTests(unittest.TestCase):
             self.stop(held, stop_reason)
         return first
 
+    def test_75_campaign_reopens_same_ledger_and_stops_at_first_adverse_result(self):
+        for outcome in ('incorrect', 'primary_failed', 'independent_failed'):
+            with self.subTest(outcome=outcome), tempfile.TemporaryDirectory(dir=self.base) as temporary:
+                parent = Path(temporary)
+                with patch.object(s.inputs, 'PRIVATE_CASES', parent/'collection-05'/'cases.json'):
+                    raw = self.raw(s.CAMPAIGN_75, retries=0, setVersion=s.inputs.SET_VERSION_75)
+                    instance = s.open_for(raw)
+                    self.assertEqual(instance.root, parent/'collection-07'/s.ROOT_PARENT/s.CAMPAIGN_75)
+                    with instance.locked() as held:
+                        self.complete(held, 1)
+                    with s.open_for(raw).locked() as held:
+                        with self.assertRaises(ValueError):
+                            self.step(held, 1, 'primary_reserved')
+                        if outcome == 'incorrect':
+                            self.complete(held, 2, correct=False, proof=DAY2)
+                        else:
+                            self.fail(held, 2, role=outcome.removesuffix('_failed'), proof=DAY2)
+                    with s.open_for(raw).locked() as held:
+                        summary = held.summary()
+                        self.assertEqual(summary['status'], 'stopped')
+                        self.assertEqual(summary['primaryReserved'], 2)
+                        self.assertEqual(summary['correct'], 1)
+                        self.assertEqual(summary['incorrect'], int(outcome == 'incorrect'))
+                        self.assertEqual(summary['evaluationFailed'], int(outcome != 'incorrect'))
+                        with self.assertRaisesRegex(ValueError, 'measurement stopped'):
+                            self.step(held, 3, 'primary_reserved', DAY2)
+
+    def test_75_ledger_rejects_other_campaigns_and_retry_budget(self):
+        with self.assertRaises(ValueError):
+            s.open_for(self.raw('heldout-matrix-other-01', retries=0, setVersion=s.inputs.SET_VERSION_75))
+        with self.assertRaises(ValueError):
+            s.open_for(self.raw(s.CAMPAIGN_75, retries=1, setVersion=s.inputs.SET_VERSION_75))
+        with self.assertRaises(ValueError):
+            s.open_for(self.raw(s.CAMPAIGN_75, retries=0))
+        predecessor = dict(kind='successor-0.3.0', campaignId=s.CAMPAIGN_75,
+            contractSha256='c'*64, headSha256='d'*64, events=1)
+        with self.assertRaises(ValueError):
+            s.open_for(self.raw('heldout-matrix-other-01', predecessor=predecessor))
+
     def test_fresh_ledger_requires_daily_proof_and_ordered_fresh_slots(self):
         with self.ledger('heldout-matrix-fresh-01').locked() as held:
             with self.assertRaises(ValueError):
