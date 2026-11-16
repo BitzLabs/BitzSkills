@@ -58,6 +58,29 @@ class HeldoutOriginalTests(unittest.TestCase):
                 (self.base/'receipt.json').write_bytes(originals.io.encoded(self.fixture.receipt))
                 with self.assertRaisesRegex(ValueError,'fixed Git source mismatch'):self.load()
 
+    def test_originals_use_campaign_specific_git_inventory(self):
+        preflight = originals.evidence.preflight
+        extra = originals.x.inputs.REVIEW_PATH_75
+        self.fixture.capture.git_raws[extra] = (ROOT/extra).read_bytes()
+        legacy = self.fixture.proof
+        campaign_proof = copy.deepcopy(legacy)
+        campaign_proof['sourceSha256'][extra] = originals.io.sha(self.fixture.capture.git_raws[extra])
+
+        def write_guards(proof):
+            raw = originals.io.encoded(dict.fromkeys(['before', 'invoke', 'after'], proof))
+            self.fixture.originals['resource-guards.json'] = raw
+            self.fixture.rehash()
+            (self.base/'resource-guards.json').write_bytes(raw)
+            (self.base/'receipt.json').write_bytes(originals.io.encoded(self.fixture.receipt))
+
+        required = (*preflight.SOURCE_FILES, extra)
+        with patch.object(preflight, 'source_files', return_value=required):
+            write_guards(campaign_proof)
+            self.assertEqual(self.load().ordinal, 1)
+            write_guards(legacy)
+            with self.assertRaisesRegex(ValueError, 'fixed Git source mismatch'):
+                self.load()
+
     def test_group_readable_hardlinked_and_symlinked_originals_are_rejected(self):
         path=self.base/'rpc-in.jsonl';path.chmod(0o640)
         with self.assertRaises(ValueError):self.load()
