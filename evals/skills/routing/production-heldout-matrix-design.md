@@ -229,3 +229,10 @@ python -B evals/skills/routing/production_heldout_inputs.py --source <確定40�
 `evidence_invalid` の全体停止の3イベントを持つ元のcampaignを対象とする。
 先行台帳の契約と末尾イベントのSHA-256を固定し、実行時に中断1枠と一次消費1回を再計算する。
 後継台帳の開始枠は第2枠。初期化では既存の封印手順に従い、先行台帳に後継の印を新規保存する。
+
+### 第17枠不正解後の継続
+
+後継campaign `heldout-matrix-75-collection-07-remaining7` は、第2〜16枠が正解で
+第17枠が不正解となった112イベントを持つ先行campaignから開始する。
+元の中断1枠と確定済み16枠を維持し、次の予約対象を第18枠とする。
+修正した共通指示の評価結果には、当該実行条件の識別子を記録する。
