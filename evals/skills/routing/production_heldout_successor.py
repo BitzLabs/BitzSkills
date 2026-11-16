@@ -37,10 +37,12 @@ RETRYABLE = frozenset({'primary_failed', 'independent_failed', 'interrupted'})
 CAMPAIGN_75 = 'heldout-matrix-75-collection-07'
 CONTINUATION_75 = 'heldout-matrix-75-collection-07-remaining23'
 FINAL_75 = 'heldout-matrix-75-collection-07-remaining7'
-CAMPAIGNS_75 = frozenset({CAMPAIGN_75, CONTINUATION_75, FINAL_75})
+REMAINING_SIX_75 = 'heldout-matrix-75-collection-07-remaining6'
+CAMPAIGNS_75 = frozenset({CAMPAIGN_75, CONTINUATION_75, FINAL_75, REMAINING_SIX_75})
 PREDECESSORS_75 = {
     CONTINUATION_75: (CAMPAIGN_75, 3),
     FINAL_75: (CONTINUATION_75, 16 * len(STAGES)),
+    REMAINING_SIX_75: (FINAL_75, len(STAGES)),
 }
 
 
@@ -50,7 +52,7 @@ def predecessor_spec(value, campaign_id):
     require(isinstance(value, dict) and set(value) == {'kind', 'campaignId', 'contractSha256',
         'headSha256', 'events'} and value['kind'] in PREDECESSOR_KINDS
         and isinstance(value['campaignId'], str) and CAMPAIGN.fullmatch(value['campaignId']) is not None
-        and value['campaignId'] not in {campaign_id, FINAL_75} and type(value['events']) is int
+        and value['campaignId'] not in {campaign_id, REMAINING_SIX_75} and type(value['events']) is int
         and 0 <= value['events'] <= MAX_EVENTS, 'heldout successor predecessor')
     require(value['kind'] != 'continuation-0.2.0' or value['campaignId'] == continuation.CAMPAIGN,
         'heldout successor continuation predecessor campaign')
@@ -202,6 +204,9 @@ def predecessor_state(spec, *, seal_sha256=None, directory=None, depth=0):
                 == [(ordinal, stage) for ordinal in range(2, 18) for stage in STAGES]
                 and [row['measuredCorrect'] for row in rows if row['stage'] == 'parent_verified']
                 == [True]*15 + [False], 'heldout 75-resource incorrect seventeenth slot')
+        if spec['campaignId'] == FINAL_75:
+            require([(row['ordinal'], row['stage']) for row in rows] == [(18, stage) for stage in STAGES]
+                and rows[-1]['measuredCorrect'] is False, 'heldout 75-resource incorrect eighteenth slot')
     require(len(rows) == spec['events'] and head == spec['headSha256'],
         'heldout successor predecessor journal drift')
     boundary(state, rows)
