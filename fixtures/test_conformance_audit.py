@@ -9407,7 +9407,7 @@ class AuditTests(unittest.TestCase):
                 source = {"kind": "file", "workspaceId": case["owner"], "path": f".spec/requirements/{document}.md", "key": key}
                 if identifier == "MULTI-061-02":
                     expected = {"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-                                "summary": f"パス{case['path']}の解決先がワークスペース{case['owner']}の所有領域の外です", "source": source}
+                                "summary": f"パス{case['path']}がワークスペース{case['owner']}の所有領域の外です", "source": source}
                 else:
                     expected = {"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": spec[case["field"]][0], "source": source}
                 self.assertEqual(declaring["diagnostics"], [expected])
@@ -9433,7 +9433,7 @@ class AuditTests(unittest.TestCase):
         # 承認済みの文言だけ（新しい文言はない）。
         record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
         for phrase in ("実装パスが存在しません", "テストのパスが存在しません", "コマンドの作業ディレクトリが利用できません",
-                       "パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"):
+                       "パス{path}がワークスペース{workspace_id}の所有領域の外です"):
             self.assertIn(phrase, record)
         # 失敗した文書も数える（`SINGLE-024`と同じ形）。
         self.assertEqual((read("SINGLE-024")["checkedDocumentCount"], read("SINGLE-024")["checkedStatementCount"]), (1, 1))
@@ -9614,7 +9614,7 @@ class AuditTests(unittest.TestCase):
         def ownership(value):
             for entry in value["workspaces"]:
                 for diagnostic in entry["diagnostics"]:
-                    diagnostic.update(code="SPEC-MULTI-OWNERSHIP-001", summary="パスの解決先がワークスペースの所有領域の外です")
+                    diagnostic.update(code="SPEC-MULTI-OWNERSHIP-001", summary="パスがワークスペースの所有領域の外です")
 
         def outside(value):
             value.update(status="blocked", diagnostics=[{
@@ -9758,11 +9758,11 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(module.validate(audit.FIXTURES, {"SINGLE-174-08"})["status"], "Passed")
 
     def test_strict_path_fixtures(self):
-        """`SINGLE-179-01`〜`24`と`MULTI-067-01`〜`09`: パスの厳密な比較（NFC、NFCの衝突、シンボリックリンク、`cwd`、TASKの`changes`、逆索引、明示した仕様文書のパス）を固定する（ADR-071）。"""
+        """`SINGLE-179-01`〜`27`と`MULTI-067-01`〜`13`: パスの厳密な比較（NFC、NFCの衝突、シンボリックリンク、`cwd`、TASKの`changes`、逆索引、明示した仕様文書のパス、複合ワークスペースの所有を先に判定する順序、`{tests}`の引数の綴り）を固定する（ADR-071）。"""
         module = strict_path_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [*(f"SINGLE-179-{number:02d}" for number in range(1, 25)), *(f"MULTI-067-{number:02d}" for number in range(1, 10))])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-179-{number:02d}" for number in range(1, 28)), *(f"MULTI-067-{number:02d}" for number in range(1, 14))])
         self.assertEqual((result["setups_per_fixture"], result["references"], result["core_execution"]), (2, 2, "Not run"))
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
         for identifier in module.CASES:
@@ -9867,6 +9867,43 @@ class AuditTests(unittest.TestCase):
         result = read("MULTI-067-08")
         self.assertEqual((result["scope"], result["status"], result["workspace"], result["diagnostics"], manifest("MULTI-067-08")["expect"]["exitCode"]),
                          ("selected", "passed", {"id": "web", "path": "apps/web"}, [], 0))
+        # 複合ワークスペースで、所有の判定を存在の検査より先に行う（ルートワークスペースが、存在しない別のメンバーの所有領域のパスを宣言する）。
+        for identifier, status, path, key in (("MULTI-067-10", "approved", "apps/web/src/missing.py", "implements"),
+                                              ("MULTI-067-11", "draft", "apps/web/src/missing.py", "implements"),
+                                              ("MULTI-067-12", "approved", "services/api/tests/missing.py", "tests[0].path")):
+            with self.subTest(identifier=identifier):
+                result = read(identifier)
+                self.assertEqual((result["status"], result["diagnostics"], manifest(identifier)["expect"]["exitCode"]), ("failed", [], 1))
+                self.assertEqual([(entry["id"], entry["status"]) for entry in result["workspaces"]], [("platform", "failed"), ("api", "passed"), ("web", "passed")])
+                self.assertEqual(result["workspaces"][0]["diagnostics"], [{
+                    "code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed", "summary": f"パス{path}がワークスペースplatformの所有領域の外です",
+                    "source": {"kind": "file", "workspaceId": "platform", "path": req, "key": key}}])
+                self.assertIn(f"status: {status}", (fixture(identifier) / "repo" / req).read_text())
+                self.assertFalse((fixture(identifier) / "repo" / path).exists())
+        result = read("MULTI-067-13")
+        self.assertEqual((result["status"], [(entry["id"], entry["status"]) for entry in result["workspaces"]], manifest("MULTI-067-13")["expect"]["exitCode"]),
+                         ("passed_with_warnings", [("platform", "passed_with_warnings"), ("api", "passed"), ("web", "passed")], 0))
+        self.assertEqual(result["workspaces"][0]["diagnostics"], [{
+            "code": "SPEC-PATH-INVALID-001", "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "状態draftの実装パスは未作成です",
+            "source": {"kind": "file", "workspaceId": "platform", "path": req, "key": "implements"}}])
+        # `{tests}`の引数: 公開結果の`argv`と`tests`は宣言の綴り（NFC）で、コマンドは実在の綴りの引数を開けるときだけ通る。ハッシュ値の材料のコマンドの引数列も同じ。
+        script = "for f; do [ -f $f ] || exit 1; done"
+        for identifier, cwd, declared, relative in (
+                ("SINGLE-179-25", ".", ["tests/caf\u00e9.py", "tests/test_session.py"], ["tests/caf\u00e9.py", "tests/test_session.py"]),
+                ("SINGLE-179-26", "tests", ["tests/caf\u00e9/a.py", "tests/test_session.py"], ["caf\u00e9/a.py", "test_session.py"]),
+                ("SINGLE-179-27", "caf\u00e9", ["caf\u00e9/test_auth.py", "caf\u00e9/test_session.py"], ["test_auth.py", "test_session.py"])):
+            with self.subTest(identifier=identifier):
+                result = read(identifier, "verify")
+                self.assertEqual((result["status"], result["diagnostics"], manifest(identifier)["expect"]["exitCode"]), ("passed", [], 0))
+                self.assertEqual((result["targetResults"][0]["status"], result["targetResults"][0]["bindingRefs"]), ("passed", ["root::default"]))
+                command = result["commands"][0]
+                self.assertEqual((command["status"], command["exitCode"], command["cwd"], command["tests"]), ("passed", 0, cwd, declared))
+                self.assertEqual(command["argv"], ["/bin/sh", "-c", script, "sh", *relative])
+                config = (fixture(identifier) / "repo/.spec/bitz.yaml").read_text()
+                self.assertIn("argv: [\"/bin/sh\", \"-c\", \"" + script + "\", \"sh\", \"{tests}\"]", config)
+        self.assertEqual(manifest("SINGLE-179-25")["setup"]["materialize"], [{"from": "tests/n.py", "to": "tests/cafe\u0301.py"}])
+        self.assertEqual(manifest("SINGLE-179-26")["setup"]["materialize"], [{"from": "tests/d", "to": "tests/cafe\u0301"}])
+        self.assertEqual(manifest("SINGLE-179-27")["setup"]["materialize"], [{"from": "d", "to": "cafe\u0301"}])
         # NFC・NFDの名前は`repo/`と`changes/`へ置かない（付け替えの先は、マニフェストのJSONのエスケープで書く）。
         for identifier in module.CASES:
             directory = fixture(identifier)
@@ -9891,7 +9928,7 @@ class AuditTests(unittest.TestCase):
         # 陰性対照の事実（修正前のCore `968bc84`）。対照は通り、欠陥は失敗する。
         self.assertEqual([identifier for identifier, case in module.CASES.items() if not case["defective"]],
                          ["SINGLE-179-08", "SINGLE-179-09", "SINGLE-179-13", "SINGLE-179-14", "SINGLE-179-15", "SINGLE-179-16", "SINGLE-179-17", "SINGLE-179-18",
-                          "MULTI-067-05", "MULTI-067-06", "MULTI-067-08"])
+                          "MULTI-067-05", "MULTI-067-06", "MULTI-067-08", "MULTI-067-13"])
         # Stepの割当て: `check`の存在はStep 2、TASK・逆索引・明示対象はStep 3、`verify`はStep 4、複合はStep 5。
         steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
         placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
@@ -9900,6 +9937,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(1, 11)}, {2})
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(11, 15)}, {4})
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(15, 25)}, {3})
+        self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(25, 28)}, {4})
+        self.assertEqual({placed[f"MULTI-067-{number:02d}"] for number in range(1, 14)}, {5})
         self.assertEqual((placed["SINGLE-167-10"], placed["MULTI-051-07"]), (4, 5))
 
     def test_strict_path_reference_rules(self):
@@ -10030,6 +10069,10 @@ class AuditTests(unittest.TestCase):
             ("MULTI-067-03", dict(outcome="ok")), ("MULTI-067-04", dict(outcome="duplicate")), ("MULTI-067-05", dict(outcome="ok")),
             ("MULTI-067-06", dict(outcome="nested")), ("MULTI-067-07", dict(outcome="ok")), ("MULTI-067-09", dict(outcome="missing")),
             ("MULTI-067-08", dict(outcome="violation")),
+            ("SINGLE-179-25", dict(outcome="failed", invalid=[("TECH-001", 0, "missing")])), ("SINGLE-179-26", dict(spelling=False)),
+            ("SINGLE-179-27", dict(spelling=True)), ("SINGLE-179-27", dict(outcome="cwd")),
+            ("MULTI-067-10", dict(outcome="missing")), ("MULTI-067-10", dict(outcome="ok")), ("MULTI-067-11", dict(outcome="draft")),
+            ("MULTI-067-12", dict(outcome="missing")), ("MULTI-067-13", dict(outcome="ownership")), ("MULTI-067-13", dict(outcome="missing")),
         ]
         for identifier, changes in altered:
             with self.subTest(identifier=identifier, changes=changes), tempfile.TemporaryDirectory() as temporary:
@@ -10107,7 +10150,7 @@ class AuditTests(unittest.TestCase):
             "SINGLE-175-06": ("REQ-001", "SPEC-PATH-INVALID-001", path, "root", tech1, "tests[2].path", None),
             "MULTI-062-01": ("web::REQ-101", "SPEC-PATH-INVALID-001", path, "web", req101, "tests[1].path", None),
             "MULTI-062-02": ("web::REQ-101", "SPEC-PATH-INVALID-001", path, "web", req101, "tests[1].path", None),
-            "MULTI-062-03": ("platform::REQ-001", "SPEC-MULTI-OWNERSHIP-001", "パスapps/web/t.pyの解決先がワークスペースplatformの所有領域の外です", "platform", req001, "tests[1].path", None),
+            "MULTI-062-03": ("platform::REQ-001", "SPEC-MULTI-OWNERSHIP-001", "パスapps/web/t.pyがワークスペースplatformの所有領域の外です", "platform", req001, "tests[1].path", None),
             "MULTI-062-04": ("platform::REQ-001", "SPEC-TEST-COVERAGE-001", covers, "web", ".spec/technical/TECH-010.md", "tests[0].covers", "platform::REQ-001:AC-01"),
             "MULTI-062-06": ("web::REQ-101", "SPEC-PATH-INVALID-001", path, "web", req101, "tests[1].path", None),
         }
@@ -10164,7 +10207,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual([len(w["commands"]) for w in everything["workspaces"]], [0, 1, 0])
         # 承認済みの文言だけ（新しい文言はない）。
         record = (audit.FIXTURES / "Coreの出力文言のレビュー記録.md").read_text()
-        for phrase in (path, "フィールドcoversの参照先が存在しないか、対応できません", "パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です"):
+        for phrase in (path, "フィールドcoversの参照先が存在しないか、対応できません", "パス{path}がワークスペース{workspace_id}の所有領域の外です"):
             self.assertIn(phrase, record)
         # リポジトリの外のディレクトリは、ホストの`/usr/bin`を指す絶対パスのシンボリックリンクが1件だけ。
         links = {identifier: {path.relative_to(audit.FIXTURES / module.directory_of(identifier) / identifier / "repo").as_posix(): os.readlink(path)

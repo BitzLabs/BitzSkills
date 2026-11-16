@@ -135,7 +135,7 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 | 102 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:344（multiws.py:206） | `memberの.spec/bitz.yamlがありません` | `メンバーの.spec/bitz.yamlがありません` | §4.1: member=メンバー | 0件 |
 | 103 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:345（multiws.py:229） | `memberの設定workspace.idがcatalogのidと一致しません` | `メンバーの設定キーworkspace.idがカタログのIDと一致しません` | §4.1: member=メンバー、catalog=カタログ。§3.5の2: 設定キーの前に「設定キー」。「カタログのID」は診断レジストリの書き方 | 0件 |
 | 104 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:346（multiws.py:234） | `memberはmultiWorkspaceを宣言できません` | `メンバーは設定キーmultiWorkspaceを宣言できません` | §4.1: member=メンバー。§3.5の2 | 0件 |
-| 105 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:394（multirelate.py:399、423） | `{path}の解決先が{workspace_id}の所有範囲外です` | `パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です` | §3.5の6: 値の前に「パス」「ワークスペース」。用語集 §12: メンバーが所有するパスの範囲=所有領域 | 1件（MULTI-008）；生成器・監査1 |
+| 105 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:394（multirelate.py:399、423） | `{path}の解決先が{workspace_id}の所有範囲外です` | `パス{path}がワークスペース{workspace_id}の所有領域の外です`（2026-11-15に「解決先」を除いた。末尾の節） | §3.5の6: 値の前に「パス」「ワークスペース」。用語集 §12: メンバーが所有するパスの範囲=所有領域 | 1件（MULTI-008）；生成器・監査1 |
 | 106 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:398（check.py:142） | `{path}の基準版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の基準版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | §4.1: symlink=シンボリックリンク。§3.5の6、用語集 §12（所有領域） | 1件（MULTI-010）；生成器・監査1 |
 | 107 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:402（check.py:148） | `{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の現在版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | 同上 | 0件 |
 | 108 | summary | SPEC-MULTI-PATH-001<br>（MULTI-PATH） | messages.py:351（multiws.py:276） | `member pathの形式が不正です` | `メンバーのパスの形式が不正です` | §4.1: member=メンバー、path=パス | 0件 |
@@ -577,7 +577,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - `suggestedAction`は付けない。`SPEC-CONFIG-SCHEMA-001`は`doctor`仕様 §8の表の診断ではない。
 - 実パスの所有の違反は、既存の承認済みの文言を再利用する。新しい文言の承認ではない。
   - 単一ワークスペース（`VERIFY-CWD-OUTSIDE`）: `SPEC-VERIFY-BLOCKED-001`の「コマンドの作業ディレクトリが利用できません」（`SINGLE-167-07`）
-  - 複合ワークスペース（`MULTI-OWNERSHIP-CWD`）: `SPEC-MULTI-OWNERSHIP-001`の「パス<cwd>の解決先がワークスペース<ID>の所有領域の外です」（`MULTI-051-01`〜`04`）
+  - 複合ワークスペース（`MULTI-OWNERSHIP-CWD`）: `SPEC-MULTI-OWNERSHIP-001`の「パス<cwd>がワークスペース<ID>の所有領域の外です」（`MULTI-051-01`。2026-11-15に「解決先」を除いた）
 - 既存のfixtureの期待値は変えない（既存のfixtureの`cwd`は、すべて正しい形である）。
 
 ## 2026-11-03: 複合ワークスペースのcheckの影響の候補と文書IDの重複の文言の作業ワークスペースのIDの修飾（C69）
@@ -699,8 +699,8 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - 既存の文言は変えない。再利用する既存の文言は、末端または途中のシンボリックリンクのパスの「実装パスが存在しません」「テストのパスが存在しません」、`cwd`が利用できない場合の
   「コマンドの作業ディレクトリが利用できません」、メンバーの「メンバーのパスが重複しています」「メンバーのパスが別のメンバーの配下にあります」
   「メンバーのパスの経路にシンボリックリンクが含まれています」である。
-- 所有境界の違反（`SPEC-MULTI-OWNERSHIP-001`）の文言「パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です」は、字句のパスが別の所有領域にある場合に限る（`MULTI-061-02`、`MULTI-051-01`）。
-  文言は変えない（「解決先」は字句のパスの解決を指す）。
+- 所有境界の違反（`SPEC-MULTI-OWNERSHIP-001`）の文言は、字句のパスが別の所有領域にある場合に限る（`MULTI-061-02`、`MULTI-051-01`）。
+  この文言は、同日の後の決定で変えた（次の節）。
 
 ### 期待値の訂正の対象
 
@@ -717,3 +717,18 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 | `MULTI-010` | `failed`／1 | `passed`／0 |
 
 - `SINGLE-167-07`は、診断のJSONが同じで、条件名だけが`VERIFY-CWD-OUTSIDE`から`VERIFY-CWD-UNAVAILABLE`へ変わる。
+
+### 所有境界の違反の文言から「解決先」を除く
+
+- 診断`SPEC-MULTI-OWNERSHIP-001`（`MULTI-OWNERSHIP`、`MULTI-OWNERSHIP-CWD`）の`summary`は、「パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です」だった。
+  ADR-071により、Coreはシンボリックリンクを辿らず、所有を字句のパスで判定する。「解決先」は実パスへの解決を想起させ、規範と合わない。
+- ユーザーが、次の文言に変えることを承認した（2026-11-15。ADR-062 Decision 2。表記規則 §8の8）。**規範文から一意に導いた値ではなく、承認された値である。**
+
+| 種類 | 診断（条件） | 変更前 | 変更後（承認した値） | 固定しているfixture |
+|---|---|---|---|---|
+| summary | `SPEC-MULTI-OWNERSHIP-001`（`MULTI-OWNERSHIP`、`MULTI-OWNERSHIP-CWD`） | `パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です` | `パス{path}がワークスペース{workspace_id}の所有領域の外です` | `MULTI-061-02`、`MULTI-062-03`、`MULTI-051-01`、新しい`MULTI-067-10`〜`13` |
+
+- 期待値の文言の更新は、ADR-062の文言の変更として扱う。更新した期待値は、`MULTI-051-01`、`MULTI-061-02`、`MULTI-062-03`の3件（JSON）である。
+  生成器と監査の回帰試験、Coreの単体試験の文字列も同じ文言に合わせた。
+- 複合ワークスペースの`implements`と`tests[].path`は、所有の判定を存在の検査より先に行うので（複合ワークスペース仕様 §5.1）、別のワークスペースの所有領域にあるパスは、存在しなくても
+  同じ文言になる（`MULTI-067-10`〜`12`）。TASKの`changes`は所有境界の診断を持たないので、この文言は使わない。

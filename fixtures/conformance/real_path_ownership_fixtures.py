@@ -50,6 +50,7 @@ Coreの出力は根拠にしない。fixtureは、1つの原因だけを持つ�
 """
 import copy
 import json
+import re
 import os
 from pathlib import Path
 import subprocess
@@ -168,10 +169,16 @@ def reference_outcome(identifier, repository):
         workspace = repository / case["workspace"]
         return "ok" if lexical.lookup(workspace, case["path"], "file") == "ok" else "missing"
     prefix = owner_prefix(case)
-    if lexical.lookup(repository / prefix, case["path"], "file") != "ok":
-        return "missing"
-    declared = case["path"] if prefix in ("", ".") else f"{prefix}/{case['path']}"
-    return "ok" if lexical.owner(declared, ROOTS) == case["owner"] else "violation"
+    # 宣言したパスは、ケースの定義ではなく、準備手順の後の仕様文書から読む（入力を書き換えても、参照計算が追従する）。
+    document = repository / prefix / ".spec/requirements" / ("REQ-001.md" if case["owner"] == "platform" else "REQ-101.md")
+    text = document.read_text(encoding="utf-8")
+    match = re.search(r"^implements: \[(.+)\]$", text, re.M) if case["field"] == "implements" else re.search(r"^  - path: (.+)$", text, re.M)
+    path = match.group(1).strip()
+    declared = path if prefix in ("", ".") else f"{prefix}/{path}"
+    # 所有の判定（字句のパス）を存在の検査より先に行う（複合ワークスペース仕様 §5.1）。
+    if lexical.owner(declared, ROOTS) != case["owner"]:
+        return "violation"
+    return "ok" if lexical.lookup(repository / prefix, path, "file") == "ok" else "missing"
 
 
 def owner_prefix(case):
@@ -242,8 +249,11 @@ def corpus(identifier):
         del inputs[f"tests/{name}"]
     for path in case["files"]:
         inputs[path] = content_of(path)
-    inputs[digest_reference.CONFIG_PATH] = digest_reference.CONFIG.replace(
-        command_cwd.CWD_LINE, f"      cwd: {case.get('cwdYaml', case['cwd'])}\n").encode()
+    config = digest_reference.CONFIG.replace(command_cwd.CWD_LINE, f"      cwd: {case.get('cwdYaml', case['cwd'])}\n")
+    if case.get("argvYaml"):
+        # `{tests}`の展開の試験（実在の綴りの引数）のために、コマンドの引数列を置き換える。
+        config = config.replace('      argv: ["/bin/true", "{tests}"]\n', f"      argv: {case['argvYaml']}\n")
+    inputs[digest_reference.CONFIG_PATH] = config.encode()
     return inputs
 
 
@@ -363,7 +373,7 @@ def multi_result(identifier):
     source = {"kind": "file", "workspaceId": case["owner"], "path": f".spec/requirements/{owner_id}.md", "key": key}
     if case["outcome"] == "violation":
         diagnostic = {"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-                      "summary": f"パス{case['path']}の解決先がワークスペース{case['owner']}の所有領域の外です", "source": source}
+                      "summary": f"パス{case['path']}がワークスペース{case['owner']}の所有領域の外です", "source": source}
     else:
         diagnostic = {"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed",
                       "summary": PATH_SUMMARIES[case["field"]], "source": source}
@@ -383,6 +393,8 @@ def verify_digest_input(identifier):
     case = case_of(identifier)
     payload = copy.deepcopy(digest_reference.reviewed_digest_input("SINGLE-042"))
     payload["settings"]["commands"][0]["cwd"] = case["cwd"]
+    if case.get("argv"):
+        payload["settings"]["commands"][0]["argv"] = list(case["argv"])
     tech = payload["documents"][1]
     declared = tech_documents(identifier)
     tech["frontmatter"]["tests"] = sorted(({"path": path, "covers": [cover], "command": "default"} for path, cover in declared["TECH-001"]),

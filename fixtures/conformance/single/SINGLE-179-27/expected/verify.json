@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:f9568b1c309040cf955716497f5cd7914a76e0c9b56ac808df805f1da27b8fac",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": "café",
+      "argv": [
+        "/bin/sh",
+        "-c",
+        "for f; do [ -f $f ] || exit 1; done",
+        "sh",
+        "test_auth.py",
+        "test_session.py"
+      ],
+      "tests": [
+        "café/test_auth.py",
+        "café/test_session.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

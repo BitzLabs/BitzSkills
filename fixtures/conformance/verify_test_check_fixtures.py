@@ -199,19 +199,17 @@ def reference_target(repository, root, single, workspaces, documents):
         declared = entry["path"]
         found = lexical.lookup(repository / roots[workspace], declared, "file")
         valid = True
-        if found != "ok":
+        owned = lexical.owner(declared if roots[workspace] == "." else f"{roots[workspace]}/{declared}", roots) == workspace
+        if not single and not owned:
+            # 複合ワークスペースの所有の判定は、存在の検査より先に行う（複合ワークスペース仕様 §5.1）。存在しなくても所有境界の違反になる。
+            valid = False
+            diagnostics.append({"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
+                                "summary": f"パス{declared}がワークスペース{workspace}の所有領域の外です",
+                                "source": {**source, "key": f"tests[{index}].path"}})
+        elif found != "ok" or not owned:
             valid = False
             diagnostics.append({"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY,
                                 "source": {**source, "key": f"tests[{index}].path"}})
-        elif lexical.owner(declared if roots[workspace] == "." else f"{roots[workspace]}/{declared}", roots) != workspace:
-            valid = False
-            if single:
-                diagnostics.append({"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY,
-                                    "source": {**source, "key": f"tests[{index}].path"}})
-            else:
-                diagnostics.append({"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-                                    "summary": f"パス{declared}の解決先がワークスペース{workspace}の所有領域の外です",
-                                    "source": {**source, "key": f"tests[{index}].path"}})
         allowed = allowed_covers(documents, name)
         for text in entry["covers"]:
             if multi_crosscheck.qualify(workspace, text) not in allowed:
@@ -462,7 +460,7 @@ def violation_diagnostic(violation, workspace_id):
     key = f"tests[{violation['index']}].path"
     if violation["kind"] == "ownership":
         return {"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-                "summary": f"パス{violation['path']}の解決先がワークスペース{violation['workspace']}の所有領域の外です", "source": {**source, "key": key}}
+                "summary": f"パス{violation['path']}がワークスペース{violation['workspace']}の所有領域の外です", "source": {**source, "key": key}}
     return {"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY, "source": {**source, "key": key}}
 
 

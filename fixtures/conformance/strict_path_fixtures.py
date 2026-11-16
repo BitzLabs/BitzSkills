@@ -47,7 +47,13 @@ COLLISION_SUMMARIES = {
     "tests": "NFCで同じ名前になる項目が複数あり、テストのパスが一つに決まりません",
     "member": "NFCで同じ名前になる項目が複数あり、メンバーのパスが一つに決まりません",
 }
+DRAFT_SUMMARIES = {"implements": "状態draftの実装パスは未作成です", "tests": "状態draftのテストのパスは未作成です"}
+OWNERSHIP_SUMMARY = "パス{path}がワークスペース{workspace}の所有領域の外です"
 CWD_SUMMARY = "コマンドの作業ディレクトリが利用できません"
+# `{tests}`の展開の試験（実在の綴りの引数）のコマンド。引数のファイルがすべて通常のファイルとして開けるときだけ終了コード0で終わる。
+ARGV_SCRIPT = "for f; do [ -f $f ] || exit 1; done"
+ARGV_YAML = "[\"/bin/sh\", \"-c\", \"" + ARGV_SCRIPT + "\", \"sh\", \"{tests}\"]"
+ARGV_TEMPLATE = ["/bin/sh", "-c", ARGV_SCRIPT, "sh", "{tests}"]
 OUTSIDE_SUMMARY = "テストのパスが実効の作業ディレクトリの配下にありません"
 MEMBER_SUMMARIES = {"collision": COLLISION_SUMMARIES["member"], "duplicate": "メンバーのパスが重複しています",
                     "nested": "メンバーのパスが別のメンバーの配下にあります", "link": "メンバーのパスの経路にシンボリックリンクが含まれています"}
@@ -80,7 +86,11 @@ def path_case(field, declared, files, outcome, materialize=(), links=None, statu
                 outcome=outcome, materialize=list(materialize), links=links or {}, status=status, step=2, **extra)
 
 
-def verify_case(cwd, tests, files, outcome, materialize=(), links=None, invalid=(), source=None, cwd_yaml=None, **extra):
+def verify_case(cwd, tests, files, outcome, materialize=(), links=None, invalid=(), source=None, cwd_yaml=None, argv=False, spelling=False, **extra):
+    """`argv`が真なら、コマンドを`ARGV_TEMPLATE`にし、結果へコマンドの実行結果（`commands[]`）を持たせる（outcomeは`passed`）。
+    `spelling`は、プロセスへ渡す引数（実在の綴り）が公開結果の引数（宣言の綴り）と異なるか。"""
+    if argv:
+        extra.update(argvYaml=ARGV_YAML, argv=list(ARGV_TEMPLATE), spelling=spelling)
     return dict(kind="verify", cwd=cwd, cwdYaml=cwd_yaml or cwd, tests=tests, files={name: TEST for name in files}, outcome=outcome,
                 materialize=list(materialize), links=links or {}, invalid=list(invalid), source=source, step=4, **extra)
 
@@ -181,6 +191,18 @@ CASES.update({
                                    description="CLIで明示した仕様文書のパスがNFCで2つの仕様文書に一致するとき、一致しない場合と同じCTX-ROOT-MISSING-001にし、新しい診断を作らない"),
 })
 
+CASES.update({
+    "SINGLE-179-25": verify_case(".", [[f"tests/{NFC_NAME}.py", "tests/test_session.py"]], ["tests/n.py", "tests/test_session.py"], "passed",
+                                 materialize=[("tests/n.py", f"tests/{NFD_NAME}.py")], argv=True, spelling=True, defective=True,
+                                 description="NFDの名前のテストファイルを、NFCで宣言したとき、起動するコマンドの引数は、存在の検査で一致した実在の綴り（NFD）で組み立てる（公開結果の引数は宣言の綴り）"),
+    "SINGLE-179-26": verify_case("tests", [[f"tests/{NFC_NAME}/a.py", "tests/test_session.py"]], ["tests/d/a.py", "tests/test_session.py"], "passed",
+                                 materialize=[("tests/d", f"tests/{NFD_NAME}")], argv=True, spelling=True, defective=True,
+                                 description="NFDの名前のディレクトリを経由するテストを、NFCで宣言したとき、cwd相対の引数も、途中のセグメントを実在の綴り（NFD）で組み立てる"),
+    "SINGLE-179-27": verify_case(NFC_NAME, [[f"{NFC_NAME}/test_auth.py", f"{NFC_NAME}/test_session.py"]], ["d/test_auth.py", "d/test_session.py"], "passed",
+                                 materialize=[("d", NFD_NAME)], argv=True, defective=True,
+                                 description="cwdがNFDの名前のディレクトリで、NFCで宣言したとき、NFCで一致するcwdを実在の綴りで起動し、cwd相対の引数は同じ綴りになるので通る（引数の綴りは変わらない）"),
+})
+
 
 def multi_members_case(members, configs, outcome, materialize=(), links=None, **extra):
     """members: カタログの(ID, 宣言したパス)の列。configs: 付け替え前のASCIIの名前のメンバーの設定のパス→そのワークスペースのID。"""
@@ -212,9 +234,10 @@ CASES.update({
 })
 
 
-def multi_impl_case(outcome, field, declared, files, materialize=(), links=None, **extra):
-    return dict(kind="mimpl", field=field, declared=declared, owner="web", files={name: CODE for name in files}, outcome=outcome, materialize=list(materialize),
-                links=links or {}, step=5, **extra)
+def multi_impl_case(outcome, field, declared, files, materialize=(), links=None, owner="web", status="approved", **extra):
+    """owner: 宣言する文書を所有するワークスペース（`web`はメンバー、`platform`はルート）。outcome: `ok`・`missing`・`collision`・`ownership`（別のワークスペースの所有領域）。"""
+    return dict(kind="mimpl", field=field, declared=declared, owner=owner, status=status, files={name: (TEST if field == "tests" else CODE) for name in files},
+                outcome=outcome, materialize=list(materialize), links=links or {}, step=5, **extra)
 
 
 CASES.update({
@@ -227,6 +250,14 @@ CASES.update({
                                     materialize=[("apps/web/src/nfc.py", f"apps/web/src/{NFC_NAME}.py"), ("apps/web/src/nfd.py", f"apps/web/src/{NFD_NAME}.py")],
                                     defective=True,
                                     description="複合ワークスペースでも、メンバーのimplementsの項目がNFCで同じ名前になる2つの兄弟を持つとき、専用の文言で拒否する"),
+    "MULTI-067-10": multi_impl_case("ownership", "implements", "apps/web/src/missing.py", [], owner="platform", defective=True,
+                                    description="ルートワークスペースのimplementsが、存在しない別のメンバーの所有領域のパスを指すとき（状態approved）、存在の検査より先に所有を判定し、SPEC-MULTI-OWNERSHIP-001にする"),
+    "MULTI-067-11": multi_impl_case("ownership", "implements", "apps/web/src/missing.py", [], owner="platform", status="draft", defective=True,
+                                    description="同上で状態draft（未作成の予定）でも、別のワークスペースの所有領域を指す宣言は、SPEC-MULTI-OWNERSHIP-001（error）にし、draftのwarningにしない"),
+    "MULTI-067-12": multi_impl_case("ownership", "tests", "services/api/tests/missing.py", [], owner="platform", defective=True,
+                                    description="ルートワークスペースのtests[].pathが、存在しない別のメンバーの所有領域のパスを指すとき、implementsと同じく所有を先に判定してSPEC-MULTI-OWNERSHIP-001にする"),
+    "MULTI-067-13": multi_impl_case("draft", "implements", "src/missing.py", [], owner="platform", status="draft", defective=False,
+                                    description="対照: ルートワークスペースのimplementsが、存在しない自分の所有領域のパス（状態draft）を指すときは、未作成の予定のwarning（SPEC-PATH-INVALID-001）にする"),
 })
 
 
@@ -276,9 +307,12 @@ def reviewed_inputs(identifier):
         for path, workspace in case["configs"].items():
             files[path] = multi_reference.plain_config(workspace).encode()
     elif kind == "mimpl":
-        files = {".spec/bitz.yaml": multi_root(MEMBERS).encode(), "apps/web/.spec/bitz.yaml": multi_reference.plain_config("web").encode(),
+        root = case["owner"] == "platform"
+        document = ("REQ-001", ".spec/requirements/REQ-001.md") if root else ("REQ-101", "apps/web/.spec/requirements/REQ-101.md")
+        files = {".spec/bitz.yaml": (multi_root(MEMBERS) + (VERIFY_BLOCK if root and case["field"] == "tests" else "")).encode(),
+                 "apps/web/.spec/bitz.yaml": multi_reference.plain_config("web").encode(),
                  "services/api/.spec/bitz.yaml": multi_reference.plain_config("api").encode(), **files,
-                 "apps/web/.spec/requirements/REQ-101.md": requirement_text("REQ-101", "approved", case["field"], case["declared"]).encode()}
+                 document[1]: requirement_text(document[0], case["status"], case["field"], case["declared"]).encode()}
     elif kind == "mtask":
         files = {".spec/bitz.yaml": multi_root(MEMBERS).encode(),
                  multi_reference.ROOT_REQ_PATH: (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode(),
@@ -356,7 +390,48 @@ def path_diagnostic(field, label, status):
             "resultStatus": "passed_with_warnings" if draft else "failed", "summary": COLLISION_SUMMARIES[field], "source": source}
 
 
+def relative_tests(case):
+    """宣言したとおりの綴りのテストのパスの、`cwd`相対（公開結果の`argv`の展開。重複なし、宣言の文字列の昇順。字句のセグメントで相対化する）。"""
+    root = [] if case["cwd"] == "." else case["cwd"].split("/")
+    declared = sorted({path for tests in case["tests"] for path in tests})
+    assert all(path.split("/")[:len(root)] == root for path in declared)
+    return declared, ["/".join(path.split("/")[len(root):]) for path in declared]
+
+
+def actual_spelling(repository, declared):
+    """基準のルート`repository`の、宣言したパスの実在の綴り（ディレクトリの項目名。NFCで一致する項目）。存在しなければ`None`。"""
+    current, names = Path(repository), []
+    for segment in declared.split("/"):
+        found = [entry for entry in os.listdir(current) if lexical.segments(entry) == lexical.segments(segment)]
+        if len(found) != 1:
+            return None
+        names.append(found[0])
+        current = current / found[0]
+    return "/".join(names)
+
+
+def process_arguments(case, repository):
+    """プロセスへ渡す引数（実在の綴りの`cwd`相対のテストのパス）。公開結果の引数（宣言の綴り）とは、NFDの名前の分だけ異なる。"""
+    root = [] if case["cwd"] == "." else case["cwd"].split("/")
+    declared, _ = relative_tests(case)
+    return ["/".join(actual_spelling(repository, path).split("/")[len(root):]) for path in declared]
+
+
+def passed_verify_result(case):
+    """コマンドを起動して通る結果（`{tests}`の展開の試験）。公開結果の`argv`と`tests`は宣言の綴り。"""
+    declared, relative = relative_tests(case)
+    entry = {"target": "REQ-001", "status": "passed", "contextDigest": real_path.verify_digest(case), "statements": list(STATEMENTS),
+             "bindingRefs": ["root::default"], "diagnostics": []}
+    command = {"bindingId": "root::default", "workspaceId": "root", "name": "default", "status": "passed", "termination": "exit", "cwd": case["cwd"],
+               "argv": [*ARGV_TEMPLATE[:-1], *relative], "tests": declared, "covers": list(STATEMENTS), "exitCode": 0, "timeoutSeconds": 300,
+               "stdoutExcerpt": "", "stderrExcerpt": "", "stdoutTruncated": False, "stderrTruncated": False, "durationMs": 0}
+    return {"schemaVersion": "1.0", "operation": "verify", "status": "passed", "scope": "selected", "workspace": {"id": "root", "path": "."},
+            "targetResults": [entry], "revision": None, "commands": [command], "durationMs": 0, "diagnostics": []}
+
+
 def verify_result(case, label, aux):
+    if label == "passed":
+        return passed_verify_result(case)
     top = []
     entry = {"target": "REQ-001", "status": "failed" if label == "failed" else "blocked", "contextDigest": real_path.verify_digest(case),
              "statements": list(STATEMENTS), "bindingRefs": [], "diagnostics": []}
@@ -413,17 +488,28 @@ def build_result(case, label, aux=None):
         return multi_envelope("failed", [], [{"code": "SPEC-MULTI-PATH-001", "severity": "error", "resultStatus": "failed", "summary": MEMBER_SUMMARIES[label],
                                               "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "multiWorkspace.members"}}])
     if kind == "mimpl":
-        failed = label in ("missing", "collision")
+        owner = case["owner"]
+        document = "REQ-001" if owner == "platform" else "REQ-101"
         key = "implements" if case["field"] == "implements" else "tests[0].path"
-        summary = COLLISION_SUMMARIES[case["field"]] if label == "collision" else PATH_SUMMARIES[case["field"]]
-        diagnostic = {"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": summary,
-                      "source": {"kind": "file", "workspaceId": "web", "path": ".spec/requirements/REQ-101.md", "key": key}}
+        source = {"kind": "file", "workspaceId": owner, "path": f".spec/requirements/{document}.md", "key": key}
+        # 重大度と状態: 不在と衝突は文書の状態で分ける（approvedはerror／failed、draftはwarning／passed_with_warnings）。所有の違反は状態によらずerror／failed。
+        draft = case["status"] == "draft"
+        warned = label in ("draft", "collision") and draft
+        diagnostic = None
+        if label == "ownership":
+            diagnostic = {"code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
+                          "summary": OWNERSHIP_SUMMARY.format(path=case["declared"], workspace=owner), "source": source}
+        elif label in ("missing", "collision", "draft"):
+            summary = COLLISION_SUMMARIES[case["field"]] if label == "collision" else (DRAFT_SUMMARIES if label == "draft" else PATH_SUMMARIES)[case["field"]]
+            diagnostic = {"code": "SPEC-PATH-INVALID-001", "severity": "warning" if warned else "error",
+                          "resultStatus": "passed_with_warnings" if warned else "failed", "summary": summary, "source": source}
+        state = "passed" if diagnostic is None else ("passed_with_warnings" if warned else "failed")
         entries = []
         for identifier_, path in (("platform", "."), ("api", "services/api"), ("web", "apps/web")):
-            declares = identifier_ == "web"
-            entries.append({"id": identifier_, "path": path, "status": "failed" if declares and failed else "passed", "checkedDocumentCount": 1 if declares else 0,
-                            "checkedStatementCount": 1 if declares else 0, "durationMs": 0, "diagnostics": [diagnostic] if declares and failed else []})
-        return multi_envelope("failed" if failed else "passed", entries, [])
+            declares = identifier_ == owner
+            entries.append({"id": identifier_, "path": path, "status": state if declares else "passed", "checkedDocumentCount": 1 if declares else 0,
+                            "checkedStatementCount": 1 if declares else 0, "durationMs": 0, "diagnostics": [diagnostic] if declares and diagnostic else []})
+        return multi_envelope(state, entries, [])
     return {"schemaVersion": "1.0", "operation": "check", "scope": "selected", "status": "failed" if aux else "passed", "workspace": {"id": "web", "path": "apps/web"},
             "revision": {"base": COMMIT, "commit": COMMIT, "dirty": False}, "checkedDocumentCount": 1, "checkedStatementCount": 0, "durationMs": 0, "diagnostics": []}
 
@@ -504,8 +590,18 @@ def sandbox_label(identifier, repository):
     if kind == "mmembers":
         return member_label(case, repository), None
     if kind == "mimpl":
-        found = lexical.lookup(repository / "apps/web", case["declared"], "file")
-        return {"ok": "ok", "collision": "collision"}.get(found, "missing"), None
+        # 所有の判定（字句のパス）を存在の検査より先に行う（複合ワークスペース仕様 §5.1）。
+        prefix = "" if case["owner"] == "platform" else "apps/web"
+        declared = f"{prefix}/{case['declared']}" if prefix else case["declared"]
+        roots = {"platform": ".", "web": "apps/web", "api": "services/api"}
+        if lexical.owner(declared, roots) != case["owner"]:
+            return "ownership", None
+        found = lexical.lookup(repository / prefix if prefix else repository, case["declared"], "file")
+        if found == "ok":
+            return "ok", None
+        if found == "collision":
+            return "collision", None
+        return ("draft" if case["status"] == "draft" else "missing"), None
     # mtask: `changes`は存在の検査も所有の判定も行わず、差分のパスだけを許可と照合する。
     violations = sorted(name for name in changed_paths(repository) if not allowed_by(name, [f"apps/web/{case['changes']}"]))
     return ("violation" if violations else "ok"), violations
@@ -566,6 +662,18 @@ def check_conditions(identifier, repository, manifest, result):
         # リンクを辿れば存在する入力にする（辿らないことだけが原因になる）。
         if not os.path.isfile(repository / case["declared"]):
             raise ValueError("リンクを辿れば存在する入力である必要があります")
+    if case["kind"] == "mimpl" and case["outcome"] in ("ownership", "draft"):
+        # 存在しない予定のパスである（存在の検査より先に所有を判定することだけが原因になる）。
+        joined = case["declared"] if case["owner"] == "platform" else f"apps/web/{case['declared']}"
+        if os.path.lexists(repository / joined):
+            raise ValueError("対象のパスは存在しない予定である必要があります")
+    if case["kind"] == "verify" and case["outcome"] == "passed":
+        # 実在の綴りの引数は、通常のファイルとして実在する。宣言の綴りの引数と異なるのは、実在の綴りがNFDのとき（欠陥）だけである。
+        arguments = process_arguments(case, repository)
+        if any(not os.path.isfile(repository / ("" if case["cwd"] == "." else actual_spelling(repository, case["cwd"])) / argument) for argument in arguments):
+            raise ValueError("実在の綴りの引数が通常のファイルとして開ける必要があります")
+        if (arguments != relative_tests(case)[1]) != case["spelling"]:
+            raise ValueError("実在の綴りの引数が宣言の綴りと異なるかが、ケースの定義と食い違います")
     if case["kind"] in ("task", "changed"):
         wanted = {op["path"] for op in operations(case)}
         if set(changed_paths(repository)) != wanted:

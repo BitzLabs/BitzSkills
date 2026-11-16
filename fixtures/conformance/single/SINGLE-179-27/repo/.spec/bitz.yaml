@@ -1,0 +1,8 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+verify:
+  commands:
+    default:
+      argv: ["/bin/sh", "-c", "for f; do [ -f $f ] || exit 1; done", "sh", "{tests}"]
+      cwd: café

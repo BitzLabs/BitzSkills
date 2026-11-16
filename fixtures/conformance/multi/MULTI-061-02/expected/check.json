@@ -20,7 +20,7 @@
           "code": "SPEC-MULTI-OWNERSHIP-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "パスapps/web/src/a.pyの解決先がワークスペースplatformの所有領域の外です",
+          "summary": "パスapps/web/src/a.pyがワークスペースplatformの所有領域の外です",
           "source": {
             "kind": "file",
             "workspaceId": "platform",
