@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-067-03",
-  "description": "メンバーのパスの同一を、NFCにしたセグメントで判定し、NFCとNFDで書き分けた同じパスを重複として全体事前検査を止める",
+  "description": "NFCとNFDで書き分けた同じメンバーのパスが、NFCで同じディレクトリを引き、その設定のworkspace.idが一方のカタログのIDと一致しないとき、重複は同じ元の原因なので、優先順位が最小のSPEC-MULTI-MEMBER-001だけで全体事前検査を止める",
   "setup": {
     "git": true,
     "materialize": [

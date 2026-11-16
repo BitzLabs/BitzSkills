@@ -18,6 +18,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 import copy
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -56,7 +57,8 @@ ARGV_YAML = "[\"/bin/sh\", \"-c\", \"" + ARGV_SCRIPT + "\", \"sh\", \"{tests}\"]
 ARGV_TEMPLATE = ["/bin/sh", "-c", ARGV_SCRIPT, "sh", "{tests}"]
 OUTSIDE_SUMMARY = "テストのパスが実効の作業ディレクトリの配下にありません"
 MEMBER_SUMMARIES = {"collision": COLLISION_SUMMARIES["member"], "duplicate": "メンバーのパスが重複しています",
-                    "nested": "メンバーのパスが別のメンバーの配下にあります", "link": "メンバーのパスの経路にシンボリックリンクが含まれています"}
+                    "nested": "メンバーのパスが別のメンバーの配下にあります", "link": "メンバーのパスの経路にシンボリックリンクが含まれています",
+                    "id": "メンバーの設定キーworkspace.idがカタログのIDと一致しません"}
 EXIT = {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2, "error": 3}
 STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
 TASK_TEXT = ("---\nid: TASK-001\ntitle: 変更境界の検査\nstatus: open\nchanges: [{changes}]\n---\n\n"
@@ -218,9 +220,9 @@ CASES.update({
     "MULTI-067-02": multi_members_case([("web", f"apps/{NFC_NAME}"), ("api", "services/api")], {"apps/m/.spec/bitz.yaml": "web", **API_CONFIG}, "ok",
                                        materialize=[("apps/m", f"apps/{NFD_NAME}")], defective=True,
                                        description="NFDの名前のディレクトリを、NFCで書いたメンバーのパスで宣言したとき、NFCで比べ、存在するメンバーとして受け付ける"),
-    "MULTI-067-03": multi_members_case([("web", f"apps/{NFC_NAME}"), ("dup", f"apps/{NFD_NAME}")], {"apps/m/.spec/bitz.yaml": "web"}, "duplicate",
+    "MULTI-067-03": multi_members_case([("web", f"apps/{NFC_NAME}"), ("dup", f"apps/{NFD_NAME}")], {"apps/m/.spec/bitz.yaml": "web"}, "id",
                                        materialize=[("apps/m", f"apps/{NFC_NAME}")], defective=True,
-                                       description="メンバーのパスの同一を、NFCにしたセグメントで判定し、NFCとNFDで書き分けた同じパスを重複として全体事前検査を止める"),
+                                       description="NFCとNFDで書き分けた同じメンバーのパスが、NFCで同じディレクトリを引き、その設定のworkspace.idが一方のカタログのIDと一致しないとき、重複は同じ元の原因なので、優先順位が最小のSPEC-MULTI-MEMBER-001だけで全体事前検査を止める"),
     "MULTI-067-04": multi_members_case([("web", f"apps/{NFC_NAME}"), ("inner", f"apps/{NFD_NAME}/inner")],
                                        {"apps/m/.spec/bitz.yaml": "web", "apps/m/inner/.spec/bitz.yaml": "inner"}, "nested",
                                        materialize=[("apps/m", f"apps/{NFC_NAME}")], defective=True,
@@ -485,7 +487,8 @@ def build_result(case, label, aux=None):
             entries += [{"id": identifier, "path": path, "status": "passed", "checkedDocumentCount": 0, "checkedStatementCount": 0, "durationMs": 0, "diagnostics": []}
                         for identifier, path in sorted(case["members"])]
             return multi_envelope("passed", entries, [])
-        return multi_envelope("failed", [], [{"code": "SPEC-MULTI-PATH-001", "severity": "error", "resultStatus": "failed", "summary": MEMBER_SUMMARIES[label],
+        code = "SPEC-MULTI-MEMBER-001" if label == "id" else "SPEC-MULTI-PATH-001"
+        return multi_envelope("failed", [], [{"code": code, "severity": "error", "resultStatus": "failed", "summary": MEMBER_SUMMARIES[label],
                                               "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "multiWorkspace.members"}}])
     if kind == "mimpl":
         owner = case["owner"]
@@ -588,7 +591,11 @@ def sandbox_label(identifier, repository):
         matches = [name for name in names if lexical.segments(f".spec/requirements/{name}") == target]
         return ("ok" if len(matches) == 1 else "missing"), None
     if kind == "mmembers":
-        return member_label(case, repository), None
+        label = member_label(case, repository)
+        if label == "duplicate" and member_config_mismatch(case, repository):
+            # 同じディレクトリを指す重複は、設定のIDの不一致を伴い、同じ元の原因（診断レジストリ §2）。優先順位が最小のMEMBERだけを返す。
+            return "id", None
+        return label, None
     if kind == "mimpl":
         # 所有の判定（字句のパス）を存在の検査より先に行う（複合ワークスペース仕様 §5.1）。
         prefix = "" if case["owner"] == "platform" else "apps/web"
@@ -605,6 +612,17 @@ def sandbox_label(identifier, repository):
     # mtask: `changes`は存在の検査も所有の判定も行わず、差分のパスだけを許可と照合する。
     violations = sorted(name for name in changed_paths(repository) if not allowed_by(name, [f"apps/web/{case['changes']}"]))
     return ("violation" if violations else "ok"), violations
+
+
+def member_config_mismatch(case, repository):
+    """重複したメンバーのパスのディレクトリの設定の`workspace.id`が、カタログのIDのどれかと一致しないか（準備手順の後の入力から読む）。"""
+    paths = [path for _, path in case["members"]]
+    shared = [path for path in paths if [lexical.segments(other) for other in paths].count(lexical.segments(path)) > 1]
+    ids = {identifier for identifier, path in case["members"] if path in shared}
+    actual = actual_spelling(repository, shared[0])
+    text = (Path(repository) / actual / ".spec/bitz.yaml").read_text(encoding="utf-8")
+    declared = re.search(r"^  id: (\S+)$", text, re.M).group(1)
+    return any(identifier != declared for identifier in ids)
 
 
 def member_label(case, repository):

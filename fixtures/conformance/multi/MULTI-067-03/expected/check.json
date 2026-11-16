@@ -16,10 +16,10 @@
   "durationMs": 0,
   "diagnostics": [
     {
-      "code": "SPEC-MULTI-PATH-001",
+      "code": "SPEC-MULTI-MEMBER-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "メンバーのパスが重複しています",
+      "summary": "メンバーの設定キーworkspace.idがカタログのIDと一致しません",
       "source": {
         "kind": "file",
         "workspaceId": "platform",
