@@ -12,9 +12,11 @@ VERSION = 'public-production-matrix-inputs-0.1.0'
 SUBSET_VERSION = 'public-production-subset-inputs-0.1.0'
 REGRESSION_CASE_ID = 'SE-047'
 STOP_WITH_EVIDENCE_CASE_ID = 'SE-048'
+PREWRITE_STOP_EVIDENCE_CASE_ID = 'SE-049'
 REGRESSION_INPUTS = {
     REGRESSION_CASE_ID: 'stopEvidenceRegression',
     STOP_WITH_EVIDENCE_CASE_ID: 'stopWithEvidenceRegression',
+    PREWRITE_STOP_EVIDENCE_CASE_ID: 'prewriteStopEvidenceRegression',
 }
 
 CATEGORY_COUNTS = dict(explicit=6, implicit=6, contextual=6, negative=10, conflict=6, behavior=6, safety=6)
@@ -39,7 +41,8 @@ class MatrixInputs:
 
 
 def regression_ids(selected):
-    if selected in ([REGRESSION_CASE_ID], list(REGRESSION_INPUTS)):
+    if selected in ([REGRESSION_CASE_ID], [REGRESSION_CASE_ID, STOP_WITH_EVIDENCE_CASE_ID],
+            [PREWRITE_STOP_EVIDENCE_CASE_ID]):
         return selected
     return ()
 

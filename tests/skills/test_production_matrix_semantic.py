@@ -151,6 +151,18 @@ class MatrixSemanticTests(unittest.TestCase):
         self.assertIn('今回の実行を成功と扱う場合'.encode(), prompt)
         self.assertNotIn('イベントだけが揃う場合'.encode(), prompt)
 
+    def test_prewrite_stop_grading_requires_separate_evidence_gap(self):
+        base = self.prepared
+        marker = '書込み前のcontextがblocked'.encode()
+        self.assertNotIn(marker, semantic.prompt(base))
+        dedicated = replace(base, binding_raw=semantic.io.encoded(
+            {**base.bindings, 'caseId': semantic.PREWRITE_STOP_EVIDENCE_CASE_ID}))
+        with patch.object(semantic, 'rebound', return_value=dedicated):
+            prompt = semantic.prompt(dedicated)
+        self.assertIn(marker, prompt)
+        self.assertIn('実行済みテスト証拠がない'.encode(), prompt)
+        self.assertIn('semantic=fail'.encode(), prompt)
+
     def test_matching_six_skill_null_path_with_original_host_and_rollout_can_be_correct(self):
         prepared=self.matching_originals(None);answer=copy.deepcopy(self.answer)
         answer.update(bindings=prepared.bindings,accuracy=True,semantic='pass',routingFindings=[])
