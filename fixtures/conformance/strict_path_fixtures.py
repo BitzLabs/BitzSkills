@@ -2,7 +2,7 @@
 
 ADR-071 Decision 1（シンボリックリンクを辿らない、パスをNFCで厳密に比べる、字句のパスで所有を判定する）の規範
 （[安全な入出力・互換性 §6](../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#6-正規パス)）を固定する、ADR-051の追加である。
-群は、`SINGLE-179-01`〜`24`（単一ワークスペース）と`MULTI-067-01`〜`09`（複合ワークスペース）。既存のfixtureの期待値の訂正は、
+群は、`SINGLE-179-01`〜`27`（単一ワークスペース）と`MULTI-067-01`〜`14`（複合ワークスペース）。既存のfixtureの期待値の訂正は、
 `real_path_ownership_fixtures`（`SINGLE-174`、`MULTI-061`）、`command_cwd_fixtures`・`multi_command_cwd_fixtures`（`167`、`051`）、`verify_test_check_fixtures`（`MULTI-062-01`）、
 `multi_ownership_fixtures`（`MULTI-008`、`MULTI-010`）が持つ。`SINGLE-167-10`と`MULTI-051-07`（途中のセグメントがシンボリックリンクの`cwd`）は`command_cwd_fixtures`・`multi_command_cwd_fixtures`に置く。
 
@@ -260,6 +260,10 @@ CASES.update({
                                     description="ルートワークスペースのtests[].pathが、存在しない別のメンバーの所有領域のパスを指すとき、implementsと同じく所有を先に判定してSPEC-MULTI-OWNERSHIP-001にする"),
     "MULTI-067-13": multi_impl_case("draft", "implements", "src/missing.py", [], owner="platform", status="draft", defective=False,
                                     description="対照: ルートワークスペースのimplementsが、存在しない自分の所有領域のパス（状態draft）を指すときは、未作成の予定のwarning（SPEC-PATH-INVALID-001）にする"),
+    "MULTI-067-14": dict(kind="mstop", members=[("web", f"apps/{NFC_NAME}"), ("api", "services/api")], files={"services/api/keep": CODE},
+                         configs={"apps/m/.spec/bitz.yaml": "web"}, materialize=[("apps/m", f"apps/{NFD_NAME}")], runFrom=f"apps/{NFD_NAME}",
+                         outcome="stop", links={}, step=5, defective=True,
+                         description="カタログのメンバーのパス（NFC）と、ディスク上のNFDのディレクトリ。メンバーの設定を持たないほかのメンバーで全体事前検査が止まるとき、NFDのディレクトリでの単独の操作は、登録済みのメンバーとして、宣言の綴りのパスを返す"),
 })
 
 
@@ -303,6 +307,11 @@ def reviewed_inputs(identifier):
         files = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
         for placeholder, _, document in case["names"]:
             files[f".spec/requirements/{placeholder}.md"] = requirement_text(document, "approved").encode()
+    elif kind == "mstop":
+        files = {".spec/bitz.yaml": multi_root(case["members"]).encode(),
+                 ".spec/requirements/REQ-001.md": (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode(), **files}
+        for path, workspace in case["configs"].items():
+            files[path] = multi_reference.plain_config(workspace).encode()
     elif kind == "mmembers":
         files = {".spec/bitz.yaml": multi_root(case["members"]).encode(),
                  ".spec/requirements/REQ-001.md": (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode()}
@@ -354,6 +363,8 @@ def argv_of(case):
         return ["check", case["argument"], "--base", "HEAD"]
     if kind == "mtask":
         return ["check", "web::TASK-010", "--base", "HEAD"]
+    if kind == "mstop":
+        return ["check", "--full", "--base", "HEAD"]
     return ["check", "--all-workspaces", "--base", "HEAD"]
 
 
@@ -371,7 +382,7 @@ def reviewed_manifest(identifier):
     plan["operations"] = operations(case)
     status = reviewed_result(identifier)["status"]
     return {"fixtureId": identifier, "description": case["description"], "setup": plan,
-            "invocation": {"runner": "bitz", "cwd": ".", "argv": [*argv_of(case), "--format", "json"], "env": {}},
+            "invocation": {"runner": "bitz", "cwd": case.get("runFrom", "."), "argv": [*argv_of(case), "--format", "json"], "env": {}},
             "expect": {"status": status, "exitCode": EXIT[status], "stdout": "json", "resultFile": f"expected/{operation_of(case)}.json", "reportFileCount": 0}}
 
 
@@ -481,6 +492,13 @@ def build_result(case, label, aux=None):
         return check_envelope("failed", scope="selected", checkedDocumentCount=0, checkedStatementCount=0, diagnostics=[
             {"code": "CTX-ROOT-MISSING-001", "severity": "error", "resultStatus": "failed", "summary": f"起点{case['argument']}が存在しません",
              "source": {"kind": "invocation", "argument": case["argument"]}}])
+    if kind == "mstop":
+        # 選んだ設定のディレクトリはNFDの名前だが、カタログのメンバー`web`とNFCで一致するので、`workspace`は`web`と宣言の綴りのパス。`api`の設定がないので全体事前検査で止まる。
+        return {"schemaVersion": "1.0", "operation": "check", "status": "failed", "scope": "full", "workspace": {"id": "web", "path": f"apps/{NFC_NAME}"},
+                "revision": {"base": COMMIT, "commit": COMMIT, "dirty": False}, "durationMs": 0,
+                "diagnostics": [{"code": "SPEC-MULTI-MEMBER-001", "severity": "error", "resultStatus": "failed", "summary": "メンバーの.spec/bitz.yamlがありません",
+                                 "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml", "key": "multiWorkspace.members"}}],
+                "checkedDocumentCount": 0, "checkedStatementCount": 0}
     if kind == "mmembers":
         if label == "ok":
             entries = [{"id": "platform", "path": ".", "status": "passed", "checkedDocumentCount": 1, "checkedStatementCount": 2, "durationMs": 0, "diagnostics": []}]
@@ -590,6 +608,12 @@ def sandbox_label(identifier, repository):
         target = lexical.segments(case["argument"])
         matches = [name for name in names if lexical.segments(f".spec/requirements/{name}") == target]
         return ("ok" if len(matches) == 1 else "missing"), None
+    if kind == "mstop":
+        # `api`の設定がなく全体事前検査が止まる。選んだ設定のディレクトリ（`cwd`）は、カタログのメンバーのパスとNFCで一致する。
+        missing = [path for _, path in case["members"] if lexical.lookup(repository, path, "directory") == "ok"
+                   and not os.path.isfile(Path(repository) / actual_spelling(repository, path) / ".spec/bitz.yaml")]
+        selected = lexical.lookup(repository, case["runFrom"], "directory") == "ok" and lexical.segments(case["runFrom"]) == lexical.segments(case["members"][0][1])
+        return ("stop" if missing and selected else "ok"), None
     if kind == "mmembers":
         label = member_label(case, repository)
         if label == "duplicate" and member_config_mismatch(case, repository):
@@ -680,6 +704,8 @@ def check_conditions(identifier, repository, manifest, result):
         # リンクを辿れば存在する入力にする（辿らないことだけが原因になる）。
         if not os.path.isfile(repository / case["declared"]):
             raise ValueError("リンクを辿れば存在する入力である必要があります")
+    if case["kind"] == "mstop" and actual_spelling(repository, case["members"][0][1]) == case["members"][0][1]:
+        raise ValueError("ディスク上のディレクトリの綴りは、宣言の綴りと異なる必要があります")
     if case["kind"] == "mimpl" and case["outcome"] in ("ownership", "draft"):
         # 存在しない予定のパスである（存在の検査より先に所有を判定することだけが原因になる）。
         joined = case["declared"] if case["owner"] == "platform" else f"apps/web/{case['declared']}"

@@ -9762,7 +9762,7 @@ class AuditTests(unittest.TestCase):
         module = strict_path_fixtures
         result = module.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], [*(f"SINGLE-179-{number:02d}" for number in range(1, 28)), *(f"MULTI-067-{number:02d}" for number in range(1, 14))])
+        self.assertEqual(result["prepared"], [*(f"SINGLE-179-{number:02d}" for number in range(1, 28)), *(f"MULTI-067-{number:02d}" for number in range(1, 15))])
         self.assertEqual((result["setups_per_fixture"], result["references"], result["core_execution"]), (2, 2, "Not run"))
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
         for identifier in module.CASES:
@@ -9886,6 +9886,11 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["workspaces"][0]["diagnostics"], [{
             "code": "SPEC-PATH-INVALID-001", "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "状態draftの実装パスは未作成です",
             "source": {"kind": "file", "workspaceId": "platform", "path": req, "key": "implements"}}])
+        # 選んだ設定のディレクトリ（NFD）とカタログのメンバーのパス（NFC）をNFCで照合し、停止した単独結果の`workspace`は登録済みのメンバーと宣言の綴りのパス。
+        result = read("MULTI-067-14")
+        self.assertEqual((result["status"], result["scope"], result["workspace"], [d["code"] for d in result["diagnostics"]]),
+                         ("failed", "full", {"id": "web", "path": "apps/caf\u00e9"}, ["SPEC-MULTI-MEMBER-001"]))
+        self.assertEqual(manifest("MULTI-067-14")["invocation"]["cwd"], "apps/cafe\u0301")
         # `{tests}`の引数: 公開結果の`argv`と`tests`は宣言の綴り（NFC）で、コマンドは実在の綴りの引数を開けるときだけ通る。ハッシュ値の材料のコマンドの引数列も同じ。
         script = "for f; do [ -f $f ] || exit 1; done"
         for identifier, cwd, declared, relative in (
@@ -9938,7 +9943,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(11, 15)}, {4})
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(15, 25)}, {3})
         self.assertEqual({placed[f"SINGLE-179-{number:02d}"] for number in range(25, 28)}, {4})
-        self.assertEqual({placed[f"MULTI-067-{number:02d}"] for number in range(1, 14)}, {5})
+        self.assertEqual({placed[f"MULTI-067-{number:02d}"] for number in range(1, 15)}, {5})
         self.assertEqual((placed["SINGLE-167-10"], placed["MULTI-051-07"]), (4, 5))
 
     def test_strict_path_reference_rules(self):
@@ -10072,7 +10077,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-179-25", dict(outcome="failed", invalid=[("TECH-001", 0, "missing")])), ("SINGLE-179-26", dict(spelling=False)),
             ("SINGLE-179-27", dict(spelling=True)), ("SINGLE-179-27", dict(outcome="cwd")),
             ("MULTI-067-10", dict(outcome="missing")), ("MULTI-067-10", dict(outcome="ok")), ("MULTI-067-11", dict(outcome="draft")),
-            ("MULTI-067-12", dict(outcome="missing")), ("MULTI-067-13", dict(outcome="ownership")), ("MULTI-067-13", dict(outcome="missing")),
+            ("MULTI-067-12", dict(outcome="missing")), ("MULTI-067-13", dict(outcome="ownership")), ("MULTI-067-13", dict(outcome="missing")), ("MULTI-067-14", dict(outcome="ok")),
         ]
         for identifier, changes in altered:
             with self.subTest(identifier=identifier, changes=changes), tempfile.TemporaryDirectory() as temporary:
