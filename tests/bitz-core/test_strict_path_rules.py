@@ -389,6 +389,40 @@ class GitPathMatchingTests(_TmpBase):
                 self.assertIsNone(resolve(f".spec/requirements/{NFD_NAME}.md", {}, {}, index))
                 self.assertEqual(resolve(".spec/requirements/REQ-003.md", {}, {}, index), "REQ-003")
 
+    def test_ambiguity_is_counted_over_all_spec_file_paths_including_skipped_documents(self):
+        # 2つ目は文書の検査を省略した文書（索引へ入らない）。曖昧さは全仕様ファイルのパスで数えるので、索引へ入れない。
+        pairs = [(f".spec/requirements/{NFC_NAME}.md", "REQ-001")]
+        every = [f".spec/requirements/{NFC_NAME}.md", f".spec/requirements/{NFD_NAME}.md"]
+        self.assertEqual(pathown.build_nfc_path_index(pairs), {pathown.nfc(f".spec/requirements/{NFC_NAME}.md"): "REQ-001"})
+        self.assertEqual(pathown.build_nfc_path_index(pairs, all_paths=every), {})
+        self.assertEqual(pathown.build_nfc_path_index(pairs, all_paths=every[:1]), {pathown.nfc(every[0]): "REQ-001"})
+
+    def test_an_explicit_path_matching_a_skipped_document_too_is_missing_for_check_and_verify(self):
+        _require_nfc_nfd_distinct(self.tmp)
+        _write(self.root, ".spec/bitz.yaml", CONFIG)
+
+        def req(doc_id: str) -> str:
+            return (
+                f"---\nid: {doc_id}\ntitle: 曖昧\nstatus: approved\n---\n\n# {doc_id} 曖昧\n\n## Intent\n\n意図。\n\n"
+                f"## Acceptance Criteria\n\n- [{doc_id}:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 守る。\n\n## Verification\n\n未証明。\n"
+            )
+
+        _write(self.root, f".spec/requirements/REQ-001-{NFC_NAME}.md", req("REQ-001"))
+        # ファイル名のIDとフロントマターのIDが一致しない（`skip-document`）。
+        _write(self.root, f".spec/requirements/REQ-001-{NFD_NAME}.md", req("REQ-002"))
+        _commit(self.root)
+        argument = f".spec/requirements/REQ-001-{NFC_NAME}.md"
+        for op in ("check", "verify"):
+            with self.subTest(op=op):
+                result, code = _run(op, self.root, argument, *(["--base", "HEAD"] if op == "check" else []))
+                diagnostics = result["diagnostics"] if op == "check" else result["targetResults"][0]["diagnostics"]
+                self.assertEqual([d["code"] for d in diagnostics], ["CTX-ROOT-MISSING-001"])
+                self.assertEqual((result["status"], code), ("failed", 1))
+        # 対照: NFD側の仕様ファイルがなければ、同じパスは解決する。
+        (self.root / f".spec/requirements/REQ-001-{NFD_NAME}.md").unlink()
+        result, code = _run("check", self.root, argument)
+        self.assertEqual((result["status"], code, result["checkedDocumentCount"]), ("passed", 0, 1))
+
 
 class ProcessArgvSpellingTests(_TmpBase):
     """`{tests}`の展開: プロセスへ渡す引数は、存在の検査で一致したファイルシステム上の綴りで組み立てる。公開結果の`argv`・`tests`は宣言の綴り（ワークスペース・設定仕様 §6）。
