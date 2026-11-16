@@ -153,13 +153,21 @@ class MatrixPreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'outside fixed Git'):self.verify()
 
     def test_stop_evidence_pair_must_match_fixed_git_even_when_repinned(self):
-        for name, path in preflight.REGRESSION_PATHS.items():
+        self.assert_regression_inputs_match_git(['SE-047', 'SE-048'])
+
+    def test_prewrite_stop_regression_has_two_slots_and_matches_fixed_git(self):
+        self.assert_regression_inputs_match_git(['SE-049'])
+
+    def assert_regression_inputs_match_git(self, case_ids):
+        paths = {preflight.matrix.inputs.REGRESSION_INPUTS[case_id]:
+            preflight.REGRESSION_PATHS[preflight.matrix.inputs.REGRESSION_INPUTS[case_id]] for case_id in case_ids}
+        for name, path in paths.items():
             raw = (ROOT / path).read_bytes()
             self.originals[path] = raw
             (self.repository / path).write_bytes(raw)
             self.raws[name] = raw
-        budget = dict(primary=4, independent=4, automaticRetries=0, delegations=0)
-        case_ids = ['SE-047', 'SE-048']
+        slots = len(case_ids) * 2
+        budget = dict(primary=slots, independent=slots, automaticRetries=0, delegations=0)
         self.input_contract.update(version=preflight.matrix.inputs.SUBSET_VERSION,
                                    scope='public-six-skill-subset-input-binding-only', caseIds=case_ids,
                                    budget=budget)
@@ -174,13 +182,13 @@ class MatrixPreflightTests(unittest.TestCase):
 
         repin()
         source_hashes = self.verify()['sourceSha256']
-        self.assertEqual([self.bound.slot(n)['caseId'] for n in range(1, 5)],
-                         ['SE-047', 'SE-047', 'SE-048', 'SE-048'])
+        self.assertEqual([self.bound.slot(n)['caseId'] for n in range(1, slots+1)],
+                         [case_id for case_id in case_ids for _ in range(2)])
         for payload in self.bound.matrix.payloads:
             self.assertEqual(set(preflight.trace.strict_json(payload)['case']), {'prompt', 'context'})
         with self.assertRaises(ValueError):
-            self.bound.slot(5)
-        for name, path in preflight.REGRESSION_PATHS.items():
+            self.bound.slot(slots+1)
+        for name, path in paths.items():
             with self.subTest(name=name):
                 original = self.raws[name]
                 self.assertEqual(source_hashes[path], preflight.io.sha(original))
