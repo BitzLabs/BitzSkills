@@ -2370,3 +2370,22 @@ commit `9b5192497521ec5db785ea2ddd1a7c2055944252`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加・訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-16: シンボリックリンクを辿らない規則（ADR-071 Decision 1）と、独立レビューの是正を反映した後のGate Aの再認定
+
+ADR-071のDecision 1のとおり、Coreはパスのシンボリックリンクを辿らず、パスをNFCで厳密に比べ、字句のパスで所有を判定する（ユーザーの決定）。
+規範（安全な入出力・互換性 §6、複合ワークスペース仕様 §2・§5、ワークスペース・設定仕様 §6、`check` §2・§7、診断レジストリ §2ほか）を書き直し、19件の期待値を訂正し
+（ADR-051。管理者が承認）、文言「パス{path}がワークスペース{workspace_id}の所有領域の外です」の3件を変え（ADR-062）、
+`SINGLE-179-01`〜`27`、`MULTI-067-01`〜`14`、`SINGLE-167-10`、`MULTI-051-07`の43件を追加した（群`strict_path_fixtures`。`MULTI-067-03`はこの枝で追加した後に期待値を修正した）。
+`setup.materialize`（マニフェスト）を足した（Linux専用。macOSは対象外）。matrix、Stepの割当て、実装計画の完了条件、網羅表のハッシュ値、対象展開のvectorの契約のハッシュ値を合わせた。
+
+commit `57895e4ea5a32c6fff5dd9b8c73404137c572705`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`80cdddf9bc09238e8e3b1c6e17a5f34dd577d43643c341d6b9150ec5e796a5b1`。前回の再認定（`314ffcb6…`）から変わったのは、上の追加と訂正による件数、群、期待値だけである |
+| 規模の検証 | 2つのクローンで`Passed`。結果のSHA-256は両方`b4083149ceb277c796c03d80283ce907a6c06e45e7cd7d658202b792b3dbaa7f`（前回と同じ） |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2〜5に属するfixtureを追加・訂正したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
