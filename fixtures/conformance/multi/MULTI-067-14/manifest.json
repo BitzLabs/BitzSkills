@@ -1,0 +1,40 @@
+{
+  "fixtureId": "MULTI-067-14",
+  "description": "カタログのメンバーのパス（NFC）と、ディスク上のNFDのディレクトリ。メンバーの設定を持たないほかのメンバーで全体事前検査が止まるとき、NFDのディレクトリでの単独の操作は、登録済みのメンバーとして、宣言の綴りのパスを返す",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "apps/m",
+        "to": "apps/cafe\u0301"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/cafe\u0301",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

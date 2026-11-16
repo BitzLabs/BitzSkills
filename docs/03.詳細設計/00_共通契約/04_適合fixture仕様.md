@@ -182,7 +182,7 @@ fixture harnessの参照実装が、検査対象のソースの木構造、ビ�
 harnessは各fixtureを新しい一時ディレクトリへコピーし、次の順で準備手順を適用する。
 
 1. `repo/`の通常ファイルとディレクトリを一時ディレクトリへコピーする。シンボリックリンクはシンボリックリンクとして再作成する。
-1.5. `setup.materialize`があれば、配列順に`from`を`to`へ付け替える（`git init`の前。付け替えの後の名前が基準版のコミットに入る）。`repo/`へ直接置けない名前（Unicodeの正規化形だけが異なる名前、NFCで同じ名前になる2つの兄弟の項目。macOSのファイルシステムとGitの既定の設定で、名前が正規化または衝突する）を、ASCIIの名前の入力から作る。`to`はJSONの`\u`エスケープで書く（`\u00e9`はNFC、`e\u0301`はNFD）。`from`が存在しない、または`to`が存在すれば準備の誤りとする。この付け替えは、NFCとNFDの名前が共存できる環境（Linux）で行う。
+1.5. `setup.materialize`があれば、配列順に`from`を`to`へ付け替える（`git init`の前。付け替えの後の名前が基準版のコミットに入る）。`repo/`へ直接置けない名前（Unicodeの正規化形だけが異なる名前、NFCで同じ名前になる2つの兄弟の項目。macOSのファイルシステムとGitの既定の設定で、名前が正規化または衝突する）を、ASCIIの名前の入力から作る。`to`はJSONの`\u`エスケープで書く（`\u00e9`はNFC、`e\u0301`はNFD）。`from`が存在しない、または`to`が存在すれば準備の誤りとする。この付け替えは、NFCとNFDの名前が共存できる環境（Linux）で行う。`setup.materialize`を使うfixtureはLinux専用で、macOSでは名前が正規化または衝突して準備に失敗するため対象外とする（[ADR-055](../../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)。harnessは変えない）。
 2. `setup.git: true`なら`git init`し、同一性、時刻、既定ブランチ名をharnessの固定値にする。
 3. `setup.baseCommit`があれば、その`paths[]`だけをステージして1コミットを作る。
 4. `setup.operations[]`を配列順に適用する。
@@ -1332,6 +1332,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `MULTI-067-11` | `MULTI-067-10`と同じ入力で、REQ-001の状態が`draft` | check --all-workspaces --base HEAD | failed／1 | 状態`draft`の未作成の予定でも、別のワークスペースの所有領域を指す宣言は`SPEC-MULTI-OWNERSHIP-001`（`error`。文書の状態で重大度を分けない）。診断は`MULTI-067-10`と同じ1件で、`platform`は`failed`。`warning`の`SPEC-PATH-INVALID-001`（「状態draftの実装パスは未作成です」）にしない。修正前のCoreは後者（`passed_with_warnings`／0） |
 | `MULTI-067-12` | `MULTI-067-10`と同じ形で、ルートの`approved`のREQ-001の`tests[0].path`が`services/api/tests/missing.py`（存在しない別のメンバーの所有領域）。ルートの設定にコマンド`default`を定義する | check --all-workspaces --base HEAD | failed／1 | `tests[].path`も同じ順序で、`SPEC-MULTI-OWNERSHIP-001`（summary「パスservices/api/tests/missing.pyがワークスペースplatformの所有領域の外です」、キー`tests[0].path`）の1件。修正前のCoreは`SPEC-PATH-INVALID-001`（summary「テストのパスが存在しません」） |
 | `MULTI-067-13` | `MULTI-067-10`と同じ形で、ルートの`draft`のREQ-001の`implements: [src/missing.py]`（存在しない、ルート自身の所有領域のパス） | check --all-workspaces --base HEAD | passed_with_warnings／0 | 対照: 自分の所有領域のパスだけを存在の検査にかけ、未作成の予定は重大度`warning`の`SPEC-PATH-INVALID-001`（summary「状態draftの実装パスは未作成です」、キー`implements`）の1件。`platform`は`passed_with_warnings`。修正前のCoreも通る |
+| `MULTI-067-14` | ルート`platform`、メンバー`web`（`apps/café`。NFC）と`api`（`services/api`。設定を持たない）。ディスク上のウェブのディレクトリはNFDの名前で、`.spec/bitz.yaml`を持つ。NFDの`apps/café`で実行 | check --full --base HEAD | failed／1 | カタログのメンバーのパスと選んだ設定のディレクトリを、NFCにしたセグメントの完全一致で照合する（複合ワークスペース仕様 §2）。`api`の設定がないので全体事前検査が止まる（`SPEC-MULTI-MEMBER-001`、summary「メンバーの.spec/bitz.yamlがありません」）が、停止した単独結果の`workspace`は登録済みのメンバー`{id: web, path: apps/café}`で、`path`はカタログに宣言した綴り（NFC）。`scope`は`full`、`checkedDocumentCount`は0。修正前のCoreは、生の文字列で比べて未登録とみなし、`workspace.id`が`null`（診断は2件） |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
