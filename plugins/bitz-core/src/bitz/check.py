@@ -317,6 +317,7 @@ def _resolve_selected_roots(
     *,
     active_ws_id: str | None = None,
     local_entries: list[DocEntry] | None = None,
+    all_entries: list[DocEntry] | None = None,
 ) -> tuple[list[Diagnostic], set[str], list[DocEntry]]:
     """明示対象を解決し、`TargetExpansion(root, interpret)`の和集合を求める。
 
@@ -329,7 +330,11 @@ def _resolve_selected_roots(
     # 明示のパスは、索引に入る文書（重複でも`skip-document`でもない）のものだけを解決する。索引にない文書のパスは起点の不在として扱う
     # （文書IDの重複した文書のパスで`id_index`を引いて失敗しない）。
     path_source = relations_mod.valid_entries(local_entries) if local_entries is not None else list(id_index.values())
-    path_index = pathown.build_nfc_path_index((e.path, e.doc_id) for e in path_source if e.doc_id is not None)
+    # 曖昧さは、`skip-document`の文書を含むすべての仕様ファイルのパスで数える（check §2）。解決できるのは索引に入る文書だけである。
+    path_index = pathown.build_nfc_path_index(
+        ((e.path, e.doc_id) for e in path_source if e.doc_id is not None),
+        all_paths=(e.path for e in all_entries) if all_entries is not None else None,
+    )
 
     diags: list[Diagnostic] = []
     context_ids: set[str] = set()
@@ -421,7 +426,8 @@ def _other_member_duplicate_diagnostics(
 
     if scope == "selected":
         path_index = pathown.build_nfc_path_index(
-            (e.path, e.doc_id) for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None
+            ((e.path, e.doc_id) for e in relations_mod.valid_entries(catalog.entries) if e.doc_id is not None),
+            all_paths=(e.path for e in catalog.entries),
         )
         roots = [path_index.get(pathown.nfc(target), target) for target in parsed.positionals]
 
@@ -944,6 +950,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     statement_index,
                     active_ws_id=workspace_id if multi_active else None,
                     local_entries=catalog.entries if multi_active else None,
+                    all_entries=catalog.entries,
                 )
                 if normalize is not None:
                     context_ids = {normalize(i) for i in context_ids}

@@ -1265,8 +1265,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         cache[wid] = cfg
         return cfg
 
+    # 曖昧さは、`skip-document`の文書を含むすべての仕様ファイルのパスで数える（check §2。`verify`も同じ）。
     path_index = pathown.build_nfc_path_index(
-        (e.path, e.doc_id) for e in (catalog.entries if multi_active else id_index.values()) if e.doc_id is not None
+        ((e.path, e.doc_id) for e in (catalog.entries if multi_active else id_index.values()) if e.doc_id is not None),
+        all_paths=(e.path for e in catalog.entries),
     )
 
     verify_cfg = config_raw.get("verify") or {}

@@ -94,14 +94,25 @@ def owns(path: str, area_root: str, all_roots: Iterable[str] = ()) -> bool:
     return True
 
 
-def build_nfc_path_index(pairs: Iterable[tuple[str, str]]) -> dict[str, str]:
+def build_nfc_path_index(
+    pairs: Iterable[tuple[str, str]], all_paths: Iterable[str] | None = None
+) -> dict[str, str]:
     """``(パス, 値)``の列から、NFCにしたパスで引く索引を作る。NFCで同じになるパスが2つ以上あれば、そのパスは索引へ入れない。
 
     CLIで明示した仕様文書のパスの照合に使う（NFCで2つ以上の仕様文書のパスに一致するパスは、一致しないパスと同じに扱う）。
+    ``all_paths``を渡すと、曖昧さは、索引へ入れる文書（``pairs``）に限らず、文書の検査を省略した文書（`skip-document`）を含む、
+    ワークスペースのすべての仕様ファイルのパスで数える（check §2）。
     """
 
     index: dict[str, str] = {}
     ambiguous: set[str] = set()
+    if all_paths is not None:
+        seen: set[str] = set()
+        for path in all_paths:
+            key = nfc(path)
+            if key in seen:
+                ambiguous.add(key)
+            seen.add(key)
     for path, value in pairs:
         key = nfc(path)
         if key in ambiguous:
