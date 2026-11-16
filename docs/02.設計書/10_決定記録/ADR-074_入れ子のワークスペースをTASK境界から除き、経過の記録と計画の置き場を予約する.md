@@ -1,7 +1,7 @@
 ---
 id: ADR-074
 title: 入れ子のワークスペースをTASK境界から除き、経過の記録と計画の置き場を予約する
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-025
@@ -64,3 +64,4 @@ relations:
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-16 | 起票（`proposed`） | 提案34 §12.3、§12.4 |
+| 2026-11-16 | 利用者の承認により`accepted`へ変更 | — |

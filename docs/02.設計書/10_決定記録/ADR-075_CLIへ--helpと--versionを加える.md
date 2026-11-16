@@ -1,7 +1,7 @@
 ---
 id: ADR-075
 title: CLIへ--helpと--versionを加える
-status: proposed
+status: accepted
 ---
 
 # ADR-075 CLIへ--helpと--versionを加える
@@ -41,3 +41,4 @@ status: proposed
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-16 | 起票（`proposed`） | 提案34 §11.2 |
+| 2026-11-16 | 利用者の承認により`accepted`へ変更 | — |

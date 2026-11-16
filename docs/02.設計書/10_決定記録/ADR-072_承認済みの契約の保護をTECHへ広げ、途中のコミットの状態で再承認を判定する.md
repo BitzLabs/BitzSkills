@@ -1,7 +1,7 @@
 ---
 id: ADR-072
 title: 承認済みの契約の保護をTECHへ広げ、途中のコミットの状態で再承認を判定する
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-024
@@ -69,9 +69,11 @@ relations:
 
 - 提案34の論点2と論点3の裁定である。2026-11-16に利用者が案を選んだ。
 - 根拠となる実測: 提案34 §9.1の実測3〜6。
+- `Decision`の6番目の項目（履歴を読めない場合は違反のまま）は、起票者の案を、承認のときに利用者が確認した。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-16 | 起票（`proposed`） | 提案34 §9、§10 |
+| 2026-11-16 | 利用者の承認により`accepted`へ変更 | — |
