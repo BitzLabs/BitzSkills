@@ -36,7 +36,12 @@ RETRYABLE = frozenset({'primary_failed', 'independent_failed', 'interrupted'})
 
 CAMPAIGN_75 = 'heldout-matrix-75-collection-07'
 CONTINUATION_75 = 'heldout-matrix-75-collection-07-remaining23'
-CAMPAIGNS_75 = frozenset({CAMPAIGN_75, CONTINUATION_75})
+FINAL_75 = 'heldout-matrix-75-collection-07-remaining7'
+CAMPAIGNS_75 = frozenset({CAMPAIGN_75, CONTINUATION_75, FINAL_75})
+PREDECESSORS_75 = {
+    CONTINUATION_75: (CAMPAIGN_75, 3),
+    FINAL_75: (CONTINUATION_75, 16 * len(STAGES)),
+}
 
 
 def predecessor_spec(value, campaign_id):
@@ -45,14 +50,15 @@ def predecessor_spec(value, campaign_id):
     require(isinstance(value, dict) and set(value) == {'kind', 'campaignId', 'contractSha256',
         'headSha256', 'events'} and value['kind'] in PREDECESSOR_KINDS
         and isinstance(value['campaignId'], str) and CAMPAIGN.fullmatch(value['campaignId']) is not None
-        and value['campaignId'] not in {campaign_id, CONTINUATION_75} and type(value['events']) is int
+        and value['campaignId'] not in {campaign_id, FINAL_75} and type(value['events']) is int
         and 0 <= value['events'] <= MAX_EVENTS, 'heldout successor predecessor')
     require(value['kind'] != 'continuation-0.2.0' or value['campaignId'] == continuation.CAMPAIGN,
         'heldout successor continuation predecessor campaign')
-    if campaign_id == CONTINUATION_75 or value['campaignId'] == CAMPAIGN_75:
-        require(campaign_id in {None, CONTINUATION_75}
-            and value['campaignId'] == CAMPAIGN_75 and value['kind'] == 'successor-0.3.0'
-            and value['events'] == 3, 'heldout 75-resource stopped predecessor')
+    if campaign_id in PREDECESSORS_75 or value['campaignId'] in CAMPAIGNS_75:
+        identifier = (value['campaignId'], value['events'])
+        allowed = PREDECESSORS_75.values() if campaign_id is None else (PREDECESSORS_75.get(campaign_id),)
+        require(identifier in allowed and value['kind'] == 'successor-0.3.0',
+            'heldout 75-resource stopped predecessor')
     io.pin(value['contractSha256'])
     io.pin(value['headSha256'])
     return value
@@ -191,6 +197,11 @@ def predecessor_state(spec, *, seal_sha256=None, directory=None, depth=0):
             require([row['stage'] for row in rows] == ['primary_reserved', 'primary_started', 'global_stop']
                 and rows[0]['ordinal'] == rows[1]['ordinal'] == 1
                 and rows[-1]['stopReason'] == 'evidence_invalid', 'heldout 75-resource interrupted first slot')
+        if spec['campaignId'] == CONTINUATION_75:
+            require([(row['ordinal'], row['stage']) for row in rows]
+                == [(ordinal, stage) for ordinal in range(2, 18) for stage in STAGES]
+                and [row['measuredCorrect'] for row in rows if row['stage'] == 'parent_verified']
+                == [True]*15 + [False], 'heldout 75-resource incorrect seventeenth slot')
     require(len(rows) == spec['events'] and head == spec['headSha256'],
         'heldout successor predecessor journal drift')
     boundary(state, rows)

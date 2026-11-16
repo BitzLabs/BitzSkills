@@ -138,6 +138,36 @@ class SuccessorLedgerTests(unittest.TestCase):
         self.assertFalse((prior.root/s.SEAL_NAME).exists())
         self.assertFalse((successor.root/'contract.json').exists())
 
+    def test_75_final_continuation_carries_stopped_history_and_starts_at_eighteen(self):
+        private = patch.object(s.inputs, 'PRIVATE_CASES', self.base/'collection-05'/'cases.json')
+        private.start()
+        self.addCleanup(private.stop)
+        options = dict(retries=0, setVersion=s.inputs.SET_VERSION_75)
+        first = s.open_for(self.raw(s.CAMPAIGN_75, **options))
+        with first.locked() as held:
+            self.step(held, 1, 'primary_reserved')
+            self.step(held, 1, 'primary_started')
+            self.stop(held)
+        second = s.open_for(self.raw(s.CONTINUATION_75, self.spec(first), **options))
+        with second.locked() as held:
+            for ordinal in range(2, 18):
+                self.complete(held, ordinal, correct=ordinal != 17)
+        predecessor = self.spec(second)
+        final = s.open_for(self.raw(s.FINAL_75, predecessor, **options))
+        with final.locked() as held:
+            summary = held.summary()
+            self.assertEqual((summary['correct'], summary['incorrect'], summary['interruptedSlots']), (15, 1, 1))
+            self.assertEqual((summary['primaryReserved'], summary['independentReserved']), (17, 16))
+            self.assertEqual((summary['nextOrdinal'], summary['unattempted']), (18, 7))
+            with self.assertRaises(ValueError):
+                self.step(held, 17, 'primary_reserved')
+            self.complete(held, 18)
+        with final.locked() as held:
+            self.assertEqual(held.summary()['nextOrdinal'], 19)
+            self.assertEqual(held.summary()['incorrect'], 1)
+        with self.assertRaisesRegex(ValueError, 'stopped predecessor'):
+            s.open_for(self.raw('heldout-matrix-other-01', predecessor=predecessor))
+
     def test_fresh_ledger_requires_daily_proof_and_ordered_fresh_slots(self):
         with self.ledger('heldout-matrix-fresh-01').locked() as held:
             with self.assertRaises(ValueError):
