@@ -40,6 +40,27 @@ class StopEvidenceRegressionTests(unittest.TestCase):
         self.assertFalse(semantic.mechanical_accuracy(case, {**decision, 'outcome': 'proceed'})['outcome'])
 
 
+    def test_stop_with_evidence_preserves_status_without_claiming_a_gap(self):
+        eval_root = ROOT / 'evals' / 'skills'
+        case = semantic.trace.strict_json(
+            (eval_root / 'routing' / 'stop-with-evidence-regression-v0.1.json').read_bytes())
+        schema = semantic.trace.strict_json((eval_root / 'schemas' / 'case.schema.json').read_bytes())
+        semantic.trace.jsonschema.Draft202012Validator(schema).validate(case)
+        catalog = semantic.trace.strict_json((eval_root / 'event-catalog.json').read_bytes())
+        expected = case['expected']
+        self.assertLessEqual(set(expected['requiredEvents'] + expected['forbiddenEvents']), set(catalog['events']))
+        self.assertEqual(set(semantic.trace.project_case(case)), {'prompt', 'context'})
+
+        decision = dict(selectedEntry='sdd-implement', selectedPath=None, outcome='stop',
+                        events=['preserve-core-status'])
+        self.assertTrue(all(semantic.mechanical_accuracy(case, decision).values()))
+        for event in ('list-unproven', 'report-passed'):
+            with self.subTest(event=event):
+                result = semantic.mechanical_accuracy(case, {**decision, 'events': [*decision['events'], event]})
+                self.assertFalse(result['forbiddenEvents'])
+        self.assertFalse(semantic.mechanical_accuracy(case, {**decision, 'outcome': 'proceed'})['outcome'])
+
+
 class MatrixSemanticTests(unittest.TestCase):
     def setUp(self, *, independent_scoring=None):
         self.fixture=fixture.MatrixProviderEvidenceTests(methodName='runTest')
