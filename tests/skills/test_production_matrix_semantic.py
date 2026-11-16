@@ -138,6 +138,19 @@ class MatrixSemanticTests(unittest.TestCase):
         self.assertIn(b'semantic=fail', prompt)
         self.assertIn(base.input_raw, prompt)
 
+    def test_stop_with_evidence_reason_distinguishes_old_evidence_from_current_error(self):
+        base = self.prepared
+        marker = '過去の実行済みテストと区別'.encode()
+        self.assertNotIn(marker, semantic.prompt(base))
+        dedicated = replace(base, binding_raw=semantic.io.encoded(
+            {**base.bindings, 'caseId': semantic.STOP_WITH_EVIDENCE_CASE_ID}))
+        with patch.object(semantic, 'rebound', return_value=dedicated):
+            prompt = semantic.prompt(dedicated)
+        self.assertIn(marker, prompt)
+        self.assertIn('対象要件を未証明と扱う場合'.encode(), prompt)
+        self.assertIn('今回の実行を成功と扱う場合'.encode(), prompt)
+        self.assertNotIn('イベントだけが揃う場合'.encode(), prompt)
+
     def test_matching_six_skill_null_path_with_original_host_and_rollout_can_be_correct(self):
         prepared=self.matching_originals(None);answer=copy.deepcopy(self.answer)
         answer.update(bindings=prepared.bindings,accuracy=True,semantic='pass',routingFindings=[])

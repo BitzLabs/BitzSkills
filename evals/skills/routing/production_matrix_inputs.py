@@ -11,6 +11,11 @@ INPUT_NAMES = ('routing', 'behaviorSafety', 'protocol', 'catalog', 'instructions
 VERSION = 'public-production-matrix-inputs-0.1.0'
 SUBSET_VERSION = 'public-production-subset-inputs-0.1.0'
 REGRESSION_CASE_ID = 'SE-047'
+STOP_WITH_EVIDENCE_CASE_ID = 'SE-048'
+REGRESSION_INPUTS = {
+    REGRESSION_CASE_ID: 'stopEvidenceRegression',
+    STOP_WITH_EVIDENCE_CASE_ID: 'stopWithEvidenceRegression',
+}
 
 CATEGORY_COUNTS = dict(explicit=6, implicit=6, contextual=6, negative=10, conflict=6, behavior=6, safety=6)
 
@@ -33,14 +38,19 @@ class MatrixInputs:
                     payloadSha256=ledger.sha(self.payloads[index]), contractSha256=ledger.sha(self.contract_raw))
 
 
+def regression_ids(selected):
+    if selected in ([REGRESSION_CASE_ID], list(REGRESSION_INPUTS)):
+        return selected
+    return ()
+
+
 def input_names(contract):
-    if isinstance(contract, dict) and contract.get('caseIds') == [REGRESSION_CASE_ID]:
-        return (*INPUT_NAMES, 'stopEvidenceRegression')
-    return INPUT_NAMES
+    selected = contract.get('caseIds') if isinstance(contract, dict) else None
+    return (*INPUT_NAMES, *(REGRESSION_INPUTS[case_id] for case_id in regression_ids(selected)))
 
 
 def valid_subset(selected):
-    return selected == [REGRESSION_CASE_ID] or (
+    return bool(regression_ids(selected)) or (
         isinstance(selected, list) and 1 <= len(selected) < 46
         and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
         and selected == sorted(set(selected)))
@@ -87,11 +97,11 @@ def bind(contract_raw, **raw_inputs):
         validator.validate(case)
     trace.require([c['caseId'] for c in cases] == [f'SE-{n:03d}' for n in range(1,47)], 'matrix fixed case order')
     trace.require(trace.json_equal(dict(Counter(c['category'] for c in cases)), CATEGORY_COUNTS), 'matrix category denominators')
-    if selected == [REGRESSION_CASE_ID]:
-        case = trace.strict_json(raw_inputs['stopEvidenceRegression'])
+    for case_id in regression_ids(selected):
+        case = trace.strict_json(raw_inputs[REGRESSION_INPUTS[case_id]])
         validator.validate(case)
-        trace.require(case['caseId'] == REGRESSION_CASE_ID, 'matrix regression case identity')
-        cases = [case]
+        trace.require(case['caseId'] == case_id, 'matrix regression case identity')
+        cases.append(case)
     catalog = trace.strict_json(raw_inputs['catalog'])
     trace.require(isinstance(catalog, dict) and set(catalog) == {'schemaVersion','catalogVersion','events'}
                   and catalog['schemaVersion'] == '1.0' and isinstance(catalog['catalogVersion'], str)

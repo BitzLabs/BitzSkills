@@ -27,6 +27,8 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     catalog='evals/skills/event-catalog.json', instructions='evals/skills/routing/production-matrix-instructions-v0.1.txt',
     caseSchema='evals/skills/schemas/case.schema.json')
 REGRESSION_PATH = 'evals/skills/routing/stop-evidence-regression-v0.1.json'
+REGRESSION_PATHS = dict(stopEvidenceRegression=REGRESSION_PATH,
+    stopWithEvidenceRegression='evals/skills/routing/stop-with-evidence-regression-v0.1.json')
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
     'production_matrix_preflight', 'production_heldout_model_catalog', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run', 'production_failure_streak',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
@@ -50,9 +52,8 @@ SDK_TOP = {'openai_codex', 'openai_codex-0.160.1.dist-info', 'annotated_types',
 
 
 def source_files(contract):
-    if 'stopEvidenceRegression' in matrix.inputs.input_names(contract):
-        return (*SOURCE_FILES, REGRESSION_PATH)
-    return SOURCE_FILES
+    return (*SOURCE_FILES, *(REGRESSION_PATHS[name] for name in matrix.inputs.input_names(contract)
+        if name in REGRESSION_PATHS))
 
 
 def config_for(base, contract, *, repository):
@@ -210,7 +211,7 @@ def _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, *, ca
     originals = {name: guard.git(repository, 'show', source+':'+name) for name in source_files(bound.contract)}
     for name, raw in originals.items():
         require(io.read_regular(repository/name) == raw, 'matrix fixed source drift')
-    paths = {**INPUT_PATHS, 'stopEvidenceRegression': REGRESSION_PATH}
+    paths = {**INPUT_PATHS, **REGRESSION_PATHS}
     for name, raw in bound.input_bytes.items():
         require(raw == originals[paths[name]], 'matrix input outside fixed Git: '+name)
     schema_raw = decision_schema(originals[inventory.SCHEMA])

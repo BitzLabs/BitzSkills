@@ -152,32 +152,45 @@ class MatrixPreflightTests(unittest.TestCase):
         self.bound=self.bind();self.deployment['executionSha256']=preflight.io.sha(self.bound.execution_raw)
         with self.assertRaisesRegex(ValueError,'outside fixed Git'):self.verify()
 
-    def test_stop_evidence_regression_must_match_fixed_git_even_when_repinned(self):
-        path = preflight.REGRESSION_PATH
-        original = (ROOT / path).read_bytes()
-        self.originals[path] = original
-        (self.repository / path).write_bytes(original)
-        budget = dict(primary=2, independent=2, automaticRetries=0, delegations=0)
+    def test_stop_evidence_pair_must_match_fixed_git_even_when_repinned(self):
+        for name, path in preflight.REGRESSION_PATHS.items():
+            raw = (ROOT / path).read_bytes()
+            self.originals[path] = raw
+            (self.repository / path).write_bytes(raw)
+            self.raws[name] = raw
+        budget = dict(primary=4, independent=4, automaticRetries=0, delegations=0)
+        case_ids = ['SE-047', 'SE-048']
         self.input_contract.update(version=preflight.matrix.inputs.SUBSET_VERSION,
-                                   scope='public-six-skill-subset-input-binding-only',
-                                   caseIds=['SE-047'], budget=budget)
-        self.execution.update(version=preflight.matrix.SUBSET_VERSION, caseIds=['SE-047'], budget=budget)
+                                   scope='public-six-skill-subset-input-binding-only', caseIds=case_ids,
+                                   budget=budget)
+        self.execution.update(version=preflight.matrix.SUBSET_VERSION, caseIds=case_ids, budget=budget)
 
-        def repin(raw):
-            self.raws['stopEvidenceRegression'] = raw
-            self.input_contract['inputSha256']['stopEvidenceRegression'] = preflight.io.sha(raw)
+        def repin():
+            self.input_contract['inputSha256'] = {name: preflight.io.sha(raw) for name, raw in self.raws.items()}
             self.input_raw = preflight.io.encoded(self.input_contract)
             self.execution['inputContractSha256'] = preflight.io.sha(self.input_raw)
             self.bound = self.bind()
             self.deployment['executionSha256'] = preflight.io.sha(self.bound.execution_raw)
 
-        repin(original)
-        self.assertEqual(self.verify()['sourceSha256'][path], preflight.io.sha(original))
-        edited = preflight.trace.strict_json(original)
-        edited['expected']['requiredEvents'].remove('list-unproven')
-        repin(preflight.io.encoded(edited))
-        with self.assertRaisesRegex(ValueError, 'matrix input outside fixed Git: stopEvidenceRegression'):
-            self.verify()
+        repin()
+        source_hashes = self.verify()['sourceSha256']
+        self.assertEqual([self.bound.slot(n)['caseId'] for n in range(1, 5)],
+                         ['SE-047', 'SE-047', 'SE-048', 'SE-048'])
+        for payload in self.bound.matrix.payloads:
+            self.assertEqual(set(preflight.trace.strict_json(payload)['case']), {'prompt', 'context'})
+        with self.assertRaises(ValueError):
+            self.bound.slot(5)
+        for name, path in preflight.REGRESSION_PATHS.items():
+            with self.subTest(name=name):
+                original = self.raws[name]
+                self.assertEqual(source_hashes[path], preflight.io.sha(original))
+                edited = preflight.trace.strict_json(original)
+                edited['expected']['outcome'] = 'proceed'
+                self.raws[name] = preflight.io.encoded(edited)
+                repin()
+                with self.assertRaisesRegex(ValueError, 'matrix input outside fixed Git: '+name):
+                    self.verify()
+                self.raws[name] = original
 
     def test_fixed_source_hardlink_and_changed_driver_are_rejected(self):
         path=self.repository/'evals/skills/routing/production_matrix_preflight.py';original=path.read_bytes();path.write_bytes(original+b'changed')
