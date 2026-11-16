@@ -267,7 +267,7 @@ class HeldoutExecutionTests(unittest.TestCase):
             self.bind()
         self.reader.assert_not_called()
 
-    def select_75_execution(self):
+    def select_75_execution(self, campaign=x.successor.CAMPAIGN_75, predecessor=None):
         self.input_fixture.select_75_resources()
         self.input_raw = io.encoded(self.input_fixture.contract)
         self.reader.return_value = self.raws['cases']
@@ -281,12 +281,11 @@ class HeldoutExecutionTests(unittest.TestCase):
                 self.old.originals[name] = raw
                 (self.repository/name).write_bytes(raw)
         self.select_product(x.EXECUTION_DEPLOYMENT_75, 3)
-        campaign = x.successor.CAMPAIGN_75
         context = preflight.public.capture.context_profile(
             self.old.originals[preflight.public.inventory.CONTEXT], self.deployment)
         self.execution.update(version=x.SUCCESSOR_VERSION, campaignId=campaign,
             outputRelativeRoot='measurements/'+campaign, inputContractSha256=io.sha(self.input_raw),
-            ledger=dict(harnessRetries=0, predecessor=None),
+            ledger=dict(harnessRetries=0, predecessor=predecessor),
             conditionContextSha256=x.condition_context_sha256(context))
 
     def test_75_execution_binds_adopted_input_and_shared_condition(self):

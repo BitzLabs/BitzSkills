@@ -43,7 +43,7 @@ class HeldoutRunTests(unittest.TestCase):
                 marker=stage.endswith('_reserved') or stage.endswith('_started')
                 kwargs={'measured_correct':correct} if stage=='parent_verified' else {}
                 if stage.endswith('_failed') or (stage.endswith('_reserved')
-                        and self.bundle.bound.contract['campaignId'] == run.x.successor.CAMPAIGN_75):
+                        and self.bundle.bound.contract['campaignId'] in run.x.successor.CAMPAIGNS_75):
                     kwargs['resource_proof_sha256']=run.io.sha(run.io.encoded(self.proof))
                 ledger.append(ordinal,stage,None if marker else 'd'*64,**kwargs)
 
@@ -59,8 +59,8 @@ class HeldoutRunTests(unittest.TestCase):
         self.append(args[2],['parent_verified'])
         return dict(status='measured_incorrect',ledgerFinalized=True)
 
-    def configure_75_bundle(self):
-        self.fixture.select_75_execution()
+    def configure_75_bundle(self, **options):
+        self.fixture.select_75_execution(**options)
         self.bound = self.fixture.bind()
         self.proof.update(executionSha256=run.io.sha(self.bound.execution_raw),
             inputContractSha256=run.io.sha(self.bound.input_contract_raw), sourceSha256={})
@@ -76,6 +76,31 @@ class HeldoutRunTests(unittest.TestCase):
         self.assertEqual((self.primary.call_count, self.independent.call_count, self.parent.call_count), (0, 1, 1))
         self.assertEqual(run.run(self.bundle)['slots'], [])
         self.assertEqual(self.parent.call_count, 1)
+
+    def test_75_continuation_starts_at_second_slot_and_preserves_first_consumption(self):
+        self.configure_75_bundle()
+        self.append(1, ['primary_reserved', 'primary_started'])
+        prior = run.ledger_for(self.bundle, self.proof)
+        with prior.locked() as held:
+            held.append(None, 'global_stop', 'e'*64, stop_reason='evidence_invalid')
+            rows, head = held._history()
+        original = {path.name: path.read_bytes() for path in prior.root.glob('*.json')}
+        predecessor = dict(kind='successor-0.3.0', campaignId=run.x.successor.CAMPAIGN_75,
+            contractSha256=prior.digest, headSha256=head, events=len(rows))
+        self.fixture = fixture.HeldoutExecutionTests(methodName='runTest')
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.configure_75_bundle(campaign=run.x.successor.CONTINUATION_75, predecessor=predecessor)
+        result = run.run(self.bundle, maximum_slots=1)
+        self.assertEqual([slot['ordinal'] for slot in result['slots']], [2])
+        self.assertEqual(result['summary']['primaryReserved'], 2)
+        self.assertEqual(result['summary']['independentReserved'], 1)
+        self.assertEqual(result['summary']['interruptedSlots'], 1)
+        self.assertEqual(result['summary']['incorrect'], 1)
+        self.assertEqual(result['summary']['unattempted'], 22)
+        self.assertEqual(original, {name: (prior.root/name).read_bytes() for name in original})
+        self.assertEqual(run.run(self.bundle)['slots'], [])
+        self.assertEqual(self.primary.call_count, 1)
 
     def test_75_quota_wait_does_not_reserve_or_stop_and_pending_primary_resumes(self):
         self.configure_75_bundle()
