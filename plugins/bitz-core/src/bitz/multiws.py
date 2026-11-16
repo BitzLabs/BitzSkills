@@ -1022,7 +1022,8 @@ def selected_is_registered(pre: "PrecheckResult", selected_rel: str) -> bool:
     shape_diag, members_raw = _validate_multiworkspace_shape(pre.root_config, None)
     if shape_diag is not None or members_raw is None:
         return False
-    return any(path == selected_rel for _mid, path in members_raw)
+    # メンバーのパスの照合は、宣言したパスとディレクトリの名前を、どちらもNFCにしたセグメントの完全一致で行う（安全な入出力・互換性 §6.1）。
+    return any(pathown.nfc(path) == pathown.nfc(selected_rel) for _mid, path in members_raw)
 
 
 def catalog_member_id(pre: "PrecheckResult", selected_rel: str) -> str | None:
@@ -1033,7 +1034,21 @@ def catalog_member_id(pre: "PrecheckResult", selected_rel: str) -> str | None:
     shape_diag, members_raw = _validate_multiworkspace_shape(pre.root_config, None)
     if shape_diag is not None or members_raw is None:
         return None
-    return next((mid for mid, path in members_raw if path == selected_rel), None)
+    return next((mid for mid, path in members_raw if pathown.nfc(path) == pathown.nfc(selected_rel)), None)
+
+
+def declared_member_path(pre: "PrecheckResult", selected_rel: str) -> str | None:
+    """``selected_rel``とNFCで一致するメンバーの、カタログに宣言した綴りのパスを返す。ルート、未登録、カタログの形が不正なときは``None``。
+
+    出力（`workspace.path`）には宣言の綴りを使う（ディスク上の綴りがNFDでも変わらない）。
+    """
+
+    if selected_rel == "." or pre.root_config is None:
+        return None
+    shape_diag, members_raw = _validate_multiworkspace_shape(pre.root_config, None)
+    if shape_diag is not None or members_raw is None:
+        return None
+    return next((path for _mid, path in members_raw if pathown.nfc(path) == pathown.nfc(selected_rel)), None)
 
 
 def _read_base_root_config(
