@@ -35,6 +35,8 @@ RETRYABLE = frozenset({'primary_failed', 'independent_failed', 'interrupted'})
 
 
 CAMPAIGN_75 = 'heldout-matrix-75-collection-07'
+CONTINUATION_75 = 'heldout-matrix-75-collection-07-remaining23'
+CAMPAIGNS_75 = frozenset({CAMPAIGN_75, CONTINUATION_75})
 
 
 def predecessor_spec(value, campaign_id):
@@ -43,10 +45,14 @@ def predecessor_spec(value, campaign_id):
     require(isinstance(value, dict) and set(value) == {'kind', 'campaignId', 'contractSha256',
         'headSha256', 'events'} and value['kind'] in PREDECESSOR_KINDS
         and isinstance(value['campaignId'], str) and CAMPAIGN.fullmatch(value['campaignId']) is not None
-        and value['campaignId'] not in {campaign_id, CAMPAIGN_75} and type(value['events']) is int
+        and value['campaignId'] not in {campaign_id, CONTINUATION_75} and type(value['events']) is int
         and 0 <= value['events'] <= MAX_EVENTS, 'heldout successor predecessor')
     require(value['kind'] != 'continuation-0.2.0' or value['campaignId'] == continuation.CAMPAIGN,
         'heldout successor continuation predecessor campaign')
+    if campaign_id == CONTINUATION_75 or value['campaignId'] == CAMPAIGN_75:
+        require(campaign_id in {None, CONTINUATION_75}
+            and value['campaignId'] == CAMPAIGN_75 and value['kind'] == 'successor-0.3.0'
+            and value['events'] == 3, 'heldout 75-resource stopped predecessor')
     io.pin(value['contractSha256'])
     io.pin(value['headSha256'])
     return value
@@ -56,7 +62,7 @@ def contract(raw):
     require(isinstance(raw, bytes), 'heldout successor contract bytes')
     value = inputs.parse(raw)
     require(isinstance(value, dict) and set(value) == CONTRACT_KEYS, 'heldout successor contract inventory')
-    campaign_75 = value['campaignId'] == CAMPAIGN_75
+    campaign_75 = isinstance(value['campaignId'], str) and value['campaignId'] in CAMPAIGNS_75
     set_version = inputs.SET_VERSION_75 if campaign_75 else inputs.SET_VERSION
     require(value['version'] == VERSION and isinstance(value['campaignId'], str)
         and CAMPAIGN.fullmatch(value['campaignId']) is not None and value['model'] == 'gpt-6.1-sol'
@@ -75,7 +81,8 @@ def contract(raw):
     if campaign_75:
         require(inputs.trace.json_equal(budget, dict(primary=24, independent=24,
             automaticRetries=0, delegations=0, harnessRetries=0))
-            and value['predecessor'] is None, 'heldout 75-resource campaign budget and predecessor')
+            and (value['predecessor'] is None) == (value['campaignId'] == CAMPAIGN_75),
+            'heldout 75-resource campaign budget and predecessor')
     predecessor_spec(value['predecessor'], value['campaignId'])
     return value
 
@@ -83,7 +90,7 @@ def contract(raw):
 def root_for(campaign_id):
     require(isinstance(campaign_id, str) and CAMPAIGN.fullmatch(campaign_id) is not None,
         'heldout successor campaign root')
-    if campaign_id == CAMPAIGN_75:
+    if campaign_id in CAMPAIGNS_75:
         return inputs.collection_75_root()/ROOT_PARENT/campaign_id
     return inputs.PRIVATE_CASES.parent/ROOT_PARENT/campaign_id
 
@@ -178,7 +185,12 @@ def predecessor_state(spec, *, seal_sha256=None, directory=None, depth=0):
         rows, head = snapshot.rows, snapshot.head
     else:
         ledger = SuccessorLedger(root, raw, depth=depth+1)
+        require(ledger.contract['campaignId'] == spec['campaignId'], 'heldout successor predecessor campaign drift')
         state, rows, head = ledger.scan(directory, seal_sha256=seal_sha256)
+        if spec['campaignId'] == CAMPAIGN_75:
+            require([row['stage'] for row in rows] == ['primary_reserved', 'primary_started', 'global_stop']
+                and rows[0]['ordinal'] == rows[1]['ordinal'] == 1
+                and rows[-1]['stopReason'] == 'evidence_invalid', 'heldout 75-resource interrupted first slot')
     require(len(rows) == spec['events'] and head == spec['headSha256'],
         'heldout successor predecessor journal drift')
     boundary(state, rows)
@@ -190,7 +202,7 @@ def open_for(raw):
 
 
 def _measurement_stopped(campaign_id, rows):
-    if campaign_id != CAMPAIGN_75 or not rows:
+    if campaign_id not in CAMPAIGNS_75 or not rows:
         return False
     last = rows[-1]
     return last['stage'] in FAILURES.values() or last['measuredCorrect'] is False
@@ -207,7 +219,7 @@ class SuccessorLedger(legacy.HeldoutLedger):
         self.sealed = False
 
     def _private_root(self):
-        if self.contract['campaignId'] == CAMPAIGN_75:
+        if self.contract['campaignId'] in CAMPAIGNS_75:
             return inputs.collection_75_root()
         return super()._private_root()
 

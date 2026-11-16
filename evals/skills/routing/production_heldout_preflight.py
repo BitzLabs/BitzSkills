@@ -36,13 +36,13 @@ SOURCE_FILES = tuple(dict.fromkeys([*public.SOURCE_FILES, *inputs.SOURCE_FILES,
 
 
 def public_paths(c):
-    if c['campaignId'] == execution.successor.CAMPAIGN_75:
+    if c['campaignId'] in execution.successor.CAMPAIGNS_75:
         return dict(inputs.PUBLIC_PATHS, reviewedSet=inputs.REVIEW_PATH_75)
     return inputs.PUBLIC_PATHS
 
 
 def source_files(c):
-    if c['campaignId'] == execution.successor.CAMPAIGN_75:
+    if c['campaignId'] in execution.successor.CAMPAIGNS_75:
         return (*SOURCE_FILES, inputs.REVIEW_PATH_75,
             'evals/skills/routing/production_matrix_rate_limits.py',
             'evals/skills/routing/production_matrix_continuation.py')

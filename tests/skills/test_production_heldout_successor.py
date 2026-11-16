@@ -111,6 +111,29 @@ class SuccessorLedgerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             s.open_for(self.raw('heldout-matrix-other-01', predecessor=predecessor))
 
+    def test_75_continuation_rejects_safety_stop_and_invalid_predecessor_pins(self):
+        prior = s.open_for(self.raw(s.CAMPAIGN_75, retries=0, setVersion=s.inputs.SET_VERSION_75))
+        with prior.locked() as held:
+            self.step(held, 1, 'primary_reserved')
+            self.step(held, 1, 'primary_started')
+            self.stop(held, 'unsafe')
+        predecessor = self.spec(prior)
+        with self.assertRaisesRegex(ValueError, 'stopped predecessor'):
+            s.open_for(self.raw(s.CONTINUATION_75, dict(predecessor, events=2),
+                retries=0, setVersion=s.inputs.SET_VERSION_75))
+        wrong = s.open_for(self.raw(s.CONTINUATION_75, dict(predecessor, headSha256='0'*64),
+            retries=0, setVersion=s.inputs.SET_VERSION_75))
+        with self.assertRaises(ValueError):
+            with wrong.locked():
+                pass
+        successor = s.open_for(self.raw(s.CONTINUATION_75, predecessor,
+            retries=0, setVersion=s.inputs.SET_VERSION_75))
+        with self.assertRaisesRegex(ValueError, 'interrupted first slot'):
+            with successor.locked():
+                pass
+        self.assertFalse((prior.root/s.SEAL_NAME).exists())
+        self.assertFalse((successor.root/'contract.json').exists())
+
     def test_fresh_ledger_requires_daily_proof_and_ordered_fresh_slots(self):
         with self.ledger('heldout-matrix-fresh-01').locked() as held:
             with self.assertRaises(ValueError):

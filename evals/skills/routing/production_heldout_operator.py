@@ -93,7 +93,7 @@ class QuotaDeferred(Exception):
 
 
 def admit_quota(repository, bound):
-    if bound.contract['campaignId'] != x.successor.CAMPAIGN_75:
+    if bound.contract['campaignId'] not in x.successor.CAMPAIGNS_75:
         return
     import production_matrix_continuation as continuation
     import production_matrix_rate_limits as rate_limits
