@@ -335,6 +335,34 @@ class MemberPathTests(_TmpBase):
         self.assertEqual([m.id for m in pre.members], ["web", "web2"])
 
 
+    def stopped_selection(self):
+        """カタログに`web: apps/café`（NFC）と設定のない`api`を宣言し、ディスクにはNFDの`apps/café/.spec/bitz.yaml`だけを置く。NFDのディレクトリで`check`を実行する。"""
+        _require_nfc_nfd_distinct(self.root)
+        _write(self.root, ".spec/bitz.yaml", self.root_yaml(("web", f"apps/{NFC_NAME}"), ("api", "services/api")))
+        _write(self.root, f"apps/{NFD_NAME}/.spec/bitz.yaml", self.member_yaml("web"))
+        _write(self.root, "services/api/keep", "x\n")
+        _commit(self.root)
+        parsed = parse_argv(["check", "--base", "HEAD", "--format", "json"])
+        return check_mod.run(parsed, str(self.root / "apps" / NFD_NAME), dict(os.environ))
+
+    def test_a_stopped_selection_in_an_nfd_member_directory_is_the_registered_member_with_the_declared_spelling(self):
+        result, code = self.stopped_selection()
+        self.assertEqual((result["status"], code), ("failed", 1))
+        self.assertEqual(result["workspace"], {"id": "web", "path": f"apps/{NFC_NAME}"})
+        self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-MEMBER-001"])
+
+    def test_registration_and_catalog_id_compare_the_member_path_in_nfc(self):
+        _write(self.root, ".spec/bitz.yaml", self.root_yaml(("web", f"apps/{NFC_NAME}"), ("api", "services/api")))
+        _commit(self.root)
+        pre = self.precheck()
+        for spelled in (f"apps/{NFC_NAME}", f"apps/{NFD_NAME}"):
+            with self.subTest(spelled=spelled):
+                self.assertTrue(multiws.selected_is_registered(pre, spelled))
+                self.assertEqual(multiws.catalog_member_id(pre, spelled), "web")
+                self.assertEqual(multiws.declared_member_path(pre, spelled), f"apps/{NFC_NAME}")
+        self.assertFalse(multiws.selected_is_registered(pre, f"apps/{NFC_NAME.upper()}"))
+        self.assertIsNone(multiws.declared_member_path(pre, "."))
+
 class GitPathMatchingTests(_TmpBase):
     """Gitのパスと`implements`・`tests[].path`の逆索引の照合、CLIで明示したパスの照合（NFCの完全一致）。"""
 
