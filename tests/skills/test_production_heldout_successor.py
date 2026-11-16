@@ -112,6 +112,10 @@ class SuccessorLedgerTests(unittest.TestCase):
             s.open_for(self.raw('heldout-matrix-other-01', predecessor=predecessor))
 
     def test_75_continuation_rejects_safety_stop_and_invalid_predecessor_pins(self):
+        private_cases = self.base/'collection-05'/'cases.json'
+        fixture = patch.object(s.inputs, 'PRIVATE_CASES', private_cases)
+        fixture.start()
+        self.addCleanup(fixture.stop)
         prior = s.open_for(self.raw(s.CAMPAIGN_75, retries=0, setVersion=s.inputs.SET_VERSION_75))
         with prior.locked() as held:
             self.step(held, 1, 'primary_reserved')
