@@ -103,6 +103,20 @@ class MatrixSemanticTests(unittest.TestCase):
         f.rehash()
         return semantic.prepare(f.bind(),source_repository=f.source_repository,artifact_repository=f.artifact_repository)
 
+    def test_stop_evidence_reason_check_is_limited_to_public_regression(self):
+        base = self.prepared
+        marker = '改行入り件名を拒否する必須要件'.encode()
+        self.assertNotIn(marker, semantic.prompt(base))
+        dedicated = replace(base, binding_raw=semantic.io.encoded(
+            {**base.bindings, 'caseId': semantic.REGRESSION_CASE_ID}))
+        # The original-evidence check is covered separately. Isolate prompt rendering here.
+        with patch.object(semantic, 'rebound', return_value=dedicated):
+            prompt = semantic.prompt(dedicated)
+        self.assertIn(marker, prompt)
+        self.assertIn('イベントだけが揃う場合'.encode(), prompt)
+        self.assertIn(b'semantic=fail', prompt)
+        self.assertIn(base.input_raw, prompt)
+
     def test_matching_six_skill_null_path_with_original_host_and_rollout_can_be_correct(self):
         prepared=self.matching_originals(None);answer=copy.deepcopy(self.answer)
         answer.update(bindings=prepared.bindings,accuracy=True,semantic='pass',routingFindings=[])
