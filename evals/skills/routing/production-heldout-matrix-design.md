@@ -236,3 +236,8 @@ python -B evals/skills/routing/production_heldout_inputs.py --source <確定40�
 第17枠が不正解となった112イベントを持つ先行campaignから開始する。
 元の中断1枠と確定済み16枠を維持し、次の予約対象を第18枠とする。
 修正した共通指示の評価結果には、当該実行条件の識別子を記録する。
+
+### 第18枠不正解後の継続
+
+後継campaign `heldout-matrix-75-collection-07-remaining6` は、第18枠が不正解となった
+7イベントを持つ先行campaignから開始する。予定24枠のうち、第19〜24枠を対象とする。

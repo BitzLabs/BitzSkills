@@ -161,12 +161,19 @@ class SuccessorLedgerTests(unittest.TestCase):
             self.assertEqual((summary['nextOrdinal'], summary['unattempted']), (18, 7))
             with self.assertRaises(ValueError):
                 self.step(held, 17, 'primary_reserved')
-            self.complete(held, 18)
-        with final.locked() as held:
-            self.assertEqual(held.summary()['nextOrdinal'], 19)
-            self.assertEqual(held.summary()['incorrect'], 1)
+            self.complete(held, 18, correct=False)
+        final_spec = self.spec(final)
+        remaining = s.open_for(self.raw(s.REMAINING_SIX_75, final_spec, **options))
+        with remaining.locked() as held:
+            summary = held.summary()
+            self.assertEqual((summary['correct'], summary['incorrect'], summary['interruptedSlots']), (15, 2, 1))
+            self.assertEqual((summary['primaryReserved'], summary['independentReserved']), (18, 17))
+            self.assertEqual((summary['nextOrdinal'], summary['unattempted']), (19, 6))
+            with self.assertRaises(ValueError):
+                self.step(held, 18, 'primary_reserved')
+            self.complete(held, 19)
         with self.assertRaisesRegex(ValueError, 'stopped predecessor'):
-            s.open_for(self.raw('heldout-matrix-other-01', predecessor=predecessor))
+            s.open_for(self.raw('heldout-matrix-other-01', predecessor=final_spec))
 
     def test_fresh_ledger_requires_daily_proof_and_ordered_fresh_slots(self):
         with self.ledger('heldout-matrix-fresh-01').locked() as held:
