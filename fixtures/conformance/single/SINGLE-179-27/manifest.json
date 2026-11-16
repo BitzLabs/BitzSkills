@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-179-27",
+  "description": "cwdがNFDの名前のディレクトリで、NFCで宣言したとき、NFCで一致するcwdを実在の綴りで起動し、cwd相対の引数は同じ綴りになるので通る（引数の綴りは変わらない）",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "d",
+        "to": "cafe\u0301"
+      }
+    ],
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

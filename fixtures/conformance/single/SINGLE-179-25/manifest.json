@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-179-25",
+  "description": "NFDの名前のテストファイルを、NFCで宣言したとき、起動するコマンドの引数は、存在の検査で一致した実在の綴り（NFD）で組み立てる（公開結果の引数は宣言の綴り）",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tests/n.py",
+        "to": "tests/cafe\u0301.py"
+      }
+    ],
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}
