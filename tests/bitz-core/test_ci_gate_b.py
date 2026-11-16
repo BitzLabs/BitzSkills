@@ -60,7 +60,7 @@ class ShardingTests(unittest.TestCase):
         plan = partition_plan(step_ids(5), 4)
         # 予測秒数の範囲は200〜300秒（4分割のまま。fixtureが増えて240秒を超えた。ユーザーの決定）。
         self.assertTrue(all(200 <= row["predictedSeconds"] <= 300 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 784)
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 785)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
