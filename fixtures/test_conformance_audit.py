@@ -9848,7 +9848,7 @@ class AuditTests(unittest.TestCase):
                                                   "source": {"kind": "invocation", "argument": ".spec/requirements/REQ-001-caf\u00e9.md"}}])
         self.assertEqual((result["status"], result["checkedDocumentCount"]), ("failed", 0))
         # 複合ワークスペース。
-        for identifier, summary in (("MULTI-067-01", member_collision), ("MULTI-067-03", "メンバーのパスが重複しています"), ("MULTI-067-04", "メンバーのパスが別のメンバーの配下にあります"),
+        for identifier, summary in (("MULTI-067-01", member_collision), ("MULTI-067-04", "メンバーのパスが別のメンバーの配下にあります"),
                                     ("MULTI-067-05", "メンバーのパスの経路にシンボリックリンクが含まれています"), ("MULTI-067-06", "メンバーのパスの経路にシンボリックリンクが含まれています")):
             with self.subTest(identifier=identifier):
                 result = read(identifier)
@@ -10066,7 +10066,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-179-18", dict(violations=["ext/a.py"])), 
             ("SINGLE-179-22", dict(outcome="missing")), ("SINGLE-179-24", dict(outcome="ok")),
             ("MULTI-067-01", dict(outcome="duplicate")), ("MULTI-067-01", dict(outcome="ok")), ("MULTI-067-02", dict(outcome="collision")),
-            ("MULTI-067-03", dict(outcome="ok")), ("MULTI-067-04", dict(outcome="duplicate")), ("MULTI-067-05", dict(outcome="ok")),
+            ("MULTI-067-03", dict(outcome="ok")), ("MULTI-067-03", dict(outcome="duplicate")), ("MULTI-067-04", dict(outcome="duplicate")), ("MULTI-067-05", dict(outcome="ok")),
             ("MULTI-067-06", dict(outcome="nested")), ("MULTI-067-07", dict(outcome="ok")), ("MULTI-067-09", dict(outcome="missing")),
             ("MULTI-067-08", dict(outcome="violation")),
             ("SINGLE-179-25", dict(outcome="failed", invalid=[("TECH-001", 0, "missing")])), ("SINGLE-179-26", dict(spelling=False)),
