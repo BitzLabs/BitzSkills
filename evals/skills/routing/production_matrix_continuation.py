@@ -126,8 +126,10 @@ def run_next(repository: Path, bundle: Path, approved_condition: str, read_limit
     """独立検分された固定条件について、承認済みの実行器から呼び出す入口。"""
     require(bundle.is_relative_to(repository/'.venv') and '..' not in bundle.parts,
         'matrix continuation bundle boundary')
-    raws={name:io.read_regular(bundle/(name+'.input.json')) for name in matrix.inputs.INPUT_NAMES}
-    bound=matrix.bind(io.read_regular(bundle/'execution.json'),io.read_regular(bundle/'input-contract.json'),**raws)
+    execution_raw=io.read_regular(bundle/'execution.json')
+    contract=matrix.execution_contract(execution_raw)
+    raws={name:io.read_regular(bundle/(name+'.input.json')) for name in matrix.inputs.input_names(contract)}
+    bound=matrix.bind(execution_raw,io.read_regular(bundle/'input-contract.json'),**raws)
     c=bound.contract
     require(c.get('continuationPolicy')==matrix.CONTINUATION_POLICY, 'matrix continuation opt-in required')
     deployment=io.read_regular(bundle/'deployment.json')

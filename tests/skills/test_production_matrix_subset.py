@@ -43,6 +43,37 @@ class MatrixSubsetTests(unittest.TestCase):
         for ordinal in [0,7,True]:
             with self.subTest(ordinal=ordinal),self.assertRaises(ValueError):f.bound.slot(ordinal)
 
+    def test_stop_evidence_regression_is_a_separately_pinned_two_slot_subset(self):
+        f = self.f
+        case_path = semantic.provider.preflight.REGRESSION_PATH
+        raw = (ROOT / case_path).read_bytes()
+        raws = {**f.raws, 'stopEvidenceRegression': raw}
+        budget = dict(primary=2, independent=2, automaticRetries=0, delegations=0)
+        contract = matrix.strict_json(f.input_raw)
+        contract.update(caseIds=['SE-047'], budget=budget)
+        contract['inputSha256']['stopEvidenceRegression'] = matrix.io.sha(raw)
+        input_raw = matrix.io.encoded(contract)
+        execution = {**f.contract, 'caseIds': ['SE-047'], 'budget': budget,
+                     'inputContractSha256': matrix.io.sha(input_raw)}
+        execution_raw = matrix.io.encoded(execution)
+        bound = matrix.bind(execution_raw, input_raw, **raws)
+
+        self.assertEqual(bound.input_bytes, raws)
+        self.assertEqual(
+            [(bound.slot(n)['caseId'], bound.slot(n)['repetition']) for n in (1, 2)],
+            [('SE-047', 1), ('SE-047', 2)])
+        self.assertEqual(set(matrix.strict_json(bound.matrix.payloads[0])['case']), {'prompt', 'context'})
+        self.assertIn(case_path, semantic.provider.preflight.source_files(bound.contract))
+        self.assertNotIn(case_path, semantic.provider.preflight.source_files(f.bound.contract))
+        with self.assertRaises(ValueError):
+            bound.slot(3)
+        with self.assertRaises(ValueError):
+            matrix.bind(execution_raw, input_raw, **f.raws)
+        with self.assertRaises(ValueError):
+            matrix.bind(execution_raw, input_raw, **{**raws, 'stopEvidenceRegression': raw + b' '})
+        with self.assertRaises(ValueError):
+            matrix.execution_contract(matrix.io.encoded({**execution, 'caseIds': ['SE-001', 'SE-047']}))
+
     def test_subset_completion_counts_only_selected_slots_and_cannot_reserve_seventh(self):
         f=self.f
         self.assertIsInstance(matrix.open_ledger(f.storage,f.repository,f.bound),matrix.MatrixLedger)

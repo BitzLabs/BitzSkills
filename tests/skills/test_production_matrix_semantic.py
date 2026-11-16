@@ -12,6 +12,34 @@ import production_matrix_semantic as semantic
 import test_production_matrix_provider_evidence as fixture
 
 
+class StopEvidenceRegressionTests(unittest.TestCase):
+    def test_blocked_implementation_requires_both_evidence_events(self):
+        eval_root = ROOT / 'evals' / 'skills'
+        case = semantic.trace.strict_json(
+            (eval_root / 'routing' / 'stop-evidence-regression-v0.1.json').read_bytes())
+        schema = semantic.trace.strict_json((eval_root / 'schemas' / 'case.schema.json').read_bytes())
+        semantic.trace.jsonschema.Draft202012Validator(schema).validate(case)
+        catalog = semantic.trace.strict_json((eval_root / 'event-catalog.json').read_bytes())
+        expected = case['expected']
+        self.assertEqual(set(expected['requiredEvents']), {'preserve-core-status', 'list-unproven'})
+        self.assertLessEqual(set(expected['requiredEvents'] + expected['forbiddenEvents']), set(catalog['events']))
+        self.assertEqual(set(semantic.trace.project_case(case)), {'prompt', 'context'})
+
+        decision = dict(selectedEntry='sdd-implement', selectedPath=None, outcome='stop',
+                        events=['preserve-core-status', 'list-unproven'])
+        self.assertTrue(all(semantic.mechanical_accuracy(case, decision).values()))
+        for missing in decision['events']:
+            with self.subTest(missing=missing):
+                result = semantic.mechanical_accuracy(
+                    case, {**decision, 'events': [event for event in decision['events'] if event != missing]})
+                self.assertFalse(result['requiredEvents'])
+        for event in expected['forbiddenEvents']:
+            with self.subTest(forbidden=event):
+                result = semantic.mechanical_accuracy(case, {**decision, 'events': [*decision['events'], event]})
+                self.assertFalse(result['forbiddenEvents'])
+        self.assertFalse(semantic.mechanical_accuracy(case, {**decision, 'outcome': 'proceed'})['outcome'])
+
+
 class MatrixSemanticTests(unittest.TestCase):
     def setUp(self, *, independent_scoring=None):
         self.fixture=fixture.MatrixProviderEvidenceTests(methodName='runTest')

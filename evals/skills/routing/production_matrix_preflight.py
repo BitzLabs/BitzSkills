@@ -26,6 +26,7 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
     behaviorSafety='evals/skills/cases/behavior-safety.json', protocol='evals/skills/protocol.json',
     catalog='evals/skills/event-catalog.json', instructions='evals/skills/routing/production-matrix-instructions-v0.1.txt',
     caseSchema='evals/skills/schemas/case.schema.json')
+REGRESSION_PATH = 'evals/skills/routing/stop-evidence-regression-v0.1.json'
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
     'production_matrix_preflight', 'production_heldout_model_catalog', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run', 'production_failure_streak',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
@@ -48,6 +49,12 @@ SDK_TOP = {'openai_codex', 'openai_codex-0.160.1.dist-info', 'annotated_types',
     'typing_inspection-0.4.4.dist-info'}
 
 
+def source_files(contract):
+    if 'stopEvidenceRegression' in matrix.inputs.input_names(contract):
+        return (*SOURCE_FILES, REGRESSION_PATH)
+    return SOURCE_FILES
+
+
 def config_for(base, contract, *, repository):
     """公開の新条件だけに固定catalogを接続し、旧Canary設定は保持する。"""
     return model_catalog.configuration(base, capture.config_for(base, contract, repository=repository))
@@ -60,7 +67,7 @@ def verify_model_catalog(raw):
 
 def deployment(bound, raw):
     require(bound == matrix.bind(bound.execution_raw, bound.matrix.contract_raw,
-        **dict(zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix fixed bound drift')
+        **bound.input_bytes), 'matrix fixed bound drift')
     return deployment_for_execution(bound.execution_raw, raw)
 
 
@@ -200,11 +207,12 @@ def _verify_resources(repository, bound, deployment_raw, sdk_manifest_raw, *, ca
     require(guard.git(repository, 'rev-parse', source+'^{commit}').decode().strip() == source,
             'matrix exact source ref required')
     # 期待だけを再hashした入力、driverだけを更新した条件も固定Gitへ照合する。
-    originals = {name: guard.git(repository, 'show', source+':'+name) for name in SOURCE_FILES}
+    originals = {name: guard.git(repository, 'show', source+':'+name) for name in source_files(bound.contract)}
     for name, raw in originals.items():
         require(io.read_regular(repository/name) == raw, 'matrix fixed source drift')
-    for name, raw in zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs):
-        require(raw == originals[INPUT_PATHS[name]], 'matrix input outside fixed Git: '+name)
+    paths = {**INPUT_PATHS, 'stopEvidenceRegression': REGRESSION_PATH}
+    for name, raw in bound.input_bytes.items():
+        require(raw == originals[paths[name]], 'matrix input outside fixed Git: '+name)
     schema_raw = decision_schema(originals[inventory.SCHEMA])
     require(io.sha(schema_raw) == bound.contract['pins']['decisionSchema'], 'matrix canonical Schema pin')
     context_raw = originals[inventory.CONTEXT]

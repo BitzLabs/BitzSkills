@@ -152,6 +152,33 @@ class MatrixPreflightTests(unittest.TestCase):
         self.bound=self.bind();self.deployment['executionSha256']=preflight.io.sha(self.bound.execution_raw)
         with self.assertRaisesRegex(ValueError,'outside fixed Git'):self.verify()
 
+    def test_stop_evidence_regression_must_match_fixed_git_even_when_repinned(self):
+        path = preflight.REGRESSION_PATH
+        original = (ROOT / path).read_bytes()
+        self.originals[path] = original
+        (self.repository / path).write_bytes(original)
+        budget = dict(primary=2, independent=2, automaticRetries=0, delegations=0)
+        self.input_contract.update(version=preflight.matrix.inputs.SUBSET_VERSION,
+                                   scope='public-six-skill-subset-input-binding-only',
+                                   caseIds=['SE-047'], budget=budget)
+        self.execution.update(version=preflight.matrix.SUBSET_VERSION, caseIds=['SE-047'], budget=budget)
+
+        def repin(raw):
+            self.raws['stopEvidenceRegression'] = raw
+            self.input_contract['inputSha256']['stopEvidenceRegression'] = preflight.io.sha(raw)
+            self.input_raw = preflight.io.encoded(self.input_contract)
+            self.execution['inputContractSha256'] = preflight.io.sha(self.input_raw)
+            self.bound = self.bind()
+            self.deployment['executionSha256'] = preflight.io.sha(self.bound.execution_raw)
+
+        repin(original)
+        self.assertEqual(self.verify()['sourceSha256'][path], preflight.io.sha(original))
+        edited = preflight.trace.strict_json(original)
+        edited['expected']['requiredEvents'].remove('list-unproven')
+        repin(preflight.io.encoded(edited))
+        with self.assertRaisesRegex(ValueError, 'matrix input outside fixed Git: stopEvidenceRegression'):
+            self.verify()
+
     def test_fixed_source_hardlink_and_changed_driver_are_rejected(self):
         path=self.repository/'evals/skills/routing/production_matrix_preflight.py';original=path.read_bytes();path.write_bytes(original+b'changed')
         with self.assertRaisesRegex(ValueError,'fixed source drift'):self.verify()
