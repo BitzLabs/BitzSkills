@@ -10,6 +10,7 @@ import production_trace as trace
 INPUT_NAMES = ('routing', 'behaviorSafety', 'protocol', 'catalog', 'instructions', 'caseSchema')
 VERSION = 'public-production-matrix-inputs-0.1.0'
 SUBSET_VERSION = 'public-production-subset-inputs-0.1.0'
+REGRESSION_CASE_ID = 'SE-047'
 
 CATEGORY_COUNTS = dict(explicit=6, implicit=6, contextual=6, negative=10, conflict=6, behavior=6, safety=6)
 
@@ -32,11 +33,26 @@ class MatrixInputs:
                     payloadSha256=ledger.sha(self.payloads[index]), contractSha256=ledger.sha(self.contract_raw))
 
 
+def input_names(contract):
+    if isinstance(contract, dict) and contract.get('caseIds') == [REGRESSION_CASE_ID]:
+        return (*INPUT_NAMES, 'stopEvidenceRegression')
+    return INPUT_NAMES
+
+
+def valid_subset(selected):
+    return selected == [REGRESSION_CASE_ID] or (
+        isinstance(selected, list) and 1 <= len(selected) < 46
+        and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
+        and selected == sorted(set(selected)))
+
+
 def bind(contract_raw, **raw_inputs):
     """確定bytes/hashを照合し、期待・制御metadataを含まない一次payloadを作る。"""
-    trace.require(set(raw_inputs) == set(INPUT_NAMES) and isinstance(contract_raw, bytes)
-                  and all(isinstance(raw, bytes) for raw in raw_inputs.values()), 'matrix raw inventory')
+    trace.require(isinstance(contract_raw, bytes), 'matrix contract bytes')
     contract = trace.strict_json(contract_raw)
+    names = input_names(contract)
+    trace.require(set(raw_inputs) == set(names) and all(isinstance(raw, bytes) for raw in raw_inputs.values()),
+                  'matrix raw inventory')
     subset = isinstance(contract, dict) and contract.get('version') == SUBSET_VERSION
     extra = {'caseIds'} if subset else set()
     trace.require(isinstance(contract, dict) and set(contract) == {
@@ -50,16 +66,14 @@ def bind(contract_raw, **raw_inputs):
                   and re.fullmatch(r'[0-9a-f]{40}', contract['sourceCommit']) is not None,
                   'matrix identity')
     selected = contract.get('caseIds') if subset else [f'SE-{n:03d}' for n in range(1,47)]
-    trace.require(isinstance(selected, list) and (1 <= len(selected) < 46 if subset else len(selected) == 46)
-        and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
-        and selected == sorted(set(selected)), 'matrix selected case inventory')
+    trace.require(not subset or valid_subset(selected), 'matrix selected case inventory')
     maximum = len(selected)*2
     trace.require(type(contract['repetitions']) is int and contract['repetitions'] == 2
                   and trace.json_equal(contract['budget'], dict(primary=maximum, independent=maximum, automaticRetries=0, delegations=0))
                   and contract['certifiesBehavior'] is False and contract['certifiesSkillGate'] is False,
                   'matrix finite limits')
     pins = contract['inputSha256']
-    trace.require(isinstance(pins, dict) and set(pins) == set(INPUT_NAMES), 'matrix pin inventory')
+    trace.require(isinstance(pins, dict) and set(pins) == set(names), 'matrix pin inventory')
     for name, raw in raw_inputs.items():
         trace.require(ledger.pin(pins[name]) == ledger.sha(raw), 'matrix input drift: '+name)
     schema = trace.strict_json(raw_inputs['caseSchema'])
@@ -73,6 +87,11 @@ def bind(contract_raw, **raw_inputs):
         validator.validate(case)
     trace.require([c['caseId'] for c in cases] == [f'SE-{n:03d}' for n in range(1,47)], 'matrix fixed case order')
     trace.require(trace.json_equal(dict(Counter(c['category'] for c in cases)), CATEGORY_COUNTS), 'matrix category denominators')
+    if selected == [REGRESSION_CASE_ID]:
+        case = trace.strict_json(raw_inputs['stopEvidenceRegression'])
+        validator.validate(case)
+        trace.require(case['caseId'] == REGRESSION_CASE_ID, 'matrix regression case identity')
+        cases = [case]
     catalog = trace.strict_json(raw_inputs['catalog'])
     trace.require(isinstance(catalog, dict) and set(catalog) == {'schemaVersion','catalogVersion','events'}
                   and catalog['schemaVersion'] == '1.0' and isinstance(catalog['catalogVersion'], str)

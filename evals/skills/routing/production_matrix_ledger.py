@@ -42,6 +42,10 @@ class BoundExecution:
     def contract(self):
         return strict_json(self.execution_raw)
 
+    @property
+    def input_bytes(self):
+        return dict(zip(inputs.input_names(self.contract), self.raw_inputs, strict=True))
+
     def slot(self, ordinal):
         c = self.contract
         return dict(self.matrix.slot(ordinal), campaignId=c['campaignId'], sourceCommit=c['sourceCommit'],
@@ -80,9 +84,7 @@ def execution_contract(execution_raw):
     for value in c['pins'].values():
         io.pin(value)
     selected = c.get('caseIds') if subset else [f'SE-{n:03d}' for n in range(1,47)]
-    require(isinstance(selected, list) and (1 <= len(selected) < 46 if subset else len(selected) == 46)
-        and all(isinstance(n, str) and re.fullmatch(r'SE-0(?:0[1-9]|[1-3][0-9]|4[0-6])', n) for n in selected)
-        and selected == sorted(set(selected)), 'matrix selected case inventory')
+    require(not subset or inputs.valid_subset(selected), 'matrix selected case inventory')
     maximum = len(selected)*2
     require(json_equal(c['budget'], dict(primary=maximum, independent=maximum, automaticRetries=0, delegations=0)),
             'matrix execution limits')
@@ -103,13 +105,13 @@ def bind(execution_raw, input_contract_raw, **raw_inputs):
         and json_equal(c['budget'], input_contract['budget']), 'matrix subset execution/input scope drift')
     require(c['sourceCommit'] == strict_json(input_contract_raw)['sourceCommit']
             and c['inputContractSha256'] == io.sha(input_contract_raw), 'matrix source and input binding')
-    return BoundExecution(execution_raw, matrix, tuple(raw_inputs[name] for name in inputs.INPUT_NAMES))
+    return BoundExecution(execution_raw, matrix, tuple(raw_inputs[name] for name in inputs.input_names(c)))
 
 
 def shared_storage(repository: Path, bound: BoundExecution):
     """既存Git共通領域の解決を再利用する。保存・起動はしない。"""
     require(bound == bind(bound.execution_raw, bound.matrix.contract_raw,
-                         **dict(zip(inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix bound bytes drift')
+                         **bound.input_bytes), 'matrix bound bytes drift')
     return io.common_ledger_path(repository).parent / 'production-matrix-ledgers' / bound.contract['campaignId']
 
 
@@ -117,7 +119,7 @@ class MatrixLedger:
     def __init__(self, storage: Path, repository: Path, bound: BoundExecution):
         require('..' not in storage.parts and '..' not in repository.parts, 'matrix repository path escape')
         require(bound == bind(bound.execution_raw, bound.matrix.contract_raw,
-                             **dict(zip(inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix bound bytes drift')
+                             **bound.input_bytes), 'matrix bound bytes drift')
         self.storage, self.repository, self.bound = storage.absolute(), repository.absolute(), bound
         self._slots = tuple(bound.slot(n) for n in range(1, self.maximum+1))
         require(self.storage.is_relative_to(self.repository / '.venv'), 'matrix storage outside repository')

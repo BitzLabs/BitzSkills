@@ -47,7 +47,7 @@ class MatrixCapture:
 
 def bind_originals(bound, ordinal, originals, receipt_raw, manifest_raw, schema_raw, context_raw):
     require(bound == matrix.bind(bound.execution_raw, bound.matrix.contract_raw,
-            **dict(zip(matrix.inputs.INPUT_NAMES, bound.raw_inputs))), 'matrix fixed input drift')
+            **bound.input_bytes), 'matrix fixed input drift')
     slot = bound.slot(ordinal)
     require(all(isinstance(raw, bytes) for raw in [receipt_raw, manifest_raw, schema_raw, context_raw]),
             'matrix fixed original bytes')

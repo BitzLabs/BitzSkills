@@ -22,7 +22,7 @@ def absolute_root(value):
 
 def producer_sources(context, source_repository):
     if trace.strict_json(context.receipt_raw)['version'] == evidence.PROVIDER_VERSION:
-        return preflight.SOURCE_FILES
+        return preflight.source_files(context.bound.contract)
     # 旧原のmount順序とsource proofは、当時の確定Gitの宣言で再構成する。
     from production_matrix_calibration import source_files
     names = source_files(source_repository, context.bound.contract['sourceCommit'])
