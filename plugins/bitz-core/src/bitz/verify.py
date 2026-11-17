@@ -1237,6 +1237,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     )
 
     catalog = document_mod.build_catalog(workspace_root, workspace_id, limits=limits, qualify_summary_ids=multi_active)
+    if catalog.stopped:
+        # 仕様文書のファイル数の上限の超過（`INPUT-LIMIT-SPEC-COUNT`）は`stop-operation`なので、その診断と設定の警告だけを返し、
+        # 検証対象の解決とテストコマンドの実行へ進まない（診断レジストリ、安全な入出力・互換性 §4.1）。設定の停止と同じ形で返す。
+        diags = [d.to_dict() for d in catalog.diagnostics] + config_warning_diags
+        return _empty(workspace_id, worst_status([d["resultStatus"] for d in diags]), diags)
     # 検証対象が使うテスト対応の検査（`_make_test_checker`）が、修飾する前の元の文書を使うための、ワークスペースごとのカタログの文書。
     member_catalogs: dict[str, document_mod.CatalogResult] = {}
     if multi_active:

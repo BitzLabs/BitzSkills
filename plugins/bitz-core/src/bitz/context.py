@@ -612,6 +612,19 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         config_raw, multi_pre.root_config if multi_pre is not None else None, multi_active=multi_active
     )
     catalog = document_mod.build_catalog(loc.root, workspace_id, limits=limits, qualify_summary_ids=multi_active)
+    if catalog.stopped:
+        # 仕様文書のファイル数の上限の超過（`INPUT-LIMIT-SPEC-COUNT`）は`stop-operation`なので、その診断だけを返し、
+        # 起点の解決へ進まない（診断レジストリ、安全な入出力・互換性 §4.1）。同一性を構成した後に止まる、設定の停止と同じ形で返す。
+        # 設定の警告は`run`が加える。
+        diags = [d.to_dict() for d in catalog.diagnostics]
+        worst = status_from_diagnostics(diags)
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw, revision=revision)
+        bundle["status"] = worst
+        bundle["diagnostics"] = sort_diagnostics(diags)
+        if multi_active:
+            bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
+        bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+        return bundle, EXIT_CODE_BY_STATUS[worst]
     # 閉包を作るときに辿る文書IDの重複を求めるための、ワークスペースごとのカタログの文書（関係・トレースモデル §5.1、確認事項C96）。
     member_catalogs: dict[str, document_mod.CatalogResult] = {}
 
