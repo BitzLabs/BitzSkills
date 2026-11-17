@@ -735,6 +735,33 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-127-17` | Coreパッケージのメタデータ | package test | accepted／0 | 配布物、`import`パッケージ、CLI名は`bitz`、`requires-python`は3.12以上 |
 | `SINGLE-127-18` | ビルドのメタデータとロックファイル | package test | accepted／0 | ランタイム依存は標準ライブラリと、厳密にロックしたYAMLライブラリ1つだけ |
 | `SINGLE-127-19` | CPython 3.12でCoreを起動 | doctor | passed／0 | 3.12で利用できない構文／標準ライブラリのAPIへの依存なし |
+| `SINGLE-127-20` | `--help` | なし | 結果なし／0 | 標準出力は空でなく、UTF-8で、改行で終わる。標準エラー出力は空。結果とレポートなし（Core実行環境・CLI基盤契約 §5.1） |
+| `SINGLE-127-21` | `--help --no-such-option` | なし | 結果なし／0 | 最初の要素が`--help`なら後に続く要素を見ない。`SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-22` | `--help --version` | なし | 結果なし／0 | 最初の要素が`--help`なので`--help`として扱う。`SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-23` | `check --help` | check | 結果なし／0 | `SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-24` | `context --help`（起点なし） | context | 結果なし／0 | 起点0件の引数不正（`SINGLE-127-06`）にしない。`SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-25` | `verify --help` | verify | 結果なし／0 | `SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-26` | `doctor --help` | doctor | 結果なし／0 | `SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-27` | `check --no-such-option --help` | check | 結果なし／0 | `--help`が未知のオプションより優先する |
+| `SINGLE-127-28` | `verify REQ-001 --help --timeout` | verify | 結果なし／0 | `--help`が値の不足より優先する |
+| `SINGLE-127-29` | `context REQ-001 --purpose --help` | context | 結果なし／0 | 値の位置の要素も`--help`と完全に一致すれば`--help`として扱う |
+| `SINGLE-127-30` | `check --full --full --help` | check | 結果なし／0 | `--help`が重複したフラグより優先する |
+| `SINGLE-127-31` | `check "" --help`（空文字列の位置引数） | check | 結果なし／0 | `--help`が空文字列の位置引数より優先する |
+| `SINGLE-127-32` | `doctor --help --help` | doctor | 結果なし／0 | `--help`の反復を重複として扱わない |
+| `SINGLE-127-33` | `foo --help` | なし | 結果なし／4 | 未知の操作。標準出力は空、標準エラー出力は`bitz: `で始まる空でない1行 |
+| `SINGLE-127-34` | `--version` | なし | 結果なし／0 | 標準出力はちょうど`bitz 1.0.0`とLF（`doctor`の結果の`core.version`と同じ値）。標準エラー出力は空。結果とレポートなし |
+| `SINGLE-127-35` | `--version check` | なし | 結果なし／4 | `--version`はほかの要素を伴えば受け付けない。`SINGLE-127-33`と同じ出力の契約 |
+| `SINGLE-127-36` | `check --version` | check | 結果なし／4 | 未知のオプション。標準エラー出力は`bitz: check: `で始まる1行 |
+| `SINGLE-127-37` | `--version --version` | なし | 結果なし／4 | `SINGLE-127-33`と同じ出力の契約 |
+| `SINGLE-127-38` | `check --help=1` | check | 結果なし／4 | `--help`と完全に一致しない。`--name=value`形式の未知のオプション。`SINGLE-127-36`と同じ出力の契約 |
+| `SINGLE-127-39` | `--help`。`.spec/bitz.yaml`がないGitのリポジトリ | なし | 結果なし／0 | ワークスペースの外でも同じ。`SINGLE-127-20`と同じ出力の契約、ファイルの作成0件 |
+| `SINGLE-127-40` | `--version`。`SINGLE-127-39`と同じ入力 | なし | 結果なし／0 | `SINGLE-127-34`と同じ出力の契約、ファイルの作成0件 |
+| `SINGLE-127-41` | `doctor --help`。`.spec/bitz.yaml`がなく、Gitのリポジトリでもないディレクトリ | doctor | 結果なし／0 | `SINGLE-127-20`と同じ出力の契約、ファイルの作成0件 |
+| `SINGLE-127-42` | `--version`。`SINGLE-127-41`と同じ入力 | なし | 結果なし／0 | `SINGLE-127-34`と同じ出力の契約、ファイルの作成0件 |
+| `SINGLE-127-43` | `check --help`。設定のYAMLの構文が不正（`SINGLE-170-01`と同じ設定） | check | 結果なし／0 | 設定を読まない（`SPEC-CONFIG-SCHEMA-001`の停止にしない）。`SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-44` | `--version`。`SINGLE-127-43`と同じ入力 | なし | 結果なし／0 | 設定を読まない。`SINGLE-127-34`と同じ出力の契約 |
+| `SINGLE-127-45` | `check --format json --report --help` | check | 結果なし／0 | 操作を始めず、レポート0件。`SINGLE-127-20`と同じ出力の契約 |
+| `SINGLE-127-46` | `verify REQ-001 --report --help` | verify | 結果なし／0 | 操作を始めず、レポート0件。`SINGLE-127-20`と同じ出力の契約 |
 
 ### 6.13 規範文IDの文書一致と`local-id`の文法
 
