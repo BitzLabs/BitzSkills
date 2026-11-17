@@ -4,6 +4,7 @@
 `bitz`をインポートしない(ADR-049 Decision 6)。Coreに固有の手順(ビルド、構文解析器のアダプター)は持たず、
 参照実装が要る箇所(パッケージのランナー)だけをここに置く。
 """
+import functools
 import json
 import os
 from pathlib import Path
@@ -321,23 +322,60 @@ CLI_CONTROL_FORBIDDEN = re.compile(
 
 
 CLI_OUTPUT_STDERR_KEYS = frozenset({"stderrPrefix", "stderrReasonRequired", "stderrTerminalControls"})
+CLI_OUTPUT_STDOUT_KEYS = ("stdout", "stdoutNonEmptyText", "stdoutVersionLine")
+# `--version`の出力の1行（Core実行環境・CLI基盤契約 §5.1）。`bitz`、空白1つ、ASCIIの十進の`<major>.<minor>.<patch>`、LFだけを受け付ける。
+# SemVerのプレリリースとビルドの付記（`-rc.1`、`+abc`）は、仕様が許すと定めていないので受け付けない。
+VERSION_LINE = re.compile(rb"bitz ([0-9]+)\.([0-9]+)\.([0-9]+)\n")
+CORE_VERSION_FORM = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)")
+# `core.version`の期待値を読む`doctor`のfixture（Step 1の`doctor`の成功）。
+CORE_VERSION_SOURCE = "SINGLE-001"
+
+
+@functools.lru_cache(maxsize=None)
+def expected_core_version(root=HERE):
+    """`doctor`の結果の`core.version`の期待値（`stdoutVersionLine`の比較の基準。適合fixture仕様 §3）。
+
+    レビュー済みの`doctor`のfixture（`CORE_VERSION_SOURCE`）の期待結果から読み、単一と複合のすべての`doctor`の期待結果の
+    `core.version`が同じ1つの値で、`<major>.<minor>.<patch>`の形であることを確かめる。定まらなければfixtureのエラーとする。
+    """
+    try:
+        values = set()
+        for path in sorted(root.glob("single/*/expected/doctor.json")) + sorted(root.glob("multi/*/expected/doctor.json")):
+            core = json.loads(path.read_text(encoding="utf-8")).get("core")
+            if isinstance(core, dict) and "version" in core:
+                values.add(core["version"])
+        source = json.loads((root / "single" / CORE_VERSION_SOURCE / "expected/doctor.json")
+                            .read_text(encoding="utf-8"))["core"]["version"]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise FixtureError(f"`doctor`の期待結果から`core.version`を読めません: {error}") from error
+    if not isinstance(source, str) or values != {source} or not CORE_VERSION_FORM.fullmatch(source):
+        raise FixtureError("`doctor`の期待結果の`core.version`が`<major>.<minor>.<patch>`の1つの値に定まりません")
+    return source
+
+
+def _major_minor(core_version):
+    match = CORE_VERSION_FORM.fullmatch(core_version) if isinstance(core_version, str) else None
+    if match is None:
+        raise FixtureError(f"`core.version`の期待値が`<major>.<minor>.<patch>`の形ではありません: {core_version!r}")
+    return match.group(1).encode("ascii"), match.group(2).encode("ascii")
 
 
 def _load_cli_output(fixture_root):
     """`cli-output.json`の形を検査して返す。比べ方の種類を取り違えたfixtureを、合格にも失敗にもせずエラーにする。
 
-    標準出力は、`stdout`（文字列。バイト列の完全一致）か、`stdoutNonEmptyText: true`（UTF-8で、空でなく、改行で終わる。
-    文言を契約にしない`--help`。Core実行環境・CLI基盤契約 §5.1）のどちらか一方で比べる。`stderrLineCount`が0の場合は
-    標準エラー出力が空であることを要求し、行の形を表すキーを持たない。
+    標準出力は、`stdout`（文字列。バイト列の完全一致）、`stdoutNonEmptyText: true`（UTF-8で、空でなく、改行で終わる。
+    文言を契約にしない`--help`。Core実行環境・CLI基盤契約 §5.1）、`stdoutVersionLine: true`（`bitz <major>.<minor>.<patch>`と
+    LFの1行で、`<major>.<minor>`が`doctor`の`core.version`の期待値と一致する。パッチ部は比べない。適合fixture仕様 §3・§4）の
+    どれか1つで比べる。`stderrLineCount`が0の場合は標準エラー出力が空であることを要求し、行の形を表すキーを持たない。
     """
     cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
-    exact = "stdout" in cli_output
-    if exact == ("stdoutNonEmptyText" in cli_output):
-        raise FixtureError("`cli-output.json`は`stdout`と`stdoutNonEmptyText`のどちらか一方だけを持ちます")
-    if exact and not isinstance(cli_output["stdout"], str):
+    kinds = [key for key in CLI_OUTPUT_STDOUT_KEYS if key in cli_output]
+    if len(kinds) != 1:
+        raise FixtureError("`cli-output.json`は`stdout`、`stdoutNonEmptyText`、`stdoutVersionLine`のどれか1つだけを持ちます")
+    if kinds[0] == "stdout" and not isinstance(cli_output["stdout"], str):
         raise FixtureError("`cli-output.json`の`stdout`は文字列です")
-    if not exact and cli_output["stdoutNonEmptyText"] is not True:
-        raise FixtureError("`cli-output.json`の`stdoutNonEmptyText`は`true`だけを持てます")
+    if kinds[0] != "stdout" and cli_output[kinds[0]] is not True:
+        raise FixtureError(f"`cli-output.json`の`{kinds[0]}`は`true`だけを持てます")
     line_count = cli_output.get("stderrLineCount")
     if not isinstance(line_count, int) or isinstance(line_count, bool) or line_count < 0:
         raise FixtureError("`cli-output.json`の`stderrLineCount`は0以上の整数です")
@@ -347,11 +385,12 @@ def _load_cli_output(fixture_root):
     return cli_output
 
 
-def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes):
+def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes, core_version=None):
     """結果を作らない起動の出力を検査する。
 
     終了コード4の出力規則(結果・診断・終了コード §3)と、`--help`・`--version`の出力
-    (Core実行環境・CLI基盤契約 §5.1)を扱う。
+    (Core実行環境・CLI基盤契約 §5.1)を扱う。`core_version`は`stdoutVersionLine`の基準で、省略時は
+    `expected_core_version()`（リポジトリの`doctor`のfixtureの期待値）を使う。
     """
     differences = []
     cli_output = _load_cli_output(fixture_root)
@@ -362,6 +401,14 @@ def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_by
         if stdout_bytes != cli_output["stdout"].encode("utf-8"):
             differences.append("標準出力: 空でなければならないが出力がありました" if cli_output["stdout"] == ""
                                else "標準出力: 期待するバイト列と一致しません")
+    elif "stdoutVersionLine" in cli_output:
+        major, minor = _major_minor(expected_core_version() if core_version is None else core_version)
+        match = VERSION_LINE.fullmatch(stdout_bytes)
+        if match is None:
+            differences.append("標準出力: `bitz <major>.<minor>.<patch>`とLFの1行ではありません")
+        elif (match.group(1), match.group(2)) != (major, minor):
+            differences.append(f"標準出力: `<major>.<minor>`が`doctor`の`core.version`の期待値と一致しません"
+                               f"（期待={(major + b'.' + minor).decode()} 実際={(match.group(1) + b'.' + match.group(2)).decode()}）")
     else:
         try:
             stdout_text = stdout_bytes.decode("utf-8")

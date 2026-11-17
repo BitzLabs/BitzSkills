@@ -124,7 +124,7 @@ Gitのfixtureの監査を使い、完全な成功の期待値と、追加の原�
 9つのケースを加え、準備済みを116/311にした。この時点の引数不正のfixture 14件は、出力契約と隔離した2回の準備手順の検査を共有する。
 
 [`--help`と`--version`の起動のfixture](single/CLIのhelpとversionの起動のレビュー記録.md)は、同じ群の続きの`SINGLE-127-20`〜`46`で、結果を作らずに終了コード0で終わる2つの起動と、それらを受け付けない引数列の終了コード4を固定する（ADR-075）。
-`cli-output.json`は、`--help`の標準出力を`stdoutNonEmptyText`（空でなく、UTF-8で、改行で終わる）で、`--version`の1行をバイト列の完全一致で比べる。
+`cli-output.json`は、`--help`の標準出力を`stdoutNonEmptyText`（空でなく、UTF-8で、改行で終わる）で、`--version`の1行を`stdoutVersionLine`（`bitz <major>.<minor>.<patch>`とLFの1行で、`<major>.<minor>`が`doctor`の`core.version`の期待値と一致する。パッチ部は比べない）で比べる。
 
 [`--expand`の反復のfixture](single/展開指定の反復のレビュー記録.md)は、異なる値の整列と重複排除を、2系統のコンテキストのハッシュ値の参照計算と隔離した
 2回の準備手順とともに加え、準備済みを118/311にした。

@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
 from conformance import package_check
-from conformance.runner import FixtureError, build_git_shim, diff_json, normalize_result, normalize_text, _check_cli_output
+from conformance.runner import (FixtureError, build_git_shim, diff_json, expected_core_version, normalize_result,
+                                normalize_text, _check_cli_output)
 
 
 class NormalizeResultTests(unittest.TestCase):
@@ -153,13 +154,14 @@ class NoResultSuccessOutputTests(unittest.TestCase):
     """`--help`と`--version`（Core実行環境・CLI基盤契約 §5.1）: 結果を作らない終了コード0の起動の出力。"""
 
     HELP = {"exitCode": 0, "stdoutNonEmptyText": True, "stderrLineCount": 0}
-    VERSION = {"exitCode": 0, "stdout": "bitz 1.0.0\n", "stderrLineCount": 0}
+    VERSION = {"exitCode": 0, "stdoutVersionLine": True, "stderrLineCount": 0}
 
-    def _check(self, cli_output, exit_code, stdout, stderr, expected_exit=0):
+    def _check(self, cli_output, exit_code, stdout, stderr, expected_exit=0, core_version=None):
         with tempfile.TemporaryDirectory() as tmp:
             fixture_root = Path(tmp)
             (fixture_root / "cli-output.json").write_text(json.dumps(cli_output), encoding="utf-8")
-            return _check_cli_output(fixture_root, {"expect": {"exitCode": expected_exit}}, exit_code, stdout, stderr)
+            return _check_cli_output(fixture_root, {"expect": {"exitCode": expected_exit}}, exit_code, stdout, stderr,
+                                     core_version=core_version)
 
     def test_help_accepts_any_non_empty_utf8_text_ending_with_newline(self):
         for stdout in (b"usage: bitz\n", "使い方\n\n操作\n".encode(), b"\n"):
@@ -176,18 +178,51 @@ class NoResultSuccessOutputTests(unittest.TestCase):
         self.assertTrue(any("標準エラー出力" in d for d in self._check(self.HELP, 0, b"usage\n", b"bitz: note\n")))
         self.assertTrue(any("exitCode" in d for d in self._check(self.HELP, 4, b"usage\n", b"")))
 
-    def test_version_requires_the_exact_line(self):
-        self.assertEqual(self._check(self.VERSION, 0, b"bitz 1.0.0\n", b""), [])
-        for stdout in (b"bitz 1.0.0", b"bitz 1.0.0\n\n", b"bitz  1.0.0\n", b"bitz 1.0.1\n", b"bitz version 1.0.0\n"):
+    def test_version_line_ignores_only_the_patch(self):
+        """`stdoutVersionLine`: `<major>.<minor>`を`core.version`の期待値と比べ、パッチ部は比べない（適合fixture仕様 §3・§4）。"""
+        for stdout in (b"bitz 2.3.4\n", b"bitz 2.3.0\n", b"bitz 2.3.5\n", b"bitz 2.3.123\n"):
             with self.subTest(stdout=stdout):
-                self.assertTrue(any("標準出力" in d for d in self._check(self.VERSION, 0, stdout, b"")))
-        self.assertTrue(any("標準エラー出力" in d for d in self._check(self.VERSION, 0, b"bitz 1.0.0\n", b"\n")))
+                self.assertEqual(self._check(self.VERSION, 0, stdout, b"", core_version="2.3.4"), [])
+
+    def test_version_line_rejects_other_forms(self):
+        rejected = (
+            b"", b"bitz 2.3.4", b"bitz 2.3.4\n\n", b"bitz 2.3.4\nbitz 2.3.4\n", b"bitz 2.3.4\r\n", b"bitz 2.3.4 \n",
+            b" bitz 2.3.4\n", b"2.3.4\n", b"bitz  2.3.4\n", b"bitz\t2.3.4\n", b"bitz version 2.3.4\n", b"Bitz 2.3.4\n",
+            b"bitz 2.3\n", b"bitz 2.3.\n", b"bitz 2.3.4.0\n", b"bitz 2.3.x\n", b"bitz v2.3.4\n",
+            b"bitz 2.3.4-rc.1\n", b"bitz 2.3.4+build.1\n", "bitz 2.3.\uff14\n".encode(), b"bitz 2.3.4\x00\n",
+            b"bitz 2.4.4\n", b"bitz 3.3.4\n", b"bitz 02.3.4\n", b"bitz 2.03.4\n", b"bitz 23.4.4\n",
+        )
+        for stdout in rejected:
+            with self.subTest(stdout=stdout):
+                differences = self._check(self.VERSION, 0, stdout, b"", core_version="2.3.4")
+                self.assertTrue(any("標準出力" in d for d in differences), differences)
+        self.assertTrue(any("標準エラー出力" in d for d in self._check(self.VERSION, 0, b"bitz 2.3.4\n", b"\n", core_version="2.3.4")))
+        self.assertTrue(any("exitCode" in d for d in self._check(self.VERSION, 4, b"bitz 2.3.4\n", b"", core_version="2.3.4")))
+
+    def test_version_line_defaults_to_the_reviewed_doctor_core_version(self):
+        """基準を省略すると、リポジトリの`doctor`のfixtureの期待結果の`core.version`を使う。"""
+        doctor = json.loads((Path(__file__).resolve().parent / "single/SINGLE-001/expected/doctor.json").read_text(encoding="utf-8"))
+        self.assertEqual(expected_core_version(), doctor["core"]["version"])
+        major, minor, patch = doctor["core"]["version"].split(".")
+        self.assertEqual(self._check(self.VERSION, 0, f"bitz {major}.{minor}.{patch}\n".encode(), b""), [])
+        self.assertEqual(self._check(self.VERSION, 0, f"bitz {major}.{minor}.{int(patch) + 1}\n".encode(), b""), [])
+        self.assertNotEqual(self._check(self.VERSION, 0, f"bitz {major}.{int(minor) + 1}.{patch}\n".encode(), b""), [])
+
+    def test_version_line_with_malformed_core_version_is_a_fixture_error(self):
+        for core_version in ("2.3", "2.3.4-rc.1", "v2.3.4", ""):
+            with self.subTest(core_version=core_version), self.assertRaises(FixtureError):
+                self._check(self.VERSION, 0, b"bitz 2.3.4\n", b"", core_version=core_version)
 
     def test_malformed_cli_output_is_a_fixture_error(self):
         malformed = [
             {"exitCode": 0, "stderrLineCount": 0},
             {"exitCode": 0, "stdout": "", "stdoutNonEmptyText": True, "stderrLineCount": 0},
             {"exitCode": 0, "stdoutNonEmptyText": False, "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutVersionLine": False, "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutVersionLine": "bitz 1.0.0\n", "stderrLineCount": 0},
+            {"exitCode": 0, "stdout": "bitz 1.0.0\n", "stdoutVersionLine": True, "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutNonEmptyText": True, "stdoutVersionLine": True, "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutVersionLine": True, "stderrLineCount": 0, "stderrPrefix": "bitz: "},
             {"exitCode": 0, "stdout": "x\n", "stderrLineCount": 0, "stderrPrefix": "bitz: "},
             {"exitCode": 4, "stdout": "", "stderrLineCount": 1, "stderrPrefix": "bitz: "},
             {"exitCode": 0, "stdout": "x\n", "stderrLineCount": -1},
