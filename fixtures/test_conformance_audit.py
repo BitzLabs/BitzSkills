@@ -15512,6 +15512,15 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-182-05", "expected/verify.json",
              lambda v: v["diagnostics"][0].update(summary="{tests}展開後のargvがバイト数上限1 MiBを超えます")),
             ("SINGLE-182-06", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-182-07", "expected/verify.json",
+             lambda v: v["diagnostics"][0].update(summary="{tests}展開後のargvの要素数が上限10,000を超えます")),
+            ("SINGLE-180-10", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("SINGLE-180-10", "expected/check.json", lambda v: v.update(checkedDocumentCount=1, checkedStatementCount=1)),
+            ("SINGLE-183-06", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="設定キーlimits.specBytesは1〜1,048,576の整数で指定してください")),
+            ("SINGLE-183-09", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="limits")),
+            ("SINGLE-183-11", "expected/doctor.json", lambda v: v.update(limits={})),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -15552,7 +15561,10 @@ class AuditTests(unittest.TestCase):
             ("MULTI-069-02", "expected/check.json",
              lambda v: v["diagnostics"][0].update(summary="仕様文書のファイル数が上限10,000を超過しました")),
             ("MULTI-069-04", "expected/check.json",
-             lambda v: v["diagnostics"][0].update(summary="入力バイト数が上限4,096を超過しました")),
+             lambda v: v["diagnostics"][0].update(summary="入力バイト数が上限4,096バイトを超過しました")),
+            ("MULTI-068-06", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(workspaceId="web", key="limits")),
+            ("MULTI-068-06", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001")),
             ("MULTI-069-01", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
             ("MULTI-069-15", "expected/verify.json",
              lambda v: v["diagnostics"][0]["evidence"].update(dimension="commandDefinitionCount")),

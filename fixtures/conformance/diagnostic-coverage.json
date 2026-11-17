@@ -3,7 +3,7 @@
   "reviewStatus": "Passed",
   "sources": {
     "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "3fc84c93e2788a0b64e1d71aea1eac22e72be74fd771df37cd3d8ca489ff799c",
-    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "1b3227c80e6cb885fa5bfa442dc4571373358c45998f80f233489d9218da402f",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "2383944a3200b152faf2f330fcbafd743d4caba4d074b4d9cd142261bb6c62b1",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "abb7622b9eec04ccd1c92a489877f84dbe2f1cd3e9a9c21e02fb62634366a2cc",
     "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "cf639635224cec117ff75effd4031906b8944b9be97d3c049a81074b8e9f41d2",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "aece6d4c2d4a9588fe46aafa4f5b18f4213c56193062b5babfec583a2c92c954",
@@ -13,7 +13,7 @@
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5f79861e103eb51723a53302122fa32d5125a9bf9687a70c2dbbc5cc1776ee6f",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "34682e598700d150db361fb807e051920bf5ad9047a572ab93fda13a6495f401",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "78532f1eea3521ade4c6b67043424407d7dc55d77b12f97f25e62f9ad2e68375",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "efb52a54f13e0637a4ceebf9d89dfa79642eef4571f53c5d875686803d6461fe",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "f643613bd5a2dc785cf2169641d666e42ecf169f74a0cb265d877e1dbee85a9b",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
@@ -42,7 +42,7 @@
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md",
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md"
       ],
-      "rationale": "§1、§2、§4: 入力の復号失敗とI/O障害、BOM、寸法上限を別条件として扱う。 ADR-076（2026-11-17）: 仕様文書、フロントマター、仕様文書のファイル数、1文書の規範文数と配列の項目数の上限は`limits`で小さくでき、超過の条件、コード、重大度、結果への効果、継続単位は設定した値でも絶対上限でも同じ（安全な入出力・互換性 §4.1。SINGLE-180-*）。`bitz.yaml`の64 KiBは設定で変えない。"
+      "rationale": "§1、§2、§4: 入力の復号失敗とI/O障害、BOM、寸法上限を別条件として扱う。 ADR-076（2026-11-17）: 仕様文書、フロントマター、仕様文書のファイル数、1文書の規範文数と配列の項目数の上限は`limits`で小さくでき、超過の条件、コード、重大度、結果への効果、継続単位は設定した値でも絶対上限でも同じ（安全な入出力・互換性 §4.1。SINGLE-180-*。ファイル数の超過の発生元は`.spec`）。`bitz.yaml`の64 KiBは設定で変えない。"
     },
     {
       "id": "config",
@@ -62,7 +62,7 @@
         "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md",
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
       ],
-      "rationale": "設定型・必須・YAML禁止・版互換性。doctorのEARS版は専用条件。 ADR-076: `limits`の型と範囲の不正はCONFIG-FIELD-TYPE、`limits`の中の未知のキー（`memberCount`を含む）はCONFIG-KEY-UNKNOWNで判定に使わない（ワークスペース・設定仕様 §5。SINGLE-183-04・05、MULTI-068-05）。"
+      "rationale": "設定型・必須・YAML禁止・版互換性。doctorのEARS版は専用条件。 ADR-076: `limits`の型と範囲の不正はCONFIG-FIELD-TYPE、`limits`の中の未知のキー（`memberCount`を含む）はCONFIG-KEY-UNKNOWNで判定に使わない（ワークスペース・設定仕様 §5。SINGLE-183-04〜11、MULTI-068-05）。"
     },
     {
       "id": "workspace",
@@ -232,7 +232,7 @@
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md",
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
       ],
-      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。cwdがシンボリックリンクを含むなどディレクトリとして存在しなければ、単一・複合とも起動前に遮断（VERIFY-CWD-UNAVAILABLE）。 検証対象が使うテスト対応のパスとcoversの不正はcheckと同じ診断で検証対象をfailed（skip-target）。 ADR-076: 展開後上限の3つの値は`limits`で小さくでき、条件と継続単位は同じ（SINGLE-182-*）。"
+      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。cwdがシンボリックリンクを含むなどディレクトリとして存在しなければ、単一・複合とも起動前に遮断（VERIFY-CWD-UNAVAILABLE）。 検証対象が使うテスト対応のパスとcoversの不正はcheckと同じ診断で検証対象をfailed（skip-target）。 ADR-076: 展開後上限の3つの値は`limits`で小さくでき、条件と継続単位は同じ（SINGLE-182-*。要素数の超過はSINGLE-182-07）。"
     },
     {
       "id": "report",
@@ -263,7 +263,7 @@
         "docs/03.詳細設計/03_操作仕様/04_doctor.md",
         "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md"
       ],
-      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。`doctor` §7）。"
+      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。設定がスキーマに適合しないときは返さない。`doctor` §7、SINGLE-183-11）。"
     },
     {
       "id": "multiWorkspace",
@@ -292,7 +292,7 @@
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md",
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md"
       ],
-      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用する（MULTI-069-*）。除外の件数の超過とメンバーの設定の`limits`はMULTI-CONFIG（MULTI-068-02。メンバーの設定の`limits`は文言が未承認のためfixtureなし）。"
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用する（MULTI-069-*）。除外の件数の超過とメンバーの設定の`limits`はMULTI-CONFIG（MULTI-068-02、MULTI-068-06。メンバーの設定の`limits`の発生元はMULTI-MEMBERと同じくカタログの宣言）。"
     }
   ],
   "openIssues": []

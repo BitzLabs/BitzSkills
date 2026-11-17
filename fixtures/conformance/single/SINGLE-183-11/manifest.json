@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-183-11",
+  "description": "limitsの値が不正な設定のdoctorはlimitsを返さない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

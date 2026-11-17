@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 複合ワークスペースのスナップショット全体の次元の上限（複合ワークスペース仕様 §10）と除外のパスの件数の上限を、ルートワークスペースの設定の
 `limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。実寸の上限の
-`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。26件である。
+`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。27件である。
 
 | fixture | 起動 | 入力 | 期待 |
 |---|---|---|---|
@@ -17,11 +17,12 @@
 | `MULTI-068-03` | `doctor --all-workspaces`（`apps/web`） | `MULTI-026-01`のルートの設定に`limits` | `limits`を最上位にだけ置く |
 | `MULTI-068-04` | `doctor`（`apps/web`） | `MULTI-035-03`のルートの設定に`limits` | 作業ワークスペースは`web`でも、`limits`はルートの設定の値 |
 | `MULTI-068-05` | `check --all-workspaces --base HEAD` | `MULTI-001`のルートの設定に`limits.memberCount: 1`（メンバー2件） | `passed_with_warnings`／0。`memberCount`は`limits`のキーではない（未知のキーの警告。判定に使わない） |
+| `MULTI-068-06` | 同上 | `MULTI-001`のメンバー`web`の設定に`limits.specBytes: 2048` | `failed`／1。`SPEC-MULTI-CONFIG-001`（発生元は`MULTI-048-04`と同じくカタログの宣言） |
 
 期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、複合ワークスペース仕様 §7・§10、ワークスペース・設定仕様 §5、`verify` §3・§4・§8、
 `doctor` §7、結果・診断・終了コード §2・§5、ADR-066）と、承認済みの文言（`multi_limit_fixtures.SUMMARY_LABELS`、`Coreの出力文言のレビュー記録.md`の
 #41と2026-10-18の除外の件数）だけである。小さい値を設定したときの`summary`は、§4.1の規則で上限の表記だけを実際の値へ置き換える
-（件数は3桁区切りの整数、バイト数は3桁区切りの整数に`バイト`）。超過はちょうど上限+1にし、`observedAtLeast`は上限+1とする。
+（既存の文言の形のまま、値を3桁区切りの整数で入れる。`inputBytes`も単位を付けない。2026-11-17の承認済みの対応表）。超過はちょうど上限+1にし、`observedAtLeast`は上限+1とする。
 入力は、実寸の群と同じ生成器（`multi_generator`）で小さい値を生成し、`repo/`としてバージョン管理する。次元の計数は、生成計画ではなく
 生成したバイト列から数え直す（`multi_generator.count`）。期待結果は、実寸の群と同じ参照計算（`multi_limit_fixtures`、
 `multi_single_verify_limit_fixtures`、`multi_crosscheck`）で組み立てる。`MULTI-068-*`は、レビュー済みの既存のfixtureの入力の
@@ -40,7 +41,7 @@ from . import multi_limit_fixtures as scale
 from . import multi_single_verify_limit_fixtures as single_verify
 from .harness import setup, write_generated
 from .initial_fixtures import compare_state, observe
-from .limits_single_fixtures import ABSOLUTE, _dump, bytes_text, count_text, effective_limits, limits_block, read_tree, write_tree
+from .limits_single_fixtures import ABSOLUTE, _dump, count_text, effective_limits, limits_block, read_tree, write_tree
 from .schemas import schema_path
 
 HERE = Path(__file__).resolve().parent
@@ -97,6 +98,8 @@ CASES.update({
     "MULTI-068-04": dict(form="derived", base="MULTI-035-03", limits=[("specBytes", 2048), ("statementCount", 10)],
                          outcome="passed"),
     "MULTI-068-05": dict(form="derived", base="MULTI-001", limits=[("memberCount", 1)], outcome="passed_with_warnings"),
+    "MULTI-068-06": dict(form="derived", base="MULTI-001", config="apps/web/.spec/bitz.yaml",
+                         limits=[("specBytes", 2048)], outcome="failed"),
 })
 LABELS = {"specFileCount": "仕様文書のファイル数", "inputBytes": "入力バイト数", "statementCount": "規範文数",
           "relationEdgeCount": "関係のエッジ数", "traceEntryCount": "トレースのエントリ数",
@@ -114,6 +117,7 @@ DESCRIPTIONS = {
     "MULTI-068-03": "doctor --all-workspacesはlimitsを最上位にだけ置く",
     "MULTI-068-04": "メンバーの中の単独のdoctorはルートの設定のlimitsを返す",
     "MULTI-068-05": "limitsのmemberCountは未知のキーとして警告にし判定に使わない",
+    "MULTI-068-06": "メンバーの設定がlimitsを持てば複合ワークスペースの設定不適合にする",
 }
 
 
@@ -197,8 +201,9 @@ def reviewed_inputs(identifier):
     case = CASES[identifier]
     if case["form"] == "derived":
         tree = read_tree(base_fixture(identifier) / "repo")
-        content, executable = tree[ROOT_CONFIG]
-        tree[ROOT_CONFIG] = (content + limits_block(case["limits"]).encode(), executable)
+        path = case.get("config", ROOT_CONFIG)
+        content, executable = tree[path]
+        tree[path] = (content + limits_block(case["limits"]).encode(), executable)
         return tree
     return {path: (content, False) for path, content in entries_of(identifier)}
 
@@ -228,8 +233,9 @@ def argv_of(identifier):
 
 
 def limit_diagnostic(dimension, limit):
-    """上限の診断。`summary`は承認済みの文言の上限の表記だけを実際の値へ置き換える（§4.1）。超過はちょうど上限+1である。"""
-    shown = bytes_text(limit) if dimension == "inputBytes" else count_text(limit)
+    """上限の診断。`summary`は既存の文言の形のまま、上限の値を3桁区切りの整数で入れる（§4.1、承認済みの対応表）。
+    `inputBytes`も値を数として持つ文言なので単位を付けない。超過はちょうど上限+1である。"""
+    shown = count_text(limit)
     return {
         "code": "SPEC-MULTI-LIMIT-001", "severity": "error", "resultStatus": "blocked",
         "summary": f"{scale.SUMMARY_LABELS[dimension]}が上限{shown}を超過しました",
@@ -295,6 +301,11 @@ def derived_result(identifier):
         # `MULTI-037-15`（除外が101件）と同じ停止。入力は`MULTI-037-01`と同じで、上限の表記だけを設定した値へ置き換える。
         result = json.loads((HERE / "multi/MULTI-037-15/expected/check.json").read_text())
         result["diagnostics"][0]["summary"] = EXCLUDE_COUNT_SUMMARY.format(count_text(dict(case["limits"])["excludeCount"]))
+    elif identifier == "MULTI-068-06":
+        # メンバーの設定の禁止されたキーの診断は、メンバー自身の設定ではなくカタログの宣言を発生元にする
+        # （`MULTI-048-04`の「メンバーは設定キーmultiWorkspaceを宣言できません」と同じ形）。文言は承認済みの対応表。
+        result = json.loads((HERE / "multi/MULTI-048-04/expected/check.json").read_text())
+        result["diagnostics"][0].update(code="SPEC-MULTI-CONFIG-001", summary="メンバーの設定は設定キーlimitsを指定できません")
     elif identifier in {"MULTI-068-03", "MULTI-068-04"}:
         result["limits"] = effective_limits(case["limits"])
     elif identifier == "MULTI-068-05":
@@ -330,7 +341,7 @@ def expected_name(identifier):
 def reviewed_manifest(identifier):
     case = CASES[identifier]
     if case["form"] == "derived":
-        source = "MULTI-037-15" if identifier == "MULTI-068-02" else case["base"]
+        source = {"MULTI-068-02": "MULTI-037-15", "MULTI-068-06": "MULTI-048-04"}.get(identifier, case["base"])
         manifest = json.loads((HERE / "multi" / source / "manifest.json").read_text())
         manifest["fixtureId"] = identifier
         manifest["description"] = description(identifier)

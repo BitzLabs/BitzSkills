@@ -19,7 +19,7 @@
       "code": "SPEC-MULTI-LIMIT-001",
       "severity": "error",
       "resultStatus": "blocked",
-      "summary": "入力バイト数が上限4,096バイトを超過しました",
+      "summary": "入力バイト数が上限4,096を超過しました",
       "source": {
         "kind": "file",
         "workspaceId": "platform",

@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 上限の値を`limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。
 この群は、単一ワークスペースの`doctor`の`limits`の出力、`limits`の設定の検査、入力の上限（安全な入出力・互換性 §4.1）、
-`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、21件で固定する。
+`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、28件で固定する。
 
 | fixture | 操作 | 入力 | 期待 |
 |---|---|---|---|
@@ -16,18 +16,22 @@
 | `SINGLE-180-03`、`04` | 同上 | `frontmatterBytes`が区切りの行を含む大きさ／区切りの行を除く大きさより1小さい | `passed`／`failed` |
 | `SINGLE-180-05`、`06` | 同上 | `documentStatementCount: 3`で規範文が3件／4件 | `passed`／`failed` |
 | `SINGLE-180-07`、`08` | 同上 | `documentArrayItemCount: 3`で`covers`が3件／4件 | `passed`／`failed`（`source.key`は`tests[0].covers`） |
-| `SINGLE-180-09` | 同上 | `specFileCount: 2`で仕様文書が2件 | `passed`／0 |
+| `SINGLE-180-09`、`10` | 同上 | `specFileCount`が2／1で仕様文書が2件 | `passed`／`failed`（`SPEC-INPUT-LIMIT-001`、発生元は`.spec`） |
 | `SINGLE-181` | `context REQ-001 --purpose verify` | `SINGLE-042`の設定に、どの上限も超えない`limits` | `SINGLE-042`と同じ結果。`contextDigest`も同じ |
 | `SINGLE-182-01` | `verify REQ-001` | `SINGLE-055`の設定に`expandedArgvCount: 3`（展開した後の要素数ちょうど） | `SINGLE-055`と同じ結果 |
 | `SINGLE-182-02`、`03` | 同上 | `expandedArgvElementBytes`が最長の要素＋1／最長の要素−1 | `passed`／`blocked`（`SPEC-VERIFY-BLOCKED-001`） |
 | `SINGLE-182-04`、`05` | 同上 | `expandedArgvBytes`が要素の合計＋要素数／要素の合計−1 | `passed`／`blocked` |
 | `SINGLE-182-06` | 同上 | 複合ワークスペースのスナップショット全体の次元のキーをすべて1にする | `SINGLE-055`と同じ結果 |
+| `SINGLE-182-07` | 同上 | `expandedArgvCount: 2`（展開した後の要素は3件） | `blocked`（`SPEC-VERIFY-BLOCKED-001`） |
+| `SINGLE-183-06`〜`10` | `check --full --base HEAD` | `limits`の値が0、負、絶対上限+1、真偽値、文字列 | `error`／3。`SPEC-CONFIG-SCHEMA-001`（`source.key`は`limits.<キー>`） |
+| `SINGLE-183-11` | `doctor` | `SINGLE-092`の形で、設定の`limits.specBytes`が0 | `error`／3。`limits`を返さない（`doctor` §7） |
 
 期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、ワークスペース・設定仕様 §5・§6、文書・フロントマター・状態仕様 §11、
 コンテキストのハッシュ値の正規化仕様 §3、`doctor` §7、結果・診断・終了コード §2・§5、診断レジストリ）と、承認済みの文言
-（`Coreの出力文言のレビュー記録.md`の#22・#41・#76・#78・#79・#140と2026-11-04の要素の文言）だけである。小さい値を設定したときの`summary`は、
-§4.1の規則で上限の表記だけを実際の値（件数は3桁区切りの整数、バイト数は3桁区切りの整数に`バイト`）へ置き換える。Coreの出力は根拠にしない。
-`SINGLE-181`・`182-*`・`183-01`・`02`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`）の入力の設定へ`limits`の行を足し、
+（`Coreの出力文言のレビュー記録.md`の#22・#41・#80と、2026-11-17の上限の設定の承認済みの対応表）だけである。小さい値を設定したときの`summary`は、
+§4.1の規則による。単位を付けた表記（`1 MiB`、`32 KiB`）を持つ文言はその表記を3桁区切りの整数に`バイト`を付けた表記へ置き換え、
+値を数として持つ文言は今の形のまま実際の値を3桁区切りの整数で入れる。Coreの出力は根拠にしない。
+`SINGLE-181`・`182-*`・`183-01`・`02`・`11`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`・`092`）の入力の設定へ`limits`の行を足し、
 期待結果をそこから導く。基のfixtureの入力か期待値が変われば、この群の監査が失敗する。
 
 フロントマターの大きさが区切りの行（`---`）を含むか、引数列のバイト数が要素の終端のNULを含むかは、規範文が定めない。
@@ -136,6 +140,18 @@ CASES = {
                           raw="limits: 1024\n", status="error"),
     "SINGLE-183-05": case("config", 1, "limitsの中の未知のキーを警告にし判定に使わない",
                           limits=[("futureLimit", 1)], status="passed_with_warnings"),
+    "SINGLE-183-06": case("config", 1, "limitsの値が0なら設定の値の範囲の不正にする",
+                          raw="limits:\n  specBytes: 0\n", status="error", key="specBytes"),
+    "SINGLE-183-07": case("config", 1, "limitsの値が負なら設定の値の範囲の不正にする",
+                          raw="limits:\n  documentStatementCount: -1\n", status="error", key="documentStatementCount"),
+    "SINGLE-183-08": case("config", 1, "limitsの値が絶対上限を1超えれば設定の値の範囲の不正にする",
+                          raw="limits:\n  expandedArgvBytes: 1048577\n", status="error", key="expandedArgvBytes"),
+    "SINGLE-183-09": case("config", 1, "limitsの値が真偽値なら設定の型の不正にする",
+                          raw="limits:\n  specFileCount: true\n", status="error", key="specFileCount"),
+    "SINGLE-183-10": case("config", 1, "limitsの値が文字列なら設定の型の不正にする",
+                          raw='limits:\n  statementCount: "5"\n', status="error", key="statementCount"),
+    "SINGLE-183-11": case("doctor-invalid", 1, "limitsの値が不正な設定のdoctorはlimitsを返さない",
+                          base="SINGLE-092", raw="limits:\n  specBytes: 0\n", key="specBytes"),
     "SINGLE-180-01": case("input", 2, "specBytesが仕様文書の大きさちょうどなら遮断しない",
                           limits=[("specBytes", DOCUMENT_SIZE)], document="plain", status="passed"),
     "SINGLE-180-02": case("input", 2, "仕様文書がspecBytesを1バイト超えれば文書を検査しない",
@@ -158,6 +174,9 @@ CASES = {
                           summary=f"1文書の関係・パスの配列の項目数が{count_text(3)}上限を超過しました"),
     "SINGLE-180-09": case("input", 2, "specFileCountちょうどの仕様文書の数を遮断しない",
                           limits=[("specFileCount", 2)], document="two-files", status="passed"),
+    "SINGLE-180-10": case("input", 2, "仕様文書のファイル数がspecFileCountを1超えれば操作を止める",
+                          limits=[("specFileCount", 1)], document="two-files", status="failed",
+                          summary=f"仕様文書のファイルが{count_text(1)}件上限を超過しました"),
     "SINGLE-181": case("derived", 3, "limitsはコンテキストのハッシュ値の材料に含めない",
                        base="SINGLE-042", limits=None),
     "SINGLE-182-01": case("derived", 4, "expandedArgvCountちょうどの引数列のテスト割当てを起動する",
@@ -174,6 +193,9 @@ CASES = {
                           summary=f"{{tests}}展開後のargvがバイト数上限{bytes_text(ARGV_TOTAL - 1)}を超えます"),
     "SINGLE-182-06": case("derived", 4, "単一ワークスペースは複合ワークスペースのスナップショット全体の次元のキーを使わない",
                           base="SINGLE-055", limits=[(key, 1) for key in SNAPSHOT_KEYS]),
+    "SINGLE-182-07": case("argv-blocked", 4, "要素数がexpandedArgvCountを超える引数列のテスト割当てを起動しない",
+                          base="SINGLE-055", limits=[("expandedArgvCount", len(SINGLE_055_ARGV) - 1)],
+                          summary=f"{{tests}}展開後のargvの要素数が上限{count_text(len(SINGLE_055_ARGV) - 1)}を超えます"),
 }
 
 
@@ -240,6 +262,11 @@ def document_inputs(kind):
 def reviewed_inputs(identifier):
     """`repo/`の(パス -> (バイト列, 実行ビット))。"""
     case_ = CASES[identifier]
+    if case_["kind"] == "doctor-invalid":
+        # 基の`SINGLE-092`（設定の型の不正の`doctor`）の入力の設定だけを、`SINGLE-001`の最小設定に不正な`limits`を足したものに置き換える。
+        tree = read_tree(base_fixture(identifier) / "repo")
+        tree[CONFIG_PATH] = (config_text(identifier).encode(), tree[CONFIG_PATH][1])
+        return tree
     if "base" in case_:
         tree = read_tree(base_fixture(identifier) / "repo")
         content, executable = tree[CONFIG_PATH]
@@ -255,7 +282,7 @@ def reviewed_inputs(identifier):
 
 def operation(identifier):
     case_ = CASES[identifier]
-    if case_["kind"] == "doctor":
+    if case_["kind"] in {"doctor", "doctor-invalid"}:
         return "doctor"
     if case_["kind"] in {"config", "input"}:
         return "check"
@@ -299,7 +326,7 @@ def diagnostic(code, severity, status, summary, path, key=None, identity="root")
 # 入力の上限のfixtureの検査件数（文書、規範文）。`skip-document`で上限を超えた文書は数えない（診断レジストリ）。
 INPUT_COUNTS = {"SINGLE-180-01": (1, 1), "SINGLE-180-02": (0, 0), "SINGLE-180-03": (1, 1), "SINGLE-180-04": (0, 0),
                 "SINGLE-180-05": (1, 3), "SINGLE-180-06": (0, 0), "SINGLE-180-07": (1, 3), "SINGLE-180-08": (1, 1),
-                "SINGLE-180-09": (2, 2)}
+                "SINGLE-180-09": (2, 2), "SINGLE-180-10": (0, 0)}
 
 
 def reviewed_result(identifier):
@@ -308,6 +335,11 @@ def reviewed_result(identifier):
     if kind == "doctor":
         result = json.loads((base_fixture(identifier) / "expected/doctor.json").read_text())
         result["limits"] = effective_limits(case_["limits"])
+        return result
+    if kind == "doctor-invalid":
+        # 設定がスキーマに適合しないときは`limits`を返さない（`doctor` §7）。結果の形は`SINGLE-092`と同じで、診断だけが異なる。
+        result = json.loads((base_fixture(identifier) / "expected/doctor.json").read_text())
+        result["diagnostics"] = [range_diagnostic(case_["key"])]
         return result
     if kind == "derived":
         # `limits`はどの上限も超えず、コンテキストのハッシュ値の材料にも含めないので、基のfixtureと同じ結果になる。
@@ -328,6 +360,8 @@ def reviewed_result(identifier):
             return check_result("error", 0, 0, [diagnostic(
                 "SPEC-CONFIG-SCHEMA-001", "error", "error", "設定キーlimitsはマッピングで指定してください",
                 CONFIG_PATH, "limits", identity=None)], identity=None)
+        if "key" in case_:
+            return check_result("error", 0, 0, [range_diagnostic(case_["key"])], identity=None)
         if identifier == "SINGLE-183-05":
             return check_result("passed_with_warnings", 0, 0, [diagnostic(
                 "SPEC-CONFIG-UNKNOWN-001", "warning", "passed_with_warnings", "未知の設定キーです",
@@ -337,8 +371,18 @@ def reviewed_result(identifier):
     diagnostics = []
     if case_["status"] == "failed":
         key = "tests[0].covers" if identifier == "SINGLE-180-08" else None
-        diagnostics.append(diagnostic(LIMIT_CODE, "error", "failed", case_["summary"], REQ_PATH, key))
+        # 仕様文書のファイル数の超過（`stop-operation`）の発生元はワークスペース相対の`.spec`（§4.1）。
+        path = ".spec" if identifier == "SINGLE-180-10" else REQ_PATH
+        diagnostics.append(diagnostic(LIMIT_CODE, "error", "failed", case_["summary"], path, key))
     return check_result(case_["status"], documents, statements, diagnostics)
+
+
+def range_diagnostic(key):
+    """`limits`の値の型と範囲の不正（ワークスペース・設定仕様 §5）。文言は承認済みの`設定キー{key}は1〜{max}の整数で指定してください`。
+    設定の型の不正では同一性を構成できないので、`workspaceId`は`null`（結果・診断・終了コード §5）。"""
+    return diagnostic("SPEC-CONFIG-SCHEMA-001", "error", "error",
+                      f"設定キーlimits.{key}は1〜{ABSOLUTE[key]}の整数で指定してください", CONFIG_PATH, f"limits.{key}",
+                      identity=None)
 
 
 def expected_name(identifier):
@@ -399,6 +443,7 @@ def check_measurements(identifier, inputs):
             "SINGLE-182-04": sum(sizes) + len(sizes) == limits.get("expandedArgvBytes"),
             "SINGLE-182-05": sum(sizes) == limits.get("expandedArgvBytes", 0) + 1,
             "SINGLE-182-06": set(limits) == set(SNAPSHOT_KEYS),
+            "SINGLE-182-07": len(argv) == limits.get("expandedArgvCount", 0) + 1,
         }
         if not checks[identifier]:
             raise ValueError("引数列の測り直しがレビュー済みの上限と一致しません")
