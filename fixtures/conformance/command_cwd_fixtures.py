@@ -5,11 +5,13 @@
 規範は次のとおり定めた。
 
 - ワークスペース・設定仕様 §6: `cwd`の字句は、単独の`.`、または空のセグメント、`.`、`..`、NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を含まず、`/`で始まらない
-  パスに限る。字句の違反は設定の検査で診断`SPEC-CONFIG-SCHEMA-001`とし、どの操作もコマンドの実行へ進まない。実パスの所有は`verify`が
-  テスト割当ての起動前に判定し、単一ワークスペースで実パスがワークスペースのルートの外なら診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とする。
+  パスに限る。字句の違反は設定の検査で診断`SPEC-CONFIG-SCHEMA-001`とし、どの操作もコマンドの実行へ進まない。`cwd`のシンボリックリンクは辿らない
+  （ADR-071。2026-11-15の訂正）。`cwd`がディレクトリとして存在しなければ（途中または末端がシンボリックリンクを含む）、`verify`がテスト割当ての起動前に
+  診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とする。単一ワークスペースでは、字句の検査を通った`cwd`は常にルートの配下にあるので、所有の違反は生じない
+  （`VERIFY-CWD-OUTSIDE`は診断レジストリから除いた）。
 - 診断レジストリ: `CONFIG-FIELD-TYPE`系の`SPEC-CONFIG-SCHEMA-001`（重大度`error`、結果への効果`error`）、
-  `VERIFY-CWD-OUTSIDE`（`SPEC-VERIFY-BLOCKED-001`、`blocked`、`skip-binding`、`file`）。
-- `verify` §5.1: `VERIFY-CWD-OUTSIDE`の`source`は設定ファイルの`verify.commands.<名前>.cwd`。§6: `skip-binding`は単一ワークスペースでは
+  `VERIFY-CWD-UNAVAILABLE`（`SPEC-VERIFY-BLOCKED-001`、`blocked`、`skip-binding`、`file`）。
+- `verify` §5.1: `VERIFY-CWD-UNAVAILABLE`の`source`は設定ファイルの`verify.commands.<名前>.cwd`。§6: `skip-binding`は単一ワークスペースでは
   最上位の`diagnostics`へ1件だけ置き、影響を受ける検証対象は診断を複製せず、状態を`blocked`、`bindingRefs: []`とする。`commands[]`へ実行結果を作らない。
 - 結果・診断・終了コード §2: 設定の構文・型などでワークスペースの同一性を構成する前に停止した単独結果は、`workspace.id`を`null`、`path`を`.`とする。
   §3: `SPEC-CONFIG-SCHEMA-001`は終了コード3（`error`）。
@@ -22,9 +24,9 @@
 | `SINGLE-167-04` | `context REQ-001 --purpose verify` | `tests//`（空のセグメント） | 同上（`context`の結果の形） |
 | `SINGLE-167-05` | `verify REQ-001` | `./tests`（`.`のセグメント） | 同上 |
 | `SINGLE-167-06` | `verify REQ-001` | `a]`（閉じ括弧だけ。globの文字は`*?[]`の4つ） | 同上 |
-| `SINGLE-167-07` | `verify REQ-001` | シンボリックリンク`up -> ..`（ワークスペースのルートの親） | `VERIFY-CWD-OUTSIDE`、`blocked`／2、`commands`は空 |
+| `SINGLE-167-07` | `verify REQ-001` | シンボリックリンク`up -> ..`（ワークスペースのルートの親） | `VERIFY-CWD-UNAVAILABLE`、`blocked`／2、`commands`は空（診断のJSONは訂正の前と同じ） |
 | `SINGLE-167-08` | `verify REQ-001` | `tests`（対照） | `passed`／0、`commands[].cwd`は`tests` |
-| `SINGLE-167-09` | `verify REQ-001` | シンボリックリンク`inner -> real`（対照。テストのパスは`inner/`配下） | `passed`／0、`commands[].cwd`は`inner` |
+| `SINGLE-167-09` | `verify REQ-001` | シンボリックリンク`inner -> real`（テストのパスは`inner/`配下。2026-11-15に`passed`から`failed`へ訂正） | `failed`／1。テストのパスの途中がシンボリックリンクなので、`TECH-001`の`tests[0].path`・`tests[1].path`が`SPEC-PATH-INVALID-001`（`cwd`は判定しない）。`commands`は空 |
 
 全ケースは`SINGLE-042`のcorpus（`REQ-001`と`TECH-001`、テストは`TECH-001`が宣言する）を基にコマンドの`cwd`だけを替え、`SINGLE-126`と同じく
 インデックスへステージしてから実行する（`check`は基準版のコミットを作る）。診断の`summary`は、字句の違反が新しい文言
@@ -33,8 +35,10 @@
 停止する結果の形は、同じ原因（設定の型の不正）の既存のfixtureがレビュー済みの形を引き継ぐ: `doctor`は`SINGLE-092`、`check`は`SINGLE-004-01`、
 `context`は`SINGLE-150`（目的だけ`verify`）、`verify`は`SINGLE-126-01`。診断だけを新しい診断に置き換える。
 
-`SINGLE-167-07`の`up -> ..`は、準備手順の後は準備手順で作る隔離したリポジトリの親（`home`などの隣のディレクトリを持つ）を指す。実パスの判定は、
-入力のシンボリックリンクの解決先から導く（このモジュールの参照計算）。
+`SINGLE-167-07`の`up -> ..`は、準備手順の後は準備手順で作る隔離したリポジトリの親（`home`などの隣のディレクトリを持つ）を指す。リンクを辿らないので、
+リンク先がどこかは判定に使わない（`cwd`が利用できないのは、末端がシンボリックリンクだから）。このとき、テストのパスは字句では`cwd`の配下にもないが、
+`cwd`の判定がその前提なので、`cwd`だけが原因になる。`SINGLE-167-09`は、`cwd`の`inner`配下にテストを置くため、テストのパスの途中がシンボリックリンクになり、
+起動前の検査より前のテストのパスの検査（`verify` §4の4.）が先に止める。
 
 期待値の根拠は規範文と、このモジュールの参照計算だけである（Coreの出力は根拠にしない）。ハッシュ値は、独立に書いた2系統の参照計算
 （リテラルのA、入力の木構造から導出するB）のバイト列の一致を要求する。
@@ -50,6 +54,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from .schemas import schema_path
 from . import digest_crosscheck, digest_reference
+from . import lexical_path_reference as lexical
 from .harness import setup
 from .initial_fixtures import compare_state, observe
 
@@ -66,7 +71,8 @@ LEXICAL_SUMMARY = "作業ディレクトリのパスの形式が不正です"
 OUTSIDE_SUMMARY = "コマンドの作業ディレクトリが利用できません"
 
 # id: dict(op, argv, cwd, kind, base, description)。
-#   kind: `lexical`（字句の違反で設定の検査が止める）、`outside`（実パスがルートの外）、`passed`（対照）。
+#   kind: `lexical`（字句の違反で設定の検査が止める）、`unavailable`（`cwd`が利用できない。末端がシンボリックリンク）、`invalid`（テストのパスの途中がシンボリックリンク）、
+#   `passed`（対照）。
 #   link: 入力に置くシンボリックリンク(名前, 解決先)。tests: テストを置くディレクトリ。
 #   base: 停止の結果の形を引き継ぐ元のfixture。
 CASES = {
@@ -82,12 +88,15 @@ CASES = {
                           description="cwdに.のセグメントがあれば設定の検査が止めverifyはコマンドを起動しない"),
     "SINGLE-167-06": dict(op="verify", argv=["verify", "REQ-001"], cwd="a]", kind="lexical", base="SINGLE-126-01", tests="tests",
                           description="cwdに閉じ括弧だけがあってもglobの文字なので設定の検査が止める"),
-    "SINGLE-167-07": dict(op="verify", argv=["verify", "REQ-001"], cwd="up", kind="outside", base=None, tests="tests", link=("up", ".."),
-                          description="cwdの実パスがワークスペースのルートの外なら起動前にblockedとする"),
+    "SINGLE-167-07": dict(op="verify", argv=["verify", "REQ-001"], cwd="up", kind="unavailable", base=None, tests="tests", link=("up", ".."),
+                          description="cwdがシンボリックリンクなら、辿らずにcwdが利用できないものとして起動前にblockedとする"),
     "SINGLE-167-08": dict(op="verify", argv=["verify", "REQ-001"], cwd="tests", kind="passed", base=None, tests="tests",
                           description="対照: cwdがルート配下の通常のディレクトリならverifyは通る"),
-    "SINGLE-167-09": dict(op="verify", argv=["verify", "REQ-001"], cwd="inner", kind="passed", base=None, tests="inner", link=("inner", "real"),
-                          description="対照: cwdがルート配下へ解決するシンボリックリンクならverifyは通る"),
+    "SINGLE-167-09": dict(op="verify", argv=["verify", "REQ-001"], cwd="inner", kind="invalid", base=None, tests="inner", link=("inner", "real"),
+                          description="cwdの配下のテストのパスの途中がシンボリックリンクなら、リンク先がルートの中でも存在しないパスと同じにし、verifyの対象をfailedにする"),
+    "SINGLE-167-10": dict(op="verify", argv=["verify", "REQ-001"], cwd="lnk/sub", kind="unavailable", base=None, tests="tests", link=("lnk", "real"),
+                          files={"real/sub/keep.txt": b"keep\n"},
+                          description="cwdの途中のセグメントがシンボリックリンクなら、リンク先に実在するディレクトリでも、辿らずにcwdが利用できないものとして起動前にblockedとする"),
 }
 EXIT_BY_STATUS = {"passed": 0, "failed": 1, "blocked": 2, "error": 3}
 
@@ -104,8 +113,8 @@ def lexical_violation(cwd):
 
 
 def within(path, base):
-    """パスのセグメントの境界での包含（境界自身を含む）。"""
-    return path == base or path.startswith(base.rstrip("/") + "/")
+    """字句のパスのセグメントの境界での包含（境界自身を含む）。NFCにしたセグメントのコードポイントの完全一致で比べ、ファイルシステムを読まない。"""
+    return lexical.within(path, base)
 
 
 # --- 入力 -------------------------------------------------------------------------------
@@ -116,7 +125,7 @@ def tests_directory(identifier):
 
 def config(identifier):
     cwd = CASES[identifier]["cwd"]
-    text = cwd if CASES[identifier]["kind"] == "passed" else '"' + cwd + '"'
+    text = cwd if CASES[identifier]["kind"] in ("passed", "invalid") else '"' + cwd + '"'
     return digest_reference.CONFIG.replace(CWD_LINE, f"      cwd: {text}\n")
 
 
@@ -124,6 +133,7 @@ def reviewed_inputs(identifier):
     """通常のファイルの(パス→バイト列)。`link`のシンボリックリンクは`reviewed_links`が別に持つ。"""
     inputs = dict(digest_reference.reviewed_inputs("SINGLE-042"))
     inputs[CONFIG_PATH] = config(identifier).encode()
+    inputs.update(CASES[identifier].get("files", {}))
     directory = tests_directory(identifier)
     if directory != "tests":
         # テストの実体を`real/`へ移し、`TECH-001`が宣言するテストのパスをシンボリックリンク`inner/`経由にする。
@@ -197,14 +207,24 @@ def stop_result(identifier):
     return base
 
 
+def invalid_diagnostics(identifier):
+    """テストのパスの途中がシンボリックリンクのとき、`TECH-001`のエントリごとの診断（`verify` §4の4.）。"""
+    return [{"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": "テストのパスが存在しません",
+             "source": {"kind": "file", "workspaceId": "root", "path": TECH_PATH, "key": f"tests[{index}].path"}}
+            for index in range(len(TEST_NAMES))]
+
+
 def verify_result(identifier):
-    outside = CASES[identifier]["kind"] == "outside"
-    entry = {"target": "REQ-001", "status": "blocked" if outside else "passed", "contextDigest": context_digest(identifier),
-             "statements": list(STATEMENTS), "bindingRefs": [] if outside else ["root::default"], "diagnostics": []}
-    result = {"schemaVersion": "1.0", "operation": "verify", "status": "blocked" if outside else "passed", "scope": "selected",
+    kind = CASES[identifier]["kind"]
+    blocked, invalid = kind == "unavailable", kind == "invalid"
+    status = "blocked" if blocked else "failed" if invalid else "passed"
+    entry = {"target": "REQ-001", "status": status, "contextDigest": context_digest(identifier),
+             "statements": list(STATEMENTS), "bindingRefs": [] if blocked or invalid else ["root::default"],
+             "diagnostics": invalid_diagnostics(identifier) if invalid else []}
+    result = {"schemaVersion": "1.0", "operation": "verify", "status": status, "scope": "selected",
               "workspace": {"id": "root", "path": "."}, "targetResults": [entry], "revision": None, "commands": [],
-              "durationMs": 0, "diagnostics": [outside_diagnostic()] if outside else []}
-    if not outside:
+              "durationMs": 0, "diagnostics": [outside_diagnostic()] if blocked else []}
+    if status == "passed":
         result["commands"] = [{
             "bindingId": "root::default", "workspaceId": "root", "name": "default", "status": "passed",
             "termination": "exit", "cwd": CASES[identifier]["cwd"], "argv": ["/bin/true", *TEST_NAMES],
@@ -234,13 +254,19 @@ def configured_cwd(repository):
     return value[1:-1] if value[:1] == '"' else value
 
 
-def reference_outcome(repository):
-    """設定の`cwd`と実パスから、操作の結果の種類を導く: `lexical`、`outside`、`passed`。"""
+def reference_outcome(repository, tests):
+    """設定の`cwd`と宣言したテストのパスから、操作の結果の種類を字句の規則で導く: `lexical`、`invalid`、`unavailable`、`passed`。
+
+    テストのパスの検査（`verify` §4の4.）は、`cwd`の検査（§5.1）より前に行う。リンクを辿らず、実パスを使わない。
+    """
     cwd = configured_cwd(repository)
     if lexical_violation(cwd):
         return "lexical"
-    real = os.path.realpath(repository / cwd)
-    return "passed" if within(real, os.path.realpath(repository)) else "outside"
+    if any(lexical.lookup(repository, path, "file") != "ok" for path in tests):
+        return "invalid"
+    if lexical.lookup(repository, cwd, "directory") != "ok":
+        return "unavailable"
+    return "passed"
 
 
 def check_conditions(identifier, repository, manifest, result):
@@ -248,7 +274,7 @@ def check_conditions(identifier, repository, manifest, result):
     case = CASES[identifier]
     if configured_cwd(repository) != case["cwd"]:
         raise ValueError("設定の`cwd`がレビュー済みの値と異なります")
-    outcome = reference_outcome(repository)
+    outcome = reference_outcome(repository, test_paths(identifier))
     if outcome != case["kind"]:
         raise ValueError(f"入力から導く結果の種類が期待と異なります: {outcome}")
     link = case.get("link")
@@ -258,17 +284,21 @@ def check_conditions(identifier, repository, manifest, result):
             raise ValueError("シンボリックリンクがレビュー済みの入力と異なります")
     elif case["kind"] == "passed" and not (repository / case["cwd"]).is_dir():
         raise ValueError("対照の`cwd`は通常のディレクトリである必要があります")
-    if case["kind"] == "outside" and within(os.path.realpath(repository / case["cwd"]), os.path.realpath(repository)):
-        raise ValueError("ルートの外へ解決するシンボリックリンクである必要があります")
+    if case["kind"] == "unavailable" and lexical.lookup(repository, case["cwd"], "directory") != "link":
+        raise ValueError("途中または末端がシンボリックリンクの`cwd`である必要があります")
+    if case["kind"] == "unavailable" and not os.path.isdir(repository / case["cwd"]):
+        raise ValueError("リンクを辿れば実在するディレクトリの`cwd`である必要があります")
+    if case["kind"] == "invalid" and not all(os.path.isfile(repository / path) for path in test_paths(identifier)):
+        raise ValueError("リンクを辿れば実在する通常のファイルである必要があります")
     if case["kind"] == "passed":
-        # テストのパスは、実効`cwd`の配下に実在する。
+        # テストのパスは、実効`cwd`の字句の配下に実在する。
         for path in test_paths(identifier):
-            if not (repository / path).is_file() or not within(os.path.realpath(repository / path), os.path.realpath(repository / case["cwd"])):
+            if lexical.lookup(repository, path, "file") != "ok" or not within(path, case["cwd"]):
                 raise ValueError("テストのパスは実効`cwd`の配下の通常のファイルである必要があります")
     if case["kind"] == "lexical":
         if result["diagnostics"] != [stop_diagnostic()] or result["status"] != "error":
             raise ValueError("字句の違反は設定の検査の診断1件だけを返す必要があります")
-    status = {"lexical": "error", "outside": "blocked", "passed": "passed"}[outcome]
+    status = {"lexical": "error", "unavailable": "blocked", "invalid": "failed", "passed": "passed"}[outcome]
     if (manifest["expect"]["status"], manifest["expect"]["exitCode"]) != (status, EXIT_BY_STATUS[status]) or result["status"] != status:
         raise ValueError("状態または終了コードが参照計算と異なります")
     if outcome != "passed" and result.get("commands"):

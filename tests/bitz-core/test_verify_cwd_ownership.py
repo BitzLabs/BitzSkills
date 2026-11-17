@@ -4,18 +4,21 @@
 そのため、`cwd: ../..`、絶対パス、空のセグメント、glob、外へ出るシンボリックリンクの`cwd`でも、どの操作も止まらず、
 `verify`はテストのコマンドを所有領域の外で起動していた。
 
-規範:
-- ワークスペース・設定仕様 §6: `cwd`はワークスペース相対の既存のディレクトリとし、絶対パス、`..`、ルートの外の
-  シンボリックリンクを禁止する。字句の違反は設定の検査で`SPEC-CONFIG-SCHEMA-001`とし、実パスの所有は`verify`が
-  テスト割当ての起動前に判定する（単一ワークスペースは`SPEC-VERIFY-BLOCKED-001`）。
-- 複合ワークスペース仕様 §5・§5.1: `cwd`はメンバーのルート配下だけを所有し、ルートワークスペースはメンバーの配下を
-  `cwd`として所有できない。違反は`SPEC-MULTI-OWNERSHIP-001`とし、そのテスト割当てだけを起動しない。
+規範（ADR-071）:
+- ワークスペース・設定仕様 §6: `cwd`はワークスペース相対の既存のディレクトリとし、絶対パス、`..`、シンボリックリンクを禁止する。
+  字句の違反は設定の検査で`SPEC-CONFIG-SCHEMA-001`とする。`cwd`がディレクトリとして存在しなければ（途中または末端のシンボリックリンク、
+  別の綴り、NFCの衝突を含む。安全な入出力・互換性 §6.2）、`verify`がテスト割当ての起動前に`SPEC-VERIFY-BLOCKED-001`
+  （条件`VERIFY-CWD-UNAVAILABLE`、「コマンドの作業ディレクトリが利用できません」）とし、単一ワークスペースと複合ワークスペースで同じとする。
+- 複合ワークスペース仕様 §5・§5.1: 存在する`cwd`の所有は字句のパスの包含で判定する。`cwd`はメンバーのルート配下だけを所有し、
+  ルートワークスペースはメンバーの配下を`cwd`として所有できない。違反は`SPEC-MULTI-OWNERSHIP-001`とし、そのテスト割当てだけを起動しない。
 
 この試験の対象:
 1. 字句の違反は、doctor、check、context、verifyのすべてで`SPEC-CONFIG-SCHEMA-001`になり、コマンドを起動しない。
 2. 単独の`.`と、正しい形の相対パスは通る。
-3. 単一ワークスペースで実パスがルートの外の`cwd`は、`verify`が`SPEC-VERIFY-BLOCKED-001`で起動を遮断する。
-4. 複合ワークスペースで所有領域の外の`cwd`は、`SPEC-MULTI-OWNERSHIP-001`で遮断し、独立したテスト割当ては続ける。
+3. シンボリックリンクの`cwd`は、リンク先がどこでも、`verify`が`SPEC-VERIFY-BLOCKED-001`（`VERIFY-CWD-UNAVAILABLE`）で起動を遮断し、
+   `VERIFY-CWD-OUTSIDE`は存在しない。
+4. 複合ワークスペースで、存在するルートワークスペースの`cwd`がメンバーの配下にあれば、`SPEC-MULTI-OWNERSHIP-001`で遮断し、
+   独立したテスト割当ては続ける。
 5. 結果は`result.schema.json`に適合する。
 """
 
@@ -174,8 +177,8 @@ class SingleWorkspaceLexicalTests(_Base):
                 self.assertEqual([c["cwd"] for c in result["commands"]], [cwd])
 
 
-class SingleWorkspaceRealPathTests(_Base):
-    def test_symlink_cwd_outside_the_root_is_blocked_before_execution(self):
+class SingleWorkspaceSymlinkTests(_Base):
+    def test_symlink_cwd_outside_the_root_is_unavailable_before_execution(self):
         _write(self.root, ".spec/bitz.yaml", CONFIG + _verify_config("up"))
         _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
         _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
@@ -189,14 +192,55 @@ class SingleWorkspaceRealPathTests(_Base):
         )
         self.assertEqual(result["commands"], [])
 
-    def test_symlink_cwd_inside_the_root_passes(self):
+    def test_symlink_cwd_inside_the_root_is_also_unavailable(self):
+        # 実体が同じワークスペースの中にあるシンボリックリンクも、辿らない（リンクの`cwd`は存在しない扱い）。
         _write(self.root, ".spec/bitz.yaml", CONFIG + _verify_config("inner"))
-        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001").replace("path: tests/t.py", "path: inner/t.py"))
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001").replace("path: tests/t.py", "path: real/t.py"))
         _write(self.root, "real/t.py", "def test_t():\n    assert True\n")
         os.symlink("real", self.root / "inner")
         self.commit()
         result, code = self.run_op("verify", "REQ-001")
-        self.assertEqual((result["status"], code), ("passed", 0), result)
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(
+            self.diagnostics(result),
+            [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません", "root", "verify.commands.t.cwd")],
+        )
+        self.assertEqual(result["commands"], [])
+
+    def test_a_symlink_in_the_middle_of_the_cwd_is_unavailable(self):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + _verify_config("lk/sub"))
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "tests/t.py", "def test_t():\n    assert True\n")
+        _write(self.root, "real/sub/keep", "")
+        os.symlink("real", self.root / "lk")
+        self.commit()
+        result, code = self.run_op("verify", "REQ-001")
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(
+            self.diagnostics(result),
+            [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません", "root", "verify.commands.t.cwd")],
+        )
+
+    def test_doctor_reports_a_symlink_cwd_as_a_command_that_cannot_be_resolved(self):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + _verify_config("inner"))
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "real/keep", "")
+        os.symlink("real", self.root / "inner")
+        self.commit()
+        result, code = self.run_op("doctor")
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(
+            [(d["code"], d["summary"], d["source"].get("key")) for d in result["diagnostics"]],
+            [("SPEC-DOCTOR-COMMAND-001", "コマンドの作業ディレクトリを解決できません", "verify.commands.t.cwd")],
+        )
+
+    def test_doctor_accepts_a_plain_directory_cwd(self):
+        _write(self.root, ".spec/bitz.yaml", CONFIG + _verify_config("real"))
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "real/keep", "")
+        self.commit()
+        result, code = self.run_op("doctor")
+        self.assertEqual([d["code"] for d in result["diagnostics"] if d["code"] == "SPEC-DOCTOR-COMMAND-001"], [])
 
 
 class MultiWorkspaceOwnershipTests(_Base):
@@ -214,7 +258,7 @@ class MultiWorkspaceOwnershipTests(_Base):
 
     def ownership(self, path: str, ws: str):
         return [(
-            "SPEC-MULTI-OWNERSHIP-001", f"パス{path}の解決先がワークスペース{ws}の所有領域の外です", ws,
+            "SPEC-MULTI-OWNERSHIP-001", f"パス{path}がワークスペース{ws}の所有領域の外です", ws,
             "verify.commands.t.cwd",
         )]
 
@@ -231,27 +275,34 @@ class MultiWorkspaceOwnershipTests(_Base):
         self.assertEqual([d["code"] for d in by_id["platform"]["diagnostics"]], ["SPEC-MULTI-OWNERSHIP-001"])
         self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("failed", "passed"))
 
-    def test_root_symlink_cwd_into_a_member_is_outside_its_ownership(self):
+    def test_root_symlink_cwd_into_a_member_is_unavailable_not_owned(self):
+        # シンボリックリンクの`cwd`は存在しない扱いなので、所有の判定へ進まず`VERIFY-CWD-UNAVAILABLE`になる。
         self.write("lk", ".")
         os.symlink("apps/web", self.root / "lk")
         self.commit()
         result, code = self.run_op("verify", "platform::REQ-001")
-        self.assertEqual((result["status"], code), ("failed", 1), result)
-        self.assertEqual(self.diagnostics(result), self.ownership("lk", "platform"))
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(
+            self.diagnostics(result),
+            [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません", "platform", "verify.commands.t.cwd")],
+        )
         self.assertEqual(self.binding_ids(result), [])
 
-    def test_member_symlink_cwd_out_of_the_member_is_outside_its_ownership(self):
+    def test_member_symlink_cwd_out_of_the_member_is_unavailable_and_independent_bindings_continue(self):
         self.write(".", "esc")
         os.symlink("../..", self.root / "apps" / "web" / "esc")
         self.commit()
         result, code = self.run_op("verify", "--all-workspaces")
-        self.assertEqual((result["status"], code), ("failed", 1), result)
-        self.assertEqual(self.diagnostics(result), self.ownership("esc", "web"))
+        self.assertEqual((result["status"], code), ("blocked", 2), result)
+        self.assertEqual(
+            self.diagnostics(result),
+            [("SPEC-VERIFY-BLOCKED-001", "コマンドの作業ディレクトリが利用できません", "web", "verify.commands.t.cwd")],
+        )
         self.assertEqual(self.binding_ids(result), ["platform::t"])
         self.assertEqual(result["diagnostics"], [])
         by_id = {ws["id"]: ws for ws in result["workspaces"]}
-        self.assertEqual([d["code"] for d in by_id["web"]["diagnostics"]], ["SPEC-MULTI-OWNERSHIP-001"])
-        self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("passed", "failed"))
+        self.assertEqual([d["code"] for d in by_id["web"]["diagnostics"]], ["SPEC-VERIFY-BLOCKED-001"])
+        self.assertEqual((by_id["platform"]["status"], by_id["web"]["status"]), ("passed", "blocked"))
 
     def test_cwd_inside_the_own_area_passes(self):
         self.write("tests", "tests")

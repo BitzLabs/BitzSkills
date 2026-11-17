@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "check",
   "scope": "selected",
-  "status": "failed",
+  "status": "passed",
   "workspace": {
     "id": "web",
     "path": "apps/web"
@@ -15,17 +15,5 @@
   "checkedDocumentCount": 1,
   "checkedStatementCount": 0,
   "durationMs": 0,
-  "diagnostics": [
-    {
-      "code": "SPEC-MULTI-OWNERSHIP-001",
-      "severity": "error",
-      "resultStatus": "failed",
-      "summary": "パスsrc/linkの基準版のシンボリックリンクがワークスペースwebの所有領域の外を指します",
-      "source": {
-        "kind": "file",
-        "workspaceId": "web",
-        "path": "src/link"
-      }
-    }
-  ]
+  "diagnostics": []
 }

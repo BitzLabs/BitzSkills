@@ -1,0 +1,43 @@
+{
+  "fixtureId": "SINGLE-179-11",
+  "description": "cwdの項目がNFCで同じ名前になる2つの兄弟を持つとき、cwdが利用できないものとして起動前に遮断する（テストのcwdの配下の判定には進まない）",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "dnfc",
+        "to": "café"
+      },
+      {
+        "from": "dnfd",
+        "to": "cafe\u0301"
+      }
+    ],
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

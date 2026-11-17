@@ -7,10 +7,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from . import gitutil
 from . import messages
+from . import pathown
 from .config import Diagnostic
 from .document import DocEntry, build_base_catalog
 
@@ -89,7 +90,7 @@ def unreadable_id_paths(entries: list[DocEntry]) -> set[str]:
     ファイル名とIDの不一致、EARS-AI構文の不正、IDの重複は、IDを読めているので含まない（``current_ids_present``が扱う）。
     """
 
-    return {e.path for e in entries if e.doc_id is None}
+    return {pathown.nfc(e.path) for e in entries if e.doc_id is None}
 
 
 def exclude_unreadable_paths(
@@ -109,7 +110,7 @@ def exclude_unreadable_paths(
     return {
         doc_id: entry
         for doc_id, entry in base_by_id.items()
-        if doc_id in current_ids_present or entry.path not in unreadable_paths
+        if doc_id in current_ids_present or pathown.nfc(entry.path) not in unreadable_paths
     }
 
 
@@ -256,10 +257,23 @@ def approved_protection_diagnostics(
     return diags
 
 
+def by_path(entries: Iterable[DocEntry]) -> dict[str, DocEntry]:
+    """文書のパス（NFC）→文書。Gitのパスとの照合に使う（安全な入出力・互換性 §6.1）。
+
+    NFCで同じになるパスが複数あれば、先に現れた文書を残す（入力の並びが決定的なので、結果も決定的である）。
+    """
+
+    index: dict[str, DocEntry] = {}
+    for entry in entries:
+        index.setdefault(pathown.nfc(entry.path), entry)
+    return index
+
+
 def _owning_doc_id(path: str, current_by_path: dict[str, DocEntry], base_by_path: dict[str, DocEntry]) -> str | None:
-    entry = current_by_path.get(path)
+    key = pathown.nfc(path)
+    entry = current_by_path.get(key)
     if entry is None:
-        entry = base_by_path.get(path)
+        entry = base_by_path.get(key)
     return entry.doc_id if entry is not None else None
 
 
@@ -282,7 +296,7 @@ def build_reverse_index(current_by_id: dict[str, DocEntry], field: str) -> dict[
                 if isinstance(t, dict) and t.get("path")
             ]
         for p in paths:
-            index.setdefault(p, set()).add(doc_id)
+            index.setdefault(pathown.nfc(p), set()).add(doc_id)
     return index
 
 
@@ -315,7 +329,8 @@ def changed_selection(
                     owning.add(doc_id)
                     matched = True
             else:
-                ids = implements_index.get(p, set()) | tests_index.get(p, set())
+                key = pathown.nfc(p)
+                ids = implements_index.get(key, set()) | tests_index.get(key, set())
                 if ids:
                     owning.update(ids)
                     matched = True
@@ -340,7 +355,8 @@ def changed_spec_document_ids(
         for p in (c.path, c.old_path):
             if p is None or not p.startswith(".spec/"):
                 continue
-            entry = current_by_path.get(p) or base_by_path.get(p)
+            key = pathown.nfc(p)
+            entry = current_by_path.get(key) or base_by_path.get(key)
             if entry is not None and entry.doc_id is not None and entry.kind in kinds:
                 result.add(entry.doc_id)
     return result

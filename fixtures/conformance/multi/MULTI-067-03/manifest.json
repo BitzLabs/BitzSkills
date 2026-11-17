@@ -1,0 +1,40 @@
+{
+  "fixtureId": "MULTI-067-03",
+  "description": "NFCとNFDで書き分けた同じメンバーのパスが、NFCで同じディレクトリを引き、その設定のworkspace.idが一方のカタログのIDと一致しないとき、重複は同じ元の原因なので、優先順位が最小のSPEC-MULTI-MEMBER-001だけで全体事前検査を止める",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "apps/m",
+        "to": "apps/café"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

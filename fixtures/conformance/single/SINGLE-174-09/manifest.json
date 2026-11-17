@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-174-09",
-  "description": "配下にないテストを複数の文書が宣言するとき、パスの辞書順で最初の文書と、その文書の最小の添字を発生元にして1件で遮断する",
+  "description": "シンボリックリンクを経由するテストのパスを複数の文書が宣言するとき、違反したエントリごとに、宣言した文書とtests[i].pathを発生元にして1件ずつ返す",
   "setup": {
     "git": true,
     "operations": [
@@ -24,8 +24,8 @@
     "env": {}
   },
   "expect": {
-    "status": "blocked",
-    "exitCode": 2,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

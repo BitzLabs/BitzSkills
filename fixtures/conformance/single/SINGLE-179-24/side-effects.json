@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001-cafe\u0301.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5dee5a24e4f2a09db21d072b81963ca69181d4e566c5c9b71ea7589f3cdda2b7"
+      },
+      ".spec/requirements/REQ-001-café.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a8b232a766278a7af8ffbc1b5aa97e38441dd30e25f70dd769a9e7dd706182e7"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 62aae3ed51937b03249840eda1730a45a0f32f00 0\t\".spec/requirements/REQ-001-cafe\\314\\201.md\"\n100644 1ad280a418e306dc2f0d61db1548aac0b5e03609 0\t\".spec/requirements/REQ-001-caf\\303\\251.md\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001-cafe\u0301.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "5dee5a24e4f2a09db21d072b81963ca69181d4e566c5c9b71ea7589f3cdda2b7"
+      },
+      ".spec/requirements/REQ-001-café.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a8b232a766278a7af8ffbc1b5aa97e38441dd30e25f70dd769a9e7dd706182e7"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 62aae3ed51937b03249840eda1730a45a0f32f00 0\t\".spec/requirements/REQ-001-cafe\\314\\201.md\"\n100644 1ad280a418e306dc2f0d61db1548aac0b5e03609 0\t\".spec/requirements/REQ-001-caf\\303\\251.md\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-174-01",
-  "description": "tests[].pathの上位のディレクトリがリポジトリの外へ解決するシンボリックリンクなら、存在しないパスと同じにする",
+  "description": "tests[].pathの上位のディレクトリがリポジトリの外を指すシンボリックリンクなら、存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {

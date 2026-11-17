@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-179-26",
+  "description": "NFDの名前のディレクトリを経由するテストを、NFCで宣言したとき、cwd相対の引数も、途中のセグメントを実在の綴り（NFD）で組み立てる",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tests/d",
+        "to": "tests/cafe\u0301"
+      }
+    ],
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

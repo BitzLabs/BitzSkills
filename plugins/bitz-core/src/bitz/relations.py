@@ -13,8 +13,6 @@
 
 from __future__ import annotations
 
-import os
-
 from . import messages
 from . import pathown
 from .config import Diagnostic
@@ -357,17 +355,17 @@ def check_relations(
     return diags
 
 
-def _path_exists_as_file(workspace_root: str, rel_path: str) -> bool:
-    """``rel_path``が、ワークスペースのルートの所有領域にある通常のファイルとして存在するか（ワークスペース・設定仕様 §9）。
+def path_status(resolver: pathown.PathResolver, rel_path: str) -> str:
+    """``rel_path``が、基準のルート（ワークスペースのルート）から通常のファイルとして存在するかを、
+    :data:`bitz.pathown.EXISTS`・:data:`bitz.pathown.ABSENT`・:data:`bitz.pathown.COLLISION`のいずれかで返す
+    （安全な入出力・互換性 §6.2。ワークスペース・設定仕様 §9）。
 
-    上位のディレクトリのシンボリックリンクを解決した実パスがルートの配下にあるときだけ存在するとする。ルートの外
-    （リポジトリの外を含む）へ解決するパスと、末端がシンボリックリンクのパスは、存在しないパスと同じに扱う。
+    シンボリックリンクは辿らない。途中のセグメントがリンクのパスと、末端がリンクのパスは、別の綴りのパスと同じく不在とする。
+    同じディレクトリにNFCで同じ名前になる項目が複数あるパスは、不在にせず :data:`bitz.pathown.COLLISION`で拒否する。
     """
 
-    abs_path = os.path.join(workspace_root, rel_path)
-    if os.path.islink(abs_path) or not os.path.isfile(abs_path):
-        return False
-    return pathown.owns(pathown.real_path(abs_path), pathown.real_path(workspace_root))
+    status = resolver.resolve(rel_path, pathown.FILE).status
+    return pathown.ABSENT if status == pathown.LINK else status
 
 
 def _skip_path_and_coverage(entry: DocEntry) -> bool:
@@ -376,14 +374,38 @@ def _skip_path_and_coverage(entry: DocEntry) -> bool:
     return entry.status in ("rejected", "cancelled")
 
 
+def path_message(field: str, status: str, is_draft: bool) -> str:
+    """`implements`（``field``＝``"implements"``）または`tests[].path`（それ以外）の、存在の検査の結果``status``に対する`summary`。
+
+    不在は状態で文言を分け、NFCの衝突は存在の有無を述べない専用の文言を、状態によらず使う（安全な入出力・互換性 §6.2）。
+    """
+
+    if field == "implements":
+        if status == pathown.COLLISION:
+            return messages.IMPLEMENTS_PATH_NFC_COLLISION
+        return messages.IMPLEMENTS_PATH_DRAFT if is_draft else messages.IMPLEMENTS_PATH_MISSING
+    if status == pathown.COLLISION:
+        return messages.TEST_PATH_NFC_COLLISION
+    return messages.TEST_PATH_DRAFT if is_draft else messages.TEST_PATH_MISSING
+
+
 def check_paths(
-    entries: list[DocEntry], workspace_root: str, workspace_id: str, *, source_ids: set[str] | None = None
+    entries: list[DocEntry],
+    workspace_root: str,
+    workspace_id: str,
+    *,
+    source_ids: set[str] | None = None,
+    resolver: pathown.PathResolver | None = None,
 ) -> list[Diagnostic]:
     """`implements`と`tests[].path`の存在を検査する（関係・トレースモデル §9）。
 
     ``source_ids``の意味は :func:`check_relations` と同じ（`scope: selected`の絞り込み）。
+    ``resolver``（ワークスペースのルートの :class:`bitz.pathown.PathResolver`）は、ディレクトリの列挙のキャッシュを
+    1回の実行の中で共有したいときに渡す。省略時は、この呼び出しの中だけのキャッシュを使う。
     """
 
+    if resolver is None:
+        resolver = pathown.PathResolver(workspace_root)
     diags: list[Diagnostic] = []
     for entry in _source_entries(entries, source_ids):
         if _skip_path_and_coverage(entry):
@@ -394,13 +416,14 @@ def check_paths(
 
         implements = entry.frontmatter.get("implements") or []
         for p in implements:
-            if not _path_exists_as_file(workspace_root, p):
+            found = path_status(resolver, p)
+            if found != pathown.EXISTS:
                 diags.append(
                     _mk(
                         "SPEC-PATH-INVALID-001",
                         severity,
                         status,
-                        messages.IMPLEMENTS_PATH_DRAFT if is_draft else messages.IMPLEMENTS_PATH_MISSING,
+                        path_message("implements", found, is_draft),
                         entry.path,
                         workspace_id,
                         key="implements",
@@ -411,13 +434,14 @@ def check_paths(
         tests = entry.frontmatter.get("tests") or []
         for idx, t in enumerate(tests):
             p = t.get("path") if isinstance(t, dict) else None
-            if p and not _path_exists_as_file(workspace_root, p):
+            found = path_status(resolver, p) if p else pathown.EXISTS
+            if found != pathown.EXISTS:
                 diags.append(
                     _mk(
                         "SPEC-PATH-INVALID-001",
                         severity,
                         status,
-                        messages.TEST_PATH_DRAFT if is_draft else messages.TEST_PATH_MISSING,
+                        path_message("tests", found, is_draft),
                         entry.path,
                         workspace_id,
                         key=f"tests[{idx}].path",

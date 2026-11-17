@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-010",
-  "description": "基準版と現在版の双方でsymlinkの所有を判定する",
+  "description": "差分のシンボリックリンクのエントリは、エントリ自身の字句のパスだけで許可を判定し、基準版と現在版のリンク先を使わない",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -31,8 +31,8 @@
     "env": {}
   },
   "expect": {
-    "status": "failed",
-    "exitCode": 1,
+    "status": "passed",
+    "exitCode": 0,
     "stdout": "json",
     "resultFile": "expected/check.json",
     "reportFileCount": 0

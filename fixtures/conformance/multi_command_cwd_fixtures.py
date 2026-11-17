@@ -4,11 +4,14 @@
 `cwd`が`../..`、絶対パス、または所有領域の外へ解決するシンボリックリンクのとき、`verify`はテストのコマンドを所有領域の外で起動していた。
 ルートワークスペースの`cwd`がメンバーのルートの配下を指す場合も、同じく所有領域の外である。
 
-- 複合ワークスペース仕様 §5・§5.1: `cwd`のシンボリックリンクは同じ所有領域内へ解決する場合だけ許可する。ルートワークスペースの`cwd`は、
-  実パスがメンバーのルートの配下にあれば所有領域の外とする。違反は診断`SPEC-MULTI-OWNERSHIP-001`とし、`verify`がテスト割当ての起動前に判定する。
-  違反したテスト割当ては起動せず、独立したテスト割当てを続ける。`cwd`の字句の違反は設定の検査で診断`SPEC-CONFIG-SCHEMA-001`とする。
+- 複合ワークスペース仕様 §5・§5.1（ADR-071。2026-11-15の訂正）: `cwd`のシンボリックリンクは、単一ワークスペースと同じく辿らず、所有領域内へ解決する場合も許可しない。
+  `cwd`がディレクトリとして存在しなければ（途中または末端がシンボリックリンクを含む）、`verify`がテスト割当ての起動前に`VERIFY-CWD-UNAVAILABLE`
+  （診断`SPEC-VERIFY-BLOCKED-001`、`blocked`）とする。存在する`cwd`は、字句のパスで所有を判定し、ルートワークスペースの`cwd`が字句のパスでメンバーのルートの配下にあれば
+  所有領域の外として診断`SPEC-MULTI-OWNERSHIP-001`（`failed`）とする。どちらも、`verify`がテスト割当ての起動前に判定し、違反したテスト割当ては起動せず、
+  独立したテスト割当てを続ける。`cwd`の字句の違反は設定の検査で診断`SPEC-CONFIG-SCHEMA-001`とする。
 - ワークスペース・設定仕様 §6: `cwd`の字句は、単独の`.`、または空のセグメント、`.`、`..`、NULを含む制御文字（U+0000〜U+001F、U+007F）、globの文字`*?[]`を含まない、`/`で始まらないパスに限る。
-- 診断レジストリ: `MULTI-OWNERSHIP-CWD`（`SPEC-MULTI-OWNERSHIP-001`、`error`／`failed`、`skip-binding`、`file`）。
+- 診断レジストリ: `VERIFY-CWD-UNAVAILABLE`（`SPEC-VERIFY-BLOCKED-001`、`error`／`blocked`、`skip-binding`、`file`）、
+  `MULTI-OWNERSHIP-CWD`（`SPEC-MULTI-OWNERSHIP-001`、`error`／`failed`、`skip-binding`、`file`）。
 - `verify` §5.1: `source`は設定ファイルの`verify.commands.<名前>.cwd`。§6: `skip-binding`の診断は、複合ワークスペースではテスト割当てを所有する
   ワークスペースへ1件だけ置き、影響を受ける検証対象は診断を複製せず、状態を`blocked`、`bindingRefs: []`とする。`commands[]`へ実行結果を作らない。
   単独の`verify`（`scope: selected`）は、ワークスペースの配列を持たないので、最上位の`diagnostics`へ置く。
@@ -19,9 +22,9 @@
 | fixture | 操作と実行ディレクトリ | 入力 | 期待 |
 |---|---|---|---|
 | `MULTI-051-01` | `verify --all-workspaces`、`.` | ルート`platform`の`cwd`が`apps/web`（メンバー`web`のルートの配下） | `failed`／1。`platform`に`SPEC-MULTI-OWNERSHIP-001`が1件、`web`のテスト割当ては実行して`passed` |
-| `MULTI-051-02` | `verify platform::REQ-001`、`.` | ルートの`cwd`がシンボリックリンク`lk -> apps/web` | `failed`／1。最上位に`SPEC-MULTI-OWNERSHIP-001`が1件、`commands`は空 |
-| `MULTI-051-03` | `verify --all-workspaces`、`.` | `web`の`cwd`がシンボリックリンク`esc -> ../..`（メンバーのルートの外） | `failed`／1。`web`に`SPEC-MULTI-OWNERSHIP-001`が1件、`platform`のテスト割当ては実行して`passed` |
-| `MULTI-051-04` | `verify --workspace web web::REQ-101`、`.` | `MULTI-051-03`と同じ入力 | `failed`／1。最上位に`SPEC-MULTI-OWNERSHIP-001`が1件、`commands`は空 |
+| `MULTI-051-02` | `verify platform::REQ-001`、`.` | ルートの`cwd`がシンボリックリンク`lk -> apps/web` | `blocked`／2。最上位に`VERIFY-CWD-UNAVAILABLE`（`SPEC-VERIFY-BLOCKED-001`）が1件、`commands`は空（2026-11-15に`failed`の`SPEC-MULTI-OWNERSHIP-001`から訂正） |
+| `MULTI-051-03` | `verify --all-workspaces`、`.` | `web`の`cwd`がシンボリックリンク`esc -> ../..`（メンバーのルートの外） | `blocked`／2。`web`に`SPEC-VERIFY-BLOCKED-001`が1件、`platform`のテスト割当ては実行して`passed`（同上の訂正） |
+| `MULTI-051-04` | `verify --workspace web web::REQ-101`、`.` | `MULTI-051-03`と同じ入力 | `blocked`／2。最上位に`SPEC-VERIFY-BLOCKED-001`が1件、`commands`は空（同上の訂正） |
 | `MULTI-051-05` | `verify --all-workspaces`、`.` | ルートの`cwd`が絶対パス`/tmp`（字句の違反） | `error`／3。設定の検査で`SPEC-CONFIG-SCHEMA-001`が1件、`workspaces`は空 |
 | `MULTI-051-06` | `verify --all-workspaces`、`.` | 両方の`cwd`が`tests`（対照） | `passed`／0。2つのテスト割当てをどちらも実行 |
 
@@ -44,7 +47,8 @@ import tempfile
 from jsonschema import Draft202012Validator, ValidationError
 
 from . import multi_crosscheck, multi_reference, multi_verify_fixtures as verify_fixtures
-from .command_cwd_fixtures import lexical_violation, within
+from . import lexical_path_reference as lexical
+from .command_cwd_fixtures import lexical_violation
 from .harness import setup
 from .initial_fixtures import compare_state, observe
 from .schemas import schema_path
@@ -59,28 +63,33 @@ KEY = f"verify.commands.{COMMAND}.cwd"
 ROOT_REQ = ("platform", "REQ-001", "プラットフォームの基準", ".spec/requirements/REQ-001.md", "tests/test_platform.py")
 WEB_REQ = ("web", "REQ-101", "Webの基準", "apps/web/.spec/requirements/REQ-101.md", "tests/test_web.py")
 WORKSPACE_ROOTS = {"platform": ".", "web": "apps/web"}
-OWNERSHIP_SUMMARY = "パス{path}の解決先がワークスペース{workspace}の所有領域の外です"
+OWNERSHIP_SUMMARY = "パス{path}がワークスペース{workspace}の所有領域の外です"
 LEXICAL_SUMMARY = "作業ディレクトリのパスの形式が不正です"
+UNAVAILABLE_SUMMARY = "コマンドの作業ディレクトリが利用できません"
 EXIT_BY_STATUS = {"passed": 0, "failed": 1, "blocked": 2, "error": 3}
 
 # id: dict(argv, root_cwd, web_cwd, links, kind, description)。`links`は(置く場所, 解決先)の列（`repo/`のルートからの相対パス）。
-#   violated: 所有領域の外の`cwd`を持つワークスペース。`kind`: `ownership`（実パスの違反）、`lexical`（字句の違反）、`passed`（対照）。
+#   violated: 違反した`cwd`を持つワークスペース。`kind`: `ownership`（字句のパスが別の所有領域）、`unavailable`（末端がシンボリックリンクで`cwd`が利用できない）、
+#   `lexical`（字句の違反）、`passed`（対照）。
 CASES = {
     "MULTI-051-01": dict(argv=["verify", "--all-workspaces"], root_cwd="apps/web", web_cwd=".", links=[], kind="ownership", violated="platform",
                          description="ルートワークスペースのcwdがメンバーのルートの配下なら所有領域の外とし、そのテスト割当てだけを起動しない"),
-    "MULTI-051-02": dict(argv=["verify", "platform::REQ-001"], root_cwd="lk", web_cwd=".", links=[("lk", "apps/web")], kind="ownership",
+    "MULTI-051-02": dict(argv=["verify", "platform::REQ-001"], root_cwd="lk", web_cwd=".", links=[("lk", "apps/web")], kind="unavailable",
                          violated="platform",
-                         description="ルートワークスペースのcwdがメンバーのルートの配下へ解決するシンボリックリンクなら所有領域の外とする"),
-    "MULTI-051-03": dict(argv=["verify", "--all-workspaces"], root_cwd=".", web_cwd="esc", links=[("apps/web/esc", "../..")], kind="ownership",
+                         description="ルートワークスペースのcwdがシンボリックリンクなら、メンバーのルートの配下を指していても辿らず、cwdが利用できないものとして起動前にblockedとする"),
+    "MULTI-051-03": dict(argv=["verify", "--all-workspaces"], root_cwd=".", web_cwd="esc", links=[("apps/web/esc", "../..")], kind="unavailable",
                          violated="web",
-                         description="メンバーのcwdがメンバーのルートの外へ解決するシンボリックリンクなら、そのテスト割当てだけを起動せず独立したテスト割当てを続ける"),
+                         description="メンバーのcwdがシンボリックリンクなら、辿らず、cwdが利用できないものとして、そのテスト割当てだけを起動せず独立したテスト割当てを続ける"),
     "MULTI-051-04": dict(argv=["verify", "--workspace", "web", "web::REQ-101"], root_cwd=".", web_cwd="esc",
-                         links=[("apps/web/esc", "../..")], kind="ownership", violated="web",
-                         description="メンバーの単独のverifyも、cwdが所有領域の外へ解決するならテスト割当てを起動しない"),
+                         links=[("apps/web/esc", "../..")], kind="unavailable", violated="web",
+                         description="メンバーの単独のverifyも、cwdがシンボリックリンクならテスト割当てを起動しない"),
     "MULTI-051-05": dict(argv=["verify", "--all-workspaces"], root_cwd="/tmp", web_cwd=".", links=[], kind="lexical", violated="platform",
                          description="ルートワークスペースのcwdが絶対パスなら設定の検査で止め、どのワークスペースも処理しない"),
     "MULTI-051-06": dict(argv=["verify", "--all-workspaces"], root_cwd="tests", web_cwd="tests", links=[], kind="passed", violated=None,
                          description="対照: 両方のcwdが自身の所有領域の中なら、どちらのテスト割当ても実行する"),
+    "MULTI-051-07": dict(argv=["verify", "--all-workspaces"], root_cwd=".", web_cwd="ext/sub", links=[("apps/web/ext", "real")], kind="unavailable",
+                         violated="web", files={"apps/web/real/sub/keep.txt": b"keep\n"},
+                         description="メンバーのcwdの途中のセグメントがシンボリックリンクなら、リンク先がメンバーの中に実在するディレクトリでも、辿らずにcwdが利用できないものとしてblockedにする"),
 }
 
 
@@ -112,6 +121,7 @@ def reviewed_inputs(identifier):
         inputs[path] = requirement_text(workspace, local, title, test_path).encode()
     inputs["tests/test_platform.py"] = b"def test_platform():\n    assert True\n"
     inputs["apps/web/tests/test_web.py"] = b"def test_web():\n    assert True\n"
+    inputs.update(case.get("files", {}))
     return inputs
 
 
@@ -174,6 +184,17 @@ def ownership_diagnostic(identifier, workspace):
             "source": {"kind": "file", "workspaceId": workspace, "path": CONFIG_PATH, "key": KEY}}
 
 
+def unavailable_diagnostic(identifier, workspace):
+    return {"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked", "summary": UNAVAILABLE_SUMMARY,
+            "source": {"kind": "file", "workspaceId": workspace, "path": CONFIG_PATH, "key": KEY}}
+
+
+def violation_diagnostic(identifier, workspace):
+    if CASES[identifier]["kind"] == "unavailable":
+        return unavailable_diagnostic(identifier, workspace)
+    return ownership_diagnostic(identifier, workspace)
+
+
 def lexical_diagnostic():
     return {"code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "resultStatus": "error", "summary": LEXICAL_SUMMARY,
             "source": {"kind": "file", "workspaceId": None, "path": CONFIG_PATH, "key": KEY}}
@@ -207,22 +228,22 @@ def reviewed_result(identifier):
                 "multiWorkspace": {"id": None, "path": "."}, "workspaces": [], "revision": revision,
                 "durationMs": 0, "diagnostics": [lexical_diagnostic()]}
     violated = case["violated"]
-    status = "failed" if violated else "passed"
+    status = ("blocked" if case["kind"] == "unavailable" else "failed") if violated else "passed"
     if "--all-workspaces" not in case["argv"]:
         # 単独の`verify`: ワークスペースの配列を持たず、最上位の`diagnostics`へ置く。
         workspace = case["violated"]
         return {"schemaVersion": "1.0", "operation": "verify", "scope": "selected", "status": status,
                 "workspace": {"id": workspace, "path": WORKSPACE_ROOTS[workspace]},
                 "targetResults": [target_entry(identifier, workspace, True)], "revision": revision, "commands": [],
-                "durationMs": 0, "diagnostics": [ownership_diagnostic(identifier, workspace)]}
+                "durationMs": 0, "diagnostics": [violation_diagnostic(identifier, workspace)]}
     entries = []
     for workspace in ("platform", "web"):
         blocked = workspace == violated
         entries.append({
-            "id": workspace, "path": WORKSPACE_ROOTS[workspace], "status": "failed" if blocked else "passed",
+            "id": workspace, "path": WORKSPACE_ROOTS[workspace], "status": status if blocked else "passed",
             "targetResults": [target_entry(identifier, workspace, blocked)],
             "commands": [] if blocked else [command_entry(identifier, workspace)],
-            "durationMs": 0, "diagnostics": [ownership_diagnostic(identifier, workspace)] if blocked else []})
+            "durationMs": 0, "diagnostics": [violation_diagnostic(identifier, workspace)] if blocked else []})
     return {"schemaVersion": "1.0", "operation": "verify", "scope": "all-workspaces", "status": status,
             "multiWorkspace": {"id": ROOT_ID, "path": "."}, "workspaces": entries, "revision": revision,
             "durationMs": 0, "diagnostics": []}
@@ -244,48 +265,52 @@ def configured_cwd(repository, config_path):
 
 
 def reference_violations(repository):
-    """入力の`cwd`と実パスから、(字句の違反のワークスペース, 所有領域の外のワークスペース)を導く（複合ワークスペース仕様 §5.1）。"""
+    """入力の`cwd`から、(字句の違反のワークスペース, 利用できない`cwd`のワークスペース, 所有領域の外のワークスペース)を字句の規則で導く（複合ワークスペース仕様 §5.1、ADR-071）。
+
+    シンボリックリンクを辿らず、`realpath`を使わない。`cwd`の存在の検査（途中または末端のシンボリックリンクを拒否する）が、所有の判定より前である。
+    """
     cwds = {"platform": configured_cwd(repository, multi_reference.ROOT_CONFIG_PATH),
             "web": configured_cwd(repository, multi_reference.WEB_CONFIG_PATH)}
-    lexical = sorted(name for name, cwd in cwds.items() if lexical_violation(cwd))
-    roots = {name: os.path.realpath(repository / path) for name, path in WORKSPACE_ROOTS.items()}
-    outside = []
+    lexical_names = sorted(name for name, cwd in cwds.items() if lexical_violation(cwd))
+    unavailable, outside = [], []
     for name, cwd in cwds.items():
-        if name in lexical:
+        if name in lexical_names:
             continue
-        real = os.path.realpath(repository / WORKSPACE_ROOTS[name] / cwd)
-        # 所有領域は自身のルートの配下。ルートワークスペースは、メンバーのルートの配下を所有しない。
-        violated = not within(real, roots[name])
-        if name == "platform":
-            violated = violated or any(within(real, root) for other, root in roots.items() if other != name)
-        if violated:
+        if lexical.lookup(repository / WORKSPACE_ROOTS[name], cwd, "directory") != "ok":
+            unavailable.append(name)
+            continue
+        # 所有領域は自身のルートの配下。ルートワークスペースは、メンバーのルートの配下を所有しない（最も深いルートが所有する）。
+        declared = cwd if WORKSPACE_ROOTS[name] == "." else f"{WORKSPACE_ROOTS[name]}/{cwd}"
+        if lexical.owner(declared, WORKSPACE_ROOTS) != name:
             outside.append(name)
-    return lexical, sorted(outside)
+    return lexical_names, sorted(unavailable), sorted(outside)
 
 
 def check_conditions(identifier, repository, manifest, result):
     case = CASES[identifier]
-    lexical, outside = reference_violations(repository)
-    expected = ([case["violated"]], []) if case["kind"] == "lexical" else ([], [case["violated"]] if case["violated"] else [])
-    if (lexical, outside) != expected:
-        raise ValueError(f"入力から導く違反が期待と異なります: {lexical}, {outside}")
+    lexical_names, unavailable, outside = reference_violations(repository)
+    violated = [case["violated"]] if case["violated"] else []
+    expected = {"lexical": ([case["violated"]], [], []), "unavailable": ([], violated, []),
+                "ownership": ([], [], violated), "passed": ([], [], [])}[case["kind"]]
+    if (lexical_names, unavailable, outside) != expected:
+        raise ValueError(f"入力から導く違反が期待と異なります: {lexical_names}, {unavailable}, {outside}")
     for name, target in reviewed_links(identifier).items():
         path = repository / name
         if not path.is_symlink() or os.readlink(path) != target:
             raise ValueError("シンボリックリンクがレビュー済みの入力と異なります")
-    status = "error" if lexical else "failed" if outside else "passed"
+    status = "error" if lexical_names else "blocked" if unavailable else "failed" if outside else "passed"
     if result["status"] != status or (manifest["expect"]["status"], manifest["expect"]["exitCode"]) != (status, EXIT_BY_STATUS[status]):
         raise ValueError("状態または終了コードが参照計算と異なります")
     # 違反の診断は1件だけで、違反していないワークスペースの診断・コマンドは変わらない。
     diagnostics = list(result["diagnostics"]) + [d for entry in result.get("workspaces", []) for d in entry["diagnostics"]]
-    if len(diagnostics) != len(lexical) + len(outside):
+    if len(diagnostics) != len(lexical_names) + len(unavailable) + len(outside):
         raise ValueError("診断は違反1件につき1件である必要があります")
     commands = [c for entry in result.get("workspaces", []) for c in entry["commands"]] + list(result.get("commands", []))
     started = {c["workspaceId"] for c in commands}
     if "--all-workspaces" not in case["argv"] or status == "error":
         want = set()
     else:
-        want = {"platform", "web"} - set(outside)
+        want = {"platform", "web"} - set(unavailable) - set(outside)
     if started != want:
         raise ValueError("起動するテスト割当てが参照計算と異なります")
 

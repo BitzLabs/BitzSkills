@@ -2,18 +2,18 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "ee6a8d5701edaf59097f8e163c8a1b93392ac76dce537f4e9eceb50866e5f7f8",
-    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "b7075dbe54c4c1c08752c97a6a68452451f1fdd7d117e31dfe26db7f85396719",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "3fc84c93e2788a0b64e1d71aea1eac22e72be74fd771df37cd3d8ca489ff799c",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "1b3227c80e6cb885fa5bfa442dc4571373358c45998f80f233489d9218da402f",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "abb7622b9eec04ccd1c92a489877f84dbe2f1cd3e9a9c21e02fb62634366a2cc",
-    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "6660ebad67a1541b2da21460b45038fbafdc29a47cbdd3f1e874f084ef4f6a6f",
+    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "cf639635224cec117ff75effd4031906b8944b9be97d3c049a81074b8e9f41d2",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "aece6d4c2d4a9588fe46aafa4f5b18f4213c56193062b5babfec583a2c92c954",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "9556647f9bf2ab3ce17090a5d68579fbb7dc95e49feabd95c20afa8d3f78b03a",
-    "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "72a013de13d2974f2ba198bba4cec92813727d828e4c9b93b484139a67a2ee26",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "fb11eee6967353b125ddb7e969e676ed45d50bd386085bc745edfdc8f70f82f9",
+    "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "110f230e4f6bcc1c23fdb53429b4b91a077518dce3cf57876696ab486f2c45e1",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "d47200da0e7c65b351b3672bc86e8f06c2eb7b14cc34a603c835f2bbf0788153",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5f79861e103eb51723a53302122fa32d5125a9bf9687a70c2dbbc5cc1776ee6f",
-    "docs/03.詳細設計/03_操作仕様/02_check.md": "9a00e59f60d424a585027f8eb851cf39fb3df814d65c0474c29015e81a258d1d",
-    "docs/03.詳細設計/03_操作仕様/03_verify.md": "b979e05719693b5b5e8266d10e2df477ca3135333a65f24f253dfd665e6891e0",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "d459c6d65d77a926bcb414e4594e8a275436c00dda7c9c913da0e50855417e3c",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "34682e598700d150db361fb807e051920bf5ad9047a572ab93fda13a6495f401",
+    "docs/03.詳細設計/03_操作仕様/03_verify.md": "78532f1eea3521ade4c6b67043424407d7dc55d77b12f97f25e62f9ad2e68375",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "efb52a54f13e0637a4ceebf9d89dfa79642eef4571f53c5d875686803d6461fe",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
@@ -162,7 +162,7 @@
         "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md",
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md"
       ],
-      "rationale": "path不正とdraft未作成予定、covers不在・対応できない参照（対応の重複はFM-FIELD-TYPE）。実効cwd配下外はverify binding解決で別途遮断。"
+      "rationale": "path不正（シンボリックリンク、別の綴り、NFCの衝突を含む）とdraft未作成予定、covers不在・対応できない参照（対応の重複はFM-FIELD-TYPE）。実効cwd配下外はverify binding解決で別途遮断。"
     },
     {
       "id": "context",
@@ -224,8 +224,7 @@
         "VERIFY-SIGNAL",
         "VERIFY-TIMEOUT",
         "VERIFY-CONFIG-UNTRACKED",
-        "VERIFY-TEST-OUTSIDE-CWD",
-        "VERIFY-CWD-OUTSIDE"
+        "VERIFY-TEST-OUTSIDE-CWD"
       ],
       "sources": [
         "docs/03.詳細設計/03_操作仕様/03_verify.md",
@@ -233,7 +232,7 @@
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md",
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
       ],
-      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。単一ワークスペースのcwdの実パスがルートの外なら起動前に遮断。 検証対象が使うテスト対応のパスとcoversの不正はcheckと同じ診断で検証対象をfailed（skip-target）。 ADR-076: 展開後上限の3つの値は`limits`で小さくでき、条件と継続単位は同じ（SINGLE-182-*）。"
+      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。cwdがシンボリックリンクを含むなどディレクトリとして存在しなければ、単一・複合とも起動前に遮断（VERIFY-CWD-UNAVAILABLE）。 検証対象が使うテスト対応のパスとcoversの不正はcheckと同じ診断で検証対象をfailed（skip-target）。 ADR-076: 展開後上限の3つの値は`limits`で小さくでき、条件と継続単位は同じ（SINGLE-182-*）。"
     },
     {
       "id": "report",
@@ -293,7 +292,7 @@
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md",
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md"
       ],
-      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用する（MULTI-069-*）。除外の件数の超過とメンバーの設定の`limits`はMULTI-CONFIG（MULTI-068-02。メンバーの設定の`limits`は文言が未承認のためfixtureなし）。"
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用する（MULTI-069-*）。除外の件数の超過とメンバーの設定の`limits`はMULTI-CONFIG（MULTI-068-02。メンバーの設定の`limits`は文言が未承認のためfixtureなし）。"
     }
   ],
   "openIssues": []

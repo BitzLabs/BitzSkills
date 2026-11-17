@@ -73,6 +73,10 @@ def _stopped_selection(pre: multiws.PrecheckResult, loc: WorkspaceLocation, ears
 
     assert loc.root is not None and pre.repo_root is not None
     rel_path = os.path.relpath(os.path.realpath(loc.root), os.path.realpath(pre.repo_root)).replace(os.sep, "/")
+    # 選んだ設定がカタログのメンバーとNFCで一致するときは、出力のパスをカタログに宣言した綴りにする。
+    declared = multiws.declared_member_path(pre, rel_path)
+    if declared is not None:
+        rel_path = declared
     workspace_id: str | None = None
     if loc.config_path is not None and multiws.selected_is_registered(pre, rel_path):
         selected = config_mod.read_config(loc.config_path, ears_version_code=ears_version_code)

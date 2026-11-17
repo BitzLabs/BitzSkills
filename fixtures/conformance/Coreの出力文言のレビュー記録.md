@@ -135,9 +135,9 @@ Coreの出力文言（診断の`summary`と`suggestedAction`、引数不正の�
 | 102 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:344（multiws.py:206） | `memberの.spec/bitz.yamlがありません` | `メンバーの.spec/bitz.yamlがありません` | §4.1: member=メンバー | 0件 |
 | 103 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:345（multiws.py:229） | `memberの設定workspace.idがcatalogのidと一致しません` | `メンバーの設定キーworkspace.idがカタログのIDと一致しません` | §4.1: member=メンバー、catalog=カタログ。§3.5の2: 設定キーの前に「設定キー」。「カタログのID」は診断レジストリの書き方 | 0件 |
 | 104 | summary | SPEC-MULTI-MEMBER-001<br>（MULTI-MEMBER） | messages.py:346（multiws.py:234） | `memberはmultiWorkspaceを宣言できません` | `メンバーは設定キーmultiWorkspaceを宣言できません` | §4.1: member=メンバー。§3.5の2 | 0件 |
-| 105 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:394（multirelate.py:399、423） | `{path}の解決先が{workspace_id}の所有範囲外です` | `パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です` | §3.5の6: 値の前に「パス」「ワークスペース」。用語集 §12: メンバーが所有するパスの範囲=所有領域 | 1件（MULTI-008）；生成器・監査1 |
-| 106 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:398（check.py:142） | `{path}の基準版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の基準版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | §4.1: symlink=シンボリックリンク。§3.5の6、用語集 §12（所有領域） | 1件（MULTI-010）；生成器・監査1 |
-| 107 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:402（check.py:148） | `{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の現在版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | 同上 | 0件 |
+| 105 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:394（multirelate.py:399、423） | `{path}の解決先が{workspace_id}の所有範囲外です` | `パス{path}がワークスペース{workspace_id}の所有領域の外です`（2026-11-15に「解決先」を除いた。末尾の節） | §3.5の6: 値の前に「パス」「ワークスペース」。用語集 §12: メンバーが所有するパスの範囲=所有領域 | 1件（MULTI-008）；生成器・監査1 |
+| 106 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:398（check.py:142） | `{path}の基準版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の基準版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | §4.1: symlink=シンボリックリンク。§3.5の6、用語集 §12（所有領域） | 2026-11-15 廃止（ADR-071。Coreはシンボリックリンクを辿らず、差分のパスに所有の診断を出さない）。MULTI-010の期待は`passed`／0（診断なし）に訂正した |
+| 107 | summary | SPEC-MULTI-OWNERSHIP-001<br>（MULTI-OWNERSHIP） | messages.py:402（check.py:148） | `{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します` | `パス{path}の現在版のシンボリックリンクがワークスペース{workspace_id}の所有領域の外を指します` | 同上 | 2026-11-15 廃止（ADR-071。106と同じ）。0件 |
 | 108 | summary | SPEC-MULTI-PATH-001<br>（MULTI-PATH） | messages.py:351（multiws.py:276） | `member pathの形式が不正です` | `メンバーのパスの形式が不正です` | §4.1: member=メンバー、path=パス | 0件 |
 | 109 | summary | SPEC-MULTI-PATH-001<br>（MULTI-PATH） | messages.py:352（multiws.py:390） | `member pathが重複しています` | `メンバーのパスが重複しています` | 同上 | 0件 |
 | 110 | summary | SPEC-MULTI-PATH-001<br>（MULTI-PATH） | messages.py:353（multiws.py:398） | `member pathが別のmemberの配下にあります` | `メンバーのパスが別のメンバーの配下にあります` | 同上 | 1件（MULTI-007-01）；生成器・監査1 |
@@ -577,7 +577,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - `suggestedAction`は付けない。`SPEC-CONFIG-SCHEMA-001`は`doctor`仕様 §8の表の診断ではない。
 - 実パスの所有の違反は、既存の承認済みの文言を再利用する。新しい文言の承認ではない。
   - 単一ワークスペース（`VERIFY-CWD-OUTSIDE`）: `SPEC-VERIFY-BLOCKED-001`の「コマンドの作業ディレクトリが利用できません」（`SINGLE-167-07`）
-  - 複合ワークスペース（`MULTI-OWNERSHIP-CWD`）: `SPEC-MULTI-OWNERSHIP-001`の「パス<cwd>の解決先がワークスペース<ID>の所有領域の外です」（`MULTI-051-01`〜`04`）
+  - 複合ワークスペース（`MULTI-OWNERSHIP-CWD`）: `SPEC-MULTI-OWNERSHIP-001`の「パス<cwd>がワークスペース<ID>の所有領域の外です」（`MULTI-051-01`。2026-11-15に「解決先」を除いた）
 - 既存のfixtureの期待値は変えない（既存のfixtureの`cwd`は、すべて正しい形である）。
 
 ## 2026-11-03: 複合ワークスペースのcheckの影響の候補と文書IDの重複の文言の作業ワークスペースのIDの修飾（C69）
@@ -669,3 +669,66 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - 監査の回帰試験（`test_frontmatter_glob_audit_rejects_changed_expectations`）は、6件の期待を旧い文言へ取り違える改変を拒否する。
   修正前のCore（`origin/main`の`plugins/bitz-core`）に対して、`SINGLE-171-01`〜`06`は`summary`の差で失敗する。`07`・`08`は診断がないので通る。
 - 既存のレビュー記録（[フロントマターのパスのglobの文字](single/フロントマターのパスのglobの文字のレビュー記録.md)）の診断の文言の節を、新しい文言に合わせた。
+
+## 2026-11-15: NFCの衝突の文言の追加（ADR-071。C109の解決に伴う）
+
+### 追加の理由
+
+- [ADR-071](../../docs/02.設計書/10_決定記録/ADR-071_パスと所有の境界をGitに倣い強い関係の閉包を辺の向きごとの到達可能性で定める.md) Decision 1.2が、パスの比較を、NFCへ正規化した各セグメントのコードポイントの完全一致に改めた
+  （[安全な入出力・互換性 §6](../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#6-正規パス)）。Linuxでは、NFCの名前とNFDの名前の項目が同じディレクトリに共存できるので、
+  1つのセグメントがNFCで2件以上の項目に一致する場合（NFCの衝突）が生じる。この場合、パスを存在しないものとして扱うと、別の項目を黙って選ぶことと区別できないため、
+  存在の有無を述べない専用の文言で拒否する（§6.2の3.）。診断のコードは既存のものを使う。
+- 次の3つの文言は、Coreがまだ出していない新しい文言である。適合fixtureで初めて固定するので、ADR-062により承認が要る。
+
+### ユーザーの承認
+
+- ADR-062 Decision 2に従い、ユーザーが承認した値である。確定版は安全な入出力・互換性 §6.2に書いてある。
+- **この文字列は、規範文から一意に導いた値ではなく、承認された値である。** 文型は、既存の「{対象}が存在しません」「メンバーのパスが重複しています」と同じ、
+  条件を述べる平叙文にし、「NFC」は安全な入出力・互換性 §1と用語集の用語である。存在の有無を述べないので、状態`draft`にも同じ文言を使う
+  （「状態draftの実装パスは未作成です」に当たる別の文言は置かない）。
+
+| 種類 | 診断（条件） | 対象 | 文言 | 固定しているfixture |
+|---|---|---|---|---|
+| summary | `SPEC-PATH-INVALID-001`（`TRACE-PATH-APPROVED`、`TRACE-PATH-DRAFT`、NFCの衝突） | `implements` | `NFCで同じ名前になる項目が複数あり、実装パスが一つに決まりません` | `SINGLE-179-01`、`03`、`04`、`MULTI-067-09` |
+| summary | `SPEC-PATH-INVALID-001`（`TRACE-PATH-APPROVED`、`VERIFY-TEST-PATH-INVALID`、NFCの衝突） | `tests[].path` | `NFCで同じ名前になる項目が複数あり、テストのパスが一つに決まりません` | `SINGLE-179-02`、`12` |
+| summary | `SPEC-MULTI-PATH-001`（`MULTI-PATH`、NFCの衝突） | メンバーのパス | `NFCで同じ名前になる項目が複数あり、メンバーのパスが一つに決まりません` | `MULTI-067-01` |
+
+- 重大度は、`implements`と`tests[].path`が不在と同じく文書の状態で分ける（状態`approved`は`error`／`failed`、状態`draft`は`warning`／`passed_with_warnings`。`SINGLE-179-04`）。
+  `cwd`のNFCの衝突は`VERIFY-CWD-UNAVAILABLE`の既存の文言「コマンドの作業ディレクトリが利用できません」を使う（`SINGLE-179-11`。新しい文言ではない）。
+- 生成器・監査は`strict_path_fixtures.py`である（[レビュー記録](single/パスの厳密な比較のレビュー記録.md)）。
+- 既存の文言は変えない。再利用する既存の文言は、末端または途中のシンボリックリンクのパスの「実装パスが存在しません」「テストのパスが存在しません」、`cwd`が利用できない場合の
+  「コマンドの作業ディレクトリが利用できません」、メンバーの「メンバーのパスが重複しています」「メンバーのパスが別のメンバーの配下にあります」
+  「メンバーのパスの経路にシンボリックリンクが含まれています」である。
+- 所有境界の違反（`SPEC-MULTI-OWNERSHIP-001`）の文言は、字句のパスが別の所有領域にある場合に限る（`MULTI-061-02`、`MULTI-051-01`）。
+  この文言は、同日の後の決定で変えた（次の節）。
+
+### 期待値の訂正の対象
+
+- 文言の変更ではなく、診断の種類・状態の訂正（ADR-051。ADR-071の書き直した規範文が根拠）である。訂正した19件は次のとおりである。文言は、すべて既存の承認済みの文言である。
+
+| fixture | 旧い期待 | 新しい期待 |
+|---|---|---|
+| `SINGLE-174-03`、`04`、`MULTI-061-03`、`07` | `passed`／0（対照） | `failed`／1。`SPEC-PATH-INVALID-001`（途中のシンボリックリンク） |
+| `MULTI-061-01`、`04`、`05`、`06`、`062-01`、`MULTI-008` | `SPEC-MULTI-OWNERSHIP-001` | `SPEC-PATH-INVALID-001` |
+| `SINGLE-174-07`、`SINGLE-167-09` | `passed`／0 | `blocked`／2（`VERIFY-CWD-UNAVAILABLE`）、`failed`／1（テストのパスの途中のシンボリックリンク）。`SINGLE-174-07`は前者 |
+| `SINGLE-174-08`、`09` | `blocked`／2（`VERIFY-TEST-OUTSIDE-CWD`） | `failed`／1。`SPEC-PATH-INVALID-001`（違反したエントリごと） |
+| `SINGLE-174-10` | `passed`／0 | `failed`／1。`SPEC-PATH-INVALID-001` |
+| `MULTI-051-02`、`03`、`04` | `failed`／1。`SPEC-MULTI-OWNERSHIP-001` | `blocked`／2。`VERIFY-CWD-UNAVAILABLE` |
+| `MULTI-010` | `failed`／1 | `passed`／0 |
+
+- `SINGLE-167-07`は、診断のJSONが同じで、条件名だけが`VERIFY-CWD-OUTSIDE`から`VERIFY-CWD-UNAVAILABLE`へ変わる。
+
+### 所有境界の違反の文言から「解決先」を除く
+
+- 診断`SPEC-MULTI-OWNERSHIP-001`（`MULTI-OWNERSHIP`、`MULTI-OWNERSHIP-CWD`）の`summary`は、「パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です」だった。
+  ADR-071により、Coreはシンボリックリンクを辿らず、所有を字句のパスで判定する。「解決先」は実パスへの解決を想起させ、規範と合わない。
+- ユーザーが、次の文言に変えることを承認した（2026-11-15。ADR-062 Decision 2。表記規則 §8の8）。**規範文から一意に導いた値ではなく、承認された値である。**
+
+| 種類 | 診断（条件） | 変更前 | 変更後（承認した値） | 固定しているfixture |
+|---|---|---|---|---|
+| summary | `SPEC-MULTI-OWNERSHIP-001`（`MULTI-OWNERSHIP`、`MULTI-OWNERSHIP-CWD`） | `パス{path}の解決先がワークスペース{workspace_id}の所有領域の外です` | `パス{path}がワークスペース{workspace_id}の所有領域の外です` | `MULTI-061-02`、`MULTI-062-03`、`MULTI-051-01`、新しい`MULTI-067-10`〜`13` |
+
+- 期待値の文言の更新は、ADR-062の文言の変更として扱う。更新した期待値は、`MULTI-051-01`、`MULTI-061-02`、`MULTI-062-03`の3件（JSON）である。
+  生成器と監査の回帰試験、Coreの単体試験の文字列も同じ文言に合わせた。
+- 複合ワークスペースの`implements`と`tests[].path`は、所有の判定を存在の検査より先に行うので（複合ワークスペース仕様 §5.1）、別のワークスペースの所有領域にあるパスは、存在しなくても
+  同じ文言になる（`MULTI-067-10`〜`12`）。TASKの`changes`は所有境界の診断を持たないので、この文言は使わない。

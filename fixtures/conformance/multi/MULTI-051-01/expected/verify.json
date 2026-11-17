@@ -31,7 +31,7 @@
           "code": "SPEC-MULTI-OWNERSHIP-001",
           "severity": "error",
           "resultStatus": "failed",
-          "summary": "パスapps/webの解決先がワークスペースplatformの所有領域の外です",
+          "summary": "パスapps/webがワークスペースplatformの所有領域の外です",
           "source": {
             "kind": "file",
             "workspaceId": "platform",

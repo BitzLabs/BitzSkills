@@ -1,9 +1,10 @@
 """複合ワークスペースの所有境界とTASK境界を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-メンバーが所有できるのは自身のルート配下だけであり、シンボリックリンクは同じ所有領域内へ解決する場合だけ許される
-（[複合ワークスペース仕様 §5.1](../../docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md)）。
-`MULTI-008`はシンボリックリンクで別のメンバーを所有する宣言、`MULTI-009`は字句のセグメントの境界、`MULTI-010`は
-基準版と現在版の双方で行うシンボリックリンクの所有の判定を扱う。
+メンバーが所有できるのは自身のルート配下だけであり、所有は字句のパスで判定する。シンボリックリンクは辿らない
+（[複合ワークスペース仕様 §5.1・§5.2](../../docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md)、ADR-071。2026-11-15の訂正）。
+`MULTI-008`は、末端がシンボリックリンクの`implements`（別のメンバーのコードを指す）を、存在しないパス（`SPEC-PATH-INVALID-001`）として拒否する。
+`MULTI-009`は字句のセグメントの境界、`MULTI-010`は、TASKの差分に現れたシンボリックリンクのエントリを、そのエントリ自身の字句のパスだけで判定し
+（基準版のリンク先も現在版のリンク先も使わない）、許可の範囲内で所有するメンバーの中なら通すことを扱う。
 """
 import json
 import os
@@ -61,8 +62,8 @@ WEB_TASK = (
     "webの変更境界を確認する。\n"
 )
 OWNERSHIP_IMPLEMENTS = {
-    "code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-    "summary": "パスsrc/shared.pyの解決先がワークスペースwebの所有領域の外です",
+    "code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed",
+    "summary": "実装パスが存在しません",
     "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md",
                "key": "implements"},
 }
@@ -71,19 +72,14 @@ TASK_BOUNDARY = {
     "summary": "パスsrc2/outside.pyはweb::TASK-010の変更許可パスの外です",
     "source": {"kind": "file", "workspaceId": "web", "path": "src2/outside.py"},
 }
-OWNERSHIP_BASE_LINK = {
-    "code": "SPEC-MULTI-OWNERSHIP-001", "severity": "error", "resultStatus": "failed",
-    "summary": "パスsrc/linkの基準版のシンボリックリンクがワークスペースwebの所有領域の外を指します",
-    "source": {"kind": "file", "workspaceId": "web", "path": "src/link"},
-}
 # id: (引数列の残り, 状態, 検査文書数, 検査規範文数, 診断, 説明)
 CASES = {
     "MULTI-008": (["check", "--all-workspaces"], "failed", None, None, OWNERSHIP_IMPLEMENTS,
-                  "symlinkで別memberのcodeを所有する宣言を拒否する"),
+                  "implementsの末端がシンボリックリンクなら、別のメンバーのコードを指していても辿らず、存在しないパスとして拒否する"),
     "MULTI-009": (["check", "web::TASK-010"], "failed", 1, 0, TASK_BOUNDARY,
                   "TASK changesのsegment境界をsrc2へ広げない"),
-    "MULTI-010": (["check", "web::TASK-010"], "failed", 1, 0, OWNERSHIP_BASE_LINK,
-                  "基準版と現在版の双方でsymlinkの所有を判定する"),
+    "MULTI-010": (["check", "web::TASK-010"], "passed", 1, 0, None,
+                  "差分のシンボリックリンクのエントリは、エントリ自身の字句のパスだけで許可を判定し、基準版と現在版のリンク先を使わない"),
 }
 
 
@@ -108,7 +104,7 @@ def reviewed_inputs(identifier):
         files[OUTSIDE_PATH] = b"# before\n"
         changes["outside.py"] = b"# after\n"
     if identifier == "MULTI-010":
-        # 基準版では別のメンバーを指し、現在版ではweb内へ向け直す。現在版だけを見ると不適合を見落とす。
+        # 基準版では別のメンバーを指し、現在版ではweb内へ向け直す。どちらのリンク先も判定に使わず、エントリ自身の字句のパス（許可の範囲の`src/`の中でwebが所有する）だけで通す。
         links[CHANGED_LINK] = ESCAPING_TARGET
         change_links["link"] = LOCAL_TARGET
     return {"files": files, "links": links, "changes": changes, "changeLinks": change_links}
@@ -127,7 +123,7 @@ def reviewed_manifest(identifier):
         "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": operations},
         "invocation": {"runner": "bitz", "cwd": ".",
                        "argv": [*argv, "--base", "HEAD", "--format", "json"], "env": {}},
-        "expect": {"status": status, "exitCode": 1, "stdout": "json",
+        "expect": {"status": status, "exitCode": 0 if status == "passed" else 1, "stdout": "json",
                    "resultFile": "expected/check.json", "reportFileCount": 0},
     }
 
@@ -158,7 +154,7 @@ def reviewed_result(identifier):
         "checkedDocumentCount": documents,
         "checkedStatementCount": statements,
         "durationMs": 0,
-        "diagnostics": [dict(diagnostic)],
+        "diagnostics": [dict(diagnostic)] if diagnostic else [],
     }
 
 
@@ -169,9 +165,9 @@ def check_boundary_inputs(identifier, repository):
         link = repository / SHARED_LINK
         if not link.is_symlink() or os.readlink(link) != ESCAPING_TARGET:
             raise ValueError("所有境界のケースは、別メンバーへ出るシンボリックリンクが必要です")
-        resolved = link.resolve()
-        if not resolved.is_relative_to(repository / "services/api"):
-            raise ValueError("シンボリックリンクの解決先が別メンバーの中にありません")
+        if not os.path.isfile(link):
+            # リンクを辿れば別のメンバーのコードへ届く入力にする（辿らないことだけが原因になる）。
+            raise ValueError("シンボリックリンクの解決先が実在する通常のファイルである必要があります")
         if (repository / "apps/web/.spec/tasks").exists():
             raise ValueError("所有境界のケースはTASKを持たず、TASK境界の診断コードを起こさない")
     if identifier == "MULTI-009":

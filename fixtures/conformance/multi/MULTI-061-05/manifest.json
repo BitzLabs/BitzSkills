@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-061-05",
-  "description": "ルートのimplementsの上位のディレクトリがメンバーの配下へ解決するシンボリックリンクなら所有境界の違反にする",
+  "description": "ルートのimplementsの上位のディレクトリがメンバーの配下を指すシンボリックリンクなら、存在しないパスと同じにする",
   "setup": {
     "git": true,
     "baseCommit": {

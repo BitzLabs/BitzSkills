@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-174-10",
-  "description": "対照: テストが字句でも実パスでもcwdの配下なら、引数列は字句の相対パスのままにする",
+  "description": "cwdが.でも、テストのパスの途中がシンボリックリンクなら、存在しないパスと同じにし、検証対象をfailedにする",
   "setup": {
     "git": true,
     "operations": [
@@ -24,8 +24,8 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
-    "exitCode": 0,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

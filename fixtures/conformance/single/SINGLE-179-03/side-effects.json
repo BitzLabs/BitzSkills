@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "adec213d6191fd6e010c2e7cc5de3f27ef135ebbab8f3359fd75ba515bd8cf08"
+      },
+      "lib": {
+        "kind": "directory"
+      },
+      "lib/cafe\u0301": {
+        "kind": "directory"
+      },
+      "lib/cafe\u0301/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      },
+      "lib/café": {
+        "kind": "directory"
+      },
+      "lib/café/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 2064564217626b6ae463c1b0bd8d8f521cd95871 0\t.spec/requirements/REQ-001.md\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"lib/cafe\\314\\201/a.py\"\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"lib/caf\\303\\251/a.py\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "adec213d6191fd6e010c2e7cc5de3f27ef135ebbab8f3359fd75ba515bd8cf08"
+      },
+      "lib": {
+        "kind": "directory"
+      },
+      "lib/cafe\u0301": {
+        "kind": "directory"
+      },
+      "lib/cafe\u0301/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      },
+      "lib/café": {
+        "kind": "directory"
+      },
+      "lib/café/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 2064564217626b6ae463c1b0bd8d8f521cd95871 0\t.spec/requirements/REQ-001.md\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"lib/cafe\\314\\201/a.py\"\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\t\"lib/caf\\303\\251/a.py\"\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

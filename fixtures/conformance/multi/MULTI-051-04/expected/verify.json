@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "verify",
   "scope": "selected",
-  "status": "failed",
+  "status": "blocked",
   "workspace": {
     "id": "web",
     "path": "apps/web"
@@ -27,10 +27,10 @@
   "durationMs": 0,
   "diagnostics": [
     {
-      "code": "SPEC-MULTI-OWNERSHIP-001",
+      "code": "SPEC-VERIFY-BLOCKED-001",
       "severity": "error",
-      "resultStatus": "failed",
-      "summary": "パスescの解決先がワークスペースwebの所有領域の外です",
+      "resultStatus": "blocked",
+      "summary": "コマンドの作業ディレクトリが利用できません",
       "source": {
         "kind": "file",
         "workspaceId": "web",

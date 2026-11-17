@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "operation": "check",
   "scope": "all-workspaces",
-  "status": "passed",
+  "status": "failed",
   "multiWorkspace": {
     "id": "platform",
     "path": "."
@@ -29,11 +29,24 @@
     {
       "id": "web",
       "path": "apps/web",
-      "status": "passed",
+      "status": "failed",
       "checkedDocumentCount": 1,
       "checkedStatementCount": 1,
       "durationMs": 0,
-      "diagnostics": []
+      "diagnostics": [
+        {
+          "code": "SPEC-PATH-INVALID-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "実装パスが存在しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/requirements/REQ-101.md",
+            "key": "implements"
+          }
+        }
+      ]
     }
   ],
   "revision": {

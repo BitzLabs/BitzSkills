@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-167-09",
-  "description": "対照: cwdがルート配下へ解決するシンボリックリンクならverifyは通る",
+  "description": "cwdの配下のテストのパスの途中がシンボリックリンクなら、リンク先がルートの中でも存在しないパスと同じにし、verifyの対象をfailedにする",
   "setup": {
     "git": true,
     "operations": [
@@ -24,8 +24,8 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
-    "exitCode": 0,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/verify.json",
     "reportFileCount": 0

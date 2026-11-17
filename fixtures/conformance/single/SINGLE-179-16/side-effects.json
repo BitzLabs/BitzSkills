@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "fb1d5293e46d4379b0e91f5f6b0ce8bac4f14a90dc003e221b0f9a1929cd86ca"
+      },
+      "lib": {
+        "kind": "directory"
+      },
+      "lib/link": {
+        "kind": "symlink",
+        "target": "../src/b.py"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      },
+      "src/b.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": " M lib/link\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 2d35470388fa4d1ff1fdb19670c61b19e61ba420 0\t.spec/tasks/TASK-001.md\n120000 b216f42bb9ab0240d55a24721fb83c00699598a4 0\tlib/link\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tsrc/a.py\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tsrc/b.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "fb1d5293e46d4379b0e91f5f6b0ce8bac4f14a90dc003e221b0f9a1929cd86ca"
+      },
+      "lib": {
+        "kind": "directory"
+      },
+      "lib/link": {
+        "kind": "symlink",
+        "target": "../src/b.py"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/a.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      },
+      "src/b.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "84d6a0ab76eeab22fbe13f060e1f304524571b3d14ae5094386a1813c204a855"
+      }
+    },
+    "git": {
+      "status": " M lib/link\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 2d35470388fa4d1ff1fdb19670c61b19e61ba420 0\t.spec/tasks/TASK-001.md\n120000 b216f42bb9ab0240d55a24721fb83c00699598a4 0\tlib/link\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tsrc/a.py\n100644 258ab217c7a77fa3d850fbed9ddeeac9b5ae83d9 0\tsrc/b.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "fixtureId": "SINGLE-179-12",
+  "description": "verifyが使うテストのパスがNFCで同じ名前になる2つの兄弟を持つとき、checkと同じ専用の文言で検証対象をfailedにする",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tests/nfc.py",
+        "to": "tests/café.py"
+      },
+      {
+        "from": "tests/nfd.py",
+        "to": "tests/cafe\u0301.py"
+      }
+    ],
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

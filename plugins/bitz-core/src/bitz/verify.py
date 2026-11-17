@@ -94,7 +94,8 @@ def _resolve_target(
         return lookup
     if lookup in statement_index:
         return lookup
-    return path_index.get(lookup)
+    # 仕様文書のパスは、NFCで完全一致するものだけを解決する（NFCで2つ以上の仕様文書に一致するパスは索引にない＝一致しない。安全な入出力・互換性 §6.1）。
+    return path_index.get(pathown.nfc(lookup))
 
 
 def _is_id_target(raw: str) -> bool:
@@ -271,7 +272,8 @@ def _make_test_checker(
     local_stmt_indices: dict[str, dict[str, dict]],
     known_ws_ids: set[str],
     originals: dict[str, dict[str, DocEntry]] | None = None,
-    real_roots: dict[str, str] | None = None,
+    area_roots: dict[str, str] | None = None,
+    resolvers: dict[str, pathown.PathResolver] | None = None,
 ):
     """検証対象が使うテスト対応の検査（`bitz verify`仕様 §4の4.）を行う関数を返す。
 
@@ -282,15 +284,23 @@ def _make_test_checker(
     複合ワークスペースは`multirelate.path_diagnostics`・`coverage_diagnostics`）をそのまま呼ぶ。診断は宣言どおりの
     表記を保つため、修飾する前の元の文書（``entries_by_ws``）に対して呼ぶ。文書ごとの結果は1度だけ求めて再利用する。
     ``entries_by_ws``は``{ワークスペースID: カタログの文書}``で、単一ワークスペースでは所有ワークスペース1件だけを持つ。
-    ``originals``（ワークスペースIDと文書IDで引く元の文書）と``real_roots``（ワークスペースのルートの実パス）は、
+    ``originals``（ワークスペースIDと文書IDで引く元の文書）、``area_roots``（ワークスペースのルートの絶対パス）、
+    ``resolvers``（ワークスペースIDで引く、ルートの :class:`bitz.pathown.PathResolver`。ディレクトリの列挙のキャッシュ）は、
     索引の違う複数の検査関数（`--all-workspaces`の作業ワークスペースごと）で共有できる。
     """
 
     by_doc: dict[tuple[str, str], list[dict]] = {}
     if originals is None:
         originals = {}
-    if real_roots is None:
-        real_roots = {}
+    if area_roots is None:
+        area_roots = {}
+    if resolvers is None:
+        resolvers = {}
+
+    def _resolver(owner: str) -> pathown.PathResolver:
+        if owner not in resolvers:
+            resolvers[owner] = pathown.PathResolver(ws_root_by_id[owner])
+        return resolvers[owner]
 
     def _original(owner: str, doc_entry: DocEntry) -> DocEntry:
         if owner not in originals:
@@ -305,15 +315,17 @@ def _make_test_checker(
             return by_doc[key]
         entry = _original(owner, doc_entry)
         if multi_active:
-            if not real_roots:
-                real_roots.update({wid: os.path.realpath(root) for wid, root in ws_root_by_id.items()})
-            found = multirelate.path_diagnostics([entry], owner, ws_root_by_id[owner], real_roots)
+            if not area_roots:
+                area_roots.update({wid: os.path.abspath(root) for wid, root in ws_root_by_id.items()})
+            found = multirelate.path_diagnostics(
+                [entry], owner, ws_root_by_id[owner], area_roots, resolver=_resolver(owner)
+            )
             found += multirelate.coverage_diagnostics(
                 [entry], owner, local_id_indices, local_stmt_indices, known_ws_ids
             )
         else:
             found = relations_mod.check_paths(
-                [entry], ws_root_by_id[owner], owner, source_ids={entry.doc_id}
+                [entry], ws_root_by_id[owner], owner, source_ids={entry.doc_id}, resolver=_resolver(owner)
             )
             found += relations_mod.check_coverage(
                 entries_by_ws[owner], owner, source_ids={entry.doc_id}, id_index=id_index, statement_index=statement_index
@@ -546,18 +558,32 @@ def _compute_verify_digest(
     return digest_mod.compute_digest(digest_materials)
 
 
-def _expand_argv(argv_template: list[str], tests_workspace_rel: list[str], cwd_abs: str, workspace_root: str) -> list[str]:
+def _expand_argv(
+    argv_template: list[str],
+    tests_workspace_rel: list[str],
+    cwd_abs: str,
+    workspace_root: str,
+    *,
+    disk_tests: dict[str, tuple[str, ...]] | None = None,
+    cwd_depth: int = 0,
+) -> list[str]:
+    """``{tests}``を、実効`cwd`相対のテストのパスへ展開する。相対化は字句のパス（NFCのセグメント）で行う（ワークスペース・設定仕様 §6）。
+
+    呼び出し側は、すべてのテストのパスが実効`cwd`の配下にあることを検査済みである。``cwd_abs``は字句の実効`cwd`（NFCで比べるので、
+    宣言の綴りの違いは影響しない）。既定では、相対パスをテストのパスを宣言したとおりの綴りで返す（公開結果の`argv`の綴り）。
+    ``disk_tests``（宣言したテストのパス→存在の検査で一致した、ワークスペースのルートからのファイルシステム上の綴りのセグメントの列）を渡すと、
+    そのテストは実在の綴りの先頭``cwd_depth``個（実効`cwd`の分）を除いたセグメントを使う（プロセスへ渡す引数の綴り）。
+    """
+
     if "{tests}" not in argv_template:
         return list(argv_template)
     rel_tests = []
     for t in tests_workspace_rel:
-        test_abs = os.path.normpath(os.path.join(workspace_root, t))
-        rel = os.path.relpath(test_abs, cwd_abs)
-        if rel == os.pardir or rel.startswith(os.pardir + os.sep) or os.path.isabs(rel):
-            # 字句では`cwd`の外だが、実パスでは配下にあるテスト（`cwd`がシンボリックリンクのとき）。プロセスの`cwd`は実体の
-            # ディレクトリなので、実パスどうしの相対パスで示す（字句の相対パスは実体の`..`と一致しない）。
-            rel = os.path.relpath(pathown.real_path(test_abs), pathown.real_path(cwd_abs))
-        rel_tests.append(rel.replace(os.sep, "/"))
+        if disk_tests is not None and t in disk_tests and len(disk_tests[t]) > cwd_depth:
+            rel_tests.append("/".join(disk_tests[t][cwd_depth:]))
+            continue
+        rel = pathown.relative_to(os.path.join(workspace_root, t), cwd_abs)
+        rel_tests.append(rel if rel is not None else t)
     index = argv_template.index("{tests}")
     return list(argv_template[:index]) + rel_tests + list(argv_template[index + 1 :])
 
@@ -857,30 +883,21 @@ def _process_single_target(
 
 
 def _cwd_ownership_diag(
-    ws_id: str, name: str, cwd_rel: str, cwd_abs: str, ws_root_by_id: dict[str, str], multi_root_id: str | None
+    ws_id: str, name: str, cwd_rel: str, cwd_lexical: str, ws_root_by_id: dict[str, str]
 ) -> dict | None:
-    """実効`cwd`の実パスが所有領域の外なら、起動を遮断する診断を返す（ワークスペース・設定仕様 §6、複合ワークスペース仕様 §5・§5.1）。
+    """複合ワークスペースで、存在する実効`cwd`の字句のパスが所有領域の外なら、起動を遮断する診断を返す（複合ワークスペース仕様 §5・§5.1）。
 
-    所有領域は、テスト割当てを所有するワークスペースのルートの実パスの配下（境界を含む）とし、実パスのファイルシステム上の
-    同一性でセグメントの境界の包含を判定する（:func:`bitz.pathown.owns`）。複合ワークスペースのルートワークスペースは、
-    メンバーのルートの配下を所有しない。字句の検査は設定の検査（config._cwd_lexically_valid）が済ませている。
-    単一ワークスペースは`SPEC-VERIFY-BLOCKED-001`、複合ワークスペースは`SPEC-MULTI-OWNERSHIP-001`とする。
+    所有領域は、テスト割当てを所有するワークスペースのルートの配下（境界を含む）とし、NFCにした字句のパスのセグメント境界の包含で判定する
+    （:func:`bitz.pathown.owns`）。複合ワークスペースのルートワークスペースは、メンバーのルートの配下を所有しない。
+    字句の検査は設定の検査（config._cwd_lexically_valid）が済ませ、存在は呼び出し側が存在の検査（安全な入出力・互換性 §6）で確かめている。
+    単一ワークスペースでは、字句の検査を通った`cwd`は常にワークスペースのルートの配下にあるので、本関数を呼ばない（所有の違反は生じない）。
     """
 
-    real = pathown.real_path(cwd_abs)
-    own_real = pathown.real_path(ws_root_by_id[ws_id])
-    roots_real = [pathown.real_path(root) for root in ws_root_by_id.values()]
-    if pathown.owns(real, own_real, roots_real):
+    if pathown.owns(cwd_lexical, ws_root_by_id[ws_id], ws_root_by_id.values()):
         return None
-    key = f"verify.commands.{name}.cwd"
-    if multi_root_id is None:
-        return _file_diag(
-            "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_cwd_unavailable(),
-            ws_id, config_mod.CONFIG_PATH, key=key,
-        )
     return _file_diag(
         "SPEC-MULTI-OWNERSHIP-001", "error", "failed", messages.multi_ownership_resolved(cwd_rel, ws_id),
-        ws_id, config_mod.CONFIG_PATH, key=key,
+        ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.cwd",
     )
 
 
@@ -908,7 +925,7 @@ def _plan_and_run_bindings(
     作り、ワークスペースの処理順（``ws_root_by_id``の挿入順）、コマンド名の辞書順で逐次実行する。
 
     ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
-    実効`cwd`の解決先が所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
+    実効`cwd`がディレクトリとして存在しないテスト割当てと、複合ワークスペースで存在する実効`cwd`の字句のパスが所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
 
     戻り値は``(commands_by_key, status_by_key, blocked, launched, top_diagnostics)``。``blocked``は起動前に遮断したテスト割当ての
     ``(workspace_id, コマンド名) -> 診断``、``launched``は起動した後に検出した診断（タイムアウト・シグナル・起動失敗）の
@@ -921,6 +938,12 @@ def _plan_and_run_bindings(
     launched: dict[tuple[str, str], dict] = {}
     top_diagnostics: list[dict] = []
     config_untracked_cache: dict[str, bool] = {}
+    resolvers: dict[str, pathown.PathResolver] = {}
+
+    def _resolver(ws_id: str) -> pathown.PathResolver:
+        if ws_id not in resolvers:
+            resolvers[ws_id] = pathown.PathResolver(ws_root_by_id[ws_id])
+        return resolvers[ws_id]
 
     def _config_untracked(ws_id: str) -> bool:
         if ws_id not in config_untracked_cache:
@@ -942,25 +965,33 @@ def _plan_and_run_bindings(
             continue
 
         cmd_cwd_rel = cmd_def.get("cwd", ".")
-        cwd_abs = os.path.normpath(os.path.join(workspace_root, cmd_cwd_rel))
+        # 字句の実効`cwd`（包含と所有の判定、`{tests}`の相対化に使う）。プロセスを起動する`cwd_abs`は、存在の検査で確かめた
+        # ファイルシステム上の綴りのパス（NFDで名前を返すファイルシステムでも、宣言の綴りと開ける綴りがずれない）にする。
+        cwd_lexical = os.path.normpath(os.path.join(workspace_root, cmd_cwd_rel))
+        cwd_abs = cwd_lexical
 
         diag: dict | None = None
         expanded: list[str] = []
+        spawn_argv: list[str] = []
+        cwd_found = _resolver(ws_id).resolve(cmd_cwd_rel, pathown.DIRECTORY)
         if _config_untracked(ws_id):
             diag = _file_diag("SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_CONFIG_UNTRACKED, ws_id, config_mod.CONFIG_PATH)
-        elif not os.path.isdir(cwd_abs):
+        elif not cwd_found.exists:
+            # 不在、別の綴り、途中または末端のシンボリックリンク、NFCの衝突は、どれも作業ディレクトリが利用できない（安全な入出力・互換性 §6.2）。
             diag = _file_diag(
                 "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_cwd_unavailable(),
                 ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.cwd",
             )
-        elif (ownership := _cwd_ownership_diag(ws_id, name, cmd_cwd_rel, cwd_abs, ws_root_by_id, multi_root_id)) is not None:
+        elif multi_root_id is not None and (
+            ownership := _cwd_ownership_diag(ws_id, name, cmd_cwd_rel, cwd_lexical, ws_root_by_id)
+        ) is not None:
             diag = ownership
         else:
-            # テストのパスと実効`cwd`の包含は、両方を実パスにして判定する（ワークスペース・設定仕様 §6）。
-            real_cwd = pathown.real_path(cwd_abs)
+            cwd_abs = os.path.join(workspace_root, *cwd_found.actual)
+            # テストのパスと実効`cwd`の包含は、字句のパス（NFCのセグメント）で判定する（ワークスペース・設定仕様 §6）。
             outside = {
                 t for t in tests_sorted
-                if not pathown.within(pathown.real_path(os.path.join(workspace_root, t)), real_cwd)
+                if not pathown.within(os.path.join(workspace_root, t), cwd_lexical)
             }
             if outside:
                 # 発生元は、配下にないテストのパスを宣言した仕様文書のうち、パスの辞書順で最初の文書とし、`key`はその文書の
@@ -972,7 +1003,17 @@ def _plan_and_run_bindings(
                 )
             else:
                 argv_template = cmd_def["argv"]
-                expanded = _expand_argv(argv_template, tests_sorted, cwd_abs, workspace_root)
+                # 公開結果の`argv`と上限の判定は宣言の綴り（環境によらず同じ値）、プロセスへ渡す引数は、存在の検査で一致した
+                # ファイルシステム上の綴りで組み立てる（NFDで名前を返すファイルシステムでも、渡したパスで開ける。ワークスペース・設定仕様 §6）。
+                expanded = _expand_argv(argv_template, tests_sorted, cwd_lexical, workspace_root)
+                disk_tests = {}
+                for t in tests_sorted:
+                    test_found = _resolver(ws_id).resolve(t, pathown.FILE)
+                    if test_found.exists:
+                        disk_tests[t] = test_found.actual
+                spawn_argv = _expand_argv(
+                    argv_template, tests_sorted, cwd_lexical, workspace_root, disk_tests=disk_tests, cwd_depth=len(cwd_found.actual)
+                )
                 total_bytes = sum(len(a.encode("utf-8")) for a in expanded)
                 if len(expanded) > _ARGV_COUNT_LIMIT:
                     diag = _file_diag(
@@ -1005,7 +1046,7 @@ def _plan_and_run_bindings(
             continue
 
         plan[(ws_id, name)] = {
-            "argv": expanded, "cwd_rel": cmd_cwd_rel, "cwd_abs": cwd_abs, "tests": tests_sorted, "covers": covers_sorted,
+            "argv": expanded, "spawn_argv": spawn_argv, "cwd_rel": cmd_cwd_rel, "cwd_abs": cwd_abs, "tests": tests_sorted, "covers": covers_sorted,
         }
 
     commands_by_key: dict[tuple[str, str], dict] = {}
@@ -1015,7 +1056,7 @@ def _plan_and_run_bindings(
         effective_timeout = effective_timeout_for(ws_id)
         child_env = dict(env)
         child_env["PWD"] = info["cwd_abs"]
-        outcome_run = procrun.run(info["argv"], info["cwd_abs"], child_env, effective_timeout)
+        outcome_run = procrun.run(info["spawn_argv"], info["cwd_abs"], child_env, effective_timeout)
         termination = outcome_run["termination"]
         exit_code = outcome_run["exit_code"]
         if termination == "exit":
@@ -1224,10 +1265,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         cache[wid] = cfg
         return cfg
 
-    path_index = (
-        {e.path: e.doc_id for e in catalog.entries if e.doc_id is not None}
-        if multi_active
-        else {e.path: e.doc_id for e in id_index.values()}
+    # 曖昧さは、`skip-document`の文書を含むすべての仕様ファイルのパスで数える（check §2。`verify`も同じ）。
+    path_index = pathown.build_nfc_path_index(
+        ((e.path, e.doc_id) for e in (catalog.entries if multi_active else id_index.values()) if e.doc_id is not None),
+        all_paths=(e.path for e in catalog.entries),
     )
 
     verify_cfg = config_raw.get("verify") or {}
@@ -1481,7 +1522,8 @@ def _run_all_workspaces_members(
     any_targets = False
     cycle_diagnostics_for = _cycle_diagnostics_provider(entries_by_ws)
     test_check_originals: dict[str, dict[str, DocEntry]] = {}
-    test_check_real_roots: dict[str, str] = {}
+    test_check_area_roots: dict[str, str] = {}
+    test_check_resolvers: dict[str, pathown.PathResolver] = {}
 
     for wid, root, _rel in workspaces:
         id_index, statement_index, local_id_indices, local_stmt_indices, known_ws_ids = multirelate.merge_indices(
@@ -1493,7 +1535,7 @@ def _run_all_workspaces_members(
             multi_active=True, ws_root_by_id=ws_root_by_id, entries_by_ws=entries_by_ws,
             id_index=id_index, statement_index=statement_index,
             local_id_indices=local_id_indices, local_stmt_indices=local_stmt_indices, known_ws_ids=known_ws_ids,
-            originals=test_check_originals, real_roots=test_check_real_roots,
+            originals=test_check_originals, area_roots=test_check_area_roots, resolvers=test_check_resolvers,
         )
         # 閉包を作るときに辿る文書IDの重複（作業ワークスペースごとに到達し得る範囲が違う）。重複がなければ`None`。
         duplicates = dupclosure.tracker_for(entries_by_ws, wid, True)

@@ -299,13 +299,18 @@ class SingleWorkspaceTests(_Base):
         self.assertEqual((result["status"], code), ("passed", 0))
         self.assertEqual(self.check_diagnostics("--full"), [])
 
-    def test_control_test_path_through_a_linked_parent_inside_passes(self):
+    def test_defect_test_path_through_a_linked_parent_is_an_invalid_test_path(self):
+        """上位のディレクトリのシンボリックリンクは、同じワークスペースの中へ向いていても辿らない（安全な入出力・互換性 §6.2）。"""
         self.build(
             [("ext/a.py", ["REQ-001:AC-01"], "default"), ("tests/b.py", ["REQ-001:AC-02"], "default")],
             links=[("ext", "tests")],
         )
         result, code = self.verify("REQ-001")
-        self.assertEqual((result["status"], code), ("passed", 0))
+        target = self.targets(result)["REQ-001"]
+        self.assertSkippedTarget(target)
+        self.assertEqual(self.codes(target), [("SPEC-PATH-INVALID-001", TECH_PATH, "tests[0].path")])
+        self.assertEqual(target["diagnostics"][0]["summary"], "テストのパスが存在しません")
+        self.assertEqual((result["status"], code, result["commands"]), ("failed", 1, []))
 
 
 # --- 複合ワークスペース -----------------------------------------------------------------------
@@ -327,8 +332,8 @@ class MultiWorkspaceTests(_Base):
             (self.root / name).symlink_to(target)
         self.commit()
 
-    def test_defect_member_test_path_resolving_into_another_workspace_is_an_ownership_violation(self):
-        """`web`のテストのパスの上位のディレクトリがルートの領域へ解決する。"""
+    def test_defect_member_test_path_through_a_link_toward_another_workspace_is_an_invalid_test_path(self):
+        """`web`のテストのパスの上位のディレクトリがルートの領域へ向くシンボリックリンクでも、辿らない。所有境界の違反ではなく、存在しないパスである。"""
         self.build(
             {
                 "apps/web/.spec/requirements/REQ-101.md": _req("REQ-101", statements=1, tests=[("ext/test_x.py", ["REQ-101:AC-01"], "default")]),
@@ -340,10 +345,10 @@ class MultiWorkspaceTests(_Base):
         target = self.targets(result)["web::REQ-101"]
         self.assertSkippedTarget(target)
         path = ".spec/requirements/REQ-101.md"
-        self.assertEqual(self.codes(target), [("SPEC-MULTI-OWNERSHIP-001", path, "tests[0].path")])
+        self.assertEqual(self.codes(target), [("SPEC-PATH-INVALID-001", path, "tests[0].path")])
         diagnostic = target["diagnostics"][0]
         self.assertEqual((diagnostic["severity"], diagnostic["resultStatus"]), ("error", "failed"))
-        self.assertEqual(diagnostic["summary"], "パスext/test_x.pyの解決先がワークスペースwebの所有領域の外です")
+        self.assertEqual(diagnostic["summary"], "テストのパスが存在しません")
         self.assertEqual(diagnostic["source"], {"kind": "file", "workspaceId": "web", "path": path, "key": "tests[0].path"})
         self.assertEqual((result["status"], code, result["commands"]), ("failed", 1, []))
         self.assertSameAsCheck(target, "--all-workspaces")
@@ -360,7 +365,7 @@ class MultiWorkspaceTests(_Base):
         target = self.targets(result)["platform::REQ-001"]
         self.assertSkippedTarget(target)
         self.assertEqual(self.codes(target), [("SPEC-MULTI-OWNERSHIP-001", ".spec/requirements/REQ-001.md", "tests[0].path")])
-        self.assertEqual(target["diagnostics"][0]["summary"], "パスapps/web/t.pyの解決先がワークスペースplatformの所有領域の外です")
+        self.assertEqual(target["diagnostics"][0]["summary"], "パスapps/web/t.pyがワークスペースplatformの所有領域の外です")
         self.assertEqual((result["status"], code, result["commands"]), ("failed", 1, []))
         self.assertSameAsCheck(target, "--all-workspaces")
 
