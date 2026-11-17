@@ -163,6 +163,18 @@ class MatrixSemanticTests(unittest.TestCase):
         self.assertIn('実行済みテスト証拠がない'.encode(), prompt)
         self.assertIn('semantic=fail'.encode(), prompt)
 
+    def test_digest_stop_grading_requires_each_current_write_precondition(self):
+        base = self.prepared
+        marker = '書込み直前のdigest一致も確認できていない'.encode()
+        self.assertNotIn(marker, semantic.prompt(base))
+        dedicated = replace(base, binding_raw=semantic.io.encoded(
+            {**base.bindings, 'caseId': semantic.DIGEST_STOP_EVIDENCE_CASE_ID}))
+        with patch.object(semantic, 'rebound', return_value=dedicated):
+            prompt = semantic.prompt(dedicated)
+        self.assertIn(marker, prompt)
+        self.assertIn('現在の成功した完全なimplement用contextと対象TASKのcheck通過'.encode(), prompt)
+        self.assertIn('過去の結果の一般的な失効説明や再実行手順だけならsemantic=fail'.encode(), prompt)
+
     def test_matching_six_skill_null_path_with_original_host_and_rollout_can_be_correct(self):
         prepared=self.matching_originals(None);answer=copy.deepcopy(self.answer)
         answer.update(bindings=prepared.bindings,accuracy=True,semantic='pass',routingFindings=[])

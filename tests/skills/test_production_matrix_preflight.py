@@ -158,6 +158,9 @@ class MatrixPreflightTests(unittest.TestCase):
     def test_prewrite_stop_regression_has_two_slots_and_matches_fixed_git(self):
         self.assert_regression_inputs_match_git(['SE-049'])
 
+    def test_digest_stop_regression_has_two_slots_and_matches_fixed_git(self):
+        self.assert_regression_inputs_match_git(['SE-050'])
+
     def assert_regression_inputs_match_git(self, case_ids):
         paths = {preflight.matrix.inputs.REGRESSION_INPUTS[case_id]:
             preflight.REGRESSION_PATHS[preflight.matrix.inputs.REGRESSION_INPUTS[case_id]] for case_id in case_ids}

@@ -29,7 +29,8 @@ INPUT_PATHS = dict(routing='evals/skills/cases/routing.json',
 REGRESSION_PATH = 'evals/skills/routing/stop-evidence-regression-v0.1.json'
 REGRESSION_PATHS = dict(stopEvidenceRegression=REGRESSION_PATH,
     stopWithEvidenceRegression='evals/skills/routing/stop-with-evidence-regression-v0.1.json',
-    prewriteStopEvidenceRegression='evals/skills/routing/prewrite-stop-evidence-regression-v0.1.json')
+    prewriteStopEvidenceRegression='evals/skills/routing/prewrite-stop-evidence-regression-v0.1.json',
+    digestStopEvidenceRegression='evals/skills/routing/digest-stop-evidence-regression-v0.1.json')
 MODULES = ('production_canary_score', 'production_matrix_score', 'production_matrix_capture', 'production_matrix_calibration', 'production_matrix_originals', 'production_matrix_semantic', 'production_matrix_provider_evidence', 'production_matrix_launch', 'production_matrix_context_probe',
     'production_matrix_preflight', 'production_heldout_model_catalog', 'production_matrix_inputs', 'production_matrix_ledger', 'production_matrix_survey', 'production_matrix_survey_run', 'production_failure_streak',
     'production_matrix_evidence', 'production_primary_review', 'production_canary_capture',
