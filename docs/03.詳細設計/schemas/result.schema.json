@@ -482,12 +482,34 @@
       },
       "additionalProperties": false
     },
+    "limits": {
+      "type": "object",
+      "required": ["specBytes", "frontmatterBytes", "specFileCount", "documentStatementCount", "documentArrayItemCount", "inputBytes", "statementCount", "relationEdgeCount", "traceEntryCount", "commandDefinitionCount", "verifyBindingCount", "excludeCount", "expandedArgvCount", "expandedArgvElementBytes", "expandedArgvBytes"],
+      "properties": {
+        "specBytes": {"type": "integer", "minimum": 1},
+        "frontmatterBytes": {"type": "integer", "minimum": 1},
+        "specFileCount": {"type": "integer", "minimum": 1},
+        "documentStatementCount": {"type": "integer", "minimum": 1},
+        "documentArrayItemCount": {"type": "integer", "minimum": 1},
+        "inputBytes": {"type": "integer", "minimum": 1},
+        "statementCount": {"type": "integer", "minimum": 1},
+        "relationEdgeCount": {"type": "integer", "minimum": 1},
+        "traceEntryCount": {"type": "integer", "minimum": 1},
+        "commandDefinitionCount": {"type": "integer", "minimum": 1},
+        "verifyBindingCount": {"type": "integer", "minimum": 1},
+        "excludeCount": {"type": "integer", "minimum": 1},
+        "expandedArgvCount": {"type": "integer", "minimum": 1},
+        "expandedArgvElementBytes": {"type": "integer", "minimum": 1},
+        "expandedArgvBytes": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
     "doctorResult": {
       "allOf": [
         {"$ref": "#/$defs/baseResult"},
         {"type": "object", "required": ["workspace", "core", "checks"], "properties": {
           "operation": {"const": "doctor"}, "workspace": {"$ref": "#/$defs/workspaceResultIdentity"}, "core": {"$ref": "#/$defs/core"},
-          "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}
+          "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}, "limits": {"$ref": "#/$defs/limits"}
         }}
       ],
       "unevaluatedProperties": false
@@ -508,7 +530,8 @@
         {"type": "object", "required": ["multiWorkspace", "workspaces", "core", "checks"], "properties": {
           "operation": {"const": "doctor"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
           "workspaces": {"type": "array", "items": {"$ref": "#/$defs/doctorWorkspace"}},
-          "core": {"$ref": "#/$defs/core"}, "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}
+          "core": {"$ref": "#/$defs/core"}, "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}},
+          "limits": {"$ref": "#/$defs/limits"}
         }}
       ],
       "unevaluatedProperties": false
