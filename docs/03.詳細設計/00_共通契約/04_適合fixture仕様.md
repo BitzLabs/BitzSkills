@@ -1010,7 +1010,8 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 （[安全な入出力・互換性 §4.1](02_安全な入出力・互換性.md#41-上限の設定)、[ADR-076](../../02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)）。
 小さい値を設定したときの`summary`は、§4.1の規則と[Coreの出力文言のレビュー記録](../../../fixtures/conformance/Coreの出力文言のレビュー記録.md)の2026-11-17の承認済みの対応表による（単位を付けた表記は3桁区切りの整数に`バイト`を付けた表記へ置き換え、値を数として持つ文言は形を変えずに値を入れる）。
 引数列のバイト数は、終端のNULや区切りを含めない各文字列のUTF-8のバイト数とその総和で測る（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさは、改行を正規化した後の本文で、区切りの行の間の各行を改行（1バイト）を含めて数え、区切りの行自身は含めない（[文書・フロントマター・状態仕様 §11](../02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#11-yaml制約)）ので、LFの文書とCRLFの文書で、ちょうどの境界を固定する。
-`SINGLE-180-11`・`181`・`182-*`・`183-01`・`02`・`11`は、既存のfixture（`079-01`・`042`・`055`・`SINGLE-001`・`092`）の設定へ`limits`の行を足した入力で、期待結果は基のfixtureから導く。
+`SINGLE-180-11`・`16`・`181`・`182-*`・`183-01`・`02`・`11`は、既存のfixture（`079-01`・`042`・`055`・`SINGLE-001`・`092`）の設定へ`limits`の行を足した入力で、期待結果は基のfixtureから導く。
+仕様文書のファイル数の超過（`INPUT-LIMIT-SPEC-COUNT`）は`parse`の操作のどれでも`stop-operation`である（[診断レジストリ](05_診断レジストリ.md)）。`SINGLE-180-14`・`15`の結果の形は、同一性を構成した後に`stop-operation`で止まる既存のfixture（`context`は`MULTI-040-08`・`MULTI-036-07`、`verify`は`SINGLE-165-01`）と、明示した起点で止まる`SINGLE-166-02`・`SINGLE-126-01`に倣う。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
@@ -1027,6 +1028,9 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-180-11` | `SINGLE-079-01`の入力（1 MiBを超える文書1件）の設定に`limits.specBytes: 1048576`（絶対上限と同じ値を明示） | check --full --base | failed／1 | `SINGLE-079-01`と同じ結果。summaryは「仕様文書のMarkdownが1 MiB上限を超過しました」のまま（§4.1「絶対上限を使うときの診断の文言は変えない」） |
 | `SINGLE-180-12` | `SINGLE-180-01`の文書のすべての改行をCRLFにした文書（原文のフロントマターは区切りの行の間で55バイト、改行を正規化すると52バイト）と`limits.frontmatterBytes: 52` | check --full --base | passed／0 | 改行を正規化した後に数え、CRLFも1バイトの改行とするので、ちょうどは遮断しない。検査文書1、規範文1 |
 | `SINGLE-180-13` | `SINGLE-180-12`の文書と`limits.frontmatterBytes: 51` | check --full --base | failed／1 | `SINGLE-180-04`と同じ結果（summary「フロントマターが51バイト上限を超過しました」）。検査文書0、規範文0 |
+| `SINGLE-180-14` | `SINGLE-180-10`と同じ入力（仕様文書2件と`limits.specFileCount: 1`） | context REQ-001 | failed／1 | 操作全体を止める（`stop-operation`）。診断は`SPEC-INPUT-LIMIT-001`の1件だけ（summary「仕様文書のファイルが1件上限を超過しました」、発生元は`{file, root, .spec}`で`key`なし。§4.1）。起点の`REQ-001`は存在するので`CTX-ROOT-MISSING-001`を返さない。`workspace.id`は`root`、`purpose`は`interpret`、`roots`は`["REQ-001"]`、`contextDigest: null`、`revision`はコミットの`{commit, dirty: false}`、`resolution`は`complete: false`・`documentCount: 0`・`unresolvedStrongRelations: 0`、`documents`・制約台帳・カバレッジは空（結果・診断・終了コード §2。`SINGLE-166-02`・`MULTI-040-08`と同じ形） |
+| `SINGLE-180-15` | `SINGLE-180-10`と同じ入力 | verify REQ-001 | failed／1 | 操作全体を止める。最上位の診断は`SINGLE-180-14`と同じ1件だけで、`CTX-ROOT-MISSING-001`を返さない。`scope: selected`、`workspace.id`は`root`、`targetResults`と`commands`は空、`revision`はコミットの`{commit, dirty: false}`（`SINGLE-165-01`・`SINGLE-126-01`と同じ形） |
+| `SINGLE-180-16` | `SINGLE-055`の設定に`limits.specFileCount: 3`（`.spec/`の仕様文書3件。ちょうど） | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果。ちょうどは遮断しない（`context`のちょうどは`SINGLE-181`が固定する） |
 | `SINGLE-181` | `SINGLE-042`の設定に、どの上限も超えない`limits`（ファイル単位の5キーを基の入力の最大値に合わせ、引数列の3キーを1にする） | context REQ-001 --purpose verify | passed／0 | `SINGLE-042`と同じ結果で、`contextDigest`も同じ（`limits`はハッシュ値の材料に含めない。コンテキストのハッシュ値の正規化仕様 §3、§4.1） |
 | `SINGLE-182-01` | `SINGLE-055`の設定に`limits.expandedArgvCount: 3`（展開した後の要素数ちょうど） | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果 |
 | `SINGLE-182-02` | `SINGLE-055`の設定に`limits.expandedArgvElementBytes: 21`（最長の要素`tests/test_session.py`は21バイト。ちょうど） | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果 |
