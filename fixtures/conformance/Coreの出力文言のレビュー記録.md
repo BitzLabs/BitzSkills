@@ -732,3 +732,43 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
   生成器と監査の回帰試験、Coreの単体試験の文字列も同じ文言に合わせた。
 - 複合ワークスペースの`implements`と`tests[].path`は、所有の判定を存在の検査より先に行うので（複合ワークスペース仕様 §5.1）、別のワークスペースの所有領域にあるパスは、存在しなくても
   同じ文言になる（`MULTI-067-10`〜`12`）。TASKの`changes`は所有境界の診断を持たないので、この文言は使わない。
+
+## 2026-11-17: 上限の設定（ADR-076）の文言
+
+### 追加の理由
+
+- [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)で、
+  上限の値を`bitz.yaml`の`limits`で小さくできるようにした。設定の不正と、小さい値を設定したときの上限の超過に、新しい`summary`が要る。
+- 絶対上限を使うときの文言は変えない。既存の適合fixtureの期待値は変わらない。
+- 文言の規則は[安全な入出力・互換性 §4.1](../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#41-上限の設定)による。
+
+### 管理者の承認
+
+- 2026-11-17、人間の管理者（ユーザー）が、下の対応表を**このまま承認した**（ADR-062 Decision 2）。
+- **文字列は、規範文から一意に導いた値ではなく、表記規則 §3.5に合わせて管理者が承認した値である。**
+  期待値の根拠はこの承認済みの対応表であり、Coreの出力ではない（ADR-051、ADR-062）。
+
+### 承認済みの対応表
+
+`{…}`は実行時に差し込む値を示す。`{key}`は`limits.specBytes`のような設定キー、`{max}`はそのキーの絶対上限（区切りのない整数）、
+`{n}`は実際に使った上限の値（3桁区切りの整数）である。
+
+| 種別 | コード（規則） | 場面 | 文言 |
+|---|---|---|---|
+| summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-FIELD-TYPE`） | `limits`がマッピングでない | `設定キーlimitsはマッピングで指定してください`（既存の行#22の形） |
+| summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-FIELD-TYPE`） | `limits`の値が整数でない（真偽値、文字列を含む）、1未満、絶対上限を超える | `設定キー{key}は1〜{max}の整数で指定してください`（例: `設定キーlimits.specBytesは1〜1048576の整数で指定してください`） |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`） | メンバーの設定が`limits`を持つ | `メンバーの設定は設定キーlimitsを指定できません` |
+| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`） | `multiWorkspace.exclude`の件数が`limits.excludeCount`を超える | `設定キーmultiWorkspace.excludeは{n}件以下で指定してください`（絶対上限のときは既存の`100件以下`と同じ） |
+| summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`） | 展開した後の引数列の要素数が上限を超える | `{tests}展開後のargvの要素数が上限{n}を超えます`（絶対上限のときは`上限10,000`） |
+| summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`） | 展開した後の引数列の全体のバイト数が、小さく設定した上限を超える | `{tests}展開後のargvがバイト数上限{n}バイトを超えます`（絶対上限のときは既存の`上限1 MiB`のまま） |
+| summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`） | 展開した後の引数列の1要素のバイト数が、小さく設定した上限を超える | `{tests}展開後のargvの要素がバイト数上限{n}バイトを超えます`（絶対上限のときは既存の`上限32 KiB`のまま） |
+| summary | `SPEC-INPUT-LIMIT-001`（`INPUT-LIMIT-SPEC`） | 仕様文書のMarkdownが、小さく設定した上限を超える | `仕様文書のMarkdownが{n}バイト上限を超過しました`（絶対上限のときは既存の`1 MiB上限`のまま） |
+| summary | `SPEC-INPUT-LIMIT-001`（`INPUT-LIMIT-FRONTMATTER`） | フロントマターが、小さく設定した上限を超える | `フロントマターが{n}バイト上限を超過しました`（絶対上限のときは既存の`32 KiB上限`のまま） |
+| summary | `SPEC-INPUT-LIMIT-001`（`INPUT-LIMIT-STATEMENT-COUNT`、`INPUT-LIMIT-ARRAY-COUNT`、`INPUT-LIMIT-SPEC-COUNT`）、`SPEC-MULTI-LIMIT-001`（`MULTI-LIMIT`） | 件数または次元が、小さく設定した上限を超える | 既存の文言の形のまま、上限の値を`{n}`にする（例: `1文書の規範文数が5上限を超過しました`、`入力バイト数が上限4,096を超過しました`） |
+
+### 合わせて承認した細目
+
+- 単一ワークスペースで仕様文書のファイル数が上限を超えたときの診断の発生元は、ワークスペース相対のパス`.spec`とする。
+- 設定がスキーマに適合しないときの`doctor`は、`limits`を返さない。
+- `check --base`で基準版の文書だけがファイル単位の上限を超える場合は、今回は新しい規則を定めず、適合fixtureを作らない。
+- `doctor`の`limits`のキーの順は、仕様では表の順とする。harnessはオブジェクトのキーの順を比べないので、適合fixtureでは固定しない。
