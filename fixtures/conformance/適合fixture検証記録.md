@@ -2413,3 +2413,19 @@ commit `3484485bc46d6b4049bfab4a01e9d662881da32e`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Coreは`limits`をまだ実装していないので、Step 1〜5のGate Bは、実装の後に判定し直す（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-11-17: フロントマターの数え方と基準版への上限の当て方を定めた後のGate Aの再認定
+
+利用者の裁定と独立レビューの指摘により、フロントマターの大きさの数え方（文書・フロントマター・状態仕様 §11）と、`check --base`で基準版へ上限を当てる規則
+（安全な入出力・互換性 §4.1。`excludeCount`は現在版の設定の除外にだけ当てる、基準版はコミットの内容で数える、読めなければ`SPEC-MULTI-GIT-001`）を定めた。
+`SINGLE-180-03`の上限をちょうどの境界（52バイト）へ改め、`SINGLE-180-12`、`13`（CRLFの文書）、`MULTI-068-10`、`11`（基準版の除外の件数）、
+`MULTI-069-25`（インデックスへ入れた変更と基準版のコミット）を追加した。メンバーの設定の`limits`を`SPEC-MULTI-MEMBER-001`へ改め、
+引数列のバイト数をちょうどの境界で固定し、網羅のfixture（`MULTI-068-07`〜`09`、`MULTI-069-22`〜`24`、`SINGLE-180-11`、`SINGLE-183-12`）を足した。
+
+commit `8b80dd674ae4640b1a2f68b471cd7fc82eb94511`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`c93a3367610ea09d095ac41c41ebdeb352051c58bac42d90908c96d622ec62cd`。Stepの件数は60／150／122／158／342（重複を除いて826件）、手動の一覧は28件、matrixは854件 |
+| 規模の検証 | 実行しない（ADR-076 Decision 7） |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
