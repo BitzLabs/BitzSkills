@@ -15537,11 +15537,24 @@ class AuditTests(unittest.TestCase):
         for identifier, old, new in (("SINGLE-180-01", b"specBytes: 334", b"specBytes: 333"),
                                      ("SINGLE-180-05", b"documentStatementCount: 3", b"documentStatementCount: 4"),
                                      ("SINGLE-182-04", b"expandedArgvBytes: 48", b"expandedArgvBytes: 47"),
-                                     ("SINGLE-182-02", b"expandedArgvElementBytes: 21", b"expandedArgvElementBytes: 22")):
+                                     ("SINGLE-182-02", b"expandedArgvElementBytes: 21", b"expandedArgvElementBytes: 22"),
+                                     ("SINGLE-180-03", b"frontmatterBytes: 52", b"frontmatterBytes: 60"),
+                                     ("SINGLE-180-12", b"frontmatterBytes: 52", b"frontmatterBytes: 55")):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 config = root / "single" / identifier / "repo/.spec/bitz.yaml"
                 config.write_bytes(config.read_bytes().replace(old, new))
+                self.assertEqual(limits_single_fixtures.validate(root, {identifier})["status"], "Failed")
+        # CRLFの文書がLFへ正規化された入力と、正規化を止める`.gitattributes`の欠落を拒否する（フロントマターの数え方は文書・フロントマター・状態仕様 §11）。
+        for identifier in ("SINGLE-180-12", "SINGLE-180-13"):
+            with self.subTest(identifier=identifier, change="lf"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                document = root / "single" / identifier / "repo/.spec/requirements/REQ-001.md"
+                document.write_bytes(document.read_bytes().replace(b"\r\n", b"\n"))
+                self.assertEqual(limits_single_fixtures.validate(root, {identifier})["status"], "Failed")
+            with self.subTest(identifier=identifier, change="gitattributes"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                (root / "single" / identifier / ".gitattributes").unlink()
                 self.assertEqual(limits_single_fixtures.validate(root, {identifier})["status"], "Failed")
 
     def test_limits_multi_fixtures(self):
@@ -15588,6 +15601,13 @@ class AuditTests(unittest.TestCase):
             ("MULTI-069-20", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
             ("MULTI-069-20", "manifest.json", lambda v: v["setup"]["operations"].pop()),
             ("MULTI-069-21", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-069-25", "manifest.json", lambda v: v["setup"]["operations"].pop()),
+            ("MULTI-069-25", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("MULTI-068-10", "expected/check.json", lambda v: v.update(status="blocked", workspaces=[])),
+            ("MULTI-068-10", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
+            ("MULTI-068-11", "expected/check.json", lambda v: v.update(checkedDocumentCount=0, checkedStatementCount=0)),
+            ("MULTI-068-11", "manifest.json", lambda v: v["invocation"].update(
+                argv=["check", "--base", "HEAD", "--format", "json"])),
             ("MULTI-068-02", "expected/check.json",
              lambda v: v["diagnostics"][0].update(summary="設定キーmultiWorkspace.excludeは100件以下で指定してください")),
             ("MULTI-068-03", "expected/doctor.json", lambda v: v["workspaces"][0].update(limits=v["limits"])),
@@ -15603,12 +15623,19 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value, ensure_ascii=False))
                 self.assertEqual(limits_multi_fixtures.validate(root, {identifier})["status"], "Failed")
         for identifier, old, new in (("MULTI-069-05", b"statementCount: 5", b"statementCount: 6"),
-                                     ("MULTI-068-01", b"excludeCount: 2", b"excludeCount: 1")):
+                                     ("MULTI-068-01", b"excludeCount: 2", b"excludeCount: 1"),
+                                     ("MULTI-068-10", b"    - vendor/b\n", b"")):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 config = root / "multi" / identifier / "repo/.spec/bitz.yaml"
                 config.write_bytes(config.read_bytes().replace(old, new))
                 self.assertEqual(limits_multi_fixtures.validate(root, {identifier})["status"], "Failed")
+        # 現在版の除外を`excludeCount`より多くすると、現在版がちょうど上限の条件が成り立たない。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-068-10")
+            change = root / "multi/MULTI-068-10/changes/bitz.yaml"
+            change.write_bytes(change.read_bytes().replace(b"    - vendor/a\n", b"    - vendor/a\n    - vendor/b\n"))
+            self.assertEqual(limits_multi_fixtures.validate(root, {"MULTI-068-10"})["status"], "Failed")
         # 現在版の設定の`limits`を除くと、基準版だけが超える条件が成り立たない。
         with tempfile.TemporaryDirectory() as temporary:
             root = self.copy_multi_fixture(temporary, "MULTI-069-20")

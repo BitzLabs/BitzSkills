@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 上限の値を`limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。
 この群は、単一ワークスペースの`doctor`の`limits`の出力、`limits`の設定の検査、入力の上限（安全な入出力・互換性 §4.1）、
-`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、30件で固定する。
+`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、33件で固定する。
 
 | fixture | 操作 | 入力 | 期待 |
 |---|---|---|---|
@@ -13,7 +13,8 @@
 | `SINGLE-183-04` | `check --full --base HEAD` | `limits: 1024`（マッピングでない） | `error`／3。`SPEC-CONFIG-SCHEMA-001`（`source.key`は`limits`） |
 | `SINGLE-183-05` | `check --full --base HEAD` | `limits`の中の未知のキー`futureLimit: 1` | `passed_with_warnings`／0。`SPEC-CONFIG-UNKNOWN-001`（`source.key`は`limits.futureLimit`） |
 | `SINGLE-180-01`、`02` | `check --full --base HEAD` | `specBytes`が仕様文書の大きさちょうど／1小さい | `passed`／`failed`（`SPEC-INPUT-LIMIT-001`） |
-| `SINGLE-180-03`、`04` | 同上 | `frontmatterBytes`が区切りの行を含む大きさ／区切りの行を除く大きさより1小さい | `passed`／`failed` |
+| `SINGLE-180-03`、`04` | 同上 | `frontmatterBytes`がフロントマターの大きさ（区切りの行を除き、改行を含む）ちょうど／1小さい | `passed`／`failed` |
+| `SINGLE-180-12`、`13` | 同上 | `180-03`・`04`と同じ文書をCRLFの改行にし、同じ`frontmatterBytes`（改行は正規化した後の1バイトで数える） | `passed`／`failed` |
 | `SINGLE-180-05`、`06` | 同上 | `documentStatementCount: 3`で規範文が3件／4件 | `passed`／`failed` |
 | `SINGLE-180-07`、`08` | 同上 | `documentArrayItemCount: 3`で`covers`が3件／4件 | `passed`／`failed`（`source.key`は`tests[0].covers`） |
 | `SINGLE-180-11` | 同上 | `SINGLE-079-01`の設定に`limits.specBytes: 1048576`（絶対上限と同じ値を明示） | `SINGLE-079-01`と同じ結果（文言は`1 MiB上限`のまま） |
@@ -37,8 +38,10 @@
 期待結果をそこから導く。基のfixtureの入力か期待値が変われば、この群の監査が失敗する。
 
 引数列のバイト数は、YAML表記、配列の区切り、終端のNULを含めず、各文字列のUTF-8のバイト数とその総和で測り、展開した後も公開結果の`argv`で測る
-（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさが区切りの行（`---`）を含むかは規範文が定めないので、
-どちらの数え方でも結論が変わらない値（含む数え方のちょうど、含まない数え方の1超過）を使い、ちょうどの境界は固定しない。
+（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさは、改行を正規化した後（CRLFとCRをLFへ置き換えた後）の本文で、
+開始と終了の区切りの行の間の各行を、その行の改行（1バイト）を含めて数え、区切りの行自身は含めない（文書・フロントマター・状態仕様 §11）ので、
+ちょうどの境界を固定する。`SINGLE-180-12`・`13`の文書はCRLFの改行で、原文のバイト数で数えるとちょうどの側も超過になる。CRLFの原文を
+リポジトリの`* text=auto eol=lf`で正規化させないため、fixtureのディレクトリに`.gitattributes`（`repo/`の文書の`-text`）を置く。
 """
 import copy
 import json
@@ -112,18 +115,43 @@ def effective_limits(entries):
 # --- 入力 -------------------------------------------------------------------------------------
 
 def frontmatter_content(document):
-    """区切りの行（`---`とLF）の間のバイト列。"""
+    """区切りの行（`---`とLF）の間のバイト列。LFの文書だけに使う。"""
     parts = document.split(b"---\n", 2)
     if len(parts) != 3 or parts[0]:
         raise ValueError("文書に区切られたフロントマターがありません")
     return parts[1]
 
 
+def frontmatter_size(document):
+    """フロントマターの大きさ（文書・フロントマター・状態仕様 §11）。改行を正規化した後（CRLFとCRをLFへ置き換えた後）の本文で、
+    開始と終了の区切りの行の間にある各行を、その行の改行（1バイト）を含めて数えたUTF-8のバイト数の合計。区切りの行自身は含めない。"""
+    lines = document.replace(b"\r\n", b"\n").replace(b"\r", b"\n").split(b"\n")
+    if lines[0] != b"---" or b"---" not in lines[1:]:
+        raise ValueError("文書に区切られたフロントマターがありません")
+    end = lines.index(b"---", 1)
+    return sum(len(line) + 1 for line in lines[1:end])
+
+
+def raw_frontmatter_size(document):
+    """原文のまま（改行を正規化せずに）区切りの行の間を数えた大きさ。CRLFの文書で、正規化した数え方と結論が分かれることを確かめるためだけに使う。"""
+    lines = document.split(b"\n")
+    end = next(index for index in range(1, len(lines)) if lines[index].rstrip(b"\r") == b"---")
+    return sum(len(line) + 1 for line in lines[1:end])
+
+
+def crlf(document):
+    """すべての改行をCRLFにした文書。"""
+    if b"\r" in document:
+        raise ValueError("CRを含む文書はCRLFへ変換しません")
+    return document.replace(b"\n", b"\r\n")
+
+
 DOCUMENT_BYTES = DOCUMENT.encode()
 DOCUMENT_SIZE = len(DOCUMENT_BYTES)
-FRONTMATTER_CONTENT = len(frontmatter_content(DOCUMENT_BYTES))
-# 区切りの行2本（`---\n`が2回）を含む大きさ。
-FRONTMATTER_WITH_DELIMITERS = FRONTMATTER_CONTENT + 2 * len(b"---\n")
+DOCUMENT_CRLF = crlf(DOCUMENT_BYTES)
+FRONTMATTER_SIZE = frontmatter_size(DOCUMENT_BYTES)
+# CRLFの原文を`* text=auto eol=lf`（リポジトリの`.gitattributes`）で正規化させない。fixtureのディレクトリに置き、`repo/`の文書だけに当てる。
+GITATTRIBUTES = f"repo/{REQ_PATH} -text\n"
 ARGV_TOTAL = sum(len(value.encode()) for value in SINGLE_055_ARGV)
 ARGV_LONGEST = max(len(value.encode()) for value in SINGLE_055_ARGV)
 
@@ -162,11 +190,16 @@ CASES = {
     "SINGLE-180-02": case("input", 2, "仕様文書がspecBytesを1バイト超えれば文書を検査しない",
                           limits=[("specBytes", DOCUMENT_SIZE - 1)], document="plain", status="failed",
                           summary=f"仕様文書のMarkdownが{bytes_text(DOCUMENT_SIZE - 1)}上限を超過しました"),
-    "SINGLE-180-03": case("input", 2, "frontmatterBytesが区切りの行を含むフロントマターの大きさなら遮断しない",
-                          limits=[("frontmatterBytes", FRONTMATTER_WITH_DELIMITERS)], document="plain", status="passed"),
-    "SINGLE-180-04": case("input", 2, "フロントマターがfrontmatterBytesを超えれば文書を検査しない",
-                          limits=[("frontmatterBytes", FRONTMATTER_CONTENT - 1)], document="plain", status="failed",
-                          summary=f"フロントマターが{bytes_text(FRONTMATTER_CONTENT - 1)}上限を超過しました"),
+    "SINGLE-180-03": case("input", 2, "frontmatterBytesがフロントマターの大きさちょうどなら遮断しない",
+                          limits=[("frontmatterBytes", FRONTMATTER_SIZE)], document="plain", status="passed"),
+    "SINGLE-180-04": case("input", 2, "フロントマターがfrontmatterBytesを1バイト超えれば文書を検査しない",
+                          limits=[("frontmatterBytes", FRONTMATTER_SIZE - 1)], document="plain", status="failed",
+                          summary=f"フロントマターが{bytes_text(FRONTMATTER_SIZE - 1)}上限を超過しました"),
+    "SINGLE-180-12": case("input", 2, "CRLFの改行のフロントマターも改行を1バイトとして数えfrontmatterBytesちょうどなら遮断しない",
+                          limits=[("frontmatterBytes", FRONTMATTER_SIZE)], document="crlf", status="passed"),
+    "SINGLE-180-13": case("input", 2, "CRLFの改行のフロントマターがfrontmatterBytesを1バイト超えれば文書を検査しない",
+                          limits=[("frontmatterBytes", FRONTMATTER_SIZE - 1)], document="crlf", status="failed",
+                          summary=f"フロントマターが{bytes_text(FRONTMATTER_SIZE - 1)}上限を超過しました"),
     "SINGLE-180-05": case("input", 2, "documentStatementCountちょうどの規範文を遮断しない",
                           limits=[("documentStatementCount", 3)], document="statements-3", status="passed"),
     "SINGLE-180-06": case("input", 2, "1文書の規範文がdocumentStatementCountを1件超えれば文書を検査しない",
@@ -252,6 +285,8 @@ def config_text(identifier):
 def document_inputs(kind):
     if kind == "plain":
         return {REQ_PATH: DOCUMENT_BYTES}
+    if kind == "crlf":
+        return {REQ_PATH: DOCUMENT_CRLF}
     if kind == "statements-3":
         return {REQ_PATH: requirement(3, covers_ids(3)), TEST_PATH: TEST_FILE}
     if kind == "statements-4":
@@ -333,7 +368,7 @@ def diagnostic(code, severity, status, summary, path, key=None, identity="root")
 # 入力の上限のfixtureの検査件数（文書、規範文）。`skip-document`で上限を超えた文書は数えない（診断レジストリ）。
 INPUT_COUNTS = {"SINGLE-180-01": (1, 1), "SINGLE-180-02": (0, 0), "SINGLE-180-03": (1, 1), "SINGLE-180-04": (0, 0),
                 "SINGLE-180-05": (1, 3), "SINGLE-180-06": (0, 0), "SINGLE-180-07": (1, 3), "SINGLE-180-08": (1, 1),
-                "SINGLE-180-09": (2, 2), "SINGLE-180-10": (0, 0)}
+                "SINGLE-180-09": (2, 2), "SINGLE-180-10": (0, 0), "SINGLE-180-12": (1, 1), "SINGLE-180-13": (0, 0)}
 
 
 def reviewed_result(identifier):
@@ -421,15 +456,15 @@ def check_measurements(identifier, inputs):
         key, value = next(iter(limits.items()))
         over = case_["status"] == "failed"
         if key == "frontmatterBytes":
-            content = len(frontmatter_content(document))
-            with_delimiters = content + 2 * len(b"---\n")
-            # 区切りの行を含む／含まないのどちらで数えても、結論が同じになる値に限る。
-            if over != (content > value) or over != (with_delimiters > value):
-                raise ValueError("フロントマターの数え方によって結論が変わる値です")
-            if not over and with_delimiters != value:
-                raise ValueError("区切りの行を含むフロントマターの大きさがちょうど上限ではありません")
-            if over and content != value + 1:
-                raise ValueError("区切りの行を除くフロントマターの大きさが上限+1ではありません")
+            # 文書・フロントマター・状態仕様 §11の数え方で、ちょうど上限または上限+1にする。
+            if frontmatter_size(document) != (value + 1 if over else value):
+                raise ValueError("フロントマターの大きさがちょうど上限または上限+1ではありません")
+            if case_["document"] == "crlf":
+                # すべての改行がCRLFで、原文のまま数えるとちょうどの側も超過になる（改行の正規化を確かめる入力である）。
+                if document != crlf(document.replace(b"\r\n", b"\n")) or raw_frontmatter_size(document) <= value + 1:
+                    raise ValueError("CRLFの文書が改行の正規化を区別しません")
+            elif b"\r" in document:
+                raise ValueError("LFの文書がCRを含みます")
         elif measured[key] != (value + 1 if over else value):
             raise ValueError(f"{key}の実測がちょうど上限または上限+1ではありません")
         for other, absolute in ABSOLUTE.items():
@@ -493,6 +528,8 @@ def generate(root=HERE, identifiers=None):
             continue
         fixture = root / "single" / identifier
         fixture.mkdir(parents=True, exist_ok=False)
+        if CASES[identifier].get("document") == "crlf":
+            (fixture / ".gitattributes").write_text(GITATTRIBUTES)
         write_tree(fixture / "repo", reviewed_inputs(identifier))
         manifest = reviewed_manifest(identifier)
         (fixture / "manifest.json").write_text(_dump(manifest))
@@ -531,6 +568,12 @@ def validate(root=HERE, identifiers=None):
                 raise ValueError("期待値のファイルがレビュー済みの1件と異なります")
             if (fixture / "changes").exists():
                 raise ValueError("この群は`changes`を持ちません")
+            attributes = fixture / ".gitattributes"
+            if CASES[identifier].get("document") == "crlf":
+                if not attributes.is_file() or attributes.read_text() != GITATTRIBUTES:
+                    raise ValueError("CRLFの文書を正規化させない`.gitattributes`がレビュー済みの内容と異なります")
+            elif attributes.exists():
+                raise ValueError("CRLFの文書のないfixtureは`.gitattributes`を持ちません")
             inputs = reviewed_inputs(identifier)
             check_tree(fixture / "repo", inputs)
             check_measurements(identifier, inputs)

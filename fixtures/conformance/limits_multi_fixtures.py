@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 複合ワークスペースのスナップショット全体の次元の上限（複合ワークスペース仕様 §10）と除外のパスの件数の上限を、ルートワークスペースの設定の
 `limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。実寸の上限の
-`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。33件である。
+`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。36件である。
 
 | fixture | 起動 | 入力 | 期待 |
 |---|---|---|---|
@@ -13,23 +13,26 @@
 | `MULTI-069-19` | `verify --workspace nope` | コマンド定義5件（`commandDefinitionCount: 4`）、テスト割当て1件 | 終了コード4。全体事前検査では`commandDefinitionCount`を判定しない |
 | `MULTI-069-20` | `check --all-workspaces --base HEAD` | 基準版は規範文6件で`limits`なし。現在版は規範文5件で`statementCount: 5` | `blocked`／2。現在版の上限を基準版へ適用する |
 | `MULTI-069-21` | 同上 | 基準版は規範文6件で`statementCount: 5`。現在版は規範文6件で`limits`なし | `passed`／0。基準版の設定の`limits`は使わない（対照） |
+| `MULTI-069-25` | 同上 | `MULTI-069-20`の変更をインデックスへステージする（インデックスと作業ツリーは規範文5件、基準版のコミットは6件） | `blocked`／2。基準版はコミットの内容で数える |
 | `MULTI-068-01`、`02` | `check --all-workspaces --base HEAD` | `MULTI-037-01`の除外2件に`excludeCount: 2`／`1` | `MULTI-037-01`と同じ／`SPEC-MULTI-CONFIG-001` |
 | `MULTI-068-03` | `doctor --all-workspaces`（`apps/web`） | `MULTI-026-01`のルートの設定に`limits` | `limits`を最上位にだけ置く |
 | `MULTI-068-04` | `doctor`（`apps/web`） | `MULTI-035-03`のルートの設定に`limits` | 作業ワークスペースは`web`でも、`limits`はルートの設定の値 |
 | `MULTI-068-05` | `check --all-workspaces --base HEAD` | `MULTI-001`のルートの設定に`limits.memberCount: 1`（メンバー2件） | `passed_with_warnings`／0。`memberCount`は`limits`のキーではない（未知のキーの警告。判定に使わない） |
 | `MULTI-068-06`〜`08` | 同上 | `MULTI-001`のメンバー`web`の設定に`limits.specBytes: 2048`／`limits: 1024`／`limits.specBytes: 0` | `failed`／1。値によらず`SPEC-MULTI-MEMBER-001`の1件（発生元は`MULTI-048-04`と同じくカタログの宣言） |
 | `MULTI-068-09` | `doctor --all-workspaces` | `MULTI-007-01`（メンバーの入れ子で`failed`）のルートの設定に`limits` | `failed`／1。`limits`も返す（`doctor` §7） |
+| `MULTI-068-10`、`11` | `check --all-workspaces --base HEAD`／`check --full --base HEAD` | `MULTI-037-20`の形で、基準版は`exclude: [vendor/a, vendor/b]`と`vendor/a/.spec/bitz.yaml`。現在版は`exclude: [vendor/a]`と`excludeCount: 1` | `passed`／0。`excludeCount`は現在版の除外にだけ当て、基準版の除外は絶対上限で検査する |
 | `MULTI-069-22`、`23` | `check --all-workspaces --base HEAD` | メンバー`m001`の文書だけが規範文2件、ルートの`documentStatementCount`が2／1 | `passed`／`failed`（`m001`の`SPEC-INPUT-LIMIT-001`） |
 | `MULTI-069-24` | `verify --all-workspaces` | メンバー`m001`のテスト割当てだけが展開した後に3要素、ルートの`expandedArgvCount: 2` | `blocked`／2（`m001`の`SPEC-VERIFY-BLOCKED-001`） |
 
-期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、複合ワークスペース仕様 §7・§10、ワークスペース・設定仕様 §5、`verify` §3・§4・§8、
+期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、複合ワークスペース仕様 §2・§2.1・§7・§8・§10、`check` §9、ワークスペース・設定仕様 §5、`verify` §3・§4・§8、
 `doctor` §7、結果・診断・終了コード §2・§5、ADR-066）と、承認済みの文言（`multi_limit_fixtures.SUMMARY_LABELS`、`Coreの出力文言のレビュー記録.md`の
 #41と2026-10-18の除外の件数）だけである。小さい値を設定したときの`summary`は、§4.1の規則で上限の表記だけを実際の値へ置き換える
 （既存の文言の形のまま、値を3桁区切りの整数で入れる。`inputBytes`も単位を付けない。2026-11-17の承認済みの対応表）。超過はちょうど上限+1にし、`observedAtLeast`は上限+1とする。
 入力は、実寸の群と同じ生成器（`multi_generator`）で小さい値を生成し、`repo/`としてバージョン管理する。次元の計数は、生成計画ではなく
 生成したバイト列から数え直す（`multi_generator.count`）。期待結果は、実寸の群と同じ参照計算（`multi_limit_fixtures`、
 `multi_single_verify_limit_fixtures`、`multi_crosscheck`）で組み立てる。`MULTI-068-*`は、レビュー済みの既存のfixtureの入力の
-ルートの設定へ`limits`の行を足し、期待結果をそこから導く。Coreの出力は根拠にしない。
+ルートの設定へ`limits`の行を足し、期待結果をそこから導く。`MULTI-068-10`・`11`は`MULTI-037-20`の入力から作り、全体の結果は`MULTI-037-20`の
+期待結果（`revision.dirty`だけを`true`）から導く。Coreの出力は根拠にしない。
 """
 import copy
 import json
@@ -94,6 +97,8 @@ CASES.update({
                          current_statements=BASE_STATEMENT_LIMIT, outcome="blocked", report="statementCount"),
     "MULTI-069-21": dict(form="base", base_limits=[("statementCount", BASE_STATEMENT_LIMIT)], current_limits=[],
                          current_statements=BASE_STATEMENTS, outcome="passed", report=None),
+    "MULTI-069-25": dict(form="base", base_limits=[], current_limits=[("statementCount", BASE_STATEMENT_LIMIT)],
+                         current_statements=BASE_STATEMENT_LIMIT, outcome="blocked", report="statementCount", stage=True),
     "MULTI-068-01": dict(form="derived", base="MULTI-037-01", limits=[("excludeCount", 2)], outcome="passed"),
     "MULTI-068-02": dict(form="derived", base="MULTI-037-01", limits=[("excludeCount", 1)], outcome="failed"),
     "MULTI-068-03": dict(form="derived", base="MULTI-026-01",
@@ -109,6 +114,8 @@ CASES.update({
                          raw="limits:\n  specBytes: 0\n", limits=[], outcome="failed"),
     "MULTI-068-09": dict(form="derived", base="MULTI-007-01", limits=[("specBytes", 4096), ("excludeCount", 5)],
                          outcome="failed"),
+    "MULTI-068-10": dict(form="base-exclude", scope="all", limits=[("excludeCount", 1)], outcome="passed"),
+    "MULTI-068-11": dict(form="base-exclude", scope="single", limits=[("excludeCount", 1)], outcome="passed"),
     "MULTI-069-22": dict(form="member-statement", limits=[("documentStatementCount", 2)], outcome="passed"),
     "MULTI-069-23": dict(form="member-statement", limits=[("documentStatementCount", 1)], outcome="failed"),
     "MULTI-069-24": dict(form="member-argv", limits=[("expandedArgvCount", 2)], outcome="blocked"),
@@ -124,6 +131,9 @@ DESCRIPTIONS = {
     "MULTI-069-19": "コマンド定義数だけがlimitsを超えカタログにない--workspaceを指定した単独のverifyは引数不正にする",
     "MULTI-069-20": "check --baseは現在版のルートの設定のlimitsを基準版へも適用する",
     "MULTI-069-21": "check --baseは基準版のルートの設定のlimitsを使わない",
+    "MULTI-069-25": "check --baseは基準版の上限をインデックスではなく基準版のコミットの内容で数える",
+    "MULTI-068-10": "check --all-workspaces --baseはexcludeCountを基準版の設定の除外に当てず絶対上限で検査する",
+    "MULTI-068-11": "単独のcheck --baseはexcludeCountを基準版の設定の除外に当てず絶対上限で検査する",
     "MULTI-068-01": "除外のパスの件数がexcludeCountちょうどなら受け入れる",
     "MULTI-068-02": "除外のパスの件数がexcludeCountを超えれば設定不適合にする",
     "MULTI-068-03": "doctor --all-workspacesはlimitsを最上位にだけ置く",
@@ -188,7 +198,47 @@ def entries_of(identifier):
         return with_limits(draft_statement_entries(BASE_STATEMENTS), case["base_limits"])
     if form in {"member-statement", "member-argv"}:
         return with_limits(member_entries(shared_command=form == "member-argv"), case["limits"])
+    if form == "base-exclude":
+        return exclude_entries(BASE_EXCLUDES, [])
     raise ValueError("派生の群は`entries_of`を使いません")
+
+
+EXCLUDE_SOURCE = "MULTI-037-20"
+SOURCE_EXCLUDE_BLOCK = b"  exclude:\n    - generated\n"
+VENDOR_CONFIG = "vendor/a/.spec/bitz.yaml"
+# 除外した範囲の中の単一ワークスペースの設定（`MULTI-037-01`の`cases/single`と同じ形）。カタログには登録しない。
+VENDOR_CONFIG_TEXT = b'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: vendor\n'
+BASE_EXCLUDES = ["vendor/a", "vendor/b"]
+CURRENT_EXCLUDES = ["vendor/a"]
+CHECK_SINGLE_FULL = ["check", "--full", "--base", "HEAD", "--format", "json"]
+
+
+def exclude_entries(excludes, limits):
+    """`MULTI-037-20`の入力の、ルートの設定の除外を`excludes`に替え、`limits`を足し、除外した範囲の中に`vendor/a`の設定を置いた木構造。"""
+    tree = read_tree(HERE / "multi" / EXCLUDE_SOURCE / "repo")
+    if any(executable for _, executable in tree.values()):
+        raise ValueError("基のfixtureの入力に実行ビットがあります")
+    config = tree[ROOT_CONFIG][0]
+    if not config.endswith(SOURCE_EXCLUDE_BLOCK) or config.count(SOURCE_EXCLUDE_BLOCK) != 1:
+        raise ValueError("基のfixtureのルートの設定の除外が想定と異なります")
+    block = b"  exclude:\n" + b"".join(f"    - {path}\n".encode() for path in excludes)
+    entries = {path: content for path, (content, _) in tree.items()}
+    entries[ROOT_CONFIG] = config[:-len(SOURCE_EXCLUDE_BLOCK)] + block
+    entries[VENDOR_CONFIG] = VENDOR_CONFIG_TEXT
+    return with_limits(sorted(entries.items()), limits)
+
+
+def exclude_paths(config):
+    """ルートの設定の`multiWorkspace.exclude`の項目（この群の設定の書き方だけを読む）。"""
+    text = config.decode()
+    if text.count("  exclude:\n") != 1:
+        raise ValueError("ルートの設定の除外が1つではありません")
+    paths = []
+    for line in text.split("  exclude:\n", 1)[1].split("\n"):
+        if not line.startswith("    - "):
+            break
+        paths.append(line[len("    - "):])
+    return paths
 
 
 MEMBER_DOCUMENT = "members/m001/.spec/technical/TECH-000002.md"
@@ -209,8 +259,10 @@ def member_entries(shared_command):
 
 
 def current_entries(identifier):
-    """`base`の群の現在版の木構造（準備の処理を適用した後）。"""
+    """`base`・`base-exclude`の群の現在版の木構造（準備の処理を適用した後）。"""
     case = CASES[identifier]
+    if case["form"] == "base-exclude":
+        return exclude_entries(CURRENT_EXCLUDES, case["limits"])
     return with_limits(draft_statement_entries(case["current_statements"]), case["current_limits"])
 
 
@@ -226,6 +278,9 @@ def changes_of(identifier):
             source = f"changes/{path.rsplit('/', 1)[-1]}"
             changes[source[len("changes/"):]] = (current[path], False)
             operations.append({"op": "update", "path": path, "source": source})
+    if CASES[identifier].get("stage"):
+        # 変更をインデックスへステージし、インデックスと作業ツリーを同じ内容にする（基準版のコミットだけが異なる）。
+        operations.append({"op": "stage", "paths": [operation["path"] for operation in operations]})
     return changes, operations
 
 
@@ -246,8 +301,11 @@ def reviewed_inputs(identifier):
     return {path: (content, False) for path, content in entries_of(identifier)}
 
 
+CHANGED_FORMS = {"base", "base-exclude"}
+
+
 def reviewed_changes(identifier):
-    return changes_of(identifier)[0] if CASES[identifier]["form"] == "base" else {}
+    return changes_of(identifier)[0] if CASES[identifier]["form"] in CHANGED_FORMS else {}
 
 
 # --- 期待値 -----------------------------------------------------------------------------------
@@ -269,6 +327,8 @@ def argv_of(identifier):
         return ["verify", "--workspace", UNKNOWN_WORKSPACE, "--format", "json"]
     if form == "member-argv":
         return VERIFY_ALL
+    if form == "base-exclude" and case["scope"] == "single":
+        return CHECK_SINGLE_FULL
     return CHECK_ALL
 
 
@@ -317,6 +377,19 @@ def generated_result(identifier):
     limits = dict(case.get("limits", []))
     if case["outcome"] == "argument":
         return None
+    if form == "base-exclude":
+        # 現在版の除外（1件）は`excludeCount: 1`ちょうど、基準版の除外（2件）は絶対上限（100件）以内で、どちらのスナップショットも
+        # 自身のルートの設定の除外で`vendor/a`の設定を列挙しない（安全な入出力・互換性 §4.1、複合ワークスペース仕様 §2.1・§8）。
+        # 入力は`MULTI-037-20`と同じカタログと文書なので、全体の結果は`MULTI-037-20`の期待結果で、作業ツリーの変更により`dirty`だけが`true`。
+        if case["scope"] == "all":
+            result = json.loads((HERE / "multi" / EXCLUDE_SOURCE / "expected/check.json").read_text())
+            result["revision"]["dirty"] = True
+            return result
+        # 単独の`check --full`は、作業ワークスペース（ルート）の文書だけを完全検査する（`check` §9）。ルートのREQ-001は1件・規範文1件で関係を持たない。
+        return {"schemaVersion": "1.0", "operation": "check", "status": "passed", "scope": "full",
+                "workspace": {"id": "platform", "path": "."},
+                "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True},
+                "checkedDocumentCount": 1, "checkedStatementCount": 1, "durationMs": 0, "diagnostics": []}
     if form == "base":
         if case["outcome"] == "blocked":
             limit = dict(case["current_limits"])[case["report"]]
@@ -433,7 +506,7 @@ def reviewed_manifest(identifier):
         status = case["outcome"]
         expect.update({"status": status, "exitCode": {"passed": 0, "failed": 1, "blocked": 2}[status], "stdout": "json",
                        "resultFile": expected_name(identifier)})
-    operations = changes_of(identifier)[1] if case["form"] == "base" else []
+    operations = changes_of(identifier)[1] if case["form"] in CHANGED_FORMS else []
     return {"fixtureId": identifier, "description": description(identifier),
             "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": operations},
             "invocation": {"runner": "bitz", "cwd": ".", "argv": argv_of(identifier), "env": {}},
@@ -493,6 +566,27 @@ def check_measurements(identifier):
                 counted["verifyBindingCount"] <= effective["verifyBindingCount"]
                 < counted["commandDefinitionCount"] == effective["commandDefinitionCount"] + 1):
             raise ValueError("コマンド定義数だけがちょうど上限+1で超える必要があります")
+    elif form == "base-exclude":
+        base, current = dict(entries_of(identifier)), dict(current_entries(identifier))
+        limit = dict(case["limits"])["excludeCount"]
+        base_excludes, current_excludes = exclude_paths(base[ROOT_CONFIG]), exclude_paths(current[ROOT_CONFIG])
+        # 現在版の除外はちょうど`excludeCount`。基準版の除外は`excludeCount`を超えるが絶対上限以内（`excludeCount`を基準版にも当てると不適合になる）。
+        if len(current_excludes) != limit or not limit < len(base_excludes) <= ABSOLUTE["excludeCount"]:
+            raise ValueError("除外の件数が、現在版でちょうど上限、基準版で上限を超え絶対上限以内ではありません")
+        if b"limits:" in base[ROOT_CONFIG]:
+            raise ValueError("基準版のルートの設定は`limits`を持ちません")
+        # どちらのスナップショットでも、未登録の設定は自身の除外の中にだけある（除外を当てなければ未登録になる）。
+        for snapshot, excludes in ((base, base_excludes), (current, current_excludes)):
+            configs = {path for path in snapshot if path.endswith(".spec/bitz.yaml")}
+            if configs != {ROOT_CONFIG, "apps/web/.spec/bitz.yaml", "services/api/.spec/bitz.yaml", VENDOR_CONFIG}:
+                raise ValueError("設定の集合が想定と異なります")
+            if not VENDOR_CONFIG.startswith(excludes[0] + "/"):
+                raise ValueError("未登録の設定が除外した範囲の中にありません")
+            if any(path.startswith(f"{exclude}/") for exclude in excludes[1:] for path in snapshot):
+                raise ValueError("2件目の除外は実在しない範囲である必要があります")
+        changed = {path for path in base if base[path] != current[path]}
+        if set(base) != set(current) or changed != {ROOT_CONFIG}:
+            raise ValueError("基準版と現在版の差がルートの設定だけではありません")
     elif form == "base":
         base, current = entries_of(identifier), current_entries(identifier)
         # 上限は現在版の設定から決める（複合ワークスペース仕様 §10）。基準版の設定の`limits`は使わない。

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-180-04",
-  "description": "フロントマターがfrontmatterBytesを超えれば文書を検査しない",
+  "description": "フロントマターがfrontmatterBytesを1バイト超えれば文書を検査しない",
   "setup": {
     "git": true,
     "baseCommit": {

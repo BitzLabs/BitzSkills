@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-180-03",
-  "description": "frontmatterBytesが区切りの行を含むフロントマターの大きさなら遮断しない",
+  "description": "frontmatterBytesがフロントマターの大きさちょうどなら遮断しない",
   "setup": {
     "git": true,
     "baseCommit": {

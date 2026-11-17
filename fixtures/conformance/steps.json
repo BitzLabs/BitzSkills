@@ -217,7 +217,9 @@
         "SINGLE-180-08",
         "SINGLE-180-09",
         "SINGLE-180-10",
-        "SINGLE-180-11"
+        "SINGLE-180-11",
+        "SINGLE-180-12",
+        "SINGLE-180-13"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -834,6 +836,8 @@
         "MULTI-068-07",
         "MULTI-068-08",
         "MULTI-068-09",
+        "MULTI-068-10",
+        "MULTI-068-11",
         "MULTI-069-01",
         "MULTI-069-02",
         "MULTI-069-03",
@@ -857,7 +861,8 @@
         "MULTI-069-21",
         "MULTI-069-22",
         "MULTI-069-23",
-        "MULTI-069-24"
+        "MULTI-069-24",
+        "MULTI-069-25"
       ]
     }
   ],
