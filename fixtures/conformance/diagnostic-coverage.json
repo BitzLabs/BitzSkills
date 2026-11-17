@@ -4,7 +4,7 @@
   "sources": {
     "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "cb3f9aea70c1a5afb2f599c5ef9fd06e75d278908a6bcbc25be0c440ff7c35f9",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5cc4e1d4f7c37a882dd266168b4987546d97c637a8d46168aac0abc67b1ce5c5",
-    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "abb7622b9eec04ccd1c92a489877f84dbe2f1cd3e9a9c21e02fb62634366a2cc",
+    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "d3b6426c8c30ffc4662c806db7719ef14eafc23b0c4862219c13144fd5590de0",
     "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "55ee4ff97e253991e7bf663e61e17b24163bf5e93ddfb379b03c67346128fba7",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "293eff37049258c38b40ef2a6050b7879e9c61500ca3167efab2ae8499275c9d",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "9556647f9bf2ab3ce17090a5d68579fbb7dc95e49feabd95c20afa8d3f78b03a",
@@ -18,7 +18,7 @@
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
     "docs/03.詳細設計/01_EARS-AI/03_EARS-AI例・アンチパターン.md": "7564d43883f734d37f402226b1ab234c00e56fad81c3498ea28d8773cc64fed7",
-    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "780069b30f4c0983a1d6a135b38c64a2c58d83e3d71e973f7ab898ed9129a9cb"
+    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "f03c3c28de467829f5747713cbda74c6a8d4e6649cc40de43b5bdeff4ba55e75"
   },
   "groups": [
     {

@@ -2,7 +2,7 @@
 
 `uv run --with jsonschema==4.23.0 python -m unittest fixtures.conformance.test_runner`
 (リポジトリのルートから)、または`uv run -m unittest fixtures/conformance/test_runner.py`で実行できる。
-Coreを起動せず、正規化器、テキストの置換、終了コード4の出力判定、Gitのシム、`package_check`だけを検査する。
+Coreを起動せず、正規化器、テキストの置換、結果を作らない起動（終了コード4、`--help`、`--version`）の出力判定、Gitのシム、`package_check`だけを検査する。
 """
 import json
 from pathlib import Path
@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
 from conformance import package_check
-from conformance.runner import build_git_shim, diff_json, normalize_result, normalize_text, _check_cli_output
+from conformance.runner import FixtureError, build_git_shim, diff_json, normalize_result, normalize_text, _check_cli_output
 
 
 class NormalizeResultTests(unittest.TestCase):
@@ -147,6 +147,54 @@ class CliOutputTests(unittest.TestCase):
             fixture_root, manifest = self._fixture(tmp, cli_output, 4)
             differences = _check_cli_output(fixture_root, manifest, 4, b"{}", b"bitz: check: reason\n")
         self.assertTrue(any("標準出力" in d for d in differences))
+
+
+class NoResultSuccessOutputTests(unittest.TestCase):
+    """`--help`と`--version`（Core実行環境・CLI基盤契約 §5.1）: 結果を作らない終了コード0の起動の出力。"""
+
+    HELP = {"exitCode": 0, "stdoutNonEmptyText": True, "stderrLineCount": 0}
+    VERSION = {"exitCode": 0, "stdout": "bitz 1.0.0\n", "stderrLineCount": 0}
+
+    def _check(self, cli_output, exit_code, stdout, stderr, expected_exit=0):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_root = Path(tmp)
+            (fixture_root / "cli-output.json").write_text(json.dumps(cli_output), encoding="utf-8")
+            return _check_cli_output(fixture_root, {"expect": {"exitCode": expected_exit}}, exit_code, stdout, stderr)
+
+    def test_help_accepts_any_non_empty_utf8_text_ending_with_newline(self):
+        for stdout in (b"usage: bitz\n", "使い方\n\n操作\n".encode(), b"\n"):
+            with self.subTest(stdout=stdout):
+                self.assertEqual(self._check(self.HELP, 0, stdout, b""), [])
+
+    def test_help_rejects_empty_unterminated_or_non_utf8_stdout(self):
+        for stdout, word in ((b"", "空"), (b"usage: bitz", "改行"), (b"\xff\n", "UTF-8")):
+            with self.subTest(stdout=stdout):
+                differences = self._check(self.HELP, 0, stdout, b"")
+                self.assertTrue(any(word in d for d in differences), differences)
+
+    def test_help_rejects_stderr_output_and_other_exit_codes(self):
+        self.assertTrue(any("標準エラー出力" in d for d in self._check(self.HELP, 0, b"usage\n", b"bitz: note\n")))
+        self.assertTrue(any("exitCode" in d for d in self._check(self.HELP, 4, b"usage\n", b"")))
+
+    def test_version_requires_the_exact_line(self):
+        self.assertEqual(self._check(self.VERSION, 0, b"bitz 1.0.0\n", b""), [])
+        for stdout in (b"bitz 1.0.0", b"bitz 1.0.0\n\n", b"bitz  1.0.0\n", b"bitz 1.0.1\n", b"bitz version 1.0.0\n"):
+            with self.subTest(stdout=stdout):
+                self.assertTrue(any("標準出力" in d for d in self._check(self.VERSION, 0, stdout, b"")))
+        self.assertTrue(any("標準エラー出力" in d for d in self._check(self.VERSION, 0, b"bitz 1.0.0\n", b"\n")))
+
+    def test_malformed_cli_output_is_a_fixture_error(self):
+        malformed = [
+            {"exitCode": 0, "stderrLineCount": 0},
+            {"exitCode": 0, "stdout": "", "stdoutNonEmptyText": True, "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutNonEmptyText": False, "stderrLineCount": 0},
+            {"exitCode": 0, "stdout": "x\n", "stderrLineCount": 0, "stderrPrefix": "bitz: "},
+            {"exitCode": 4, "stdout": "", "stderrLineCount": 1, "stderrPrefix": "bitz: "},
+            {"exitCode": 0, "stdout": "x\n", "stderrLineCount": -1},
+        ]
+        for cli_output in malformed:
+            with self.subTest(cli_output=cli_output), self.assertRaises(FixtureError):
+                self._check(cli_output, 0, b"x\n", b"")
 
 
 class GitShimTests(unittest.TestCase):

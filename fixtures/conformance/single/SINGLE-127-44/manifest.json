@@ -1,0 +1,21 @@
+{
+  "fixtureId": "SINGLE-127-44",
+  "description": "設定のYAMLの構文が不正でも、bitz --versionは設定を読まずに終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "--version"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

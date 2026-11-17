@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-127-29",
+  "description": "オプションの値の位置にある--helpも--helpとして扱い、終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

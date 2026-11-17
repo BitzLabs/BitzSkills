@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-21",
+  "description": "最初の要素が--helpなら、後に続く未知のオプションを見ずに終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "--help",
+      "--no-such-option"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-41",
+  "description": "設定がなくGitのリポジトリでもないディレクトリで、doctor --helpは何も作らずに終了コード0で終わる",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

@@ -273,12 +273,14 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side
         stdout_bytes = (fixture_root / expect["textFile"]).read_bytes()
         if identifier == mutate:
             stdout_bytes = _mutate_text_bytes(stdout_bytes, identifier)
-    else:  # "none"
+    else:  # "none"（結果を作らない起動。終了コード4、`--help`、`--version`）
         cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
+        # `stdout`は完全一致で比べるバイト列、`stdoutNonEmptyText`は文言を契約にしない`--help`の出力。
+        stdout_bytes = (cli_output["stdout"] if "stdout" in cli_output else "偽Coreの使い方\n").encode("utf-8")
         line_count = cli_output["stderrLineCount"]
         if identifier == mutate:
             line_count += 1
-        line = f"{cli_output['stderrPrefix']}偽Coreによる拒否\n"
+        line = f"{cli_output.get('stderrPrefix', 'bitz: ')}偽Coreによる拒否\n"
         stderr_bytes = (line * line_count).encode("utf-8")
 
     if expect["reportFileCount"] > 0:
@@ -444,10 +446,8 @@ def dispatch(module, runner, argv):
         return 99
     _write_report_if_needed(entry)
     _write_extra_side_effect_if_needed(entry)
-    if entry["stdoutKind"] == "none":
-        sys.stderr.buffer.write(base64.b64decode(entry["stderrBase64"]))
-    else:
-        sys.stdout.buffer.write(base64.b64decode(entry["stdoutBase64"]))
+    sys.stdout.buffer.write(base64.b64decode(entry["stdoutBase64"]))
+    sys.stderr.buffer.write(base64.b64decode(entry["stderrBase64"]))
     return entry["exitCode"]
 '''
 

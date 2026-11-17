@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-43",
+  "description": "設定のYAMLの構文が不正でも、check --helpは設定を読まずに終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

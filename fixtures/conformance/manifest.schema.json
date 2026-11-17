@@ -280,16 +280,32 @@
             }
           },
           "else": {
-            "oneOf": [
-              {
-                "required": ["status"],
-                "not": { "required": ["outcome"] }
-              },
-              {
-                "required": ["outcome"],
-                "not": { "required": ["status"] }
+            "if": { "properties": { "stdout": { "const": "none" } }, "required": ["stdout"] },
+            "then": {
+              "description": "結果を作らない終了コード0の起動（`--help`と`--version`。Core実行環境・CLI基盤契約 §5.1）。出力の期待値は`cli-output.json`に置く。",
+              "properties": { "exitCode": { "const": 0 } },
+              "not": {
+                "anyOf": [
+                  { "required": ["status"] },
+                  { "required": ["outcome"] },
+                  { "required": ["resultFile"] },
+                  { "required": ["resultDigest"] },
+                  { "required": ["textFile"] }
+                ]
               }
-            ]
+            },
+            "else": {
+              "oneOf": [
+                {
+                  "required": ["status"],
+                  "not": { "required": ["outcome"] }
+                },
+                {
+                  "required": ["outcome"],
+                  "not": { "required": ["status"] }
+                }
+              ]
+            }
           }
         },
         {
