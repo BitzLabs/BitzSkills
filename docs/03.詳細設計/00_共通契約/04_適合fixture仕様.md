@@ -1009,15 +1009,15 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 上限の境界の判定は、`bitz.yaml`の`limits`で小さい上限を設定したfixtureで固定し（§3.4）、絶対上限の値は`limits`を宣言した設定に対する`doctor`の結果で固定する
 （[安全な入出力・互換性 §4.1](02_安全な入出力・互換性.md#41-上限の設定)、[ADR-076](../../02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)）。
 小さい値を設定したときの`summary`は、§4.1の規則と[Coreの出力文言のレビュー記録](../../../fixtures/conformance/Coreの出力文言のレビュー記録.md)の2026-11-17の承認済みの対応表による（単位を付けた表記は3桁区切りの整数に`バイト`を付けた表記へ置き換え、値を数として持つ文言は形を変えずに値を入れる）。
-引数列のバイト数は、終端のNULや区切りを含めない各文字列のUTF-8のバイト数とその総和で測る（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさに区切りの行を含むかは規範文が定めないので、どちらの数え方でも結論が変わらない値を使う。
+引数列のバイト数は、終端のNULや区切りを含めない各文字列のUTF-8のバイト数とその総和で測る（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさは、改行を正規化した後の本文で、区切りの行の間の各行を改行（1バイト）を含めて数え、区切りの行自身は含めない（[文書・フロントマター・状態仕様 §11](../02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#11-yaml制約)）ので、LFの文書とCRLFの文書で、ちょうどの境界を固定する。
 `SINGLE-180-11`・`181`・`182-*`・`183-01`・`02`・`11`は、既存のfixture（`079-01`・`042`・`055`・`SINGLE-001`・`092`）の設定へ`limits`の行を足した入力で、期待結果は基のfixtureから導く。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
 | `SINGLE-180-01` | `SINGLE-079-01`の基の文書（334バイトの`REQ-001`）と`limits.specBytes: 334` | check --full --base | passed／0 | ちょうどは遮断しない。検査文書1、規範文1 |
 | `SINGLE-180-02` | `SINGLE-180-01`の文書と`limits.specBytes: 333` | check --full --base | failed／1 | `SPEC-INPUT-LIMIT-001`の1件（summary「仕様文書のMarkdownが333バイト上限を超過しました」、発生元は`REQ-001`のパス）。検査文書0、規範文0 |
-| `SINGLE-180-03` | `SINGLE-180-01`の文書（フロントマターは区切りの行を除いて52バイト、含めて60バイト）と`limits.frontmatterBytes: 60` | check --full --base | passed／0 | どちらの数え方でも上限以内なので遮断しない |
-| `SINGLE-180-04` | `SINGLE-180-01`の文書と`limits.frontmatterBytes: 51` | check --full --base | failed／1 | どちらの数え方でも超過。`SPEC-INPUT-LIMIT-001`の1件（summary「フロントマターが51バイト上限を超過しました」）。検査文書0、規範文0 |
+| `SINGLE-180-03` | `SINGLE-180-01`の文書（フロントマターは、区切りの行の間の3行`id`・`title`・`status`を改行を含めて数えて52バイト）と`limits.frontmatterBytes: 52` | check --full --base | passed／0 | ちょうどは遮断しない。区切りの行は数えない。検査文書1、規範文1 |
+| `SINGLE-180-04` | `SINGLE-180-01`の文書と`limits.frontmatterBytes: 51` | check --full --base | failed／1 | 1バイトの超過。`SPEC-INPUT-LIMIT-001`の1件（summary「フロントマターが51バイト上限を超過しました」、発生元は`REQ-001`のパス）。検査文書0、規範文0 |
 | `SINGLE-180-05` | `SINGLE-080-01`と同じ形で規範文3件と`tests[0].covers` 3件、`limits.documentStatementCount: 3` | check --full --base | passed／0 | ちょうどは遮断しない。検査文書1、規範文3 |
 | `SINGLE-180-06` | `SINGLE-180-05`から規範文だけを4件にする | check --full --base | failed／1 | `SPEC-INPUT-LIMIT-001`だけ（summary「1文書の規範文数が3上限を超過しました」）。検査文書0、規範文0 |
 | `SINGLE-180-07` | `SINGLE-180-05`と同じ文書、`limits.documentArrayItemCount: 3` | check --full --base | passed／0 | ちょうどは遮断しない。検査文書1、規範文3 |
@@ -1025,6 +1025,8 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-180-09` | 仕様文書2件（`REQ-001`、`REQ-002`）と`limits.specFileCount: 2` | check --full --base | passed／0 | ちょうどは遮断しない。検査文書2、規範文2 |
 | `SINGLE-180-10` | `SINGLE-180-09`の仕様文書2件と`limits.specFileCount: 1` | check --full --base | failed／1 | `SPEC-INPUT-LIMIT-001`の1件だけ（summary「仕様文書のファイルが1件上限を超過しました」、発生元は`{file, root, .spec}`で`key`なし。§4.1）。`stop-operation`なので検査文書0、規範文0 |
 | `SINGLE-180-11` | `SINGLE-079-01`の入力（1 MiBを超える文書1件）の設定に`limits.specBytes: 1048576`（絶対上限と同じ値を明示） | check --full --base | failed／1 | `SINGLE-079-01`と同じ結果。summaryは「仕様文書のMarkdownが1 MiB上限を超過しました」のまま（§4.1「絶対上限を使うときの診断の文言は変えない」） |
+| `SINGLE-180-12` | `SINGLE-180-01`の文書のすべての改行をCRLFにした文書（原文のフロントマターは区切りの行の間で55バイト、改行を正規化すると52バイト）と`limits.frontmatterBytes: 52` | check --full --base | passed／0 | 改行を正規化した後に数え、CRLFも1バイトの改行とするので、ちょうどは遮断しない。検査文書1、規範文1 |
+| `SINGLE-180-13` | `SINGLE-180-12`の文書と`limits.frontmatterBytes: 51` | check --full --base | failed／1 | `SINGLE-180-04`と同じ結果（summary「フロントマターが51バイト上限を超過しました」）。検査文書0、規範文0 |
 | `SINGLE-181` | `SINGLE-042`の設定に、どの上限も超えない`limits`（ファイル単位の5キーを基の入力の最大値に合わせ、引数列の3キーを1にする） | context REQ-001 --purpose verify | passed／0 | `SINGLE-042`と同じ結果で、`contextDigest`も同じ（`limits`はハッシュ値の材料に含めない。コンテキストのハッシュ値の正規化仕様 §3、§4.1） |
 | `SINGLE-182-01` | `SINGLE-055`の設定に`limits.expandedArgvCount: 3`（展開した後の要素数ちょうど） | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果 |
 | `SINGLE-182-02` | `SINGLE-055`の設定に`limits.expandedArgvElementBytes: 21`（最長の要素`tests/test_session.py`は21バイト。ちょうど） | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果 |
@@ -1389,6 +1391,8 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `MULTI-068-07` | `MULTI-001`のメンバー`web`の設定に`limits: 1024`（マッピングでない） | check all | failed／1 | `MULTI-068-06`と同じ結果。メンバーの設定の`limits`の値は検査しないので`SPEC-CONFIG-SCHEMA-001`を返さない（複合ワークスペース仕様 §10） |
 | `MULTI-068-08` | `MULTI-001`のメンバー`web`の設定に`limits.specBytes: 0`（範囲の外） | check all | failed／1 | `MULTI-068-06`と同じ結果（同上） |
 | `MULTI-068-09` | `MULTI-007-01`（メンバーの入れ子）のルートの設定に`limits`の`specBytes: 4096`、`excludeCount: 5` | doctor --all-workspaces | failed／1 | `MULTI-007-01`の結果の最上位に`limits`を加える。全体事前検査がほかの原因で非成功でも、ルートの設定を読めてスキーマに適合し`limits`を宣言していれば返す（`doctor` §7） |
+| `MULTI-068-10` | `MULTI-037-20`の入力（ルート`platform`、メンバー`web`、`api`、ルートのREQ-001）で、基準版のルートの設定は`exclude: [vendor/a, vendor/b]`（`limits`なし）、Gitで追跡するカタログ未登録の`vendor/a/.spec/bitz.yaml`を置く（`vendor/b`は実在しない）。作業ツリーでルートの設定を`exclude: [vendor/a]`と`limits.excludeCount: 1`にする | check all | passed／0 | `excludeCount`は現在版のルートの設定の除外にだけ当て、基準版の設定の除外の件数（2件）は絶対上限（100件）で検査する（安全な入出力・互換性 §4.1）。各スナップショットは自身の除外で`vendor/a`の設定を列挙しない（複合ワークスペース仕様 §2.1・§8）。診断は0件（`SPEC-MULTI-CONFIG-001`も`SPEC-MULTI-UNREGISTERED-001`もない）。結果は`MULTI-037-20`と同じで、`revision.dirty`は`true` |
+| `MULTI-068-11` | `MULTI-068-10`と同じ入力（`.`で実行） | check --full --base HEAD | passed／0 | 単独の`check`も、基準版の除外の件数を理由に止まらない。`workspace`は`{platform, .}`、`scope: full`、検査文書1、規範文1、`revision.dirty`は`true`。診断は0件 |
 | `MULTI-069-01` | ルート`platform`、メンバー`m001`、`m002`（`multi_generator`の小さい値）。仕様文書4件と`limits.specFileCount: 4` | check all | passed／0 | ちょうどは遮断しない（`MULTI-020-04`の小さい上限版） |
 | `MULTI-069-02` | `MULTI-069-01`の形で仕様文書5件、`limits.specFileCount: 4` | check all | blocked／2 | `SPEC-MULTI-LIMIT-001`の1件（summary「仕様文書のファイル数が上限4を超過しました」、`evidence`は`dimension=specFileCount`、`limit=4`、`observedAtLeast=5`）。`workspaces`は空 |
 | `MULTI-069-03` | すべての設定と仕様文書の合計4,096バイト、`limits.inputBytes: 4096` | check all | passed／0 | ちょうどは遮断しない。`limits`の行も設定のバイト数に数える |
@@ -1413,6 +1417,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `MULTI-069-22` | ルート、`m001`、`m002`の文書が規範文1件、2件、1件（`m001`の2件は別々のコマンドのテスト対応）。ルートの設定に`limits.documentStatementCount: 2` | check all | passed／0 | ルートの設定のファイル単位の上限をメンバーの文書へ適用し、ちょうどは遮断しない（§4.1） |
 | `MULTI-069-23` | `MULTI-069-22`の入力で`limits.documentStatementCount: 1` | check all | failed／1 | `m001`の`diagnostics`に`SPEC-INPUT-LIMIT-001`の1件（summary「1文書の規範文数が1上限を超過しました」、`source`は`{file, m001, .spec/technical/TECH-000002.md}`）。`m001`は`failed`で検査0／0、ほかのワークスペースは`passed` |
 | `MULTI-069-24` | `MULTI-069-22`の形で、`m001`の2件のテスト対応が同じコマンド`c00001`を使う（展開した後の引数列は3要素、ほかは2要素）。ルートの設定に`limits.expandedArgvCount: 2` | verify all | blocked／2 | 展開した後の引数列の上限もルートの設定の値をメンバーのテスト割当てへ適用する（§4.1）。`m001`の`diagnostics`に`SPEC-VERIFY-BLOCKED-001`の1件（summary「{tests}展開後のargvの要素数が上限2を超えます」、`source.key`は`verify.commands.c00001.argv`）、`m001`の検証対象は`blocked`で`bindingRefs: []`、`commands`は空。ルートと`m002`は実行して`passed`（`MULTI-051-03`と同じ形） |
+| `MULTI-069-25` | `MULTI-069-20`と同じ基準版と変更で、変更した2つのファイルをインデックスへステージする（インデックスと作業ツリーは規範文5件、基準版のコミットは6件） | check --all-workspaces --base HEAD | blocked／2 | 基準版のスナップショットの上限は、作業ツリーとインデックスではなく基準版のコミットの内容で数える（安全な入出力・互換性 §4.1）。結果は`MULTI-069-20`と同じ（`statementCount`、`limit=5`、`observedAtLeast=6`、`revision.dirty`は`true`） |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
