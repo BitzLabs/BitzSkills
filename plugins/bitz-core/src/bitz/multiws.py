@@ -769,9 +769,10 @@ def _validate_catalog(
                 ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
             }
             # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
-            # 除外の件数の上限は、現在版のルートの設定から決めた値を基準版にも当てる（安全な入出力・互換性 §4.1）。
+            # `limits.excludeCount`は現在版のルートの設定の除外にだけ当て、基準版の設定の除外の件数は、現在版と基準版の
+            # どちらの`limits`にもよらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
             rev_exclude = (
-                valid_exclude_parts(rev_config, limits_mod.from_config(root_config).excludeCount)
+                valid_exclude_parts(rev_config, limits_mod.ABSOLUTE.excludeCount)
                 if rev_config is not None else None
             ) or []
             rev_known = {
@@ -805,7 +806,7 @@ def _validate_catalog(
     if limit_diag is None and limit_base_rev is not None and git.available and git.executable:
         # `check --base`は基準版のスナップショットにも、現在版のルートの設定から決めた同じ上限を個別に適用する（§10）。
         limit_diag = _check_base_snapshot_limits(
-            git, cwd, env, limit_base_rev, root, root_id, root_config, members, limits,
+            git, cwd, env, limit_base_rev, root, root_id, root_config, limits,
             skip_dimensions=skip_limit_dimensions, git_top=git_top,
         )
     if limit_diag is not None:
@@ -1022,17 +1023,30 @@ def _check_resource_limits(
     return counter.finish()
 
 
-def _base_snapshot_is_subset(
-    executable: str, env: dict[str, str], base_rev: str, prefixes: list[str], toplevel: str
-) -> bool:
-    """基準版の``prefixes``（リポジトリのルートからの相対の`.spec`ディレクトリ）の配下のファイルが、すべて同じ内容で作業ツリーにあるか。
+def _git_unreadable_diag() -> Diagnostic:
+    """基準版の内容をGitから読めないときの診断。Gitを利用できない場合と同じ`SPEC-MULTI-GIT-001`（`blocked`）とする（安全な入出力・互換性 §4.1）。"""
 
-    真なら、基準版のスナップショットの各次元の数は現在版の数を超えないので、基準版の数え直しを省ける（現在版で上限以内なら基準版も以内）。
-    追加（未追跡のファイルを含む）は基準版の数を増やさないので許し、変更、削除、リネーム、種別の変更が1件でもあれば偽にする。
-    判定できなければ偽（数え直す）。
-    """
+    return _diag(
+        "SPEC-MULTI-GIT-001", "blocked", messages.MULTI_GIT_BOUNDARY_UNKNOWN,
+        {"kind": "environment", "component": "git"},
+    )
 
-    return gitutil.diff_non_additions(executable, toplevel, env, base_rev, prefixes) == []
+
+def _list_base_blobs(
+    executable: str, toplevel: str, env: dict[str, str], base_rev: str, prefix: str
+) -> dict[str, gitutil.TreeBlob]:
+    blobs = gitutil.list_tree_blobs(executable, toplevel, env, base_rev, prefix)
+    if blobs is None:
+        raise gitutil.GitReadError(f"git ls-tree {prefix}")
+    return blobs
+
+
+def _parse_base_root_config(raw: bytes) -> dict | None:
+    try:
+        value = parse_yaml_subset(raw.decode("utf-8"))
+    except (UnicodeDecodeError, YamlSyntaxError, YamlForbiddenError):
+        return None
+    return value if isinstance(value, dict) else None
 
 
 def _check_base_snapshot_limits(
@@ -1043,7 +1057,6 @@ def _check_base_snapshot_limits(
     root: str,
     root_id: str,
     root_config: dict,
-    members: list[MemberRecord],
     limits: limits_mod.Limits,
     *,
     skip_dimensions: frozenset[str] = frozenset(),
@@ -1054,75 +1067,81 @@ def _check_base_snapshot_limits(
     上限は現在版のルートの設定から決めた``limits``とし、基準版のルートの設定の`limits`は使わない。基準版のスナップショットの
     ワークスペースは、基準版のルートの設定のカタログ（ルートと`multiWorkspace.members`）とする。設定と仕様文書は、Gitの基準版の
     ツリーオブジェクトの通常のファイル（シンボリックリンクとサブモジュールを除く）を、現在版と同じ順と同じ数え方で数える。
+
+    基準版は、作業ツリーとインデックスの状態によらず、常に基準版のコミットの内容で数える（作業ツリーとの差分から基準版の数を
+    推し量らない。`git diff`はskip-worktreeやassume-unchangedのファイルの削除を報告しないため）。基準版の内容を読めない場合
+    （`ls-tree`や`cat-file`の失敗、オブジェクトの欠落、タイムアウト）は、数えずに通過させず`SPEC-MULTI-GIT-001`を返す。
     """
 
     executable = git.executable
     assert executable is not None
     toplevel = git_top or gitutil.show_toplevel(executable, cwd, env)
     if toplevel is None:
-        return None
+        return _git_unreadable_diag()
     offset = os.path.relpath(os.path.realpath(root), os.path.realpath(toplevel)).replace(os.sep, "/")
 
     def _repo_rel(ws_path: str) -> str:
         parts = [p for p in (offset, ws_path) if p not in (".", "")]
         return "/".join(parts)
 
-    base_config = _read_base_root_config(git, cwd, env, base_rev, root, toplevel)
-    base_map = _workspace_map(base_config) if base_config is not None else {}
-    if not base_map:
-        # 基準版が`multiWorkspace`を宣言しない（単一ワークスペースから複合ワークスペース化する前）、または読めないときは、
-        # 基準版のスナップショットはルートの`.spec`だけとする。
-        base_map = {root_id: "."}
-    ws_paths = list(dict.fromkeys(base_map.values()))
-    # メンバー数（`multiWorkspace.maxMembers`で決める次元）も、現在版のルートの設定の値で判定する。
-    base_member_count = len(ws_paths) - (1 if "." in ws_paths else 0)
-    member_limit = _member_limit(root_config)
-    if base_member_count > member_limit:
-        return _limit_diag(root_id, "memberCount", member_limit, base_member_count)
+    def _spec_prefix(ws_path: str) -> str:
+        return _repo_rel(f"{ws_path}/.spec" if ws_path != "." else ".spec")
 
-    spec_prefixes = [_repo_rel(f"{p}/.spec" if p != "." else ".spec") for p in ws_paths]
-    current_paths = {"."} | {rec.path for rec in members}
-    if set(ws_paths) <= current_paths and _base_snapshot_is_subset(executable, env, base_rev, spec_prefixes, toplevel):
-        return None
+    try:
+        with gitutil.BlobReader(executable, toplevel, env) as reader:
+            root_prefix = _spec_prefix(".")
+            root_blobs = _list_base_blobs(executable, toplevel, env, base_rev, root_prefix)
+            root_cfg = root_blobs.get(f"{root_prefix}/bitz.yaml")
+            base_config = _parse_base_root_config(reader.read(root_cfg.oid)) if root_cfg is not None else None
+            base_map = _workspace_map(base_config) if base_config is not None else {}
+            if not base_map:
+                # 基準版が`multiWorkspace`を宣言しない（単一ワークスペースから複合ワークスペース化する前）、または設定がない、
+                # 解釈できないときは、基準版のスナップショットはルートの`.spec`だけとする。
+                base_map = {root_id: "."}
+            ws_paths = list(dict.fromkeys(base_map.values()))
+            # メンバー数（`multiWorkspace.maxMembers`で決める次元）も、現在版のルートの設定の値で判定する。
+            base_member_count = len(ws_paths) - (1 if "." in ws_paths else 0)
+            member_limit = _member_limit(root_config)
+            if base_member_count > member_limit:
+                return _limit_diag(root_id, "memberCount", member_limit, base_member_count)
 
-    counter = _SnapshotCounter(root_id, limits, skip_dimensions)
-    with gitutil.BlobReader(executable, toplevel, env) as reader:
-        for ws_path, spec_prefix in zip(ws_paths, spec_prefixes):
-            blobs = gitutil.list_tree_blobs(executable, toplevel, env, base_rev, spec_prefix)
-            if blobs is None:
-                continue
-            cfg = blobs.get(f"{spec_prefix}/bitz.yaml")
-            cfg_value: object = None
-            if cfg is not None:
-                raw_cfg = reader.read(cfg.oid)
-                if raw_cfg is not None:
-                    try:
-                        cfg_value = parse_yaml_subset(raw_cfg.decode("utf-8"))
-                    except (UnicodeDecodeError, YamlSyntaxError, YamlForbiddenError):
-                        cfg_value = None
-            diag = counter.add_config(cfg.size if cfg is not None else None, cfg_value)
-            if diag is not None:
-                return diag
-
-            spec_files = [
-                (rel, blob) for rel, blob in blobs.items()
-                if (rel_in := rel[len(spec_prefix) + 1 :]).endswith(".md")
-                and rel_in.split("/", 1)[0] in _SPEC_KIND_DIRS
-                and "/" in rel_in
-            ]
-            spec_files.sort(key=lambda item: _walk_order_key(item[0][len(spec_prefix) + 1 :]))
-            for _rel, blob in spec_files:
-                diag = counter.add_spec_file(blob.size)
-                if diag is not None:
-                    return diag
-                raw = reader.read(blob.oid)
-                if raw is None:
+            counter = _SnapshotCounter(root_id, limits, skip_dimensions)
+            for ws_path in ws_paths:
+                if ws_path != "." and not _path_lexically_valid(ws_path):
+                    # 字句が不正なメンバーのパス（`..`や絶対パスなど）は、基準版のツリーの中の位置を指さないので、数える内容がない。
                     continue
-                diag = counter.add_spec_text(raw)
-                del raw
+                spec_prefix = _spec_prefix(ws_path)
+                blobs = (
+                    root_blobs if ws_path == "."
+                    else _list_base_blobs(executable, toplevel, env, base_rev, spec_prefix)
+                )
+                cfg = blobs.get(f"{spec_prefix}/bitz.yaml")
+                cfg_value: object = None
+                if cfg is not None:
+                    cfg_value = base_config if ws_path == "." else _parse_base_root_config(reader.read(cfg.oid))
+                diag = counter.add_config(cfg.size if cfg is not None else None, cfg_value)
                 if diag is not None:
                     return diag
-    return counter.finish()
+
+                spec_files = [
+                    (rel, blob) for rel, blob in blobs.items()
+                    if (rel_in := rel[len(spec_prefix) + 1 :]).endswith(".md")
+                    and rel_in.split("/", 1)[0] in _SPEC_KIND_DIRS
+                    and "/" in rel_in
+                ]
+                spec_files.sort(key=lambda item: _walk_order_key(item[0][len(spec_prefix) + 1 :]))
+                for _rel, blob in spec_files:
+                    diag = counter.add_spec_file(blob.size)
+                    if diag is not None:
+                        return diag
+                    raw = reader.read(blob.oid)
+                    diag = counter.add_spec_text(raw)
+                    del raw
+                    if diag is not None:
+                        return diag
+            return counter.finish()
+    except gitutil.GitReadError:
+        return _git_unreadable_diag()
 
 
 def _walk_order_key(rel_in_spec: str) -> tuple:
@@ -1259,12 +1278,15 @@ def _read_base_root_config(
 def base_exclude_parts(
     git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str
 ) -> list[tuple[str, ...]]:
-    """``base_rev``のスナップショット自身のルートの設定の除外を返す。読めない、または妥当でない除外は何も除外しない（空）。"""
+    """``base_rev``のスナップショット自身のルートの設定の除外を返す。読めない、または妥当でない除外は何も除外しない（空）。
+
+    除外の件数は、基準版の設定の`limits`によらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
+    """
 
     value = _read_base_root_config(git, cwd, env, base_rev, repo_root)
     if value is None:
         return []
-    return valid_exclude_parts(value) or []
+    return valid_exclude_parts(value, limits_mod.ABSOLUTE.excludeCount) or []
 
 
 def base_workspace_map(

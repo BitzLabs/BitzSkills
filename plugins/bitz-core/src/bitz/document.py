@@ -219,6 +219,20 @@ def _extract_frontmatter(text: str) -> tuple[str | None, str | None, int | None]
     return raw, body, closing_line
 
 
+def _frontmatter_bytes(fm_raw: str, closing_line: int | None) -> int:
+    """フロントマターの大きさ（文書・フロントマター・状態仕様 §11）。
+
+    改行を正規化した後の本文で、開始の区切りの行と終了の区切りの行の間にある各行を、その行の改行（1バイト）を含めて数えた
+    UTF-8のバイト数の合計とする。区切りの行自身は含めない。間に行がなければ0バイトとする。``fm_raw``と``closing_line``は
+    :func:`_extract_frontmatter`の戻り値で、``fm_raw``は間の行を改行でつないだもの（最後の行の改行を含まない）、
+    ``closing_line``は終了の区切りの行の0始まりの行番号（開始の区切りの行は0行目なので、間の行の数は``closing_line - 1``）。
+    """
+
+    if closing_line is None or closing_line <= 1:
+        return 0
+    return len(fm_raw.encode("utf-8")) + 1
+
+
 _TOP_KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):")
 
 
@@ -373,9 +387,7 @@ def _process_document_content(
         ]
         return entry
 
-    # フロントマターの大きさは、区切りの行（`---`）の間の行のバイト数とし、最後の行の改行も含める
-    # （``fm_raw``は閉じる区切りの直前の改行を含まないので1を足す。改行は正規化済みの1バイト）。
-    if len(fm_raw.encode("utf-8")) + 1 > limits.frontmatterBytes:
+    if _frontmatter_bytes(fm_raw, closing_idx) > limits.frontmatterBytes:
         entry.hard = [
             _mk(
                 "SPEC-INPUT-LIMIT-001", "error", "failed",
