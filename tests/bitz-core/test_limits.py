@@ -11,7 +11,7 @@
 1. 設定の検査（マッピングでない、整数でない、範囲の外、未知のキー、絶対上限ちょうど、空のマッピング）
 2. 実際に使う上限の値の決定（省略したキー、適用範囲の選択、`doctor`の結果の値と順）
 3. 文言の切替え（絶対上限なら今の文言、小さい値なら承認済みの文言）
-4. ファイル単位の上限の適用（フロントマターの大きさの数え方を含む）と、仕様文書のファイル数の超過で`check`を止めること
+4. ファイル単位の上限の適用（フロントマターの大きさの数え方を含む）と、仕様文書のファイル数の超過で`check`、`context`、`verify`を止めること
 5. 複合ワークスペースの適用範囲（ルートの設定をメンバーの文書へ、メンバーの設定の`limits`、単一ワークスペースは複合の次元を使わない、
    基準版のスナップショット、除外の件数）
 6. 基準版のスナップショットを作業ツリーとインデックスによらず基準版のコミットの内容で数えること、基準版を読めなければ`SPEC-MULTI-GIT-001`にすること、
@@ -40,6 +40,7 @@ from bitz import gitutil
 from bitz import limits as limits_mod
 from bitz import messages
 from bitz import multiws
+from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 from bitz.config import load_config
 
@@ -337,6 +338,94 @@ class SingleWorkspaceTests(unittest.TestCase):
                         "source": {"kind": "file", "workspaceId": "root", "path": ".spec"},
                     }],
                 )
+
+    SPEC_COUNT_DIAG = {
+        "code": "SPEC-INPUT-LIMIT-001", "severity": "error", "resultStatus": "failed",
+        "summary": "仕様文書のファイルが1件上限を超過しました",
+        "source": {"kind": "file", "workspaceId": "root", "path": ".spec"},
+    }
+
+    def build_over_count(self, extra: str = "") -> None:
+        # `verify`のコマンドは起動すると`ran.marker`を作る。停止したらコマンドを1件も起動しないことを実ファイルで確かめる。
+        _write(
+            self.root, ".spec/bitz.yaml",
+            CONFIG + "verify:\n  commands:\n    default:\n"
+            '      argv: ["/bin/sh", "-c", "touch ran.marker", "{tests}"]\n      cwd: .\n'
+            "limits:\n  specFileCount: 1\n" + extra,
+        )
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, ".spec/requirements/REQ-002.md", _req("REQ-002"))
+        _commit(self.root)
+
+    def test_spec_file_count_stops_context_with_only_that_diagnostic(self):
+        # `context`も起点の解決へ進まず（`CTX-ROOT-MISSING-001`を返さず）、同一性を構成した後の停止の形で返す。
+        self.build_over_count()
+        revision = {"commit": _git(self.root, "rev-parse", "HEAD"), "dirty": False}
+        for roots in (["REQ-001"], ["REQ-002", "REQ-001"], ["REQ-999"]):
+            with self.subTest(roots=roots):
+                parsed = parse_argv(["context", *roots, "--format", "json"])
+                result, code = context_mod.run(parsed, str(self.root), self.env)
+                self.assertEqual((result["status"], code), ("failed", 1))
+                self.assertEqual(result["diagnostics"], [self.SPEC_COUNT_DIAG])
+                self.assertEqual(result["workspace"], {"id": "root", "path": "."})
+                self.assertEqual(result["roots"], sorted(roots))
+                self.assertIsNone(result["contextDigest"])
+                self.assertEqual(result["revision"], revision)
+                self.assertEqual(
+                    result["resolution"], {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 0}
+                )
+                self.assertEqual((result["documents"], result["constraintLedger"]), ([], {"statements": []}))
+
+    def test_spec_file_count_stops_verify_without_running_commands(self):
+        self.build_over_count()
+        revision = {"commit": _git(self.root, "rev-parse", "HEAD"), "dirty": False}
+        for argv, scope in ((["REQ-001"], "selected"), (["REQ-999"], "selected"), ([], "all")):
+            with self.subTest(argv=argv):
+                parsed = parse_argv(["verify", *argv, "--format", "json"])
+                result, code = verify_mod.run(parsed, str(self.root), self.env)
+                self.assertEqual((result["status"], code), ("failed", 1))
+                result.pop("durationMs")
+                self.assertEqual(
+                    result,
+                    {
+                        "schemaVersion": "1.0", "operation": "verify", "status": "failed", "scope": scope,
+                        "workspace": {"id": "root", "path": "."}, "targetResults": [], "revision": revision,
+                        "commands": [], "diagnostics": [self.SPEC_COUNT_DIAG],
+                    },
+                )
+                self.assertFalse((self.root / "ran.marker").exists())
+
+    def test_spec_file_count_stop_keeps_config_warnings(self):
+        # 設定の警告（`continue`）は、停止した結果にも最上位の診断として残す（設定の停止の経路と同じ）。
+        self.build_over_count(extra="  futureLimit: 3\n")
+        warning = {
+            "code": "SPEC-CONFIG-UNKNOWN-001", "severity": "warning", "resultStatus": "passed_with_warnings",
+            "summary": "未知の設定キーです",
+            "source": {"kind": "file", "workspaceId": "root", "path": ".spec/bitz.yaml", "key": "limits.futureLimit"},
+        }
+        for op, mod in (("context", context_mod), ("verify", verify_mod), ("check", check_mod)):
+            with self.subTest(op=op):
+                argv = [op, "--format", "json"] if op == "check" else [op, "REQ-001", "--format", "json"]
+                result, code = mod.run(parse_argv(argv), str(self.root), self.env)
+                self.assertEqual((result["status"], code), ("failed", 1))
+                self.assertEqual(sorted(json.dumps(d, sort_keys=True) for d in result["diagnostics"]),
+                                 sorted(json.dumps(d, sort_keys=True) for d in (self.SPEC_COUNT_DIAG, warning)))
+
+    def test_spec_file_count_boundary_does_not_stop_context_and_verify(self):
+        _write(
+            self.root, ".spec/bitz.yaml",
+            CONFIG + 'verify:\n  commands:\n    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'
+            "limits:\n  specFileCount: 2\n",
+        )
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, ".spec/requirements/REQ-002.md", _req("REQ-002"))
+        _commit(self.root)
+        result, code = context_mod.run(parse_argv(["context", "REQ-001", "--format", "json"]), str(self.root), self.env)
+        self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
+        self.assertIsNotNone(result["contextDigest"])
+        result, _code = verify_mod.run(parse_argv(["verify", "REQ-001", "--format", "json"]), str(self.root), self.env)
+        self.assertNotIn("SPEC-INPUT-LIMIT-001", [d["code"] for d in result["diagnostics"]])
+        self.assertEqual([t["target"] for t in result["targetResults"]], ["REQ-001"])
 
     def test_multi_workspace_dimensions_are_not_used(self):
         dims = "".join(f"  {k}: 1\n" for k in (
