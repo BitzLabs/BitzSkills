@@ -153,13 +153,15 @@ earsAi: "1.0"
 ワークスペースの要素へ複製しない。`--format text`の出力は変えない。
 
 ```json
-"limits": {
-  "specBytes": 1048576, "frontmatterBytes": 32768, "specFileCount": 5,
-  "documentStatementCount": 1000, "documentArrayItemCount": 1000,
-  "inputBytes": 268435456, "statementCount": 100000, "relationEdgeCount": 1000000,
-  "traceEntryCount": 1000000, "commandDefinitionCount": 10000, "verifyBindingCount": 10000,
-  "excludeCount": 100, "expandedArgvCount": 10000, "expandedArgvElementBytes": 32768,
-  "expandedArgvBytes": 1048576
+{
+  "limits": {
+    "specBytes": 1048576, "frontmatterBytes": 32768, "specFileCount": 5,
+    "documentStatementCount": 1000, "documentArrayItemCount": 1000,
+    "inputBytes": 268435456, "statementCount": 100000, "relationEdgeCount": 1000000,
+    "traceEntryCount": 1000000, "commandDefinitionCount": 10000, "verifyBindingCount": 10000,
+    "excludeCount": 100, "expandedArgvCount": 10000, "expandedArgvElementBytes": 32768,
+    "expandedArgvBytes": 1048576
+  }
 }
 ```
 
