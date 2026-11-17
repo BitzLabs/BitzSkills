@@ -2429,3 +2429,16 @@ commit `8b80dd674ae4640b1a2f68b471cd7fc82eb94511`に対して`uv run fixtures/ce
 | 監査 | 2つのクローンでReport SHA-256が両方`c93a3367610ea09d095ac41c41ebdeb352051c58bac42d90908c96d622ec62cd`。Stepの件数は60／150／122／158／342（重複を除いて826件）、手動の一覧は28件、matrixは854件 |
 | 規模の検証 | 実行しない（ADR-076 Decision 7） |
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-11-17: 仕様文書のファイル数の超過でcontextとverifyも止まるfixtureを追加した後のGate Aの再認定
+
+単一ワークスペースで仕様文書のファイル数が上限を超えると、診断レジストリの`INPUT-LIMIT-SPEC-COUNT`（`stop-operation`）で操作を止める。
+`check`だけを固定していた（`SINGLE-180-10`）ので、`context`（`SINGLE-180-14`）と`verify`（`SINGLE-180-15`）の停止と、`verify`のちょうどの境界（`SINGLE-180-16`）を追加した。
+規範は変えていない。止まった結果の形は、同一性を構成した後に`stop-operation`で止まる既存のfixture（`SINGLE-166-02`、`MULTI-040-08`、`MULTI-036-07`、`SINGLE-165-01`、`SINGLE-126-01`）に倣う。
+
+commit `987ee944a7cd6500a8a53a39ec34bdf980eb378e`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`f438b40fc9d1cff2c14262249c4d42599f5ca9a69584e63af623528012a9de49`。Stepの件数は60／150／123／160／342（重複を除いて829件）、手動の一覧は28件、matrixは857件 |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
