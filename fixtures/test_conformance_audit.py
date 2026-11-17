@@ -15524,6 +15524,18 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-180-11", "expected/check.json",
              lambda v: v["diagnostics"][0].update(summary="仕様文書のMarkdownが1,048,576バイト上限を超過しました")),
             ("SINGLE-183-12", "expected/check.json", lambda v: v.update(status="passed_with_warnings")),
+            # 仕様文書のファイル数の超過は`context`と`verify`も止める。存在する起点を不在にしない、発生元を文書にしない、解決を始めない。
+            ("SINGLE-180-14", "expected/context.json", lambda v: v["diagnostics"].append(
+                {"code": "CTX-ROOT-MISSING-001", "severity": "error", "resultStatus": "failed",
+                 "summary": "起点REQ-001が存在しません", "source": {"kind": "invocation", "argument": "REQ-001"}})),
+            ("SINGLE-180-14", "expected/context.json", lambda v: v["resolution"].update(documentCount=1)),
+            ("SINGLE-180-14", "expected/context.json", lambda v: v["workspace"].update(id=None)),
+            ("SINGLE-180-15", "expected/verify.json",
+             lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("SINGLE-180-15", "expected/verify.json", lambda v: v["targetResults"].append(
+                {"id": "REQ-001", "status": "failed", "contextDigest": None, "bindingRefs": []})),
+            ("SINGLE-180-15", "manifest.json", lambda v: v["invocation"].update(argv=["verify", "--format", "json"])),
+            ("SINGLE-180-16", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -15539,7 +15551,9 @@ class AuditTests(unittest.TestCase):
                                      ("SINGLE-182-04", b"expandedArgvBytes: 48", b"expandedArgvBytes: 47"),
                                      ("SINGLE-182-02", b"expandedArgvElementBytes: 21", b"expandedArgvElementBytes: 22"),
                                      ("SINGLE-180-03", b"frontmatterBytes: 52", b"frontmatterBytes: 60"),
-                                     ("SINGLE-180-12", b"frontmatterBytes: 52", b"frontmatterBytes: 55")):
+                                     ("SINGLE-180-12", b"frontmatterBytes: 52", b"frontmatterBytes: 55"),
+                                     ("SINGLE-180-14", b"specFileCount: 1", b"specFileCount: 2"),
+                                     ("SINGLE-180-16", b"specFileCount: 3", b"specFileCount: 2")):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 config = root / "single" / identifier / "repo/.spec/bitz.yaml"

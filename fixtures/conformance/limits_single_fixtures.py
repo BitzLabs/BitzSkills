@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 上限の値を`limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。
 この群は、単一ワークスペースの`doctor`の`limits`の出力、`limits`の設定の検査、入力の上限（安全な入出力・互換性 §4.1）、
-`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、33件で固定する。
+`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、36件で固定する。
 
 | fixture | 操作 | 入力 | 期待 |
 |---|---|---|---|
@@ -19,6 +19,9 @@
 | `SINGLE-180-07`、`08` | 同上 | `documentArrayItemCount: 3`で`covers`が3件／4件 | `passed`／`failed`（`source.key`は`tests[0].covers`） |
 | `SINGLE-180-11` | 同上 | `SINGLE-079-01`の設定に`limits.specBytes: 1048576`（絶対上限と同じ値を明示） | `SINGLE-079-01`と同じ結果（文言は`1 MiB上限`のまま） |
 | `SINGLE-180-09`、`10` | 同上 | `specFileCount`が2／1で仕様文書が2件 | `passed`／`failed`（`SPEC-INPUT-LIMIT-001`、発生元は`.spec`） |
+| `SINGLE-180-14` | `context REQ-001` | `SINGLE-180-10`と同じ入力 | `failed`／1。`SPEC-INPUT-LIMIT-001`の1件だけ。操作を止め、`contextDigest: null`、空の`documents` |
+| `SINGLE-180-15` | `verify REQ-001` | `SINGLE-180-10`と同じ入力 | `failed`／1。`SPEC-INPUT-LIMIT-001`の1件だけ。操作を止め、`targetResults`と`commands`は空 |
+| `SINGLE-180-16` | `verify REQ-001` | `SINGLE-055`の設定に`specFileCount: 3`（仕様文書の数ちょうど） | `SINGLE-055`と同じ結果 |
 | `SINGLE-181` | `context REQ-001 --purpose verify` | `SINGLE-042`の設定に、どの上限も超えない`limits` | `SINGLE-042`と同じ結果。`contextDigest`も同じ |
 | `SINGLE-182-01` | `verify REQ-001` | `SINGLE-055`の設定に`expandedArgvCount: 3`（展開した後の要素数ちょうど） | `SINGLE-055`と同じ結果 |
 | `SINGLE-182-02`、`03` | 同上 | `expandedArgvElementBytes`が最長の要素のバイト数ちょうど／1小さい | `passed`／`blocked`（`SPEC-VERIFY-BLOCKED-001`） |
@@ -34,7 +37,7 @@
 （`Coreの出力文言のレビュー記録.md`の#22・#41・#80と、2026-11-17の上限の設定の承認済みの対応表）だけである。小さい値を設定したときの`summary`は、
 §4.1の規則による。単位を付けた表記（`1 MiB`、`32 KiB`）を持つ文言はその表記を3桁区切りの整数に`バイト`を付けた表記へ置き換え、
 値を数として持つ文言は今の形のまま実際の値を3桁区切りの整数で入れる。Coreの出力は根拠にしない。
-`SINGLE-180-11`・`181`・`182-*`・`183-01`・`02`・`11`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`・`079-01`・`092`）の入力の設定へ`limits`の行を足し、
+`SINGLE-180-11`・`16`・`181`・`182-*`・`183-01`・`02`・`11`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`・`079-01`・`092`）の入力の設定へ`limits`の行を足し、
 期待結果をそこから導く。基のfixtureの入力か期待値が変われば、この群の監査が失敗する。
 
 引数列のバイト数は、YAML表記、配列の区切り、終端のNULを含めず、各文字列のUTF-8のバイト数とその総和で測り、展開した後も公開結果の`argv`で測る
@@ -42,6 +45,14 @@
 開始と終了の区切りの行の間の各行を、その行の改行（1バイト）を含めて数え、区切りの行自身は含めない（文書・フロントマター・状態仕様 §11）ので、
 ちょうどの境界を固定する。`SINGLE-180-12`・`13`の文書はCRLFの改行で、原文のバイト数で数えるとちょうどの側も超過になる。CRLFの原文を
 リポジトリの`* text=auto eol=lf`で正規化させないため、fixtureのディレクトリに`.gitattributes`（`repo/`の文書の`-text`）を置く。
+
+仕様文書のファイル数の超過（`INPUT-LIMIT-SPEC-COUNT`）は、`parse`の操作（`context`、`check`、`verify`）のどれでも`stop-operation`である（診断レジストリ §2・§3）。
+`SINGLE-180-14`・`15`は、`SINGLE-180-10`と同じ入力で`context`と`verify`も操作全体を止めることを固定する。起点の`REQ-001`は存在するので、
+`CTX-ROOT-MISSING-001`を返してはならない。設定を読んで同一性を構成した後、仕様文書を解析する前に止まるので、`workspace.id`は`root`、
+派生する配列は空、派生する件数は0とし（結果・診断・終了コード §2）、`context`は`contextDigest: null`、`resolution.complete: false`、
+空の`documents`・制約台帳・カバレッジを返す。結果の形は、同一性を構成した後に`stop-operation`で止まる既存のfixture
+（`context`は`MULTI-040-08`・`MULTI-036-07`、`verify`は`SINGLE-165-01`）と、明示した起点で止まる`SINGLE-166-02`・`SINGLE-126-01`に倣う。
+`SINGLE-180-16`は、`verify`でちょうどの仕様文書の数を遮断しないこと（`context`のちょうどの境界は`SINGLE-181`が固定する）を固定する。
 """
 import copy
 import json
@@ -217,6 +228,14 @@ CASES = {
     "SINGLE-180-10": case("input", 2, "仕様文書のファイル数がspecFileCountを1超えれば操作を止める",
                           limits=[("specFileCount", 1)], document="two-files", status="failed",
                           summary=f"仕様文書のファイルが{count_text(1)}件上限を超過しました"),
+    "SINGLE-180-14": case("input-stop", 3, "仕様文書のファイル数がspecFileCountを1超えればcontextも操作を止める",
+                          operation="context", limits=[("specFileCount", 1)], document="two-files", status="failed",
+                          summary=f"仕様文書のファイルが{count_text(1)}件上限を超過しました"),
+    "SINGLE-180-15": case("input-stop", 4, "仕様文書のファイル数がspecFileCountを1超えればverifyも操作を止める",
+                          operation="verify", limits=[("specFileCount", 1)], document="two-files", status="failed",
+                          summary=f"仕様文書のファイルが{count_text(1)}件上限を超過しました"),
+    "SINGLE-180-16": case("derived", 4, "specFileCountちょうどの仕様文書の数のverifyを止めない",
+                          base="SINGLE-055", limits=[("specFileCount", 3)]),
     "SINGLE-181": case("derived", 3, "limitsはコンテキストのハッシュ値の材料に含めない",
                        base="SINGLE-042", limits=None),
     "SINGLE-182-01": case("derived", 4, "expandedArgvCountちょうどの引数列のテスト割当てを起動する",
@@ -315,7 +334,7 @@ def reviewed_inputs(identifier):
         tree[CONFIG_PATH] = (content + limits_block(limits_of(identifier)).encode(), executable)
         return tree
     inputs = {CONFIG_PATH: config_text(identifier).encode()}
-    if case_["kind"] == "input":
+    if case_["kind"] in {"input", "input-stop"}:
         inputs.update(document_inputs(case_["document"]))
     return {path: (content, False) for path, content in inputs.items()}
 
@@ -328,6 +347,8 @@ def operation(identifier):
         return "doctor"
     if case_["kind"] in {"config", "input"}:
         return "check"
+    if case_["kind"] == "input-stop":
+        return case_["operation"]
     return json.loads((base_fixture(identifier) / "manifest.json").read_text())["invocation"]["argv"][0]
 
 
@@ -342,10 +363,12 @@ def reviewed_manifest(identifier):
             manifest["expect"].update(status="blocked", exitCode=2)
         return manifest
     status = case_["status"]
+    # `context`と`verify`は`--base`を持たない。起点は`SINGLE-180-10`の入力に存在する`REQ-001`とする。
+    argv = ([name, "REQ-001", "--format", "json"] if case_["kind"] == "input-stop"
+            else ["check", "--full", "--base", "HEAD", "--format", "json"])
     return {"fixtureId": identifier, "description": case_["description"],
             "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []},
-            "invocation": {"runner": "bitz", "cwd": ".",
-                           "argv": ["check", "--full", "--base", "HEAD", "--format", "json"], "env": {}},
+            "invocation": {"runner": "bitz", "cwd": ".", "argv": argv, "env": {}},
             "expect": {"status": status,
                        "exitCode": {"passed": 0, "passed_with_warnings": 0, "failed": 1, "error": 3}[status],
                        "stdout": "json", "resultFile": f"expected/{name}.json", "reportFileCount": 0}}
@@ -356,6 +379,30 @@ def check_result(status, documents, statements, diagnostics, identity="root"):
             "workspace": {"id": identity, "path": "."}, "durationMs": 0, "diagnostics": diagnostics,
             "scope": "full", "revision": {"base": COMMIT, "commit": COMMIT, "dirty": False},
             "checkedDocumentCount": documents, "checkedStatementCount": statements}
+
+
+def empty_coverage():
+    levels = {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []}
+    return {"must": copy.deepcopy(levels), "should": copy.deepcopy(levels), "may": copy.deepcopy(levels), "adjacent": []}
+
+
+def stopped_result(name, status, diagnostics):
+    """同一性を構成した後、仕様文書を解析する前に`stop-operation`で止まった`context`または`verify`の結果。
+    派生する配列は空、派生する件数は0（結果・診断・終了コード §2）。コミットがあるので`revision`を返し、作業ツリーは基準版と同じ。"""
+    revision = {"commit": COMMIT, "dirty": False}
+    if name == "context":
+        # 起点は引数のまま。既定の目的は`interpret`、既定の詳細度は`standard`（`context` §2）。形は`SINGLE-166-02`・`MULTI-040-08`と同じ。
+        return {"schemaVersion": "1.0", "operation": "context", "status": status, "purpose": "interpret",
+                "workspace": {"id": "root", "path": "."}, "roots": ["REQ-001"], "contextDigest": None,
+                "revision": revision,
+                "resolution": {"complete": False, "documentCount": 0, "unresolvedStrongRelations": 0},
+                "projection": {"detail": "standard", "expanded": []}, "documents": [],
+                "constraintLedger": {"statements": []}, "coverage": empty_coverage(),
+                "durationMs": 0, "diagnostics": diagnostics}
+    # 明示した検証対象は`scope: selected`。検証対象の解決を始めないので`targetResults`と`commands`は空（`SINGLE-126-01`・`SINGLE-165-01`と同じ形）。
+    return {"schemaVersion": "1.0", "operation": "verify", "status": status, "scope": "selected",
+            "workspace": {"id": "root", "path": "."}, "targetResults": [], "revision": revision, "commands": [],
+            "durationMs": 0, "diagnostics": diagnostics}
 
 
 def diagnostic(code, severity, status, summary, path, key=None, identity="root"):
@@ -409,6 +456,10 @@ def reviewed_result(identifier):
                 "SPEC-CONFIG-UNKNOWN-001", "warning", "passed_with_warnings", "未知の設定キーです",
                 CONFIG_PATH, "limits.futureLimit")])
         return check_result("passed", 0, 0, [])
+    if kind == "input-stop":
+        # 仕様文書のファイル数の超過は`stop-operation`で、発生元はワークスペース相対の`.spec`（§4.1）。ほかの診断を返さない。
+        return stopped_result(case_["operation"], case_["status"], [
+            diagnostic(LIMIT_CODE, "error", "failed", case_["summary"], ".spec")])
     documents, statements = INPUT_COUNTS[identifier]
     diagnostics = []
     if case_["status"] == "failed":
@@ -448,7 +499,7 @@ def check_measurements(identifier, inputs):
     for key, value in limits.items():
         if key in ABSOLUTE and not 1 <= value <= ABSOLUTE[key]:
             raise ValueError(f"{key}の値が1以上、絶対上限以下ではありません")
-    if case_["kind"] == "input":
+    if case_["kind"] in {"input", "input-stop"}:
         document = inputs[REQ_PATH][0]
         measured = {"specBytes": len(document), "documentStatementCount": statement_count(document),
                     "documentArrayItemCount": covers_count(document),
@@ -470,6 +521,11 @@ def check_measurements(identifier, inputs):
         for other, absolute in ABSOLUTE.items():
             if other in measured and other != key and measured[other] > absolute:
                 raise ValueError(f"{other}も上限を超えています")
+    if identifier == "SINGLE-180-16":
+        # 基の`SINGLE-055`の仕様文書（`.spec/`の配下のMarkdown）の数が、設定した上限ちょうどである。
+        count = sum(1 for path in inputs if path.startswith(".spec/") and path.endswith(".md"))
+        if count != limits.get("specFileCount") or sum(1 for path in inputs if path.endswith(".md")) != count:
+            raise ValueError("仕様文書の数がspecFileCountちょうどではありません")
     if identifier.startswith("SINGLE-182-"):
         # 基の`SINGLE-055`の`{tests}`を展開した後の引数列を、基の期待結果から読み直す。
         base = json.loads((base_fixture(identifier) / "expected/verify.json").read_text())

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-INPUT-LIMIT-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "仕様文書のファイルが1件上限を超過しました",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec"
+      }
+    }
+  ]
+}
