@@ -134,15 +134,27 @@ fixture IDは`SINGLE-NNN`または`MULTI-NNN`をケースファミリーとし�
 | `invocation.env` | ○ | 追加の環境変数。0件でもキーを置く |
 | `invocation.python` | — | `bitz`だけ。起動するCPythonの`<major>.<minor>`。§3.5 |
 | `invocation.gitVersion` | — | `bitz`だけ。Gitのシムが返す`<major>.<minor>.<patch>`。§3.5 |
-| `expect.status` | — | 結果を返す起動では必須。引数不正で結果を返さない場合だけ省略する |
+| `expect.status` | — | 結果を返す起動では必須。結果を返さない起動（引数不正、`--help`、`--version`）では省略する |
 | `expect.outcome` | — | `consumer`、`migration`、`package`だけで必須。`accepted`、`rejected`、`passed`のいずれか |
 | `expect.exitCode` | ○ | 期待する終了コード |
-| `expect.stdout` | ○ | `json`、`text`、`markdown`、`none`のいずれか |
+| `expect.stdout` | ○ | `json`、`text`、`markdown`、`none`のいずれか。`none`は結果を返さない起動（終了コード4、`--help`、`--version`）で、`runner: bitz`だけに使う。標準出力と標準エラー出力は`cli-output.json`で比べる |
 | `expect.resultFile` | — | 期待するJSON。`stdout: none`では持たない |
 | `expect.resultDigest` | — | 生成fixtureの期待結果について、正規JSONのSHA-256。`resultFile`と排他 |
 | `expect.textFile` | — | 期待するテキストまたはMarkdown。`stdout: text|markdown`で必須 |
 | `expect.reportFileCount` | ○ | 実行後に`.spec/reports/`へ増える件数 |
 | `parserChecks` | — | §4.1の内部の構文解析器受入。`path`と`resultFile`を持つ配列 |
+
+`stdout: none`のfixtureは、`expected/cli-output.json`に標準出力と標準エラー出力の期待を置く。キーは次のとおりとする。
+
+| キー | 内容 |
+|---|---|
+| `stdout` | 標準出力のUTF-8のバイト列との完全一致。空文字列は「何も書かない」を表す |
+| `stdoutNonEmptyText` | `true`だけを持つ。標準出力がUTF-8で、空でなく、LFで終わることだけを比べる（文言を契約にしない`--help`。Core実行環境・CLI基盤契約 §5.1） |
+| `stdoutVersionLine` | `true`だけを持つ。標準出力が`bitz <major>.<minor>.<patch>`とLFの1行で、`<major>.<minor>`が`doctor`の`core.version`の期待値と一致することを比べる。パッチ部は§4と同じく比べない |
+| `stderrLineCount` | 標準エラー出力の行数。0は「何も書かない」を表す |
+| `stderrPrefix`、`stderrReasonRequired`、`stderrTerminalControls` | 終了コード4の標準エラー出力の1行の形（結果・診断・終了コード §3） |
+
+`stdout`、`stdoutNonEmptyText`、`stdoutVersionLine`は、どれか1つだけを持つ。
 
 `runner: bitz`はシェルを介さず、§3.5の隔離環境にある検査対象のコンソールスクリプト`bitz`を実行する。
 `runner: consumer`と`runner: migration`は、Core配布物のモジュール`bitz.compat`を同じ隔離環境で
@@ -276,7 +288,7 @@ LFを標準出力へ書いて終了0とし、それ以外の`argv`はシムの�
 - `durationMs`（最上位、`workspaces[]`、`commands[]`のすべて）
 - レポートのファイル名に含まれる生成時刻と連番
 - GitのコミットID。`revision.base`と`revision.commit`は「40桁の小文字16進」であることだけを検査する
-- `core.version`のパッチ部
+- `core.version`のパッチ部（`--version`の出力のパッチ部も同じく比べない。§3の`stdoutVersionLine`）
 - 実行環境に依存するプロセス出力の抜粋
 
 除外するフィールドをfixtureごとに追加してはならない。上記以外のフィールド、値、配列順、`null`と空配列の区別、
@@ -749,7 +761,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-127-31` | `check "" --help`（空文字列の位置引数） | check | 結果なし／0 | `--help`が空文字列の位置引数より優先する |
 | `SINGLE-127-32` | `doctor --help --help` | doctor | 結果なし／0 | `--help`の反復を重複として扱わない |
 | `SINGLE-127-33` | `foo --help` | なし | 結果なし／4 | 未知の操作。標準出力は空、標準エラー出力は`bitz: `で始まる空でない1行 |
-| `SINGLE-127-34` | `--version` | なし | 結果なし／0 | 標準出力はちょうど`bitz 1.0.0`とLF（`doctor`の結果の`core.version`と同じ値）。標準エラー出力は空。結果とレポートなし |
+| `SINGLE-127-34` | `--version` | なし | 結果なし／0 | 標準出力は`bitz 1.0.<patch>`とLFの1行（`doctor`の結果の`core.version`と同じ値。パッチ部は§4により比べない）。標準エラー出力は空。結果とレポートなし |
 | `SINGLE-127-35` | `--version check` | なし | 結果なし／4 | `--version`はほかの要素を伴えば受け付けない。`SINGLE-127-33`と同じ出力の契約 |
 | `SINGLE-127-36` | `check --version` | check | 結果なし／4 | 未知のオプション。標準エラー出力は`bitz: check: `で始まる1行 |
 | `SINGLE-127-37` | `--version --version` | なし | 結果なし／4 | `SINGLE-127-33`と同じ出力の契約 |
