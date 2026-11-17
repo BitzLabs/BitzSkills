@@ -757,7 +757,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 |---|---|---|---|
 | summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-FIELD-TYPE`） | `limits`がマッピングでない | `設定キーlimitsはマッピングで指定してください`（既存の行#22の形） |
 | summary | `SPEC-CONFIG-SCHEMA-001`（`CONFIG-FIELD-TYPE`） | `limits`の値が整数でない（真偽値、文字列を含む）、1未満、絶対上限を超える | `設定キー{key}は1〜{max}の整数で指定してください`（例: `設定キーlimits.specBytesは1〜1048576の整数で指定してください`） |
-| summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`） | メンバーの設定が`limits`を持つ | `メンバーの設定は設定キーlimitsを指定できません` |
+| summary | `SPEC-MULTI-MEMBER-001`（`MULTI-MEMBER`） | メンバーの設定が`limits`を持つ | `メンバーの設定は設定キーlimitsを指定できません` |
 | summary | `SPEC-MULTI-CONFIG-001`（`MULTI-CONFIG`） | `multiWorkspace.exclude`の件数が`limits.excludeCount`を超える | `設定キーmultiWorkspace.excludeは{n}件以下で指定してください`（絶対上限のときは既存の`100件以下`と同じ） |
 | summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`） | 展開した後の引数列の要素数が上限を超える | `{tests}展開後のargvの要素数が上限{n}を超えます`（絶対上限のときは`上限10,000`） |
 | summary | `SPEC-VERIFY-BLOCKED-001`（`VERIFY-ARGV-EXPANDED-LIMIT`） | 展開した後の引数列の全体のバイト数が、小さく設定した上限を超える | `{tests}展開後のargvがバイト数上限{n}バイトを超えます`（絶対上限のときは既存の`上限1 MiB`のまま） |
@@ -772,3 +772,5 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 - 設定がスキーマに適合しないときの`doctor`は、`limits`を返さない。
 - `check --base`で基準版の文書だけがファイル単位の上限を超える場合は、今回は新しい規則を定めず、適合fixtureを作らない。
 - `doctor`の`limits`のキーの順は、仕様では表の順とする。harnessはオブジェクトのキーの順を比べないので、適合fixtureでは固定しない。
+- メンバーの設定が`limits`を持つ場合のコードは、承認の時点では`SPEC-MULTI-CONFIG-001`としていた。独立レビューの指摘（`multiWorkspace`を宣言したメンバーと分類がそろわない）を受け、
+  同日に`SPEC-MULTI-MEMBER-001`へ改めた。発生元は`multiWorkspace`を宣言したメンバーの場合（`MULTI-048-04`）と同じとする。承認済みの文言は変えていない。
