@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "a2dd76b44fcc136b9e78ef3eaeecf37030287071f535eadd4d8fd08899e9152d",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "cb3f9aea70c1a5afb2f599c5ef9fd06e75d278908a6bcbc25be0c440ff7c35f9",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5cc4e1d4f7c37a882dd266168b4987546d97c637a8d46168aac0abc67b1ce5c5",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "abb7622b9eec04ccd1c92a489877f84dbe2f1cd3e9a9c21e02fb62634366a2cc",
     "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "55ee4ff97e253991e7bf663e61e17b24163bf5e93ddfb379b03c67346128fba7",
