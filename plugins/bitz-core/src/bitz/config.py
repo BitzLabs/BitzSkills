@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import lex
+from . import limits as limits_mod
 from . import messages
 from .yamlsafe import YamlForbiddenError, YamlSyntaxError, parse_yaml_subset
 
@@ -34,6 +35,7 @@ _KNOWN_TOP_KEYS = {
     "safety",
     "workspace",
     "multiWorkspace",
+    "limits",
 }
 
 _COMMAND_NAME_RE = lex.re.compile(r"^[a-z][a-z0-9-]{0,31}$")
@@ -249,8 +251,41 @@ def _peek_workspace_id(config: dict) -> str:
     return DEFAULT_WORKSPACE_ID
 
 
-def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
-    """`schemaVersion`以外のすべてのフィールドの型・必須・未知のキーを検査する。"""
+def _validate_limits(config: dict, diags: list[Diagnostic]) -> None:
+    """`limits`の型・値の範囲・未知のキーを検査する（ワークスペース・設定仕様 §5、安全な入出力・互換性 §4.1、ADR-076）。
+
+    宣言はキーの有無で判定し、値のない`limits:`（``None``）もマッピングでないものとする。各キーの値は、1以上、
+    絶対上限以下の整数（真偽値を除く）とする。`limits`の中の未知のキーは、未知の標準キーと同じく警告にし、判定へは使わない。
+    """
+
+    if "limits" not in config:
+        return
+    raw = config["limits"]
+    if not isinstance(raw, dict):
+        _add_type_error(diags, "limits", "マッピング")
+        return
+    for key, value in raw.items():
+        if key not in limits_mod.ABSOLUTE_LIMITS:
+            diags.append(
+                Diagnostic(
+                    code="SPEC-CONFIG-UNKNOWN-001",
+                    severity="warning",
+                    resultStatus="passed_with_warnings",
+                    summary="未知の設定キーです",
+                    source=_file_source(None, f"limits.{key}"),
+                )
+            )
+            continue
+        if not limits_mod.is_valid_value(key, value):
+            _add_type_error(diags, f"limits.{key}", f"1〜{limits_mod.ABSOLUTE_LIMITS[key]}の整数")
+
+
+def _validate_other_fields(config: dict, diags: list[Diagnostic], *, validate_limits: bool = True) -> None:
+    """`schemaVersion`以外のすべてのフィールドの型・必須・未知のキーを検査する。
+
+    ``validate_limits``が偽なら`limits`の値を検査しない（複合ワークスペースのメンバーの設定。`limits`を持つこと自体を
+    `SPEC-MULTI-MEMBER-001`とし、値の型と範囲は検査しない。複合ワークスペース仕様 §10）。
+    """
     for key in config:
         if key == "profiles":
             diags.append(
@@ -335,18 +370,24 @@ def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
             if not isinstance(wid, str) or not lex.WORKSPACE_ID_RE.match(wid):
                 _add_type_error(diags, "workspace.id", "[a-z][a-z0-9-]{0,31}")
 
+    if validate_limits:
+        _validate_limits(config, diags)
+
     # `multiWorkspace.members`の詳細な検証はStep 1の範囲外（複合ワークスペース仕様の側で扱う）。
     # TODO(Step5以降): `multiWorkspace.members`のカタログの検証を実装する。
 
     config["_resolvedCommands"] = commands
 
 
-def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> ConfigOutcome:
+def load_config(
+    read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001", validate_limits: bool = True
+) -> ConfigOutcome:
     """`.spec/bitz.yaml` を読み込み、スキーマを検査する。
 
     ``read_bytes`` は呼び出し側が用意した、元のバイト列（1回読み込んだものを渡す）。
     ``ears_version_code`` はEARS-AIのメジャーバージョンが非互換のときに使う診断コードで、`doctor`だけ
     ``SPEC-DOCTOR-EARS-001`` を渡す（`診断レジストリ` §6）。
+    ``validate_limits``は、複合ワークスペースの全体事前検査がメンバーの設定を読むときだけ偽にする（:func:`_validate_other_fields`）。
     """
 
     outcome = ConfigOutcome()
@@ -504,7 +545,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
 
     # ここまででメジャーバージョンは対応済み。他のすべてのフィールドの型・必須・未知のキーを検査する。
     field_errors: list[Diagnostic] = []
-    _validate_other_fields(value, field_errors)
+    _validate_other_fields(value, field_errors, validate_limits=validate_limits)
 
     hard_errors = _dedupe_diagnostics([d for d in field_errors if d.resultStatus == "error"])
     soft_warnings = [d for d in field_errors if d.resultStatus == "passed_with_warnings"]
@@ -543,7 +584,9 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
     return _finish_success(workspace_id, value, soft_warnings)
 
 
-def read_config(path, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> ConfigOutcome:
+def read_config(
+    path, *, ears_version_code: str = "SPEC-EARS-VERSION-001", validate_limits: bool = True
+) -> ConfigOutcome:
     """設定ファイルを上限+1バイトまでだけ読み、`load_config`へ渡す。
 
     上限を超えた時点で読取りを続けない（`INPUT-LIMIT-CONFIG`）。権限、I/O、読取り中の消失は
@@ -568,4 +611,4 @@ def read_config(path, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> Co
         outcome.stop_stage = "config"
         outcome.workspace_id = None
         return outcome
-    return load_config(raw, ears_version_code=ears_version_code)
+    return load_config(raw, ears_version_code=ears_version_code, validate_limits=validate_limits)

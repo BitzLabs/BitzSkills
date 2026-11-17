@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import dataclasses
 import os
 import subprocess
 import tempfile
@@ -15,6 +17,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from bitz import limits as limits_mod
 from bitz import multiws
 from bitz import verify as verify_mod
 from bitz.cliargs import ParsedArgs
@@ -22,6 +25,19 @@ from bitz.cliargs import ParsedArgs
 ROOT_YAML = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: platform\n'
 MEMBER_YAML = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: {wid}\n'
 
+
+
+@contextlib.contextmanager
+def _limits(**values):
+    """操作が使う上限の値（:func:`bitz.limits.from_config`の結果）を差し替える。
+
+    設定の`limits`は1以上の値しか書けないので、0などの境界は差し替えで試す（ADR-076の前は`multiws.HARD_LIMITS`と
+    `verify._VERIFY_BINDING_LIMIT`を差し替えていた）。入れ子にすると、外側の差し替えに重ねる。
+    """
+
+    original = limits_mod.from_config
+    with mock.patch.object(limits_mod, "from_config", lambda config: dataclasses.replace(original(config), **values)):
+        yield
 
 def _git_env() -> dict[str, str]:
     return {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
@@ -228,7 +244,7 @@ class VerifyBindingCountPriorityTests(unittest.TestCase):
             # 一時的に下げ、`verifyBindingCount`を優先する判定の経路（`SPEC-MULTI-LIMIT-001`、
             # `dimension: verifyBindingCount`）が正しく選ばれることを確認する
             # （`commandDefinitionCount`の一般の事前検査は`skip_limit_dimensions`で迂回している）。
-            with mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+            with _limits(verifyBindingCount=0):
                 result, exit_code = _run_all(root)
 
             self.assertEqual(exit_code, 2)
@@ -287,7 +303,7 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
             root = Path(tmp)
             self._repo_with_extra_unused_commands(root)
 
-            with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+            with _limits(commandDefinitionCount=2):
                 result, exit_code = _run_all(root)
 
             self.assertEqual(exit_code, 2, result)
@@ -307,8 +323,8 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
             root = Path(tmp)
             self._repo_with_extra_unused_commands(root)
 
-            with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}), \
-                 mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+            with _limits(commandDefinitionCount=2), \
+                 _limits(verifyBindingCount=0):
                 result, exit_code = _run_all(root)
 
             self.assertEqual(exit_code, 2, result)
@@ -327,7 +343,7 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
 
             env = dict(os.environ)
             git = gitutil.detect_git(str(root), env)
-            with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+            with _limits(commandDefinitionCount=2):
                 pre = multiws.precheck(str(root), git, env)
 
             self.assertFalse(pre.ok)
@@ -343,10 +359,11 @@ class SkipLimitDimensionsTests(unittest.TestCase):
         totals = {
             "specFileCount": 0, "inputBytes": 0, "statementCount": 0,
             "relationEdgeCount": 0, "traceEntryCount": 0,
-            "commandDefinitionCount": multiws.HARD_LIMITS["commandDefinitionCount"] + 1,
+            "commandDefinitionCount": limits_mod.ABSOLUTE.commandDefinitionCount + 1,
         }
-        self.assertIsNone(multiws._first_exceeded(totals, frozenset({"commandDefinitionCount"})))
-        self.assertEqual(multiws._first_exceeded(totals, frozenset()), "commandDefinitionCount")
+        absolute = limits_mod.ABSOLUTE
+        self.assertIsNone(multiws._first_exceeded(totals, absolute, frozenset({"commandDefinitionCount"})))
+        self.assertEqual(multiws._first_exceeded(totals, absolute, frozenset()), "commandDefinitionCount")
 
 
 if __name__ == "__main__":

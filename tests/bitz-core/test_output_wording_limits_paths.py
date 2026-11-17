@@ -14,7 +14,8 @@
 
 この試験の対象:
 1. 要素の上限を超えたときは「{tests}展開後のargvの要素がバイト数上限32 KiBを超えます」、総和の上限を超えたときは
-   今の「{tests}展開後のargvがバイト数上限1 MiBを超えます」を返す（実ファイルで32 KiBの要素は作れないので、上限の定数を差し替える）。
+   今の「{tests}展開後のargvがバイト数上限1 MiBを超えます」を返す。実ファイルで32 KiBの要素は作りにくいので、
+   `limits`（ADR-076）で上限を小さくして要素と総和の区別を確かめ、絶対上限のときの文言は文言の組み立てで確かめる。
 2. フロントマターのパスの字句の違反（globの文字、絶対パス、`.`、`..`、NUL、空文字列）は「フロントマターのフィールド{key}のパスの形式が不正です」。
 3. 型の不正（配列でない、文字列でない要素、文字列でない`tests[].path`）は、今の型の不正の文言のまま。
 """
@@ -26,9 +27,10 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 from bitz import frontmatter as fm
+from bitz import limits as limits_mod
+from bitz import messages
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 
@@ -45,6 +47,9 @@ REQ = (
 
 ELEMENT_SUMMARY = "{tests}展開後のargvの要素がバイト数上限32 KiBを超えます"
 TOTAL_SUMMARY = "{tests}展開後のargvがバイト数上限1 MiBを超えます"
+# `limits`で小さくしたときの文言（Coreの出力文言のレビュー記録の2026-11-17の承認済みの対応表）。
+SMALL_ELEMENT_SUMMARY = "{tests}展開後のargvの要素がバイト数上限20バイトを超えます"
+SMALL_TOTAL_SUMMARY = "{tests}展開後のargvがバイト数上限40バイトを超えます"
 PATH_FORM = "フロントマターのフィールド{key}のパスの形式が不正です"
 
 
@@ -72,14 +77,35 @@ class ExpandedArgvLimitTests(unittest.TestCase):
         self.assertEqual((result["status"], code), ("blocked", 2), result)
         return [d["summary"] for d in result["diagnostics"] if d["code"] == "SPEC-VERIFY-BLOCKED-001"]
 
+    def _set_limits(self, limits_yaml: str) -> None:
+        _write(self.root, ".spec/bitz.yaml", CONFIG + VERIFY_CONFIG + limits_yaml)
+        env = {**os.environ, **_GIT_ENV}
+        for args in (["add", ".spec/bitz.yaml"],
+                     ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "limits"]):
+            subprocess.run(["git", *args], cwd=self.root, env=env, check=True, capture_output=True)
+
     def test_element_limit_reports_the_element_limit(self):
         # 展開した要素（`tests/test_long_name_for_limit.py`、33バイト）だけが上限を超える。
-        with mock.patch.object(verify_mod, "_ARGV_ELEMENT_LIMIT", 20):
-            self.assertEqual(self.blocked_summaries(), [ELEMENT_SUMMARY])
+        self._set_limits("limits:\n  expandedArgvElementBytes: 20\n")
+        self.assertEqual(self.blocked_summaries(), [SMALL_ELEMENT_SUMMARY])
 
     def test_total_limit_reports_the_total_limit(self):
-        with mock.patch.object(verify_mod, "_ARGV_TOTAL_LIMIT", 40):
-            self.assertEqual(self.blocked_summaries(), [TOTAL_SUMMARY])
+        # 要素の総和（`/bin/true`の9バイトと33バイト）だけが上限を超える。
+        self._set_limits("limits:\n  expandedArgvBytes: 40\n")
+        self.assertEqual(self.blocked_summaries(), [SMALL_TOTAL_SUMMARY])
+
+    def test_absolute_limit_wording_is_unchanged(self):
+        absolute = limits_mod.ABSOLUTE
+        self.assertEqual(
+            messages.verify_argv_expanded_element_limit(
+                limits_mod.format_bytes(absolute, "expandedArgvElementBytes", "32 KiB")
+            ),
+            ELEMENT_SUMMARY,
+        )
+        self.assertEqual(
+            messages.verify_argv_expanded_limit(limits_mod.format_bytes(absolute, "expandedArgvBytes", "1 MiB")),
+            TOTAL_SUMMARY,
+        )
 
     def test_within_limits_is_not_blocked(self):
         result, code = verify_mod.run(parse_argv(["verify", "REQ-001", "--format", "json"]), str(self.root), dict(os.environ))

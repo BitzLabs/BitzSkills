@@ -27,6 +27,7 @@ from . import document as document_mod
 from . import dupclosure
 from . import execfile
 from . import gitutil
+from . import limits as limits_mod
 from . import messages
 from . import multirelate
 from . import multiws
@@ -41,10 +42,9 @@ from .errors import CliArgError
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
 from .workspace import locate_workspace
 
-_ARGV_ELEMENT_LIMIT = 32 * 1024
-_ARGV_TOTAL_LIMIT = 1024 * 1024
-_ARGV_COUNT_LIMIT = 10000
-_VERIFY_BINDING_LIMIT = multiws.HARD_LIMITS["verifyBindingCount"]
+# 展開した後の引数列の上限（`expandedArgvCount`、`expandedArgvElementBytes`、`expandedArgvBytes`）と、複合ワークスペースの
+# 実行計画の上限（`verifyBindingCount`、`commandDefinitionCount`）は、設定の`limits`から決めた:class:`bitz.limits.Limits`で判定する
+# （単一ワークスペースは作業ワークスペースの設定、複合ワークスペースはルートの設定。安全な入出力・互換性 §4.1）。
 
 
 def _invocation_diag(code: str, severity: str, status: str, summary: str, argument: str | None = None) -> dict:
@@ -167,7 +167,8 @@ def _total_command_definition_count(config_by_ws: dict[str, dict], workspaces) -
 
 
 def _plan_limit_diagnostic(
-    binding_count: int, config_by_ws: dict[str, dict], workspaces, root_id: str | None
+    binding_count: int, config_by_ws: dict[str, dict], workspaces, root_id: str | None,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
 ) -> dict | None:
     """実行計画を確定した後の上限の判定（複合ワークスペース仕様 §10、ADR-066）。超過がなければ``None``。
 
@@ -176,12 +177,12 @@ def _plan_limit_diagnostic(
     コマンドを1件も起動する前に呼び出す。
     """
 
-    if binding_count > _VERIFY_BINDING_LIMIT:
-        dimension, limit, observed = "verifyBindingCount", _VERIFY_BINDING_LIMIT, binding_count
+    if binding_count > limits.verifyBindingCount:
+        dimension, limit, observed = "verifyBindingCount", limits.verifyBindingCount, binding_count
     else:
         # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、ここで自分で判定する。
         # `verifyBindingCount`が超過していなければ、`commandDefinitionCount`だけの超過をそのまま報告する。
-        dimension, limit = "commandDefinitionCount", multiws.HARD_LIMITS["commandDefinitionCount"]
+        dimension, limit = "commandDefinitionCount", limits.commandDefinitionCount
         observed = _total_command_definition_count(config_by_ws, workspaces)
         if observed <= limit:
             return None
@@ -919,6 +920,7 @@ def _plan_and_run_bindings(
     env: dict[str, str],
     effective_timeout_for,
     multi_root_id: str | None = None,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
 ):
     """``needs``（``(workspace_id, コマンド名) -> {"tests": set, "covers": set, "decls": set}``。``decls``は
     ``(宣言した仕様文書のパス, その文書の`tests`の添字, テストのパス)``の集合）からテスト割当ての実行計画を
@@ -926,6 +928,7 @@ def _plan_and_run_bindings(
 
     ``multi_root_id``は複合ワークスペースのルートワークスペースのIDで、単一ワークスペースでは``None``とする。
     実効`cwd`がディレクトリとして存在しないテスト割当てと、複合ワークスペースで存在する実効`cwd`の字句のパスが所有領域の外にあるテスト割当ては起動しない（_cwd_ownership_diag）。
+    ``limits``は展開した後の引数列の上限を決める（単一ワークスペースは作業ワークスペースの設定、複合ワークスペースはルートの設定。安全な入出力・互換性 §4.1）。
 
     戻り値は``(commands_by_key, status_by_key, blocked, launched, top_diagnostics)``。``blocked``は起動前に遮断したテスト割当ての
     ``(workspace_id, コマンド名) -> 診断``、``launched``は起動した後に検出した診断（タイムアウト・シグナル・起動失敗）の
@@ -1015,19 +1018,24 @@ def _plan_and_run_bindings(
                     argv_template, tests_sorted, cwd_lexical, workspace_root, disk_tests=disk_tests, cwd_depth=len(cwd_found.actual)
                 )
                 total_bytes = sum(len(a.encode("utf-8")) for a in expanded)
-                if len(expanded) > _ARGV_COUNT_LIMIT:
+                if len(expanded) > limits.expandedArgvCount:
                     diag = _file_diag(
-                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_argv_expanded_count_limit(),
+                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked",
+                        messages.verify_argv_expanded_count_limit(limits.expandedArgvCount),
                         ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.argv",
                     )
-                elif any(len(a.encode("utf-8")) > _ARGV_ELEMENT_LIMIT for a in expanded):
+                elif any(len(a.encode("utf-8")) > limits.expandedArgvElementBytes for a in expanded):
                     diag = _file_diag(
-                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_ARGV_EXPANDED_ELEMENT_LIMIT,
+                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked",
+                        messages.verify_argv_expanded_element_limit(
+                            limits_mod.format_bytes(limits, "expandedArgvElementBytes", "32 KiB")
+                        ),
                         ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.argv",
                     )
-                elif total_bytes > _ARGV_TOTAL_LIMIT:
+                elif total_bytes > limits.expandedArgvBytes:
                     diag = _file_diag(
-                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.VERIFY_ARGV_EXPANDED_LIMIT,
+                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked",
+                        messages.verify_argv_expanded_limit(limits_mod.format_bytes(limits, "expandedArgvBytes", "1 MiB")),
                         ws_id, config_mod.CONFIG_PATH, key=f"verify.commands.{name}.argv",
                     )
                 else:
@@ -1223,8 +1231,12 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     workspace_root = loc.root
 
     multi_active = multi_pre is not None and multi_pre.ok
+    # 上限は、単一ワークスペースでは作業ワークスペースの設定、複合ワークスペースではルートの設定から決める（安全な入出力・互換性 §4.1）。
+    limits = limits_mod.for_workspace(
+        config_raw, multi_pre.root_config if multi_pre is not None else None, multi_active=multi_active
+    )
 
-    catalog = document_mod.build_catalog(workspace_root, workspace_id, qualify_summary_ids=multi_active)
+    catalog = document_mod.build_catalog(workspace_root, workspace_id, limits=limits, qualify_summary_ids=multi_active)
     # 検証対象が使うテスト対応の検査（`_make_test_checker`）が、修飾する前の元の文書を使うための、ワークスペースごとのカタログの文書。
     member_catalogs: dict[str, document_mod.CatalogResult] = {}
     if multi_active:
@@ -1326,7 +1338,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         configs = {multi_pre.root_id: multi_pre.root_config or {}}
         configs.update({m.id: m.config for m in multi_pre.members})
         limit_diag = _plan_limit_diagnostic(
-            binding_count, configs, multiws.ordered_workspaces(multi_pre), multi_pre.root_id
+            binding_count, configs, multiws.ordered_workspaces(multi_pre), multi_pre.root_id, limits
         )
         if limit_diag is None:
             return None
@@ -1393,6 +1405,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for,
         multi_root_id=multi_pre.root_id if multi_active and multi_pre is not None else None,
+        limits=limits,
     )
     top_diagnostics.extend(binding_top_diags)
     _apply_binding_results(target_entries, blocked_keys, status_by_key)
@@ -1503,9 +1516,12 @@ def _run_all_workspaces_members(
         ws_default = cfg.get("timeoutSeconds", 300)
         return min(cli_cap, ws_default) if cli_cap is not None else ws_default
 
+    # 複合ワークスペースでは、ルートワークスペースの設定の`limits`をすべてのワークスペースへ使う（安全な入出力・互換性 §4.1）。
+    limits = limits_mod.from_config(config_by_ws[pre.root_id])
+
     per_ws_catalog: dict[str, document_mod.CatalogResult] = {}
     for wid, root, _rel in workspaces:
-        per_ws_catalog[wid] = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
+        per_ws_catalog[wid] = document_mod.build_catalog(root, wid, limits=limits, qualify_summary_ids=True)
 
     entries_by_ws = {wid: cat.entries for wid, cat in per_ws_catalog.items()}
     invalid_by_ws = {
@@ -1585,7 +1601,7 @@ def _run_all_workspaces_members(
                 bucket["decls"].add((doc_path, test_index, path))
 
     # 実行計画（`needs`）を確定した後、コマンドを1件も起動する前（`_plan_and_run_bindings`より前）に上限を判定する。
-    limit_diag = _plan_limit_diagnostic(len(needs), config_by_ws, workspaces, pre.root_id)
+    limit_diag = _plan_limit_diagnostic(len(needs), config_by_ws, workspaces, pre.root_id, limits)
 
     if limit_diag is not None:
         diagnostics = sort_diagnostics([limit_diag])
@@ -1616,6 +1632,7 @@ def _run_all_workspaces_members(
     commands_by_key, status_by_key, blocked_keys, launched_keys, binding_top_diags = _plan_and_run_bindings(
         needs, ws_root_by_id=ws_root_by_id, resolved_commands_for=_resolved_commands_for,
         git=git, env=env, effective_timeout_for=_effective_timeout_for, multi_root_id=pre.root_id,
+        limits=limits,
     )
     # 起動前に遮断した診断（skip-binding）と、起動した後に検出した診断（タイムアウト・シグナル・起動失敗）は、
     # テスト割当てを所有するワークスペースへ1件だけ置き、最上位へ複製しない（verify.md §6）。

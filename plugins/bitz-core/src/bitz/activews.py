@@ -174,6 +174,7 @@ def select_active(
     ears_version_code: str = "SPEC-EARS-VERSION-001",
     report_git_with_config_stop: bool = False,
     skip_limit_dimensions: frozenset[str] = frozenset(),
+    limit_base_rev: str | None = None,
 ) -> ActiveSelection:
     """作業ワークスペースを決める。``subject``は引数不正のメッセージの「起点」「対象」の呼び方。
 
@@ -183,6 +184,8 @@ def select_active(
     判定できるカタログの不適合を並べるか（単独の`doctor`だけ真。`04_doctor.md` §3、ADR-070）。
     ``skip_limit_dimensions``は、全体事前検査のリソースの上限の判定から除く次元（単独の`verify`だけが、実行計画を確定した後に
     自分で判定する`commandDefinitionCount`を渡す。複合ワークスペース仕様 §7・§10、ADR-066）。
+    ``limit_base_rev``は、スナップショット全体のリソースの上限を現在版に加えて適用する基準版（単独の`check`だけが渡す。
+    複合ワークスペース仕様 §10）。
     """
 
     qualified_prefixes = {q[0] for t in positionals if (q := multirelate.parse_qualified(t)) is not None}
@@ -207,6 +210,7 @@ def select_active(
         compare_git_configs=compare_git_configs,
         report_git_with_config_stop=report_git_with_config_stop,
         skip_limit_dimensions=skip_limit_dimensions,
+        limit_base_rev=limit_base_rev,
     )
     if pre.discovery_failed:
         return ActiveSelection(loc, ".", None)

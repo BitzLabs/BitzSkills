@@ -14,17 +14,29 @@ import re
 
 SPEC_UTF8_INVALID = "仕様文書のファイルをUTF-8として復号できません"
 SPEC_IO_UNREADABLE = "仕様文書のファイルを読み取れません"
-SPEC_SIZE_LIMIT = "仕様文書のMarkdownが1 MiB上限を超過しました"
-FRONTMATTER_SIZE_LIMIT = "フロントマターが32 KiB上限を超過しました"
-STATEMENT_COUNT_LIMIT = "1文書の規範文数が1,000上限を超過しました"
+# 上限の値を差し込む文言（安全な入出力・互換性 §4.1、ADR-076）。絶対上限を使うときは今までの文言と同じ文字列になる。
+# 単位を付けた表記（`1 MiB`、`32 KiB`）は、小さい値を設定したときだけ3桁区切りの整数に`バイト`を付けた表記へ置き換える
+# （Coreの出力文言のレビュー記録の2026-11-17の承認済みの対応表）。``bytes_label``は:func:`bitz.limits.format_bytes`の結果を渡す。
+
+
+def spec_size_limit(bytes_label: str = "1 MiB") -> str:
+    return f"仕様文書のMarkdownが{bytes_label}上限を超過しました"
+
+
+def frontmatter_size_limit(bytes_label: str = "32 KiB") -> str:
+    return f"フロントマターが{bytes_label}上限を超過しました"
+
+
+def statement_count_limit(limit: int = 1_000) -> str:
+    return f"1文書の規範文数が{limit:,}上限を超過しました"
 
 
 def spec_file_count_limit(limit: int = 10_000) -> str:
     return f"仕様文書のファイルが{limit:,}件上限を超過しました"
 
 
-def array_count_limit(key: str) -> str:
-    return "1文書の関係・パスの配列の項目数が1,000上限を超過しました"
+def array_count_limit(key: str, limit: int = 1_000) -> str:
+    return f"1文書の関係・パスの配列の項目数が{limit:,}上限を超過しました"
 
 
 SPEC_BOM = "仕様文書のファイル先頭のBOMを除いて解析を続行します"
@@ -319,8 +331,16 @@ VERIFY_TARGETS_EMPTY = "検証対象がありません"
 VERIFY_SPAWN_ERROR = "コマンドの実行形式をOSが拒否しプロセスを生成できません"
 VERIFY_SIGNAL = "コマンドがシグナルで終了しました"
 VERIFY_EXECUTABLE_UNAVAILABLE = "コマンドの実行可能ファイルを環境変数PATHから解決できません"
-VERIFY_ARGV_EXPANDED_LIMIT = "{tests}展開後のargvがバイト数上限1 MiBを超えます"
-VERIFY_ARGV_EXPANDED_ELEMENT_LIMIT = "{tests}展開後のargvの要素がバイト数上限32 KiBを超えます"
+
+
+def verify_argv_expanded_limit(bytes_label: str = "1 MiB") -> str:
+    return "{tests}展開後のargvがバイト数上限" + bytes_label + "を超えます"
+
+
+def verify_argv_expanded_element_limit(bytes_label: str = "32 KiB") -> str:
+    return "{tests}展開後のargvの要素がバイト数上限" + bytes_label + "を超えます"
+
+
 VERIFY_CONFIG_UNTRACKED = "設定ファイルがGit管理下で未追跡です"
 VERIFY_TEST_OUTSIDE_CWD = "テストのパスが実効の作業ディレクトリの配下にありません"
 
@@ -341,8 +361,8 @@ def verify_executable_unavailable_path() -> str:
     return "コマンドの実行可能ファイルを解決できません"
 
 
-def verify_argv_expanded_count_limit() -> str:
-    return "{tests}展開後のargvの要素数が上限10,000を超えます"
+def verify_argv_expanded_count_limit(limit: int = 10_000) -> str:
+    return "{tests}展開後のargvの要素数が上限" + f"{limit:,}" + "を超えます"
 
 
 def verify_cwd_unavailable() -> str:
@@ -360,7 +380,6 @@ MULTI_CONFIG_MAX_MEMBERS_RANGE = "設定キーmultiWorkspace.maxMembersは1〜10
 MULTI_CONFIG_ROOT_ID_REQUIRED = "ルートワークスペースの設定キーworkspace.idがありません"
 # 除外の指定（ADR-064の8。管理者が承認した7件の一つ。一字も変えない）。
 MULTI_CONFIG_EXCLUDE_TYPE = "設定キーmultiWorkspace.excludeは文字列の配列で指定してください"
-MULTI_CONFIG_EXCLUDE_COUNT = "設定キーmultiWorkspace.excludeは100件以下で指定してください"
 MULTI_EXCLUDE_INVALID = "除外のパスの形式が不正です"
 MULTI_EXCLUDE_DUPLICATE = "除外のパスが重複しています"
 MULTI_EXCLUDE_NESTED = "除外のパスが別の除外のパスの配下にあります"
@@ -369,6 +388,15 @@ MULTI_EXCLUDE_SPEC = "除外のパスに.specが含まれています"
 MEMBER_CONFIG_MISSING = "メンバーの.spec/bitz.yamlがありません"
 MEMBER_ID_MISMATCH = "メンバーの設定キーworkspace.idがカタログのIDと一致しません"
 MEMBER_NESTED_MULTIWORKSPACE = "メンバーは設定キーmultiWorkspaceを宣言できません"
+# メンバーの設定の`limits`（複合ワークスペース仕様 §10、ADR-076。2026-11-17に管理者が承認）。
+MEMBER_LIMITS_DECLARED = "メンバーの設定は設定キーlimitsを指定できません"
+
+
+def multi_config_exclude_count(limit: int = 100) -> str:
+    """除外の件数の上限（ADR-064の8の文言。上限の値は`limits.excludeCount`。絶対上限のときは今までと同じ`100件以下`）。"""
+
+    return f"設定キーmultiWorkspace.excludeは{limit:,}件以下で指定してください"
+
 
 MULTI_ID_INVALID = "ワークスペースIDの形式が不正です"
 MULTI_ID_DUPLICATE = "ワークスペースIDが複合ワークスペース内で重複しています"

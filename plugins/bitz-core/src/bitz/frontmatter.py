@@ -12,9 +12,12 @@ import re
 from dataclasses import dataclass, field
 
 from . import lex
+from . import limits as limits_mod
 from . import messages
 
-ARRAY_ITEM_LIMIT = 1000
+#: 1つの文書の関係・パスの配列の項目の数の絶対上限。実際に使う値は:func:`validate`の``array_item_limit``
+#: （`limits.documentArrayItemCount`。安全な入出力・互換性 §4.1）。
+ARRAY_ITEM_LIMIT = limits_mod.ABSOLUTE_LIMITS["documentArrayItemCount"]
 
 ID_PATTERN = {
     "REQ": re.compile(r"^REQ-[0-9]{3,}$"),
@@ -174,7 +177,7 @@ def _unknown_warning(key: str) -> FieldIssue:
 
 def _check_path_array(
     value: object, key: str, limits: list[FieldIssue], hard: list[FieldIssue], label: str,
-    *, allow_directory_prefix: bool = False,
+    *, allow_directory_prefix: bool = False, array_item_limit: int = ARRAY_ITEM_LIMIT,
 ) -> bool:
     """``key``がパスの配列として妥当か検査する。型が不正なら``True``を返し、呼び出し側で打ち切る。"""
 
@@ -185,8 +188,8 @@ def _check_path_array(
         # 型は正しいが、パスの字句の規則（ワークスペース・設定仕様 §9）に反する（確認事項C85）。
         hard.append(_schema_error(key, messages.fm_path_form_error(key)))
         return True
-    if len(value) > ARRAY_ITEM_LIMIT:
-        limits.append(_limit_error(key, messages.array_count_limit(key)))
+    if len(value) > array_item_limit:
+        limits.append(_limit_error(key, messages.array_count_limit(key, array_item_limit)))
         return True
     if _has_duplicates(value):
         hard.append(_schema_error(key, messages.fm_array_duplicate(key)))
@@ -194,8 +197,11 @@ def _check_path_array(
     return False
 
 
-def validate(value: object, kind: str) -> FrontmatterOutcome:
-    """1文書のフロントマター（YAMLの部分集合としてデコード済み）を検証する。"""
+def validate(value: object, kind: str, *, array_item_limit: int = ARRAY_ITEM_LIMIT) -> FrontmatterOutcome:
+    """1文書のフロントマター（YAMLの部分集合としてデコード済み）を検証する。
+
+    ``array_item_limit``は関係・パスの配列の項目の数の上限（`limits.documentArrayItemCount`。安全な入出力・互換性 §4.1）。
+    """
 
     outcome = FrontmatterOutcome()
     if not isinstance(value, dict):
@@ -261,8 +267,10 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
                         _schema_error(f"relations.{rk}", messages.fm_type_error(f"relations.{rk}", "ID文字列の配列"))
                     )
                     continue
-                if len(rv) > ARRAY_ITEM_LIMIT:
-                    limits.append(_limit_error(f"relations.{rk}", messages.array_count_limit(f"relations.{rk}")))
+                if len(rv) > array_item_limit:
+                    limits.append(
+                        _limit_error(f"relations.{rk}", messages.array_count_limit(f"relations.{rk}", array_item_limit))
+                    )
                     continue
                 if _has_duplicates(rv):
                     hard.append(_schema_error(f"relations.{rk}", messages.fm_relations_duplicate(rk)))
@@ -273,7 +281,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("implements", messages.fm_null_forbidden("implements")))
         else:
-            _check_path_array(v, "implements", limits, hard, "implements")
+            _check_path_array(v, "implements", limits, hard, "implements", array_item_limit=array_item_limit)
 
     # --- tests --------------------------------------------------------
     if "tests" in value:
@@ -282,8 +290,8 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
             hard.append(_schema_error("tests", messages.fm_null_forbidden("tests")))
         elif not isinstance(v, list):
             hard.append(_schema_error("tests", messages.fm_type_error("tests", "オブジェクトの配列")))
-        elif len(v) > ARRAY_ITEM_LIMIT:
-            limits.append(_limit_error("tests", messages.array_count_limit("tests")))
+        elif len(v) > array_item_limit:
+            limits.append(_limit_error("tests", messages.array_count_limit("tests", array_item_limit)))
         else:
             dup_keys: list[tuple] = []
             tests_hard = False
@@ -318,8 +326,10 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
                     )
                     tests_hard = True
                     continue
-                if len(covers_v) > ARRAY_ITEM_LIMIT:
-                    limits.append(_limit_error(f"{prefix}.covers", messages.array_count_limit(f"{prefix}.covers")))
+                if len(covers_v) > array_item_limit:
+                    limits.append(
+                        _limit_error(f"{prefix}.covers", messages.array_count_limit(f"{prefix}.covers", array_item_limit))
+                    )
                     continue
                 if len(covers_v) == 0:
                     hard.append(_schema_error(f"{prefix}.covers", messages.TESTS_COVERS_EMPTY))
@@ -359,7 +369,9 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         if v is None:
             hard.append(_schema_error("changes", messages.fm_null_forbidden("changes")))
         else:
-            _check_path_array(v, "changes", limits, hard, "changes", allow_directory_prefix=True)
+            _check_path_array(
+                v, "changes", limits, hard, "changes", allow_directory_prefix=True, array_item_limit=array_item_limit
+            )
 
     # --- refs（旧フィールド。型だけ検証し、旧形式の検出（SPEC-RELATION-LEGACY-001）はフェーズCが行う） ---
     if "refs" in value:
@@ -368,8 +380,8 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
             hard.append(_schema_error("refs", messages.fm_null_forbidden("refs")))
         elif not isinstance(v, list) or any(not _is_scalar(x) for x in v):
             hard.append(_schema_error("refs", messages.fm_type_error("refs", "スカラーの配列")))
-        elif len(v) > ARRAY_ITEM_LIMIT:
-            limits.append(_limit_error("refs", messages.array_count_limit("refs")))
+        elif len(v) > array_item_limit:
+            limits.append(_limit_error("refs", messages.array_count_limit("refs", array_item_limit)))
         elif _has_duplicates(v):
             hard.append(_schema_error("refs", messages.fm_array_duplicate("refs")))
 

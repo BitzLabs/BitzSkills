@@ -7,12 +7,15 @@
 - ほかの次元（`specFileCount`など）は今までどおり全体事前検査で判定する。全体事前検査が非成功なら、終了コード4より診断を優先する
   （ADR-063の決定3）。`commandDefinitionCount`だけが超過し、`--workspace`のIDがカタログにないときは、全体事前検査が成功するため
   引数不正（終了コード4）になる（ADR-066のConsequences）。
-- 上限の絶対値は大きいため、`multiws.HARD_LIMITS`と`verify._VERIFY_BINDING_LIMIT`を一時的に小さくして試す。
+- 上限の絶対値は大きいため、操作が使う上限の値（`limits`、ADR-076）を一時的に小さくして試す。設定では書けない0も試すので、
+  設定から上限を決める関数（`bitz.limits.from_config`）を差し替える。
 - 出力が`docs/03.詳細設計/schemas/result.schema.json`に適合し、`PYTHONHASHSEED`を変えても同じ出力になる。
 """
 
 from __future__ import annotations
 
+import contextlib
+import dataclasses
 import json
 import os
 import shutil
@@ -23,7 +26,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from bitz import multiws
+from bitz import limits as limits_mod
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 from bitz.errors import CliArgError
@@ -52,6 +55,19 @@ WEB_YAML = (
     '    extra2:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'
 )
 
+
+
+@contextlib.contextmanager
+def _limits(**values):
+    """操作が使う上限の値（:func:`bitz.limits.from_config`の結果）を差し替える。
+
+    設定の`limits`は1以上の値しか書けないので、0などの境界は差し替えで試す（ADR-076の前は`multiws.HARD_LIMITS`と
+    `verify._VERIFY_BINDING_LIMIT`を差し替えていた）。入れ子にすると、外側の差し替えに重ねる。
+    """
+
+    original = limits_mod.from_config
+    with mock.patch.object(limits_mod, "from_config", lambda config: dataclasses.replace(original(config), **values)):
+        yield
 
 def _git(root: Path, *args: str) -> str:
     proc = subprocess.run(
@@ -207,22 +223,22 @@ class PlanPriorityTests(_Base):
     def test_both_exceeded_reports_verify_binding_count(self):
         self.build()
         for name, (argv, scope) in self.VARIANTS.items():
-            with self.subTest(variant=name), mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}), \
-                    mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+            with self.subTest(variant=name), _limits(commandDefinitionCount=2), \
+                    _limits(verifyBindingCount=0):
                 result, code = self.verify(*argv)
                 self.assert_limit_stop(result, code, "verifyBindingCount", 0, 1)
                 self.assertEqual((result["scope"], result["workspace"]), (scope, {"id": "platform", "path": "."}))
 
     def test_binding_count_alone_reports_verify_binding_count(self):
         self.build(two_bindings=True)
-        with mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 1):
+        with _limits(verifyBindingCount=1):
             result, code = self.verify("platform::REQ-001")
         self.assert_limit_stop(result, code, "verifyBindingCount", 1, 2)
 
     def test_binding_count_is_the_plan_after_deduplication(self):
         # 同じコマンドへの2つのテスト割当ては、重複排除の後で1件になる。上限が1なら超過しない。
         self.build(two_bindings=True, same_command=True)
-        with mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 1):
+        with _limits(verifyBindingCount=1):
             result, code = self.verify("platform::REQ-001")
         self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
         self.assertEqual([c["name"] for c in result["commands"]], ["frontend"])
@@ -230,7 +246,7 @@ class PlanPriorityTests(_Base):
     def test_command_definition_count_alone_is_reported_with_small_plan(self):
         self.build()
         for name, (argv, scope) in self.VARIANTS.items():
-            with self.subTest(variant=name), mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+            with self.subTest(variant=name), _limits(commandDefinitionCount=2):
                 result, code = self.verify(*argv)
                 self.assert_limit_stop(result, code, "commandDefinitionCount", 2, 3)
                 self.assertEqual((result["scope"], result["workspace"]), (scope, {"id": "platform", "path": "."}))
@@ -238,7 +254,7 @@ class PlanPriorityTests(_Base):
     def test_member_working_directory_reports_member_workspace(self):
         # メンバーの配下から`verify`しても、停止結果の`workspace`は作業ワークスペース（`web`）。
         self.build()
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+        with _limits(commandDefinitionCount=2):
             result, code = self.verify(cwd=self.root / "apps" / "web")
         self.assertEqual((result["status"], code), ("blocked", 2))
         self.assertEqual(result["workspace"], {"id": "web", "path": "apps/web"})
@@ -255,7 +271,7 @@ class PlanPriorityTests(_Base):
             with self.subTest(variant=name):
                 web_reports = self.root / "apps" / "web" / ".spec" / "reports"
                 shutil.rmtree(web_reports, ignore_errors=True)
-                with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+                with _limits(commandDefinitionCount=2):
                     result, code = self.verify(*argv, "--report")
                 self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
                 self.assertEqual(result["workspace"], {"id": "web", "path": "apps/web"})
@@ -276,8 +292,8 @@ class PlanPriorityTests(_Base):
             with self.subTest(variant=name):
                 self.marker.unlink(missing_ok=True)
                 # 上限ちょうど（commandDefinitionCount=3、verifyBindingCount=1）は超過ではない。
-                with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 3}), \
-                        mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 1):
+                with _limits(commandDefinitionCount=3), \
+                        _limits(verifyBindingCount=1):
                     result, code = self.verify(*argv)
                 self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
                 self.assertEqual(result["scope"], scope)
@@ -289,9 +305,9 @@ class PlanPriorityTests(_Base):
         # プロセスの起動そのものを数える（マーカーの有無に加えて）。上限内では起動し、超過では起動しない。
         self.build()
         with mock.patch.object(verify_mod.procrun, "run", wraps=verify_mod.procrun.run) as spy:
-            with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+            with _limits(commandDefinitionCount=2):
                 self.verify("platform::REQ-001")
-            with mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+            with _limits(verifyBindingCount=0):
                 self.verify("platform::REQ-001")
             self.assertEqual(spy.call_count, 0)
             self.verify("platform::REQ-001")
@@ -303,13 +319,13 @@ class PlanPriorityTests(_Base):
         result, code = self.verify()
         self.assertEqual((result["status"], code), ("blocked", 2))
         self.assertEqual([d["code"] for d in result["diagnostics"]], [EMPTY_TARGETS])
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+        with _limits(commandDefinitionCount=2):
             result, code = self.verify()
         self.assert_limit_stop(result, code, "commandDefinitionCount", 2, 3)
 
     def test_report_is_saved_for_the_stop_result(self):
         self.build()
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+        with _limits(commandDefinitionCount=2):
             result, code = self.verify("platform::REQ-001", "--report")
         self.assertEqual((result["status"], code), ("blocked", 2))
         saved = sorted((self.root / ".spec" / "reports").glob("*-verify*.json"))
@@ -323,7 +339,7 @@ class PrecheckBoundaryTests(_Base):
     def test_unknown_workspace_with_command_definition_count_is_argument_error(self):
         # 全体事前検査が成功するため、カタログにない`--workspace`は引数不正（終了コード4）。ADR-066のConsequences。
         self.build()
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 2}):
+        with _limits(commandDefinitionCount=2):
             with self.assertRaises(CliArgError) as ctx:
                 self.verify("--workspace", "nope")
         self.assertIn("nope", str(ctx.exception))
@@ -335,8 +351,10 @@ class PrecheckBoundaryTests(_Base):
         self.build()
         proc = subprocess.run(
             [sys.executable, "-c",
-             "import sys\nfrom unittest import mock\nfrom bitz import multiws, cli\n"
-             "with mock.patch.dict(multiws.HARD_LIMITS, {'commandDefinitionCount': 2}):\n"
+             "import dataclasses, sys\nfrom unittest import mock\nfrom bitz import cli, limits\n"
+             "original = limits.from_config\n"
+             "patched = lambda config: dataclasses.replace(original(config), commandDefinitionCount=2)\n"
+             "with mock.patch.object(limits, 'from_config', patched):\n"
              "    sys.exit(cli.main(['verify', '--workspace', 'nope', '--format', 'json']))\n"],
             cwd=self.root, env={**self.env, "PYTHONPATH": os.pathsep.join(sys.path)}, capture_output=True, text=True,
         )
@@ -352,9 +370,7 @@ class PrecheckBoundaryTests(_Base):
         }
         for name, argv in cases.items():
             # `commandDefinitionCount`も同時に超過させても、先に全体事前検査の次元（`specFileCount`）が報告される。
-            with self.subTest(variant=name), mock.patch.dict(
-                multiws.HARD_LIMITS, {"specFileCount": 1, "commandDefinitionCount": 2}
-            ), mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+            with self.subTest(variant=name), _limits(specFileCount=1, commandDefinitionCount=2, verifyBindingCount=0):
                 result, code = self.verify(*argv)
                 self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
                 self.assertEqual([d["code"] for d in result["diagnostics"]], [LIMIT])
@@ -378,8 +394,9 @@ class PrecheckBoundaryTests(_Base):
         _git(r, "config", "user.name", "t")
         _git(r, "add", "-A")
         _git(r, "commit", "-q", "-m", "base")
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 0, "specFileCount": 0}), \
-                mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
+        # 単一ワークスペースは、複合ワークスペースの実行計画の次元（`commandDefinitionCount`、`verifyBindingCount`）を使わない
+        # （安全な入出力・互換性 §4.1）。`specFileCount`は単一ワークスペースの仕様文書のファイル数にも使うので、ここでは変えない。
+        with _limits(commandDefinitionCount=0, verifyBindingCount=0):
             result, code = self.verify("REQ-001")
         self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
         self.assertEqual(result["workspace"], {"id": "solo", "path": "."})
@@ -405,8 +422,7 @@ class AllWorkspacesUnchangedTests(_Base):
             ({}, 0, "verifyBindingCount", 0, 1),
         ]
         for hard, binding_limit, dimension, limit, observed in cases:
-            with self.subTest(dimension=dimension, hard=hard), mock.patch.dict(multiws.HARD_LIMITS, hard), \
-                    mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", binding_limit):
+            with self.subTest(dimension=dimension, hard=hard), _limits(**hard, verifyBindingCount=binding_limit):
                 result, code = self.run_all()
                 self.assertEqual((result["status"], code), ("blocked", 2))
                 self.assertEqual((result["scope"], result["workspaces"]), ("all-workspaces", []))
@@ -423,13 +439,16 @@ class DeterminismTests(_Base):
     """`PYTHONHASHSEED`を変えても、停止結果が同じこと。"""
 
     SCRIPT = (
-        "import json, os, sys\n"
+        "import dataclasses, json, os, sys\n"
         "from unittest import mock\n"
-        "from bitz import multiws, verify\n"
+        "from bitz import limits as limits_mod, verify\n"
         "from bitz.cliargs import parse_argv\n"
         "out = []\n"
-        "for limits, binding in (({'commandDefinitionCount': 2}, 10000), ({'commandDefinitionCount': 2}, 0)):\n"
-        "    with mock.patch.dict(multiws.HARD_LIMITS, limits), mock.patch.object(verify, '_VERIFY_BINDING_LIMIT', binding):\n"
+        "original = limits_mod.from_config\n"
+        "for values in ({'commandDefinitionCount': 2, 'verifyBindingCount': 10000},\n"
+        "               {'commandDefinitionCount': 2, 'verifyBindingCount': 0}):\n"
+        "    patched = lambda config, values=values: dataclasses.replace(original(config), **values)\n"
+        "    with mock.patch.object(limits_mod, 'from_config', patched):\n"
         "        result, code = verify.run(parse_argv(['verify', '--format', 'json']), os.getcwd(), dict(os.environ))\n"
         "    result.pop('durationMs')\n"
         "    out.append([code, result])\n"

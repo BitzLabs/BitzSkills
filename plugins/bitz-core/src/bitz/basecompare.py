@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 
 from . import gitutil
+from . import limits as limits_mod
 from . import messages
 from . import pathown
 from .config import Diagnostic
@@ -75,12 +76,16 @@ def load_base_catalog(
     base_commit: str | None,
     workspace_root: str,
     workspace_id: str,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
 ) -> dict[str, DocEntry]:
-    """Gitの基準版の文書の一覧を``doc_id -> DocEntry``で返す。解決できなければ空の``dict``。"""
+    """Gitの基準版の文書の一覧を``doc_id -> DocEntry``で返す。解決できなければ空の``dict``。
+
+    ``limits``は現在版の設定から決めた上限で、基準版の文書にも適用する（安全な入出力・互換性 §4.1）。
+    """
 
     if not git.available or git.executable is None or base_commit is None:
         return {}
-    return build_base_catalog(git.executable, cwd, env, base_commit, workspace_root, workspace_id)
+    return build_base_catalog(git.executable, cwd, env, base_commit, workspace_root, workspace_id, limits)
 
 
 def unreadable_id_paths(entries: list[DocEntry]) -> set[str]:

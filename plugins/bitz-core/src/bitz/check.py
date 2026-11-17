@@ -27,6 +27,7 @@ from . import config as config_mod
 from . import document as document_mod
 from . import dupclosure
 from . import gitutil
+from . import limits as limits_mod
 from . import messages
 from . import multirelate
 from . import multiws
@@ -497,9 +498,10 @@ def _member_base_diagnostics(
     ws_root_abs: str,
     entries: list[DocEntry],
     current_by_id: dict[str, DocEntry],
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
 ) -> list[Diagnostic]:
     base_root = _base_root_for_git(repo_root, base_path)
-    base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id)
+    base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id, limits)
     current_ids_present = {e.doc_id for e in entries if e.doc_id is not None}
     # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にも比較にもしない（確認事項C105）。
     unreadable_paths = basecompare.unreadable_id_paths(entries)
@@ -541,6 +543,8 @@ def _run_all_workspaces_members(
     workspaces = multiws.ordered_workspaces(pre)
     known_ws_ids = {wid for wid, _, _ in workspaces}
     area_roots = {wid: os.path.abspath(root) for wid, root, _ in workspaces}
+    # 複合ワークスペースでは、ルートワークスペースの設定の`limits`をすべてのワークスペースのファイル単位の上限へ使う（安全な入出力・互換性 §4.1）。
+    limits = limits_mod.from_config(pre.root_config)
 
     per_ws_entries: dict[str, list[DocEntry]] = {}
     per_ws_catalog_diags: dict[str, list[Diagnostic]] = {}
@@ -549,7 +553,7 @@ def _run_all_workspaces_members(
     local_stmt_indices: dict[str, dict[str, dict]] = {}
 
     for wid, root, _relpath in workspaces:
-        catalog = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
+        catalog = document_mod.build_catalog(root, wid, limits=limits, qualify_summary_ids=True)
         for e in catalog.entries:
             e.body = None
         per_ws_entries[wid] = catalog.entries
@@ -581,7 +585,7 @@ def _run_all_workspaces_members(
     top_level_diags: list[Diagnostic] = []
     for deleted_id in sorted(set(base_map) - set(current_map)):
         base_root = _base_root_for_git(pre.repo_root, base_map[deleted_id])
-        base_by_id = basecompare.load_base_catalog(git, cwd, env, resolved_base, base_root, deleted_id)
+        base_by_id = basecompare.load_base_catalog(git, cwd, env, resolved_base, base_root, deleted_id, limits)
         top_level_diags.extend(
             basecompare.state_transition_diagnostics(base_by_id, {}, deleted_id, current_ids_present=set())
         )
@@ -600,7 +604,7 @@ def _run_all_workspaces_members(
             diags.extend(
                 _member_base_diagnostics(
                     git, cwd, env, resolved_base, pre.repo_root, base_map[wid], wid, root, entries,
-                    local_id_indices[wid],
+                    local_id_indices[wid], limits,
                 )
             )
 
@@ -673,7 +677,9 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
             raise CliArgError("check", f"--baseを解決できません: {base_arg}")
 
     extra_revs = [resolved_base] if resolved_base is not None else []
-    pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs, require_declaration=True)
+    pre = multiws.precheck(
+        cwd, git, env, extra_config_revs=extra_revs, require_declaration=True, limit_base_rev=resolved_base
+    )
     if pre.discovery_failed:
         raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
@@ -793,7 +799,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # 最寄りの設定のワークスペース、の順で決める（`activews.select_active`。(a)と(b)が食い違えば引数不正＝終了コード4）。
     # 単一ワークスペースは軽量な従来の経路のまま、事前検査を行わない。`--all-workspaces`は別の経路
     # （`_run_all_workspaces`）が処理するためここには来ない。
-    sel = activews.select_active("check", parsed.positionals, requested_workspace, cwd, git, env, loc)
+    sel = activews.select_active(
+        "check", parsed.positionals, requested_workspace, cwd, git, env, loc, limit_base_rev=base_commit
+    )
     if sel.stop is not None:
         return _stopped_result(sel.stop, scope, revision, want_report, started)
     multi_pre = sel.pre
@@ -823,6 +831,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             }
         )
 
+    catalog_stopped = False
     if loc.config_path is None:
         workspace_id = None
         diagnostics.append(
@@ -849,7 +858,20 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             if multi_pre is not None and multi_pre.ok:
                 ws_roots = {wid: root for wid, root, _rel in multiws.ordered_workspaces(multi_pre)}
             multi_active = multi_pre is not None and multi_pre.ok and workspace_id in ws_roots
-            catalog = document_mod.build_catalog(loc.root, workspace_id, qualify_summary_ids=multi_active)
+            # 上限は、単一ワークスペースでは作業ワークスペースの設定、複合ワークスペースではルートの設定から決める（安全な入出力・互換性 §4.1）。
+            limits = limits_mod.for_workspace(
+                outcome.config, multi_pre.root_config if multi_pre is not None else None, multi_active=multi_active
+            )
+            catalog = document_mod.build_catalog(
+                loc.root, workspace_id, limits=limits, qualify_summary_ids=multi_active
+            )
+            # 仕様文書のファイル数の上限の超過（`INPUT-LIMIT-SPEC-COUNT`）は`stop-operation`なので、その診断だけを返し、
+            # 関係・パス・基準版との比較などの後続の検査へ進まない（診断レジストリ、安全な入出力・互換性 §4.1）。
+            catalog_stopped = catalog.stopped
+            if catalog_stopped:
+                diagnostics.extend(d.to_dict() for d in catalog.diagnostics)
+        if not outcome.stop and not catalog_stopped:
+            assert loc.root is not None
             catalog_diags = catalog.diagnostics
             member_catalogs: dict[str, document_mod.CatalogResult] = {}
             if multi_active:
@@ -893,7 +915,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             changed_paths: list[gitutil.ChangedPath] = []
             if base_commit is not None:
                 base_by_id = basecompare.load_base_catalog(
-                    git, cwd, env, base_commit, loc.root, workspace_id
+                    git, cwd, env, base_commit, loc.root, workspace_id, limits
                 )
                 if git.available and git.executable:
                     changed_paths = gitutil.collect_changed_paths(

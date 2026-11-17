@@ -30,7 +30,7 @@ from pathlib import Path
 from unittest import mock
 
 from bitz import check as check_mod
-from bitz import multiws
+from bitz import limits as limits_mod
 from bitz import verify as verify_mod
 from bitz.cliargs import parse_argv
 from bitz.resultmodel import sort_diagnostics
@@ -174,14 +174,14 @@ class VerifyPlanLimitReportTests(_Base):
         self.commit()
 
     def test_plan_limit_result_is_saved(self):
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 1}):
+        with mock.patch.object(limits_mod, "from_config", return_value=limits_mod.Limits(commandDefinitionCount=1)):
             result, code = self.run_op(verify_mod, "verify", "--report")
         self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
         self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-LIMIT-001"])
         self.assert_saved_once(result, "verify")
 
     def test_plan_limit_without_report_writes_nothing(self):
-        with mock.patch.dict(multiws.HARD_LIMITS, {"commandDefinitionCount": 1}):
+        with mock.patch.object(limits_mod, "from_config", return_value=limits_mod.Limits(commandDefinitionCount=1)):
             result, code = self.run_op(verify_mod, "verify")
         self.assertEqual(code, 2, result["diagnostics"])
         self.assertFalse((self.root / ".spec" / "reports").exists())

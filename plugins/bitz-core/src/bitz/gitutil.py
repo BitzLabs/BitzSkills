@@ -560,3 +560,143 @@ def is_config_tracked(executable: str, cwd: str, env: dict[str, str], path: str)
     except (OSError, subprocess.SubprocessError):
         return False
     return proc.returncode == 0
+
+
+# --- 基準版のスナップショットのリソースの上限（複合ワークスペース仕様 §10、`check --base`） ------------------------
+
+
+@dataclass(frozen=True)
+class TreeBlob:
+    """Gitのツリーオブジェクトの通常のファイルの項目（オブジェクトIDとバイト数）。"""
+
+    oid: str
+    size: int
+
+
+def list_tree_blobs(
+    executable: str, toplevel: str, env: dict[str, str], rev: str, prefix: str
+) -> dict[str, TreeBlob] | None:
+    """``rev``の時点の``prefix``（リポジトリのルートからの相対のディレクトリ）の配下の通常のファイルを、
+    リポジトリのルートからの相対パスをキーにして返す。シンボリックリンク（モード ``120000``）とサブモジュールの`gitlink`は除く。
+
+    `--full-tree`でパスの指定と出力をリポジトリのルートからの相対にそろえ、`-z`でパスを原文のまま受け取る（`core.quotePath`に依存しない）。
+    ``prefix``は字句どおりのパスとして扱う（`--literal-pathspecs`）。Gitが失敗したときは``None``を返す。
+    """
+
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "--literal-pathspecs", "ls-tree", "--full-tree", "-r", "-l", "-z",
+             rev, "--", prefix],
+            cwd=toplevel, env=env, capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    out: dict[str, TreeBlob] = {}
+    for tok in proc.stdout.split(b"\0"):
+        if b"\t" not in tok:
+            continue
+        meta, raw_path = tok.split(b"\t", 1)
+        parts = meta.split()
+        if len(parts) < 4:
+            continue
+        mode, obj_type, oid, size = parts[0], parts[1], parts[2], parts[3]
+        if obj_type != b"blob" or mode == b"120000" or not size.isdigit():
+            continue
+        path = raw_path.decode("utf-8", "surrogateescape")
+        if path != prefix and not path.startswith(prefix.rstrip("/") + "/"):
+            continue
+        out[path] = TreeBlob(oid=oid.decode("ascii"), size=int(size))
+    return out
+
+
+def diff_non_additions(
+    executable: str, toplevel: str, env: dict[str, str], rev: str, prefixes: list[str]
+) -> list[str] | None:
+    """``rev``から作業ツリーまでの、``prefixes``の配下の追加以外の変更（変更、削除、リネーム、種別の変更など）のパスを返す。
+
+    リネームを検出せず（`--no-renames`。リネームは削除と追加になる）、追加（`A`）だけを除く。未追跡のファイルは現れない（追加にあたる）。
+    Gitが失敗したときは``None``を返す。
+    """
+
+    if not prefixes:
+        return []
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "--literal-pathspecs", "diff", "-z", "--no-color", "--no-ext-diff",
+             "--no-renames", "--name-only", "--diff-filter=a", rev, "--", *prefixes],
+            cwd=toplevel, env=env, capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return [p.decode("utf-8", "surrogateescape") for p in proc.stdout.split(b"\0") if p]
+
+
+class BlobReader:
+    """`git cat-file --batch`で、オブジェクトIDからファイルの内容を1件ずつ読む。
+
+    1件ごとに要求して読み切るので、内容をすべて同時に保持しない（複合ワークスペース仕様 §10.1）。
+    起動や読取りに失敗したときは、以後の読取りに``None``を返す。
+    """
+
+    def __init__(self, executable: str, toplevel: str, env: dict[str, str]) -> None:
+        self._argv = [executable, "--no-optional-locks", "cat-file", "--batch"]
+        self._cwd = toplevel
+        self._env = env
+        self._proc: subprocess.Popen | None = None
+        self._failed = False
+
+    def __enter__(self) -> "BlobReader":
+        try:
+            self._proc = subprocess.Popen(
+                self._argv, cwd=self._cwd, env=self._env,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            )
+        except OSError:
+            self._failed = True
+        return self
+
+    def __exit__(self, *exc) -> None:
+        proc = self._proc
+        if proc is None:
+            return
+        try:
+            if proc.stdin is not None:
+                proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        if proc.stdout is not None:
+            proc.stdout.close()
+
+    def read(self, oid: str) -> bytes | None:
+        proc = self._proc
+        if self._failed or proc is None or proc.stdin is None or proc.stdout is None:
+            return None
+        try:
+            proc.stdin.write(oid.encode("ascii") + b"\n")
+            proc.stdin.flush()
+            header = proc.stdout.readline()
+            fields = header.split()
+            if len(fields) != 3 or not fields[2].isdigit():
+                # `<oid> missing`など。内容が続かないので、次の要求へ進める。
+                if not header:
+                    self._failed = True
+                return None
+            size = int(fields[2])
+            data = proc.stdout.read(size)
+            proc.stdout.read(1)  # 内容の後の改行
+            if len(data) != size:
+                self._failed = True
+                return None
+            return data
+        except (OSError, ValueError):
+            self._failed = True
+            return None

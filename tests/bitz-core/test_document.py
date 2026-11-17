@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 from bitz import document as doc_mod
+from bitz import limits as limits_mod
 
 WORKSPACE_ID = "root"
 
@@ -347,7 +348,7 @@ class SpecFileCountLimitTests(unittest.TestCase):
             _write(root, ".spec/bitz.yaml", "schemaVersion: \"1.0\"\nearsAi: \"1.0\"\n")
             for i in range(1, 4):
                 _write(root, f".spec/requirements/REQ-{i:03d}.md", REQ_OK.replace("REQ-001", f"REQ-{i:03d}"))
-            catalog = doc_mod.build_catalog(root, WORKSPACE_ID, spec_file_count_limit=2)
+            catalog = doc_mod.build_catalog(root, WORKSPACE_ID, limits=limits_mod.Limits(specFileCount=2))
             self.assertEqual(len(catalog.diagnostics), 1)
             diag = catalog.diagnostics[0]
             self.assertEqual(diag.code, "SPEC-INPUT-LIMIT-001")
@@ -361,7 +362,7 @@ class SpecFileCountLimitTests(unittest.TestCase):
             _write(root, ".spec/bitz.yaml", "schemaVersion: \"1.0\"\nearsAi: \"1.0\"\n")
             for i in range(1, 3):
                 _write(root, f".spec/requirements/REQ-{i:03d}.md", REQ_OK.replace("REQ-001", f"REQ-{i:03d}"))
-            catalog = doc_mod.build_catalog(root, WORKSPACE_ID, spec_file_count_limit=2)
+            catalog = doc_mod.build_catalog(root, WORKSPACE_ID, limits=limits_mod.Limits(specFileCount=2))
             self.assertEqual(catalog.diagnostics, [])
             self.assertEqual(catalog.checked_document_count, 2)
 
