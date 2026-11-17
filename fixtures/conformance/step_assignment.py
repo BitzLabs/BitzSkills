@@ -6,6 +6,10 @@
 - 接頭辞のない番号は、同じ段落で直前に現れた接頭辞（`SINGLE-`または`MULTI-`）を引き継ぐ。
 - `A`〜`B`は範囲を表す。枝番付きの`A`に2桁の`B`が続けば同じファミリーの枝番の範囲、
   3桁どうしならファミリーの範囲（枝番をすべて含む）とする。
+
+実寸の上限のfixture（適合fixture仕様 §3.4が名前を挙げるファミリー）は、手動で実行する検証であり、Stepに含めない
+（ADR-076）。`steps.json`の`manual`がその一覧を持つ。実装計画の範囲表記がそれらを含んでも、各Stepからは除いて照合し、
+`manual`は§3.4が挙げるファミリーのmatrixのIDと、生成fixtureのディレクトリにちょうど対応することを確かめる。
 """
 import json
 from pathlib import Path
@@ -17,6 +21,22 @@ PLAN = ROOT / "docs/04.提案資料/12_Core-1.0実装計画.md"
 MATRIX = ROOT / "docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md"
 SECTIONS = {1: "## 4. Step 1", 2: "## 5. Step 2", 3: "## 6. Step 3", 4: "## 7. Step 4", 5: "## 8. Step 5"}
 TOKEN = re.compile(r"`((?:SINGLE|MULTI)-)?(\d{3})(?:-(\d{2}))?`(?:〜`((?:SINGLE|MULTI)-)?(\d{2,3})(?:-(\d{2}))?`)?")
+
+
+MANUAL_SENTENCE = re.compile(r"実寸の上限のfixture（([^）]*)）")
+MANUAL_FAMILY = re.compile(r"`((?:SINGLE|MULTI)-\d{3})-\*`")
+
+
+def manual_families(text=None):
+    """適合fixture仕様 §3.4が手動の検証として名前を挙げるファミリー（例: `MULTI-020`）。"""
+    text = MATRIX.read_text() if text is None else text
+    match = MANUAL_SENTENCE.search(text)
+    if match is None:
+        raise ValueError("適合fixture仕様に実寸の上限のfixtureの一覧がありません")
+    families = MANUAL_FAMILY.findall(match.group(1))
+    if not families:
+        raise ValueError("適合fixture仕様の実寸の上限のfixtureの一覧が空です")
+    return families
 
 
 def matrix_ids(text=None):
@@ -84,8 +104,27 @@ def validate(root=HERE, plan_text=None):
         document = json.loads((root / "steps.json").read_text())
         declared = {entry["step"]: entry for entry in document["steps"]}
         planned = plan_steps(plan_text, ids)
+        manual_list = document["manual"]["fixtures"]
+        families = manual_families()
     except (OSError, ValueError, KeyError, TypeError) as error:
         return {"status": "Failed", "errors": [f"steps.json: {str(error).splitlines()[0]}"]}
+    manual = set(manual_list)
+    expected_manual = {identifier for identifier in ids if identifier.rsplit("-", 1)[0] in families}
+    if manual_list != sorted(manual, key=lambda value: ids.index(value) if value in ids else len(ids)):
+        errors.append("手動の一覧のIDがmatrixの順序で重複なく並んでいません")
+    if manual != expected_manual:
+        errors.append(f"手動の一覧が適合fixture仕様 §3.4の実寸の上限のfixtureと一致しません: "
+                      f"欠落={sorted(expected_manual - manual)}、余分={sorted(manual - expected_manual)}")
+    for identifier in manual_list:
+        fixture = root / "multi" / identifier
+        try:
+            manifest = json.loads((fixture / "manifest.json").read_text())
+        except (OSError, ValueError):
+            errors.append(f"{identifier}: 手動の一覧のfixtureのディレクトリがありません")
+            continue
+        if manifest.get("fixtureId") != identifier or "generate" not in manifest.get("setup", {}):
+            errors.append(f"{identifier}: 手動の一覧のfixtureは実寸の入力を生成するfixtureである必要があります")
+    planned = {step: selected - manual for step, selected in planned.items()}
     if sorted(declared) != sorted(planned):
         errors.append("`steps.json`のStepが実装計画と異なります")
     parser_ids = set()
@@ -95,6 +134,8 @@ def validate(root=HERE, plan_text=None):
             errors.append(f"Step {step}: IDがmatrixの順序で重複なく並んでいません")
         if fixtures & parser_checks:
             errors.append(f"Step {step}: 公開結果と構文解析器の受入の両方に同じIDがあります")
+        if (fixtures | parser_checks) & manual:
+            errors.append(f"Step {step}: 手動で実行する実寸の上限のfixtureをStepに置いています")
         if fixtures | parser_checks != planned.get(step, set()):
             errors.append(f"Step {step}: 実装計画の完了条件と一致しません")
         for identifier in sorted(parser_checks):
@@ -103,10 +144,11 @@ def validate(root=HERE, plan_text=None):
                 errors.append(f"{identifier}: `parserChecks`を持たないfixtureを構文解析器の受入に置いています")
         parser_ids |= parser_checks
     public = {identifier for entry in declared.values() for identifier in entry["fixtures"]}
-    for identifier in sorted(set(ids) - public):
-        errors.append(f"{identifier}: 公開結果を比較するStepがありません")
+    for identifier in sorted(set(ids) - public - manual):
+        errors.append(f"{identifier}: 公開結果を比較するStepも手動の一覧もありません")
     for path in sorted((root / "single").glob("*/manifest.json")):
         if "parserChecks" in json.loads(path.read_text()) and path.parent.name not in parser_ids:
             errors.append(f"{path.parent.name}: 構文解析器の受入を行うStepがありません")
     return {"steps": {str(step): len(entry["fixtures"]) for step, entry in sorted(declared.items())},
+            "manual": len(manual_list),
             "status": "Passed" if not errors else "Failed", "errors": errors}

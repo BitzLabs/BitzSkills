@@ -7,6 +7,8 @@
 
 `--core`が指す検査対象Core(ソースのディレクトリまたはwheel)へ、`--step`または`--fixture`で選んだ
 マニフェストを実行し、合否と差分をJSONで報告する。選んだfixtureがすべて`passed`の場合だけ終了コード0とする。
+`--step`はStepの完了fixtureだけを選ぶ。実寸の上限のfixture(`steps.json`の`manual`)は、`--suite scale`か
+`--fixture`で選んだときだけ実行する手動の検証であり、Gateの認定の対象ではない(ADR-076)。
 このスクリプトと`conformance/`はCoreに依存せず、`bitz`をインポートしない(ADR-049 Decision 6)。
 """
 import argparse
@@ -21,7 +23,7 @@ from jsonschema import Draft202012Validator
 sys.dont_write_bytecode = True
 from conformance.runner import CoreEnvironment, CoreEnvironmentError, host_tool_versions, run_fixture
 from conformance.schemas import schema_path
-from conformance.selection import step_ids, selected_ids
+from conformance.selection import manual_ids, step_ids, selected_ids
 
 HERE = Path(__file__).resolve().parent
 CONFORMANCE_ROOT = HERE / "conformance"
@@ -40,6 +42,10 @@ def resolve_fixture_ids(args):
             if identifier not in ordered:
                 ordered.append(identifier)
         return ordered
+    if args.suite == "scale":
+        # 手動の一覧はStepに属さない。`--step`の値は存在するStepであることだけを検査する。
+        step_ids(args.step)
+        return manual_ids()
     return step_ids(args.step)
 
 
@@ -56,12 +62,14 @@ def parse_args(argv):
         description="Bitz Core 1.0の参照適合harness。`--core`に対して選んだfixtureを実行し、合否をJSONで報告する。")
     parser.add_argument("--core", required=True, help="検査対象Coreのソースのディレクトリまたは`.whl`ファイル")
     selector = parser.add_mutually_exclusive_group(required=True)
-    selector.add_argument("--step", type=int, help="`steps.json`のStep 1..Nのfixtureを累積で選ぶ")
+    selector.add_argument("--step", type=int,
+                          help="`steps.json`のStep 1..Nのfixtureを累積で選ぶ。`--suite scale`では手動の一覧を選ぶ")
     selector.add_argument("--fixture", action="append", dest="fixtures", metavar="ID",
                            help="`single/`または`multi/`のfixture IDを選ぶ。反復可能")
     parser.add_argument("--output", help="結果JSONの書き出し先。省略時は標準出力")
     parser.add_argument("--suite", choices=("full", "standard", "scale"), default="full",
-                        help="開発時の部分検査。Gate認定は`full`だけを使用する")
+                        help="`full`と`standard`はStepのfixture、`scale`は手動で実行する実寸の上限のfixture"
+                             "(`steps.json`の`manual`)。Gate認定は`full`だけを使用する")
     parser.add_argument("--shard", type=int, default=1, help="1から始まる分割番号")
     parser.add_argument("--shards", type=int, default=1, help="分割数")
     parser.add_argument("--timings", help="工程別の所要時間を保存する別JSON")

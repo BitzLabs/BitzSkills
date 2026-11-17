@@ -12,6 +12,7 @@ from . import activews
 from . import config as config_mod
 from . import execfile
 from . import gitutil
+from . import limits as limits_mod
 from . import messages
 from . import multiws
 from . import pathown
@@ -237,7 +238,34 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
                 "id": wid, "path": path, "status": local["status"], "checks": local["checks"],
                 "durationMs": _elapsed_ms(member_started), "diagnostics": local["diagnostics"],
             })
-    return _build_multi_result(pre.root_id, checks, diagnostics, started, workspaces)
+    result, exit_code = _build_multi_result(pre.root_id, checks, diagnostics, started, workspaces)
+    # 最上位にだけ置き、ワークスペースの要素へ複製しない。全体事前検査がほかの原因で非成功でも、ルートの設定を読めて
+    # スキーマに適合し`limits`を宣言していれば返す（`doctor` §7）。
+    _attach_limits(result, pre.root_config, pre.root_config_valid)
+    return result, exit_code
+
+
+def _config_schema_valid(outcome: config_mod.ConfigOutcome | None) -> tuple[dict | None, bool]:
+    """設定の読込みの結果から``(設定の値, スキーマに適合したか)``を返す。
+
+    型と値の範囲の検査を通過した設定（EARS-AIのメジャーバージョンの非対応で止まった設定を含む）を適合とする。
+    """
+
+    if outcome is None:
+        return None, False
+    if outcome.stop_stage is None:
+        return outcome.config, True
+    if outcome.stop_stage == "ears-major":
+        return outcome.parsed, True
+    return None, False
+
+
+def _attach_limits(result: dict, config: dict | None, schema_valid: bool) -> None:
+    """設定が`limits`を宣言していれば、結果の最上位へ実際に使う上限の値を加える（`doctor` §7、ADR-076）。"""
+
+    payload = limits_mod.doctor_result(config, schema_valid)
+    if payload is not None:
+        result["limits"] = payload
 
 
 def _build_multi_result(
@@ -327,6 +355,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         diagnostics.extend(sel.stop.diagnostics)
         result = _build_result(sel.stop.workspace_id, checks, diagnostics, started)
         result["workspace"]["path"] = sel.stop.rel_path
+        # 全体事前検査が非成功でも、ルートの設定を読めてスキーマに適合し`limits`を宣言していれば返す（`doctor` §7）。
+        _attach_limits(result, sel.pre.root_config, sel.pre.root_config_valid)
         return result, _exit_code(result["status"])
 
     result, exit_code = _diagnose_workspace(
@@ -334,6 +364,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     )
     # 複合ワークスペース内の単独操作の`workspace.path`は、リポジトリのルートからの相対パス（結果・診断・終了コード §2）。
     result["workspace"]["path"] = workspace_path
+    # `limits`は、作業ワークスペースの設定（複合ワークスペースではルートワークスペースの設定）から決める（`doctor` §7）。
+    if sel.pre is not None:
+        _attach_limits(result, sel.pre.root_config, sel.pre.root_config_valid)
+    else:
+        _attach_limits(result, *_config_schema_valid(outcome))
     return result, exit_code
 
 

@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-183-02",
+  "description": "limitsの一部のキーを小さくしたdoctorはその値と残りの絶対上限を表の順に返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

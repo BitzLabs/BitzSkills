@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-069-13",
+  "description": "テスト割当て数がlimitsの4ちょうどなら遮断しない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "reportFileCount": 0,
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json"
+  }
+}

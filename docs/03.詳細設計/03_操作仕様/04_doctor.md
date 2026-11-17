@@ -146,6 +146,26 @@ earsAi: "1.0"
 `core`はすべての`doctor`の結果で必須とする。Core実行体を観測できない`SPEC-DOCTOR-CORE-002`の場合だけ`version`と
 `apiVersion`を`null`、`capabilities`を空配列にする。それ以外は観測した文字列値と対応機能の配列を返す。
 
+作業ワークスペースの設定（複合ワークスペースではルートワークスペースの設定）が`limits`を宣言している場合は、結果の最上位に`limits`を加える。
+`limits`は、[安全な入出力・互換性 §4.1](../00_共通契約/02_安全な入出力・互換性.md#41-上限の設定)の表のすべてのキーを、表の順に持ち、
+実際に使う上限の値（設定した値、または省略したキーの絶対上限）を整数で返す。空のマッピング（`limits: {}`）も宣言とする。
+設定が`limits`を宣言していない場合、設定を読めない場合、設定がスキーマに適合しない場合（`SPEC-CONFIG-SCHEMA-001`）は、`limits`を返さない。複合ワークスペースでは、ルートワークスペースの設定を読めて、スキーマに適合し、`limits`を宣言していれば、
+全体事前検査がほかの原因で非成功になる場合も返す。`--all-workspaces`の結果でも最上位にだけ置き、
+ワークスペースの要素へ複製しない。`--format text`の出力は変えない。
+
+```json
+{
+  "limits": {
+    "specBytes": 1048576, "frontmatterBytes": 32768, "specFileCount": 5,
+    "documentStatementCount": 1000, "documentArrayItemCount": 1000,
+    "inputBytes": 268435456, "statementCount": 100000, "relationEdgeCount": 1000000,
+    "traceEntryCount": 1000000, "commandDefinitionCount": 10000, "verifyBindingCount": 10000,
+    "excludeCount": 100, "expandedArgvCount": 10000, "expandedArgvElementBytes": 32768,
+    "expandedArgvBytes": 1048576
+  }
+}
+```
+
 | `checks[]`のフィールド | 型 | 必須 | 内容 |
 |---|---|:--:|---|
 | `name` | 文字列 | ○ | 安定した検査の名前 |

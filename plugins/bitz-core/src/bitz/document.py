@@ -16,6 +16,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import frontmatter as fm_mod
+from . import limits as limits_mod
 from . import messages
 from .config import Diagnostic
 from .earsai import ir as ir_mod
@@ -23,10 +24,8 @@ from .earsai.parser import parse_document
 from .earsai.scanner import normal_line_numbers, normalize_newlines, scan_candidates
 from .yamlsafe import YamlForbiddenError, YamlSyntaxError, parse_yaml_subset
 
-SPEC_SIZE_LIMIT_BYTES = 1024 * 1024
-FRONTMATTER_SIZE_LIMIT_BYTES = 32 * 1024
-STATEMENT_COUNT_LIMIT = 1000
-SPEC_FILE_COUNT_LIMIT = 10_000
+# ファイル単位の上限（仕様文書の大きさ、フロントマターの大きさ、1文書の規範文の数、1文書の配列の項目の数）と仕様文書のファイル数は、
+# 呼び出し側が渡す:class:`bitz.limits.Limits`で決める（安全な入出力・互換性 §4・§4.1、ADR-076）。省略したときは絶対上限を使う。
 
 DOC_KIND_DIR = {"REQ": "requirements", "TECH": "technical", "ADR": "decisions", "TASK": "tasks"}
 DIR_TO_KIND = {v: k for k, v in DOC_KIND_DIR.items()}
@@ -124,6 +123,8 @@ class CatalogResult:
     diagnostics: list[Diagnostic] = field(default_factory=list)
     checked_document_count: int = 0
     checked_statement_count: int = 0
+    #: 仕様文書のファイル数の上限を超えて操作を止めたか（`INPUT-LIMIT-SPEC-COUNT`、`stop-operation`）。
+    stopped: bool = False
 
 
 def _discover_top_level(spec_dir: str) -> list[str]:
@@ -216,6 +217,20 @@ def _extract_frontmatter(text: str) -> tuple[str | None, str | None, int | None]
     body = text[closing + marker_length :]
     closing_line = text.count("\n", 0, closing + 1)
     return raw, body, closing_line
+
+
+def _frontmatter_bytes(fm_raw: str, closing_line: int | None) -> int:
+    """フロントマターの大きさ（文書・フロントマター・状態仕様 §11）。
+
+    改行を正規化した後の本文で、開始の区切りの行と終了の区切りの行の間にある各行を、その行の改行（1バイト）を含めて数えた
+    UTF-8のバイト数の合計とする。区切りの行自身は含めない。間に行がなければ0バイトとする。``fm_raw``と``closing_line``は
+    :func:`_extract_frontmatter`の戻り値で、``fm_raw``は間の行を改行でつないだもの（最後の行の改行を含まない）、
+    ``closing_line``は終了の区切りの行の0始まりの行番号（開始の区切りの行は0行目なので、間の行の数は``closing_line - 1``）。
+    """
+
+    if closing_line is None or closing_line <= 1:
+        return 0
+    return len(fm_raw.encode("utf-8")) + 1
 
 
 _TOP_KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):")
@@ -320,7 +335,9 @@ def _check_sections(h2_index: list[tuple[int, str]], lines: list[str], path: str
     return diags
 
 
-def _process_document(spec_dir: str, path: str, kind: str, workspace_id: str) -> DocEntry:
+def _process_document(
+    spec_dir: str, path: str, kind: str, workspace_id: str, limits: limits_mod.Limits = limits_mod.ABSOLUTE
+) -> DocEntry:
     abs_path = os.path.join(spec_dir, path[len(".spec/") :])
 
     raw, ok = _read_bytes(abs_path)
@@ -328,20 +345,28 @@ def _process_document(spec_dir: str, path: str, kind: str, workspace_id: str) ->
         entry = DocEntry(path=path, kind=kind)
         entry.hard = [_mk("SPEC-INPUT-READ-001", "error", "error", messages.SPEC_IO_UNREADABLE, path, workspace_id)]
         return entry
-    return _process_document_content(raw, path, kind, workspace_id)
+    return _process_document_content(raw, path, kind, workspace_id, limits)
 
 
-def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: str) -> DocEntry:
+def _process_document_content(
+    raw: bytes, path: str, kind: str, workspace_id: str, limits: limits_mod.Limits = limits_mod.ABSOLUTE
+) -> DocEntry:
     """バイト列から:class:`DocEntry`を組み立てる（`_process_document`のファイルの読取り以降を共有する）。
 
     Gitの基準版の文書の解析（:func:`build_base_catalog`）でも同じ関数を使う（`02_check.md`の
     「基準版の文書の解析は現在版と同じフロントマター／構文解析器を使う」）。ファイルの読取り自体のI/Oエラー
     （`SPEC-INPUT-READ-001`）だけは呼び出し側（`_process_document`）の責務であり、ここには含めない。
+    ``limits``はファイル単位の上限（`specBytes`、`frontmatterBytes`、`documentStatementCount`、`documentArrayItemCount`）を決める。
     """
 
     entry = DocEntry(path=path, kind=kind)
-    if len(raw) > SPEC_SIZE_LIMIT_BYTES:
-        entry.hard = [_mk("SPEC-INPUT-LIMIT-001", "error", "failed", messages.SPEC_SIZE_LIMIT, path, workspace_id)]
+    if len(raw) > limits.specBytes:
+        entry.hard = [
+            _mk(
+                "SPEC-INPUT-LIMIT-001", "error", "failed",
+                messages.spec_size_limit(limits_mod.format_bytes(limits, "specBytes", "1 MiB")), path, workspace_id,
+            )
+        ]
         return entry
 
     if raw.startswith(b"\xef\xbb\xbf"):
@@ -362,9 +387,13 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
         ]
         return entry
 
-    if len(fm_raw.encode("utf-8")) > FRONTMATTER_SIZE_LIMIT_BYTES:
+    if _frontmatter_bytes(fm_raw, closing_idx) > limits.frontmatterBytes:
         entry.hard = [
-            _mk("SPEC-INPUT-LIMIT-001", "error", "failed", messages.FRONTMATTER_SIZE_LIMIT, path, workspace_id)
+            _mk(
+                "SPEC-INPUT-LIMIT-001", "error", "failed",
+                messages.frontmatter_size_limit(limits_mod.format_bytes(limits, "frontmatterBytes", "32 KiB")),
+                path, workspace_id,
+            )
         ]
         return entry
 
@@ -388,7 +417,7 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
         entry.hard = [_mk("SPEC-FM-SCHEMA-001", "error", "failed", exc.summary, path, workspace_id, key=exc.key)]
         return entry
 
-    outcome = fm_mod.validate(value, kind)
+    outcome = fm_mod.validate(value, kind, array_item_limit=limits.documentArrayItemCount)
     if outcome.hard:
         entry.hard = [_issue_to_diag(i, path, workspace_id) for i in outcome.hard]
         return entry
@@ -412,9 +441,12 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
 
     # --- EARS-AI構文 ------------------------------------------------------
     candidates = scan_candidates(text)
-    if len(candidates) > STATEMENT_COUNT_LIMIT:
+    if len(candidates) > limits.documentStatementCount:
         entry.hard = [
-            _mk("SPEC-INPUT-LIMIT-001", "error", "failed", messages.STATEMENT_COUNT_LIMIT, path, workspace_id)
+            _mk(
+                "SPEC-INPUT-LIMIT-001", "error", "failed",
+                messages.statement_count_limit(limits.documentStatementCount), path, workspace_id,
+            )
         ]
         return entry
 
@@ -524,9 +556,16 @@ def build_catalog(
     workspace_root: str,
     workspace_id: str,
     *,
-    spec_file_count_limit: int = SPEC_FILE_COUNT_LIMIT,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
     qualify_summary_ids: bool = False,
 ) -> CatalogResult:
+    """ワークスペースの仕様文書の一覧を作り、各文書を検査する。
+
+    ``limits``は、仕様文書のファイル数（`specFileCount`）とファイル単位の上限を決める（安全な入出力・互換性 §4.1）。
+    単一ワークスペースは作業ワークスペースの設定、複合ワークスペースはルートワークスペースの設定から決めた値を渡す。
+    """
+
+    spec_file_count_limit = limits.specFileCount
     result = CatalogResult()
     spec_dir = os.path.join(workspace_root, ".spec")
     if not os.path.isdir(spec_dir):
@@ -555,6 +594,7 @@ def build_catalog(
                 workspace_id,
             )
         ]
+        result.stopped = True
         return result
 
     for name in sorted(unknown_top):
@@ -583,7 +623,7 @@ def build_catalog(
     entries: list[DocEntry] = []
     for kind in ("REQ", "TECH", "ADR", "TASK"):
         for path in kind_files[kind]:
-            entries.append(_process_document(spec_dir, path, kind, workspace_id))
+            entries.append(_process_document(spec_dir, path, kind, workspace_id, limits))
 
     # --- IDの一意性（ファイル名／フロントマターの段階を通過した文書だけを対象にする） --------
     by_id: dict[str, list[DocEntry]] = {}
@@ -637,8 +677,11 @@ def build_base_catalog(
     base_rev: str,
     workspace_root: str,
     workspace_id: str,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
 ) -> dict[str, DocEntry]:
     """Gitの基準版``base_rev``の時点の文書の一覧を``doc_id -> DocEntry``で返す（`02_check.md §5・§9`）。
+
+    ``limits``は現在版の設定から決めた上限で、基準版の文書にも同じファイル単位の上限を適用する（安全な入出力・互換性 §4.1）。
 
     現在版と同じ:func:`_process_document_content`を使う（`基準版の文書の解析は現在版と同じ
     フロントマター／構文解析器を使う`）。フロントマターが壊れている、ファイル名のIDと不一致、EARS-AI構文が壊れている
@@ -660,7 +703,7 @@ def build_base_catalog(
         raw = gitutil.show_base_file(git_executable, cwd, env, base_rev, workspace_root, path)
         if raw is None:
             continue
-        entry = _process_document_content(raw, path, kind, workspace_id)
+        entry = _process_document_content(raw, path, kind, workspace_id, limits)
         if entry.hard is not None or entry.duplicate:
             continue
         if entry.doc_id is None or entry.doc_id in result:

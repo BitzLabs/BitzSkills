@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "m001",
+      "path": "members/m001",
+      "status": "failed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-INPUT-LIMIT-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "1文書の規範文数が1上限を超過しました",
+          "source": {
+            "kind": "file",
+            "workspaceId": "m001",
+            "path": ".spec/technical/TECH-000002.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "m002",
+      "path": "members/m002",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

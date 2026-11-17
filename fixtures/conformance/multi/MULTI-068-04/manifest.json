@@ -1,0 +1,31 @@
+{
+  "fixtureId": "MULTI-068-04",
+  "description": "メンバーの中の単独のdoctorはルートの設定のlimitsを返す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

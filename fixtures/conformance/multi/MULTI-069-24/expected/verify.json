@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "platform::TECH-000001",
+          "status": "passed",
+          "contextDigest": "sha256:249f7a648617dc31d56b784d543df25dccf78b69b8e24ef86ac1ab911e57dd46",
+          "statements": [
+            "platform::TECH-000001:AC-0001"
+          ],
+          "bindingRefs": [
+            "platform::c00001"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "platform::c00001",
+          "workspaceId": "platform",
+          "name": "c00001",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_00001.py"
+          ],
+          "tests": [
+            "tests/test_00001.py"
+          ],
+          "covers": [
+            "platform::TECH-000001:AC-0001"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "m001",
+      "path": "members/m001",
+      "status": "blocked",
+      "targetResults": [
+        {
+          "target": "m001::TECH-000002",
+          "status": "blocked",
+          "contextDigest": "sha256:0b109437619ff932dcdd54b3384e4456d37424594993ddfb1c9916b625cd1a22",
+          "statements": [
+            "m001::TECH-000002:AC-0001",
+            "m001::TECH-000002:AC-0002"
+          ],
+          "bindingRefs": [],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "{tests}展開後のargvの要素数が上限2を超えます",
+          "source": {
+            "kind": "file",
+            "workspaceId": "m001",
+            "path": ".spec/bitz.yaml",
+            "key": "verify.commands.c00001.argv"
+          }
+        }
+      ]
+    },
+    {
+      "id": "m002",
+      "path": "members/m002",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "m002::TECH-000003",
+          "status": "passed",
+          "contextDigest": "sha256:86e03e59ca8cc4b4b7e9bc27e6bfd736270d2c12184c7f08719d0372d31a7ad5",
+          "statements": [
+            "m002::TECH-000003:AC-0001"
+          ],
+          "bindingRefs": [
+            "m002::c00001"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "m002::c00001",
+          "workspaceId": "m002",
+          "name": "c00001",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_00004.py"
+          ],
+          "tests": [
+            "tests/test_00004.py"
+          ],
+          "covers": [
+            "m002::TECH-000003:AC-0001"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

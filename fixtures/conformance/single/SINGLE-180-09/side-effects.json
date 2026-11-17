@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9c7b737aa0af2d53a49d1f8bf9e24f0e4ebe79ace3d944f73216cba97879ed09"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9f4e225d6cc4dc0c4e8c494d359da69c4b8b28053c2153b33265c19855ddea01"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 6659eac6d4d167b28d439e00e5a89255c949245b 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n100644 d6de6d9a13498f75621f9ee7787821512aace530 0\t.spec/requirements/REQ-002.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9c7b737aa0af2d53a49d1f8bf9e24f0e4ebe79ace3d944f73216cba97879ed09"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9f4e225d6cc4dc0c4e8c494d359da69c4b8b28053c2153b33265c19855ddea01"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 6659eac6d4d167b28d439e00e5a89255c949245b 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n100644 d6de6d9a13498f75621f9ee7787821512aace530 0\t.spec/requirements/REQ-002.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-LIMIT-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "テスト割当て数が上限4を超過しました",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml"
+      },
+      "evidence": {
+        "dimension": "verifyBindingCount",
+        "limit": 4,
+        "observedAtLeast": 5
+      }
+    }
+  ]
+}

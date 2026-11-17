@@ -6,8 +6,10 @@
 from __future__ import annotations
 
 import os
+import selectors
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 
 MIN_GIT_MAJOR = 2
@@ -560,3 +562,188 @@ def is_config_tracked(executable: str, cwd: str, env: dict[str, str], path: str)
     except (OSError, subprocess.SubprocessError):
         return False
     return proc.returncode == 0
+
+
+# --- 基準版のスナップショットのリソースの上限（複合ワークスペース仕様 §10、`check --base`） ------------------------
+
+
+@dataclass(frozen=True)
+class TreeBlob:
+    """Gitのツリーオブジェクトの通常のファイルの項目（オブジェクトIDとバイト数）。"""
+
+    oid: str
+    size: int
+
+
+def list_tree_blobs(
+    executable: str, toplevel: str, env: dict[str, str], rev: str, prefix: str
+) -> dict[str, TreeBlob] | None:
+    """``rev``の時点の``prefix``（リポジトリのルートからの相対のディレクトリ）の配下の通常のファイルを、
+    リポジトリのルートからの相対パスをキーにして返す。シンボリックリンク（モード ``120000``）とサブモジュールの`gitlink`は除く。
+
+    `--full-tree`でパスの指定と出力をリポジトリのルートからの相対にそろえ、`-z`でパスを原文のまま受け取る（`core.quotePath`に依存しない）。
+    ``prefix``は字句どおりのパスとして扱う（`--literal-pathspecs`）。Gitが失敗したとき、出力を解釈できないとき、
+    通常のファイルの大きさを得られないとき（オブジェクトの欠落）は``None``を返す。
+    """
+
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "--literal-pathspecs", "ls-tree", "--full-tree", "-r", "-l", "-z",
+             rev, "--", prefix],
+            cwd=toplevel, env=env, capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    out: dict[str, TreeBlob] = {}
+    for tok in proc.stdout.split(b"\0"):
+        if not tok:
+            continue
+        if b"\t" not in tok:
+            return None
+        meta, raw_path = tok.split(b"\t", 1)
+        parts = meta.split()
+        if len(parts) < 4:
+            return None
+        mode, obj_type, oid, size = parts[0], parts[1], parts[2], parts[3]
+        if obj_type != b"blob" or mode == b"120000":
+            continue
+        if not size.isdigit():
+            # オブジェクトを読めないとき、`ls-tree -l`は終了コード0のまま大きさを`BAD`などと出す。黙って除かず、失敗とする。
+            return None
+        path = raw_path.decode("utf-8", "surrogateescape")
+        if path != prefix and not path.startswith(prefix.rstrip("/") + "/"):
+            continue
+        out[path] = TreeBlob(oid=oid.decode("ascii"), size=int(size))
+    return out
+
+
+class GitReadError(Exception):
+    """基準版の内容をGitから読めない（起動や読取りの失敗、オブジェクトの欠落、タイムアウト）。
+
+    呼び出し側は、数えずに通過させず、Gitを利用できない場合と同じく`SPEC-MULTI-GIT-001`にする（安全な入出力・互換性 §4.1）。
+    """
+
+
+#: `git cat-file --batch`の1件の要求から内容を読み終えるまでの時間の上限（秒）。ほかのGitの呼出し（``_run``）の30秒に合わせる。
+BLOB_READ_TIMEOUT_SECONDS = 30.0
+
+
+class BlobReader:
+    """`git cat-file --batch`で、オブジェクトIDからファイルの内容を1件ずつ読む。
+
+    1件ごとに要求して読み切るので、内容をすべて同時に保持しない（複合ワークスペース仕様 §10.1）。
+    標準出力は非ブロッキングで読み、1件の要求ごとに``timeout``秒の期限を設ける（partial cloneの遅延取得が止まった場合などに
+    無期限に待たない）。起動の失敗、オブジェクトの欠落（`<oid> missing`など）、途中の終了、期限の超過は:class:`GitReadError`を送出し、
+    以後の読取りもすべて:class:`GitReadError`にする。失敗したときは、終了時にプロセスを待たずに強制終了する。
+    """
+
+    def __init__(
+        self, executable: str, toplevel: str, env: dict[str, str], *, timeout: float = BLOB_READ_TIMEOUT_SECONDS
+    ) -> None:
+        self._argv = [executable, "--no-optional-locks", "cat-file", "--batch"]
+        self._cwd = toplevel
+        self._env = env
+        self._timeout = timeout
+        self._proc: subprocess.Popen | None = None
+        self._selector: selectors.BaseSelector | None = None
+        self._buf = bytearray()
+        self._failed = False
+
+    def __enter__(self) -> "BlobReader":
+        try:
+            self._proc = subprocess.Popen(
+                self._argv, cwd=self._cwd, env=self._env,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            )
+            assert self._proc.stdout is not None
+            fd = self._proc.stdout.fileno()
+            os.set_blocking(fd, False)
+            self._selector = selectors.DefaultSelector()
+            self._selector.register(fd, selectors.EVENT_READ)
+        except OSError:
+            self._failed = True
+        return self
+
+    def __exit__(self, *exc) -> None:
+        if self._selector is not None:
+            self._selector.close()
+            self._selector = None
+        proc = self._proc
+        if proc is None:
+            return
+        if self._failed:
+            # 応答しないプロセスを待たない。
+            try:
+                proc.kill()
+            except OSError:
+                pass
+        try:
+            if proc.stdin is not None:
+                proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=self._timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        if proc.stdout is not None:
+            proc.stdout.close()
+
+    def _fill(self, deadline: float) -> None:
+        selector = self._selector
+        proc = self._proc
+        assert selector is not None and proc is not None and proc.stdout is not None
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not selector.select(timeout=remaining):
+            raise GitReadError("git cat-file --batchが期限内に応答しません")
+        try:
+            chunk = os.read(proc.stdout.fileno(), 65536)
+        except BlockingIOError:
+            return
+        if not chunk:
+            raise GitReadError("git cat-file --batchが途中で終了しました")
+        self._buf += chunk
+
+    def _readline(self, deadline: float) -> bytes:
+        while (end := self._buf.find(b"\n")) < 0:
+            self._fill(deadline)
+        line = bytes(self._buf[: end + 1])
+        del self._buf[: end + 1]
+        return line
+
+    def _read_exact(self, size: int, deadline: float) -> bytes:
+        while len(self._buf) < size:
+            self._fill(deadline)
+        data = bytes(self._buf[:size])
+        del self._buf[:size]
+        return data
+
+    def read(self, oid: str) -> bytes:
+        """``oid``の内容を返す。読めなければ:class:`GitReadError`を送出する。"""
+
+        proc = self._proc
+        if self._failed or proc is None or proc.stdin is None or self._selector is None:
+            self._failed = True
+            raise GitReadError("git cat-file --batchを起動できません")
+        try:
+            proc.stdin.write(oid.encode("ascii") + b"\n")
+            proc.stdin.flush()
+            deadline = time.monotonic() + self._timeout
+            fields = self._readline(deadline).split()
+            if len(fields) != 3 or not fields[2].isdigit():
+                # `<oid> missing`、`<oid> ambiguous`など。
+                raise GitReadError("基準版のオブジェクトを読めません")
+            size = int(fields[2])
+            data = self._read_exact(size + 1, deadline)
+            if data[-1:] != b"\n":
+                raise GitReadError("git cat-file --batchの出力が不正です")
+            return data[:-1]
+        except GitReadError:
+            self._failed = True
+            raise
+        except (OSError, ValueError) as exc:
+            self._failed = True
+            raise GitReadError(str(exc)) from exc

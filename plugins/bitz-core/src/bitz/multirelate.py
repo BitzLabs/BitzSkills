@@ -21,6 +21,7 @@ from dataclasses import replace
 
 from . import document as document_mod
 from . import lex
+from . import limits as limits_mod
 from . import messages
 from . import multiws
 from . import pathown
@@ -590,11 +591,13 @@ def build_multi_context(
     for local_sid, stmt in local_stmt_indices[active_ws_id].items():
         merged_stmt_index[f"{active_ws_id}::{local_sid}"] = stmt
 
+    # 他のワークスペースの文書にも、ルートワークスペースの設定の`limits`のファイル単位の上限を使う（安全な入出力・互換性 §4.1）。
+    limits = limits_mod.from_config(pre.root_config)
     for wid, root, _relpath in multiws.ordered_workspaces(pre):
         known_ws_ids.add(wid)
         if wid == active_ws_id:
             continue
-        catalog = document_mod.build_catalog(root, wid, qualify_summary_ids=True)
+        catalog = document_mod.build_catalog(root, wid, limits=limits, qualify_summary_ids=True)
         if not keep_body:
             for e in catalog.entries:
                 e.body = None

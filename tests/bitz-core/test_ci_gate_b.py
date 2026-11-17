@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "tests/bitz-core"))
 import ci_gate_b as ci
 import plan_conformance as planning
 from conformance.reports import merge_reports
-from conformance.selection import partition, partition_plan, predicted_seconds, selected_ids, step_ids
+from conformance.selection import manual_ids, partition, partition_plan, predicted_seconds, selected_ids, step_ids
 from conformance.timing import timed_call
 
 
@@ -49,40 +49,52 @@ class ShardingTests(unittest.TestCase):
                 self.assertEqual(group, [i for i in ids if i in group])
 
     def test_heaviest_limit_cases_are_distributed(self):
+        # 実寸の上限のfixtureは手動の一覧へ移った（ADR-076）。CIの対象（Step）では、予測が最も重い4件が
+        # 別々の分割へ入ること、手動の一覧を分割したときも実寸の最も重い4件が別々の分割へ入ることを確かめる。
         groups = partition(step_ids(5), 4)
-        heavy = {"MULTI-020-09", "MULTI-020-10", "MULTI-020-11", "MULTI-020-12"}
+        heavy = {"SINGLE-126-12", "SINGLE-126-13", "SINGLE-059", "SINGLE-126-15"}
         self.assertEqual([len(heavy.intersection(group)) for group in groups], [1, 1, 1, 1])
+        manual_groups = partition(manual_ids(), 4)
+        manual_heavy = {"MULTI-020-09", "MULTI-020-10", "MULTI-020-11", "MULTI-020-12"}
+        self.assertEqual([len(manual_heavy.intersection(group)) for group in manual_groups], [1, 1, 1, 1])
 
     def test_ci_measurements_produce_balanced_predictions(self):
         groups = partition(step_ids(5), 4)
         fixture_seconds = [predicted_seconds(group) for group in groups]
         self.assertLess(max(fixture_seconds) - min(fixture_seconds), 0.2)
         plan = partition_plan(step_ids(5), 4)
-        # 予測秒数の範囲は200〜300秒（4分割のまま。fixtureが増えて240秒を超えた。ユーザーの決定）。
-        self.assertTrue(all(200 <= row["predictedSeconds"] <= 300 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 785)
+        # 実寸の上限のfixtureを手動の一覧へ移した（ADR-076）ので、4つの分割の予測秒数は42.8〜42.9秒（固定時間12秒を含む）。
+        # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は827件だが、6件が2つのStepに現れるので重複を除いて821件。
+        self.assertTrue(all(35 <= row["predictedSeconds"] <= 50 for row in plan))
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 826)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
         workers = plan["matrix"]["include"]
         self.assertEqual([(row["replica"], row["shard"]) for row in workers],
                          [(replica, shard) for replica in (1, 2) for shard in range(1, 5)])
-        # 4つの分割の予測秒数は241.5〜241.6秒で、どれもPythonのroundで242秒（4分02秒）になる。
-        self.assertEqual([row["predicted"] for row in workers], ["4分02秒"] * 8)
+        # 4つの分割の予測秒数は42.8〜42.9秒で、どれもPythonのroundで43秒になる。
+        self.assertEqual([row["predicted"] for row in workers], ["43秒"] * 8)
         summary = planning.markdown(plan)
         self.assertIn("GitHub Actionsの実行36248419060", summary)
-        self.assertEqual((summary.count("| 4分00秒 |"), summary.count("| 4分02秒 |")), (0, 4))
+        self.assertEqual((summary.count("| 42秒 |"), summary.count("| 43秒 |")), (0, 4))
         pull_request = planning.build_plan(step=5, shards=4, replicas=1)
         self.assertEqual([(row["replica"], row["shard"])
                           for row in pull_request["matrix"]["include"]],
                          [(1, shard) for shard in range(1, 5)])
 
     def test_standard_and_scale_are_disjoint_and_exhaustive(self):
-        ids = step_ids(5)
+        # 実寸の上限のfixtureはStepにない（ADR-076）。Stepと手動の一覧を合わせた全体で、互いに素で網羅することを確かめる。
+        steps = step_ids(5)
+        manual = manual_ids()
+        self.assertFalse(set(steps) & set(manual))
+        ids = steps + manual
         normal = selected_ids(ids, "standard")
         scale = selected_ids(ids, "scale")
         self.assertFalse(set(normal) & set(scale))
         self.assertEqual(set(normal) | set(scale), set(ids))
+        self.assertEqual(normal, steps)
+        self.assertEqual(scale, manual)
         self.assertEqual(len(scale), 28)
 
     def test_invalid_step_and_shard_fail_closed(self):

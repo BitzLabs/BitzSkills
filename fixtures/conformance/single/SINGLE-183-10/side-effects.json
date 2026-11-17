@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "283fb90e8e4069f4b4492af0e0944f56c10146d2b8b5b27beca9801a5b9af93c"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 11a4d54ddfc36affcb8332e88f75ef371255e944 0\t.spec/bitz.yaml\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "283fb90e8e4069f4b4492af0e0944f56c10146d2b8b5b27beca9801a5b9af93c"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 11a4d54ddfc36affcb8332e88f75ef371255e944 0\t.spec/bitz.yaml\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

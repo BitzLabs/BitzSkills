@@ -11,9 +11,11 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from bitz import doctor as doctor_mod
 from bitz import gitutil
+from bitz import limits as limits_mod
 from bitz import multiws
 from bitz.cliargs import parse_argv
 
@@ -365,7 +367,7 @@ class ResourceLimitTests(unittest.TestCase):
     def test_member_count_over_hard_limit_stops_early(self):
         """`memberCount`の次元はCoreの絶対上限（既定100）に対して判定する（`複合ワークスペース仕様 §10`）。
 
-        101メンバー分のfixtureを毎回作ると重いため、`HARD_LIMITS["memberCount"]`を一時的に3へ
+        101メンバー分のfixtureを毎回作ると重いため、`MEMBER_COUNT_HARD_LIMIT`を一時的に3へ
         下げて早期停止を検証する。
         """
 
@@ -379,13 +381,8 @@ class ResourceLimitTests(unittest.TestCase):
             _init_repo(root)
 
             git = gitutil.detect_git(str(root), dict(os.environ))
-            original = dict(multiws.HARD_LIMITS)
-            try:
-                multiws.HARD_LIMITS["memberCount"] = 3
+            with mock.patch.object(multiws, "MEMBER_COUNT_HARD_LIMIT", 3):
                 pre = multiws.precheck(str(root), git, dict(os.environ), extra_config_revs=[])
-            finally:
-                multiws.HARD_LIMITS.clear()
-                multiws.HARD_LIMITS.update(original)
             self.assertFalse(pre.ok)
             self.assertEqual(pre.diagnostics[0].code, "SPEC-MULTI-LIMIT-001")
             self.assertEqual(pre.diagnostics[0].evidence["dimension"], "memberCount")
@@ -403,14 +400,9 @@ class ResourceLimitTests(unittest.TestCase):
             "traceEntryCount": 0,
             "commandDefinitionCount": 0,
         }
-        original = dict(multiws.HARD_LIMITS)
-        try:
-            multiws.HARD_LIMITS["specFileCount"] = 0
-            multiws.HARD_LIMITS["inputBytes"] = 0
-            self.assertEqual(multiws._first_exceeded(totals), "specFileCount")
-        finally:
-            multiws.HARD_LIMITS.clear()
-            multiws.HARD_LIMITS.update(original)
+        # `Limits`は値を検査しないので、設定では書けない0も境界として使える。
+        limits = limits_mod.Limits(specFileCount=0, inputBytes=0)
+        self.assertEqual(multiws._first_exceeded(totals, limits), "specFileCount")
 
     def test_statement_and_relation_counting_from_document(self):
         text = (

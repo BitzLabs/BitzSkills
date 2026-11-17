@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-068-03",
+  "description": "doctor --all-workspacesはlimitsを最上位にだけ置く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

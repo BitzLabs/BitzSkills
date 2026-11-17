@@ -29,6 +29,7 @@ from . import digest as digest_mod
 from . import document as document_mod
 from . import dupclosure
 from . import gitutil
+from . import limits as limits_mod
 from . import messages
 from . import multirelate
 from . import multiws
@@ -605,7 +606,12 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     config_raw = outcome.config
     assert loc.root is not None
 
-    catalog = document_mod.build_catalog(loc.root, workspace_id, qualify_summary_ids=multi_active)
+    # 上限は、単一ワークスペースでは作業ワークスペースの設定、複合ワークスペースではルートの設定から決める（安全な入出力・互換性 §4.1）。
+    # `limits`はコンテキストのハッシュ値の材料に含めない（コンテキストのハッシュ値の正規化仕様 §3）。
+    limits = limits_mod.for_workspace(
+        config_raw, multi_pre.root_config if multi_pre is not None else None, multi_active=multi_active
+    )
+    catalog = document_mod.build_catalog(loc.root, workspace_id, limits=limits, qualify_summary_ids=multi_active)
     # 閉包を作るときに辿る文書IDの重複を求めるための、ワークスペースごとのカタログの文書（関係・トレースモデル §5.1、確認事項C96）。
     member_catalogs: dict[str, document_mod.CatalogResult] = {}
 

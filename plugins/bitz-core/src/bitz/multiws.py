@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from . import config as config_mod
 from . import gitutil
 from . import lex
+from . import limits as limits_mod
 from . import messages
 from . import pathown
 from .config import Diagnostic
@@ -48,18 +49,14 @@ ROOT_CONFIG_PATH = config_mod.CONFIG_PATH  # ".spec/bitz.yaml"
 
 _SPEC_KIND_DIRS = ("requirements", "technical", "decisions", "tasks")
 
-HARD_LIMITS: dict[str, int] = {
-    "memberCount": 100,
-    "specFileCount": 10_000,
-    "inputBytes": 256 * 1024 * 1024,
-    "statementCount": 100_000,
-    "relationEdgeCount": 1_000_000,
-    "traceEntryCount": 1_000_000,
-    "commandDefinitionCount": 10_000,
-    # `verifyBindingCount`は事前検査（カタログ全体のスナップショットの走査）では計数しない。1回の`verify`
-    # の実行計画のテスト割当ての数だけに適用するため、`verify.py`が自分で数える（複合ワークスペース仕様 §10）。
-    "verifyBindingCount": 10_000,
-}
+#: メンバー数の絶対上限（複合ワークスペース仕様 §10）。実効の上限は`multiWorkspace.maxMembers`で決め、`limits`では扱わない。
+MEMBER_COUNT_HARD_LIMIT = 100
+
+# スナップショット全体のほかの次元（`specFileCount`、`inputBytes`、`statementCount`、`relationEdgeCount`、`traceEntryCount`、
+# `commandDefinitionCount`、`verifyBindingCount`）の上限は、ルートワークスペースの設定の`limits`で決める
+# （:mod:`bitz.limits`。複合ワークスペース仕様 §10、安全な入出力・互換性 §4.1）。`verifyBindingCount`は事前検査
+# （カタログ全体のスナップショットの走査）では計数しない。1回の`verify`の実行計画のテスト割当ての数だけに適用するため、
+# `verify.py`が自分で数える。
 
 # 早期停止のときにどの次元を優先して報告するか（§10「複数の次元が同時に超過する場合は…」の
 # 一般化。Step 5Aの範囲では`verifyBindingCount`を計算しないため対象外とする）。
@@ -97,6 +94,8 @@ class PrecheckResult:
     #: ルートの設定をYAMLとして読めた値（版の非対応で停止したときも含む）。読めなければ``None``。
     #: 単独操作の停止結果が、選択した設定のカタログへの登録を判定する（:func:`selected_is_registered`）ために使う。
     root_config: dict | None = None
+    #: ルートの設定がスキーマの検査（型と値の範囲）を通過したか。`doctor`が結果の`limits`を返すかを決める（`doctor` §7）。
+    root_config_valid: bool = False
 
 
 def _has_explicit_workspace_id(config: dict) -> bool:
@@ -262,10 +261,6 @@ def _is_ancestor(a: tuple[str, ...], b: tuple[str, ...]) -> bool:
 
 # --- 除外（`multiWorkspace.exclude`。ADR-064、複合ワークスペース仕様 §2・§2.1） ---------------------------------
 
-#: 除外の最大件数（ワークスペース・設定仕様 §5）。
-EXCLUDE_LIMIT = 100
-
-
 def _nfc_parts(path: str) -> tuple[str, ...]:
     """パスをUnicode NFCへ正規化し、セグメントへ分ける（大文字と小文字は区別する。複合ワークスペース仕様 §2.1）。"""
 
@@ -284,8 +279,11 @@ def _in_excluded_area(parts: tuple[str, ...], exclude_parts: list[tuple[str, ...
     return any(_is_prefix_or_equal(e, parts) for e in exclude_parts)
 
 
-def _exclude_shape_diag(mw: dict, root_id: str | None) -> Diagnostic | None:
-    """``exclude``の型（文字列の配列）と件数（0〜100）を検査する。キーがなければ``None``（既定は空）。"""
+def _exclude_shape_diag(mw: dict, root_id: str | None, exclude_limit: int) -> Diagnostic | None:
+    """``exclude``の型（文字列の配列）と件数（0〜``exclude_limit``）を検査する。キーがなければ``None``（既定は空）。
+
+    ``exclude_limit``は`limits.excludeCount`の実効の値（既定100。ワークスペース・設定仕様 §5、安全な入出力・互換性 §4.1）。
+    """
 
     if "exclude" not in mw:
         return None
@@ -295,9 +293,9 @@ def _exclude_shape_diag(mw: dict, root_id: str | None) -> Diagnostic | None:
             "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_EXCLUDE_TYPE,
             _root_source(root_id, "multiWorkspace.exclude"),
         )
-    if len(raw) > EXCLUDE_LIMIT:
+    if len(raw) > exclude_limit:
         return _diag(
-            "SPEC-MULTI-CONFIG-001", "failed", messages.MULTI_CONFIG_EXCLUDE_COUNT,
+            "SPEC-MULTI-CONFIG-001", "failed", messages.multi_config_exclude_count(exclude_limit),
             _root_source(root_id, "multiWorkspace.exclude"),
         )
     return None
@@ -356,20 +354,20 @@ def _member_paths_overlapping(members_raw: object, exclude_parts: list[tuple[str
     return False
 
 
-def valid_exclude_parts(root_config: dict) -> list[tuple[str, ...]] | None:
+def valid_exclude_parts(root_config: dict, exclude_limit: int | None = None) -> list[tuple[str, ...]] | None:
     """ルートの設定の``multiWorkspace.exclude``を信用できるなら、そのNFCのセグメントの一覧を返す。信用できなければ``None``。
 
     信用できるのは、``multiWorkspace``が設定不適合（``SPEC-MULTI-CONFIG-001``。members の不在・型・件数、maxMembers、
     exclude の型・件数・字句・重複・入れ子・`.spec`を含む）を持たず、メンバーのパスと重ならないときだけである
     （複合ワークスペース仕様 §2・§2.1、ADR-064の3）。members が不在または配列でなければ、重なりを判定できないため信用しない。
     メンバーのパスの字句の不正など``SPEC-MULTI-PATH-001``は、ほかの不備として除外の信用に影響しない。
-    除外がなければ空の一覧を返す。
+    除外がなければ空の一覧を返す。``exclude_limit``は除外の件数の上限で、省略すると``root_config``自身の`limits.excludeCount`を使う。
     """
 
     mw = root_config.get("multiWorkspace")
     if not isinstance(mw, dict) or "exclude" not in mw:
         return []
-    shape_diag, _members = _validate_multiworkspace_shape(root_config, None)
+    shape_diag, _members = _validate_multiworkspace_shape(root_config, None, exclude_limit)
     if shape_diag is not None:
         return None
     diags, parts = _evaluate_excludes(None, mw["exclude"])
@@ -378,7 +376,13 @@ def valid_exclude_parts(root_config: dict) -> list[tuple[str, ...]] | None:
     return parts
 
 
-def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tuple[Diagnostic | None, list[tuple[str, str]] | None]:
+def _validate_multiworkspace_shape(
+    root_config: dict, root_id: str | None, exclude_limit: int | None = None
+) -> tuple[Diagnostic | None, list[tuple[str, str]] | None]:
+    """``multiWorkspace``の型と件数を検査する。``exclude_limit``を省略すると、``root_config``自身の`limits.excludeCount`を使う。"""
+
+    if exclude_limit is None:
+        exclude_limit = limits_mod.from_config(root_config).excludeCount
     if "multiWorkspace" not in root_config:
         return None, []
     mw = root_config["multiWorkspace"]
@@ -426,7 +430,7 @@ def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tu
             ), None
         members.append((raw["id"], raw["path"]))
 
-    shape_diag = _exclude_shape_diag(mw, root_id)
+    shape_diag = _exclude_shape_diag(mw, root_id, exclude_limit)
     if shape_diag is not None:
         return shape_diag, None
     return None, members
@@ -458,7 +462,8 @@ def _member_config_check(
             _root_source(root_id, "multiWorkspace.members"),
         ), None
 
-    m_outcome = config_mod.read_config(member_cfg)
+    # メンバーの設定の`limits`は値を検査しない（`limits`を持つこと自体を下で`SPEC-MULTI-MEMBER-001`とする。複合ワークスペース仕様 §10）。
+    m_outcome = config_mod.read_config(member_cfg, validate_limits=False)
     if m_outcome.stop:
         if m_outcome.stop_stage in ("schema-major", "ears-major"):
             code = "SPEC-MULTI-VERSION-001"
@@ -491,6 +496,13 @@ def _member_config_check(
     if "multiWorkspace" in m_outcome.config:
         return _diag(
             "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_NESTED_MULTIWORKSPACE,
+            _root_source(root_id, "multiWorkspace.members"),
+        ), None
+    # メンバーの設定は`limits`を持てない。値の型と範囲によらず、`multiWorkspace`を宣言したメンバーと同じ発生元で返す
+    # （複合ワークスペース仕様 §10、ADR-076）。宣言はキーの有無で判定する（値のない`limits:`も含む）。
+    if "limits" in m_outcome.config:
+        return _diag(
+            "SPEC-MULTI-MEMBER-001", "failed", messages.MEMBER_LIMITS_DECLARED,
             _root_source(root_id, "multiWorkspace.members"),
         ), None
     return None, m_outcome.config
@@ -624,6 +636,7 @@ def _validate_catalog(
     compare_git_configs: bool = True,
     selected_dir: str | None = None,
     git_top: str | None = None,
+    limit_base_rev: str | None = None,
 ) -> tuple[list[Diagnostic], list[MemberRecord] | None]:
     """カタログ・ID・パス・バージョン・未登録の設定を検証する（優先順位900〜960。`GIT`は呼び出し側で解決済み）。
 
@@ -756,7 +769,12 @@ def _validate_catalog(
                 ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
             }
             # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
-            rev_exclude = (valid_exclude_parts(rev_config) if rev_config is not None else None) or []
+            # `limits.excludeCount`は現在版のルートの設定の除外にだけ当て、基準版の設定の除外の件数は、現在版と基準版の
+            # どちらの`limits`にもよらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
+            rev_exclude = (
+                valid_exclude_parts(rev_config, limits_mod.ABSOLUTE.excludeCount)
+                if rev_config is not None else None
+            ) or []
             rev_known = {
                 p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root, git_top)
                 if not _config_in_excluded_area(p, rev_exclude)
@@ -781,7 +799,16 @@ def _validate_catalog(
     # --- LIMIT段階（970） -------------------------------------------------------
     # 上限の超過は複合ワークスペース全体を停止する単一の元の原因であり、複合ワークスペース仕様 §10のとおり
     # 最初に検出した次元で早期停止する（複数のメンバーに個別の独立した元の原因とは扱いが異なる）。
-    limit_diag = _check_resource_limits(root, root_id, root_config, members, skip_dimensions=skip_limit_dimensions)
+    limits = limits_mod.from_config(root_config)
+    limit_diag = _check_resource_limits(
+        root, root_id, root_config, members, limits, skip_dimensions=skip_limit_dimensions
+    )
+    if limit_diag is None and limit_base_rev is not None and git.available and git.executable:
+        # `check --base`は基準版のスナップショットにも、現在版のルートの設定から決めた同じ上限を個別に適用する（§10）。
+        limit_diag = _check_base_snapshot_limits(
+            git, cwd, env, limit_base_rev, root, root_id, root_config, limits,
+            skip_dimensions=skip_limit_dimensions, git_top=git_top,
+        )
     if limit_diag is not None:
         return [limit_diag], None
 
@@ -867,11 +894,13 @@ def _scan_document_counts(text: str) -> tuple[int, int, int]:
     return len(candidates), rel_count, trace_count
 
 
-def _first_exceeded(totals: dict[str, int], skip_dimensions: frozenset[str] = frozenset()) -> str | None:
+def _first_exceeded(
+    totals: dict[str, int], limits: limits_mod.Limits, skip_dimensions: frozenset[str] = frozenset()
+) -> str | None:
     for dim in _LIMIT_DIMENSION_ORDER:
         if dim in skip_dimensions:
             continue
-        if totals[dim] > HARD_LIMITS[dim]:
+        if totals[dim] > limits.value(dim):
             return dim
     return None
 
@@ -884,73 +913,245 @@ def _limit_diag(root_id: str, dimension: str, limit: int, observed: int) -> Diag
     )
 
 
+def _member_limit(root_config: dict) -> int:
+    # `memberCount`は`multiWorkspace.maxMembers`（既定20、範囲1〜100）の実効上限で判定し、Coreの絶対上限
+    # 100を超えない（複合ワークスペース仕様 §2・§10）。値域は_validate_catalogで検査済み。`limits`では扱わない。
+    max_members = (root_config.get("multiWorkspace") or {}).get("maxMembers", 20)
+    return min(max_members, MEMBER_COUNT_HARD_LIMIT)
+
+
+def _commands_count(config: object) -> int:
+    if not isinstance(config, dict):
+        return 0
+    verify_cfg = config.get("verify")
+    commands = verify_cfg.get("commands") if isinstance(verify_cfg, dict) else None
+    return len(commands) if isinstance(commands, dict) else 0
+
+
+class _SnapshotCounter:
+    """1つのスナップショットのリソースの次元を数え、最初に上限を超えた次元で止める（複合ワークスペース仕様 §10・§10.1）。
+
+    現在版（作業ツリー）と基準版（Gitのツリーオブジェクト）で同じ数え方と同じ判定順を使う。
+    """
+
+    def __init__(self, root_id: str, limits: limits_mod.Limits, skip_dimensions: frozenset[str]) -> None:
+        self.root_id = root_id
+        self.limits = limits
+        self.skip_dimensions = skip_dimensions
+        self.totals = {k: 0 for k in _LIMIT_DIMENSION_ORDER}
+
+    def _exceeded(self) -> Diagnostic | None:
+        dim = _first_exceeded(self.totals, self.limits, self.skip_dimensions)
+        if dim:
+            return _limit_diag(self.root_id, dim, self.limits.value(dim), self.totals[dim])
+        return None
+
+    def add_config(self, size: int | None, config: object) -> Diagnostic | None:
+        if size is not None:
+            self.totals["inputBytes"] += size
+        self.totals["commandDefinitionCount"] += _commands_count(config)
+        return self._exceeded()
+
+    def add_spec_file(self, size: int) -> Diagnostic | None:
+        self.totals["specFileCount"] += 1
+        self.totals["inputBytes"] += size
+        return self._exceeded()
+
+    def add_spec_text(self, raw: bytes) -> Diagnostic | None:
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+        stmt_count, rel_count, trace_count = _scan_document_counts(text)
+        del text
+        self.totals["statementCount"] += stmt_count
+        self.totals["relationEdgeCount"] += rel_count
+        self.totals["traceEntryCount"] += trace_count
+        return self._exceeded()
+
+    def finish(self) -> Diagnostic | None:
+        return self._exceeded()
+
+
 def _check_resource_limits(
     root: str,
     root_id: str,
     root_config: dict,
     members: list[MemberRecord],
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
     *,
     skip_dimensions: frozenset[str] = frozenset(),
 ) -> Diagnostic | None:
-    # `memberCount`は`multiWorkspace.maxMembers`（既定20、範囲1〜100）の実効上限で判定し、Coreの絶対上限
-    # 100を超えない（複合ワークスペース仕様 §2・§10）。値域は_validate_catalogで検査済み。
+    """現在版（作業ツリー）のスナップショットのリソースの上限を判定する。``limits``はルートの設定から決めた上限。"""
+
     member_count = len(members)
-    max_members = (root_config.get("multiWorkspace") or {}).get("maxMembers", 20)
-    member_limit = min(max_members, HARD_LIMITS["memberCount"])
+    member_limit = _member_limit(root_config)
     if member_count > member_limit:
         return _limit_diag(root_id, "memberCount", member_limit, member_count)
 
-    totals = {k: 0 for k in _LIMIT_DIMENSION_ORDER}
-
+    counter = _SnapshotCounter(root_id, limits, skip_dimensions)
     workspaces = [(root, root_config)] + [(rec.root, rec.config) for rec in members]
     for wroot, wconfig in workspaces:
         cfg_path = os.path.join(wroot, ".spec", "bitz.yaml")
         try:
-            totals["inputBytes"] += os.path.getsize(cfg_path)
+            cfg_size: int | None = os.path.getsize(cfg_path)
         except OSError:
-            pass
-        commands = ((wconfig.get("verify") or {}) if isinstance(wconfig.get("verify"), dict) else {}).get("commands")
-        if isinstance(commands, dict):
-            totals["commandDefinitionCount"] += len(commands)
-
-        dim = _first_exceeded(totals, skip_dimensions)
-        if dim:
-            return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
+            cfg_size = None
+        diag = counter.add_config(cfg_size, wconfig)
+        if diag is not None:
+            return diag
 
         for md_path in _iter_spec_md_files(wroot):
             try:
                 size = os.path.getsize(md_path)
             except OSError:
                 continue
-            totals["specFileCount"] += 1
-            totals["inputBytes"] += size
-            dim = _first_exceeded(totals, skip_dimensions)
-            if dim:
-                return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
+            diag = counter.add_spec_file(size)
+            if diag is not None:
+                return diag
 
             try:
                 with open(md_path, "rb") as f:
                     raw = f.read()
             except OSError:
                 continue
-            try:
-                text = raw.decode("utf-8")
-            except UnicodeDecodeError:
-                continue
+            diag = counter.add_spec_text(raw)
             del raw
-            stmt_count, rel_count, trace_count = _scan_document_counts(text)
-            del text
-            totals["statementCount"] += stmt_count
-            totals["relationEdgeCount"] += rel_count
-            totals["traceEntryCount"] += trace_count
-            dim = _first_exceeded(totals, skip_dimensions)
-            if dim:
-                return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
+            if diag is not None:
+                return diag
 
-    dim = _first_exceeded(totals, skip_dimensions)
-    if dim:
-        return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
-    return None
+    return counter.finish()
+
+
+def _git_unreadable_diag() -> Diagnostic:
+    """基準版の内容をGitから読めないときの診断。Gitを利用できない場合と同じ`SPEC-MULTI-GIT-001`（`blocked`）とする（安全な入出力・互換性 §4.1）。"""
+
+    return _diag(
+        "SPEC-MULTI-GIT-001", "blocked", messages.MULTI_GIT_BOUNDARY_UNKNOWN,
+        {"kind": "environment", "component": "git"},
+    )
+
+
+def _list_base_blobs(
+    executable: str, toplevel: str, env: dict[str, str], base_rev: str, prefix: str
+) -> dict[str, gitutil.TreeBlob]:
+    blobs = gitutil.list_tree_blobs(executable, toplevel, env, base_rev, prefix)
+    if blobs is None:
+        raise gitutil.GitReadError(f"git ls-tree {prefix}")
+    return blobs
+
+
+def _parse_base_root_config(raw: bytes) -> dict | None:
+    try:
+        value = parse_yaml_subset(raw.decode("utf-8"))
+    except (UnicodeDecodeError, YamlSyntaxError, YamlForbiddenError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _check_base_snapshot_limits(
+    git: gitutil.GitInfo,
+    cwd: str,
+    env: dict[str, str],
+    base_rev: str,
+    root: str,
+    root_id: str,
+    root_config: dict,
+    limits: limits_mod.Limits,
+    *,
+    skip_dimensions: frozenset[str] = frozenset(),
+    git_top: str | None = None,
+) -> Diagnostic | None:
+    """基準版のスナップショットのリソースの上限を判定する（`check --base`。複合ワークスペース仕様 §10、安全な入出力・互換性 §4.1）。
+
+    上限は現在版のルートの設定から決めた``limits``とし、基準版のルートの設定の`limits`は使わない。基準版のスナップショットの
+    ワークスペースは、基準版のルートの設定のカタログ（ルートと`multiWorkspace.members`）とする。設定と仕様文書は、Gitの基準版の
+    ツリーオブジェクトの通常のファイル（シンボリックリンクとサブモジュールを除く）を、現在版と同じ順と同じ数え方で数える。
+
+    基準版は、作業ツリーとインデックスの状態によらず、常に基準版のコミットの内容で数える（作業ツリーとの差分から基準版の数を
+    推し量らない。`git diff`はskip-worktreeやassume-unchangedのファイルの削除を報告しないため）。基準版の内容を読めない場合
+    （`ls-tree`や`cat-file`の失敗、オブジェクトの欠落、タイムアウト）は、数えずに通過させず`SPEC-MULTI-GIT-001`を返す。
+    """
+
+    executable = git.executable
+    assert executable is not None
+    toplevel = git_top or gitutil.show_toplevel(executable, cwd, env)
+    if toplevel is None:
+        return _git_unreadable_diag()
+    offset = os.path.relpath(os.path.realpath(root), os.path.realpath(toplevel)).replace(os.sep, "/")
+
+    def _repo_rel(ws_path: str) -> str:
+        parts = [p for p in (offset, ws_path) if p not in (".", "")]
+        return "/".join(parts)
+
+    def _spec_prefix(ws_path: str) -> str:
+        return _repo_rel(f"{ws_path}/.spec" if ws_path != "." else ".spec")
+
+    try:
+        with gitutil.BlobReader(executable, toplevel, env) as reader:
+            root_prefix = _spec_prefix(".")
+            root_blobs = _list_base_blobs(executable, toplevel, env, base_rev, root_prefix)
+            root_cfg = root_blobs.get(f"{root_prefix}/bitz.yaml")
+            base_config = _parse_base_root_config(reader.read(root_cfg.oid)) if root_cfg is not None else None
+            base_map = _workspace_map(base_config) if base_config is not None else {}
+            if not base_map:
+                # 基準版が`multiWorkspace`を宣言しない（単一ワークスペースから複合ワークスペース化する前）、または設定がない、
+                # 解釈できないときは、基準版のスナップショットはルートの`.spec`だけとする。
+                base_map = {root_id: "."}
+            ws_paths = list(dict.fromkeys(base_map.values()))
+            # メンバー数（`multiWorkspace.maxMembers`で決める次元）も、現在版のルートの設定の値で判定する。
+            base_member_count = len(ws_paths) - (1 if "." in ws_paths else 0)
+            member_limit = _member_limit(root_config)
+            if base_member_count > member_limit:
+                return _limit_diag(root_id, "memberCount", member_limit, base_member_count)
+
+            counter = _SnapshotCounter(root_id, limits, skip_dimensions)
+            for ws_path in ws_paths:
+                if ws_path != "." and not _path_lexically_valid(ws_path):
+                    # 字句が不正なメンバーのパス（`..`や絶対パスなど）は、基準版のツリーの中の位置を指さないので、数える内容がない。
+                    continue
+                spec_prefix = _spec_prefix(ws_path)
+                blobs = (
+                    root_blobs if ws_path == "."
+                    else _list_base_blobs(executable, toplevel, env, base_rev, spec_prefix)
+                )
+                cfg = blobs.get(f"{spec_prefix}/bitz.yaml")
+                cfg_value: object = None
+                if cfg is not None:
+                    cfg_value = base_config if ws_path == "." else _parse_base_root_config(reader.read(cfg.oid))
+                diag = counter.add_config(cfg.size if cfg is not None else None, cfg_value)
+                if diag is not None:
+                    return diag
+
+                spec_files = [
+                    (rel, blob) for rel, blob in blobs.items()
+                    if (rel_in := rel[len(spec_prefix) + 1 :]).endswith(".md")
+                    and rel_in.split("/", 1)[0] in _SPEC_KIND_DIRS
+                    and "/" in rel_in
+                ]
+                spec_files.sort(key=lambda item: _walk_order_key(item[0][len(spec_prefix) + 1 :]))
+                for _rel, blob in spec_files:
+                    diag = counter.add_spec_file(blob.size)
+                    if diag is not None:
+                        return diag
+                    raw = reader.read(blob.oid)
+                    diag = counter.add_spec_text(raw)
+                    del raw
+                    if diag is not None:
+                        return diag
+            return counter.finish()
+    except gitutil.GitReadError:
+        return _git_unreadable_diag()
+
+
+def _walk_order_key(rel_in_spec: str) -> tuple:
+    """``.spec``からの相対パスを、:func:`_iter_spec_md_files`（種別ディレクトリの順、各ディレクトリでファイルを先、
+    続いてサブディレクトリを名前の順）と同じ順に並べるキー。"""
+
+    segments = rel_in_spec.split("/")
+    kind_index = _SPEC_KIND_DIRS.index(segments[0])
+    rest = segments[1:]
+    return (kind_index, tuple((0 if i == len(rest) - 1 else 1, seg) for i, seg in enumerate(rest)))
 
 
 def config_warnings(root_abs: str) -> list[Diagnostic]:
@@ -1077,12 +1278,15 @@ def _read_base_root_config(
 def base_exclude_parts(
     git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_rev: str | None, repo_root: str
 ) -> list[tuple[str, ...]]:
-    """``base_rev``のスナップショット自身のルートの設定の除外を返す。読めない、または妥当でない除外は何も除外しない（空）。"""
+    """``base_rev``のスナップショット自身のルートの設定の除外を返す。読めない、または妥当でない除外は何も除外しない（空）。
+
+    除外の件数は、基準版の設定の`limits`によらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
+    """
 
     value = _read_base_root_config(git, cwd, env, base_rev, repo_root)
     if value is None:
         return []
-    return valid_exclude_parts(value) or []
+    return valid_exclude_parts(value, limits_mod.ABSOLUTE.excludeCount) or []
 
 
 def base_workspace_map(
@@ -1156,6 +1360,7 @@ def precheck(
     compare_git_configs: bool = True,
     report_git_with_config_stop: bool = False,
     require_declaration: bool = False,
+    limit_base_rev: str | None = None,
 ) -> PrecheckResult:
     """`--all-workspaces`の全体事前検査（複合ワークスペース仕様 §8）。
 
@@ -1185,6 +1390,9 @@ def precheck(
     ``report_git_with_config_stop``が真なら、ルートの設定で停止したときも、Gitの境界を確定できなければ`SPEC-MULTI-GIT-001`を加え、
     Gitの境界を確定できずに止まるときも、ルートの設定の本文だけで判定できるカタログの不適合（ルートの`workspace.id`の省略、
     `multiWorkspace`の型と件数、除外のパスの不正。`SPEC-MULTI-CONFIG-001`）を並べて返す（`doctor`だけが真を渡す。`04_doctor.md` §3、ADR-070）。
+
+    ``limit_base_rev``は、スナップショット全体のリソースの上限を現在版に加えて適用する基準版のリビジョン（`check`だけが渡す。
+    複合ワークスペース仕様 §10「`check --base`の基準版と現在版は、各スナップショットへ個別に同じ上限を適用する」）。
     """
 
     root, cfg_path, git_confirmed, git_top = _locate_root(cwd, git, env, nearest_config_path)
@@ -1192,6 +1400,8 @@ def precheck(
         return PrecheckResult(discovery_failed=True)
 
     outcome = config_mod.read_config(cfg_path, ears_version_code=ears_version_code)
+    # 型と値の範囲の検査を通過した設定（EARS-AIのメジャーバージョンの非対応で止まった設定を含む）。`doctor` §7の`limits`に使う。
+    root_valid = outcome.stop_stage in (None, "ears-major")
     if require_declaration and not _declares_multiworkspace(outcome) and outcome.stop_stage != "config":
         # `--all-workspaces`は、ルートの設定が`multiWorkspace`を宣言するときだけ複合ワークスペースを発見できる（複合ワークスペース仕様 §8、
         # 確認事項C64）。宣言の有無は、構文、型、必須フィールド、IDの検査を通過した設定（版の非対応で止まった設定を含む）のキーで判定する。設定を読めない場合は、
@@ -1230,6 +1440,7 @@ def precheck(
             repo_root=root,
             git_confirmed=git_confirmed,
             root_config=outcome.parsed,
+            root_config_valid=root_valid,
         )
 
     assert outcome.config is not None
@@ -1264,7 +1475,7 @@ def precheck(
         return PrecheckResult(
             ok=False, root_id=root_id, diagnostics=shape_diags + [diag], git_status="blocked",
             catalog_status="failed" if shape_diags else None, repo_root=root,
-            git_confirmed=False, root_config=outcome.config,
+            git_confirmed=False, root_config=outcome.config, root_config_valid=root_valid,
         )
 
     if not root_id_explicit:
@@ -1274,7 +1485,7 @@ def precheck(
         )
         return PrecheckResult(
             ok=False, root_id=None, diagnostics=[diag], git_status="passed", catalog_status="failed", repo_root=root,
-            git_confirmed=True, root_config=outcome.config,
+            git_confirmed=True, root_config=outcome.config, root_config_valid=root_valid,
         )
     assert root_id is not None
 
@@ -1282,6 +1493,7 @@ def precheck(
     catalog_diags, members = _validate_catalog(
         root, root_id, outcome.config, git, cwd, env, revs, skip_limit_dimensions=skip_limit_dimensions,
         compare_git_configs=compare_git_configs, selected_dir=selected_dir, git_top=git_top,
+        limit_base_rev=limit_base_rev,
     )
     if catalog_diags:
         status = worst_status([d.resultStatus for d in catalog_diags])
@@ -1294,6 +1506,7 @@ def precheck(
             repo_root=root,
             git_confirmed=True,
             root_config=outcome.config,
+            root_config_valid=root_valid,
         )
 
     assert members is not None
@@ -1307,4 +1520,5 @@ def precheck(
         repo_root=root,
         git_confirmed=True,
         root_config=outcome.config,
+        root_config_valid=root_valid,
     )

@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-069-14",
+  "description": "テスト割当て数がlimitsの4を1超えれば全体を遮断する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "reportFileCount": 0,
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "fixtureId": "MULTI-069-19",
+  "description": "コマンド定義数だけがlimitsを超えカタログにない--workspaceを指定した単独のverifyは引数不正にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--workspace",
+      "nope",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "reportFileCount": 0,
+    "exitCode": 4,
+    "stdout": "none"
+  }
+}

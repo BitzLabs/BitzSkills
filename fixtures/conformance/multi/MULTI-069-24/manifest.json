@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-069-24",
+  "description": "メンバーのテスト割当ての引数列の要素数がルートの設定のexpandedArgvCountを超えれば起動しない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "reportFileCount": 0,
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/verify.json"
+  }
+}
