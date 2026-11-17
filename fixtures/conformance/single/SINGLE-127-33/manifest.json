@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-33",
+  "description": "最初の要素が公開の操作の名前でなければ、--helpがあっても未知の操作として終了コード4にする",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "foo",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

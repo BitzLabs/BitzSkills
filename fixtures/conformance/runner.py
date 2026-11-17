@@ -199,6 +199,7 @@ def _referenced_files(fixture_root, manifest):
     if "textFile" in expect:
         paths.append(expect["textFile"])
     if expect.get("stdout") == "none":
+        # 結果を作らない起動（終了コード4、`--help`、`--version`）。出力の期待値は`cli-output.json`に置く。
         paths.append("cli-output.json")
     for name in paths:
         if not (fixture_root / name).is_file():
@@ -319,15 +320,62 @@ CLI_CONTROL_FORBIDDEN = re.compile(
     "[\u0000-\u0009\u000b-\u001f\u007f\u0080-\u009f]")
 
 
-def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes):
-    """終了コード4の出力規則(結果・診断・終了コード §3)を検査する。"""
-    differences = []
+CLI_OUTPUT_STDERR_KEYS = frozenset({"stderrPrefix", "stderrReasonRequired", "stderrTerminalControls"})
+
+
+def _load_cli_output(fixture_root):
+    """`cli-output.json`の形を検査して返す。比べ方の種類を取り違えたfixtureを、合格にも失敗にもせずエラーにする。
+
+    標準出力は、`stdout`（文字列。バイト列の完全一致）か、`stdoutNonEmptyText: true`（UTF-8で、空でなく、改行で終わる。
+    文言を契約にしない`--help`。Core実行環境・CLI基盤契約 §5.1）のどちらか一方で比べる。`stderrLineCount`が0の場合は
+    標準エラー出力が空であることを要求し、行の形を表すキーを持たない。
+    """
     cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
+    exact = "stdout" in cli_output
+    if exact == ("stdoutNonEmptyText" in cli_output):
+        raise FixtureError("`cli-output.json`は`stdout`と`stdoutNonEmptyText`のどちらか一方だけを持ちます")
+    if exact and not isinstance(cli_output["stdout"], str):
+        raise FixtureError("`cli-output.json`の`stdout`は文字列です")
+    if not exact and cli_output["stdoutNonEmptyText"] is not True:
+        raise FixtureError("`cli-output.json`の`stdoutNonEmptyText`は`true`だけを持てます")
+    line_count = cli_output.get("stderrLineCount")
+    if not isinstance(line_count, int) or isinstance(line_count, bool) or line_count < 0:
+        raise FixtureError("`cli-output.json`の`stderrLineCount`は0以上の整数です")
+    present = CLI_OUTPUT_STDERR_KEYS & set(cli_output)
+    if (line_count == 0 and present) or (line_count > 0 and present != CLI_OUTPUT_STDERR_KEYS):
+        raise FixtureError("`cli-output.json`の標準エラー出力の行の形のキーが`stderrLineCount`と合いません")
+    return cli_output
+
+
+def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes):
+    """結果を作らない起動の出力を検査する。
+
+    終了コード4の出力規則(結果・診断・終了コード §3)と、`--help`・`--version`の出力
+    (Core実行環境・CLI基盤契約 §5.1)を扱う。
+    """
+    differences = []
+    cli_output = _load_cli_output(fixture_root)
     expect_exit = manifest["expect"]["exitCode"]
     if exit_code != expect_exit or exit_code != cli_output["exitCode"]:
         differences.append(f"`exitCode`: 期待={expect_exit} 実際={exit_code}")
-    if stdout_bytes != cli_output["stdout"].encode("utf-8"):
-        differences.append("標準出力: 空でなければならないが出力がありました")
+    if "stdout" in cli_output:
+        if stdout_bytes != cli_output["stdout"].encode("utf-8"):
+            differences.append("標準出力: 空でなければならないが出力がありました" if cli_output["stdout"] == ""
+                               else "標準出力: 期待するバイト列と一致しません")
+    else:
+        try:
+            stdout_text = stdout_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            differences.append("標準出力: UTF-8として解読できません")
+        else:
+            if not stdout_text:
+                differences.append("標準出力: 空であってはなりません")
+            elif not stdout_text.endswith("\n"):
+                differences.append("標準出力: 末尾が改行で終わっていません")
+    if cli_output["stderrLineCount"] == 0:
+        if stderr_bytes != b"":
+            differences.append("標準エラー出力: 空でなければならないが出力がありました")
+        return differences
     try:
         text = stderr_bytes.decode("utf-8")
     except UnicodeDecodeError:

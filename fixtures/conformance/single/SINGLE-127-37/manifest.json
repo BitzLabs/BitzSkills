@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-37",
+  "description": "--versionの反復は、未知の操作として終了コード4にする",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "--version",
+      "--version"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

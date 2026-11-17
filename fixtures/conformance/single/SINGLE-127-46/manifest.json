@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-127-46",
+  "description": "verify --reportに--helpがあれば、操作を始めずレポートを作らずに終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--report",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

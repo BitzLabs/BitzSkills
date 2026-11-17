@@ -19,6 +19,7 @@ from conformance.schemas import schema_path
 import certify_gate_a as certify
 from conformance import step_assignment
 from conformance import limits_multi_fixtures, limits_single_fixtures
+from conformance import help_version_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
@@ -15656,6 +15657,96 @@ class AuditTests(unittest.TestCase):
             (root / "multi/MULTI-069-20/changes/bitz.yaml").write_bytes(
                 (audit.FIXTURES / "multi/MULTI-069-20/repo/.spec/bitz.yaml").read_bytes())
             self.assertEqual(limits_multi_fixtures.validate(root, {"MULTI-069-20"})["status"], "Failed")
+
+    def test_help_version_fixtures(self):
+        """`SINGLE-127-20`〜`46`: `--help`と`--version`の起動（ADR-075、Core実行環境・CLI基盤契約 §5.1）。"""
+        module = help_version_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], [f"SINGLE-127-{number}" for number in range(20, 47)])
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in ("SINGLE-127-20", "SINGLE-127-34", "SINGLE-127-41"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+        # Step 1（CLIの引数不正の既存のfixtureと同じStep）に置く。
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        for identifier in module.CASES:
+            self.assertEqual(placed[identifier], placed["SINGLE-127-01"], identifier)
+        # `--version`の1行は`doctor`の結果の`core.version`と同じ値で、パッチ部を含めてバイト列で比べる。
+        doctor = json.loads((audit.FIXTURES / "single/SINGLE-001/expected/doctor.json").read_text())
+        self.assertEqual(module.reviewed_cli_output("SINGLE-127-34")["stdout"], "bitz " + doctor["core"]["version"] + "\n")
+        # 結果を作らない終了コード0の起動はマニフェストのスキーマが許し、結果の状態や期待結果を伴うものと、ほかの終了コードとランナーは許さない。
+        validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
+        base = json.loads((audit.FIXTURES / "single/SINGLE-127-20/manifest.json").read_text())
+        validator.validate(base)
+        invalid = [
+            dict(base, expect=dict(base["expect"], status="passed")),
+            dict(base, expect=dict(base["expect"], resultFile="expected/check.json")),
+            dict(base, expect=dict(base["expect"], textFile="expected/check.txt")),
+            dict(base, expect=dict(base["expect"], exitCode=1)),
+            dict(base, expect=dict(base["expect"], exitCode=3)),
+            dict(base, invocation=dict(base["invocation"], runner="consumer"), expect=dict(base["expect"], outcome="accepted")),
+        ]
+        for manifest in invalid:
+            with self.subTest(expect=manifest["expect"], runner=manifest["invocation"]["runner"]):
+                self.assertFalse(validator.is_valid(manifest))
+
+    def test_help_version_audit_rejects_changed_expectations(self):
+        """期待値、起動条件、入力、副作用の改変を拒否する（陰性対照）。"""
+        mutations = [
+            ("SINGLE-127-20", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("SINGLE-127-20", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+            ("SINGLE-127-20", "cli-output.json", lambda v: v.update(stdoutNonEmptyText=False)),
+            ("SINGLE-127-20", "cli-output.json", lambda v: (v.pop("stdoutNonEmptyText"), v.update(stdout="usage\n"))),
+            ("SINGLE-127-20", "cli-output.json", lambda v: v.update(stderrLineCount=1)),
+            # 最初の要素が`--help`でなくなると`--help`の起動ではない。
+            ("SINGLE-127-21", "manifest.json", lambda v: v["invocation"]["argv"].reverse()),
+            ("SINGLE-127-22", "manifest.json", lambda v: v["invocation"].update(argv=["--version"])),
+            ("SINGLE-127-23", "manifest.json", lambda v: v["invocation"]["argv"].remove("--help")),
+            ("SINGLE-127-27", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(2, "--help=1")),
+            ("SINGLE-127-32", "manifest.json", lambda v: v["invocation"]["argv"].pop()),
+            ("SINGLE-127-33", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(0, "check")),
+            ("SINGLE-127-33", "cli-output.json", lambda v: v.update(stderrPrefix="bitz: foo: ")),
+            ("SINGLE-127-33", "manifest.json", lambda v: v["expect"].update(exitCode=0)),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz 1.0.0")),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz 1.0\n")),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz version 1.0.0\n")),
+            ("SINGLE-127-34", "manifest.json", lambda v: v["invocation"]["argv"].append("--format")),
+            ("SINGLE-127-35", "manifest.json", lambda v: v["expect"].update(exitCode=0)),
+            ("SINGLE-127-36", "cli-output.json", lambda v: v.update(stderrPrefix="bitz: ")),
+            ("SINGLE-127-37", "manifest.json", lambda v: v["invocation"]["argv"].pop()),
+            ("SINGLE-127-38", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(1, "--help")),
+            ("SINGLE-127-39", "manifest.json", lambda v: v["setup"].update(git=False)),
+            ("SINGLE-127-41", "manifest.json", lambda v: v["setup"].update(git=True)),
+            ("SINGLE-127-41", "side-effects.json", lambda v: v["after"].update(git={"status": "", "index": ""})),
+            ("SINGLE-127-45", "side-effects.json",
+             lambda v: v["after"]["repository"].update({".spec/reports": {"kind": "directory"}})),
+            ("SINGLE-127-46", "manifest.json", lambda v: v["invocation"]["argv"].remove("--help")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertEqual(help_version_fixtures.validate(root, {identifier})["status"], "Failed")
+        # 入力の改変: ワークスペースの外に設定を置く、構文の不正な設定を正しい設定へ戻す、`.git`を置く。
+        for identifier, change in (("SINGLE-127-39", "config"), ("SINGLE-127-43", "fix"), ("SINGLE-127-42", "git")):
+            with self.subTest(identifier=identifier, change=change), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                repository = root / "single" / identifier / "repo"
+                if change == "config":
+                    (repository / ".spec").mkdir()
+                    (repository / ".spec/bitz.yaml").write_bytes((audit.FIXTURES / "single/SINGLE-127-20/repo/.spec/bitz.yaml").read_bytes())
+                elif change == "fix":
+                    (repository / ".spec/bitz.yaml").write_bytes((audit.FIXTURES / "single/SINGLE-127-20/repo/.spec/bitz.yaml").read_bytes())
+                else:
+                    (repository / ".git").mkdir()
+                self.assertEqual(help_version_fixtures.validate(root, {identifier})["status"], "Failed")
 
 if __name__ == "__main__":
     unittest.main()

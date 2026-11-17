@@ -118,6 +118,7 @@ from conformance.closure_reachability_fixtures import validate as validate_closu
 from conformance.strict_path_fixtures import validate as validate_strict_path_fixtures
 from conformance.limits_single_fixtures import validate as validate_limits_single_fixtures
 from conformance.limits_multi_fixtures import validate as validate_limits_multi_fixtures
+from conformance.help_version_fixtures import validate as validate_help_version_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -440,6 +441,7 @@ def main():
     checks["strict_path_fixtures"] = validate_strict_path_fixtures()
     checks["limits_single_fixtures"] = validate_limits_single_fixtures()
     checks["limits_multi_fixtures"] = validate_limits_multi_fixtures()
+    checks["help_version_fixtures"] = validate_help_version_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

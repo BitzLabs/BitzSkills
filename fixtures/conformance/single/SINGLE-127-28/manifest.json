@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-127-28",
+  "description": "操作の--helpは値の不足した--timeoutより優先し、終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--help",
+      "--timeout"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

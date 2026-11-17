@@ -1,0 +1,22 @@
+{
+  "fixtureId": "SINGLE-127-38",
+  "description": "--helpと完全に一致しない--help=1は、--name=value形式の未知のオプションとして終了コード4にする",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--help=1"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

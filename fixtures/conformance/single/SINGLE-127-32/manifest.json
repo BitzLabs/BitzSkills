@@ -1,0 +1,23 @@
+{
+  "fixtureId": "SINGLE-127-32",
+  "description": "--helpが2回現れても重複として扱わず、終了コード0で終わる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--help",
+      "--help"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 0,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}
