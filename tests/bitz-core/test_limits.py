@@ -14,7 +14,10 @@
 4. ファイル単位の上限の適用（フロントマターの大きさの数え方を含む）と、仕様文書のファイル数の超過で`check`を止めること
 5. 複合ワークスペースの適用範囲（ルートの設定をメンバーの文書へ、メンバーの設定の`limits`、単一ワークスペースは複合の次元を使わない、
    基準版のスナップショット、除外の件数）
-6. `limits`がコンテキストのハッシュ値を変えないこと、出力が`PYTHONHASHSEED`に依存しないこと
+6. 基準版のスナップショットを作業ツリーとインデックスによらず基準版のコミットの内容で数えること、基準版を読めなければ`SPEC-MULTI-GIT-001`にすること、
+   基準版の除外の件数を絶対上限で検査すること
+7. フロントマターの大きさの数え方（間に行がなければ0バイト、改行の正規化）
+8. `limits`がコンテキストのハッシュ値を変えないこと、出力が`PYTHONHASHSEED`に依存しないこと
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -515,12 +519,11 @@ class MultiWorkspaceTests(unittest.TestCase):
             result["diagnostics"][0]["evidence"], {"dimension": "specFileCount", "limit": 2, "observedAtLeast": 3}
         )
 
-    def test_unchanged_base_snapshot_is_not_recounted(self):
-        # 基準版のファイルがすべて同じ内容で作業ツリーにあれば（追加だけなら）、基準版の数は現在版を超えないので数え直さない。
+    def test_unchanged_base_snapshot_within_the_limit_passes(self):
+        # 対照: 基準版も現在版も上限以内なら通る（基準版は常に数える。作業ツリーで足しただけのファイルは基準版に現れない）。
         self.build(root_limits="limits:\n  statementCount: 10\n")
         _write(self.root, "apps/web/.spec/technical/TECH-002.md", _tech("TECH-002"))
-        with mock.patch.object(gitutil, "BlobReader", side_effect=AssertionError("数え直した")):
-            result, code = self.check_all()
+        result, code = self.check_all()
         self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
 
     def test_exclude_count_uses_the_limit(self):
@@ -534,6 +537,306 @@ class MultiWorkspaceTests(unittest.TestCase):
             [(d["code"], d["summary"], d["source"].get("key")) for d in result["diagnostics"]],
             [("SPEC-MULTI-CONFIG-001", "設定キーmultiWorkspace.excludeは1件以下で指定してください", "multiWorkspace.exclude")],
         )
+
+
+_GIT_001 = {
+    "code": "SPEC-MULTI-GIT-001", "severity": "error", "resultStatus": "blocked",
+    "summary": "Gitのリポジトリの境界を確定できません", "source": {"kind": "environment", "component": "git"},
+}
+
+
+class BaseSnapshotTests(unittest.TestCase):
+    """`check --base`の基準版のスナップショットの上限（複合ワークスペース仕様 §10、安全な入出力・互換性 §4.1）。
+
+    基準版のスナップショットは、作業ツリーとインデックスではなく、基準版のコミットの内容で数える。基準版を読めなければ
+    `SPEC-MULTI-GIT-001`（`blocked`）とし、数えずに通さない。
+    """
+
+    #: ルートのREQ-001と、メンバー`web`のTECH-001〜003の4件。現在版で1件消すと3件になる。
+    TECH_003 = "apps/web/.spec/technical/TECH-003.md"
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.env = {**os.environ, **_GIT_ENV}
+
+    def run_check(self, *argv: str, cwd: Path | None = None) -> tuple[dict, int]:
+        parsed = parse_argv(["check", *argv, "--format", "json"])
+        return check_mod.run(parsed, str(cwd or self.root), self.env)
+
+    def build_four_files(self, root_yaml: str = ROOT_YAML, limits: str = "limits:\n  specFileCount: 3\n") -> None:
+        _write(self.root, ".spec/bitz.yaml", root_yaml + limits)
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "apps/web/.spec/bitz.yaml", WEB_YAML)
+        for n in (1, 2, 3):
+            _write(self.root, f"apps/web/.spec/technical/TECH-00{n}.md", _tech(f"TECH-00{n}"))
+        _commit(self.root)
+
+    def remove(self, rel: str, mode: str) -> None:
+        if mode == "index":
+            _git(self.root, "rm", "-q", rel)
+            return
+        if mode == "skip-worktree":
+            _git(self.root, "update-index", "--skip-worktree", rel)
+        elif mode == "assume-unchanged":
+            _git(self.root, "update-index", "--assume-unchanged", rel)
+        (self.root / rel).unlink()
+
+    def assert_limit(self, result: dict, code: int, dimension: str, limit: int, observed: int) -> None:
+        self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
+        self.assertEqual(
+            [(d["code"], d.get("evidence")) for d in result["diagnostics"]],
+            [("SPEC-MULTI-LIMIT-001", {"dimension": dimension, "limit": limit, "observedAtLeast": observed})],
+        )
+
+    def test_exceeding_base_is_blocked_whatever_the_worktree_and_index_say(self):
+        # `git diff <rev>`はskip-worktreeとassume-unchangedのファイルを作業ツリーから消しても削除と報告しない。
+        # 差分から基準版の数を推し量らず、基準版のコミットの内容を数える。
+        for mode in ("worktree", "index", "skip-worktree", "assume-unchanged"):
+            with self.subTest(mode=mode):
+                self.setUp()
+                self.build_four_files()
+                self.remove(self.TECH_003, mode)
+                result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+                self.assert_limit(result, code, "specFileCount", 3, 4)
+
+    def test_modified_file_hidden_from_git_is_counted_in_the_base(self):
+        # 基準版のTECH-001は規範文3件（ルートと合わせて4件）。作業ツリーで1件に減らし、skip-worktreeでGitから隠す。
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + "limits:\n  statementCount: 3\n")
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "apps/web/.spec/bitz.yaml", WEB_YAML)
+        _write(self.root, "apps/web/.spec/technical/TECH-001.md", _tech("TECH-001", 3))
+        _commit(self.root)
+        for flag in ("--skip-worktree", "--assume-unchanged"):
+            with self.subTest(flag=flag):
+                _git(self.root, "update-index", "--no-skip-worktree", "--no-assume-unchanged",
+                     "apps/web/.spec/technical/TECH-001.md")
+                _git(self.root, "update-index", flag, "apps/web/.spec/technical/TECH-001.md")
+                _write(self.root, "apps/web/.spec/technical/TECH-001.md", _tech("TECH-001", 1))
+                result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+                self.assert_limit(result, code, "statementCount", 3, 4)
+
+    def test_single_operations_check_the_base(self):
+        # 単独の`check`（メンバーの中から、`--workspace`、修飾IDの対象、ルートの全体検査）も基準版を数える。
+        cases = [
+            ("apps/web", ()),
+            ("apps/web", ("--base", "HEAD")),
+            (".", ("--workspace", "web")),
+            (".", ("web::TECH-001",)),
+            (".", ("--full", "--base", "HEAD")),
+        ]
+        for mode in ("worktree", "skip-worktree"):
+            for cwd, argv in cases:
+                with self.subTest(mode=mode, cwd=cwd, argv=argv):
+                    self.setUp()
+                    self.build_four_files()
+                    self.remove(self.TECH_003, mode)
+                    result, code = self.run_check(*argv, cwd=self.root / cwd)
+                    self.assert_limit(result, code, "specFileCount", 3, 4)
+
+    def test_member_path_change_counts_the_base_catalog(self):
+        # 基準版のカタログは`web`を`apps/web`に置く。現在版は`apps/www`へ移し、1件消す（現在版は3件、基準版は4件）。
+        self.build_four_files()
+        _git(self.root, "mv", "apps/web", "apps/www")
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML.replace("apps/web", "apps/www") + "limits:\n  specFileCount: 3\n")
+        (self.root / "apps/www/.spec/technical/TECH-003.md").unlink()
+        for argv, cwd in ((("--all-workspaces", "--base", "HEAD"), "."), ((), "apps/www")):
+            with self.subTest(argv=argv):
+                result, code = self.run_check(*argv, cwd=self.root / cwd)
+                self.assert_limit(result, code, "specFileCount", 3, 4)
+
+    def test_member_only_in_the_base_is_counted(self):
+        # 基準版のカタログだけにあるメンバー`api`の文書も基準版のスナップショットに含める。
+        root_yaml = ROOT_YAML + "    - id: api\n      path: services/api\n"
+        _write(self.root, ".spec/bitz.yaml", root_yaml + "limits:\n  specFileCount: 2\n")
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "apps/web/.spec/bitz.yaml", WEB_YAML)
+        _write(self.root, "apps/web/.spec/technical/TECH-001.md", _tech("TECH-001"))
+        _write(self.root, "services/api/.spec/bitz.yaml", CONFIG + "workspace:\n  id: api\n")
+        _write(self.root, "services/api/.spec/technical/TECH-101.md", _tech("TECH-101"))
+        _commit(self.root)
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + "limits:\n  specFileCount: 2\n")
+        _git(self.root, "rm", "-q", "-r", "services/api")
+        for argv, cwd in ((("--all-workspaces", "--base", "HEAD"), "."), ((), "apps/web"), (("--full",), ".")):
+            with self.subTest(argv=argv, cwd=cwd):
+                result, code = self.run_check(*argv, cwd=self.root / cwd)
+                self.assert_limit(result, code, "specFileCount", 2, 3)
+
+    def test_base_within_the_limit_passes_whatever_the_worktree_says(self):
+        # 対照: 基準版が上限以内なら、skip-worktreeで隠した変更があっても上限の診断を返さない。
+        self.build_four_files(limits="limits:\n  specFileCount: 4\n")
+        self.remove(self.TECH_003, "skip-worktree")
+        result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assertNotIn("SPEC-MULTI-LIMIT-001", [d["code"] for d in result["diagnostics"]], result["diagnostics"])
+        self.assertNotIn("SPEC-MULTI-GIT-001", [d["code"] for d in result["diagnostics"]], result["diagnostics"])
+
+    # --- 基準版を読めないとき（I-3） ---------------------------------------------------------------
+
+    def assert_git_blocked(self, result: dict, code: int) -> None:
+        self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
+        self.assertEqual([d for d in result["diagnostics"] if d["code"] != "SPEC-MULTI-LIMIT-001"], [_GIT_001])
+        self.assertNotIn("SPEC-MULTI-LIMIT-001", [d["code"] for d in result["diagnostics"]])
+
+    def test_unreadable_tree_is_git_001(self):
+        self.build_four_files(limits="")
+        for argv, cwd in ((("--all-workspaces", "--base", "HEAD"), "."), ((), "apps/web")):
+            with self.subTest(argv=argv, cwd=cwd):
+                with mock.patch.object(gitutil, "list_tree_blobs", return_value=None):
+                    result, code = self.run_check(*argv, cwd=self.root / cwd)
+                self.assert_git_blocked(result, code)
+
+    def test_unreadable_member_tree_is_git_001(self):
+        # ルートの`.spec`は読めて、メンバーの`.spec`だけ読めない場合も、そのメンバーを数えずに通さない。
+        self.build_four_files(limits="")
+        real = gitutil.list_tree_blobs
+
+        def fake(executable, toplevel, env, rev, prefix):
+            return None if prefix.startswith("apps/web") else real(executable, toplevel, env, rev, prefix)
+
+        with mock.patch.object(gitutil, "list_tree_blobs", side_effect=fake):
+            result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assert_git_blocked(result, code)
+
+    def test_unreadable_blob_is_git_001(self):
+        self.build_four_files(limits="")
+        for failing in ("config", "spec"):
+            with self.subTest(failing=failing):
+                real_read = gitutil.BlobReader.read
+                calls = {"n": 0}
+
+                def fake_read(reader, oid, _failing=failing):
+                    calls["n"] += 1
+                    # 最初の読取りはルートの設定。`spec`の場合は2件目以降（仕様文書）で失敗させる。
+                    if _failing == "config" or calls["n"] > 1:
+                        raise gitutil.GitReadError("cat-file")
+                    return real_read(reader, oid)
+
+                with mock.patch.object(gitutil.BlobReader, "read", fake_read):
+                    result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+                self.assert_git_blocked(result, code)
+
+    def test_blob_reader_failure_to_start_is_git_001(self):
+        self.build_four_files(limits="")
+        real_popen = subprocess.Popen
+
+        def fake_popen(argv, *args, **kwargs):
+            if "cat-file" in argv:
+                raise OSError("spawn")
+            return real_popen(argv, *args, **kwargs)
+
+        with mock.patch.object(gitutil.subprocess, "Popen", side_effect=fake_popen):
+            result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assert_git_blocked(result, code)
+
+    def test_missing_object_in_the_repository_is_git_001(self):
+        # 実際のGitで、基準版のblobのオブジェクトを消す（partial cloneで取得できない場合に相当）。
+        self.build_four_files(limits="")
+        oid = _git(self.root, "rev-parse", f"HEAD:{self.TECH_003}")
+        (self.root / ".git" / "objects" / oid[:2] / oid[2:]).unlink()
+        result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assert_git_blocked(result, code)
+
+    def test_blob_reader_times_out(self):
+        # `git cat-file --batch`が応答しない（partial cloneの遅延取得が止まった場合など）ときも、無期限に待たない。
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_git = Path(tmp) / "git"
+            fake_git.write_text("#!/bin/sh\nexec sleep 30\n", encoding="utf-8")
+            fake_git.chmod(0o755)
+            started = time.monotonic()
+            with gitutil.BlobReader(str(fake_git), tmp, dict(os.environ), timeout=0.5) as reader:
+                with self.assertRaises(gitutil.GitReadError):
+                    reader.read("0" * 40)
+            self.assertLess(time.monotonic() - started, 10)
+
+    def test_blob_reader_reads_contents_and_reports_missing_objects(self):
+        self.build_four_files(limits="")
+        executable = gitutil.detect_git(str(self.root), self.env).executable
+        oid = _git(self.root, "rev-parse", "HEAD:.spec/requirements/REQ-001.md")
+        with gitutil.BlobReader(executable, str(self.root), self.env) as reader:
+            self.assertEqual(reader.read(oid), _req("REQ-001").encode("utf-8"))
+            with self.assertRaises(gitutil.GitReadError):
+                reader.read("0" * 40)
+
+    # --- 除外の件数（S-2） ------------------------------------------------------------------------
+
+    def build_exclude(self, base_exclude: list[str], base_limits: str = "") -> None:
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + f"  exclude: [{', '.join(base_exclude)}]\n" + base_limits)
+        _write(self.root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(self.root, "apps/web/.spec/bitz.yaml", WEB_YAML)
+        _write(self.root, "vendor/a/.spec/bitz.yaml", CONFIG + "workspace:\n  id: vendored\n")
+        _commit(self.root)
+
+    def test_exclude_count_applies_only_to_the_current_root_config(self):
+        # 基準版の除外は2件、現在版は1件で`excludeCount: 1`。基準版の除外は絶対上限（100件）で検査するので、
+        # 基準版の`vendor/a`の設定も除外の中にあり、未登録の設定にならない。
+        self.build_exclude(["vendor/a", "vendor/b"])
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + "  exclude: [vendor/a]\nlimits:\n  excludeCount: 1\n")
+        for argv in (("--all-workspaces", "--base", "HEAD"), ("--full", "--base", "HEAD"), ()):
+            with self.subTest(argv=argv):
+                result, code = self.run_check(*argv)
+                self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
+
+    def test_base_exclude_count_ignores_the_base_limits(self):
+        # 基準版の設定自身の`limits.excludeCount`も使わない（絶対上限で検査する）。
+        self.build_exclude(["vendor/a", "vendor/b"], base_limits="limits:\n  excludeCount: 1\n")
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + "  exclude: [vendor/a]\n")
+        result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assertEqual((result["status"], code), ("passed", 0), result["diagnostics"])
+        git = gitutil.detect_git(str(self.root), self.env)
+        self.assertEqual(
+            multiws.base_exclude_parts(git, str(self.root), self.env, "HEAD", str(self.root)), [("vendor", "a"), ("vendor", "b")]
+        )
+
+    def test_base_exclude_over_the_absolute_limit_is_not_trusted(self):
+        # 基準版の除外が101件なら、絶対上限を超えるので信用せず、基準版の`vendor/a`の設定は未登録になる。
+        self.build_exclude(["vendor/a"] + [f"other/x{i:03d}" for i in range(100)])
+        _write(self.root, ".spec/bitz.yaml", ROOT_YAML + "  exclude: [vendor/a]\n")
+        result, code = self.run_check("--all-workspaces", "--base", "HEAD")
+        self.assertEqual((result["status"], code), ("blocked", 2), result["diagnostics"])
+        self.assertEqual(
+            [(d["code"], d["source"].get("path")) for d in result["diagnostics"]],
+            [("SPEC-MULTI-UNREGISTERED-001", "vendor/a/.spec/bitz.yaml")],
+        )
+
+
+class FrontmatterSizeTests(unittest.TestCase):
+    """フロントマターの大きさ（文書・フロントマター・状態仕様 §11）。区切りの行の間の各行を改行（正規化後1バイト）を含めて数え、
+    区切りの行は含めない。間に行がなければ0バイト。"""
+
+    def size(self, text: str) -> int:
+        fm_raw, _body, closing = doc_mod._extract_frontmatter(text)
+        self.assertIsNotNone(fm_raw)
+        return doc_mod._frontmatter_bytes(fm_raw, closing)
+
+    def test_counting_rule(self):
+        self.assertEqual(self.size("---\n---"), 0)
+        self.assertEqual(self.size("---\n\n---\n"), 1)
+        self.assertEqual(self.size("---\nid: A\n---\n"), 6)
+        self.assertEqual(self.size("---\nid: A\nx: y\n---\nbody\n"), 11)
+        self.assertEqual(self.size("---\nid: A\n---"), 6)
+        self.assertEqual(self.size("---\nあ: い\n---\n"), 9)
+
+    def process(self, raw: bytes, limit: int) -> list[str]:
+        entry = doc_mod._process_document_content(
+            raw, ".spec/requirements/REQ-001.md", "REQ", "root", limits_mod.Limits(frontmatterBytes=limit)
+        )
+        return [d.summary for d in entry.hard or [] if d.code == "SPEC-INPUT-LIMIT-001"]
+
+    def test_no_lines_between_the_delimiters_is_zero_bytes(self):
+        # 間に行がなければ0バイトなので、最小の上限1でも超過しない（区切りの行と、終わりの区切りの後の改行を数えない）。
+        for raw in (b"---\n---", b"---\r\n---"):
+            with self.subTest(raw=raw):
+                self.assertEqual(self.process(raw, 1), [])
+
+    def test_crlf_is_counted_after_normalization(self):
+        # CRLFはLFへ正規化した後に数える。`id: REQ-001\ntitle: REQ\nstatus: approved\n`は40バイト（CRLFのままなら43バイト）。
+        raw = _req("REQ-001").replace("\n", "\r\n").encode("utf-8")
+        self.assertEqual(self.process(raw, 40), [])
+        self.assertEqual(self.process(raw, 39), ["フロントマターが39バイト上限を超過しました"])
+        cr = _req("REQ-001").replace("\n", "\r").encode("utf-8")
+        self.assertEqual(self.process(cr, 40), [])
+        self.assertEqual(self.process(cr, 39), ["フロントマターが39バイト上限を超過しました"])
 
 
 class WalkOrderTests(unittest.TestCase):
