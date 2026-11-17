@@ -1413,3 +1413,22 @@ Core固有の単体試験は1400件がすべて成功した（3件はスキッ�
 
 実寸の上限の検証は、Gate Cの最終の集約の前に、確定したコミットで1回実行して記録する（ADR-076 Decision 8）。
 既知の問題として、単一ワークスペースの仕様文書のファイル数の超過で、`context`と`verify`が原因の診断を返さない（`check`は停止する）。別の作業で直す。
+
+## 2026-11-17: 仕様文書のファイル数の超過でcontextとverifyも操作を止めるようにした後のStep 1〜5の再判定
+
+単一ワークスペースで仕様文書のファイル数が上限を超えたとき、`context`と`verify`は空のカタログのまま続け、原因の`SPEC-INPUT-LIMIT-001`ではなく
+`CTX-ROOT-MISSING-001`を返していた（ADR-076の独立レビューで判明。`limits`で上限を小さくできるようになり、起こしやすくなった）。
+`build_catalog`の後で停止を確かめ、設定の停止と同じ経路で返すようにした。修正前のCoreでは`SINGLE-180-14`と`15`が非成功、修正後は829件すべてが`passed`となる。
+独立レビューの判定はPASS（複合ワークスペースでは全体事前検査が先に止めることを、実際のGitリポジトリで確かめた）。
+
+コミット`987ee944a7cd6500a8a53a39ec34bdf980eb378e`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 829件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。結果のSHA-256は両方`8a59d5ce0bf9dfa04a3f56d3f506242bef5f9976c9d37abdbfcd9321d0f9debf` |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は1460件がすべて成功した（3件はスキップ）。
