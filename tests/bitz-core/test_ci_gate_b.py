@@ -64,7 +64,7 @@ class ShardingTests(unittest.TestCase):
         self.assertLess(max(fixture_seconds) - min(fixture_seconds), 0.2)
         plan = partition_plan(step_ids(5), 4)
         # 実寸の上限のfixtureを手動の一覧へ移した（ADR-076）ので、4つの分割の予測秒数は42.8〜42.9秒（固定時間12秒を含む）。
-        # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は827件だが、6件が2つのStepに現れるので重複を除いて821件。
+        # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は835件だが、6件が2つのStepに現れるので重複を除いて829件。
         self.assertTrue(all(35 <= row["predictedSeconds"] <= 50 for row in plan))
         self.assertEqual(sum(row["fixtureCount"] for row in plan), 829)
 
