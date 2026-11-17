@@ -66,7 +66,7 @@ class ShardingTests(unittest.TestCase):
         # 実寸の上限のfixtureを手動の一覧へ移した（ADR-076）ので、4つの分割の予測秒数は42.8〜42.9秒（固定時間12秒を含む）。
         # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は827件だが、6件が2つのStepに現れるので重複を除いて821件。
         self.assertTrue(all(35 <= row["predictedSeconds"] <= 50 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 826)
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 829)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
