@@ -12,7 +12,7 @@ CLIの引数の境界の群（`SINGLE-127-*`）の続きとして、`SINGLE-127-
 | `SINGLE-127-27`〜`31` | 操作の`--help`と、未知のオプション、値の不足、値の位置の`--help`、重複、空文字列の位置引数 | 同上 | 0。`--help`がほかの引数の検査より優先する |
 | `SINGLE-127-32` | `doctor --help --help` | 同上 | 0。`--help`の反復を重複として扱わない |
 | `SINGLE-127-33` | `foo --help` | 同上 | 4。未知の操作 |
-| `SINGLE-127-34` | `--version` | 同上 | 0。標準出力はちょうど`bitz <core.version>`とLF |
+| `SINGLE-127-34` | `--version` | 同上 | 0。標準出力は`bitz <major>.<minor>.<patch>`とLFの1行で、`<major>.<minor>`は`core.version`と同じ |
 | `SINGLE-127-35`、`37` | `--version check`、`--version --version` | 同上 | 4。未知の操作 |
 | `SINGLE-127-36`、`38` | `check --version`、`check --help=1` | 同上 | 4。`check`の未知のオプション |
 | `SINGLE-127-39`、`40` | `--help`、`--version` | `.spec/bitz.yaml`のないGitのリポジトリ | 0 |
@@ -22,7 +22,9 @@ CLIの引数の境界の群（`SINGLE-127-*`）の続きとして、`SINGLE-127-
 
 すべての起動は読取り専用で、`reportFileCount`は0、副作用の期待値は実行前と実行後が同じ状態である（§5.1: 結果のJSONとレポートを作らない）。
 `--help`の文言は契約にしないので、`cli-output.json`の`stdoutNonEmptyText`で、空でなく、UTF-8で、改行で終わることだけを比べる。
-`--version`の1行は、`doctor`の結果の`core.version`と同じ値を使う（§5.1）。値は、レビュー済みの`doctor`のfixtureの期待結果から読み、
+`--version`の1行は、`cli-output.json`の`stdoutVersionLine`で、`bitz <major>.<minor>.<patch>`とLFの1行であり、`<major>.<minor>`が
+`doctor`の結果の`core.version`の期待値と一致することを比べる（§5.1、適合fixture仕様 §3）。パッチ部は、`doctor`の`core.version`と同じく
+比べない（適合fixture仕様 §4）。期待値は`runner.expected_core_version`が、レビュー済みの`doctor`のfixtureの期待結果から読み、
 すべての`doctor`の期待結果で同じ値であることを確かめる。
 
 終了コード4の標準エラー出力は、結果・診断・終了コード §3の`bitz: <operation-or-argv-context>: <reason>`の1行である。
@@ -40,15 +42,13 @@ from jsonschema import Draft202012Validator, ValidationError
 from . import digest_reference
 from .harness import setup, snapshot
 from .initial_fixtures import compare_state, observe
-from .runner import FixtureError, _check_cli_output
+from .runner import FixtureError, _check_cli_output, expected_core_version
 from .schemas import schema_path
 from .workspace_selection_fixtures import SYNTAX_CONFIG
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
 OPERATIONS = ("check", "context", "verify", "doctor")
-# `core.version`の正本の値を読む`doctor`のfixture（Step 1の`doctor`の成功）。
-VERSION_SOURCE = "SINGLE-001"
 
 # id: (引数列, 入力の種類, 期待の種類, 説明)
 # 入力の種類: `workspace`（`SINGLE-042`の入力。Gitのリポジトリでコミットなし）、`outside-git`（`.spec`を除いた同じ入力のGitのリポジトリ）、
@@ -114,20 +114,11 @@ GIT_BY_INPUTS = {"workspace": True, "outside-git": True, "outside": False, "synt
 
 
 def core_version():
-    """`doctor`の結果の`core.version`（§5.1）。リポジトリのレビュー済みの`doctor`のfixtureの期待結果から読み、全件で1つの値であることを確かめる。
+    """`doctor`の結果の`core.version`の期待値（§5.1）。harnessの比較と同じ`runner.expected_core_version`で読む。
 
     改変したコピーを監査するときも、値の出典はリポジトリの`doctor`のfixtureとする（この群の外の期待値である）。
     """
-    root = HERE
-    values = set()
-    for path in sorted((root / "single").glob("*/expected/doctor.json")) + sorted((root / "multi").glob("*/expected/doctor.json")):
-        value = json.loads(path.read_text()).get("core", {}).get("version")
-        if value is not None:
-            values.add(value)
-    source = json.loads((root / "single" / VERSION_SOURCE / "expected/doctor.json").read_text())["core"]["version"]
-    if not isinstance(source, str) or not source or values != {source}:
-        raise ValueError("`doctor`の期待結果の`core.version`が1つの値に定まりません")
-    return source
+    return expected_core_version()
 
 
 def reviewed_inputs(identifier):
@@ -158,7 +149,8 @@ def reviewed_cli_output(identifier):
     if outcome == "help":
         return {"exitCode": 0, "stdoutNonEmptyText": True, "stderrLineCount": 0}
     if outcome == "version":
-        return {"exitCode": 0, "stdout": f"bitz {core_version()}\n", "stderrLineCount": 0}
+        # パッチ部を比べないので、値をfixtureへ書かない（適合fixture仕様 §3の`stdoutVersionLine`、§4）。
+        return {"exitCode": 0, "stdoutVersionLine": True, "stderrLineCount": 0}
     prefix = "bitz: " if outcome == "unknown-operation" else f"bitz: {CASES[identifier][0][0]}: "
     return {"exitCode": 4, "stdout": "", "stderrPrefix": prefix, "stderrLineCount": 1,
             "stderrReasonRequired": True, "stderrTerminalControls": False}
@@ -188,10 +180,24 @@ def check_comparison(identifier, fixture):
         bad = [(0, b"", b""), (0, b"usage: bitz", b""), (0, b"\xff\n", b""), (0, b"usage: bitz\n", b"bitz: note\n"),
                (4, b"usage: bitz\n", b"")]
     elif outcome == "version":
-        line = cli_output["stdout"].encode()
-        good = [(0, line, b"")]
-        bad = [(0, line.rstrip(b"\n"), b""), (0, line + b"\n", b""), (0, line.replace(b" ", b"  "), b""),
-               (0, line.replace(b"bitz ", b"bitz version "), b""), (0, line, b"warning\n"), (4, line, b"")]
+        major, minor, patch = core_version().split(".")
+        line = f"bitz {major}.{minor}.{patch}\n".encode()
+        # パッチ部だけが違う1行は受理する（§4）。`<major>.<minor>`、1行の形、付記、空白、改行の違いは拒否する。
+        good = [(0, line, b""), (0, f"bitz {major}.{minor}.{int(patch) + 1}\n".encode(), b""),
+                (0, f"bitz {major}.{minor}.{int(patch) + 10}\n".encode(), b"")]
+        bad = [(0, b"", b""), (0, line.rstrip(b"\n"), b""), (0, line + b"\n", b""), (0, line + line, b""),
+               (0, line.replace(b"\n", b"\r\n"), b""), (0, line.replace(b"\n", b" \n"), b""),
+               (0, b" " + line, b""), (0, line.replace(b"bitz ", b""), b""), (0, line.replace(b" ", b"  "), b""),
+               (0, line.replace(b"bitz ", b"bitz version "), b""), (0, line.replace(b"bitz ", b"Bitz "), b""),
+               (0, f"bitz {major}.{minor}\n".encode(), b""), (0, f"bitz {major}.{minor}.\n".encode(), b""),
+               (0, f"bitz {major}.{minor}.{patch}.0\n".encode(), b""),
+               (0, f"bitz {major}.{int(minor) + 1}.{patch}\n".encode(), b""),
+               (0, f"bitz {int(major) + 1}.{minor}.{patch}\n".encode(), b""),
+               (0, f"bitz 0{major}.{minor}.{patch}\n".encode(), b""),
+               (0, f"bitz {major}.{minor}.{patch}-rc.1\n".encode(), b""),
+               (0, f"bitz {major}.{minor}.{patch}+build.1\n".encode(), b""),
+               (0, f"bitz {major}.{minor}.\uff10\n".encode(), b""),
+               (0, line, b"warning\n"), (4, line, b"")]
     else:
         prefix = cli_output["stderrPrefix"].encode()
         good = [(4, b"", prefix + b"x: reason\n")]

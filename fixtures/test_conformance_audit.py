@@ -15675,9 +15675,13 @@ class AuditTests(unittest.TestCase):
         placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
         for identifier in module.CASES:
             self.assertEqual(placed[identifier], placed["SINGLE-127-01"], identifier)
-        # `--version`の1行は`doctor`の結果の`core.version`と同じ値で、パッチ部を含めてバイト列で比べる。
+        # `--version`の1行は`stdoutVersionLine`で比べ、`<major>.<minor>`の基準は`doctor`の結果の`core.version`の期待値とする。
+        # パッチ部は比べない（適合fixture仕様 §3・§4）ので、値をfixtureへ書かない。
         doctor = json.loads((audit.FIXTURES / "single/SINGLE-001/expected/doctor.json").read_text())
-        self.assertEqual(module.reviewed_cli_output("SINGLE-127-34")["stdout"], "bitz " + doctor["core"]["version"] + "\n")
+        self.assertEqual(module.core_version(), doctor["core"]["version"])
+        for identifier in ("SINGLE-127-34", "SINGLE-127-40", "SINGLE-127-42", "SINGLE-127-44"):
+            self.assertEqual(module.reviewed_cli_output(identifier),
+                             {"exitCode": 0, "stdoutVersionLine": True, "stderrLineCount": 0}, identifier)
         # 結果を作らない終了コード0の起動はマニフェストのスキーマが許し、結果の状態や期待結果を伴うものと、ほかの終了コードとランナーは許さない。
         validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
         base = json.loads((audit.FIXTURES / "single/SINGLE-127-20/manifest.json").read_text())
@@ -15711,9 +15715,15 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-127-33", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(0, "check")),
             ("SINGLE-127-33", "cli-output.json", lambda v: v.update(stderrPrefix="bitz: foo: ")),
             ("SINGLE-127-33", "manifest.json", lambda v: v["expect"].update(exitCode=0)),
-            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz 1.0.0")),
-            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz 1.0\n")),
-            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz version 1.0.0\n")),
+            # `stdoutVersionLine`を、パッチ部まで比べる完全一致や、ほかの比べ方へ置き換えない。
+            ("SINGLE-127-34", "cli-output.json", lambda v: (v.pop("stdoutVersionLine"), v.update(stdout="bitz 1.0.0\n"))),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdout="bitz 1.0.0\n")),
+            ("SINGLE-127-34", "cli-output.json", lambda v: (v.pop("stdoutVersionLine"), v.update(stdoutNonEmptyText=True))),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stdoutVersionLine=False)),
+            ("SINGLE-127-34", "cli-output.json", lambda v: v.update(stderrLineCount=1)),
+            ("SINGLE-127-40", "cli-output.json", lambda v: (v.pop("stdoutVersionLine"), v.update(stdout="bitz 1.0.0\n"))),
+            ("SINGLE-127-42", "cli-output.json", lambda v: v.update(exitCode=4)),
+            ("SINGLE-127-44", "cli-output.json", lambda v: (v.pop("stdoutVersionLine"), v.update(stdoutNonEmptyText=True))),
             ("SINGLE-127-34", "manifest.json", lambda v: v["invocation"]["argv"].append("--format")),
             ("SINGLE-127-35", "manifest.json", lambda v: v["expect"].update(exitCode=0)),
             ("SINGLE-127-36", "cli-output.json", lambda v: v.update(stderrPrefix="bitz: ")),

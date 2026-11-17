@@ -25,7 +25,7 @@ from jsonschema import Draft202012Validator
 
 from . import multi_crosscheck, multi_generator, multi_limit_fixtures, multi_single_verify_limit_fixtures
 from .harness import setup, snapshot
-from .runner import default_python_minor
+from .runner import default_python_minor, expected_core_version
 from .schemas import schema_path
 
 CONFORMANCE_ROOT = Path(__file__).resolve().parent
@@ -275,8 +275,17 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side
             stdout_bytes = _mutate_text_bytes(stdout_bytes, identifier)
     else:  # "none"（結果を作らない起動。終了コード4、`--help`、`--version`）
         cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
-        # `stdout`は完全一致で比べるバイト列、`stdoutNonEmptyText`は文言を契約にしない`--help`の出力。
-        stdout_bytes = (cli_output["stdout"] if "stdout" in cli_output else "偽Coreの使い方\n").encode("utf-8")
+        # `stdout`は完全一致で比べるバイト列、`stdoutNonEmptyText`は文言を契約にしない`--help`の出力、
+        # `stdoutVersionLine`は`--version`の1行。`--version`は、パッチ部を期待値と変えた1行を返し、harnessが
+        # パッチ部を比べないこと（適合fixture仕様 §4）も通しで確かめる。
+        if "stdout" in cli_output:
+            stdout_text = cli_output["stdout"]
+        elif "stdoutVersionLine" in cli_output:
+            major, minor, patch = expected_core_version().split(".")
+            stdout_text = f"bitz {major}.{minor}.{int(patch) + 1}\n"
+        else:
+            stdout_text = "偽Coreの使い方\n"
+        stdout_bytes = stdout_text.encode("utf-8")
         line_count = cli_output["stderrLineCount"]
         if identifier == mutate:
             line_count += 1
