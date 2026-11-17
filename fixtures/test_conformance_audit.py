@@ -17,6 +17,7 @@ import validate_conformance as audit
 from conformance.schemas import schema_path
 import certify_gate_a as certify
 from conformance import step_assignment
+from conformance import limits_multi_fixtures, limits_single_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
@@ -14503,6 +14504,7 @@ class AuditTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 (root / "single").symlink_to(audit.FIXTURES / "single")
+                (root / "multi").symlink_to(audit.FIXTURES / "multi")
                 (root / "steps.json").write_text(json.dumps(document))
                 return step_assignment.validate(root, plan_text)
 
@@ -14514,22 +14516,32 @@ class AuditTests(unittest.TestCase):
         misplaced["steps"][1]["parserChecks"].append(misplaced["steps"][1]["fixtures"].pop(0))
         self.assertTrue(run(misplaced)["errors"])
         self.assertTrue(run(original, plan.replace("`SINGLE-001`〜`006`、", "`SINGLE-002`〜`006`、", 1))["errors"])
+        # 実寸の上限のfixtureは手動の一覧に置き、Stepに置かない（ADR-076）。手動の一覧の欠落、余分、Stepへの混入を拒否する。
+        self.assertEqual(len(original["manual"]["fixtures"]), 28)
+        for name, change in {
+            "manual-drop": lambda v: v["manual"]["fixtures"].pop(),
+            "manual-extra": lambda v: v["manual"]["fixtures"].append("MULTI-069-01"),
+            "manual-in-step": lambda v: v["steps"][4]["fixtures"].append(v["manual"]["fixtures"][0]),
+            "manual-moved-to-step": lambda v: v["steps"][4]["fixtures"].append(v["manual"]["fixtures"].pop()),
+            "manual-order": lambda v: v["manual"]["fixtures"].reverse(),
+            "manual-missing": lambda v: v.pop("manual"),
+        }.items():
+            with self.subTest(name):
+                altered = copy.deepcopy(original)
+                change(altered)
+                self.assertTrue(run(altered)["errors"])
+        # 適合fixture仕様 §3.4の一文から、手動の検証のファミリーを読む。
+        self.assertEqual(step_assignment.manual_families(), ["MULTI-020", "MULTI-021", "MULTI-041"])
 
     @staticmethod
-    def certification_runs(pending=None, errors=None, conformance_exit=1, scale_status="Passed"):
+    def certification_runs(pending=None, errors=None, conformance_exit=1):
         report = {"gateA": "Blocked", "pending": [certify.CERTIFIED] if pending is None else pending,
                   "checks": {"links": {"errors": errors or []}, "fixture_coverage": {"status": "Passed", "errors": []}}}
         conformance = {"exitCode": conformance_exit, "stdout": json.dumps(report).encode()}
-        scale = {"exitCode": 0 if scale_status == "Passed" else 1,
-                 "stdout": json.dumps({"status": scale_status, "durationSeconds": 37.0, "results": [], "errors": []}).encode()}
-        return [conformance, dict(conformance)], [scale, dict(scale)]
+        return [conformance, dict(conformance)]
 
     def test_gate_a_certification_accepts_identical_fresh_checkouts(self):
-        conformance, scale = self.certification_runs()
-        self.assertEqual(certify.judge(conformance, scale), [])
-        # 所要時間だけが異なる規模の検証は一致として扱う。
-        scale[1] = {"exitCode": 0, "stdout": scale[1]["stdout"].replace(b"37.0", b"41.5")}
-        self.assertEqual(certify.judge(conformance, scale), [])
+        self.assertEqual(certify.judge(self.certification_runs()), [])
 
     def test_gate_a_certification_rejects_incomplete_or_unrepeatable_evidence(self):
         cases = {
@@ -14537,26 +14549,21 @@ class AuditTests(unittest.TestCase):
             "認定対象の項目の欠落": self.certification_runs(pending=[]),
             "errorのある検査": self.certification_runs(errors=["broken link"]),
             "統合検証の終了コード": self.certification_runs(conformance_exit=0),
-            "scale検証の失敗": self.certification_runs(scale_status="Failed"),
         }
-        conformance, scale = self.certification_runs()
-        cases["checkout数"] = (conformance[:1], scale[:1])
-        cases["reportのbyte不一致"] = (
-            [conformance[0], {"exitCode": 1, "stdout": conformance[1]["stdout"] + b"\n"}], scale)
-        cases["scale結果の不一致"] = (
-            conformance, [scale[0], {"exitCode": 0, "stdout": scale[1]["stdout"].replace(b'"results": []', b'"results": [1]')}])
-        cases["JSONでないreport"] = ([{"exitCode": 1, "stdout": b"not json"}] * 2, scale)
-        for name, (runs, scales) in cases.items():
+        conformance = self.certification_runs()
+        cases["checkout数"] = conformance[:1]
+        cases["reportのbyte不一致"] = [conformance[0], {"exitCode": 1, "stdout": conformance[1]["stdout"] + b"\n"}]
+        cases["JSONでないreport"] = [{"exitCode": 1, "stdout": b"not json"}] * 2
+        for name, runs in cases.items():
             with self.subTest(name):
-                self.assertTrue(certify.judge(runs, scales))
+                self.assertTrue(certify.judge(runs))
 
-    def test_gate_a_certification_names_the_scale_failure(self):
-        # 規模の検証が理由を返したときは、認定の理由にその先頭を示す（原因を「形式が不正」に埋もれさせない）。
-        conformance, scale = self.certification_runs()
-        failed = {"exitCode": 1, "stdout": json.dumps({"status": "Failed", "durationSeconds": 1.0, "results": [],
-                                                      "errors": ["MULTI-020-01: 照合を完了できません（TimeoutExpired: git）"]}).encode()}
-        reasons = certify.judge(conformance, [failed, dict(failed)])
-        self.assertIn("規模の検証1: 成功していません（MULTI-020-01: 照合を完了できません（TimeoutExpired: git））", reasons)
+    def test_gate_a_certification_does_not_run_the_scale_validation(self):
+        # 実寸の検証は手動の検証であり、Gate Aの認定の条件にしない（ADR-076）。認定は監査だけを各チェックアウトで実行する。
+        import inspect
+        self.assertFalse(hasattr(certify, "SCALE"))
+        self.assertEqual(list(inspect.signature(certify.judge).parameters), ["conformance"])
+        self.assertNotIn("validate_scale", inspect.getsource(certify.main))
 
     def test_scale_validation_reports_setup_failures_as_json(self):
         # 準備手順のGit操作がタイムアウトしても、規模の検証はJSONのレポートを出し、失敗として数える（C14）。
@@ -14587,11 +14594,6 @@ class AuditTests(unittest.TestCase):
                          + len(validate_scale.single_verify.CASES))
         self.assertEqual(len(report["errors"]), 1)
         self.assertTrue(report["errors"][0].startswith(f"{first}: 照合を完了できません（TimeoutExpired: "))
-        conformance, _scale = self.certification_runs()
-        reasons = certify.judge(conformance, [{"exitCode": exit_code, "stdout": output.getvalue().encode()}] * 2)
-        self.assertEqual([reason for reason in reasons if reason.startswith("規模の検証1")],
-                         [f"規模の検証1: 成功していません（{report['errors'][0]}）"])
-        self.assertFalse(any("形式が不正" in reason for reason in reasons), reasons)
 
     def test_scale_validation_does_not_swallow_other_exceptions(self):
         # 捕まえる範囲は準備手順・ファイル操作・照合の不一致に限り、それ以外の例外（実装の欠陥など）は伝える。
@@ -14605,18 +14607,14 @@ class AuditTests(unittest.TestCase):
                 validate_scale.main()
 
     def test_gate_a_certification_shows_the_stderr_of_an_unreadable_report(self):
-        conformance, _scale = self.certification_runs()
         crashed = {"exitCode": 1, "stdout": b"", "stderr": b"Traceback (most recent call last):\n  ...\nKeyError: 'x'\n"}
-        reasons = certify.judge(conformance, [crashed, dict(crashed)])
-        self.assertIn("規模の検証1: レポートの形式が不正です（KeyError: 'x'）", reasons)
-        self.assertIn("規模の検証2: レポートの形式が不正です（KeyError: 'x'）", reasons)
-        _conformance, scale = self.certification_runs()
-        reasons = certify.judge([crashed, dict(crashed)], scale)
+        reasons = certify.judge([crashed, dict(crashed)])
         self.assertIn("監査1: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        self.assertIn("監査2: レポートの形式が不正です（KeyError: 'x'）", reasons)
         # 実行の結果は標準エラー出力を保持する（`judge`へ渡す材料）。
         completed = certify.subprocess.CompletedProcess(["uv"], 1, stdout=b"", stderr=b"KeyError: 'y'\n")
         with patch.object(certify.subprocess, "run", return_value=completed):
-            result = certify.run("uv", ["fixtures/validate_scale.py"], Path("."), 900)
+            result = certify.run("uv", ["fixtures/validate_conformance.py"], Path("."), 600)
         self.assertEqual(result, {"exitCode": 1, "stdout": b"", "stderr": b"KeyError: 'y'\n"})
 
     def test_fixture_git_uses_the_shared_timeout(self):
@@ -15054,6 +15052,121 @@ class AuditTests(unittest.TestCase):
                 (root / "tracked.txt").write_text("changed\n")
                 self.assertTrue(certify.worktree_errors())
 
+
+    def test_limits_single_fixtures(self):
+        """`SINGLE-180-*`〜`183-*`: 単一ワークスペースの`limits`（ADR-076、安全な入出力・互換性 §4.1）。"""
+        module = limits_single_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(module.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+        # `doctor`の`limits`は§4.1の表のすべてのキーを表の順に持つ。
+        self.assertEqual(list(module.effective_limits([("expandedArgvBytes", 4096), ("specFileCount", 5)])),
+                         list(json.loads(schema_path(audit.FIXTURES, "result").read_text())["$defs"]["limits"]["required"]))
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        for identifier, case in module.CASES.items():
+            self.assertEqual(placed[identifier], case["step"], identifier)
+        self.assertEqual((placed["SINGLE-001"], placed["SINGLE-079-01"], placed["SINGLE-042"], placed["SINGLE-055"]), (1, 2, 3, 4))
+
+    def test_limits_single_audit_rejects_changed_expectations(self):
+        """期待値、起動条件、入力の改変を拒否する（陰性対照）。絶対上限の文言の取り違え、設定した値と異なる上限、基のfixtureとの差を含む。"""
+        mutations = [
+            ("SINGLE-183-01", "expected/doctor.json", lambda v: v.pop("limits")),
+            ("SINGLE-183-01", "expected/doctor.json", lambda v: v["limits"].update(excludeCount=99)),
+            ("SINGLE-183-02", "expected/doctor.json", lambda v: v["limits"].update(specFileCount=10000)),
+            ("SINGLE-183-04", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(workspaceId="root")),
+            ("SINGLE-183-05", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="futureLimit")),
+            ("SINGLE-180-02", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="仕様文書のMarkdownが1 MiB上限を超過しました")),
+            ("SINGLE-180-06", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="1文書の規範文数が1,000上限を超過しました")),
+            ("SINGLE-180-08", "expected/check.json", lambda v: v.update(checkedDocumentCount=0, checkedStatementCount=0)),
+            ("SINGLE-180-01", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("SINGLE-181", "expected/context.json",
+             lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-182-03", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=["root::default"])),
+            ("SINGLE-182-05", "expected/verify.json",
+             lambda v: v["diagnostics"][0].update(summary="{tests}展開後のargvがバイト数上限1 MiBを超えます")),
+            ("SINGLE-182-06", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertEqual(limits_single_fixtures.validate(root, {identifier})["status"], "Failed")
+        # 入力の`limits`の値を変えると、測り直しとレビュー済みの入力の照合で拒否する（境界の反対側への差替えを含む）。
+        for identifier, old, new in (("SINGLE-180-01", b"specBytes: 334", b"specBytes: 333"),
+                                     ("SINGLE-180-05", b"documentStatementCount: 3", b"documentStatementCount: 4"),
+                                     ("SINGLE-182-04", b"expandedArgvBytes: 51", b"expandedArgvBytes: 47")):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                config = root / "single" / identifier / "repo/.spec/bitz.yaml"
+                config.write_bytes(config.read_bytes().replace(old, new))
+                self.assertEqual(limits_single_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_limits_multi_fixtures(self):
+        """`MULTI-069-*`、`MULTI-068-*`: ルートの設定の`limits`（ADR-076、複合ワークスペース仕様 §10）。"""
+        module = limits_multi_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(module.CASES))
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        self.assertTrue(all(placed[identifier] == 5 for identifier in module.CASES))
+        # 7つの次元のそれぞれに、ちょうどと1超過がある。
+        dimensions = [(case["dimension"], case["outcome"]) for identifier, case in module.CASES.items()
+                      if case["form"] == "all" and identifier <= "MULTI-069-14"]
+        self.assertEqual(sorted(dimensions), sorted((name, outcome) for name in module.ORDER for outcome in ("passed", "blocked")))
+
+    def test_limits_multi_audit_rejects_changed_expectations(self):
+        """期待値、起動条件、入力の改変を拒否する（陰性対照）。絶対上限の`evidence`への取り違え、優先する次元の取り違えを含む。"""
+        mutations = [
+            ("MULTI-069-02", "expected/check.json", lambda v: v["diagnostics"][0]["evidence"].update(limit=10000)),
+            ("MULTI-069-02", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="仕様文書のファイル数が上限10,000を超過しました")),
+            ("MULTI-069-04", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="入力バイト数が上限4,096を超過しました")),
+            ("MULTI-069-01", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-069-15", "expected/verify.json",
+             lambda v: v["diagnostics"][0]["evidence"].update(dimension="commandDefinitionCount")),
+            ("MULTI-069-17", "expected/verify.json",
+             lambda v: v["diagnostics"][0]["evidence"].update(dimension="verifyBindingCount")),
+            ("MULTI-069-18", "expected/verify.json", lambda v: v["commands"].pop()),
+            ("MULTI-069-19", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("MULTI-069-20", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
+            ("MULTI-069-20", "manifest.json", lambda v: v["setup"]["operations"].pop()),
+            ("MULTI-069-21", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-068-02", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="設定キーmultiWorkspace.excludeは100件以下で指定してください")),
+            ("MULTI-068-03", "expected/doctor.json", lambda v: v["workspaces"][0].update(limits=v["limits"])),
+            ("MULTI-068-04", "expected/doctor.json", lambda v: v.pop("limits")),
+            ("MULTI-068-05", "expected/check.json", lambda v: v.update(status="blocked", workspaces=[])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertEqual(limits_multi_fixtures.validate(root, {identifier})["status"], "Failed")
+        for identifier, old, new in (("MULTI-069-05", b"statementCount: 5", b"statementCount: 6"),
+                                     ("MULTI-068-01", b"excludeCount: 2", b"excludeCount: 1")):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                config = root / "multi" / identifier / "repo/.spec/bitz.yaml"
+                config.write_bytes(config.read_bytes().replace(old, new))
+                self.assertEqual(limits_multi_fixtures.validate(root, {identifier})["status"], "Failed")
+        # 現在版の設定の`limits`を除くと、基準版だけが超える条件が成り立たない。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-069-20")
+            (root / "multi/MULTI-069-20/changes/bitz.yaml").write_bytes(
+                (audit.FIXTURES / "multi/MULTI-069-20/repo/.spec/bitz.yaml").read_bytes())
+            self.assertEqual(limits_multi_fixtures.validate(root, {"MULTI-069-20"})["status"], "Failed")
 
 if __name__ == "__main__":
     unittest.main()

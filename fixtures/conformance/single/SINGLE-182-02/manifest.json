@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-182-02",
+  "description": "最長の要素がexpandedArgvElementBytes以内の引数列のテスト割当てを起動する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

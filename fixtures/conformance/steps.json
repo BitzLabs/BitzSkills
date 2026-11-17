@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "description": "実装計画の各Stepの完了条件を機械可読にした写し。正本は実装計画であり、validate_conformance.pyが一致を検査する（ADR-052）。Gate BはStep 1から当該Stepまでの全entryを実行する。",
+  "description": "実装計画の各Stepの完了条件を機械可読にした写し。正本は実装計画であり、validate_conformance.pyが一致を検査する（ADR-052）。Gate BはStep 1から当該Stepまでの全entryを実行する。実寸の上限のfixtureは`manual`に置き、Stepに含めない（ADR-076）。",
   "steps": [
     {
       "step": 1,
@@ -52,7 +52,12 @@
         "SINGLE-127-18",
         "SINGLE-127-19",
         "SINGLE-170-01",
-        "SINGLE-170-02"
+        "SINGLE-170-02",
+        "SINGLE-183-01",
+        "SINGLE-183-02",
+        "SINGLE-183-03",
+        "SINGLE-183-04",
+        "SINGLE-183-05"
       ]
     },
     {
@@ -184,7 +189,16 @@
         "SINGLE-174-03",
         "SINGLE-174-04",
         "SINGLE-174-05",
-        "SINGLE-174-06"
+        "SINGLE-174-06",
+        "SINGLE-180-01",
+        "SINGLE-180-02",
+        "SINGLE-180-03",
+        "SINGLE-180-04",
+        "SINGLE-180-05",
+        "SINGLE-180-06",
+        "SINGLE-180-07",
+        "SINGLE-180-08",
+        "SINGLE-180-09"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -306,7 +320,8 @@
         "SINGLE-127-04",
         "SINGLE-127-12",
         "SINGLE-127-13",
-        "SINGLE-170-03"
+        "SINGLE-170-03",
+        "SINGLE-181"
       ]
     },
     {
@@ -454,7 +469,13 @@
         "SINGLE-178-14",
         "SINGLE-178-15",
         "SINGLE-178-16",
-        "SINGLE-178-17"
+        "SINGLE-178-17",
+        "SINGLE-182-01",
+        "SINGLE-182-02",
+        "SINGLE-182-03",
+        "SINGLE-182-04",
+        "SINGLE-182-05",
+        "SINGLE-182-06"
       ]
     },
     {
@@ -504,30 +525,6 @@
         "MULTI-018-01",
         "MULTI-018-02",
         "MULTI-019",
-        "MULTI-020-01",
-        "MULTI-020-02",
-        "MULTI-020-03",
-        "MULTI-020-04",
-        "MULTI-020-05",
-        "MULTI-020-06",
-        "MULTI-020-07",
-        "MULTI-020-08",
-        "MULTI-020-09",
-        "MULTI-020-10",
-        "MULTI-020-11",
-        "MULTI-020-12",
-        "MULTI-020-13",
-        "MULTI-020-14",
-        "MULTI-020-15",
-        "MULTI-020-16",
-        "MULTI-021-01",
-        "MULTI-021-02",
-        "MULTI-021-03",
-        "MULTI-021-04",
-        "MULTI-021-05",
-        "MULTI-021-06",
-        "MULTI-021-07",
-        "MULTI-021-08",
         "MULTI-022-01",
         "MULTI-022-02",
         "MULTI-022-03",
@@ -623,10 +620,6 @@
         "MULTI-040-08",
         "MULTI-040-09",
         "MULTI-040-10",
-        "MULTI-041-01",
-        "MULTI-041-02",
-        "MULTI-041-03",
-        "MULTI-041-04",
         "MULTI-042-01",
         "MULTI-042-02",
         "MULTI-042-03",
@@ -778,8 +771,67 @@
         "MULTI-065-08",
         "MULTI-065-09",
         "MULTI-066-01",
-        "MULTI-066-02"
+        "MULTI-066-02",
+        "MULTI-069-01",
+        "MULTI-069-02",
+        "MULTI-069-03",
+        "MULTI-069-04",
+        "MULTI-069-05",
+        "MULTI-069-06",
+        "MULTI-069-07",
+        "MULTI-069-08",
+        "MULTI-069-09",
+        "MULTI-069-10",
+        "MULTI-069-11",
+        "MULTI-069-12",
+        "MULTI-069-13",
+        "MULTI-069-14",
+        "MULTI-069-15",
+        "MULTI-069-16",
+        "MULTI-069-17",
+        "MULTI-069-18",
+        "MULTI-069-19",
+        "MULTI-069-20",
+        "MULTI-069-21",
+        "MULTI-068-01",
+        "MULTI-068-02",
+        "MULTI-068-03",
+        "MULTI-068-04",
+        "MULTI-068-05"
       ]
     }
-  ]
+  ],
+  "manual": {
+    "description": "実寸の上限のfixture（適合fixture仕様 §3.4）。手動で実行する検証であり、Gate A、Gate B、CIの認定の対象にしない。`run_conformance.py --suite scale`で実行し、Gate Cの最終の集約の前に確定したコミットで1回実行する（ADR-076）。",
+    "fixtures": [
+      "MULTI-020-01",
+      "MULTI-020-02",
+      "MULTI-020-03",
+      "MULTI-020-04",
+      "MULTI-020-05",
+      "MULTI-020-06",
+      "MULTI-020-07",
+      "MULTI-020-08",
+      "MULTI-020-09",
+      "MULTI-020-10",
+      "MULTI-020-11",
+      "MULTI-020-12",
+      "MULTI-020-13",
+      "MULTI-020-14",
+      "MULTI-020-15",
+      "MULTI-020-16",
+      "MULTI-021-01",
+      "MULTI-021-02",
+      "MULTI-021-03",
+      "MULTI-021-04",
+      "MULTI-021-05",
+      "MULTI-021-06",
+      "MULTI-021-07",
+      "MULTI-021-08",
+      "MULTI-041-01",
+      "MULTI-041-02",
+      "MULTI-041-03",
+      "MULTI-041-04"
+    ]
+  }
 }

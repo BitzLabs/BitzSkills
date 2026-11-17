@@ -44,13 +44,31 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(json.loads(output)["counts"]["error"], 1)
 
     def test_invalid_selection_returns_invocation_error(self):
-        for args in (["--step", "0"], ["--step", "1", "--suite", "scale"],
-                     ["--step", "5", "--shard", "0"]):
+        # 手動の一覧にない`--fixture`だけを`--suite scale`で選ぶと、実行するfixtureが0件になる（ADR-076）。
+        for args in (["--step", "0"], ["--fixture", "SINGLE-001", "--suite", "scale"],
+                     ["--step", "0", "--suite", "scale"], ["--step", "5", "--shard", "0"]):
             with self.subTest(args=args):
                 code, output, error = self.run_harness(args)
                 self.assertEqual(code, 2)
                 self.assertFalse(output)
                 self.assertTrue(error)
+
+    def test_scale_suite_runs_only_the_manual_list(self):
+        # Stepの完了fixtureは実寸の上限のfixtureを含まず、`--suite scale`は手動の一覧だけを実行する（ADR-076）。
+        from conformance.selection import manual_ids, step_ids
+        manual = manual_ids()
+        self.assertEqual(len(manual), 28)
+        self.assertFalse(set(manual) & set(step_ids(5)))
+        code, output, _ = self.run_harness(["--step", "5", "--suite", "scale"])
+        self.assertEqual(code, 0)
+        self.assertEqual([entry["id"] for entry in json.loads(output)["fixtures"]], manual)
+        code, output, _ = self.run_harness(["--step", "1"])
+        self.assertEqual(code, 0)
+        self.assertEqual([entry["id"] for entry in json.loads(output)["fixtures"]], step_ids(1))
+        # 実寸のfixtureは`--fixture`で個別に実行できる。
+        code, output, _ = self.run_harness(["--fixture", "MULTI-020-01"])
+        self.assertEqual(code, 0)
+        self.assertEqual([entry["id"] for entry in json.loads(output)["fixtures"]], ["MULTI-020-01"])
 
     def test_result_and_timing_paths_cannot_overwrite_each_other(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:

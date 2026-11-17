@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:7344dadb951732bd515e8912cda26fa21a6ff4346b8ffba0c649b0d32002bd22",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "{tests}展開後のargvの要素がバイト数上限20バイトを超えます",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.default.argv"
+      }
+    }
+  ]
+}

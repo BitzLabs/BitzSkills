@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-069-18",
+  "description": "単独のverifyでテスト割当て数とコマンド定義数がlimitsちょうどなら全件を実行する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "platform::REQ-001",
+      "platform::REQ-002",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "reportFileCount": 0,
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json"
+  }
+}

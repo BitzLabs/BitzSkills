@@ -1,4 +1,7 @@
-"""適合fixtureの選択と決定的な分割。分割は合否条件を変更しない。"""
+"""適合fixtureの選択と決定的な分割。分割は合否条件を変更しない。
+
+実寸の上限のfixtureは`steps.json`の`manual`に置き、Stepに含めない。`--suite scale`だけが実行する（ADR-076）。
+"""
 import json
 from pathlib import Path
 
@@ -56,6 +59,7 @@ STANDARD_SECONDS = {
 
 
 def step_ids(step):
+    """Step 1から`step`までの完了fixture。手動で実行する実寸の上限のfixture（`manual_ids`）は含まない（ADR-076）。"""
     steps = json.loads((ROOT / "steps.json").read_text())["steps"]
     if type(step) is not int or step not in {entry["step"] for entry in steps}:
         raise ValueError("`steps.json`に存在するStepを指定してください")
@@ -63,8 +67,13 @@ def step_ids(step):
                               for identifier in entry["fixtures"]))
 
 
+def manual_ids():
+    """手動で実行する実寸の上限のfixture（`steps.json`の`manual`）。Gate A・Gate B・CIの認定の対象にしない（ADR-076）。"""
+    return list(json.loads((ROOT / "steps.json").read_text())["manual"]["fixtures"])
+
+
 def is_scale(identifier):
-    return identifier.startswith(("MULTI-020-", "MULTI-021-", "MULTI-041-"))
+    return identifier in set(manual_ids())
 
 
 def estimated_seconds(identifier):
@@ -110,10 +119,16 @@ def partition_plan(identifiers, shards):
 
 
 def selected_ids(identifiers, suite="full", shard=1, shards=1):
+    """`identifiers`から`suite`の対象を選び、`shard`番目の分割を返す。
+
+    `full`は`identifiers`のすべて、`standard`は手動の一覧にないもの、`scale`は手動の一覧にあるものを選ぶ。
+    Stepの完了fixture（`step_ids`）は手動の一覧を含まないので、`full`と`standard`は同じになる。
+    """
     if suite not in ("full", "standard", "scale"):
         raise ValueError("`suite`が不正です")
+    manual = set(manual_ids())
     chosen = [identifier for identifier in identifiers
-              if suite == "full" or is_scale(identifier) == (suite == "scale")]
+              if suite == "full" or (identifier in manual) == (suite == "scale")]
     if type(shard) is not int or not 1 <= shard <= shards:
         raise ValueError("`shard`は1以上、`shards`以下にしてください")
     return partition(chosen, shards)[shard - 1]

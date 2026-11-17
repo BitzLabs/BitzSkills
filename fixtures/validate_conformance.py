@@ -115,6 +115,8 @@ from conformance.multi_all_workspaces_output_fixtures import validate as validat
 from conformance.verify_closure_limit_fixtures import validate as validate_verify_closure_limit_fixtures
 from conformance.duplicate_closure_fixtures import validate as validate_duplicate_closure_fixtures
 from conformance.closure_reachability_fixtures import validate as validate_closure_reachability_fixtures
+from conformance.limits_single_fixtures import validate as validate_limits_single_fixtures
+from conformance.limits_multi_fixtures import validate as validate_limits_multi_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -434,6 +436,8 @@ def main():
     checks["verify_closure_limit_fixtures"] = validate_verify_closure_limit_fixtures()
     checks["duplicate_closure_fixtures"] = validate_duplicate_closure_fixtures()
     checks["closure_reachability_fixtures"] = validate_closure_reachability_fixtures()
+    checks["limits_single_fixtures"] = validate_limits_single_fixtures()
+    checks["limits_multi_fixtures"] = validate_limits_multi_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

@@ -6,7 +6,8 @@
 データセットのマニフェストから生成する（`multi_generator`）。
 
 既定の監査は縮小した生成計画で生成器の決定論と次元の計数を照合する。実寸の生成と木構造のハッシュ値の照合は
-`uv run fixtures/validate_scale.py`が行う。
+`uv run fixtures/validate_scale.py`が行う。この群は手動で実行する実寸の検証であり、`steps.json`のStepに含めず、
+Gateの認定の対象にしない（ADR-076）。上限の境界の判定は、`limits`で小さい上限を設定した`limits_multi_fixtures`が毎回固定する。
 """
 import json
 from pathlib import Path

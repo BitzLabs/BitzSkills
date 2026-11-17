@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "selected",
+  "status": "passed",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "platform::REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:164ebfa9459f4ef9c3709f8862e5877fbdce5b6f4ae1efd788e310f6be8985dd",
+      "statements": [
+        "platform::REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "m001::c00001",
+        "m001::c00002"
+      ],
+      "diagnostics": []
+    },
+    {
+      "target": "platform::REQ-002",
+      "status": "passed",
+      "contextDigest": "sha256:e60697c3113121f2b8645258659def85141feb39f0aa0f2a4c732193d5e58452",
+      "statements": [
+        "platform::REQ-002:AC-01"
+      ],
+      "bindingRefs": [
+        "m002::c00001",
+        "m002::c00002"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "commands": [
+    {
+      "bindingId": "m001::c00001",
+      "workspaceId": "m001",
+      "name": "c00001",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_00001.py"
+      ],
+      "tests": [
+        "tests/test_00001.py"
+      ],
+      "covers": [
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "m001::c00002",
+      "workspaceId": "m001",
+      "name": "c00002",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_00002.py"
+      ],
+      "tests": [
+        "tests/test_00002.py"
+      ],
+      "covers": [
+        "platform::REQ-001:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "m002::c00001",
+      "workspaceId": "m002",
+      "name": "c00001",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_00003.py"
+      ],
+      "tests": [
+        "tests/test_00003.py"
+      ],
+      "covers": [
+        "platform::REQ-002:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "m002::c00002",
+      "workspaceId": "m002",
+      "name": "c00002",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_00004.py"
+      ],
+      "tests": [
+        "tests/test_00004.py"
+      ],
+      "covers": [
+        "platform::REQ-002:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
