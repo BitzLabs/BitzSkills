@@ -15521,6 +15521,9 @@ class AuditTests(unittest.TestCase):
              lambda v: v["diagnostics"][0].update(summary="設定キーlimits.specBytesは1〜1,048,576の整数で指定してください")),
             ("SINGLE-183-09", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="limits")),
             ("SINGLE-183-11", "expected/doctor.json", lambda v: v.update(limits={})),
+            ("SINGLE-180-11", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(summary="仕様文書のMarkdownが1,048,576バイト上限を超過しました")),
+            ("SINGLE-183-12", "expected/check.json", lambda v: v.update(status="passed_with_warnings")),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -15533,7 +15536,8 @@ class AuditTests(unittest.TestCase):
         # 入力の`limits`の値を変えると、測り直しとレビュー済みの入力の照合で拒否する（境界の反対側への差替えを含む）。
         for identifier, old, new in (("SINGLE-180-01", b"specBytes: 334", b"specBytes: 333"),
                                      ("SINGLE-180-05", b"documentStatementCount: 3", b"documentStatementCount: 4"),
-                                     ("SINGLE-182-04", b"expandedArgvBytes: 51", b"expandedArgvBytes: 47")):
+                                     ("SINGLE-182-04", b"expandedArgvBytes: 48", b"expandedArgvBytes: 47"),
+                                     ("SINGLE-182-02", b"expandedArgvElementBytes: 21", b"expandedArgvElementBytes: 22")):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 config = root / "single" / identifier / "repo/.spec/bitz.yaml"
@@ -15564,7 +15568,16 @@ class AuditTests(unittest.TestCase):
              lambda v: v["diagnostics"][0].update(summary="入力バイト数が上限4,096バイトを超過しました")),
             ("MULTI-068-06", "expected/check.json",
              lambda v: v["diagnostics"][0]["source"].update(workspaceId="web", key="limits")),
-            ("MULTI-068-06", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-MEMBER-001")),
+            ("MULTI-068-06", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-CONFIG-001")),
+            ("MULTI-068-07", "expected/check.json", lambda v: v["diagnostics"].append(
+                {"code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "resultStatus": "error",
+                 "summary": "設定キーlimitsはマッピングで指定してください",
+                 "source": {"kind": "file", "workspaceId": None, "path": "apps/web/.spec/bitz.yaml", "key": "limits"}})),
+            ("MULTI-068-09", "expected/doctor.json", lambda v: v.pop("limits")),
+            ("MULTI-069-23", "expected/check.json", lambda v: v["workspaces"][1]["diagnostics"][0]["source"].update(workspaceId="platform")),
+            ("MULTI-069-23", "expected/check.json", lambda v: v.update(status="passed")),
+            ("MULTI-069-24", "expected/verify.json", lambda v: v["workspaces"][1].update(commands=v["workspaces"][0]["commands"])),
+            ("MULTI-069-24", "expected/verify.json", lambda v: v.update(diagnostics=v["workspaces"][1]["diagnostics"])),
             ("MULTI-069-01", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
             ("MULTI-069-15", "expected/verify.json",
              lambda v: v["diagnostics"][0]["evidence"].update(dimension="commandDefinitionCount")),

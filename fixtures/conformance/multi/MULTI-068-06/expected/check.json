@@ -16,7 +16,7 @@
   "durationMs": 0,
   "diagnostics": [
     {
-      "code": "SPEC-MULTI-CONFIG-001",
+      "code": "SPEC-MULTI-MEMBER-001",
       "severity": "error",
       "resultStatus": "failed",
       "summary": "メンバーの設定は設定キーlimitsを指定できません",

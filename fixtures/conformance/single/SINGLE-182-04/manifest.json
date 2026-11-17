@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-182-04",
-  "description": "全体のバイト数がexpandedArgvBytes以内の引数列のテスト割当てを起動する",
+  "description": "全体のバイト数がexpandedArgvBytesちょうどの引数列のテスト割当てを起動する",
   "setup": {
     "git": true,
     "operations": [

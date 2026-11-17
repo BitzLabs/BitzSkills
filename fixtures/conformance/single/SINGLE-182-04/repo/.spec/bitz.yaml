@@ -7,4 +7,4 @@ verify:
       argv: ["/bin/true", "{tests}"]
       cwd: .
 limits:
-  expandedArgvBytes: 51
+  expandedArgvBytes: 48

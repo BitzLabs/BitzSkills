@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 複合ワークスペースのスナップショット全体の次元の上限（複合ワークスペース仕様 §10）と除外のパスの件数の上限を、ルートワークスペースの設定の
 `limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。実寸の上限の
-`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。27件である。
+`MULTI-020-*`、`MULTI-021-*`、`MULTI-041-*`は手動の検証になったので、この群がその境界の判定を毎回固定する。33件である。
 
 | fixture | 起動 | 入力 | 期待 |
 |---|---|---|---|
@@ -17,7 +17,10 @@
 | `MULTI-068-03` | `doctor --all-workspaces`（`apps/web`） | `MULTI-026-01`のルートの設定に`limits` | `limits`を最上位にだけ置く |
 | `MULTI-068-04` | `doctor`（`apps/web`） | `MULTI-035-03`のルートの設定に`limits` | 作業ワークスペースは`web`でも、`limits`はルートの設定の値 |
 | `MULTI-068-05` | `check --all-workspaces --base HEAD` | `MULTI-001`のルートの設定に`limits.memberCount: 1`（メンバー2件） | `passed_with_warnings`／0。`memberCount`は`limits`のキーではない（未知のキーの警告。判定に使わない） |
-| `MULTI-068-06` | 同上 | `MULTI-001`のメンバー`web`の設定に`limits.specBytes: 2048` | `failed`／1。`SPEC-MULTI-CONFIG-001`（発生元は`MULTI-048-04`と同じくカタログの宣言） |
+| `MULTI-068-06`〜`08` | 同上 | `MULTI-001`のメンバー`web`の設定に`limits.specBytes: 2048`／`limits: 1024`／`limits.specBytes: 0` | `failed`／1。値によらず`SPEC-MULTI-MEMBER-001`の1件（発生元は`MULTI-048-04`と同じくカタログの宣言） |
+| `MULTI-068-09` | `doctor --all-workspaces` | `MULTI-007-01`（メンバーの入れ子で`failed`）のルートの設定に`limits` | `failed`／1。`limits`も返す（`doctor` §7） |
+| `MULTI-069-22`、`23` | `check --all-workspaces --base HEAD` | メンバー`m001`の文書だけが規範文2件、ルートの`documentStatementCount`が2／1 | `passed`／`failed`（`m001`の`SPEC-INPUT-LIMIT-001`） |
+| `MULTI-069-24` | `verify --all-workspaces` | メンバー`m001`のテスト割当てだけが展開した後に3要素、ルートの`expandedArgvCount: 2` | `blocked`／2（`m001`の`SPEC-VERIFY-BLOCKED-001`） |
 
 期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、複合ワークスペース仕様 §7・§10、ワークスペース・設定仕様 §5、`verify` §3・§4・§8、
 `doctor` §7、結果・診断・終了コード §2・§5、ADR-066）と、承認済みの文言（`multi_limit_fixtures.SUMMARY_LABELS`、`Coreの出力文言のレビュー記録.md`の
@@ -100,6 +103,15 @@ CASES.update({
     "MULTI-068-05": dict(form="derived", base="MULTI-001", limits=[("memberCount", 1)], outcome="passed_with_warnings"),
     "MULTI-068-06": dict(form="derived", base="MULTI-001", config="apps/web/.spec/bitz.yaml",
                          limits=[("specBytes", 2048)], outcome="failed"),
+    "MULTI-068-07": dict(form="derived", base="MULTI-001", config="apps/web/.spec/bitz.yaml",
+                         raw="limits: 1024\n", limits=[], outcome="failed"),
+    "MULTI-068-08": dict(form="derived", base="MULTI-001", config="apps/web/.spec/bitz.yaml",
+                         raw="limits:\n  specBytes: 0\n", limits=[], outcome="failed"),
+    "MULTI-068-09": dict(form="derived", base="MULTI-007-01", limits=[("specBytes", 4096), ("excludeCount", 5)],
+                         outcome="failed"),
+    "MULTI-069-22": dict(form="member-statement", limits=[("documentStatementCount", 2)], outcome="passed"),
+    "MULTI-069-23": dict(form="member-statement", limits=[("documentStatementCount", 1)], outcome="failed"),
+    "MULTI-069-24": dict(form="member-argv", limits=[("expandedArgvCount", 2)], outcome="blocked"),
 })
 LABELS = {"specFileCount": "仕様文書のファイル数", "inputBytes": "入力バイト数", "statementCount": "規範文数",
           "relationEdgeCount": "関係のエッジ数", "traceEntryCount": "トレースのエントリ数",
@@ -117,7 +129,13 @@ DESCRIPTIONS = {
     "MULTI-068-03": "doctor --all-workspacesはlimitsを最上位にだけ置く",
     "MULTI-068-04": "メンバーの中の単独のdoctorはルートの設定のlimitsを返す",
     "MULTI-068-05": "limitsのmemberCountは未知のキーとして警告にし判定に使わない",
-    "MULTI-068-06": "メンバーの設定がlimitsを持てば複合ワークスペースの設定不適合にする",
+    "MULTI-068-06": "メンバーの設定がlimitsを持てばメンバーの不適合にする",
+    "MULTI-068-07": "メンバーの設定のlimitsがマッピングでなくてもメンバーの不適合の1件だけにする",
+    "MULTI-068-08": "メンバーの設定のlimitsの値が範囲の外でもメンバーの不適合の1件だけにする",
+    "MULTI-068-09": "全体事前検査がほかの原因で非成功でもdoctorはルートの設定のlimitsを返す",
+    "MULTI-069-22": "ルートの設定のdocumentStatementCountちょうどのメンバーの文書を遮断しない",
+    "MULTI-069-23": "メンバーの文書の規範文がルートの設定のdocumentStatementCountを超えればその文書を検査しない",
+    "MULTI-069-24": "メンバーのテスト割当ての引数列の要素数がルートの設定のexpandedArgvCountを超えれば起動しない",
 }
 
 
@@ -168,7 +186,26 @@ def entries_of(identifier):
         return with_limits(multi_generator.emit(profile), case["limits"])
     if form == "base":
         return with_limits(draft_statement_entries(BASE_STATEMENTS), case["base_limits"])
+    if form in {"member-statement", "member-argv"}:
+        return with_limits(member_entries(shared_command=form == "member-argv"), case["limits"])
     raise ValueError("派生の群は`entries_of`を使いません")
+
+
+MEMBER_DOCUMENT = "members/m001/.spec/technical/TECH-000002.md"
+MEMBER_CONFIG = "members/m001/.spec/bitz.yaml"
+
+
+def member_entries(shared_command):
+    """ルートとメンバー`m002`は規範文1件、メンバー`m001`の文書だけが規範文2件（テスト対応2件）を持つ木構造。
+    `shared_command`では、`m001`の2件のテスト対応が同じコマンド`c00001`を使い、展開した後の引数列が3要素になる（ほかは2要素）。"""
+    profile = multi_generator.plan("verifyBindingCount", 4)
+    profile["bindings"] = [1, 2, 1]
+    profile["commands"] = [1, 2, 1]
+    entries = multi_generator.emit(profile)
+    if shared_command:
+        entries = [(path, content.replace(b"    command: c00002\n", b"    command: c00001\n")
+                    if path == MEMBER_DOCUMENT else content) for path, content in entries]
+    return entries
 
 
 def current_entries(identifier):
@@ -203,7 +240,8 @@ def reviewed_inputs(identifier):
         tree = read_tree(base_fixture(identifier) / "repo")
         path = case.get("config", ROOT_CONFIG)
         content, executable = tree[path]
-        tree[path] = (content + limits_block(case["limits"]).encode(), executable)
+        block = case["raw"] if "raw" in case else limits_block(case["limits"])
+        tree[path] = (content + block.encode(), executable)
         return tree
     return {path: (content, False) for path, content in entries_of(identifier)}
 
@@ -229,6 +267,8 @@ def argv_of(identifier):
         return ["verify", *targets(identifier), "--format", "json"]
     if form == "unknown-workspace":
         return ["verify", "--workspace", UNKNOWN_WORKSPACE, "--format", "json"]
+    if form == "member-argv":
+        return VERIFY_ALL
     return CHECK_ALL
 
 
@@ -264,6 +304,13 @@ def binding_digests(entries, repository):
     return digests
 
 
+def workspace_result(result, workspace_id):
+    found = [entry for entry in result["workspaces"] if entry["id"] == workspace_id]
+    if len(found) != 1 or len(found[0].get("targetResults", [None])) != 1:
+        raise ValueError(f"{workspace_id}の結果が1件ではありません")
+    return found[0]
+
+
 def generated_result(identifier):
     case = CASES[identifier]
     form = case["form"]
@@ -276,6 +323,33 @@ def generated_result(identifier):
             return all_blocked_result("check", limit_diagnostic(case["report"], limit), dirty=True)
         result = scale.passed_check_result(multi_generator.workspace_counts(current_entries(identifier)))
         result["revision"]["dirty"] = True
+        return result
+    if form == "member-statement":
+        result = scale.passed_check_result(multi_generator.workspace_counts(entries_of(identifier)))
+        if case["outcome"] == "failed":
+            # ファイル単位の上限はルートの設定の値をメンバーの文書へも当てる（§4.1）。`skip-document`なので`m001`の文書だけを検査しない。
+            member = workspace_result(result, "m001")
+            member.update(status="failed", checkedDocumentCount=0, checkedStatementCount=0, diagnostics=[{
+                "code": "SPEC-INPUT-LIMIT-001", "severity": "error", "resultStatus": "failed",
+                "summary": f"1文書の規範文数が{count_text(limits['documentStatementCount'])}上限を超過しました",
+                "source": {"kind": "file", "workspaceId": "m001", "path": ".spec/technical/TECH-000002.md"}}])
+            result["status"] = "failed"
+        return result
+    if form == "member-argv":
+        entries = entries_of(identifier)
+        with tempfile.TemporaryDirectory(prefix="bitz-limits-multi-context-") as temporary:
+            repository = Path(temporary)
+            write_generated(entries, repository)
+            result = scale.passed_binding_result(entries, binding_digests(entries, repository))
+        # 展開した後の引数列の上限もルートの設定の値を使う（§4.1）。起動前の`skip-binding`の診断は、テスト割当てを所有する
+        # ワークスペースの`diagnostics`へ置く（`verify` §6、`MULTI-051-03`と同じ形）。
+        member = workspace_result(result, "m001")
+        member["targetResults"][0].update(status="blocked", bindingRefs=[])
+        member.update(status="blocked", commands=[], diagnostics=[{
+            "code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
+            "summary": f"{{tests}}展開後のargvの要素数が上限{count_text(limits['expandedArgvCount'])}を超えます",
+            "source": {"kind": "file", "workspaceId": "m001", "path": ".spec/bitz.yaml", "key": "verify.commands.c00001.argv"}}])
+        result["status"] = "blocked"
         return result
     if case["outcome"] == "blocked":
         diagnostic = limit_diagnostic(case["report"], limits[case["report"]])
@@ -301,11 +375,14 @@ def derived_result(identifier):
         # `MULTI-037-15`（除外が101件）と同じ停止。入力は`MULTI-037-01`と同じで、上限の表記だけを設定した値へ置き換える。
         result = json.loads((HERE / "multi/MULTI-037-15/expected/check.json").read_text())
         result["diagnostics"][0]["summary"] = EXCLUDE_COUNT_SUMMARY.format(count_text(dict(case["limits"])["excludeCount"]))
-    elif identifier == "MULTI-068-06":
-        # メンバーの設定の禁止されたキーの診断は、メンバー自身の設定ではなくカタログの宣言を発生元にする
-        # （`MULTI-048-04`の「メンバーは設定キーmultiWorkspaceを宣言できません」と同じ形）。文言は承認済みの対応表。
+    elif identifier in {"MULTI-068-06", "MULTI-068-07", "MULTI-068-08"}:
+        # メンバーの設定が`limits`のキーを持てば、値の型と範囲によらず`multiWorkspace`を宣言したメンバーと同じ`SPEC-MULTI-MEMBER-001`とし、
+        # 発生元も同じくカタログの宣言とする（`MULTI-048-04`。複合ワークスペース仕様 §10）。値は検査しないので`SPEC-CONFIG-SCHEMA-001`を返さない。
         result = json.loads((HERE / "multi/MULTI-048-04/expected/check.json").read_text())
-        result["diagnostics"][0].update(code="SPEC-MULTI-CONFIG-001", summary="メンバーの設定は設定キーlimitsを指定できません")
+        result["diagnostics"][0].update(summary="メンバーの設定は設定キーlimitsを指定できません")
+    elif identifier == "MULTI-068-09":
+        # ルートの設定を読めてスキーマに適合し`limits`を宣言していれば、全体事前検査がほかの原因で非成功でも返す（`doctor` §7）。
+        result["limits"] = effective_limits(case["limits"])
     elif identifier in {"MULTI-068-03", "MULTI-068-04"}:
         result["limits"] = effective_limits(case["limits"])
     elif identifier == "MULTI-068-05":
@@ -341,7 +418,8 @@ def expected_name(identifier):
 def reviewed_manifest(identifier):
     case = CASES[identifier]
     if case["form"] == "derived":
-        source = {"MULTI-068-02": "MULTI-037-15", "MULTI-068-06": "MULTI-048-04"}.get(identifier, case["base"])
+        source = {"MULTI-068-02": "MULTI-037-15", "MULTI-068-06": "MULTI-048-04", "MULTI-068-07": "MULTI-048-04",
+                  "MULTI-068-08": "MULTI-048-04"}.get(identifier, case["base"])
         manifest = json.loads((HERE / "multi" / source / "manifest.json").read_text())
         manifest["fixtureId"] = identifier
         manifest["description"] = description(identifier)
@@ -353,7 +431,7 @@ def reviewed_manifest(identifier):
         expect.update({"exitCode": 4, "stdout": "none"})
     else:
         status = case["outcome"]
-        expect.update({"status": status, "exitCode": {"passed": 0, "blocked": 2}[status], "stdout": "json",
+        expect.update({"status": status, "exitCode": {"passed": 0, "failed": 1, "blocked": 2}[status], "stdout": "json",
                        "resultFile": expected_name(identifier)})
     operations = changes_of(identifier)[1] if case["form"] == "base" else []
     return {"fixtureId": identifier, "description": description(identifier),
@@ -424,6 +502,33 @@ def check_measurements(identifier):
         check_snapshot(current, limits, [])
         if case["base_limits"]:
             check_snapshot(base, case["base_limits"], ["statementCount"])
+    elif form in {"member-statement", "member-argv"}:
+        entries = dict(entries_of(identifier))
+        counted = multi_generator.count(list(entries.items()))
+        if any(counted[name] > value for name, value in configured(case["limits"]).items()):
+            raise ValueError("スナップショット全体の次元が上限を超えています")
+        statements = {path: sum(1 for line in content.decode().split("\n") if multi_generator.STATEMENT.match(line))
+                      for path, content in entries.items() if path.endswith(".md")}
+        if statements.pop(MEMBER_DOCUMENT) != 2 or set(statements.values()) != {1}:
+            raise ValueError("メンバー`m001`の文書だけが規範文2件である必要があります")
+        commands = {}
+        for path, content in entries.items():
+            if path.endswith(".md"):
+                workspace = path.split("/.spec/", 1)[0] if "/.spec/" in path else "."
+                for line in content.decode().split("\n"):
+                    if line.startswith("    command: "):
+                        key = (workspace, line[len("    command: "):])
+                        commands[key] = commands.get(key, 0) + 1
+        elements = {key: count + 1 for key, count in commands.items()}  # `/bin/true`と`{tests}`の展開
+        limit = dict(case["limits"]).get("expandedArgvCount")
+        if limit is not None:
+            over = {key for key, value in elements.items() if value > limit}
+            if over != {("members/m001", "c00001")} or elements[("members/m001", "c00001")] != limit + 1:
+                raise ValueError("メンバー`m001`のテスト割当てだけがちょうど上限+1の要素数で超える必要があります")
+        else:
+            limit = dict(case["limits"])["documentStatementCount"]
+            if (case["outcome"] == "failed") != (2 > limit) or limit not in {1, 2}:
+                raise ValueError("メンバーの文書の規範文数がちょうど上限または上限+1ではありません")
     elif identifier in {"MULTI-068-01", "MULTI-068-02"}:
         config = reviewed_inputs(identifier)[ROOT_CONFIG][0].decode()
         excludes = config.split("  exclude:\n", 1)[1].split("limits:", 1)[0]

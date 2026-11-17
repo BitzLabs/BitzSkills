@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-182-02",
-  "description": "最長の要素がexpandedArgvElementBytes以内の引数列のテスト割当てを起動する",
+  "description": "最長の要素がexpandedArgvElementBytesちょうどの引数列のテスト割当てを起動する",
   "setup": {
     "git": true,
     "operations": [

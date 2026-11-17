@@ -3,7 +3,7 @@
 [ADR-076](../../docs/02.設計書/10_決定記録/ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)は、
 上限の値を`limits`で小さくできるようにし、上限の境界の判定を小さい上限のfixtureで固定すると定める（適合fixture仕様 §3.4）。
 この群は、単一ワークスペースの`doctor`の`limits`の出力、`limits`の設定の検査、入力の上限（安全な入出力・互換性 §4.1）、
-`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、28件で固定する。
+`{tests}`を展開した後の引数列の上限、複合ワークスペース用のキーを使わないこと、コンテキストのハッシュ値の材料に含めないことを、30件で固定する。
 
 | fixture | 操作 | 入力 | 期待 |
 |---|---|---|---|
@@ -16,14 +16,16 @@
 | `SINGLE-180-03`、`04` | 同上 | `frontmatterBytes`が区切りの行を含む大きさ／区切りの行を除く大きさより1小さい | `passed`／`failed` |
 | `SINGLE-180-05`、`06` | 同上 | `documentStatementCount: 3`で規範文が3件／4件 | `passed`／`failed` |
 | `SINGLE-180-07`、`08` | 同上 | `documentArrayItemCount: 3`で`covers`が3件／4件 | `passed`／`failed`（`source.key`は`tests[0].covers`） |
+| `SINGLE-180-11` | 同上 | `SINGLE-079-01`の設定に`limits.specBytes: 1048576`（絶対上限と同じ値を明示） | `SINGLE-079-01`と同じ結果（文言は`1 MiB上限`のまま） |
 | `SINGLE-180-09`、`10` | 同上 | `specFileCount`が2／1で仕様文書が2件 | `passed`／`failed`（`SPEC-INPUT-LIMIT-001`、発生元は`.spec`） |
 | `SINGLE-181` | `context REQ-001 --purpose verify` | `SINGLE-042`の設定に、どの上限も超えない`limits` | `SINGLE-042`と同じ結果。`contextDigest`も同じ |
 | `SINGLE-182-01` | `verify REQ-001` | `SINGLE-055`の設定に`expandedArgvCount: 3`（展開した後の要素数ちょうど） | `SINGLE-055`と同じ結果 |
-| `SINGLE-182-02`、`03` | 同上 | `expandedArgvElementBytes`が最長の要素＋1／最長の要素−1 | `passed`／`blocked`（`SPEC-VERIFY-BLOCKED-001`） |
-| `SINGLE-182-04`、`05` | 同上 | `expandedArgvBytes`が要素の合計＋要素数／要素の合計−1 | `passed`／`blocked` |
+| `SINGLE-182-02`、`03` | 同上 | `expandedArgvElementBytes`が最長の要素のバイト数ちょうど／1小さい | `passed`／`blocked`（`SPEC-VERIFY-BLOCKED-001`） |
+| `SINGLE-182-04`、`05` | 同上 | `expandedArgvBytes`が要素のバイト数の総和ちょうど／1小さい | `passed`／`blocked` |
 | `SINGLE-182-06` | 同上 | 複合ワークスペースのスナップショット全体の次元のキーをすべて1にする | `SINGLE-055`と同じ結果 |
 | `SINGLE-182-07` | 同上 | `expandedArgvCount: 2`（展開した後の要素は3件） | `blocked`（`SPEC-VERIFY-BLOCKED-001`） |
 | `SINGLE-183-06`〜`10` | `check --full --base HEAD` | `limits`の値が0、負、絶対上限+1、真偽値、文字列 | `error`／3。`SPEC-CONFIG-SCHEMA-001`（`source.key`は`limits.<キー>`） |
+| `SINGLE-183-12` | `check --full --base HEAD` | 値のない`limits:` | `error`／3。`SINGLE-183-04`と同じ |
 | `SINGLE-183-11` | `doctor` | `SINGLE-092`の形で、設定の`limits.specBytes`が0 | `error`／3。`limits`を返さない（`doctor` §7） |
 
 期待値の根拠は規範文（安全な入出力・互換性 §4・§4.1、ワークスペース・設定仕様 §5・§6、文書・フロントマター・状態仕様 §11、
@@ -31,11 +33,12 @@
 （`Coreの出力文言のレビュー記録.md`の#22・#41・#80と、2026-11-17の上限の設定の承認済みの対応表）だけである。小さい値を設定したときの`summary`は、
 §4.1の規則による。単位を付けた表記（`1 MiB`、`32 KiB`）を持つ文言はその表記を3桁区切りの整数に`バイト`を付けた表記へ置き換え、
 値を数として持つ文言は今の形のまま実際の値を3桁区切りの整数で入れる。Coreの出力は根拠にしない。
-`SINGLE-181`・`182-*`・`183-01`・`02`・`11`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`・`092`）の入力の設定へ`limits`の行を足し、
+`SINGLE-180-11`・`181`・`182-*`・`183-01`・`02`・`11`は、レビュー済みの既存のfixture（`SINGLE-001`・`042`・`055`・`079-01`・`092`）の入力の設定へ`limits`の行を足し、
 期待結果をそこから導く。基のfixtureの入力か期待値が変われば、この群の監査が失敗する。
 
-フロントマターの大きさが区切りの行（`---`）を含むか、引数列のバイト数が要素の終端のNULを含むかは、規範文が定めない。
-この群は、どちらの数え方でも結論が変わらない値（含む数え方のちょうど、含まない数え方の1超過）を使い、ちょうどの境界は固定しない。
+引数列のバイト数は、YAML表記、配列の区切り、終端のNULを含めず、各文字列のUTF-8のバイト数とその総和で測り、展開した後も公開結果の`argv`で測る
+（ワークスペース・設定仕様 §6）ので、ちょうどの境界を固定する。フロントマターの大きさが区切りの行（`---`）を含むかは規範文が定めないので、
+どちらの数え方でも結論が変わらない値（含む数え方のちょうど、含まない数え方の1超過）を使い、ちょうどの境界は固定しない。
 """
 import copy
 import json
@@ -150,6 +153,8 @@ CASES = {
                           raw="limits:\n  specFileCount: true\n", status="error", key="specFileCount"),
     "SINGLE-183-10": case("config", 1, "limitsの値が文字列なら設定の型の不正にする",
                           raw='limits:\n  statementCount: "5"\n', status="error", key="statementCount"),
+    "SINGLE-183-12": case("config", 1, "値のないlimitsを設定の型の不正にする",
+                          raw="limits:\n", status="error"),
     "SINGLE-183-11": case("doctor-invalid", 1, "limitsの値が不正な設定のdoctorはlimitsを返さない",
                           base="SINGLE-092", raw="limits:\n  specBytes: 0\n", key="specBytes"),
     "SINGLE-180-01": case("input", 2, "specBytesが仕様文書の大きさちょうどなら遮断しない",
@@ -174,6 +179,8 @@ CASES = {
                           summary=f"1文書の関係・パスの配列の項目数が{count_text(3)}上限を超過しました"),
     "SINGLE-180-09": case("input", 2, "specFileCountちょうどの仕様文書の数を遮断しない",
                           limits=[("specFileCount", 2)], document="two-files", status="passed"),
+    "SINGLE-180-11": case("derived", 2, "絶対上限と同じspecBytesを明示した超過の文言は絶対上限のときのまま",
+                          base="SINGLE-079-01", limits=[("specBytes", ABSOLUTE["specBytes"])]),
     "SINGLE-180-10": case("input", 2, "仕様文書のファイル数がspecFileCountを1超えれば操作を止める",
                           limits=[("specFileCount", 1)], document="two-files", status="failed",
                           summary=f"仕様文書のファイルが{count_text(1)}件上限を超過しました"),
@@ -181,13 +188,13 @@ CASES = {
                        base="SINGLE-042", limits=None),
     "SINGLE-182-01": case("derived", 4, "expandedArgvCountちょうどの引数列のテスト割当てを起動する",
                           base="SINGLE-055", limits=[("expandedArgvCount", len(SINGLE_055_ARGV))]),
-    "SINGLE-182-02": case("derived", 4, "最長の要素がexpandedArgvElementBytes以内の引数列のテスト割当てを起動する",
-                          base="SINGLE-055", limits=[("expandedArgvElementBytes", ARGV_LONGEST + 1)]),
+    "SINGLE-182-02": case("derived", 4, "最長の要素がexpandedArgvElementBytesちょうどの引数列のテスト割当てを起動する",
+                          base="SINGLE-055", limits=[("expandedArgvElementBytes", ARGV_LONGEST)]),
     "SINGLE-182-03": case("argv-blocked", 4, "要素がexpandedArgvElementBytesを超える引数列のテスト割当てを起動しない",
                           base="SINGLE-055", limits=[("expandedArgvElementBytes", ARGV_LONGEST - 1)],
                           summary=f"{{tests}}展開後のargvの要素がバイト数上限{bytes_text(ARGV_LONGEST - 1)}を超えます"),
-    "SINGLE-182-04": case("derived", 4, "全体のバイト数がexpandedArgvBytes以内の引数列のテスト割当てを起動する",
-                          base="SINGLE-055", limits=[("expandedArgvBytes", ARGV_TOTAL + len(SINGLE_055_ARGV))]),
+    "SINGLE-182-04": case("derived", 4, "全体のバイト数がexpandedArgvBytesちょうどの引数列のテスト割当てを起動する",
+                          base="SINGLE-055", limits=[("expandedArgvBytes", ARGV_TOTAL)]),
     "SINGLE-182-05": case("argv-blocked", 4, "全体のバイト数がexpandedArgvBytesを超える引数列のテスト割当てを起動しない",
                           base="SINGLE-055", limits=[("expandedArgvBytes", ARGV_TOTAL - 1)],
                           summary=f"{{tests}}展開後のargvがバイト数上限{bytes_text(ARGV_TOTAL - 1)}を超えます"),
@@ -355,7 +362,7 @@ def reviewed_result(identifier):
         result["diagnostics"] = [diagnostic(VERIFY_BLOCKED, "error", "blocked", case_["summary"], CONFIG_PATH, ARGV_KEY)]
         return result
     if kind == "config":
-        if identifier == "SINGLE-183-04":
+        if identifier in {"SINGLE-183-04", "SINGLE-183-12"}:
             # 設定の型の不正では同一性を構成できない（結果・診断・終了コード §5）。文言は承認済みの#22。
             return check_result("error", 0, 0, [diagnostic(
                 "SPEC-CONFIG-SCHEMA-001", "error", "error", "設定キーlimitsはマッピングで指定してください",
@@ -437,10 +444,10 @@ def check_measurements(identifier, inputs):
         sizes = [len(value.encode()) for value in argv]
         checks = {
             "SINGLE-182-01": len(argv) == limits.get("expandedArgvCount"),
-            # NULの終端を含む／含まないのどちらでも、最長の要素は上限以内、または上限を超える。
-            "SINGLE-182-02": max(sizes) + 1 == limits.get("expandedArgvElementBytes"),
+            # 各文字列のUTF-8のバイト数とその総和で測る（終端のNULを含めない。ワークスペース・設定仕様 §6）。
+            "SINGLE-182-02": max(sizes) == limits.get("expandedArgvElementBytes"),
             "SINGLE-182-03": max(sizes) == limits.get("expandedArgvElementBytes", 0) + 1,
-            "SINGLE-182-04": sum(sizes) + len(sizes) == limits.get("expandedArgvBytes"),
+            "SINGLE-182-04": sum(sizes) == limits.get("expandedArgvBytes"),
             "SINGLE-182-05": sum(sizes) == limits.get("expandedArgvBytes", 0) + 1,
             "SINGLE-182-06": set(limits) == set(SNAPSHOT_KEYS),
             "SINGLE-182-07": len(argv) == limits.get("expandedArgvCount", 0) + 1,

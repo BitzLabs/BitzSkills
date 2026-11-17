@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-068-09",
+  "description": "全体事前検査がほかの原因で非成功でもdoctorはルートの設定のlimitsを返す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "reportFileCount": 0,
+    "resultFile": "expected/doctor.json"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "fixtureId": "MULTI-068-06",
-  "description": "メンバーの設定がlimitsを持てば複合ワークスペースの設定不適合にする",
+  "description": "メンバーの設定がlimitsを持てばメンバーの不適合にする",
   "setup": {
     "git": true,
     "baseCommit": {

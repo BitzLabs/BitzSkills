@@ -1,0 +1,18 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: platform
+multiWorkspace:
+  members:
+    - id: m001
+      path: members/m001
+    - id: m002
+      path: members/m002
+verify:
+  commands:
+    c00001:
+      argv: ["/bin/true", "{tests}"]
+      cwd: .
+limits:
+  documentStatementCount: 1
