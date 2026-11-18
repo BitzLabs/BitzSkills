@@ -26,6 +26,9 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 | `SINGLE-184-15` | TASKの`changes`が`[src/, sandbox/exp1/note.md]`（入れ子の配下を指す）。`note.md`と`src2/outside.py`を変える | `failed`。`src2/outside.py`の1件だけ |
 | `SINGLE-184-16` | `01`の基準版。作業ワークスペース自身の`.spec/bitz.yaml`と`note.md`を変える | `failed`。`.spec/bitz.yaml`の1件だけ（自身のルートは入れ子に含めない） |
 | `SINGLE-184-17` | `01`の基準版。`sandbox/exp1/new.md`を未追跡で作る | `passed`。未追跡の変更も除く |
+| `SINGLE-184-18` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を未追跡で作り（ステージしない）、`note.md`を変える | `passed`。未追跡の設定でも入れ子とし、設定自身の追加も除く |
+| `SINGLE-184-19` | `18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）。同じ設定を作り、`note.md`を変える | `passed`。無視された設定でも入れ子とする |
+| `SINGLE-184-20` | 対照: 基準版の`sandbox/exp1/.spec/bitz.yaml`がディレクトリ（`config.yaml`を持つ）。`note.md`を変える | `failed`。`sandbox/exp1/note.md`の1件（ディレクトリは設定のファイルでない） |
 
 予約したディレクトリ（`SINGLE-185-*`、`MULTI-070-01`）:
 
@@ -39,13 +42,14 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 | `SINGLE-185-06` | `context REQ-001 --purpose verify` | `SINGLE-042`の入力に`.spec/journal/`と`.spec/plans/` | `SINGLE-042`と同じ結果 |
 | `SINGLE-185-07` | `verify REQ-001` | `SINGLE-055`の入力に同じ2つのディレクトリ | `SINGLE-055`と同じ結果 |
 | `SINGLE-185-08` | `doctor` | `SINGLE-001`の入力に同じ2つのディレクトリ | `SINGLE-001`と同じ結果 |
+| `SINGLE-185-09` | `check --full --base HEAD` | `01`の`.spec/journal/`に、ファイルへのシンボリックリンク、ディレクトリへのシンボリックリンク、サブディレクトリのリンク先のないシンボリックリンク | `passed`。診断0件、検査文書1 |
+| `SINGLE-185-10` | 同上 | `.spec/plans/`に同じ形の中身 | 同上 |
 | `MULTI-070-01` | `check --all-workspaces --base HEAD` | `MULTI-053-04`の入力から、メンバー`web`の設定の警告の原因（BOM、`profiles`）と未知のファイルを除き、`web`の`.spec/journal/`と`.spec/plans/`を置く | `passed`。どのワークスペースにも診断なし |
 
 期待値の根拠は規範文と、このモジュールの参照計算（`reference_violations`、`unknown_entries`）だけである。Coreの出力は根拠にしない。
-参照計算は、隔離した準備手順の後のGitの`HEAD`の木構造、インデックス、作業ツリーから、§5の変更集合、入れ子のワークスペースのルート
-（`HEAD`またはインデックスと作業ツリーにある通常のファイルの`.spec/bitz.yaml`。シンボリックリンクを経由しない）、境界の外の変更を導き、
-レビュー済みのリテラルの診断と一致することを確かめる。未追跡の`.spec/bitz.yaml`と、無視された`.spec/bitz.yaml`を入れ子のルートに数えるかは
-仕様が一意に決めないので（レビュー記録）、そのような入力を置かない。参照計算もそれを拒否する。
+参照計算は、隔離した準備手順の後のGitの`HEAD`の木構造と作業ツリーから、§5の変更集合、入れ子のワークスペースのルート
+（`HEAD`または作業ツリーにある通常のファイルの`.spec/bitz.yaml`。シンボリックリンクを経由せず、ディレクトリを数えない。作業ツリーのものは、
+Gitで追跡しているか、未追跡か、無視されているかによらず数える。`check` §7）、境界の外の変更を導き、レビュー済みのリテラルの診断と一致することを確かめる。
 
 `SINGLE-185-06`〜`08`と`MULTI-070-01`は、レビュー済みの既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、
 期待結果をそこから導く。予約したディレクトリは読まないので、コンテキストのハッシュ値を含めて結果は変わらない。基のfixtureが変われば、この群の監査が失敗する。
@@ -78,6 +82,8 @@ UNKNOWN_FILE_SUMMARY = ".spec/内の未知のファイルを仕様文書とし�
 # ワークスペース・設定仕様 §3の既知のエントリ（`.spec/`の直下）。
 KNOWN_ENTRIES = {"bitz.yaml", "requirements", "technical", "decisions", "tasks", "reports", "journal", "plans"}
 RESERVED = ("journal", "plans")
+# 同 §3: シンボリックリンクを未知のエントリとする規則から、このエントリとその中を除く。
+SYMLINK_EXEMPT = {"reports", *RESERVED}
 
 
 class Link(str):
@@ -124,7 +130,16 @@ def reserved(name):
             f"{base}/broken.md": BROKEN_DOCUMENT, f"{base}/sub/notes.txt": TEXT}
 
 
+def reserved_links(name):
+    """予約したディレクトリの中のシンボリックリンク。たどれば`REQ-001`のIDの重複、壊れたフロントマター、リンク先のない読取りになる。"""
+    base = f".spec/{name}"
+    return {**reserved(name), f"{base}/linked.md": Link("../requirements/REQ-001.md"),
+            f"{base}/linked-dir": Link("../../docs/linked"), f"{base}/sub/dangling.md": Link("../missing.md"),
+            "docs/linked/2026-11-18.md": DOCUMENT.encode(), "docs/linked/broken.md": BROKEN_DOCUMENT}
+
+
 BASE_DOCUMENT = {CONFIG_PATH: CONFIG, REQ_PATH: DOCUMENT.encode()}
+IGNORE_NESTED_CONFIG = f"{NESTED}/.spec/bitz.yaml\n".encode()
 
 # TASK境界: id -> dict(repo, changes, operations, cwd, workspace（リポジトリ相対のワークスペースのルート）, violations, description)
 TASK_CASES = {
@@ -203,6 +218,20 @@ TASK_CASES = {
     "SINGLE-184-17": dict(repo={**BASE_TASK, **nested()}, changes={"new.md": NEW_NOTE},
                           operations=[{"op": "create", "path": f"{NESTED}/new.md", "source": "changes/new.md"}], violations=[],
                           description="入れ子のワークスペースの配下の未追跡のファイルも、TASK境界の比較から除く"),
+    "SINGLE-184-18": dict(repo={**BASE_TASK, f"{NESTED}/note.md": NOTE_BEFORE},
+                          changes={"bitz.yaml": CONFIG, "note.md": NOTE_AFTER},
+                          operations=[{"op": "create", "path": f"{NESTED}/.spec/bitz.yaml", "source": "changes/bitz.yaml"},
+                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                          description="作業ツリーにだけある未追跡の.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加と配下の変更を除く"),
+    "SINGLE-184-19": dict(repo={**BASE_TASK, ".gitignore": IGNORE_NESTED_CONFIG, f"{NESTED}/note.md": NOTE_BEFORE},
+                          changes={"bitz.yaml": CONFIG, "note.md": NOTE_AFTER},
+                          operations=[{"op": "create", "path": f"{NESTED}/.spec/bitz.yaml", "source": "changes/bitz.yaml"},
+                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                          description=".gitignoreで無視された作業ツリーの.spec/bitz.yamlも入れ子のワークスペースとし、配下の変更を除く"),
+    "SINGLE-184-20": dict(repo={**BASE_TASK, f"{NESTED}/.spec/bitz.yaml/config.yaml": CONFIG, f"{NESTED}/note.md": NOTE_BEFORE},
+                          changes={"note.md": NOTE_AFTER},
+                          operations=[update(f"{NESTED}/note.md", "changes/note.md")], violations=[f"{NESTED}/note.md"],
+                          description="対照: .spec/bitz.yamlという名前のディレクトリは設定のファイルではないので入れ子のワークスペースにせず、配下の変更はTASK境界の外になる"),
 }
 
 # 予約したディレクトリ: id -> dict(kind, ...)。`check`は`BASE_DOCUMENT`に`extra`を足す。`derived`は基のfixtureの入力に足し、期待結果を基から導く。
@@ -220,6 +249,10 @@ RESERVED_CASES = {
     "SINGLE-185-05": dict(kind="check", extra={**reserved("journal"), ".spec/journal.txt": TEXT, ".spec/plans.txt": TEXT},
                           unknown=[".spec/journal.txt", ".spec/plans.txt"],
                           description="対照: 予約した名前と完全に一致しない.spec/journal.txtと.spec/plans.txtは未知のファイルとして警告する"),
+    "SINGLE-185-09": dict(kind="check", extra=reserved_links("journal"), unknown=[],
+                          description=".spec/journal/の中のシンボリックリンクは未知のエントリにせず、たどらず、警告しない"),
+    "SINGLE-185-10": dict(kind="check", extra=reserved_links("plans"), unknown=[],
+                          description=".spec/plans/の中のシンボリックリンクは未知のエントリにせず、たどらず、警告しない"),
     "SINGLE-185-06": dict(kind="derived", base="SINGLE-042",
                           description="contextは.spec/journal/と.spec/plans/を読まず、SINGLE-042と同じ結果とコンテキストのハッシュ値を返す"),
     "SINGLE-185-07": dict(kind="derived", base="SINGLE-055",
@@ -401,9 +434,10 @@ def _plain_file(repository, relative):
 
 
 def nested_roots(repository, workspace):
-    """作業ワークスペースの下位で、`HEAD`またはインデックスと作業ツリーに通常のファイルの`.spec/bitz.yaml`を持つディレクトリ（リポジトリ相対）。
+    """作業ワークスペースの下位で、`HEAD`または作業ツリーに通常のファイルの`.spec/bitz.yaml`を持つディレクトリ（リポジトリ相対）。
 
-    未追跡または無視された`.spec/bitz.yaml`だけを持つディレクトリは、仕様が一意に決めないので入力に置かない（置けば拒否する）。
+    作業ツリーの`.spec/bitz.yaml`は、追跡、未追跡、無視のいずれでも数える。`.spec/bitz.yaml`という名前のディレクトリと、
+    シンボリックリンク（途中の`.spec`を含む）は数えない（`check` §7）。
     """
     prefix = "" if workspace == "." else workspace + "/"
     own = prefix + CONFIG_PATH
@@ -414,15 +448,12 @@ def nested_roots(repository, workspace):
         meta, name = line.split("\t", 1)
         if name.endswith("/" + CONFIG_PATH) and name.startswith(prefix) and name != own and meta.split()[0] != "120000":
             roots.add(name[: -len("/" + CONFIG_PATH)])
-    indexed = set(_git_list(repository, "ls-files", "-z"))
     for current, directories, files in os.walk(repository, followlinks=False):
         directories[:] = [d for d in directories if d != ".git"]
         if Path(current).name == ".spec" and "bitz.yaml" in files:
             name = (Path(current) / "bitz.yaml").relative_to(repository).as_posix()
             if not name.startswith(prefix) or name == own or not _plain_file(repository, name):
                 continue
-            if name not in indexed:
-                raise ValueError("未追跡または無視された.spec/bitz.yamlを入力に置いています")
             roots.add(name[: -len("/" + CONFIG_PATH)])
     return roots
 
@@ -466,6 +497,23 @@ def unknown_entries(repository, workspace="."):
     return sorted(f".spec/{entry.name}" for entry in directory.iterdir() if entry.name not in KNOWN_ENTRIES)
 
 
+def symlinks(directory):
+    """`directory`の下のシンボリックリンク（`directory`相対、辞書順）。リンクはたどらない。"""
+    found = []
+    for current, directories, files in os.walk(directory, followlinks=False):
+        for name in directories + files:
+            path = Path(current) / name
+            if path.is_symlink():
+                found.append(path.relative_to(directory).as_posix())
+    return sorted(found)
+
+
+def unexempt_symlinks(repository, workspace="."):
+    """`.spec/`配下で、未知のエントリとする規則から除く`reports`、`journal`、`plans`とその中の外にあるシンボリックリンク（§3）。"""
+    directory = repository / workspace / ".spec"
+    return [f".spec/{path}" for path in symlinks(directory) if path.split("/")[0] not in SYMLINK_EXEMPT]
+
+
 # --- 生成と監査 ---------------------------------------------------------------------------
 
 def _dump(value):
@@ -502,11 +550,31 @@ def inspector(identifier):
                 raise ValueError("境界の外の変更が参照計算と異なります")
             if not change_set(repository):
                 raise ValueError("作業ツリーに変更がありません")
-            if identifier == "SINGLE-184-02" and nested_roots(repository, workspace):
+            if identifier in {"SINGLE-184-02", "SINGLE-184-20"} and nested_roots(repository, workspace):
                 raise ValueError("対照に入れ子のワークスペースがあります")
+            if identifier in {"SINGLE-184-18", "SINGLE-184-19"}:
+                config = f"{NESTED}/{CONFIG_PATH}"
+                tracked = config in _git_list(repository, "ls-files", "-z")
+                try:
+                    git(repository, "check-ignore", "-q", "--", config)
+                    ignored = True
+                except subprocess.CalledProcessError:
+                    ignored = False
+                if tracked or not _plain_file(repository, config) or ignored != (identifier == "SINGLE-184-19"):
+                    raise ValueError("入れ子の設定が、作業ツリーにだけある未追跡または無視されたファイルではありません")
+                if config in git(repository, "ls-tree", "-r", "--name-only", "HEAD").decode().splitlines():
+                    raise ValueError("入れ子の設定が基準版にあります")
+            if identifier == "SINGLE-184-20" and not (repository / NESTED / CONFIG_PATH).is_dir():
+                raise ValueError("対照の.spec/bitz.yamlがディレクトリではありません")
         elif identifier in RESERVED_CASES and RESERVED_CASES[identifier]["kind"] == "check":
             if unknown_entries(repository) != RESERVED_CASES[identifier]["unknown"]:
                 raise ValueError("未知のエントリが参照計算と異なります")
+            if unexempt_symlinks(repository):
+                raise ValueError("予約したディレクトリの外の.spec/配下にシンボリックリンクがあります")
+            if identifier in {"SINGLE-185-09", "SINGLE-185-10"}:
+                links = symlinks(repository / ".spec" / ("journal" if identifier == "SINGLE-185-09" else "plans"))
+                if links != ["linked-dir", "linked.md", "sub/dangling.md"]:
+                    raise ValueError("予約したディレクトリの中のシンボリックリンクがレビュー済みの3件と異なります")
             if change_set(repository):
                 raise ValueError("全体の検査の入力はコミット済みのクリーンなリポジトリです")
         elif identifier in MULTI_CASES:

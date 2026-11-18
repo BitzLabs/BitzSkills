@@ -15768,7 +15768,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["prepared"], list(module.CASES))
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
-        for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-185-04"):
+        for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-184-19", "SINGLE-184-20", "SINGLE-185-04", "SINGLE-185-09"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 self.assertEqual(module.validate(root, {identifier})["errors"], [])
@@ -15779,7 +15779,7 @@ class AuditTests(unittest.TestCase):
         steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
         placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
         same = {**{identifier: "SINGLE-034" for identifier in module.TASK_CASES},
-                **{f"SINGLE-185-0{number}": "SINGLE-083" for number in range(1, 6)},
+                **{f"SINGLE-185-{number:02d}": "SINGLE-083" for number in (1, 2, 3, 4, 5, 9, 10)},
                 "SINGLE-185-06": "SINGLE-042", "SINGLE-185-07": "SINGLE-055", "SINGLE-185-08": "SINGLE-001",
                 "MULTI-070-01": "MULTI-053-04"}
         self.assertEqual(set(same), set(module.CASES))
@@ -15800,8 +15800,13 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-184-11", "expected/check.json", lambda v: v.update(status="error")),
             ("SINGLE-184-14", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="app/sandbox/y.md")),
             ("SINGLE-184-16", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
-            # ステージをやめると、未追跡の設定だけで入れ子を判定する入力になる（仕様が一意に決めないので拒否する）。
+            # ステージをやめた入力は`SINGLE-184-18`と同じ判定になるが、レビュー済みの起動と異なるので拒否する。
             ("SINGLE-184-03", "manifest.json", lambda v: v["setup"]["operations"].pop(1)),
+            ("SINGLE-184-18", "expected/check.json", lambda v: (v.update(status="failed"), v["diagnostics"].append(boundary))),
+            ("SINGLE-184-19", "manifest.json", lambda v: v["setup"]["operations"].insert(
+                1, {"op": "stage", "paths": ["sandbox/exp1/.spec/bitz.yaml"]})),
+            ("SINGLE-184-20", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-185-09", "expected/check.json", lambda v: v.update(status="passed_with_warnings")),
             ("SINGLE-184-13", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
             ("SINGLE-185-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=2)),
             ("SINGLE-185-05", "expected/check.json", lambda v: v["diagnostics"].reverse()),
@@ -15838,8 +15843,21 @@ class AuditTests(unittest.TestCase):
         def drop_journal(repository):
             shutil.rmtree(repository / ".spec/journal")
 
+        def drop_ignore(repository):
+            (repository / ".gitignore").unlink()
+
+        def config_file(repository):
+            directory = repository / "sandbox/exp1/.spec/bitz.yaml"
+            shutil.rmtree(directory)
+            directory.write_bytes((repository / ".spec/bitz.yaml").read_bytes())
+
+        def drop_journal_link(repository):
+            (repository / ".spec/journal/linked.md").unlink()
+
         for identifier, change in (("SINGLE-184-01", drop_config), ("SINGLE-184-06", unlink_symlink),
-                                   ("SINGLE-185-01", add_unknown), ("SINGLE-185-07", drop_journal)):
+                                   ("SINGLE-184-19", drop_ignore), ("SINGLE-184-20", config_file),
+                                   ("SINGLE-185-01", add_unknown), ("SINGLE-185-07", drop_journal),
+                                   ("SINGLE-185-09", drop_journal_link)):
             with self.subTest(identifier=identifier, change=change.__name__), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 change(root / "single" / identifier / "repo")
@@ -15849,6 +15867,22 @@ class AuditTests(unittest.TestCase):
         with patch.dict(module.TASK_CASES["SINGLE-184-02"], violations=[]):
             self.assertNotEqual(original, module.TASK_CASES["SINGLE-184-02"]["violations"])
             self.assertEqual(module.validate(identifiers={"SINGLE-184-02"})["status"], "Failed")
+        # 未追跡、無視された設定で入れ子にせず、ディレクトリで入れ子にする期待値も、参照計算と一致しない（ADR-074の明確化）。
+        for identifier, violations in (("SINGLE-184-18", ["sandbox/exp1/.spec/bitz.yaml", "sandbox/exp1/note.md"]),
+                                       ("SINGLE-184-19", ["sandbox/exp1/note.md"]), ("SINGLE-184-20", [])):
+            with self.subTest(identifier=identifier), patch.dict(module.TASK_CASES[identifier], violations=violations):
+                fixture = module.fixture_dir(module.HERE, identifier)
+                with self.assertRaisesRegex(ValueError, "参照計算"):
+                    module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+        # 予約したディレクトリの外の`.spec/`配下のシンボリックリンクは、未知のエントリの参照計算が扱わないので拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            (repository / ".spec/journal").mkdir(parents=True)
+            (repository / ".spec/requirements").mkdir()
+            (repository / ".spec/journal/a.md").symlink_to("../x.md")
+            self.assertEqual(module.unexempt_symlinks(repository), [])
+            (repository / ".spec/requirements/a.md").symlink_to("../x.md")
+            self.assertEqual(module.unexempt_symlinks(repository), [".spec/requirements/a.md"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -252,7 +252,9 @@
         "SINGLE-185-02",
         "SINGLE-185-03",
         "SINGLE-185-04",
-        "SINGLE-185-05"
+        "SINGLE-185-05",
+        "SINGLE-185-09",
+        "SINGLE-185-10"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -404,6 +406,9 @@
         "SINGLE-184-15",
         "SINGLE-184-16",
         "SINGLE-184-17",
+        "SINGLE-184-18",
+        "SINGLE-184-19",
+        "SINGLE-184-20",
         "SINGLE-185-06"
       ]
     },
