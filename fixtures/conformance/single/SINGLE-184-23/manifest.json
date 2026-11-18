@@ -1,0 +1,50 @@
+{
+  "fixtureId": "SINGLE-184-23",
+  "description": "作業ワークスペースの.spec/plans/の配下のステージした変更と作業ツリーの削除も、TASK境界の比較から除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/plans/TASK-001.md",
+        "source": "changes/plan.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/plans/TASK-001.md"
+        ]
+      },
+      {
+        "op": "delete",
+        "path": ".spec/plans/sub/old.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

@@ -29,6 +29,13 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 | `SINGLE-184-18` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を未追跡で作り（ステージしない）、`note.md`を変える | `passed`。未追跡の設定でも入れ子とし、設定自身の追加も除く |
 | `SINGLE-184-19` | `18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）。同じ設定を作り、`note.md`を変える | `passed`。無視された設定でも入れ子とする |
 | `SINGLE-184-20` | 対照: 基準版の`sandbox/exp1/.spec/bitz.yaml`がディレクトリ（`config.yaml`を持つ）。`note.md`を変える | `failed`。`sandbox/exp1/note.md`の1件（ディレクトリは設定のファイルでない） |
+| `SINGLE-184-21` | `.spec/journal/TASK-001.md`を未追跡で作る | `passed`。予約した`.spec/journal`の配下の変更を除く |
+| `SINGLE-184-22` | 基準版の`.spec/journal/TASK-001.md`を変える（未ステージ） | `passed` |
+| `SINGLE-184-23` | 基準版の`.spec/plans/TASK-001.md`を変えてステージし、`.spec/plans/sub/old.md`を作業ツリーで削除する | `passed`。予約した`.spec/plans`の配下の変更と削除を除く |
+| `SINGLE-184-24` | 基準版の`.spec/journal`が通常のファイル。それを変える | `passed`。エントリ自身の変更も除く |
+| `SINGLE-184-25` | 対照: 基準版の`.spec/journal/TASK-001.md`を変え、未追跡の`.spec/plans.md`を作る | `failed`。`.spec/plans.md`の`SPEC-TASK-BOUNDARY-001`と、同じパスの未知のファイルの警告 |
+| `SINGLE-184-26` | 対照: 基準版の`sandbox/.spec/journal/TASK-001.md`（`sandbox`は入れ子でない）を変える | `failed`。作業ワークスペースの予約したディレクトリでないので除かない |
+| `SINGLE-184-27` | ワークスペースのルートは`app/`。`app/.spec/journal/TASK-001.md`を変え、`app/.spec/plans/TASK-001.md`を未追跡で作り、`app`で実行 | `passed`。ワークスペース相対の`.spec/journal`と`.spec/plans`で除く |
 
 予約したディレクトリ（`SINGLE-185-*`、`MULTI-070-01`）:
 
@@ -49,7 +56,8 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 期待値の根拠は規範文と、このモジュールの参照計算（`reference_violations`、`unknown_entries`）だけである。Coreの出力は根拠にしない。
 参照計算は、隔離した準備手順の後のGitの`HEAD`の木構造と作業ツリーから、§5の変更集合、入れ子のワークスペースのルート
 （`HEAD`または作業ツリーにある通常のファイルの`.spec/bitz.yaml`。シンボリックリンクを経由せず、ディレクトリを数えない。作業ツリーのものは、
-Gitで追跡しているか、未追跡か、無視されているかによらず数える。`check` §7）、境界の外の変更を導き、レビュー済みのリテラルの診断と一致することを確かめる。
+Gitで追跡しているか、未追跡か、無視されているかによらず数える。`check` §7）、作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`
+（エントリ自身とその配下。同 §7）、境界の外の変更を導き、レビュー済みのリテラルの診断と一致することを確かめる。
 
 `SINGLE-185-06`〜`08`と`MULTI-070-01`は、レビュー済みの既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、
 期待結果をそこから導く。予約したディレクトリは読まないので、コンテキストのハッシュ値を含めて結果は変わらない。基のfixtureが変われば、この群の監査が失敗する。
@@ -140,6 +148,13 @@ def reserved_links(name):
 
 BASE_DOCUMENT = {CONFIG_PATH: CONFIG, REQ_PATH: DOCUMENT.encode()}
 IGNORE_NESTED_CONFIG = f"{NESTED}/.spec/bitz.yaml\n".encode()
+# 作業ワークスペースの予約したディレクトリの中身（`check` §7でTASK境界の比較から除く。中身の形式はCore 1.0では定めない）。
+JOURNAL_PATH = ".spec/journal/TASK-001.md"
+PLAN_PATH = ".spec/plans/TASK-001.md"
+JOURNAL_BEFORE = "# TASK-001の経過の記録\n\n変更前。\n".encode()
+JOURNAL_AFTER = "# TASK-001の経過の記録\n\n変更後。\n".encode()
+PLAN_BEFORE = "# TASK-001の計画\n\n変更前。\n".encode()
+PLAN_AFTER = "# TASK-001の計画\n\n変更後。\n".encode()
 
 # TASK境界: id -> dict(repo, changes, operations, cwd, workspace（リポジトリ相対のワークスペースのルート）, violations, description)
 TASK_CASES = {
@@ -232,6 +247,37 @@ TASK_CASES = {
                           changes={"note.md": NOTE_AFTER},
                           operations=[update(f"{NESTED}/note.md", "changes/note.md")], violations=[f"{NESTED}/note.md"],
                           description="対照: .spec/bitz.yamlという名前のディレクトリは設定のファイルではないので入れ子のワークスペースにせず、配下の変更はTASK境界の外になる"),
+    "SINGLE-184-21": dict(repo=dict(BASE_TASK), changes={"journal.md": JOURNAL_AFTER},
+                          operations=[{"op": "create", "path": JOURNAL_PATH, "source": "changes/journal.md"}], violations=[],
+                          description="作業ワークスペースの.spec/journal/に未追跡のファイルを足しても、予約したディレクトリの配下の変更としてTASK境界の比較から除く"),
+    "SINGLE-184-22": dict(repo={**BASE_TASK, JOURNAL_PATH: JOURNAL_BEFORE}, changes={"journal.md": JOURNAL_AFTER},
+                          operations=[update(JOURNAL_PATH, "changes/journal.md")], violations=[],
+                          description="作業ワークスペースの.spec/journal/の追跡しているファイルを変えても、TASK境界の比較から除く"),
+    "SINGLE-184-23": dict(repo={**BASE_TASK, PLAN_PATH: PLAN_BEFORE, ".spec/plans/sub/old.md": PLAN_BEFORE},
+                          changes={"plan.md": PLAN_AFTER},
+                          operations=[update(PLAN_PATH, "changes/plan.md"), {"op": "stage", "paths": [PLAN_PATH]},
+                                      {"op": "delete", "path": ".spec/plans/sub/old.md"}], violations=[],
+                          description="作業ワークスペースの.spec/plans/の配下のステージした変更と作業ツリーの削除も、TASK境界の比較から除く"),
+    "SINGLE-184-24": dict(repo={**BASE_TASK, ".spec/journal": JOURNAL_BEFORE}, changes={"journal": JOURNAL_AFTER},
+                          operations=[update(".spec/journal", "changes/journal")], violations=[],
+                          description="作業ワークスペースの.spec/journalが通常のファイルでも、エントリ自身の変更としてTASK境界の比較から除く"),
+    "SINGLE-184-25": dict(repo={**BASE_TASK, JOURNAL_PATH: JOURNAL_BEFORE},
+                          changes={"journal.md": JOURNAL_AFTER, "plans.md": PLAN_AFTER},
+                          operations=[update(JOURNAL_PATH, "changes/journal.md"),
+                                      {"op": "create", "path": ".spec/plans.md", "source": "changes/plans.md"}],
+                          violations=[".spec/plans.md"], unknown=[".spec/plans.md"],
+                          description="対照: 予約した名前に似た.spec/plans.mdは除かず、TASK境界の外の変更と未知のファイルになり、.spec/journal/の変更だけを除く"),
+    "SINGLE-184-26": dict(repo={**BASE_TASK, "sandbox/.spec/journal/TASK-001.md": JOURNAL_BEFORE},
+                          changes={"journal.md": JOURNAL_AFTER},
+                          operations=[update("sandbox/.spec/journal/TASK-001.md", "changes/journal.md")],
+                          violations=["sandbox/.spec/journal/TASK-001.md"],
+                          description="対照: 作業ワークスペースのルートでない下位のディレクトリの.spec/journal/は予約したディレクトリでなく、配下の変更はTASK境界の外になる"),
+    "SINGLE-184-27": dict(repo={**prefixed("app", BASE_TASK), f"app/{JOURNAL_PATH}": JOURNAL_BEFORE},
+                          changes={"journal.md": JOURNAL_AFTER, "plan.md": PLAN_AFTER},
+                          operations=[update(f"app/{JOURNAL_PATH}", "changes/journal.md"),
+                                      {"op": "create", "path": f"app/{PLAN_PATH}", "source": "changes/plan.md"}],
+                          cwd="app", workspace="app", violations=[],
+                          description="リポジトリのルートがワークスペースのルートより上にあっても、ワークスペース相対の.spec/journalと.spec/plansの配下の変更を除く"),
 }
 
 # 予約したディレクトリ: id -> dict(kind, ...)。`check`は`BASE_DOCUMENT`に`extra`を足す。`derived`は基のfixtureの入力に足し、期待結果を基から導く。
@@ -259,6 +305,12 @@ RESERVED_CASES = {
                           description="verifyは.spec/journal/と.spec/plans/を読まず、SINGLE-055と同じ結果を返す"),
     "SINGLE-185-08": dict(kind="derived", base="SINGLE-001",
                           description="doctorは.spec/journal/と.spec/plans/があっても、SINGLE-001と同じ結果を返す"),
+}
+# 予約したディレクトリの変更（ワークスペース相対、辞書順）。準備した後の変更集合に現れることを確かめる。
+RESERVED_CHANGE_CASES = {
+    "SINGLE-184-21": [JOURNAL_PATH], "SINGLE-184-22": [JOURNAL_PATH],
+    "SINGLE-184-23": [PLAN_PATH, ".spec/plans/sub/old.md"], "SINGLE-184-24": [".spec/journal"],
+    "SINGLE-184-25": [JOURNAL_PATH], "SINGLE-184-26": [], "SINGLE-184-27": [JOURNAL_PATH, PLAN_PATH],
 }
 MULTI_BASE = "MULTI-053-04"
 MULTI_MEMBER = "apps/web"
@@ -346,7 +398,7 @@ def reviewed_manifest(identifier):
     description = CASES[identifier]["description"]
     if identifier in TASK_CASES:
         case_ = TASK_CASES[identifier]
-        status = "failed" if case_["violations"] else "passed"
+        status = task_status(case_)
         return {"fixtureId": identifier, "description": description,
                 "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]},
                           "operations": copy.deepcopy(case_["operations"])},
@@ -370,6 +422,12 @@ def reviewed_manifest(identifier):
     return manifest
 
 
+def task_status(case_):
+    if case_["violations"]:
+        return "failed"
+    return "passed_with_warnings" if case_.get("unknown") else "passed"
+
+
 def operation(identifier):
     return reviewed_manifest(identifier)["invocation"]["argv"][0]
 
@@ -385,14 +443,19 @@ def diagnostic(code, severity, status, summary, path):
 
 def reviewed_result(identifier):
     if identifier in TASK_CASES:
-        violations = TASK_CASES[identifier]["violations"]
+        case_ = TASK_CASES[identifier]
         # 明示したTASKは`scope: selected`。完全検査の対象はTASK-001だけ（規範文0）。作業ツリーに変更があるので`dirty`は真。
-        return {"schemaVersion": "1.0", "operation": "check", "status": "failed" if violations else "passed",
+        # `.spec/`の未知のエントリの警告（ワークスペース・設定仕様 §3）は、境界の診断と同じ順序の規則（`path`、`code`の辞書順）で並べる。
+        diagnostics = [diagnostic(BOUNDARY, "error", "failed", BOUNDARY_SUMMARY.format(path=path), path)
+                       for path in case_["violations"]]
+        diagnostics += [diagnostic(UNKNOWN, "warning", "passed_with_warnings", UNKNOWN_FILE_SUMMARY, path)
+                        for path in case_.get("unknown", [])]
+        diagnostics.sort(key=lambda entry: (entry["source"]["path"], entry["code"]))
+        return {"schemaVersion": "1.0", "operation": "check", "status": task_status(case_),
                 "scope": "selected", "workspace": {"id": "root", "path": "."},
                 "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True},
                 "checkedDocumentCount": 1, "checkedStatementCount": 0, "durationMs": 0,
-                "diagnostics": [diagnostic(BOUNDARY, "error", "failed", BOUNDARY_SUMMARY.format(path=path), path)
-                                for path in violations]}
+                "diagnostics": diagnostics}
     if identifier in RESERVED_CASES and RESERVED_CASES[identifier]["kind"] == "check":
         unknown = RESERVED_CASES[identifier]["unknown"]
         status = "passed_with_warnings" if unknown else "passed"
@@ -469,8 +532,14 @@ def allowed(path, changes):
     return any(path == entry or (entry.endswith("/") and path.startswith(entry)) for entry in changes)
 
 
+def reserved_path(relative):
+    """作業ワークスペースの予約したエントリ`.spec/journal`、`.spec/plans`の自身か配下か（ワークスペース相対。セグメントの境界で比べる）。"""
+    return any(relative == f".spec/{name}" or relative.startswith(f".spec/{name}/") for name in RESERVED)
+
+
 def reference_violations(repository, workspace, changes):
-    """境界の外の変更（ワークスペース相対、辞書順）。TASK自身、ワークスペースの外、入れ子のワークスペースの配下を除く（§7）。"""
+    """境界の外の変更（ワークスペース相対、辞書順）。TASK自身、ワークスペースの外、入れ子のワークスペースの配下、
+    作業ワークスペースの予約したディレクトリのエントリ自身と配下を除く（§7）。"""
     prefix = "" if workspace == "." else workspace + "/"
     roots = nested_roots(repository, workspace)
     violations = []
@@ -480,7 +549,7 @@ def reference_violations(repository, workspace, changes):
         if any(path == root or path.startswith(root + "/") for root in roots):
             continue
         relative = path[len(prefix):]
-        if relative == TASK_PATH or allowed(relative, changes):
+        if relative == TASK_PATH or reserved_path(relative) or allowed(relative, changes):
             continue
         violations.append(relative)
     return violations
@@ -550,8 +619,18 @@ def inspector(identifier):
                 raise ValueError("境界の外の変更が参照計算と異なります")
             if not change_set(repository):
                 raise ValueError("作業ツリーに変更がありません")
-            if identifier in {"SINGLE-184-02", "SINGLE-184-20"} and nested_roots(repository, workspace):
+            if identifier in {"SINGLE-184-02", "SINGLE-184-20", "SINGLE-184-26"} and nested_roots(repository, workspace):
                 raise ValueError("対照に入れ子のワークスペースがあります")
+            if unknown_entries(repository, workspace) != case_.get("unknown", []):
+                raise ValueError("未知のエントリが参照計算と異なります")
+            if unexempt_symlinks(repository, workspace):
+                raise ValueError("予約したディレクトリの外の.spec/配下にシンボリックリンクがあります")
+            if identifier in RESERVED_CHANGE_CASES:
+                # 予約したディレクトリの変更が、変更集合に実際に現れ、参照計算がそれを除いていること。
+                reserved_changes = [path[len(prefix):] for path in change_set(repository)
+                                    if path.startswith(prefix) and reserved_path(path[len(prefix):])]
+                if sorted(reserved_changes) != RESERVED_CHANGE_CASES[identifier]:
+                    raise ValueError("予約したディレクトリの変更が参照計算と異なります")
             if identifier in {"SINGLE-184-18", "SINGLE-184-19"}:
                 config = f"{NESTED}/{CONFIG_PATH}"
                 tracked = config in _git_list(repository, "ls-files", "-z")

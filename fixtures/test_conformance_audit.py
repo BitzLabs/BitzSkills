@@ -15768,7 +15768,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["prepared"], list(module.CASES))
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
-        for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-184-19", "SINGLE-184-20", "SINGLE-185-04", "SINGLE-185-09"):
+        for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-184-19", "SINGLE-184-20", "SINGLE-184-24", "SINGLE-184-25",
+                           "SINGLE-185-04", "SINGLE-185-09"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 self.assertEqual(module.validate(root, {identifier})["errors"], [])
@@ -15807,6 +15808,15 @@ class AuditTests(unittest.TestCase):
                 1, {"op": "stage", "paths": ["sandbox/exp1/.spec/bitz.yaml"]})),
             ("SINGLE-184-20", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
             ("SINGLE-185-09", "expected/check.json", lambda v: v.update(status="passed_with_warnings")),
+            # 予約したディレクトリの変更（ADR-074の追加の決定）: 除いた変更を境界の外にする、対照を除く、警告を落とす、順序を変える。
+            ("SINGLE-184-21", "expected/check.json", lambda v: (v.update(status="failed"), v["diagnostics"].append(boundary))),
+            ("SINGLE-184-23", "manifest.json", lambda v: v["setup"]["operations"].pop(2)),
+            ("SINGLE-184-24", "expected/check.json", lambda v: (v.update(status="failed"), v["diagnostics"].append(boundary))),
+            ("SINGLE-184-25", "expected/check.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-184-25", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-184-25", "expected/check.json", lambda v: (v.update(status="passed_with_warnings"), v["diagnostics"].pop(0))),
+            ("SINGLE-184-26", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-27", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
             ("SINGLE-184-13", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
             ("SINGLE-185-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=2)),
             ("SINGLE-185-05", "expected/check.json", lambda v: v["diagnostics"].reverse()),
@@ -15854,10 +15864,21 @@ class AuditTests(unittest.TestCase):
         def drop_journal_link(repository):
             (repository / ".spec/journal/linked.md").unlink()
 
+        def journal_directory(repository):
+            entry = repository / ".spec/journal"
+            content = entry.read_bytes()
+            entry.unlink()
+            entry.mkdir()
+            (entry / "TASK-001.md").write_bytes(content)
+
+        def drop_plans_entry(repository):
+            (repository / ".spec/plans/sub/old.md").unlink()
+
         for identifier, change in (("SINGLE-184-01", drop_config), ("SINGLE-184-06", unlink_symlink),
                                    ("SINGLE-184-19", drop_ignore), ("SINGLE-184-20", config_file),
                                    ("SINGLE-185-01", add_unknown), ("SINGLE-185-07", drop_journal),
-                                   ("SINGLE-185-09", drop_journal_link)):
+                                   ("SINGLE-185-09", drop_journal_link), ("SINGLE-184-24", journal_directory),
+                                   ("SINGLE-184-23", drop_plans_entry)):
             with self.subTest(identifier=identifier, change=change.__name__), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 change(root / "single" / identifier / "repo")
@@ -15869,11 +15890,27 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(module.validate(identifiers={"SINGLE-184-02"})["status"], "Failed")
         # 未追跡、無視された設定で入れ子にせず、ディレクトリで入れ子にする期待値も、参照計算と一致しない（ADR-074の明確化）。
         for identifier, violations in (("SINGLE-184-18", ["sandbox/exp1/.spec/bitz.yaml", "sandbox/exp1/note.md"]),
-                                       ("SINGLE-184-19", ["sandbox/exp1/note.md"]), ("SINGLE-184-20", [])):
+                                       ("SINGLE-184-19", ["sandbox/exp1/note.md"]), ("SINGLE-184-20", []),
+                                       # 予約したディレクトリの変更を除かない期待値と、名前が似た別のエントリや下位の`.spec/journal`を除く期待値。
+                                       ("SINGLE-184-21", [".spec/journal/TASK-001.md"]), ("SINGLE-184-24", [".spec/journal"]),
+                                       ("SINGLE-184-23", [".spec/plans/TASK-001.md", ".spec/plans/sub/old.md"]),
+                                       ("SINGLE-184-25", []), ("SINGLE-184-26", []),
+                                       ("SINGLE-184-27", [".spec/journal/TASK-001.md", ".spec/plans/TASK-001.md"])):
             with self.subTest(identifier=identifier), patch.dict(module.TASK_CASES[identifier], violations=violations):
                 fixture = module.fixture_dir(module.HERE, identifier)
                 with self.assertRaisesRegex(ValueError, "参照計算"):
                     module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+        # 未知のエントリの期待値を落とした対照も、参照計算と一致しない。
+        with patch.dict(module.TASK_CASES["SINGLE-184-25"], unknown=[]):
+            fixture = module.fixture_dir(module.HERE, "SINGLE-184-25")
+            with self.assertRaisesRegex(ValueError, "参照計算"):
+                module.prepared_states(fixture, module.reviewed_manifest("SINGLE-184-25"), module.inspector("SINGLE-184-25"))
+        # 予約したエントリの判定はセグメントの境界で行い、名前が似た別のエントリを含めない。
+        for relative, expected in ((".spec/journal", True), (".spec/journal/a/b.md", True), (".spec/plans/x", True),
+                                   (".spec/journals/x.md", False), (".spec/plans.md", False), (".spec/journal.txt", False),
+                                   ("sandbox/.spec/journal/x.md", False), (".spec/tasks/journal/x.md", False)):
+            with self.subTest(relative=relative):
+                self.assertEqual(module.reserved_path(relative), expected)
         # 予約したディレクトリの外の`.spec/`配下のシンボリックリンクは、未知のエントリの参照計算が扱わないので拒否する。
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)

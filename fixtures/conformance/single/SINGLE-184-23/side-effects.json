@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/plans": {
+        "kind": "directory"
+      },
+      ".spec/plans/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2737b6a6bbb207c7cbce60689c34b30fa2886ae90bfdef8e7886e3d41771a1cc"
+      },
+      ".spec/plans/sub": {
+        "kind": "directory"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e2db21516e52bd57398e2929d8b9788deef9a970c15e684f179d1a4371424757"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/inside.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87a30b0552c1177b5ddc9397b3474e21ff3e36b70b08e3bbdef8fe79c177115c"
+      }
+    },
+    "git": {
+      "status": "M  .spec/plans/TASK-001.md\n D .spec/plans/sub/old.md\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 3c019cde5544a278ee14fdf5d77a210e6af68419 0\t.spec/plans/TASK-001.md\n100644 43428fccd53fe1cd6e0bef2e20432af415095b84 0\t.spec/plans/sub/old.md\n100644 b91a3526d3f8a50ab92e5bed7aae606c920b195a 0\t.spec/tasks/TASK-001.md\n100644 56a3f2ada0ea58f4810cdf3a43e0729fa75a09c4 0\tsrc/inside.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/plans": {
+        "kind": "directory"
+      },
+      ".spec/plans/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2737b6a6bbb207c7cbce60689c34b30fa2886ae90bfdef8e7886e3d41771a1cc"
+      },
+      ".spec/plans/sub": {
+        "kind": "directory"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e2db21516e52bd57398e2929d8b9788deef9a970c15e684f179d1a4371424757"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/inside.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87a30b0552c1177b5ddc9397b3474e21ff3e36b70b08e3bbdef8fe79c177115c"
+      }
+    },
+    "git": {
+      "status": "M  .spec/plans/TASK-001.md\n D .spec/plans/sub/old.md\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 3c019cde5544a278ee14fdf5d77a210e6af68419 0\t.spec/plans/TASK-001.md\n100644 43428fccd53fe1cd6e0bef2e20432af415095b84 0\t.spec/plans/sub/old.md\n100644 b91a3526d3f8a50ab92e5bed7aae606c920b195a 0\t.spec/tasks/TASK-001.md\n100644 56a3f2ada0ea58f4810cdf3a43e0729fa75a09c4 0\tsrc/inside.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
