@@ -6,12 +6,13 @@
 - 基準版にだけある設定（入れ子のディレクトリ全体を作業ツリーから消した場合）と、ワークスペースのルートがリポジトリのルートより下の場合
 - 深い入れ子、途中のディレクトリがシンボリックリンクの場合、パスに`*`を含む場合（`git ls-tree`のパスを字句どおりに扱う）
 - 入れ子から外へのリネーム、複合ワークスペースの経路（`exclude_nested=False`）で規則を変えないこと
-- 性能の目安: 境界の外の候補がなければ判定しない、候補の祖先だけを見て関係のないツリーを走査しない、基準版の問い合わせを分割する
+- 性能の目安: 比較の候補がなければ判定しない、候補の祖先だけを見て関係のないツリーを走査しない、基準版の問い合わせを分割する
 - 予約した`.spec/journal`・`.spec/plans`の、エントリ自身とその配下の変更をTASK境界の比較から除くこと（`check.md §7`）。
   エントリがファイルの場合、名前が似た別のエントリとセグメント境界、単一ワークスペースと複合ワークスペースの両方の経路
 - 名前が`.spec`のセグメントを含むディレクトリを入れ子のワークスペースのルートにしないこと（`.spec/.spec/bitz.yaml`で境界を外せない）
 - 入れ子のワークスペースとして除いた変更があれば、ルートごとに1件の`SPEC-TASK-BOUNDARY-003`を返すこと（件数・発生元・並び・文言）。
-  予約したディレクトリの除外では返さないこと、入れ子の入れ子では最も内側のルートで報告すること（司令塔の裁定待ち）
+  予約したディレクトリの除外では返さないこと、`changes`が許可した変更でも返すこと、
+  入れ子の入れ子では最も内側のルートで報告すること（司令塔の裁定待ち）
 """
 
 import os
@@ -423,18 +424,26 @@ class NestedExcludedWarningTests(unittest.TestCase):
             self.assertEqual(result["diagnostics"], [])
             self.assertEqual(exit_code, 0)
 
-    def test_changes_allowed_by_task_do_not_warn(self):
-        # `changes`が許可した変更は境界の外の候補にならないので、入れ子の判定をせず、警告もしない（仕様解釈）。
+    def test_changes_allowed_by_task_also_warn(self):
+        # `changes`が許可した変更も、入れ子のワークスペースの配下なら比較から除いた変更として数え、警告する
+        # （`check.md §7`「その宣言が許可する変更は比較の対象にならない（除かれる）」。SINGLE-184-15と同じ読み方）。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
-            _write(root, ".spec/tasks/TASK-001.md", _task(["sandbox/exp1/"]))
+            _write(root, ".spec/tasks/TASK-001.md", _task(["sandbox/exp1/", "src/"]))
             _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "src/inside.py", "x = 1\n")
             _commit(root)
             _write(root, "sandbox/exp1/a.md", "1\n")
+            _write(root, "src/inside.py", "x = 2\n")
 
-            result, _ = _check_task(root)
-            self.assertEqual(result["diagnostics"], [])
+            result, exit_code = _check_task(root)
+            self.assertEqual(
+                [(d["code"], d["source"]["path"]) for d in result["diagnostics"]],
+                [("SPEC-TASK-BOUNDARY-003", "sandbox/exp1")],
+            )
+            self.assertEqual(result["status"], "passed_with_warnings")
+            self.assertEqual(exit_code, 0)
 
     def test_nested_in_nested_reports_innermost_root(self):
         # 入れ子の入れ子（`a`と`a/b`）は、最も内側のルートで報告する（`check.md §7`は明示していない。司令塔の裁定待ち）。
@@ -532,13 +541,15 @@ class NestedExcludedWarningTests(unittest.TestCase):
 
 
 class NestedWorkspacePerformanceTests(unittest.TestCase):
-    def test_no_candidate_outside_boundary_skips_detection(self):
+    def test_no_compared_candidate_skips_detection(self):
+        # 比較の候補がない（TASK自身と予約したディレクトリの変更だけ）なら、入れ子の判定をしない。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _outer_workspace(root)
             _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
             _commit(root)
-            _write(root, "src/inside.py", "x = 2\n")
+            _write(root, ".spec/tasks/TASK-001.md", _task(["src/"]) + "\n追記\n")
+            _write(root, ".spec/journal/a.md", "経過\n")
 
             with mock.patch.object(check_mod, "_nested_workspace_roots", wraps=check_mod._nested_workspace_roots) as spy:
                 result, _ = _check_task(root)
