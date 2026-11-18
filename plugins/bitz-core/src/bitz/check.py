@@ -139,7 +139,8 @@ def _task_boundary_diagnostics(
     TASK自身のファイル、明示して生成したレポート、作業ワークスペースの予約した`.spec/journal`・`.spec/plans`
     （:func:`_task_boundary_reserved`）の変更は、単一ワークスペースでも複合ワークスペースでも比較から除く。
     ``exclude_nested``（単一ワークスペース）が真なら、入れ子のワークスペースのルートとその配下の変更を比較から除く
-    （`check.md §7`、ADR-074。:func:`_nested_workspace_paths`）。複合ワークスペースでは偽にし、規則を変えない。
+    （`check.md §7`、ADR-074。:func:`_nested_workspace_roots`）。除いた変更があれば、ルートごとに`SPEC-TASK-BOUNDARY-003`を
+    返す。複合ワークスペースでは偽にし、規則を変えない。
     """
 
     display_doc_id = f"{workspace_id}::{entry.doc_id}" if qualified_ids else entry.doc_id
@@ -176,12 +177,17 @@ def _task_boundary_diagnostics(
                 reported.add(p)
                 violations.append(p)
 
+    nested_roots: list[str] = []
     if exclude_nested and violations:
         # 入れ子のワークスペースの判定は、境界の外の候補がある場合だけ、その候補の祖先のディレクトリだけで行う。
-        nested = _nested_workspace_paths(violations, git.executable, cwd, env, base_commit, workspace_root)
+        changed_parents = _changed_parent_dirs(changed)
+        nested = _nested_workspace_roots(
+            violations, git.executable, cwd, env, base_commit, workspace_root, changed_parents
+        )
         violations = [p for p in violations if p not in nested]
+        nested_roots = sorted(set(nested.values()))
 
-    return [
+    diags = [
         Diagnostic(
             code="SPEC-TASK-BOUNDARY-001",
             severity="error",
@@ -191,6 +197,38 @@ def _task_boundary_diagnostics(
         )
         for p in violations
     ]
+    # 入れ子のワークスペースとして比較から除いた変更があれば、そのルートごとに1件知らせる（`check.md §7`）。
+    # 予約した`.spec/journal`・`.spec/plans`の除外は上の候補の段階で済んでいるので、ここには現れない。
+    diags.extend(
+        Diagnostic(
+            code="SPEC-TASK-BOUNDARY-003",
+            severity="warning",
+            resultStatus="passed_with_warnings",
+            summary=messages.task_boundary_nested_excluded(r, display_doc_id),
+            source={"kind": "file", "workspaceId": workspace_id, "path": r},
+        )
+        for r in nested_roots
+    )
+    return diags
+
+
+#: 入れ子のワークスペースの中の入れ子のワークスペース（``a``と``a/b``）の配下の変更を、どちらのルートで報告するか。
+#: 真なら最も内側のルート（``a/b``）、偽なら最も外側のルート（``a``）。`check.md §7`は明示していない（司令塔の裁定待ち）。
+_NESTED_REPORT_INNERMOST = True
+
+
+def _changed_parent_dirs(changed: list[gitutil.ChangedPath]) -> set[str]:
+    """変更集合のパス（リネームは移動元と移動先）の、真の祖先のディレクトリの集合を返す（ワークスペース相対）。"""
+
+    parents: set[str] = set()
+    for c in changed:
+        for p in (c.path, c.old_path):
+            if not p:
+                continue
+            parts = [seg for seg in p.split("/") if seg]
+            for i in range(1, len(parts)):
+                parents.add("/".join(parts[:i]))
+    return parents
 
 
 def _path_dirs(path: str) -> list[str]:
@@ -198,10 +236,18 @@ def _path_dirs(path: str) -> list[str]:
 
     ``path``の祖先のディレクトリと``path``自身（`gitlink`や、`git ls-files --others`が返す`dir/`のような
     ディレクトリの変更を、ルートとして判定するため）を返す。作業ワークスペース自身のルート（空のパス）は含めない。
+    名前が``.spec``のセグメントを含むディレクトリ（作業ワークスペース自身の`.spec/`とその配下、`x/.spec/y`など）は、
+    入れ子のワークスペースのルートにしないので含めない（`check.md §7`）。最初の``.spec``のセグメントより深い
+    ディレクトリはすべてそのセグメントを含むので、そこで打ち切る。
     """
 
     parts = [seg for seg in path.split("/") if seg]
-    return ["/".join(parts[: i + 1]) for i in range(len(parts))]
+    dirs: list[str] = []
+    for i, seg in enumerate(parts):
+        if seg == ".spec":
+            break
+        dirs.append("/".join(parts[: i + 1]))
+    return dirs
 
 
 def _is_real_dir(abs_path: str) -> bool:
@@ -211,26 +257,32 @@ def _is_real_dir(abs_path: str) -> bool:
         return False
 
 
-def _nested_workspace_paths(
+def _nested_workspace_roots(
     paths: list[str],
     executable: str,
     cwd: str,
     env: dict[str, str],
     base_commit: str,
     workspace_root: str,
-) -> set[str]:
-    """``paths``（ワークスペース相対の変更のパス）のうち、入れ子のワークスペースのルートまたはその配下にあるものを返す
-    （`check.md §7`、ADR-074）。
+    changed_parents: set[str] | None = None,
+) -> dict[str, str]:
+    """``paths``（ワークスペース相対の変更のパス）のうち、入れ子のワークスペースのルートまたはその配下にあるものを、
+    報告に使う入れ子のワークスペースのルートへの対応で返す（`check.md §7`、ADR-074）。
 
     入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に通常のファイルの
-    ``.spec/bitz.yaml``を持つディレクトリとする。候補は``paths``の祖先のディレクトリ（と``paths``自身）だけで、
-    リポジトリ全体は走査しない。
+    ``.spec/bitz.yaml``を持つディレクトリとする。名前が``.spec``のセグメントを含むディレクトリはルートにしない
+    （:func:`_path_dirs`）。候補は``paths``の祖先のディレクトリ（と``paths``自身）だけで、リポジトリ全体は走査しない。
+    入れ子の入れ子では、:data:`_NESTED_REPORT_INNERMOST`に従って最も内側（または外側）のルートを選ぶ。
 
     - 作業ツリー: 候補のディレクトリの各セグメント、``.spec``、``bitz.yaml``を作業ワークスペースのルートから順に``lstat``し、
       途中がシンボリックリンクなら入れ子にしない（たどらない）。``bitz.yaml``は通常のファイルだけを数え、
       ディレクトリとシンボリックリンクは数えない。Gitの追跡・未追跡・無視によらない。設定の内容は読まない。
-    - 基準版: 作業ツリーで決まらなかった候補だけを、1回（候補が多ければ分割）の`git ls-tree`で調べる
-      （:func:`gitutil.list_base_config_dirs`）。
+    - 基準版: 作業ツリーだけでは報告するルートが決まらない候補（内側を選ぶなら、作業ツリーで見つけたルートより深い候補）
+      だけを、1回（候補が多ければ分割）の`git ls-tree`で調べる（:func:`gitutil.list_base_config_dirs`）。
+      変更のパス自身は、``changed_parents``（変更集合のパスの真の祖先のディレクトリ）に含まれる場合だけ基準版で調べる。
+      基準版でディレクトリだった``path``に設定があれば、その設定の削除（または移動元）も変更集合に現れるためである
+      （作業ツリーのディレクトリ、`gitlink`のチェックアウト、未追跡の`dir/`は、作業ツリーの``lstat``で判定する）。
+      ``changed_parents``がNoneなら、変更のパス自身も常に調べる。
     """
 
     root_abs = os.path.abspath(workspace_root)
@@ -260,22 +312,34 @@ def _nested_workspace_paths(
             worktree_cache[rel] = cached
         return cached
 
-    nested: set[str] = set()
-    pending: dict[str, list[str]] = {}
+    # 報告に使うルートを選ぶ向き。``ordered``の先頭に近いほど優先する（内側なら深い順）。
+    def _ordered(dirs: list[str]) -> list[str]:
+        return list(reversed(dirs)) if _NESTED_REPORT_INNERMOST else list(dirs)
+
+    roots: dict[str, str] = {}
+    # 作業ツリーで見つけたルート（なければNone）と、それより優先する基準版の候補。
+    pending: dict[str, tuple[str | None, list[str]]] = {}
     for p in paths:
-        dirs = _path_dirs(p)
-        if any(_worktree_has_config(d) for d in dirs):
-            nested.add(p)
-        else:
-            pending[p] = dirs
+        dirs = _ordered(_path_dirs(p))
+        wt_root = next((d for d in dirs if _worktree_has_config(d)), None)
+        preferred = dirs if wt_root is None else dirs[: dirs.index(wt_root)]
+        if changed_parents is not None:
+            self_dir = "/".join(seg for seg in p.split("/") if seg)
+            preferred = [d for d in preferred if d != self_dir or d in changed_parents]
+        if preferred:
+            pending[p] = (wt_root, preferred)
+        elif wt_root is not None:
+            roots[p] = wt_root
     if pending:
         base_dirs = gitutil.list_base_config_dirs(
             executable, cwd, env, base_commit, workspace_root,
-            sorted({d for dirs in pending.values() for d in dirs}),
+            sorted({d for _, preferred in pending.values() for d in preferred}),
         )
-        if base_dirs:
-            nested.update(p for p, dirs in pending.items() if any(d in base_dirs for d in dirs))
-    return nested
+        for p, (wt_root, preferred) in pending.items():
+            chosen = next((d for d in preferred if d in base_dirs), wt_root)
+            if chosen is not None:
+                roots[p] = chosen
+    return roots
 
 
 def _alias_normalizer(active_ws_id: str) -> Callable[[str], str]:
