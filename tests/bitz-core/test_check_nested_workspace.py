@@ -12,7 +12,7 @@
 - 名前が`.spec`のセグメントを含むディレクトリを入れ子のワークスペースのルートにしないこと（`.spec/.spec/bitz.yaml`で境界を外せない）
 - 入れ子のワークスペースとして除いた変更があれば、ルートごとに1件の`SPEC-TASK-BOUNDARY-003`を返すこと（件数・発生元・並び・文言）。
   予約したディレクトリの除外では返さないこと、`changes`が許可した変更でも返すこと、
-  入れ子の入れ子では最も内側のルートで報告すること（司令塔の裁定待ち）
+  入れ子の入れ子では最も内側のルートで報告すること（`check.md §7`）
 """
 
 import os
@@ -446,7 +446,7 @@ class NestedExcludedWarningTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
 
     def test_nested_in_nested_reports_innermost_root(self):
-        # 入れ子の入れ子（`a`と`a/b`）は、最も内側のルートで報告する（`check.md §7`は明示していない。司令塔の裁定待ち）。
+        # 入れ子の入れ子（`a`と`a/b`）は、最も内側のルートで報告する（`check.md §7`「最も内側のルートの変更として数える」）。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _outer_workspace(root)
