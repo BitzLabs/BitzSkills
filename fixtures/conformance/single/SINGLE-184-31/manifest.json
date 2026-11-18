@@ -1,0 +1,55 @@
+{
+  "fixtureId": "SINGLE-184-31",
+  "description": "変更を除いた入れ子のワークスペースのルートごとに1件だけ警告し、変更のないルートと、.specのセグメントを含むディレクトリには警告しない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "sandbox/exp1/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "create",
+        "path": "sandbox/exp1/new.md",
+        "source": "changes/new.md"
+      },
+      {
+        "op": "update",
+        "path": "sandbox/exp2/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "update",
+        "path": "sandbox/exp2/.spec/v/note.md",
+        "source": "changes/note.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

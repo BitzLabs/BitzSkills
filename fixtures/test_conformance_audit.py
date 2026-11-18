@@ -15769,7 +15769,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
         for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-184-19", "SINGLE-184-20", "SINGLE-184-24", "SINGLE-184-25",
-                           "SINGLE-185-04", "SINGLE-185-09"):
+                           "SINGLE-184-28", "SINGLE-184-31", "SINGLE-185-04", "SINGLE-185-09"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 self.assertEqual(module.validate(root, {identifier})["errors"], [])
@@ -15793,13 +15793,18 @@ class AuditTests(unittest.TestCase):
         boundary = {"code": "SPEC-TASK-BOUNDARY-001", "severity": "error", "resultStatus": "failed",
                     "summary": "パスsandbox/exp1/note.mdはTASK-001の変更許可パスの外です",
                     "source": {"kind": "file", "workspaceId": "root", "path": "sandbox/exp1/note.md"}}
+
+        def nested(path):
+            return {"code": "SPEC-TASK-BOUNDARY-003", "severity": "warning", "resultStatus": "passed_with_warnings",
+                    "summary": f"入れ子のワークスペース{path}の配下の変更を、TASK TASK-001の境界の比較から除きました",
+                    "source": {"kind": "file", "workspaceId": "root", "path": path}}
         mutations = [
             ("SINGLE-184-01", "expected/check.json", lambda v: (v.update(status="failed"), v["diagnostics"].append(boundary))),
             ("SINGLE-184-01", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
             ("SINGLE-184-02", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
             ("SINGLE-184-06", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
             ("SINGLE-184-11", "expected/check.json", lambda v: v.update(status="error")),
-            ("SINGLE-184-14", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="app/sandbox/y.md")),
+            ("SINGLE-184-14", "expected/check.json", lambda v: v["diagnostics"][-1]["source"].update(path="app/sandbox/y.md")),
             ("SINGLE-184-16", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
             # ステージをやめた入力は`SINGLE-184-18`と同じ判定になるが、レビュー済みの起動と異なるので拒否する。
             ("SINGLE-184-03", "manifest.json", lambda v: v["setup"]["operations"].pop(1)),
@@ -15820,6 +15825,31 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-184-13", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
             ("SINGLE-185-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=2)),
             ("SINGLE-185-05", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            # 入れ子の除外の警告（ADR-074の独立レビューの後の決定）: 警告を落とす、文言・発生元・件数・順序を変える、
+            # 予約したディレクトリや変更のないルートに警告を足す、`.spec`のセグメントを含むディレクトリを入れ子にする。
+            ("SINGLE-184-01", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-01", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-184-01", "expected/check.json", lambda v: v["diagnostics"][0].update(
+                summary=v["diagnostics"][0]["summary"].replace("TASK TASK-001", "TASKTASK-001"))),
+            ("SINGLE-184-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="sandbox/exp1/")),
+            ("SINGLE-184-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="sandbox/exp1/note.md")),
+            ("SINGLE-184-01", "expected/check.json", lambda v: v["diagnostics"][0].update(severity="error", resultStatus="failed")),
+            ("SINGLE-184-03", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-184-08", "expected/check.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-184-08", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-184-10", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-184-16", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-184-19", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-21", "expected/check.json", lambda v: (v.update(status="passed_with_warnings"), v["diagnostics"].append(nested(".spec/journal")))),
+            ("SINGLE-184-28", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-28", "expected/check.json", lambda v: (v.update(status="passed_with_warnings"), v["diagnostics"].clear(),
+                                                                v["diagnostics"].append(nested(".spec")))),
+            ("SINGLE-184-28", "manifest.json", lambda v: v["setup"]["operations"].pop(0)),
+            ("SINGLE-184-29", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-30", "expected/check.json", lambda v: v["diagnostics"].pop(0)),
+            ("SINGLE-184-31", "expected/check.json", lambda v: v["diagnostics"].append(nested("sandbox/exp3"))),
+            ("SINGLE-184-31", "expected/check.json", lambda v: v["diagnostics"].append(nested("sandbox/exp2/.spec/v"))),
+            ("SINGLE-184-32", "expected/check.json", lambda v: (v.update(status="passed_with_warnings"), v["diagnostics"].append(nested(".spec/journal")))),
             ("SINGLE-185-06", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
             ("SINGLE-185-08", "expected/doctor.json", lambda v: v.update(status="passed_with_warnings")),
         ]
@@ -15900,6 +15930,49 @@ class AuditTests(unittest.TestCase):
                 fixture = module.fixture_dir(module.HERE, identifier)
                 with self.assertRaisesRegex(ValueError, "参照計算"):
                     module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+        # `.spec`のセグメントを含むディレクトリを入れ子にする期待値は、参照計算と一致しない。
+        for identifier, violations in (("SINGLE-184-28", []), ("SINGLE-184-29", []), ("SINGLE-184-30", ["sandbox/x/note.md"])):
+            with self.subTest(identifier=identifier), patch.dict(module.TASK_CASES[identifier], violations=violations):
+                fixture = module.fixture_dir(module.HERE, identifier)
+                with self.assertRaisesRegex(ValueError, "参照計算"):
+                    module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+        # 入れ子の除外の警告のルートを落とす、足す、予約したディレクトリや`.spec`のセグメントを含むディレクトリに返す期待値は、参照計算と一致しない。
+        for identifier, roots in (("SINGLE-184-01", []), ("SINGLE-184-08", ["a"]), ("SINGLE-184-19", []),
+                                  ("SINGLE-184-21", [".spec/journal"]), ("SINGLE-184-28", [".spec"]),
+                                  ("SINGLE-184-31", ["sandbox/exp1", "sandbox/exp2", "sandbox/exp3"]),
+                                  ("SINGLE-184-31", ["sandbox/exp1", "sandbox/exp2", "sandbox/exp2/.spec/v"]),
+                                  ("SINGLE-184-32", [".spec/journal"])):
+            with self.subTest(identifier=identifier, roots=roots), patch.dict(module.TASK_CASES[identifier], nested=roots):
+                fixture = module.fixture_dir(module.HERE, identifier)
+                with self.assertRaisesRegex(ValueError, "参照計算"):
+                    module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+        # `.spec`のセグメントの規則の有無で、入れ子のルートが分かれる（規則がなければ`.spec`、`.spec/requirements`などがルートになる）。
+        for identifier, workspace_roots in (("SINGLE-184-28", {".spec"}), ("SINGLE-184-29", {".spec/requirements"}),
+                                            ("SINGLE-184-30", {"sandbox/x/.spec/y"}), ("SINGLE-184-32", {".spec/journal"}),
+                                            ("SINGLE-184-31", {"sandbox/exp1", "sandbox/exp2", "sandbox/exp3", "sandbox/exp2/.spec/v"})):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                fixture = module.fixture_dir(module.HERE, identifier)
+                repository = fixture_setup(fixture, module.reviewed_manifest(identifier), Path(temporary) / "repo")
+                self.assertEqual(module.nested_roots(repository, ".", True), workspace_roots)
+                self.assertEqual(module.nested_roots(repository, "."), {root for root in workspace_roots if ".spec" not in root.split("/")})
+        # 入れ子の入れ子の内側だけに変更がある入力は、帰属の読み方で警告が変わるので、参照計算が拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-184-08"
+            manifest = module.reviewed_manifest(identifier)
+            manifest["setup"]["operations"] = [operation for operation in manifest["setup"]["operations"]
+                                               if operation["path"] != "a/top.md"]
+            repository = fixture_setup(module.fixture_dir(module.HERE, identifier), manifest, Path(temporary) / "repo")
+            with self.assertRaisesRegex(ValueError, "帰属"):
+                module.reference_excluded_roots(repository, ".")
+        # 作業ワークスペースの`.spec/`の中の`.spec`という名前のディレクトリ（予約した3つのエントリの中を除く）は、入力として拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            for relative in (".spec/journal/.spec", ".spec/reports/.spec", ".spec/requirements/x"):
+                (repository / relative).mkdir(parents=True)
+            self.assertEqual(module.spec_named_directories(repository), [])
+            (repository / ".spec/requirements/.spec").mkdir()
+            (repository / ".spec/.spec").mkdir()
+            self.assertEqual(module.spec_named_directories(repository), [".spec/.spec", ".spec/requirements/.spec"])
         # 未知のエントリの期待値を落とした対照も、参照計算と一致しない。
         with patch.dict(module.TASK_CASES["SINGLE-184-25"], unknown=[]):
             fixture = module.fixture_dir(module.HERE, "SINGLE-184-25")

@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-184-03",
-  "description": "基準版になく、ステージして作業ツリーにある.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加も除く",
+  "description": "基準版になく、ステージして作業ツリーにある.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加も除き、ルートごとに1件だけ警告する",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -42,7 +42,7 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
+    "status": "passed_with_warnings",
     "exitCode": 0,
     "stdout": "json",
     "resultFile": "expected/check.json",

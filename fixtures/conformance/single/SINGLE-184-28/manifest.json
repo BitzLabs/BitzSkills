@@ -1,0 +1,49 @@
+{
+  "fixtureId": "SINGLE-184-28",
+  "description": "基準版の.spec/.spec/bitz.yamlで作業ワークスペースの.specを入れ子のワークスペースにせず、設定とREQの変更はTASK境界の外になる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "delete",
+        "path": ".spec/.spec"
+      },
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/bitz.yaml"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/REQ-001.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

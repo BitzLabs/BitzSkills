@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-30",
+  "description": "作業ワークスペースの.specの外でも、.specのセグメントを含むsandbox/x/.spec/yを入れ子のワークスペースにせず、配下の変更はTASK境界の外になる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "sandbox/x/.spec/y/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "update",
+        "path": "sandbox/x/note.md",
+        "source": "changes/note.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-TASK-BOUNDARY-003",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "入れ子のワークスペースsandbox/exp1の配下の変更を、TASK TASK-001の境界の比較から除きました",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": "sandbox/exp1"
+      }
+    },
+    {
+      "code": "SPEC-TASK-BOUNDARY-003",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "入れ子のワークスペースsandbox/exp2の配下の変更を、TASK TASK-001の境界の比較から除きました",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": "sandbox/exp2"
+      }
+    }
+  ]
+}

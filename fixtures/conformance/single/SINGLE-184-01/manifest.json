@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-184-01",
-  "description": "作業ツリーと基準版に.spec/bitz.yamlを持つ入れ子のワークスペースの配下の変更は、TASK境界の比較から除く",
+  "description": "作業ツリーと基準版に.spec/bitz.yamlを持つ入れ子のワークスペースの配下の変更は、TASK境界の比較から除き、そのルートの警告を返す",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -31,7 +31,7 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
+    "status": "passed_with_warnings",
     "exitCode": 0,
     "stdout": "json",
     "resultFile": "expected/check.json",

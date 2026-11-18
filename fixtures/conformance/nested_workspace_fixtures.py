@@ -1,41 +1,51 @@
 """入れ子のワークスペースをTASK境界から除くことと、予約したディレクトリ`.spec/journal`と`.spec/plans`を固定する（Coreの公開操作は実行しない）。
 
 [ADR-074](../../docs/02.設計書/10_決定記録/ADR-074_入れ子のワークスペースをTASK境界から除き、経過の記録と計画の置き場を予約する.md)、
-[`check`仕様 §7](../../docs/03.詳細設計/03_操作仕様/02_check.md#7-task境界)の入れ子のワークスペースの段落、
+[`check`仕様 §7](../../docs/03.詳細設計/03_操作仕様/02_check.md#7-task境界)の入れ子のワークスペースの段落
+（名前が`.spec`のセグメントを含むディレクトリを入れ子のルートにしないこと、除いたルートごとの警告`SPEC-TASK-BOUNDARY-003`を含む）、
 [ワークスペース・設定仕様 §3](../../docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md#3-探索対象)、
-診断レジストリの`WORKSPACE-ENTRY-UNKNOWN`を根拠とする。
+診断レジストリの`WORKSPACE-ENTRY-UNKNOWN`と`CHECK-TASK-NESTED-EXCLUDED`を根拠とする。
+
+入れ子のワークスペースとして比較から除いた変更が1件以上あれば、そのルートごとに1件、`SPEC-TASK-BOUNDARY-003`（`warning`）を返す。
+発生元はルートのディレクトリ（ワークスペース相対）で、`SPEC-TASK-BOUNDARY-001`と同じく`path`、`code`の辞書順に並べる。
+下の表の「警告」は、この警告を返すルートである。予約した`.spec/journal`と`.spec/plans`の除外には返さない。
 
 TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 
 | fixture | 入力と変更 | 期待 |
 |---|---|---|
-| `SINGLE-184-01` | 基準版に`sandbox/exp1/.spec/bitz.yaml`と`sandbox/exp1/note.md`。`note.md`を変える（未ステージ） | `passed`。入れ子のワークスペースの配下の変更を除く |
+| `SINGLE-184-01` | 基準版に`sandbox/exp1/.spec/bitz.yaml`と`sandbox/exp1/note.md`。`note.md`を変える（未ステージ） | `passed_with_warnings`。入れ子のワークスペースの配下の変更を除く。警告`sandbox/exp1` |
 | `SINGLE-184-02` | 対照: `01`から`sandbox/exp1/.spec/bitz.yaml`を除く | `failed`。`sandbox/exp1/note.md`の`SPEC-TASK-BOUNDARY-001` |
-| `SINGLE-184-03` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を追加してステージし、`note.md`を変える | `passed`。基準版になくインデックスと作業ツリーにある設定でも入れ子とし、設定自身の追加も除く |
-| `SINGLE-184-04` | `01`の基準版。`sandbox/exp1/.spec/bitz.yaml`を作業ツリーで削除する（未ステージ） | `passed`。設定自身の削除を除く |
-| `SINGLE-184-05` | `01`の基準版。設定の削除をステージし、`note.md`を変える | `passed`。基準版にだけある設定でも入れ子とする |
+| `SINGLE-184-03` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を追加してステージし、`note.md`を変える | `passed_with_warnings`。基準版になくインデックスと作業ツリーにある設定でも入れ子とし、設定自身の追加も除く。警告`sandbox/exp1`の1件（変更2件でもルートごとに1件） |
+| `SINGLE-184-04` | `01`の基準版。`sandbox/exp1/.spec/bitz.yaml`を作業ツリーで削除する（未ステージ） | `passed_with_warnings`。設定自身の削除を除く。警告`sandbox/exp1` |
+| `SINGLE-184-05` | `01`の基準版。設定の削除をステージし、`note.md`を変える | `passed_with_warnings`。基準版にだけある設定でも入れ子とする。警告`sandbox/exp1` |
 | `SINGLE-184-06` | `01`の設定をシンボリックリンク（`../../../.spec/bitz.yaml`）にする | `failed`。入れ子にしない |
 | `SINGLE-184-07` | `sandbox/exp1/.spec`をシンボリックリンク（`../cfg`、`sandbox/cfg/bitz.yaml`あり）にする | `failed`。シンボリックリンクをたどらない |
-| `SINGLE-184-08` | `a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`。`a/top.md`と`a/b/deep.md`を変える | `passed`。入れ子の入れ子も除く |
-| `SINGLE-184-09` | `tools/lab/exp/.spec/bitz.yaml`（2段の下位）。`tools/lab/exp/n.md`と`tools/lab/other.md`を変える | `failed`。`tools/lab/other.md`の1件だけ |
-| `SINGLE-184-10` | `sandbox/exp1`だけが入れ子。`sandbox/exp1/note.md`と`sandbox/exp10/note.md`を変える | `failed`。`sandbox/exp10/note.md`の1件だけ（セグメントの境界） |
-| `SINGLE-184-11` | 入れ子の設定のYAMLの構文が不正（`SINGLE-127-43`と同じ設定）。`note.md`を変える | `passed`。診断なし（設定の内容を読まない） |
-| `SINGLE-184-12` | 入れ子の設定を作業ツリーで構文の不正な設定へ変える。ほかの変更はない | `passed`。診断なし |
-| `SINGLE-184-13` | ワークスペースのルートは`app/`（リポジトリのルートの下位）。`app/sandbox/x/.spec/bitz.yaml`。`app/sandbox/x/note.md`を変え、`app`で実行 | `passed` |
-| `SINGLE-184-14` | `13`に`app/sandbox/y.md`を足し、両方を変える | `failed`。ワークスペース相対の`sandbox/y.md`の1件だけ |
-| `SINGLE-184-15` | TASKの`changes`が`[src/, sandbox/exp1/note.md]`（入れ子の配下を指す）。`note.md`と`src2/outside.py`を変える | `failed`。`src2/outside.py`の1件だけ |
-| `SINGLE-184-16` | `01`の基準版。作業ワークスペース自身の`.spec/bitz.yaml`と`note.md`を変える | `failed`。`.spec/bitz.yaml`の1件だけ（自身のルートは入れ子に含めない） |
-| `SINGLE-184-17` | `01`の基準版。`sandbox/exp1/new.md`を未追跡で作る | `passed`。未追跡の変更も除く |
-| `SINGLE-184-18` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を未追跡で作り（ステージしない）、`note.md`を変える | `passed`。未追跡の設定でも入れ子とし、設定自身の追加も除く |
-| `SINGLE-184-19` | `18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）。同じ設定を作り、`note.md`を変える | `passed`。無視された設定でも入れ子とする |
+| `SINGLE-184-08` | `a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`。`a/top.md`と`a/b/deep.md`を変える | `passed_with_warnings`。入れ子の入れ子も除く。警告`a`と`a/b` |
+| `SINGLE-184-09` | `tools/lab/exp/.spec/bitz.yaml`（2段の下位）。`tools/lab/exp/n.md`と`tools/lab/other.md`を変える | `failed`。警告`tools/lab/exp`と、`tools/lab/other.md`の1件 |
+| `SINGLE-184-10` | `sandbox/exp1`だけが入れ子。`sandbox/exp1/note.md`と`sandbox/exp10/note.md`を変える | `failed`。警告`sandbox/exp1`と、`sandbox/exp10/note.md`の1件（セグメントの境界） |
+| `SINGLE-184-11` | 入れ子の設定のYAMLの構文が不正（`SINGLE-127-43`と同じ設定）。`note.md`を変える | `passed_with_warnings`。設定の内容を読まず、設定の診断を出さない。警告`sandbox/exp1` |
+| `SINGLE-184-12` | 入れ子の設定を作業ツリーで構文の不正な設定へ変える。ほかの変更はない | `passed_with_warnings`。警告`sandbox/exp1`だけ |
+| `SINGLE-184-13` | ワークスペースのルートは`app/`（リポジトリのルートの下位）。`app/sandbox/x/.spec/bitz.yaml`。`app/sandbox/x/note.md`を変え、`app`で実行 | `passed_with_warnings`。警告はワークスペース相対の`sandbox/x` |
+| `SINGLE-184-14` | `13`に`app/sandbox/y.md`を足し、両方を変える | `failed`。警告`sandbox/x`と、ワークスペース相対の`sandbox/y.md`の1件 |
+| `SINGLE-184-15` | TASKの`changes`が`[src/, sandbox/exp1/note.md]`（入れ子の配下を指す）。`note.md`と`src2/outside.py`を変える | `failed`。警告`sandbox/exp1`と、`src2/outside.py`の1件 |
+| `SINGLE-184-16` | `01`の基準版。作業ワークスペース自身の`.spec/bitz.yaml`と`note.md`を変える | `failed`。`.spec/bitz.yaml`の1件（自身のルートは入れ子に含めない）と、警告`sandbox/exp1` |
+| `SINGLE-184-17` | `01`の基準版。`sandbox/exp1/new.md`を未追跡で作る | `passed_with_warnings`。未追跡の変更も除く。警告`sandbox/exp1` |
+| `SINGLE-184-18` | 基準版に`note.md`だけ。`sandbox/exp1/.spec/bitz.yaml`を未追跡で作り（ステージしない）、`note.md`を変える | `passed_with_warnings`。未追跡の設定でも入れ子とし、設定自身の追加も除く。警告`sandbox/exp1` |
+| `SINGLE-184-19` | `18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）。同じ設定を作り、`note.md`を変える | `passed_with_warnings`。無視された設定でも入れ子とする。警告`sandbox/exp1`（除いた変更は`note.md`） |
 | `SINGLE-184-20` | 対照: 基準版の`sandbox/exp1/.spec/bitz.yaml`がディレクトリ（`config.yaml`を持つ）。`note.md`を変える | `failed`。`sandbox/exp1/note.md`の1件（ディレクトリは設定のファイルでない） |
-| `SINGLE-184-21` | `.spec/journal/TASK-001.md`を未追跡で作る | `passed`。予約した`.spec/journal`の配下の変更を除く |
+| `SINGLE-184-21` | `.spec/journal/TASK-001.md`を未追跡で作る | `passed`。予約した`.spec/journal`の配下の変更を除き、警告を返さない |
 | `SINGLE-184-22` | 基準版の`.spec/journal/TASK-001.md`を変える（未ステージ） | `passed` |
 | `SINGLE-184-23` | 基準版の`.spec/plans/TASK-001.md`を変えてステージし、`.spec/plans/sub/old.md`を作業ツリーで削除する | `passed`。予約した`.spec/plans`の配下の変更と削除を除く |
 | `SINGLE-184-24` | 基準版の`.spec/journal`が通常のファイル。それを変える | `passed`。エントリ自身の変更も除く |
 | `SINGLE-184-25` | 対照: 基準版の`.spec/journal/TASK-001.md`を変え、未追跡の`.spec/plans.md`を作る | `failed`。`.spec/plans.md`の`SPEC-TASK-BOUNDARY-001`と、同じパスの未知のファイルの警告 |
 | `SINGLE-184-26` | 対照: 基準版の`sandbox/.spec/journal/TASK-001.md`（`sandbox`は入れ子でない）を変える | `failed`。作業ワークスペースの予約したディレクトリでないので除かない |
 | `SINGLE-184-27` | ワークスペースのルートは`app/`。`app/.spec/journal/TASK-001.md`を変え、`app/.spec/plans/TASK-001.md`を未追跡で作り、`app`で実行 | `passed`。ワークスペース相対の`.spec/journal`と`.spec/plans`で除く |
+| `SINGLE-184-28` | 基準版に`.spec/.spec/bitz.yaml`とREQ-001。作業ツリーで`.spec/.spec`を削除し、`.spec/bitz.yaml`とREQ-001を変える | `failed`。`.spec`を入れ子にせず、3件（`.spec/.spec/bitz.yaml`、`.spec/bitz.yaml`、REQ-001）。警告なし |
+| `SINGLE-184-29` | 基準版に`.spec/requirements/.spec/bitz.yaml`とREQ-001。作業ツリーで`.spec/requirements/.spec`を削除し、`.spec/bitz.yaml`とREQ-001を変える | `failed`。`.spec/requirements`を入れ子にせず、3件。警告なし |
+| `SINGLE-184-30` | `sandbox/x/.spec/y/.spec/bitz.yaml`（`sandbox/x`に設定はない）。`sandbox/x/.spec/y/note.md`と`sandbox/x/note.md`を変える | `failed`。`sandbox/x/.spec/y`を入れ子にせず、2件。警告なし |
+| `SINGLE-184-31` | 入れ子`sandbox/exp1`・`exp2`・`exp3`と、`exp2`の中の`sandbox/exp2/.spec/v/.spec/bitz.yaml`。`exp1`の2件、`exp2/note.md`、`exp2/.spec/v/note.md`を変える | `passed_with_warnings`。警告`sandbox/exp1`と`sandbox/exp2`の2件だけ（変更のない`exp3`と、ルートにしない`exp2/.spec/v`には返さない） |
+| `SINGLE-184-32` | 基準版に`.spec/journal/.spec/bitz.yaml`と`.spec/journal/TASK-001.md`。`TASK-001.md`を変える | `passed`。`.spec/journal`を入れ子にせず、予約したディレクトリの除外として警告を返さない |
 
 予約したディレクトリ（`SINGLE-185-*`、`MULTI-070-01`）:
 
@@ -56,8 +66,12 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 期待値の根拠は規範文と、このモジュールの参照計算（`reference_violations`、`unknown_entries`）だけである。Coreの出力は根拠にしない。
 参照計算は、隔離した準備手順の後のGitの`HEAD`の木構造と作業ツリーから、§5の変更集合、入れ子のワークスペースのルート
 （`HEAD`または作業ツリーにある通常のファイルの`.spec/bitz.yaml`。シンボリックリンクを経由せず、ディレクトリを数えない。作業ツリーのものは、
-Gitで追跡しているか、未追跡か、無視されているかによらず数える。`check` §7）、作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`
-（エントリ自身とその配下。同 §7）、境界の外の変更を導き、レビュー済みのリテラルの診断と一致することを確かめる。
+Gitで追跡しているか、未追跡か、無視されているかによらず数える。ワークスペース相対のパスが名前`.spec`のセグメントを含むディレクトリは除く。`check` §7）、
+作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`（エントリ自身とその配下。同 §7）、境界の外の変更と、
+除いた変更を1件以上持つ入れ子のルートを導き、レビュー済みのリテラルの診断と一致することを確かめる。
+
+入れ子の入れ子（`a`と`a/b`）の配下の変更が、最も内側のルートだけに属するか、それを含むすべてのルートに属するかを規範文は定めない。
+参照計算は両方の読み方でルートの集合を求め、一致しない入力を拒否する（`SINGLE-184-08`は`a/top.md`も変えるので、どちらでも`a`と`a/b`）。
 
 `SINGLE-185-06`〜`08`と`MULTI-070-01`は、レビュー済みの既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、
 期待結果をそこから導く。予約したディレクトリは読まないので、コンテキストのハッシュ値を含めて結果は変わらない。基のfixtureが変われば、この群の監査が失敗する。
@@ -83,9 +97,12 @@ CONFIG_PATH = ".spec/bitz.yaml"
 CONFIG = CONFIGS["SINGLE-001"].encode()
 TASK_PATH = ".spec/tasks/TASK-001.md"
 BOUNDARY = "SPEC-TASK-BOUNDARY-001"
+NESTED_EXCLUDED = "SPEC-TASK-BOUNDARY-003"
 UNKNOWN = "SPEC-WORKSPACE-UNKNOWN-001"
 # 承認済みの文言（Coreの出力文言のレビュー記録.md #137、#151）。
 BOUNDARY_SUMMARY = "パス{path}はTASK-001の変更許可パスの外です"
+# 承認済みの文言（同「2026-11-18: 入れ子のワークスペースを境界から除いた警告」）。`TASK`と`{task}`の間に空白を1つ置く。
+NESTED_SUMMARY = "入れ子のワークスペース{path}の配下の変更を、TASK {task}の境界の比較から除きました"
 UNKNOWN_FILE_SUMMARY = ".spec/内の未知のファイルを仕様文書として読みません"
 # ワークスペース・設定仕様 §3の既知のエントリ（`.spec/`の直下）。
 KNOWN_ENTRIES = {"bitz.yaml", "requirements", "technical", "decisions", "tasks", "reports", "journal", "plans"}
@@ -155,12 +172,18 @@ JOURNAL_BEFORE = "# TASK-001の経過の記録\n\n変更前。\n".encode()
 JOURNAL_AFTER = "# TASK-001の経過の記録\n\n変更後。\n".encode()
 PLAN_BEFORE = "# TASK-001の計画\n\n変更前。\n".encode()
 PLAN_AFTER = "# TASK-001の計画\n\n変更後。\n".encode()
+# REQ-001の節Verificationの散文だけを変える。明示したTASKの完全検査の対象（TASK-001だけ）に入らないので、状態遷移と承認済み要求の保護の対象にならない（`check` §3）。
+REQ_AFTER = DOCUMENT.replace("現時点では未証明。", "確認の手順は未定。").encode()
+# 名前が`.spec`のセグメントを含むディレクトリの設定（`check` §7。入れ子のワークスペースのルートにしない）。
+SPEC_SPEC_CONFIG = ".spec/.spec/bitz.yaml"
+REQUIREMENTS_SPEC_CONFIG = ".spec/requirements/.spec/bitz.yaml"
+SANDBOX_SPEC_CONFIG = "sandbox/x/.spec/y/.spec/bitz.yaml"
 
 # TASK境界: id -> dict(repo, changes, operations, cwd, workspace（リポジトリ相対のワークスペースのルート）, violations, description)
 TASK_CASES = {
     "SINGLE-184-01": dict(repo={**BASE_TASK, **nested()}, changes={"note.md": NOTE_AFTER},
-                          operations=[update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
-                          description="作業ツリーと基準版に.spec/bitz.yamlを持つ入れ子のワークスペースの配下の変更は、TASK境界の比較から除く"),
+                          operations=[update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
+                          description="作業ツリーと基準版に.spec/bitz.yamlを持つ入れ子のワークスペースの配下の変更は、TASK境界の比較から除き、そのルートの警告を返す"),
     "SINGLE-184-02": dict(repo={**BASE_TASK, f"{NESTED}/note.md": NOTE_BEFORE}, changes={"note.md": NOTE_AFTER},
                           operations=[update(f"{NESTED}/note.md", "changes/note.md")], violations=[f"{NESTED}/note.md"],
                           description="対照: .spec/bitz.yamlのないディレクトリの配下の変更は、今どおりTASK境界の外になる"),
@@ -168,15 +191,15 @@ TASK_CASES = {
                           changes={"bitz.yaml": CONFIG, "note.md": NOTE_AFTER},
                           operations=[{"op": "create", "path": f"{NESTED}/.spec/bitz.yaml", "source": "changes/bitz.yaml"},
                                       {"op": "stage", "paths": [f"{NESTED}/.spec/bitz.yaml"]},
-                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
-                          description="基準版になく、ステージして作業ツリーにある.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加も除く"),
+                                      update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
+                          description="基準版になく、ステージして作業ツリーにある.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加も除き、ルートごとに1件だけ警告する"),
     "SINGLE-184-04": dict(repo={**BASE_TASK, **nested()}, changes={},
-                          operations=[{"op": "delete", "path": f"{NESTED}/.spec/bitz.yaml"}], violations=[],
+                          operations=[{"op": "delete", "path": f"{NESTED}/.spec/bitz.yaml"}], nested=[NESTED], violations=[],
                           description="基準版にある入れ子のワークスペースの.spec/bitz.yamlを作業ツリーで削除しても、設定自身の削除として除く"),
     "SINGLE-184-05": dict(repo={**BASE_TASK, **nested()}, changes={"note.md": NOTE_AFTER},
                           operations=[{"op": "delete", "path": f"{NESTED}/.spec/bitz.yaml"},
                                       {"op": "stage", "paths": [f"{NESTED}/.spec/bitz.yaml"]},
-                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                                      update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
                           description="基準版にだけある.spec/bitz.yamlも入れ子のワークスペースとし、削除をステージしても配下の変更を除く"),
     "SINGLE-184-06": dict(repo={**BASE_TASK, f"{NESTED}/.spec/bitz.yaml": Link("../../../.spec/bitz.yaml"),
                                 f"{NESTED}/note.md": NOTE_BEFORE}, changes={"note.md": NOTE_AFTER},
@@ -190,58 +213,58 @@ TASK_CASES = {
                                 "a/top.md": NOTE_BEFORE, "a/b/deep.md": NOTE_BEFORE},
                           changes={"top.md": NOTE_AFTER, "deep.md": NOTE_AFTER},
                           operations=[update("a/top.md", "changes/top.md"), update("a/b/deep.md", "changes/deep.md")],
-                          violations=[], description="入れ子のワークスペースの中の入れ子のワークスペースの配下の変更も除く"),
+                          nested=["a", "a/b"], violations=[], description="入れ子のワークスペースの中の入れ子のワークスペースの配下の変更も除き、変更を除いた2つのルートの警告を返す"),
     "SINGLE-184-09": dict(repo={**BASE_TASK, "tools/lab/exp/.spec/bitz.yaml": CONFIG, "tools/lab/exp/n.md": NOTE_BEFORE,
                                 "tools/lab/other.md": NOTE_BEFORE},
                           changes={"n.md": NOTE_AFTER, "other.md": NOTE_AFTER},
                           operations=[update("tools/lab/exp/n.md", "changes/n.md"),
                                       update("tools/lab/other.md", "changes/other.md")],
-                          violations=["tools/lab/other.md"],
+                          nested=["tools/lab/exp"], violations=["tools/lab/other.md"],
                           description="2段の下位の入れ子のワークスペースの配下だけを除き、その外の上位のディレクトリの変更はTASK境界の外になる"),
     "SINGLE-184-10": dict(repo={**BASE_TASK, **nested(), "sandbox/exp10/note.md": NOTE_BEFORE},
                           changes={"note.md": NOTE_AFTER},
                           operations=[update(f"{NESTED}/note.md", "changes/note.md"),
                                       update("sandbox/exp10/note.md", "changes/note.md")],
-                          violations=["sandbox/exp10/note.md"],
+                          nested=[NESTED], violations=["sandbox/exp10/note.md"],
                           description="入れ子のワークスペースのルートの除外はセグメントの境界で行い、sandbox/exp10を除かない"),
     "SINGLE-184-11": dict(repo={**BASE_TASK, **nested(config=BROKEN_CONFIG)}, changes={"note.md": NOTE_AFTER},
-                          operations=[update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                          operations=[update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
                           description="入れ子のワークスペースの設定のYAMLの構文が不正でも内容を読まず、有無だけで除き、設定の診断を出さない"),
     "SINGLE-184-12": dict(repo={**BASE_TASK, **nested()}, changes={"bitz.yaml": BROKEN_CONFIG},
-                          operations=[update(f"{NESTED}/.spec/bitz.yaml", "changes/bitz.yaml")], violations=[],
+                          operations=[update(f"{NESTED}/.spec/bitz.yaml", "changes/bitz.yaml")], nested=[NESTED], violations=[],
                           description="入れ子のワークスペースの設定を構文の不正な設定へ変えても、配下の変更として除き、設定の診断を出さない"),
     "SINGLE-184-13": dict(repo={**prefixed("app", BASE_TASK), **nested("app/sandbox/x")}, changes={"note.md": NOTE_AFTER},
                           operations=[update("app/sandbox/x/note.md", "changes/note.md")], cwd="app", workspace="app",
-                          violations=[], description="リポジトリのルートがワークスペースのルートより上にあっても、入れ子のワークスペースの配下の変更を除く"),
+                          nested=["sandbox/x"], violations=[], description="リポジトリのルートがワークスペースのルートより上にあっても、入れ子のワークスペースの配下の変更を除く"),
     "SINGLE-184-14": dict(repo={**prefixed("app", BASE_TASK), **nested("app/sandbox/x"), "app/sandbox/y.md": NOTE_BEFORE},
                           changes={"note.md": NOTE_AFTER},
                           operations=[update("app/sandbox/x/note.md", "changes/note.md"),
                                       update("app/sandbox/y.md", "changes/note.md")], cwd="app", workspace="app",
-                          violations=["sandbox/y.md"],
+                          nested=["sandbox/x"], violations=["sandbox/y.md"],
                           description="リポジトリのルートがワークスペースのルートより上にあるとき、入れ子の外の変更をワークスペース相対のパスで報告する"),
     "SINGLE-184-15": dict(repo={**BASE_TASK, TASK_PATH: task(["src/", f"{NESTED}/note.md"]), **nested(),
                                 "src2/outside.py": OUTSIDE_BEFORE},
                           changes={"note.md": NOTE_AFTER, "outside.py": OUTSIDE_AFTER},
                           operations=[update(f"{NESTED}/note.md", "changes/note.md"),
                                       update("src2/outside.py", "changes/outside.py")],
-                          violations=["src2/outside.py"],
+                          nested=[NESTED], violations=["src2/outside.py"],
                           description="TASKのchangesが入れ子のワークスペースの配下を指しても検査は今どおりで、ほかの境界の外の変更を検出する"),
     "SINGLE-184-16": dict(repo={**BASE_TASK, **nested()}, changes={"bitz.yaml": OUTER_CONFIG_AFTER, "note.md": NOTE_AFTER},
                           operations=[update(CONFIG_PATH, "changes/bitz.yaml"), update(f"{NESTED}/note.md", "changes/note.md")],
-                          violations=[CONFIG_PATH],
+                          nested=[NESTED], violations=[CONFIG_PATH],
                           description="作業ワークスペース自身のルートは入れ子のワークスペースに含めず、自身の設定の変更はTASK境界の外になる"),
     "SINGLE-184-17": dict(repo={**BASE_TASK, **nested()}, changes={"new.md": NEW_NOTE},
-                          operations=[{"op": "create", "path": f"{NESTED}/new.md", "source": "changes/new.md"}], violations=[],
+                          operations=[{"op": "create", "path": f"{NESTED}/new.md", "source": "changes/new.md"}], nested=[NESTED], violations=[],
                           description="入れ子のワークスペースの配下の未追跡のファイルも、TASK境界の比較から除く"),
     "SINGLE-184-18": dict(repo={**BASE_TASK, f"{NESTED}/note.md": NOTE_BEFORE},
                           changes={"bitz.yaml": CONFIG, "note.md": NOTE_AFTER},
                           operations=[{"op": "create", "path": f"{NESTED}/.spec/bitz.yaml", "source": "changes/bitz.yaml"},
-                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                                      update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
                           description="作業ツリーにだけある未追跡の.spec/bitz.yamlも入れ子のワークスペースとし、設定自身の追加と配下の変更を除く"),
     "SINGLE-184-19": dict(repo={**BASE_TASK, ".gitignore": IGNORE_NESTED_CONFIG, f"{NESTED}/note.md": NOTE_BEFORE},
                           changes={"bitz.yaml": CONFIG, "note.md": NOTE_AFTER},
                           operations=[{"op": "create", "path": f"{NESTED}/.spec/bitz.yaml", "source": "changes/bitz.yaml"},
-                                      update(f"{NESTED}/note.md", "changes/note.md")], violations=[],
+                                      update(f"{NESTED}/note.md", "changes/note.md")], nested=[NESTED], violations=[],
                           description=".gitignoreで無視された作業ツリーの.spec/bitz.yamlも入れ子のワークスペースとし、配下の変更を除く"),
     "SINGLE-184-20": dict(repo={**BASE_TASK, f"{NESTED}/.spec/bitz.yaml/config.yaml": CONFIG, f"{NESTED}/note.md": NOTE_BEFORE},
                           changes={"note.md": NOTE_AFTER},
@@ -278,6 +301,38 @@ TASK_CASES = {
                                       {"op": "create", "path": f"app/{PLAN_PATH}", "source": "changes/plan.md"}],
                           cwd="app", workspace="app", violations=[],
                           description="リポジトリのルートがワークスペースのルートより上にあっても、ワークスペース相対の.spec/journalと.spec/plansの配下の変更を除く"),
+    "SINGLE-184-28": dict(repo={**BASE_TASK, REQ_PATH: DOCUMENT.encode(), SPEC_SPEC_CONFIG: CONFIG},
+                          changes={"bitz.yaml": OUTER_CONFIG_AFTER, "REQ-001.md": REQ_AFTER},
+                          operations=[{"op": "delete", "path": ".spec/.spec"}, update(CONFIG_PATH, "changes/bitz.yaml"),
+                                      update(REQ_PATH, "changes/REQ-001.md")],
+                          violations=[SPEC_SPEC_CONFIG, CONFIG_PATH, REQ_PATH],
+                          description="基準版の.spec/.spec/bitz.yamlで作業ワークスペースの.specを入れ子のワークスペースにせず、設定とREQの変更はTASK境界の外になる"),
+    "SINGLE-184-29": dict(repo={**BASE_TASK, REQ_PATH: DOCUMENT.encode(), REQUIREMENTS_SPEC_CONFIG: CONFIG},
+                          changes={"bitz.yaml": OUTER_CONFIG_AFTER, "REQ-001.md": REQ_AFTER},
+                          operations=[{"op": "delete", "path": ".spec/requirements/.spec"}, update(CONFIG_PATH, "changes/bitz.yaml"),
+                                      update(REQ_PATH, "changes/REQ-001.md")],
+                          violations=[CONFIG_PATH, REQUIREMENTS_SPEC_CONFIG, REQ_PATH],
+                          description="基準版の.spec/requirements/.spec/bitz.yamlで.spec/requirementsを入れ子のワークスペースにせず、設定とREQの変更はTASK境界の外になる"),
+    "SINGLE-184-30": dict(repo={**BASE_TASK, SANDBOX_SPEC_CONFIG: CONFIG, "sandbox/x/.spec/y/note.md": NOTE_BEFORE,
+                                "sandbox/x/note.md": NOTE_BEFORE},
+                          changes={"note.md": NOTE_AFTER},
+                          operations=[update("sandbox/x/.spec/y/note.md", "changes/note.md"),
+                                      update("sandbox/x/note.md", "changes/note.md")],
+                          violations=["sandbox/x/.spec/y/note.md", "sandbox/x/note.md"],
+                          description="作業ワークスペースの.specの外でも、.specのセグメントを含むsandbox/x/.spec/yを入れ子のワークスペースにせず、配下の変更はTASK境界の外になる"),
+    "SINGLE-184-31": dict(repo={**BASE_TASK, **nested("sandbox/exp1"), **nested("sandbox/exp2"), **nested("sandbox/exp3"),
+                                "sandbox/exp2/.spec/v/.spec/bitz.yaml": CONFIG, "sandbox/exp2/.spec/v/note.md": NOTE_BEFORE},
+                          changes={"note.md": NOTE_AFTER, "new.md": NEW_NOTE},
+                          operations=[update("sandbox/exp1/note.md", "changes/note.md"),
+                                      {"op": "create", "path": "sandbox/exp1/new.md", "source": "changes/new.md"},
+                                      update("sandbox/exp2/note.md", "changes/note.md"),
+                                      update("sandbox/exp2/.spec/v/note.md", "changes/note.md")],
+                          nested=["sandbox/exp1", "sandbox/exp2"], violations=[],
+                          description="変更を除いた入れ子のワークスペースのルートごとに1件だけ警告し、変更のないルートと、.specのセグメントを含むディレクトリには警告しない"),
+    "SINGLE-184-32": dict(repo={**BASE_TASK, JOURNAL_PATH: JOURNAL_BEFORE, ".spec/journal/.spec/bitz.yaml": CONFIG},
+                          changes={"journal.md": JOURNAL_AFTER},
+                          operations=[update(JOURNAL_PATH, "changes/journal.md")], violations=[],
+                          description=".spec/journal/.spec/bitz.yamlで.spec/journalを入れ子のワークスペースにせず、予約したディレクトリの変更として除き、警告を返さない"),
 }
 
 # 予約したディレクトリ: id -> dict(kind, ...)。`check`は`BASE_DOCUMENT`に`extra`を足す。`derived`は基のfixtureの入力に足し、期待結果を基から導く。
@@ -311,7 +366,14 @@ RESERVED_CHANGE_CASES = {
     "SINGLE-184-21": [JOURNAL_PATH], "SINGLE-184-22": [JOURNAL_PATH],
     "SINGLE-184-23": [PLAN_PATH, ".spec/plans/sub/old.md"], "SINGLE-184-24": [".spec/journal"],
     "SINGLE-184-25": [JOURNAL_PATH], "SINGLE-184-26": [], "SINGLE-184-27": [JOURNAL_PATH, PLAN_PATH],
+    "SINGLE-184-32": [JOURNAL_PATH],
 }
+# 名前が`.spec`のセグメントを含むディレクトリの設定を置いたfixture。そのディレクトリを入れ子のルートとすれば（この規則がなければ）、
+# 変更を1件以上除くことを確かめ、規則の有無で期待値が分かれる入力であることを保証する。
+SPEC_SEGMENT_CASES = {"SINGLE-184-28", "SINGLE-184-29", "SINGLE-184-30", "SINGLE-184-31", "SINGLE-184-32"}
+# 入れ子のワークスペースのない対照。
+NO_NESTED_CASES = {"SINGLE-184-02", "SINGLE-184-20", "SINGLE-184-26", "SINGLE-184-28", "SINGLE-184-29", "SINGLE-184-30",
+                   "SINGLE-184-32"}
 MULTI_BASE = "MULTI-053-04"
 MULTI_MEMBER = "apps/web"
 MULTI_CASES = {
@@ -425,7 +487,7 @@ def reviewed_manifest(identifier):
 def task_status(case_):
     if case_["violations"]:
         return "failed"
-    return "passed_with_warnings" if case_.get("unknown") else "passed"
+    return "passed_with_warnings" if case_.get("unknown") or case_.get("nested") else "passed"
 
 
 def operation(identifier):
@@ -445,11 +507,15 @@ def reviewed_result(identifier):
     if identifier in TASK_CASES:
         case_ = TASK_CASES[identifier]
         # 明示したTASKは`scope: selected`。完全検査の対象はTASK-001だけ（規範文0）。作業ツリーに変更があるので`dirty`は真。
-        # `.spec/`の未知のエントリの警告（ワークスペース・設定仕様 §3）は、境界の診断と同じ順序の規則（`path`、`code`の辞書順）で並べる。
+        # `.spec/`の未知のエントリの警告（ワークスペース・設定仕様 §3）と入れ子の除外の警告は、境界の診断と同じ順序の規則（`path`、`code`の辞書順）で並べる。
         diagnostics = [diagnostic(BOUNDARY, "error", "failed", BOUNDARY_SUMMARY.format(path=path), path)
                        for path in case_["violations"]]
         diagnostics += [diagnostic(UNKNOWN, "warning", "passed_with_warnings", UNKNOWN_FILE_SUMMARY, path)
                         for path in case_.get("unknown", [])]
+        # 入れ子のワークスペースとして変更を除いたルートごとの警告（`check` §7）。発生元はルートのディレクトリ（ワークスペース相対）。
+        diagnostics += [diagnostic(NESTED_EXCLUDED, "warning", "passed_with_warnings",
+                                   NESTED_SUMMARY.format(path=root, task="TASK-001"), root)
+                        for root in case_.get("nested", [])]
         diagnostics.sort(key=lambda entry: (entry["source"]["path"], entry["code"]))
         return {"schemaVersion": "1.0", "operation": "check", "status": task_status(case_),
                 "scope": "selected", "workspace": {"id": "root", "path": "."},
@@ -496,12 +562,22 @@ def _plain_file(repository, relative):
     return path.is_file()
 
 
-def nested_roots(repository, workspace):
+def nested_roots(repository, workspace, spec_segments=False):
     """作業ワークスペースの下位で、`HEAD`または作業ツリーに通常のファイルの`.spec/bitz.yaml`を持つディレクトリ（リポジトリ相対）。
 
     作業ツリーの`.spec/bitz.yaml`は、追跡、未追跡、無視のいずれでも数える。`.spec/bitz.yaml`という名前のディレクトリと、
-    シンボリックリンク（途中の`.spec`を含む）は数えない（`check` §7）。
+    シンボリックリンク（途中の`.spec`を含む）は数えない。ワークスペース相対のパスが名前`.spec`のセグメントを含むディレクトリ
+    （作業ワークスペース自身の`.spec/`とその配下、`sandbox/x/.spec/y`など）も数えない（`check` §7）。
+    `spec_segments`が真なら、最後の規則を適用しない（規則の有無で期待値が分かれる入力であることを確かめるためだけに使う）。
     """
+    roots = _nested_roots(repository, workspace)
+    if spec_segments:
+        return roots
+    prefix = "" if workspace == "." else workspace + "/"
+    return {root for root in roots if ".spec" not in root[len(prefix):].split("/")}
+
+
+def _nested_roots(repository, workspace):
     prefix = "" if workspace == "." else workspace + "/"
     own = prefix + CONFIG_PATH
     roots = set()
@@ -519,6 +595,32 @@ def nested_roots(repository, workspace):
                 continue
             roots.add(name[: -len("/" + CONFIG_PATH)])
     return roots
+
+
+def owners(path, roots):
+    """変更のパスを配下に持つ入れ子のルート（セグメントの境界で比べる）。"""
+    return [root for root in roots if path == root or path.startswith(root + "/")]
+
+
+def reference_excluded_roots(repository, workspace, spec_segments=False):
+    """入れ子のワークスペースとして比較から除いた変更を1件以上持つルート（ワークスペース相対、辞書順。`check` §7の警告の発生元）。
+
+    入れ子の入れ子の配下の変更が、最も内側のルートだけに属するか、それを含むすべてのルートに属するかを規範文は定めないので、
+    両方の読み方で求め、一致しない入力を拒否する。
+    """
+    prefix = "" if workspace == "." else workspace + "/"
+    roots = nested_roots(repository, workspace, spec_segments)
+    containing, innermost = set(), set()
+    for path in change_set(repository):
+        if not path.startswith(prefix):
+            continue
+        found = owners(path, roots)
+        containing.update(found)
+        if found:
+            innermost.add(max(found, key=len))
+    if containing != innermost:
+        raise ValueError("入れ子の入れ子の配下の変更の帰属（最も内側のルートか、含むすべてのルートか）で警告が変わる入力です")
+    return sorted(root[len(prefix):] for root in containing)
 
 
 def change_set(repository):
@@ -546,7 +648,7 @@ def reference_violations(repository, workspace, changes):
     for path in sorted(change_set(repository)):
         if not path.startswith(prefix):
             continue
-        if any(path == root or path.startswith(root + "/") for root in roots):
+        if owners(path, roots):
             continue
         relative = path[len(prefix):]
         if relative == TASK_PATH or reserved_path(relative) or allowed(relative, changes):
@@ -574,6 +676,22 @@ def symlinks(directory):
             path = Path(current) / name
             if path.is_symlink():
                 found.append(path.relative_to(directory).as_posix())
+    return sorted(found)
+
+
+def spec_named_directories(repository, workspace="."):
+    """作業ワークスペースの`.spec/`の中（`reports`、`journal`、`plans`とその中を除く）にある、名前が`.spec`のディレクトリ（ワークスペース相対）。
+
+    未知のディレクトリの`summary`と、その中身を個別に報告するかは規範文が定めないので、作業ツリーのこの位置に`.spec`を置く入力を拒否する。
+    """
+    directory = repository / workspace / ".spec"
+    found = []
+    for current, directories, files in os.walk(directory, followlinks=False):
+        relative = Path(current).relative_to(directory).as_posix()
+        if relative == ".":
+            directories[:] = [name for name in directories if name not in SYMLINK_EXEMPT]
+        found += [f".spec/{name}" if relative == "." else f".spec/{relative}/{name}"
+                  for name in directories if name == ".spec"]
     return sorted(found)
 
 
@@ -619,8 +737,15 @@ def inspector(identifier):
                 raise ValueError("境界の外の変更が参照計算と異なります")
             if not change_set(repository):
                 raise ValueError("作業ツリーに変更がありません")
-            if identifier in {"SINGLE-184-02", "SINGLE-184-20", "SINGLE-184-26"} and nested_roots(repository, workspace):
+            if reference_excluded_roots(repository, workspace) != case_.get("nested", []):
+                raise ValueError("入れ子の除外の警告のルートが参照計算と異なります")
+            if identifier in NO_NESTED_CASES and nested_roots(repository, workspace):
                 raise ValueError("対照に入れ子のワークスペースがあります")
+            if identifier in SPEC_SEGMENT_CASES and not set(reference_excluded_roots(repository, workspace, True)) - set(
+                    case_.get("nested", [])):
+                raise ValueError(".specのセグメントを含むディレクトリをルートとしても、除く変更がありません")
+            if spec_named_directories(repository, workspace):
+                raise ValueError("作業ワークスペースの.spec/の中に.specという名前のディレクトリがあります")
             if unknown_entries(repository, workspace) != case_.get("unknown", []):
                 raise ValueError("未知のエントリが参照計算と異なります")
             if unexempt_symlinks(repository, workspace):
