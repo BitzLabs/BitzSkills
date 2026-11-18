@@ -349,6 +349,64 @@ def list_base_spec_paths(
     return out
 
 
+#: :func:`list_base_config_dirs`が1回の`git ls-tree`へ渡すパスの数の上限（引数列の長さの上限を超えないため）。
+_LS_TREE_PATH_CHUNK = 512
+
+
+def list_base_config_dirs(
+    executable: str,
+    cwd: str,
+    env: dict[str, str],
+    base_rev: str,
+    workspace_root: str,
+    dirs: list[str],
+    toplevel: str | None = None,
+) -> set[str]:
+    """``dirs``（ワークスペースのルートからの相対のディレクトリ）のうち、``base_rev``で``<dir>/.spec/bitz.yaml``を
+    通常のファイルとして持つものを返す（`check.md §7`の入れ子のワークスペース。ADR-074）。
+
+    基準版のツリーだけを見て、作業ツリーとインデックスは読まない。``git ls-tree``へ候補の設定のパスだけを渡し
+    （`--full-tree`でリポジトリのルートからの相対。`--literal-pathspecs`でパスの`*`などを字句どおりに扱う）、
+    基準版の全体を列挙しない。モード``120000``（シンボリックリンク）と、ブロブでないエントリ（`.spec/bitz.yaml`という名前の
+    ディレクトリ、`gitlink`）は数えない。途中のセグメントがシンボリックリンクのパスは、Gitがツリーをたどらないので現れない。
+    設定の内容は読まない。Gitの呼び出しに失敗したパスは、設定を持たないものとして扱う。
+    """
+
+    if not dirs:
+        return set()
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel)
+    prefix = "" if offset in (None, ".", "") else offset.rstrip("/") + "/"
+    by_repo_path = {f"{prefix}{d}/.spec/bitz.yaml": d for d in dirs}
+    repo_paths = sorted(by_repo_path)
+    found: set[str] = set()
+    for start in range(0, len(repo_paths), _LS_TREE_PATH_CHUNK):
+        chunk = repo_paths[start : start + _LS_TREE_PATH_CHUNK]
+        try:
+            proc = _run(
+                [
+                    executable, "--no-optional-locks", "--literal-pathspecs",
+                    "ls-tree", "--full-tree", "-z", base_rev, "--", *chunk,
+                ],
+                cwd,
+                env,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if proc.returncode != 0:
+            continue
+        for tok in proc.stdout.split("\0"):
+            if "\t" not in tok:
+                continue
+            meta, path = tok.split("\t", 1)
+            parts = meta.split(" ")
+            if len(parts) < 2 or parts[1] != "blob" or parts[0] == "120000":
+                continue
+            d = by_repo_path.get(path)
+            if d is not None:
+                found.add(d)
+    return found
+
+
 def show_base_file(
     executable: str,
     cwd: str,
