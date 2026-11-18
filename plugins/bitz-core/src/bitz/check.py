@@ -18,6 +18,7 @@ Step 2のフェーズCで関係・パス・カバレッジの検査と、明示�
 from __future__ import annotations
 
 import os
+import stat
 import time
 from collections.abc import Callable
 
@@ -110,6 +111,7 @@ def _task_boundary_diagnostics(
     workspace_root: str,
     *,
     qualified_ids: bool = False,
+    exclude_nested: bool = False,
 ) -> list[Diagnostic]:
     """TASKを明示した場合のTASK境界の検査（`check.md §7`）。TASKのIDまたはパスを明示した場合だけ呼び出す。
 
@@ -118,6 +120,8 @@ def _task_boundary_diagnostics(
     リンク先は使わない（基準版のツリーオブジェクトのリンク先も、現在版の`lstat`も読まない）。
     ``qualified_ids``（複合ワークスペース内での、TASKを明示した`check`）が真なら、`summary`に埋め込むTASKのIDを
     複合ワークスペースの正規形式（`ws::local`）にする（複合ワークスペース仕様 §4）。
+    ``exclude_nested``（単一ワークスペース）が真なら、入れ子のワークスペースのルートとその配下の変更を比較から除く
+    （`check.md §7`、ADR-074。:func:`_nested_workspace_paths`）。複合ワークスペースでは偽にし、規則を変えない。
     """
 
     display_doc_id = f"{workspace_id}::{entry.doc_id}" if qualified_ids else entry.doc_id
@@ -136,7 +140,7 @@ def _task_boundary_diagnostics(
     changed = gitutil.collect_changed_paths(git.executable, cwd, env, base_commit, workspace_root)
     allowed = (entry.frontmatter or {}).get("changes") or []
 
-    diags: list[Diagnostic] = []
+    violations: list[str] = []
     reported: set[str] = set()
     for c in changed:
         # リネームは移動元と移動先の2つのパスを検査する（安全な入出力・互換性 §6、check.md §7）。
@@ -146,16 +150,108 @@ def _task_boundary_diagnostics(
                 continue
             if not _task_own_path_allows(p, allowed):
                 reported.add(p)
-                diags.append(
-                    Diagnostic(
-                        code="SPEC-TASK-BOUNDARY-001",
-                        severity="error",
-                        resultStatus="failed",
-                        summary=messages.task_boundary_violation(p, display_doc_id),
-                        source={"kind": "file", "workspaceId": workspace_id, "path": p},
-                    )
-                )
-    return diags
+                violations.append(p)
+
+    if exclude_nested and violations:
+        # 入れ子のワークスペースの判定は、境界の外の候補がある場合だけ、その候補の祖先のディレクトリだけで行う。
+        nested = _nested_workspace_paths(violations, git.executable, cwd, env, base_commit, workspace_root)
+        violations = [p for p in violations if p not in nested]
+
+    return [
+        Diagnostic(
+            code="SPEC-TASK-BOUNDARY-001",
+            severity="error",
+            resultStatus="failed",
+            summary=messages.task_boundary_violation(p, display_doc_id),
+            source={"kind": "file", "workspaceId": workspace_id, "path": p},
+        )
+        for p in violations
+    ]
+
+
+def _path_dirs(path: str) -> list[str]:
+    """ワークスペース相対の``path``から、入れ子のワークスペースのルートの候補のディレクトリを浅い順に返す。
+
+    ``path``の祖先のディレクトリと``path``自身（`gitlink`や、`git ls-files --others`が返す`dir/`のような
+    ディレクトリの変更を、ルートとして判定するため）を返す。作業ワークスペース自身のルート（空のパス）は含めない。
+    """
+
+    parts = [seg for seg in path.split("/") if seg]
+    return ["/".join(parts[: i + 1]) for i in range(len(parts))]
+
+
+def _is_real_dir(abs_path: str) -> bool:
+    try:
+        return stat.S_ISDIR(os.lstat(abs_path).st_mode)
+    except OSError:
+        return False
+
+
+def _nested_workspace_paths(
+    paths: list[str],
+    executable: str,
+    cwd: str,
+    env: dict[str, str],
+    base_commit: str,
+    workspace_root: str,
+) -> set[str]:
+    """``paths``（ワークスペース相対の変更のパス）のうち、入れ子のワークスペースのルートまたはその配下にあるものを返す
+    （`check.md §7`、ADR-074）。
+
+    入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に通常のファイルの
+    ``.spec/bitz.yaml``を持つディレクトリとする。候補は``paths``の祖先のディレクトリ（と``paths``自身）だけで、
+    リポジトリ全体は走査しない。
+
+    - 作業ツリー: 候補のディレクトリの各セグメント、``.spec``、``bitz.yaml``を作業ワークスペースのルートから順に``lstat``し、
+      途中がシンボリックリンクなら入れ子にしない（たどらない）。``bitz.yaml``は通常のファイルだけを数え、
+      ディレクトリとシンボリックリンクは数えない。Gitの追跡・未追跡・無視によらない。設定の内容は読まない。
+    - 基準版: 作業ツリーで決まらなかった候補だけを、1回（候補が多ければ分割）の`git ls-tree`で調べる
+      （:func:`gitutil.list_base_config_dirs`）。
+    """
+
+    root_abs = os.path.abspath(workspace_root)
+    real_dir_cache: dict[str, bool] = {}
+
+    def _real_dir(rel: str) -> bool:
+        cached = real_dir_cache.get(rel)
+        if cached is None:
+            parent, _, _ = rel.rpartition("/")
+            cached = (not parent or _real_dir(parent)) and _is_real_dir(os.path.join(root_abs, *rel.split("/")))
+            real_dir_cache[rel] = cached
+        return cached
+
+    worktree_cache: dict[str, bool] = {}
+
+    def _worktree_has_config(rel: str) -> bool:
+        cached = worktree_cache.get(rel)
+        if cached is None:
+            cached = False
+            if _real_dir(rel):
+                spec_abs = os.path.join(root_abs, *rel.split("/"), ".spec")
+                if _is_real_dir(spec_abs):
+                    try:
+                        cached = stat.S_ISREG(os.lstat(os.path.join(spec_abs, "bitz.yaml")).st_mode)
+                    except OSError:
+                        cached = False
+            worktree_cache[rel] = cached
+        return cached
+
+    nested: set[str] = set()
+    pending: dict[str, list[str]] = {}
+    for p in paths:
+        dirs = _path_dirs(p)
+        if any(_worktree_has_config(d) for d in dirs):
+            nested.add(p)
+        else:
+            pending[p] = dirs
+    if pending:
+        base_dirs = gitutil.list_base_config_dirs(
+            executable, cwd, env, base_commit, workspace_root,
+            sorted({d for dirs in pending.values() for d in dirs}),
+        )
+        if base_dirs:
+            nested.update(p for p, dirs in pending.items() if any(d in base_dirs for d in dirs))
+    return nested
 
 
 def _alias_normalizer(active_ws_id: str) -> Callable[[str], str]:
@@ -992,7 +1088,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     task_diags.extend(
                         _task_boundary_diagnostics(
                             task_entry, git, cwd, env, base_commit, workspace_id, loc.root,
-                            qualified_ids=multi_active,
+                            qualified_ids=multi_active, exclude_nested=not multi_active,
                         )
                     )
                 extra_diags = root_diags + task_diags

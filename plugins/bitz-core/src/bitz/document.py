@@ -29,7 +29,10 @@ from .yamlsafe import YamlForbiddenError, YamlSyntaxError, parse_yaml_subset
 
 DOC_KIND_DIR = {"REQ": "requirements", "TECH": "technical", "ADR": "decisions", "TASK": "tasks"}
 DIR_TO_KIND = {v: k for k, v in DOC_KIND_DIR.items()}
-KNOWN_TOP_ENTRIES = {"bitz.yaml", "requirements", "technical", "decisions", "tasks", "reports"}
+#: `.spec/`直下の、エントリの種別にかかわらず既知とし、探索せず、中身を読まないエントリ（ワークスペース・設定仕様 §3）。
+#: `reports`は結果の保存先、`journal`と`plans`は経過の記録と計画の置き場として予約したもの（ADR-074）。
+RESERVED_TOP_ENTRIES = frozenset({"reports", "journal", "plans"})
+KNOWN_TOP_ENTRIES = {"bitz.yaml", "requirements", "technical", "decisions", "tasks"} | RESERVED_TOP_ENTRIES
 
 REQUIRED_REQ_SECTIONS = ("Intent", "Acceptance Criteria", "Verification")
 ALLOWED_STATEMENT_SECTIONS = {
@@ -128,9 +131,9 @@ class CatalogResult:
 
 
 def _discover_top_level(spec_dir: str) -> list[str]:
-    """`.spec/`直下の未知のエントリ名を返す（`reports`は種別を問わず既知、探索しない）。
+    """`.spec/`直下の未知のエントリ名を返す（予約した`reports`・`journal`・`plans`は種別を問わず既知、探索しない）。
 
-    シンボリックリンク（ファイル・ディレクトリとも）は`reports`以外なら、名前が既知の種別と一致していても
+    シンボリックリンク（ファイル・ディレクトリとも）は予約したエントリ以外なら、名前が既知の種別と一致していても
     常に未知のエントリとする（ワークスペース・設定仕様 §1-5「シンボリックリンクをたどって、ワークスペースの外の
     仕様文書を読み込まない」）。たどらない・読まない。
     """
@@ -141,7 +144,7 @@ def _discover_top_level(spec_dir: str) -> list[str]:
     except OSError:
         return []
     for name in entries:
-        if name == "reports":
+        if name in RESERVED_TOP_ENTRIES:
             continue
         full = os.path.join(spec_dir, name)
         if os.path.islink(full):
