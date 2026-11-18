@@ -291,6 +291,40 @@ def parse_context(rest: list[str]) -> ParsedArgs:
     return parsed
 
 
+@dataclass(frozen=True)
+class InfoRequest:
+    """操作を始めずに情報だけを書いて終わる起動（Core実行環境・CLI基盤契約 §5.1、ADR-075）。
+
+    ``kind``は``"help"``か``"version"``。``operation``は操作の``--help``のときだけ操作の名前を持つ。
+    """
+
+    kind: str
+    operation: str | None = None
+
+
+def detect_info_request(argv: list[str]) -> InfoRequest | None:
+    """`--help`と`--version`の起動を、ほかのどの引数の検査よりも前に判定する。
+
+    - 最初の要素が`--help`なら、後に続く要素を見ずに全体の`--help`とする。
+    - 最初の要素が公開の操作の名前で、2番目以降のいずれかの要素が`--help`と完全に一致すれば、その操作の`--help`とする。
+      ほかの引数不正（未知のオプション、値の不足、重複、空文字列、`--name=value`）より優先し、`--help`の反復も許す。
+      `--help=1`のような完全に一致しない要素は対象にしない。
+    - 引数列が`--version`の1要素だけなら`--version`とする。ほかの要素を伴えば対象にしない。
+
+    どれにも当たらなければ``None``を返し、呼び出し側は今までどおり:func:`parse_argv`で検査する。
+    """
+    if not argv:
+        return None
+    first = argv[0]
+    if first == "--help":
+        return InfoRequest("help")
+    if first in OPERATIONS and "--help" in argv[1:]:
+        return InfoRequest("help", first)
+    if first == "--version" and len(argv) == 1:
+        return InfoRequest("version")
+    return None
+
+
 def parse_argv(argv: list[str]) -> ParsedArgs:
     if not argv:
         raise CliArgError("(no-operation)", "操作を指定してください")

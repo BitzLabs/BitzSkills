@@ -481,3 +481,173 @@ def doctor_command_cwd_action(name: str) -> str:
 
 def doctor_command_file_action(name: str) -> str:
     return f"設定キーverify.commands.{name}.argvの先頭の実行可能ファイルをインストールするか、正しいパスを指定してください"
+
+
+# --- CLIの`--help`と`--version`（ADR-075、Core実行環境・CLI基盤契約 §5.1） ---
+# `--help`の文言、行の構成、並びは契約にしない（§5.1）。各操作の使い方の構文は、操作仕様（`03_操作仕様/0*.md`）の
+# §2の公開構文を一字も変えずに写す（単体試験`test_cli_help_version.py`が操作仕様と照合する）。
+
+HELP_TOP = """\
+使い方:
+  bitz <操作> [<引数>...]
+  bitz <操作> --help
+  bitz --help
+  bitz --version
+
+操作:
+  context  起点の仕様文書または規範文から、目的に応じたコンテキスト一式を返す
+  check    仕様文書のEARS-AI、スキーマ、ID、関係、状態、パス、トレース、Gitの差分を検査する
+  verify   検証対象のテスト対応を確かめ、bitz.yamlに定義したテストのコマンドを実行する
+  doctor   Coreと.spec/を利用できる前提を、読取り専用で診断する
+
+操作ごとの引数とオプションは、bitz <操作> --helpで表示します。
+Coreのバージョンは、bitz --versionで表示します。
+機械が読むCoreのバージョン、APIのバージョン、対応機能は、bitz doctor --format jsonのcoreを使ってください。
+"""
+
+_HELP_CONTEXT = """\
+使い方:
+  bitz context <spec-or-statement-id>...
+    [--purpose interpret|implement|verify]
+    [--format markdown|json]
+    [--detail compact|standard|full]
+    [--expand <document-id>]...
+    [--expect-digest sha256:<64-lower-hex>]
+    [--workspace <workspace-id>]
+
+起点の仕様文書または規範文から、解釈、実装、検証に必要な文書を型付きの関係でたどって完全解決し、
+目的に応じたコンテキスト一式を返します。
+
+引数とオプション:
+  <spec-or-statement-id>...
+      起点。文書IDまたは規範文IDを1件以上指定します。パス、コード、テストは指定できません。
+  --purpose interpret|implement|verify
+      目的。interpretは解釈、implementは実装、verifyは検証です。既定値はinterpretです。
+      ADRの起点には、interpretだけを指定できます。
+  --format markdown|json
+      出力形式。既定値はmarkdownです。
+  --detail compact|standard|full
+      詳細度。提示する量を選びます。完全解決と制約台帳は変わりません。既定値はstandardです。
+  --expand <document-id>
+      完全解決した集合にある文書を、提示形式fullへ昇格します。繰り返して指定できます。
+  --expect-digest sha256:<64-lower-hex>
+      期待するコンテキストのハッシュ値。再計算した値と一致しなければ停止します。
+  --workspace <workspace-id>
+      非修飾IDを解決する基準のワークスペース。起点の所有ワークスペースと一致しなければなりません。
+  --help
+      この使い方を表示します。
+"""
+
+_HELP_CHECK = """\
+使い方:
+  bitz check [<spec-or-statement-id-or-spec-path>...]
+    [--full]
+    [--base <git-revision>]
+    [--workspace <workspace-id>]
+    [--format text|json]
+    [--report]
+  bitz check --all-workspaces
+    [--base <git-revision>]
+    [--format text|json]
+    [--report]
+
+仕様文書のEARS-AI、スキーマ、ID、関係、状態、パス、トレース、Gitの差分を検査します。
+--reportを指定したときだけ、結果のレポートを保存します。
+
+引数とオプション:
+  <spec-or-statement-id-or-spec-path>...
+      明示対象。REQ、TECH、ADR、TASKの文書ID、規範文ID、または仕様文書のMarkdownのパスを指定します。
+      省略すると、Gitの変更集合を出発点にして検査します。
+  --full
+      すべての仕様文書を完全検査します。明示対象とは同時に指定できません。
+  --base <git-revision>
+      基準版にするGitのリビジョン。既定値はHEADです。
+  --workspace <workspace-id>
+      複合ワークスペースで、作業ワークスペースを選びます。
+  --format text|json
+      出力形式。既定値はtextです。
+  --report
+      結果のレポートを保存します。
+  --all-workspaces
+      複合ワークスペースのすべてのワークスペースを検査します（全体操作）。
+      明示対象、--full、--workspaceとは同時に指定できません。
+  --help
+      この使い方を表示します。
+"""
+
+_HELP_VERIFY = """\
+使い方:
+  bitz verify [<req-tech-statement-task-or-spec-path>...]
+    [--workspace <workspace-id>]
+    [--timeout <seconds>]
+    [--format text|json]
+    [--report]
+  bitz verify --all-workspaces
+    [--timeout <seconds>]
+    [--format text|json]
+    [--report]
+
+検証対象のコンテキストを再解決し、対象のMUSTにテスト対応があることを確かめて、
+bitz.yamlに定義したテストのコマンドを実行します。--reportを指定したときだけ、結果のレポートを保存します。
+
+引数とオプション:
+  <req-tech-statement-task-or-spec-path>...
+      検証対象。REQ ID、TECH ID、規範文ID、TASK ID、またはREQ、TECH、TASKのMarkdownのパスを指定します。
+      省略すると、状態approvedのREQと、規範文またはテストを持つ状態approvedのTECHを検証します。
+  --workspace <workspace-id>
+      複合ワークスペースで、作業ワークスペースを選びます。
+  --timeout <seconds>
+      テストのコマンドのタイムアウトの秒数。1から3600までを指定します。
+      設定のtimeoutより長い値を指定しても、設定のtimeoutが使われます。
+  --format text|json
+      出力形式。既定値はtextです。
+  --report
+      結果のレポートを保存します。
+  --all-workspaces
+      複合ワークスペースのすべてのワークスペースを検証します（全体操作）。
+      明示対象、--workspaceとは同時に指定できません。
+  --help
+      この使い方を表示します。
+"""
+
+_HELP_DOCTOR = """\
+使い方:
+  bitz doctor [--format text|json]
+    [--workspace <workspace-id>|--all-workspaces]
+    [--plugin <id> --plugin-version <semver> --require-core-api <semver-range>
+     [--require-capability <capability-name>]...]
+
+Coreと.spec/を利用できる前提を、読取り専用で診断します。環境を変更せず、ネットワーク、LLM、テストの実行を行いません。
+
+引数とオプション:
+  --format text|json
+      出力形式。既定値はtextです。
+  --workspace <workspace-id>
+      診断するワークスペース。--all-workspacesとは同時に指定できません。
+  --all-workspaces
+      複合ワークスペースのすべてのワークスペースを診断します（全体操作）。
+  --plugin <id>
+      プラグインのID。
+  --plugin-version <semver>
+      プラグインのバージョン。
+  --require-core-api <semver-range>
+      プラグインが要求するCoreのAPIのバージョンの範囲。
+  --require-capability <capability-name>
+      プラグインが要求する対応機能。繰り返して指定できます。
+  --help
+      この使い方を表示します。
+
+--plugin、--plugin-version、--require-core-apiは、プラグインの要求として3つをそろえて指定します。
+--require-capabilityは、この3つと一緒に指定します。
+"""
+
+HELP_BY_OPERATION = {
+    "context": _HELP_CONTEXT,
+    "check": _HELP_CHECK,
+    "verify": _HELP_VERIFY,
+    "doctor": _HELP_DOCTOR,
+}
+
+
+def version_line(core_version: str) -> str:
+    return f"bitz {core_version}\n"
