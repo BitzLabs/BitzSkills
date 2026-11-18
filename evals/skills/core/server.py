@@ -75,8 +75,12 @@ class Host:
             raise ValueError("対象Core、CPython>=3.12、ruamel.yaml==0.19.1の実行環境が必要です")
         process = subprocess.run([self.control["python"], "-m", "bitz.cli", *argv],
                                  cwd=self.workspace, env=env, capture_output=True, text=True, timeout=20)
-        if help_probe and (process.returncode != 4 or process.stdout):
-            raise ValueError("未対応helpの引数探索は操作未開始・終了コード4である必要があります")
+        # `--help`はCore実行環境・CLI基盤契約 §5.1（ADR-075）で操作を始めずに終了コード0で使い方を返す。
+        # `-h`は公開の起動ではないので、今までどおり操作を始めない終了コード4である。
+        if argv[1:] == ["--help"] and (process.returncode != 0 or not process.stdout or process.stderr):
+            raise ValueError("helpの引数探索は操作未開始・終了コード0で使い方だけを返す必要があります")
+        if argv[1:] == ["-h"] and (process.returncode != 4 or process.stdout):
+            raise ValueError("未対応の-hの引数探索は操作未開始・終了コード4である必要があります")
         if "--report" in argv and self.control["allowReport"]:
             for path in self.workspace.glob(".spec/reports/*.json"):
                 if path.is_file() and path.resolve().is_relative_to(self.workspace):
