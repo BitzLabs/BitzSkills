@@ -497,7 +497,7 @@ HELP_TOP = """\
 操作:
   context  起点の仕様文書または規範文から、目的に応じたコンテキスト一式を返す
   check    仕様文書のEARS-AI、スキーマ、ID、関係、状態、パス、トレース、Gitの差分を検査する
-  verify   検証対象のテスト対応を確かめ、bitz.yamlに定義したテストのコマンドを実行する
+  verify   検証対象のテスト対応を確かめ、bitz.yamlに定義したテストコマンドを実行する
   doctor   Coreと.spec/を利用できる前提を、読取り専用で診断する
 
 操作ごとの引数とオプションは、bitz <操作> --helpで表示します。
@@ -531,7 +531,7 @@ _HELP_CONTEXT = """\
   --expand <document-id>
       完全解決した集合にある文書を、提示形式fullへ昇格します。繰り返して指定できます。
   --expect-digest sha256:<64-lower-hex>
-      期待するコンテキストのハッシュ値。再計算した値と一致しなければ停止します。
+      期待するコンテキストのハッシュ値。再計算した値と一致しなければ、状態blockedを返します。
   --workspace <workspace-id>
       非修飾IDを解決する基準のワークスペース。起点の所有ワークスペースと一致しなければなりません。
   --help
@@ -588,17 +588,17 @@ _HELP_VERIFY = """\
     [--report]
 
 検証対象のコンテキストを再解決し、対象のMUSTにテスト対応があることを確かめて、
-bitz.yamlに定義したテストのコマンドを実行します。--reportを指定したときだけ、結果のレポートを保存します。
+bitz.yamlに定義したテストコマンドを実行します。--reportを指定したときだけ、結果のレポートを保存します。
 
 引数とオプション:
   <req-tech-statement-task-or-spec-path>...
       検証対象。REQ ID、TECH ID、規範文ID、TASK ID、またはREQ、TECH、TASKのMarkdownのパスを指定します。
-      省略すると、状態approvedのREQと、規範文またはテストを持つ状態approvedのTECHを検証します。
+      省略すると、状態approvedのREQと、規範文を持つか、フィールドtestsを宣言する状態approvedのTECHを検証します。
   --workspace <workspace-id>
       複合ワークスペースで、作業ワークスペースを選びます。
   --timeout <seconds>
-      テストのコマンドのタイムアウトの秒数。1から3600までを指定します。
-      設定のtimeoutより長い値を指定しても、設定のtimeoutが使われます。
+      テストコマンドのタイムアウトの秒数。1から3600までを指定します。
+      設定のverify.timeoutSeconds（既定値300）より長い値を指定しても、verify.timeoutSecondsの値を使います。
   --format text|json
       出力形式。既定値はtextです。
   --report
