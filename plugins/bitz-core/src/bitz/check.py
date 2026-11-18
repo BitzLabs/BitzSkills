@@ -213,11 +213,6 @@ def _task_boundary_diagnostics(
     return diags
 
 
-#: 入れ子のワークスペースの中の入れ子のワークスペース（``a``と``a/b``）の配下の変更を、どちらのルートで報告するか。
-#: 真なら最も内側のルート（``a/b``）、偽なら最も外側のルート（``a``）。`check.md §7`は明示していない（司令塔の裁定待ち）。
-_NESTED_REPORT_INNERMOST = True
-
-
 def _changed_parent_dirs(changed: list[gitutil.ChangedPath]) -> set[str]:
     """変更集合のパス（リネームは移動元と移動先）の、真の祖先のディレクトリの集合を返す（ワークスペース相対）。"""
 
@@ -273,7 +268,7 @@ def _nested_workspace_roots(
     入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に通常のファイルの
     ``.spec/bitz.yaml``を持つディレクトリとする。名前が``.spec``のセグメントを含むディレクトリはルートにしない
     （:func:`_path_dirs`）。候補は``paths``の祖先のディレクトリ（と``paths``自身）だけで、リポジトリ全体は走査しない。
-    入れ子の入れ子では、:data:`_NESTED_REPORT_INNERMOST`に従って最も内側（または外側）のルートを選ぶ。
+    入れ子の入れ子では、最も内側のルートを選ぶ（`check.md §7`「最も内側のルートの変更として数える」）。
 
     - 作業ツリー: 候補のディレクトリの各セグメント、``.spec``、``bitz.yaml``を作業ワークスペースのルートから順に``lstat``し、
       途中がシンボリックリンクなら入れ子にしない（たどらない）。``bitz.yaml``は通常のファイルだけを数え、
@@ -315,7 +310,7 @@ def _nested_workspace_roots(
 
     # 報告に使うルートを選ぶ向き。``ordered``の先頭に近いほど優先する（内側なら深い順）。
     def _ordered(dirs: list[str]) -> list[str]:
-        return list(reversed(dirs)) if _NESTED_REPORT_INNERMOST else list(dirs)
+        return list(reversed(dirs))
 
     roots: dict[str, str] = {}
     # 作業ツリーで見つけたルート（なければNone）と、それより優先する基準版の候補。
