@@ -134,9 +134,11 @@ class CoreEvaluationTests(unittest.TestCase):
             response = host.call("run_bitz", {"argv": ["verify", "--help"]})
             self.assertFalse(response["isError"], response)
             result = evaluation.read_jsonl(root / "log.jsonl")[-1]["result"]
-            self.assertEqual(4, result["exitCode"])
-            self.assertEqual("", result["stdout"])
-            self.assertIn("未知のオプションです: --help", result["stderr"])
+            # ADR-075で`--help`は操作を始めずに使い方を返す（終了コード0）。登録テストは起動しない。
+            self.assertEqual(0, result["exitCode"])
+            self.assertIn("bitz verify", result["stdout"])
+            self.assertEqual("", result["stderr"])
+            self.assertEqual([], result["reportFiles"])
             decision = dict(case["expected"], reportedStatus=None, readyClaimed=False, reason="外部送信を制約できず未実行。")
             events = [{"type": "turn.started"}, {"type": "item.completed", "item": {
                 "id": "help", "type": "mcp_tool_call", "server": "core_eval", "tool": "run_bitz",

@@ -222,9 +222,19 @@ def read_jsonl(path):
 
 
 def invocation_error(call):
+    """操作を始めなかったCLIの起動。引数不正（終了コード4）と、`<操作> --help`の使い方の表示（終了コード0）。
+
+    `--help`はCore実行環境・CLI基盤契約 §5.1（ADR-075）で、ワークスペースもテストも触らずに使い方だけを返す。
+    ADR-075の前は同じ引数探索が終了コード4だったので、どちらも操作の要求として数えない。
+    """
     result = call.get("result", {})
-    return (call["accepted"] and result.get("exitCode") == 4
-            and result.get("stdout") == "" and bool(result.get("stderr")))
+    if not call["accepted"]:
+        return False
+    if result.get("exitCode") == 4 and result.get("stdout") == "" and bool(result.get("stderr")):
+        return True
+    argv = call.get("arguments", {}).get("argv") or []
+    return (len(argv) == 2 and argv[1] == "--help" and result.get("exitCode") == 0
+            and bool(result.get("stdout")) and result.get("stderr") == "" and not result.get("reportFiles"))
 
 
 def observation(events):
