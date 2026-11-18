@@ -2457,3 +2457,20 @@ commit `be2420024ec7b8857fdf6280f635d35571cb8efc`に対して`uv run fixtures/ce
 |---|---|
 | 監査 | 2つのクローンでReport SHA-256が両方`cd0df9c4adf2c245e479407714e7bfc9e8038c0e5c200d96e4173f6b7a0fb2f6`。Stepの件数は87／150／123／160／342（重複を除いて856件）、手動の一覧は28件 |
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-11-18: 入れ子のワークスペースと予約したディレクトリ（ADR-074）のfixtureを追加した後のGate Aの再認定
+
+[ADR-074](../../docs/02.設計書/10_決定記録/ADR-074_入れ子のワークスペースをTASK境界から除き、経過の記録と計画の置き場を予約する.md)のとおり、単一ワークスペースのTASK境界から
+入れ子のワークスペースの配下の変更を除き、`.spec/journal`と`.spec/plans`を予約した。実施の中で利用者が、journalとplansの変更もTASK境界から除くこと、
+名前が`.spec`のセグメントを含むディレクトリを入れ子のルートにしないこと、除いたときに`SPEC-TASK-BOUNDARY-003`（`warning`）を返すことを決めた（独立レビューの指摘による）。
+`SINGLE-184-01`〜`33`、`SINGLE-185-01`〜`10`、`MULTI-070-01`の44件を追加した（群`nested_workspace_fixtures`）。
+
+監査の自己試験が増え、この実行環境では監査1回が約570〜700秒になり、Gate Aの認定の中の時間の上限（監査600秒、中の自己試験600秒）を超えた。
+上限はハングを止めるためのもので合否の条件ではないので、監査を1800秒、自己試験を1200秒に改めた（`certify_gate_a.py`、`validate_conformance.py`）。
+
+commit `fa26ac412d5b54c5c18c7e2e24cdb3ef257bf721`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`4a6893d7410df3f0e4445140636128e586872c60fb259ab8581c27d257c65eb9`。Stepの件数は88／157／157／161／343（重複を除いて900件）、手動の一覧は28件 |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
