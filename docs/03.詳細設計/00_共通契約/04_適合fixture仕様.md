@@ -1097,7 +1097,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に`.spec/bitz.yaml`を持つディレクトリとし、設定の内容を読まず、シンボリックリンクをたどらない。
 名前が`.spec`のセグメントを含むディレクトリは、入れ子のワークスペースのルートにしない。入れ子のワークスペースとして比較から除いた変更が1件以上あれば、そのルートごとに1件、
 `SPEC-TASK-BOUNDARY-003`（`warning`。summary「入れ子のワークスペース{path}の配下の変更を、TASK TASK-001の境界の比較から除きました」、`source.path`はルートのディレクトリのワークスペース相対のパス）を返し、
-`SPEC-TASK-BOUNDARY-001`と同じく`path`、`code`の辞書順に並べる。予約したディレクトリの除外には返さない（同 §7）。
+`SPEC-TASK-BOUNDARY-001`と同じく`path`、`code`の辞書順に並べる。変更が入れ子の入れ子の配下にあるときは最も内側のルートで数え、TASKの`changes`が許可した変更でも入れ子として除いたものは数える。予約したディレクトリの除外には返さない（同 §7）。
 `SINGLE-184-*`は、TASK-001（`changes: [src/]`）を`check TASK-001 --base HEAD`で検査する。作業ツリーの`.spec/bitz.yaml`は、Gitで追跡しているか、未追跡か、無視されているかによらず数え、
 `.spec/bitz.yaml`という名前のディレクトリは数えない（[`check`仕様 §7](../03_操作仕様/02_check.md#7-task境界)。[レビュー記録](../../../fixtures/conformance/single/入れ子のワークスペースと予約したディレクトリのレビュー記録.md)）。
 作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`の、エントリ自身とその配下の変更も比較の対象から除き、名前が似た別のエントリは除かない（同 §7）。
@@ -1114,7 +1114,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-184-05` | `SINGLE-184-01`の基準版。`sandbox/exp1/.spec/bitz.yaml`の削除をステージし（基準版にだけある）、`note.md`を変える | check TASK-ID --base | passed_with_warnings／0 | 基準版の設定で入れ子とし、設定の削除と配下の変更を除く。診断は`SPEC-TASK-BOUNDARY-003`（`sandbox/exp1`）の1件 |
 | `SINGLE-184-06` | `SINGLE-184-01`の`sandbox/exp1/.spec/bitz.yaml`がシンボリックリンク（`../../../.spec/bitz.yaml`）。`note.md`を変える | check TASK-ID --base | failed／1 | シンボリックリンクの設定では入れ子にしない。`SINGLE-184-02`と同じ1件 |
 | `SINGLE-184-07` | `sandbox/exp1/.spec`がシンボリックリンク（`../cfg`。`sandbox/cfg/bitz.yaml`は通常のファイル）。`note.md`を変える | check TASK-ID --base | failed／1 | シンボリックリンクをたどらないので入れ子にしない。`SINGLE-184-02`と同じ1件 |
-| `SINGLE-184-08` | 入れ子のワークスペース`a`の中に入れ子のワークスペース`a/b`（`a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`）。`a/top.md`と`a/b/deep.md`を変える | check TASK-ID --base | passed_with_warnings／0 | 入れ子の入れ子の配下も除く。診断は`SPEC-TASK-BOUNDARY-003`の2件（`a`、`a/b`の順）。`a/top.md`も変えるので、`a/b/deep.md`が最も内側のルートだけに属するか、含むすべてのルートに属するかによらない |
+| `SINGLE-184-08` | 入れ子のワークスペース`a`の中に入れ子のワークスペース`a/b`（`a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`）。`a/top.md`と`a/b/deep.md`を変える | check TASK-ID --base | passed_with_warnings／0 | 入れ子の入れ子の配下も除く。診断は`SPEC-TASK-BOUNDARY-003`の2件（`a`、`a/b`の順）。`a/b/deep.md`は最も内側のルート`a/b`の変更として数え、`a`は`a/top.md`で返す（`check` §7） |
 | `SINGLE-184-09` | 2段の下位の入れ子のワークスペース`tools/lab/exp`だけ。`tools/lab/exp/n.md`と`tools/lab/other.md`を変える | check TASK-ID --base | failed／1 | 入れ子の配下だけを除く。`SPEC-TASK-BOUNDARY-003`（`tools/lab/exp`）と、`tools/lab/other.md`の`SPEC-TASK-BOUNDARY-001`の2件（`path`の辞書順） |
 | `SINGLE-184-10` | 入れ子のワークスペース`sandbox/exp1`。`sandbox/exp1/note.md`と`sandbox/exp10/note.md`を変える | check TASK-ID --base | failed／1 | 除外はセグメントの境界で行う。`SPEC-TASK-BOUNDARY-003`（`sandbox/exp1`）と、`sandbox/exp10/note.md`の`SPEC-TASK-BOUNDARY-001`の2件（この順） |
 | `SINGLE-184-11` | `SINGLE-184-01`の入れ子の設定がYAMLの構文の不正な設定（`SINGLE-127-43`と同じ） | check TASK-ID --base | passed_with_warnings／0 | 設定の内容を読まず有無だけで判定し、設定の診断（`SPEC-CONFIG-SCHEMA-001`）を出さない。診断は`SPEC-TASK-BOUNDARY-003`（`sandbox/exp1`）の1件 |
@@ -1139,6 +1139,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-184-30` | 基準版に`sandbox/x/.spec/y/.spec/bitz.yaml`、`sandbox/x/.spec/y/note.md`、`sandbox/x/note.md`（`sandbox/x`は`.spec/bitz.yaml`を持たない）。2つの`note.md`を変える | check TASK-ID --base | failed／1 | 作業ワークスペースの`.spec`の外でも、`.spec`のセグメントを含む`sandbox/x/.spec/y`を入れ子にしない。`SPEC-TASK-BOUNDARY-001`の2件（`sandbox/x/.spec/y/note.md`、`sandbox/x/note.md`の順）。`SPEC-TASK-BOUNDARY-003`なし |
 | `SINGLE-184-31` | 入れ子のワークスペース`sandbox/exp1`、`sandbox/exp2`、`sandbox/exp3`と、`sandbox/exp2/.spec/v/.spec/bitz.yaml`。`sandbox/exp1/note.md`を変えて未追跡の`sandbox/exp1/new.md`を作り、`sandbox/exp2/note.md`と`sandbox/exp2/.spec/v/note.md`を変える（`exp3`は変えない） | check TASK-ID --base | passed_with_warnings／0 | `SPEC-TASK-BOUNDARY-003`の2件（`sandbox/exp1`、`sandbox/exp2`の順）。ルートごとに1件で、変更を除かなかった`sandbox/exp3`と、ルートにしない`sandbox/exp2/.spec/v`には返さない |
 | `SINGLE-184-32` | 基準版に`.spec/journal/.spec/bitz.yaml`と`.spec/journal/TASK-001.md`。`TASK-001.md`を変える | check TASK-ID --base | passed／0 | `.spec/journal`を入れ子にせず、予約したディレクトリの変更として除く。`SPEC-TASK-BOUNDARY-003`を返さない。診断0件 |
+| `SINGLE-184-33` | `SINGLE-184-08`の入力。`a/b/deep.md`だけを変える | check TASK-ID --base | passed_with_warnings／0 | 入れ子の入れ子の配下の変更は最も内側のルートの変更として数える（`check` §7）。`SPEC-TASK-BOUNDARY-003`は`a/b`の1件だけで、外側の`a`には返さない |
 | `SINGLE-185-01` | `.spec/journal/`に`2026-11-18.md`と`requirements/REQ-001.md`（どちらも`REQ-001`と同じ内容）、壊れたフロントマターの`broken.md`、`sub/notes.txt`。ほかは`SINGLE-083`と同じREQ-001（コミット済み） | check --full --base | passed／0 | 診断0件。`.spec/journal/`を`SPEC-WORKSPACE-UNKNOWN-001`にせず、中身を仕様文書として読まない。検査文書1、規範文1 |
 | `SINGLE-185-02` | `SINGLE-185-01`と同じ形の中身を`.spec/plans/`に置く | check --full --base | passed／0 | `SINGLE-185-01`と同じ結果 |
 | `SINGLE-185-03` | `.spec/journal`が通常のファイル | check --full --base | passed／0 | エントリの種別にかかわらず既知のエントリとする。`SINGLE-185-01`と同じ結果 |
