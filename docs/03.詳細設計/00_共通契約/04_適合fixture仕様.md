@@ -1095,9 +1095,10 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 
 単一ワークスペースのTASK境界は、入れ子のワークスペースのルートとその配下の変更を比較の対象から除く（[`check`仕様 §7](../03_操作仕様/02_check.md#7-task境界)、[ADR-074](../../02.設計書/10_決定記録/ADR-074_入れ子のワークスペースをTASK境界から除き、経過の記録と計画の置き場を予約する.md)）。
 入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に`.spec/bitz.yaml`を持つディレクトリとし、設定の内容を読まず、シンボリックリンクをたどらない。
-`SINGLE-184-*`は、TASK-001（`changes: [src/]`）を`check TASK-001 --base HEAD`で検査する。入れ子の判定に使う`.spec/bitz.yaml`は、基準版のコミット、またはインデックスと作業ツリーにある（ステージした）ものだけとし、
-未追跡または無視された`.spec/bitz.yaml`だけを持つディレクトリを入力に置かない（仕様が一意に決めない。[レビュー記録](../../../fixtures/conformance/single/入れ子のワークスペースと予約したディレクトリのレビュー記録.md)）。
-`.spec/journal`と`.spec/plans`は、エントリの種別にかかわらず既知のエントリとし、探索せず、中身を読まず、未知のエントリとしても扱わない（[ワークスペース・設定仕様 §3](../02_仕様文書モデル/01_ワークスペース・設定仕様.md#3-探索対象)）。
+`SINGLE-184-*`は、TASK-001（`changes: [src/]`）を`check TASK-001 --base HEAD`で検査する。作業ツリーの`.spec/bitz.yaml`は、Gitで追跡しているか、未追跡か、無視されているかによらず数え、
+`.spec/bitz.yaml`という名前のディレクトリは数えない（[`check`仕様 §7](../03_操作仕様/02_check.md#7-task境界)。[レビュー記録](../../../fixtures/conformance/single/入れ子のワークスペースと予約したディレクトリのレビュー記録.md)）。
+`.spec/journal`と`.spec/plans`は、エントリの種別にかかわらず既知のエントリとし、探索せず、中身を読まず、未知のエントリとしても扱わない。シンボリックリンクを未知のエントリとする規則からも、
+`.spec/reports`と同じく、この2つとその中を除く（[ワークスペース・設定仕様 §3](../02_仕様文書モデル/01_ワークスペース・設定仕様.md#3-探索対象)）。
 `SINGLE-185-*`の中身は、仕様文書として読めばIDの重複（`REQ-001`）、ファイル名とIDの不一致、フロントマターの構文の不正になるMarkdownを含む。`SINGLE-185-06`〜`08`と`MULTI-070-01`は、既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、期待結果は基のfixtureから導く。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1119,6 +1120,9 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-184-15` | TASK-001の`changes: [src/, sandbox/exp1/note.md]`（入れ子の配下を指す）。入れ子のワークスペース`sandbox/exp1`。`sandbox/exp1/note.md`と`src2/outside.py`を変える | check TASK-ID --base | failed／1 | 宣言の検査は今どおりで診断を出さない。`SPEC-TASK-BOUNDARY-001`は`src2/outside.py`の1件だけ |
 | `SINGLE-184-16` | `SINGLE-184-01`の基準版。作業ワークスペース自身の`.spec/bitz.yaml`（既定値と同じ`context.maxDocuments: 20`を足す）と`sandbox/exp1/note.md`を変える | check TASK-ID --base | failed／1 | 作業ワークスペース自身のルートは入れ子に含めない。`SPEC-TASK-BOUNDARY-001`は`.spec/bitz.yaml`の1件だけ |
 | `SINGLE-184-17` | `SINGLE-184-01`の基準版。作業ツリーに未追跡の`sandbox/exp1/new.md`を作る | check TASK-ID --base | passed／0 | 未追跡のパス（`check` §5の変更集合）も入れ子の配下なら除く。診断0件 |
+| `SINGLE-184-18` | 基準版に`sandbox/exp1/note.md`だけ。作業ツリーに`sandbox/exp1/.spec/bitz.yaml`を作り（未追跡。基準版にもインデックスにもない）、`note.md`を変える | check TASK-ID --base | passed／0 | 未追跡の設定でも入れ子とし、設定自身の追加と配下の変更を除く。診断0件 |
+| `SINGLE-184-19` | `SINGLE-184-18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）を足す。同じ設定を作業ツリーに作り（無視される）、`note.md`を変える | check TASK-ID --base | passed／0 | `.gitignore`で無視された設定でも入れ子とし、配下の変更を除く。診断0件 |
+| `SINGLE-184-20` | 基準版の`sandbox/exp1/.spec/bitz.yaml`が、`config.yaml`を持つディレクトリ。`note.md`を変える | check TASK-ID --base | failed／1 | 対照: `.spec/bitz.yaml`という名前のディレクトリは設定のファイルではないので入れ子にしない。`SINGLE-184-02`と同じ1件 |
 | `SINGLE-185-01` | `.spec/journal/`に`2026-11-18.md`と`requirements/REQ-001.md`（どちらも`REQ-001`と同じ内容）、壊れたフロントマターの`broken.md`、`sub/notes.txt`。ほかは`SINGLE-083`と同じREQ-001（コミット済み） | check --full --base | passed／0 | 診断0件。`.spec/journal/`を`SPEC-WORKSPACE-UNKNOWN-001`にせず、中身を仕様文書として読まない。検査文書1、規範文1 |
 | `SINGLE-185-02` | `SINGLE-185-01`と同じ形の中身を`.spec/plans/`に置く | check --full --base | passed／0 | `SINGLE-185-01`と同じ結果 |
 | `SINGLE-185-03` | `.spec/journal`が通常のファイル | check --full --base | passed／0 | エントリの種別にかかわらず既知のエントリとする。`SINGLE-185-01`と同じ結果 |
@@ -1127,6 +1131,8 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-185-06` | `SINGLE-042`の入力に、`SINGLE-185-01`と同じ形の`.spec/journal/`と`.spec/plans/` | context REQ-001 --purpose verify | passed／0 | `SINGLE-042`と同じ結果で、`contextDigest`も同じ |
 | `SINGLE-185-07` | `SINGLE-055`の入力に、同じ`.spec/journal/`と`.spec/plans/` | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果 |
 | `SINGLE-185-08` | `SINGLE-001`の入力に、同じ`.spec/journal/`と`.spec/plans/` | doctor | passed／0 | `SINGLE-001`と同じ結果 |
+| `SINGLE-185-09` | `SINGLE-185-01`の`.spec/journal/`に、ファイルへのシンボリックリンク`linked.md`（`../requirements/REQ-001.md`）、ディレクトリへのシンボリックリンク`linked-dir`（`../../docs/linked`。リンク先は`REQ-001`と同じ内容のMarkdownと壊れたフロントマターのMarkdown）、リンク先のないシンボリックリンク`sub/dangling.md`を足す | check --full --base | passed／0 | `.spec/journal`の中のシンボリックリンクを未知のエントリにせず、たどらない。`SINGLE-185-01`と同じ結果 |
+| `SINGLE-185-10` | `SINGLE-185-09`と同じ形の中身を`.spec/plans/`に置く | check --full --base | passed／0 | `SINGLE-185-09`と同じ結果 |
 
 ## 7. 最小matrix: 複合ワークスペース
 
