@@ -1,0 +1,250 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "19ea88ff55000b21adb91a865f85d650768bff15210da1d0c2f3bdaf049a1665"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "35c1898fe9fd5b3a8e8705d81ce858938d9ab8aa8d5611b33a37603ee6e48603"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b6d2d9faa67b87ba0a5f12dafca9ed69c1fcee350b4cc8855a5f81e12a55395d"
+      },
+      "apps/web/.spec/journal": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/journal/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      "apps/web/.spec/journal/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/journal/sub": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      "apps/web/.spec/plans": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/plans/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      "apps/web/.spec/plans/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/plans/sub": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      "apps/web/.spec/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "35c1898fe9fd5b3a8e8705d81ce858938d9ab8aa8d5611b33a37603ee6e48603"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "apps/web/tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 2ebc3eb6d8c632fb7483d24fc05c4cb75bb1320c 0\t.spec/bitz.yaml\n100644 8f8c66919d160f0e6389583cbe0da15a70fc880e 0\t.spec/requirements/REQ-001.md\n100644 e5c06653b3b9f730d0351a9380044be32a3c2369 0\tapps/web/.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/journal/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\tapps/web/.spec/journal/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/journal/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\tapps/web/.spec/journal/sub/notes.txt\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/plans/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\tapps/web/.spec/plans/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/plans/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\tapps/web/.spec/plans/sub/notes.txt\n100644 8f8c66919d160f0e6389583cbe0da15a70fc880e 0\tapps/web/.spec/requirements/REQ-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tapps/web/tests/t.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "19ea88ff55000b21adb91a865f85d650768bff15210da1d0c2f3bdaf049a1665"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "35c1898fe9fd5b3a8e8705d81ce858938d9ab8aa8d5611b33a37603ee6e48603"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/.spec": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b6d2d9faa67b87ba0a5f12dafca9ed69c1fcee350b4cc8855a5f81e12a55395d"
+      },
+      "apps/web/.spec/journal": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/journal/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      "apps/web/.spec/journal/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/journal/sub": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/journal/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      "apps/web/.spec/plans": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/plans/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      "apps/web/.spec/plans/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      "apps/web/.spec/plans/sub": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/plans/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      "apps/web/.spec/requirements": {
+        "kind": "directory"
+      },
+      "apps/web/.spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "35c1898fe9fd5b3a8e8705d81ce858938d9ab8aa8d5611b33a37603ee6e48603"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "apps/web/tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/t.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 2ebc3eb6d8c632fb7483d24fc05c4cb75bb1320c 0\t.spec/bitz.yaml\n100644 8f8c66919d160f0e6389583cbe0da15a70fc880e 0\t.spec/requirements/REQ-001.md\n100644 e5c06653b3b9f730d0351a9380044be32a3c2369 0\tapps/web/.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/journal/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\tapps/web/.spec/journal/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/journal/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\tapps/web/.spec/journal/sub/notes.txt\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/plans/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\tapps/web/.spec/plans/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\tapps/web/.spec/plans/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\tapps/web/.spec/plans/sub/notes.txt\n100644 8f8c66919d160f0e6389583cbe0da15a70fc880e 0\tapps/web/.spec/requirements/REQ-001.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\tapps/web/tests/t.py\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/t.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

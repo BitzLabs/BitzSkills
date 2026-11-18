@@ -20,6 +20,7 @@ import certify_gate_a as certify
 from conformance import step_assignment
 from conformance import limits_multi_fixtures, limits_single_fixtures
 from conformance import help_version_fixtures
+from conformance import nested_workspace_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
@@ -15757,6 +15758,97 @@ class AuditTests(unittest.TestCase):
                 else:
                     (repository / ".git").mkdir()
                 self.assertEqual(help_version_fixtures.validate(root, {identifier})["status"], "Failed")
+
+
+    def test_nested_workspace_fixtures(self):
+        """`SINGLE-184-*`・`SINGLE-185-*`・`MULTI-070-01`: 入れ子のワークスペースのTASK境界と予約したディレクトリ（ADR-074）。"""
+        module = nested_workspace_fixtures
+        result = module.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(module.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-185-04"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                self.assertEqual(module.validate(root, {identifier})["errors"], [])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-070-01")
+            self.assertEqual(module.validate(root, {"MULTI-070-01"})["errors"], [])
+        # 同種の既存のfixtureと同じStepに置く（TASK境界はSINGLE-034、未知のエントリはSINGLE-083、操作ごとの基のfixture）。
+        steps = json.loads((audit.FIXTURES / "steps.json").read_text())["steps"]
+        placed = {identifier: step["step"] for step in steps for identifier in step["fixtures"]}
+        same = {**{identifier: "SINGLE-034" for identifier in module.TASK_CASES},
+                **{f"SINGLE-185-0{number}": "SINGLE-083" for number in range(1, 6)},
+                "SINGLE-185-06": "SINGLE-042", "SINGLE-185-07": "SINGLE-055", "SINGLE-185-08": "SINGLE-001",
+                "MULTI-070-01": "MULTI-053-04"}
+        self.assertEqual(set(same), set(module.CASES))
+        for identifier, base in same.items():
+            self.assertEqual(placed[identifier], placed[base], identifier)
+
+    def test_nested_workspace_audit_rejects_changed_expectations(self):
+        """期待値、起動条件、入力の改変を拒否する（陰性対照）。"""
+        module = nested_workspace_fixtures
+        boundary = {"code": "SPEC-TASK-BOUNDARY-001", "severity": "error", "resultStatus": "failed",
+                    "summary": "パスsandbox/exp1/note.mdはTASK-001の変更許可パスの外です",
+                    "source": {"kind": "file", "workspaceId": "root", "path": "sandbox/exp1/note.md"}}
+        mutations = [
+            ("SINGLE-184-01", "expected/check.json", lambda v: (v.update(status="failed"), v["diagnostics"].append(boundary))),
+            ("SINGLE-184-01", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("SINGLE-184-02", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-06", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            ("SINGLE-184-11", "expected/check.json", lambda v: v.update(status="error")),
+            ("SINGLE-184-14", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="app/sandbox/y.md")),
+            ("SINGLE-184-16", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
+            # ステージをやめると、未追跡の設定だけで入れ子を判定する入力になる（仕様が一意に決めないので拒否する）。
+            ("SINGLE-184-03", "manifest.json", lambda v: v["setup"]["operations"].pop(1)),
+            ("SINGLE-184-13", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+            ("SINGLE-185-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=2)),
+            ("SINGLE-185-05", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-185-06", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-185-08", "expected/doctor.json", lambda v: v.update(status="passed_with_warnings")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-070-01")
+            path = root / "multi/MULTI-070-01/expected/check.json"
+            value = json.loads(path.read_text())
+            value["workspaces"][1]["status"] = "passed_with_warnings"
+            path.write_text(json.dumps(value, ensure_ascii=False))
+            self.assertEqual(module.validate(root, {"MULTI-070-01"})["status"], "Failed")
+        # 入力の改変: 入れ子の設定を除く、シンボリックリンクを通常のファイルにする、未知のエントリを足す、予約したディレクトリを除く。
+        def drop_config(repository):
+            (repository / "sandbox/exp1/.spec/bitz.yaml").unlink()
+
+        def unlink_symlink(repository):
+            link = repository / "sandbox/exp1/.spec/bitz.yaml"
+            link.unlink()
+            link.write_bytes((repository / ".spec/bitz.yaml").read_bytes())
+
+        def add_unknown(repository):
+            (repository / ".spec/notes.txt").write_text("memo\n")
+
+        def drop_journal(repository):
+            shutil.rmtree(repository / ".spec/journal")
+
+        for identifier, change in (("SINGLE-184-01", drop_config), ("SINGLE-184-06", unlink_symlink),
+                                   ("SINGLE-185-01", add_unknown), ("SINGLE-185-07", drop_journal)):
+            with self.subTest(identifier=identifier, change=change.__name__), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                change(root / "single" / identifier / "repo")
+                self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
+        # 参照計算: 改変した期待値（境界の外の変更がない入れ子の対照）は、準備した後のリポジトリと一致しない。
+        original = module.TASK_CASES["SINGLE-184-02"]["violations"]
+        with patch.dict(module.TASK_CASES["SINGLE-184-02"], violations=[]):
+            self.assertNotEqual(original, module.TASK_CASES["SINGLE-184-02"]["violations"])
+            self.assertEqual(module.validate(identifiers={"SINGLE-184-02"})["status"], "Failed")
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-TASK-BOUNDARY-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "パス.spec/bitz.yamlはTASK-001の変更許可パスの外です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml"
+      }
+    }
+  ]
+}

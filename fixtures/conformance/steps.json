@@ -91,7 +91,8 @@
         "SINGLE-183-09",
         "SINGLE-183-10",
         "SINGLE-183-11",
-        "SINGLE-183-12"
+        "SINGLE-183-12",
+        "SINGLE-185-08"
       ]
     },
     {
@@ -246,7 +247,12 @@
         "SINGLE-180-10",
         "SINGLE-180-11",
         "SINGLE-180-12",
-        "SINGLE-180-13"
+        "SINGLE-180-13",
+        "SINGLE-185-01",
+        "SINGLE-185-02",
+        "SINGLE-185-03",
+        "SINGLE-185-04",
+        "SINGLE-185-05"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -380,7 +386,25 @@
         "SINGLE-179-23",
         "SINGLE-179-24",
         "SINGLE-180-14",
-        "SINGLE-181"
+        "SINGLE-181",
+        "SINGLE-184-01",
+        "SINGLE-184-02",
+        "SINGLE-184-03",
+        "SINGLE-184-04",
+        "SINGLE-184-05",
+        "SINGLE-184-06",
+        "SINGLE-184-07",
+        "SINGLE-184-08",
+        "SINGLE-184-09",
+        "SINGLE-184-10",
+        "SINGLE-184-11",
+        "SINGLE-184-12",
+        "SINGLE-184-13",
+        "SINGLE-184-14",
+        "SINGLE-184-15",
+        "SINGLE-184-16",
+        "SINGLE-184-17",
+        "SINGLE-185-06"
       ]
     },
     {
@@ -545,7 +569,8 @@
         "SINGLE-182-04",
         "SINGLE-182-05",
         "SINGLE-182-06",
-        "SINGLE-182-07"
+        "SINGLE-182-07",
+        "SINGLE-185-07"
       ]
     },
     {
@@ -892,7 +917,8 @@
         "MULTI-069-22",
         "MULTI-069-23",
         "MULTI-069-24",
-        "MULTI-069-25"
+        "MULTI-069-25",
+        "MULTI-070-01"
       ]
     }
   ],

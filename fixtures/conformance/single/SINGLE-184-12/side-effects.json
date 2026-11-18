@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e2db21516e52bd57398e2929d8b9788deef9a970c15e684f179d1a4371424757"
+      },
+      "sandbox": {
+        "kind": "directory"
+      },
+      "sandbox/exp1": {
+        "kind": "directory"
+      },
+      "sandbox/exp1/.spec": {
+        "kind": "directory"
+      },
+      "sandbox/exp1/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "39863e2bca90a9cd98167635a1d1006fe8b55649f91592eb12621f9ac476b95f"
+      },
+      "sandbox/exp1/note.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d484c5082226ef869d1b23cb5215006aef7b278aca566a528549cd23ba3666d0"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/inside.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87a30b0552c1177b5ddc9397b3474e21ff3e36b70b08e3bbdef8fe79c177115c"
+      }
+    },
+    "git": {
+      "status": " M sandbox/exp1/.spec/bitz.yaml\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 b91a3526d3f8a50ab92e5bed7aae606c920b195a 0\t.spec/tasks/TASK-001.md\n100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\tsandbox/exp1/.spec/bitz.yaml\n100644 4a18ce54bedbf8008c7cf873e51e11f1d85d7396 0\tsandbox/exp1/note.md\n100644 56a3f2ada0ea58f4810cdf3a43e0729fa75a09c4 0\tsrc/inside.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e2db21516e52bd57398e2929d8b9788deef9a970c15e684f179d1a4371424757"
+      },
+      "sandbox": {
+        "kind": "directory"
+      },
+      "sandbox/exp1": {
+        "kind": "directory"
+      },
+      "sandbox/exp1/.spec": {
+        "kind": "directory"
+      },
+      "sandbox/exp1/.spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "39863e2bca90a9cd98167635a1d1006fe8b55649f91592eb12621f9ac476b95f"
+      },
+      "sandbox/exp1/note.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d484c5082226ef869d1b23cb5215006aef7b278aca566a528549cd23ba3666d0"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/inside.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "87a30b0552c1177b5ddc9397b3474e21ff3e36b70b08e3bbdef8fe79c177115c"
+      }
+    },
+    "git": {
+      "status": " M sandbox/exp1/.spec/bitz.yaml\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 b91a3526d3f8a50ab92e5bed7aae606c920b195a 0\t.spec/tasks/TASK-001.md\n100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\tsandbox/exp1/.spec/bitz.yaml\n100644 4a18ce54bedbf8008c7cf873e51e11f1d85d7396 0\tsandbox/exp1/note.md\n100644 56a3f2ada0ea58f4810cdf3a43e0729fa75a09c4 0\tsrc/inside.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

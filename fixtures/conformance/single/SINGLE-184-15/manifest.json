@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-15",
+  "description": "TASKのchangesが入れ子のワークスペースの配下を指しても検査は今どおりで、ほかの境界の外の変更を検出する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "sandbox/exp1/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "update",
+        "path": "src2/outside.py",
+        "source": "changes/outside.py"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
