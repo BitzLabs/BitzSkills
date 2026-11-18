@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-184-08",
-  "description": "入れ子のワークスペースの中の入れ子のワークスペースの配下の変更も除く",
+  "description": "入れ子のワークスペースの中の入れ子のワークスペースの配下の変更も除き、変更を除いた2つのルートの警告を返す",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -36,7 +36,7 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
+    "status": "passed_with_warnings",
     "exitCode": 0,
     "stdout": "json",
     "resultFile": "expected/check.json",

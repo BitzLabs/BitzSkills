@@ -31,7 +31,7 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
+    "status": "passed_with_warnings",
     "exitCode": 0,
     "stdout": "json",
     "resultFile": "expected/check.json",
