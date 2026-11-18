@@ -101,6 +101,22 @@ def _task_own_path_allows(path: str, allowed: list) -> bool:
     return False
 
 
+#: TASK境界の比較から、エントリ自身とその配下の変更を除く、作業ワークスペースの予約したディレクトリ
+#: （`check.md §7`、ADR-074。ワークスペース・設定仕様 §3）。経過の記録と計画は、どのTASKの作業の中でも書き換えられる。
+_TASK_BOUNDARY_RESERVED_DIRS = (".spec/journal", ".spec/plans")
+
+
+def _task_boundary_reserved(path: str) -> bool:
+    """ワークスペース相対の``path``が、予約した`.spec/journal`・`.spec/plans`のエントリ自身かその配下か（`check.md §7`）。
+
+    パスのセグメント単位で比べ、名前が似た別のエントリ（`.spec/journals`、`.spec/plans.md`など）は含めない。
+    エントリの種別（ディレクトリ、ファイル、シンボリックリンク）は問わず、ファイルシステムは読まない。
+    """
+
+    path_nfc = pathown.nfc(path)
+    return any(path_nfc == d or path_nfc.startswith(d + "/") for d in _TASK_BOUNDARY_RESERVED_DIRS)
+
+
 def _task_boundary_diagnostics(
     entry: DocEntry,
     git: gitutil.GitInfo,
@@ -120,6 +136,8 @@ def _task_boundary_diagnostics(
     リンク先は使わない（基準版のツリーオブジェクトのリンク先も、現在版の`lstat`も読まない）。
     ``qualified_ids``（複合ワークスペース内での、TASKを明示した`check`）が真なら、`summary`に埋め込むTASKのIDを
     複合ワークスペースの正規形式（`ws::local`）にする（複合ワークスペース仕様 §4）。
+    TASK自身のファイル、明示して生成したレポート、作業ワークスペースの予約した`.spec/journal`・`.spec/plans`
+    （:func:`_task_boundary_reserved`）の変更は、単一ワークスペースでも複合ワークスペースでも比較から除く。
     ``exclude_nested``（単一ワークスペース）が真なら、入れ子のワークスペースのルートとその配下の変更を比較から除く
     （`check.md §7`、ADR-074。:func:`_nested_workspace_paths`）。複合ワークスペースでは偽にし、規則を変えない。
     """
@@ -146,7 +164,13 @@ def _task_boundary_diagnostics(
         # リネームは移動元と移動先の2つのパスを検査する（安全な入出力・互換性 §6、check.md §7）。
         candidates = [c.old_path, c.path] if c.status == "R" else [c.path]
         for p in candidates:
-            if p is None or pathown.nfc(p) == pathown.nfc(entry.path) or p.startswith(".spec/reports/") or p in reported:
+            if (
+                p is None
+                or pathown.nfc(p) == pathown.nfc(entry.path)
+                or p.startswith(".spec/reports/")
+                or _task_boundary_reserved(p)
+                or p in reported
+            ):
                 continue
             if not _task_own_path_allows(p, allowed):
                 reported.add(p)
