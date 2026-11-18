@@ -1,0 +1,40 @@
+{
+  "fixtureId": "SINGLE-184-26",
+  "description": "対照: 作業ワークスペースのルートでない下位のディレクトリの.spec/journal/は予約したディレクトリでなく、配下の変更はTASK境界の外になる",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "sandbox/.spec/journal/TASK-001.md",
+        "source": "changes/journal.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

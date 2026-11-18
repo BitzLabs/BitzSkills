@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-25",
+  "description": "対照: 予約した名前に似た.spec/plans.mdは除かず、TASK境界の外の変更と未知のファイルになり、.spec/journal/の変更だけを除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/journal/TASK-001.md",
+        "source": "changes/journal.md"
+      },
+      {
+        "op": "create",
+        "path": ".spec/plans.md",
+        "source": "changes/plans.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

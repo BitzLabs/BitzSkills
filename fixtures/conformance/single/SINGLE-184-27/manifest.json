@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-27",
+  "description": "リポジトリのルートがワークスペースのルートより上にあっても、ワークスペース相対の.spec/journalと.spec/plansの配下の変更を除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "app/.spec/journal/TASK-001.md",
+        "source": "changes/journal.md"
+      },
+      {
+        "op": "create",
+        "path": "app/.spec/plans/TASK-001.md",
+        "source": "changes/plan.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "app",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

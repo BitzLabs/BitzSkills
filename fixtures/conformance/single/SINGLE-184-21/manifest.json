@@ -1,0 +1,40 @@
+{
+  "fixtureId": "SINGLE-184-21",
+  "description": "作業ワークスペースの.spec/journal/に未追跡のファイルを足しても、予約したディレクトリの配下の変更としてTASK境界の比較から除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "create",
+        "path": ".spec/journal/TASK-001.md",
+        "source": "changes/journal.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
