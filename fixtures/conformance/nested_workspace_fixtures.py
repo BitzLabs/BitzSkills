@@ -21,7 +21,7 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 | `SINGLE-184-05` | `01`の基準版。設定の削除をステージし、`note.md`を変える | `passed_with_warnings`。基準版にだけある設定でも入れ子とする。警告`sandbox/exp1` |
 | `SINGLE-184-06` | `01`の設定をシンボリックリンク（`../../../.spec/bitz.yaml`）にする | `failed`。入れ子にしない |
 | `SINGLE-184-07` | `sandbox/exp1/.spec`をシンボリックリンク（`../cfg`、`sandbox/cfg/bitz.yaml`あり）にする | `failed`。シンボリックリンクをたどらない |
-| `SINGLE-184-08` | `a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`。`a/top.md`と`a/b/deep.md`を変える | `passed_with_warnings`。入れ子の入れ子も除く。警告`a`と`a/b` |
+| `SINGLE-184-08` | `a/.spec/bitz.yaml`と`a/b/.spec/bitz.yaml`。`a/top.md`と`a/b/deep.md`を変える | `passed_with_warnings`。入れ子の入れ子も除く。警告`a`と`a/b`（`a/b/deep.md`は最も内側の`a/b`で数える） |
 | `SINGLE-184-09` | `tools/lab/exp/.spec/bitz.yaml`（2段の下位）。`tools/lab/exp/n.md`と`tools/lab/other.md`を変える | `failed`。警告`tools/lab/exp`と、`tools/lab/other.md`の1件 |
 | `SINGLE-184-10` | `sandbox/exp1`だけが入れ子。`sandbox/exp1/note.md`と`sandbox/exp10/note.md`を変える | `failed`。警告`sandbox/exp1`と、`sandbox/exp10/note.md`の1件（セグメントの境界） |
 | `SINGLE-184-11` | 入れ子の設定のYAMLの構文が不正（`SINGLE-127-43`と同じ設定）。`note.md`を変える | `passed_with_warnings`。設定の内容を読まず、設定の診断を出さない。警告`sandbox/exp1` |
@@ -46,6 +46,7 @@ TASK境界（`SINGLE-184-*`、`check TASK-001 --base HEAD`）:
 | `SINGLE-184-30` | `sandbox/x/.spec/y/.spec/bitz.yaml`（`sandbox/x`に設定はない）。`sandbox/x/.spec/y/note.md`と`sandbox/x/note.md`を変える | `failed`。`sandbox/x/.spec/y`を入れ子にせず、2件。警告なし |
 | `SINGLE-184-31` | 入れ子`sandbox/exp1`・`exp2`・`exp3`と、`exp2`の中の`sandbox/exp2/.spec/v/.spec/bitz.yaml`。`exp1`の2件、`exp2/note.md`、`exp2/.spec/v/note.md`を変える | `passed_with_warnings`。警告`sandbox/exp1`と`sandbox/exp2`の2件だけ（変更のない`exp3`と、ルートにしない`exp2/.spec/v`には返さない） |
 | `SINGLE-184-32` | 基準版に`.spec/journal/.spec/bitz.yaml`と`.spec/journal/TASK-001.md`。`TASK-001.md`を変える | `passed`。`.spec/journal`を入れ子にせず、予約したディレクトリの除外として警告を返さない |
+| `SINGLE-184-33` | `08`の入力。`a/b/deep.md`だけを変える | `passed_with_warnings`。警告は最も内側のルート`a/b`の1件だけ（外側の`a`には返さない） |
 
 予約したディレクトリ（`SINGLE-185-*`、`MULTI-070-01`）:
 
@@ -70,8 +71,8 @@ Gitで追跡しているか、未追跡か、無視されているかによら�
 作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`（エントリ自身とその配下。同 §7）、境界の外の変更と、
 除いた変更を1件以上持つ入れ子のルートを導き、レビュー済みのリテラルの診断と一致することを確かめる。
 
-入れ子の入れ子（`a`と`a/b`）の配下の変更が、最も内側のルートだけに属するか、それを含むすべてのルートに属するかを規範文は定めない。
-参照計算は両方の読み方でルートの集合を求め、一致しない入力を拒否する（`SINGLE-184-08`は`a/top.md`も変えるので、どちらでも`a`と`a/b`）。
+変更が入れ子の入れ子（`a`と`a/b`）の配下にあるときは、最も内側のルートの変更として数える（`check` §7）。
+TASKの`changes`が許可した変更でも、入れ子の配下にあって比較から除いたものは数える（同 §7。`SINGLE-184-15`）。
 
 `SINGLE-185-06`〜`08`と`MULTI-070-01`は、レビュー済みの既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、
 期待結果をそこから導く。予約したディレクトリは読まないので、コンテキストのハッシュ値を含めて結果は変わらない。基のfixtureが変われば、この群の監査が失敗する。
@@ -333,6 +334,11 @@ TASK_CASES = {
                           changes={"journal.md": JOURNAL_AFTER},
                           operations=[update(JOURNAL_PATH, "changes/journal.md")], violations=[],
                           description=".spec/journal/.spec/bitz.yamlで.spec/journalを入れ子のワークスペースにせず、予約したディレクトリの変更として除き、警告を返さない"),
+    "SINGLE-184-33": dict(repo={**BASE_TASK, "a/.spec/bitz.yaml": CONFIG, "a/b/.spec/bitz.yaml": CONFIG,
+                                "a/top.md": NOTE_BEFORE, "a/b/deep.md": NOTE_BEFORE},
+                          changes={"deep.md": NOTE_AFTER},
+                          operations=[update("a/b/deep.md", "changes/deep.md")], nested=["a/b"], violations=[],
+                          description="入れ子の入れ子の配下の変更は最も内側のルートの変更として数え、外側のルートには警告しない"),
 }
 
 # 予約したディレクトリ: id -> dict(kind, ...)。`check`は`BASE_DOCUMENT`に`extra`を足す。`derived`は基のfixtureの入力に足し、期待結果を基から導く。
@@ -605,22 +611,19 @@ def owners(path, roots):
 def reference_excluded_roots(repository, workspace, spec_segments=False):
     """入れ子のワークスペースとして比較から除いた変更を1件以上持つルート（ワークスペース相対、辞書順。`check` §7の警告の発生元）。
 
-    入れ子の入れ子の配下の変更が、最も内側のルートだけに属するか、それを含むすべてのルートに属するかを規範文は定めないので、
-    両方の読み方で求め、一致しない入力を拒否する。
+    変更が入れ子の入れ子の配下にあるときは、最も内側のルート（配下に持つルートは互いに祖先と子孫なので、セグメントの数が最も多いものが一意に決まる）
+    の変更として数える。TASKの`changes`が許可するかによらない（同 §7）。
     """
     prefix = "" if workspace == "." else workspace + "/"
     roots = nested_roots(repository, workspace, spec_segments)
-    containing, innermost = set(), set()
+    innermost = set()
     for path in change_set(repository):
         if not path.startswith(prefix):
             continue
         found = owners(path, roots)
-        containing.update(found)
         if found:
-            innermost.add(max(found, key=len))
-    if containing != innermost:
-        raise ValueError("入れ子の入れ子の配下の変更の帰属（最も内側のルートか、含むすべてのルートか）で警告が変わる入力です")
-    return sorted(root[len(prefix):] for root in containing)
+            innermost.add(max(found, key=lambda root: root.count("/")))
+    return sorted(root[len(prefix):] for root in innermost)
 
 
 def change_set(repository):
