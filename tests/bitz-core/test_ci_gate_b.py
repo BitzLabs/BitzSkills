@@ -63,21 +63,21 @@ class ShardingTests(unittest.TestCase):
         fixture_seconds = [predicted_seconds(group) for group in groups]
         self.assertLess(max(fixture_seconds) - min(fixture_seconds), 0.2)
         plan = partition_plan(step_ids(5), 4)
-        # 実寸の上限のfixtureを手動の一覧へ移した（ADR-076）ので、4つの分割の予測秒数は43.9〜44.0秒（固定時間12秒を含む）。
-        # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は862件だが、6件が2つのStepに現れるので重複を除いて856件。
+        # 実寸の上限のfixtureを手動の一覧へ移した（ADR-076）ので、4つの分割の予測秒数は44.9〜45.1秒（固定時間12秒を含む）。
+        # 中央付近に余裕を持たせ、35〜50秒とする。Stepの累計は893件だが、6件が2つのStepに現れるので重複を除いて887件。
         self.assertTrue(all(35 <= row["predictedSeconds"] <= 50 for row in plan))
-        self.assertEqual(sum(row["fixtureCount"] for row in plan), 856)
+        self.assertEqual(sum(row["fixtureCount"] for row in plan), 887)
 
     def test_ci_plan_displays_prediction_for_every_worker(self):
         plan = planning.build_plan(step=5, shards=4, replicas=2)
         workers = plan["matrix"]["include"]
         self.assertEqual([(row["replica"], row["shard"]) for row in workers],
                          [(replica, shard) for replica in (1, 2) for shard in range(1, 5)])
-        # 4つの分割の予測秒数は43.9〜44.0秒で、どれもPythonのroundで44秒になる。
-        self.assertEqual([row["predicted"] for row in workers], ["44秒"] * 8)
+        # 4つの分割の予測秒数は44.9〜45.1秒で、どれもPythonのroundで45秒になる。
+        self.assertEqual([row["predicted"] for row in workers], ["45秒"] * 8)
         summary = planning.markdown(plan)
         self.assertIn("GitHub Actionsの実行36248419060", summary)
-        self.assertEqual((summary.count("| 43秒 |"), summary.count("| 44秒 |")), (0, 4))
+        self.assertEqual((summary.count("| 44秒 |"), summary.count("| 45秒 |")), (0, 4))
         pull_request = planning.build_plan(step=5, shards=4, replicas=1)
         self.assertEqual([(row["replica"], row["shard"])
                           for row in pull_request["matrix"]["include"]],
