@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-184-04",
+  "description": "基準版にある入れ子のワークスペースの.spec/bitz.yamlを作業ツリーで削除しても、設定自身の削除として除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "delete",
+        "path": "sandbox/exp1/.spec/bitz.yaml"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

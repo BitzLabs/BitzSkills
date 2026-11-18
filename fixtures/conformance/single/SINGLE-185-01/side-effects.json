@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/journal": {
+        "kind": "directory"
+      },
+      ".spec/journal/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/journal/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      ".spec/journal/requirements": {
+        "kind": "directory"
+      },
+      ".spec/journal/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/journal/sub": {
+        "kind": "directory"
+      },
+      ".spec/journal/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/journal/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\t.spec/journal/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/journal/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\t.spec/journal/sub/notes.txt\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/journal": {
+        "kind": "directory"
+      },
+      ".spec/journal/2026-11-18.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/journal/broken.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "d888ed149dc9320ba0d6142f2cc2b7f94679c5ac72d3865b5b6d220fee1bb8c5"
+      },
+      ".spec/journal/requirements": {
+        "kind": "directory"
+      },
+      ".spec/journal/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      },
+      ".spec/journal/sub": {
+        "kind": "directory"
+      },
+      ".spec/journal/sub/notes.txt": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0aea9ef5e42251b3bdc7e66037b93f5a2b28aa26bedd94b5c300becf05c6470f"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8b546f4fe4773d0fcc95490786d95f2a8800a86aa65298cb89f2fcd81ac26ae3"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/journal/2026-11-18.md\n100644 24ad6d99ff527547063e4a1d26d8fa80828170eb 0\t.spec/journal/broken.md\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/journal/requirements/REQ-001.md\n100644 3828e5fe69f7d143ca2a467fdba34f76fea44eed 0\t.spec/journal/sub/notes.txt\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

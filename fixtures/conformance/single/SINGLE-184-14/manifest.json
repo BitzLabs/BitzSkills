@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-14",
+  "description": "リポジトリのルートがワークスペースのルートより上にあるとき、入れ子の外の変更をワークスペース相対のパスで報告する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "app/sandbox/x/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "update",
+        "path": "app/sandbox/y.md",
+        "source": "changes/note.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "app",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

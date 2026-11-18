@@ -1,0 +1,45 @@
+{
+  "fixtureId": "SINGLE-184-08",
+  "description": "入れ子のワークスペースの中の入れ子のワークスペースの配下の変更も除く",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": "a/top.md",
+        "source": "changes/top.md"
+      },
+      {
+        "op": "update",
+        "path": "a/b/deep.md",
+        "source": "changes/deep.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "TASK-001",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
