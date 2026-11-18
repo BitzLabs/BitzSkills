@@ -1454,3 +1454,24 @@ Gitの呼出しより前に、標準出力へUTF-8で書いて終了コード0�
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は、Coreが同じ内容のコミット`8ca9eb56`で1475件がすべて成功した（3件はスキップ。`be242002`との違いはfixtureの監査の1ファイルだけ）。
+
+## 2026-11-18: 入れ子のワークスペースをTASK境界から除き、journalとplansを予約した後のStep 1〜5の再判定
+
+ADR-074のとおり、単一ワークスペースのTASK境界の比較から、入れ子のワークスペース（作業ツリーまたは基準版に`.spec/bitz.yaml`を持つ下位のディレクトリ。
+名前が`.spec`のセグメントを含むディレクトリを除く）の配下の変更と、`.spec/journal`、`.spec/plans`の変更を除く。入れ子として除いたときは、
+最も内側のルートごとに`SPEC-TASK-BOUNDARY-003`（`warning`）を返す。判定は境界の外の候補がある場合だけ、候補の祖先だけを調べ、基準版は候補の設定だけを
+`git ls-tree`で問い合わせる。`.spec/journal`と`.spec/plans`は`.spec/reports`と同じく既知のエントリとする。
+独立レビューは2回（1回目は条件付きの合格で、`.spec/.spec/bitz.yaml`で境界をすり抜けられることと、設定のファイル1つで黙って境界から外せることを指摘。
+2回目はPASS）。
+
+コミット`fa26ac412d5b54c5c18c7e2e24cdb3ef257bf721`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 900件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。結果のSHA-256は両方`d5fb97464d042e05fab3f55a042b76cc288f87b57ef584c6704562b21289f02d` |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は、Coreが同じ内容のコミット`cbae1406`で1510件がすべて成功した（3件はスキップ。`fa26ac41`との違いはfixtureのharnessの時間の上限だけ）。
