@@ -7,6 +7,8 @@
 - 深い入れ子、途中のディレクトリがシンボリックリンクの場合、パスに`*`を含む場合（`git ls-tree`のパスを字句どおりに扱う）
 - 入れ子から外へのリネーム、複合ワークスペースの経路（`exclude_nested=False`）で規則を変えないこと
 - 性能の目安: 境界の外の候補がなければ判定しない、候補の祖先だけを見て関係のないツリーを走査しない、基準版の問い合わせを分割する
+- 予約した`.spec/journal`・`.spec/plans`の、エントリ自身とその配下の変更をTASK境界の比較から除くこと（`check.md §7`）。
+  エントリがファイルの場合、名前が似た別のエントリとセグメント境界、単一ワークスペースと複合ワークスペースの両方の経路
 """
 
 import os
@@ -345,6 +347,173 @@ class ReservedSpecEntriesTests(unittest.TestCase):
             self.assertEqual(result["diagnostics"], [])
             self.assertEqual(result["checkedDocumentCount"], 0)
             self.assertEqual(exit_code, 0)
+
+
+class TaskBoundaryReservedEntriesTests(unittest.TestCase):
+    """予約した`.spec/journal`・`.spec/plans`の変更をTASK境界の比較から除く（`check.md §7`、ADR-074）。"""
+
+    def test_add_modify_delete_under_journal_and_plans_are_excluded(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, ".spec/journal/2026-11-17.md", "経過1\n")
+            _write(root, ".spec/journal/old.md", "古い\n")
+            _write(root, ".spec/plans/plan-a.md", "計画A\n")
+            _write(root, ".spec/plans/old.md", "古い\n")
+            _commit(root)
+
+            _write(root, ".spec/journal/2026-11-17.md", "経過1を改める\n")  # 変更（未ステージ）
+            _write(root, ".spec/journal/2026-11-18.md", "経過2\n")  # 追加（未追跡）
+            _write(root, ".spec/journal/sub/deep/note.md", "深い\n")  # 追加（未追跡、深い配下）
+            os.remove(os.path.join(root, ".spec", "journal", "old.md"))  # 削除
+            _write(root, ".spec/plans/plan-a.md", "計画Aを改める\n")
+            _git(root, "add", ".spec/plans/plan-a.md")  # 変更（ステージ済み）
+            _write(root, ".spec/plans/plan-b.md", "計画B\n")
+            _git(root, "add", ".spec/plans/plan-b.md")  # 追加（ステージ済み）
+            _git(root, "rm", "-q", ".spec/plans/old.md")  # 削除（ステージ済み）
+
+            result, exit_code = _check_task(root)
+            self.assertEqual(result["status"], "passed", result["diagnostics"])
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(exit_code, 0)
+
+    def test_reserved_entry_that_is_a_file_is_excluded(self):
+        # `.spec/journal`と`.spec/plans`がファイルでも、エントリ自身の追加・変更・削除を除く。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, ".spec/plans", "計画\n")
+            _commit(root)
+
+            _write(root, ".spec/journal", "経過\n")  # 追加（未追跡のファイル）
+            _write(root, ".spec/plans", "計画を改める\n")  # 変更
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+
+            os.remove(os.path.join(root, ".spec", "plans"))  # 削除
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+
+    def test_reserved_entry_replaced_by_directory_and_symlink_is_excluded(self):
+        # ファイルからディレクトリへの置き換え、シンボリックリンクのエントリも、種別によらず字句のパスで除く。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, ".spec/journal", "ファイル\n")
+            _commit(root)
+
+            os.remove(os.path.join(root, ".spec", "journal"))
+            _write(root, ".spec/journal/a.md", "ディレクトリへ\n")
+            os.symlink(os.path.join("..", "src"), os.path.join(root, ".spec", "plans"))
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+
+    def test_similar_names_and_segment_boundary_are_not_excluded(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _commit(root)
+
+            similar = [
+                ".spec/journals/a.md",
+                ".spec/journal.md",
+                ".spec/journalx",
+                ".spec/plans.md",
+                ".spec/plans-old/a.md",
+                ".spec/Plans/a.md",
+                "docs/.spec/journal/a.md",  # 作業ワークスペースのルートの`.spec`ではない（設定がないので入れ子でもない）
+                "journal/a.md",
+                "spec/plans/a.md",
+            ]
+            for p in similar:
+                _write(root, p, "x\n")
+            result, _ = _check_task(root)
+            self.assertEqual(sorted(_boundary_paths(result)), sorted(similar))
+
+    def test_rename_out_of_journal_reports_only_destination(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, ".spec/journal/moved.md", "移す内容の行\n" * 5)
+            _write(root, "docs/plan.md", "戻す内容の行\n" * 5)
+            _commit(root)
+
+            _git(root, "mv", ".spec/journal/moved.md", "docs/moved.md")
+            os.makedirs(os.path.join(root, ".spec", "plans"))
+            _git(root, "mv", "docs/plan.md", ".spec/plans/plan.md")
+            result, _ = _check_task(root)
+            self.assertEqual(sorted(_boundary_paths(result)), ["docs/moved.md", "docs/plan.md"])
+
+    def test_workspace_below_repository_root_uses_workspace_relative_paths(self):
+        # 予約したディレクトリは作業ワークスペースのルートからの相対で判定する。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root, prefix="pkg/")
+            _commit(root)
+
+            _write(root, "pkg/.spec/journal/a.md", "経過\n")
+            _write(root, "pkg/.spec/plans/b.md", "計画\n")
+            _write(root, "pkg/sub/.spec/journal/c.md", "外\n")
+            result, _ = _check_task(os.path.join(root, "pkg"))
+            self.assertEqual(_boundary_paths(result), ["sub/.spec/journal/c.md"])
+
+    def test_multi_workspace_path_also_excludes_reserved_entries(self):
+        # 複合ワークスペースの経路（`exclude_nested=False`）でも、TASK自身のファイルを除く規則と同じく除く。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _commit(root)
+            _write(root, ".spec/journal/a.md", "経過\n")
+            _write(root, ".spec/plans", "計画\n")
+            _write(root, ".spec/journals/a.md", "似た名前\n")
+
+            git = gitutil.detect_git(root, dict(os.environ))
+            base = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            entry = document_mod.DocEntry(
+                path=".spec/tasks/TASK-001.md", kind="TASK", doc_id="TASK-001", frontmatter={"changes": ["src/"]}
+            )
+            for exclude_nested in (False, True):
+                diags = check_mod._task_boundary_diagnostics(
+                    entry, git, root, dict(os.environ), base, "root", root,
+                    qualified_ids=not exclude_nested, exclude_nested=exclude_nested,
+                )
+                self.assertEqual([d.source["path"] for d in diags], [".spec/journals/a.md"])
+
+    def test_multi_workspace_member_and_root(self):
+        # 実際の複合ワークスペースで、作業ワークスペース（メンバー）の予約したディレクトリを除く。
+        # ルートワークスペースを作業ワークスペースにした場合、メンバーの`.spec/journal`は作業ワークスペースの
+        # 予約したディレクトリではないので、予約による除外の対象にしない。
+        root_yaml = (
+            'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: platform\n'
+            "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"
+        )
+        member_yaml = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\nworkspace:\n  id: web\n'
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _write(root, ".spec/bitz.yaml", root_yaml)
+            _write(root, ".spec/tasks/TASK-001.md", _task(["src/"]))
+            _write(root, "apps/web/.spec/bitz.yaml", member_yaml)
+            _write(root, "apps/web/.spec/tasks/TASK-001.md", _task(["src/"]))
+            _commit(root)
+
+            _write(root, "apps/web/.spec/journal/a.md", "経過\n")
+            _write(root, "apps/web/.spec/plans/b.md", "計画\n")
+            _write(root, "apps/web/.spec/journals/c.md", "似た名前\n")
+
+            member_result, _ = _check_task(os.path.join(root, "apps", "web"))
+            self.assertEqual(_boundary_paths(member_result), [".spec/journals/c.md"])
+
+            root_result, _ = _check_task(root)
+            self.assertEqual(
+                sorted(_boundary_paths(root_result)),
+                [
+                    "apps/web/.spec/journal/a.md",
+                    "apps/web/.spec/journals/c.md",
+                    "apps/web/.spec/plans/b.md",
+                ],
+            )
 
 
 if __name__ == "__main__":
