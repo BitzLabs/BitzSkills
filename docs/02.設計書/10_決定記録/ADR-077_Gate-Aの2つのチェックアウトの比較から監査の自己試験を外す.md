@@ -1,7 +1,7 @@
 ---
 id: ADR-077
 title: Gate Aの2つのチェックアウトの比較から監査の自己試験を外す
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-048
@@ -62,3 +62,4 @@ fixtureごとの準備の決定性は、監査の中で各fixtureの準備の手
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-18 | 起票（`proposed`） | 利用者の指示 |
+| 2026-11-18 | 利用者の承認により`accepted`へ変更 | — |
