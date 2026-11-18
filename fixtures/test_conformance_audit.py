@@ -24,7 +24,7 @@ from conformance import help_version_fixtures
 from conformance import nested_workspace_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
-from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
+from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions, CASES as INITIAL_CASES
 from conformance.ears_fixtures import validate as validate_ears
 from conformance.document_fixtures import validate as validate_documents
 from conformance.trace_fixtures import validate as validate_trace
@@ -125,6 +125,8 @@ from conformance.initial_fixtures import observe as observe_single
 # 自己試験の時間の多くをスキーマの検証が占める。検証は文書とスキーマだけで決まるので、成功の結果を再利用しても
 # 判定は変わらない。失敗は記録せず、毎回検証し直して同じ例外を送出する。鍵は、JSONへ往復しても同じ値に戻る文書
 # （JSONの型だけからなる文書）にだけ作る。タプル、文字列以外のキー、NaNなどを含む文書は、記録せずに毎回検証する。
+# あわせて、期待値のJSONを改変する対照の多くは、改変が当たるか（例外を出さず、値を変えるか）を元のfixtureで先に確かめ、
+# 当たる改変だけを、対照ごとに独立した一時コピーへ書いて検証する（当たらない改変のためにfixtureを複製しない）。
 _SCHEMA_ACCEPTED = set()
 _schema_validate_uncached = Draft202012Validator.validate
 
@@ -3284,20 +3286,20 @@ class AuditTests(unittest.TestCase):
                     mutations.append((identifier, "cli-output.json", name, change))
         applied = skipped = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError):
+                skipped += 1
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                skipped += 1
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError):
-                    skipped += 1
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    skipped += 1
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -3488,18 +3490,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -3720,18 +3722,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -3908,18 +3910,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -4132,18 +4134,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -4382,18 +4384,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(identifier, "side-effects.json", name, change) for name, change in effects.items()]
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -4669,18 +4671,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -4943,18 +4945,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -5127,18 +5129,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -5313,18 +5315,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -5507,18 +5509,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -5741,18 +5743,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -5930,18 +5932,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -6119,18 +6121,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -6331,18 +6333,18 @@ class AuditTests(unittest.TestCase):
             mutations.append((identifier, "side-effects.json", "policy", lambda v: v.update(policy="read-write")))
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_multi_fixture(temporary, identifier)
                 path = root / "multi" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -6550,18 +6552,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(identifier, "side-effects.json", name, change) for name, change in effects.items()]
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "single" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_single_fixture(temporary, identifier)
                 path = root / "single" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -6764,18 +6766,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(identifier, "side-effects.json", name, change) for name, change in effects.items()]
         applied = 0
         for index, (identifier, relative, name, mutate) in enumerate(mutations):
+            value = json.loads((audit.FIXTURES / "single" / identifier / relative).read_text())
+            before = json.dumps(value, sort_keys=True)
+            try:
+                mutate(value)
+            except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                continue
+            if json.dumps(value, sort_keys=True) == before:
+                continue
+            applied += 1
             with tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_single_fixture(temporary, identifier)
                 path = root / "single" / identifier / relative
-                value = json.loads(path.read_text())
-                before = json.dumps(value, sort_keys=True)
-                try:
-                    mutate(value)
-                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                    continue
-                if json.dumps(value, sort_keys=True) == before:
-                    continue
-                applied += 1
                 path.write_text(json.dumps(value))
                 with self.subTest(index=index, identifier=identifier, file=relative, mutation=name):
                     self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -7026,18 +7028,18 @@ class AuditTests(unittest.TestCase):
                 mutations += [("manifest.json", name, change) for name, change in manifests.items()]
                 mutations += [("side-effects.json", name, change) for name, change in effects.items()]
                 for relative, name, mutate in mutations:
+                    value = json.loads((audit.FIXTURES / kind / identifier / relative).read_text())
+                    before = json.dumps(value, sort_keys=True)
+                    try:
+                        mutate(value)
+                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                        continue
+                    if json.dumps(value, sort_keys=True) == before:
+                        continue
+                    applied += 1
                     with tempfile.TemporaryDirectory() as temporary:
                         root = copy_fixture(temporary, identifier)
                         path = root / kind / identifier / relative
-                        value = json.loads(path.read_text())
-                        before = json.dumps(value, sort_keys=True)
-                        try:
-                            mutate(value)
-                        except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                            continue
-                        if json.dumps(value, sort_keys=True) == before:
-                            continue
-                        applied += 1
                         path.write_text(json.dumps(value))
                         with self.subTest(identifier=identifier, file=relative, mutation=name):
                             self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -7284,18 +7286,18 @@ class AuditTests(unittest.TestCase):
             mutations += [("manifest.json", name, change) for name, change in manifests.items()]
             mutations += [("side-effects.json", name, change) for name, change in effects.items()]
             for relative, name, mutate in mutations:
+                value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     path = root / "multi" / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=name):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -7943,18 +7945,18 @@ class AuditTests(unittest.TestCase):
             mutations += [("manifest.json", name, change) for name, change in manifests.items()]
             mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
             for relative, name, mutate in mutations:
+                value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     path = root / "multi" / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=name):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -8165,18 +8167,18 @@ class AuditTests(unittest.TestCase):
             mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
             mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / "multi" / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_multi_fixture(temporary, identifier)
                     path = root / "multi" / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -8451,18 +8453,18 @@ class AuditTests(unittest.TestCase):
             mutations.append(("side-effects.json", "policy", lambda v: v.update(policy="read-write")))
             mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / "single" / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_single_fixture(temporary, identifier)
                     path = root / "single" / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -8895,18 +8897,18 @@ class AuditTests(unittest.TestCase):
             mutations.append(("side-effects.json", "after", lambda v: v["after"]["cache"].update(index={"kind": "directory"})))
             mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / "single" / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_single_fixture(temporary, identifier)
                     path = root / "single" / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -9232,18 +9234,18 @@ class AuditTests(unittest.TestCase):
             mutations.append(("side-effects.json", "after", lambda v: v["after"]["cache"].update(index={"kind": "directory"})))
             mutations.append(("side-effects.json", "extra", lambda v: v["before"]["repository"].update(extra={"kind": "directory"})))
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / module.directory_of(identifier) / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_path_lexical_fixture(temporary, identifier)
                     path = root / module.directory_of(identifier) / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -9620,18 +9622,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(f"expected/{name}", label, change) for label, change in results.items()]
             mutations += [("side-effects.json", label, change) for label, change in effects.items()]
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / module.directory_of(identifier) / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_real_path_fixture(temporary, identifier)
                     path = root / module.directory_of(identifier) / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -10080,18 +10082,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(f"expected/{name}", label, change) for label, change in results.items()]
             mutations += [("side-effects.json", label, change) for label, change in effects.items()]
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / ("multi" if identifier.startswith("MULTI-") else "single") / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_real_path_fixture(temporary, identifier)
                     path = root / ("multi" if identifier.startswith("MULTI-") else "single") / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -10380,18 +10382,18 @@ class AuditTests(unittest.TestCase):
             mutations += [("expected/verify.json", label, change) for label, change in results.items()]
             mutations += [("side-effects.json", label, change) for label, change in effects.items()]
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / module.directory_of(identifier) / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_real_path_fixture(temporary, identifier)
                     path = root / module.directory_of(identifier) / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -10967,18 +10969,18 @@ class AuditTests(unittest.TestCase):
             mutations += [("expected/verify.json", label, change) for label, change in results.items()]
             mutations += [("side-effects.json", label, change) for label, change in effects.items()]
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / module.directory_of(identifier) / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_real_path_fixture(temporary, identifier)
                     path = root / module.directory_of(identifier) / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
@@ -14820,12 +14822,22 @@ class AuditTests(unittest.TestCase):
                 suggestedAction="設定キーverify.commands.default.cwdのディレクトリを作成するか、正しいパスを指定してください")),
             ("SINGLE-006-02/expected/doctor.json", lambda value: value["checks"][6].update(status="passed")),
         ]
+        # `validate_initial`が読むのは、スキーマと`INITIAL_CASES`の9件のfixtureだけである。単一ワークスペースの群の全体
+        # （600件余り）ではなく、この9件を複製する。複製した9件を改変せずに受理することを、陽性対照として先に確かめる。
+        def copy_initial(temporary):
+            root = Path(temporary)
+            for identifier in INITIAL_CASES:
+                shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier, symlinks=True)
+            for name in ("manifest", "result", "side-effects"):
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
+            return root
+
+        with tempfile.TemporaryDirectory() as temporary:
+            self.assertEqual(validate_initial(copy_initial(temporary))["errors"], [])
         for relative, mutate in mutations:
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                shutil.copytree(audit.FIXTURES / "single", root / "single", symlinks=True)
-                for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                self.assertIn(relative.split("/", 1)[0], INITIAL_CASES)
+                root = copy_initial(temporary)
                 path = root / "single" / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -15456,18 +15468,18 @@ class AuditTests(unittest.TestCase):
             mutations += [(f"expected/{operation}.json", label, change) for label, change in results.items()]
             mutations += [("side-effects.json", label, change) for label, change in effects.items()]
             for relative, label, mutate in mutations:
+                value = json.loads((audit.FIXTURES / module.directory_of(identifier) / identifier / relative).read_text())
+                before = json.dumps(value, sort_keys=True)
+                try:
+                    mutate(value)
+                except (KeyError, IndexError, TypeError, AttributeError, ValueError, StopIteration):
+                    continue
+                if json.dumps(value, sort_keys=True) == before:
+                    continue
+                applied += 1
                 with tempfile.TemporaryDirectory() as temporary:
                     root = self.copy_real_path_fixture(temporary, identifier)
                     path = root / module.directory_of(identifier) / identifier / relative
-                    value = json.loads(path.read_text())
-                    before = json.dumps(value, sort_keys=True)
-                    try:
-                        mutate(value)
-                    except (KeyError, IndexError, TypeError, AttributeError, ValueError, StopIteration):
-                        continue
-                    if json.dumps(value, sort_keys=True) == before:
-                        continue
-                    applied += 1
                     path.write_text(json.dumps(value))
                     with self.subTest(identifier=identifier, file=relative, mutation=label):
                         self.assertEqual(module.validate(root, {identifier})["status"], "Failed")
