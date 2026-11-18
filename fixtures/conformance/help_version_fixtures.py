@@ -172,7 +172,9 @@ def check_case(identifier):
 
 def check_comparison(identifier, fixture):
     """harnessの比較（`runner._check_cli_output`）を、このfixtureの期待値で陽性と陰性の対照に当てる。"""
-    manifest = {"expect": {"exitCode": reviewed_manifest(identifier)["expect"]["exitCode"]}}
+    reviewed = reviewed_manifest(identifier)
+    manifest = {"invocation": {"argv": reviewed["invocation"]["argv"]},
+                "expect": {"exitCode": reviewed["expect"]["exitCode"]}}
     cli_output = json.loads((fixture / "cli-output.json").read_text())
     outcome = CASES[identifier][2]
     if outcome == "help":
