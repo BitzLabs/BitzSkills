@@ -115,8 +115,8 @@ def main():
                     directory = Path(temporary) / f"checkout{index}"
                     checkout(commit, directory)
                     # 監査はハングを止めるための上限で、合否の条件ではない。監査の自己試験が増え、遅い実行環境では
-                    # 1回が600秒に近づいたので、上限を1200秒にする（CIのGate Aのジョブは全体で30分の上限を持つ）。
-                    conformance.append(run(uv, CONFORMANCE, directory, 1200))
+                    # 1回が600秒に近づいたので、上限を1800秒にする（中の自己試験の上限は1200秒。CIのGate Aのジョブは全体で30分の上限を持つ）。
+                    conformance.append(run(uv, CONFORMANCE, directory, 1800))
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             errors.append(str(error).split("\n")[0])
         else:
