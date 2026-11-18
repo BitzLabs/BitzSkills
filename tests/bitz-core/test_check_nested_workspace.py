@@ -9,10 +9,14 @@
 - 性能の目安: 境界の外の候補がなければ判定しない、候補の祖先だけを見て関係のないツリーを走査しない、基準版の問い合わせを分割する
 - 予約した`.spec/journal`・`.spec/plans`の、エントリ自身とその配下の変更をTASK境界の比較から除くこと（`check.md §7`）。
   エントリがファイルの場合、名前が似た別のエントリとセグメント境界、単一ワークスペースと複合ワークスペースの両方の経路
+- 名前が`.spec`のセグメントを含むディレクトリを入れ子のワークスペースのルートにしないこと（`.spec/.spec/bitz.yaml`で境界を外せない）
+- 入れ子のワークスペースとして除いた変更があれば、ルートごとに1件の`SPEC-TASK-BOUNDARY-003`を返すこと（件数・発生元・並び・文言）。
+  予約したディレクトリの除外では返さないこと、入れ子の入れ子では最も内側のルートで報告すること（司令塔の裁定待ち）
 """
 
 import os
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -83,6 +87,16 @@ def _boundary_paths(result):
     return [d["source"]["path"] for d in result["diagnostics"] if d["code"] == "SPEC-TASK-BOUNDARY-001"]
 
 
+def _nested_warning_paths(result):
+    return [d["source"]["path"] for d in result["diagnostics"] if d["code"] == "SPEC-TASK-BOUNDARY-003"]
+
+
+def _base_commit(root):
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
+    ).stdout.strip()
+
+
 class NestedWorkspaceBoundaryTests(unittest.TestCase):
     def test_sandbox_workspace_with_spec_documents_does_not_break_outer_task(self):
         # `sandbox/exp1/`に仕様文書を持つ独立のワークスペースを置き、その中で文書・コード・結果を変えても、
@@ -102,7 +116,9 @@ class NestedWorkspaceBoundaryTests(unittest.TestCase):
             _write(root, "src/inside.py", "x = 2\n")
 
             result, exit_code = _check_task(root)
-            self.assertEqual(result["status"], "passed", result["diagnostics"])
+            self.assertEqual(result["status"], "passed_with_warnings", result["diagnostics"])
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(_nested_warning_paths(result), ["sandbox/exp1"])
             self.assertEqual(exit_code, 0)
 
             inner, inner_exit = check_mod.run(
@@ -239,7 +255,280 @@ class NestedWorkspaceBoundaryTests(unittest.TestCase):
             excluded = check_mod._task_boundary_diagnostics(
                 entry, git, root, dict(os.environ), base, "root", root, exclude_nested=True
             )
-            self.assertEqual(excluded, [])
+            self.assertEqual([(d.code, d.source["path"]) for d in excluded], [("SPEC-TASK-BOUNDARY-003", "sandbox/exp1")])
+
+
+class SpecSegmentIsNotNestedRootTests(unittest.TestCase):
+    """名前が`.spec`のセグメントを含むディレクトリは入れ子のワークスペースのルートにしない（`check.md §7`）。"""
+
+    def test_path_dirs_stop_at_spec_segment(self):
+        self.assertEqual(check_mod._path_dirs("a/b"), ["a", "a/b"])
+        self.assertEqual(check_mod._path_dirs("dir/"), ["dir"])
+        self.assertEqual(check_mod._path_dirs(".spec/.spec/bitz.yaml"), [])
+        self.assertEqual(check_mod._path_dirs(".spec/requirements/REQ-001.md"), [])
+        self.assertEqual(check_mod._path_dirs("sandbox/x/.spec/y/z.md"), ["sandbox", "sandbox/x"])
+        # 名前が似た別のセグメントは打ち切らない。
+        self.assertEqual(check_mod._path_dirs("a/.specs/b"), ["a", "a/.specs", "a/.specs/b"])
+        self.assertEqual(check_mod._path_dirs("a/spec/b"), ["a", "a/spec", "a/spec/b"])
+
+    def test_config_under_own_spec_does_not_exclude_spec_changes(self):
+        # 検分者の再現: 作業ワークスペースの`.spec/.spec/bitz.yaml`で、REQと設定の変更を境界から外せていた。
+        for committed in (True, False):
+            with self.subTest(committed=committed), tempfile.TemporaryDirectory() as root:
+                _init_repo(root)
+                _outer_workspace(root)
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                if committed:
+                    _write(root, ".spec/.spec/bitz.yaml", "x\n")
+                _commit(root)
+
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001") + "\n追記\n")
+                _write(root, ".spec/bitz.yaml", _bitz_yaml() + "# 変更\n")
+                if not committed:
+                    _write(root, ".spec/.spec/bitz.yaml", "x\n")
+
+                result, exit_code = _check_task(root)
+                expected = [".spec/bitz.yaml", ".spec/requirements/REQ-001.md"]
+                if not committed:
+                    expected.insert(0, ".spec/.spec/bitz.yaml")
+                self.assertEqual(_boundary_paths(result), expected)
+                self.assertEqual(_nested_warning_paths(result), [])
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(exit_code, 1)
+
+    def test_config_under_nested_spec_subdirectory_is_not_a_root(self):
+        # `sandbox/x/.spec/y/.spec/bitz.yaml`の`sandbox/x/.spec/y`はルートにしない。`sandbox/x`に設定があれば、そちらで除く。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sandbox/x/.spec/y/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/x/.spec/y/a.md", "1\n")
+            _write(root, "sandbox/z/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/z/.spec/y/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/z/.spec/y/a.md", "1\n")
+            _commit(root)
+
+            _write(root, "sandbox/x/.spec/y/a.md", "2\n")
+            _write(root, "sandbox/z/.spec/y/a.md", "2\n")
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), ["sandbox/x/.spec/y/a.md"])
+            self.assertEqual(_nested_warning_paths(result), ["sandbox/z"])
+
+
+class NestedExcludedWarningTests(unittest.TestCase):
+    """入れ子のワークスペースとして比較から除いた変更があれば、ルートごとに1件`SPEC-TASK-BOUNDARY-003`を返す。"""
+
+    def test_one_warning_per_root_with_source_order_and_summary(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sandbox/exp2/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/exp2/a.md", "1\n")
+            _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/exp1/b.md", "1\n")
+            _write(root, "sandbox/exp3/.spec/bitz.yaml", _bitz_yaml())  # 変更なし: 警告しない
+            _commit(root)
+
+            _write(root, "sandbox/exp2/a.md", "2\n")
+            _write(root, "sandbox/exp2/new/c.md", "1\n")  # 未追跡
+            _write(root, "sandbox/exp2/.spec/bitz.yaml", _bitz_yaml() + "# 変更\n")
+            _write(root, "sandbox/exp1/b.md", "2\n")
+            _write(root, "zz/outside.md", "1\n")
+            _write(root, "src/inside.py", "x = 2\n")
+
+            result, exit_code = _check_task(root)
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(exit_code, 1)
+            warnings = [d for d in result["diagnostics"] if d["code"] == "SPEC-TASK-BOUNDARY-003"]
+            self.assertEqual(
+                warnings,
+                [
+                    {
+                        "code": "SPEC-TASK-BOUNDARY-003",
+                        "severity": "warning",
+                        "resultStatus": "passed_with_warnings",
+                        "summary": "入れ子のワークスペースsandbox/exp1の配下の変更を、TASK TASK-001の境界の比較から除きました",
+                        "source": {"kind": "file", "workspaceId": "root", "path": "sandbox/exp1"},
+                    },
+                    {
+                        "code": "SPEC-TASK-BOUNDARY-003",
+                        "severity": "warning",
+                        "resultStatus": "passed_with_warnings",
+                        "summary": "入れ子のワークスペースsandbox/exp2の配下の変更を、TASK TASK-001の境界の比較から除きました",
+                        "source": {"kind": "file", "workspaceId": "root", "path": "sandbox/exp2"},
+                    },
+                ],
+            )
+            self.assertEqual(
+                [(d["code"], d["source"]["path"]) for d in result["diagnostics"]],
+                [
+                    ("SPEC-TASK-BOUNDARY-003", "sandbox/exp1"),
+                    ("SPEC-TASK-BOUNDARY-003", "sandbox/exp2"),
+                    ("SPEC-TASK-BOUNDARY-001", "zz/outside.md"),
+                ],
+            )
+
+    def test_only_nested_changes_pass_with_warnings(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+            _write(root, "sandbox/exp1/a.md", "1\n")
+
+            result, exit_code = _check_task(root)
+            self.assertEqual(result["status"], "passed_with_warnings")
+            self.assertEqual(_nested_warning_paths(result), ["sandbox/exp1"])
+            self.assertEqual(exit_code, 0)
+
+    def test_root_config_addition_and_deletion_report_root(self):
+        # 設定自身の追加（作業ツリーにだけある）と削除（基準版にだけある）も、そのルートで報告する。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "gone/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+            os.remove(os.path.join(root, "gone", ".spec", "bitz.yaml"))
+            _write(root, "fresh/.spec/bitz.yaml", _bitz_yaml())
+
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(_nested_warning_paths(result), ["fresh", "gone"])
+
+    def test_directory_replaced_by_file_reports_root_from_base(self):
+        # 基準版で設定を持つディレクトリ`sub`をファイルに置き換えた: `sub`自身も基準版のルートとして除く。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sub/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sub/a.md", "1\n")
+            _commit(root)
+            _git(root, "rm", "-q", "-r", "sub")
+            _write(root, "sub", "ファイル\n")
+
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(_nested_warning_paths(result), ["sub"])
+
+    def test_reserved_directories_do_not_warn(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _commit(root)
+            _write(root, ".spec/journal/a.md", "経過\n")
+            _write(root, ".spec/plans/b.md", "計画\n")
+
+            result, exit_code = _check_task(root)
+            self.assertEqual(result["status"], "passed", result["diagnostics"])
+            self.assertEqual(result["diagnostics"], [])
+            self.assertEqual(exit_code, 0)
+
+    def test_changes_allowed_by_task_do_not_warn(self):
+        # `changes`が許可した変更は境界の外の候補にならないので、入れ子の判定をせず、警告もしない（仕様解釈）。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/tasks/TASK-001.md", _task(["sandbox/exp1/"]))
+            _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+            _write(root, "sandbox/exp1/a.md", "1\n")
+
+            result, _ = _check_task(root)
+            self.assertEqual(result["diagnostics"], [])
+
+    def test_nested_in_nested_reports_innermost_root(self):
+        # 入れ子の入れ子（`a`と`a/b`）は、最も内側のルートで報告する（`check.md §7`は明示していない。司令塔の裁定待ち）。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "a/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "a/b/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "c/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "c/d/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+
+            _write(root, "a/b/x/y.md", "1\n")  # `a/b`だけ
+            _write(root, "c/z.md", "1\n")  # `c`
+            _write(root, "c/d/w.md", "1\n")  # `c/d`
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(_nested_warning_paths(result), ["a/b", "c", "c/d"])
+
+    def test_inner_root_only_in_base_is_preferred_over_outer_worktree_root(self):
+        # 外側`a`は作業ツリーに設定があり、内側`a/b`は基準版にだけ設定がある: 内側を選ぶため基準版も調べる。
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "a/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "a/b/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "a/b/n.md", "1\n")
+            _commit(root)
+            _git(root, "rm", "-q", "a/b/.spec/bitz.yaml")
+            _write(root, "a/b/n.md", "2\n")
+
+            result, _ = _check_task(root)
+            self.assertEqual(_boundary_paths(result), [])
+            self.assertEqual(_nested_warning_paths(result), ["a/b"])
+
+    def test_rename_out_of_nested_reports_destination_and_warns_for_source_root(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _write(root, "sandbox/exp1/moved.md", "移す内容の行\n" * 5)
+            _commit(root)
+            os.makedirs(os.path.join(root, "docs"))
+            _git(root, "mv", "sandbox/exp1/moved.md", "docs/moved.md")
+
+            result, _ = _check_task(root)
+            self.assertEqual(
+                [(d["code"], d["source"]["path"]) for d in result["diagnostics"]],
+                [("SPEC-TASK-BOUNDARY-001", "docs/moved.md"), ("SPEC-TASK-BOUNDARY-003", "sandbox/exp1")],
+            )
+
+    def test_multi_workspace_path_does_not_warn(self):
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            _write(root, "sandbox/exp1/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+            _write(root, "sandbox/exp1/a.md", "1\n")
+            git = gitutil.detect_git(root, dict(os.environ))
+            entry = document_mod.DocEntry(
+                path=".spec/tasks/TASK-001.md", kind="TASK", doc_id="TASK-001", frontmatter={"changes": ["src/"]}
+            )
+            diags = check_mod._task_boundary_diagnostics(
+                entry, git, root, dict(os.environ), _base_commit(root), "root", root,
+                qualified_ids=True, exclude_nested=False,
+            )
+            self.assertEqual([(d.code, d.source["path"]) for d in diags], [("SPEC-TASK-BOUNDARY-001", "sandbox/exp1/a.md")])
+
+    def test_output_is_independent_of_hash_seed(self):
+        script = (
+            "import json, os, sys\n"
+            "from bitz import check\n"
+            "from bitz.cliargs import ParsedArgs\n"
+            "r, _ = check.run(ParsedArgs(operation='check', positionals=['TASK-001'], flags=set(),"
+            " single={'--base': 'HEAD'}, repeat={}), sys.argv[1], dict(os.environ))\n"
+            "print(json.dumps([d['source']['path'] for d in r['diagnostics']]))\n"
+        )
+        with tempfile.TemporaryDirectory() as root:
+            _init_repo(root)
+            _outer_workspace(root)
+            for i in range(8):
+                _write(root, f"n{i}/.spec/bitz.yaml", _bitz_yaml())
+            _commit(root)
+            for i in range(8):
+                _write(root, f"n{i}/f.md", "1\n")
+                _write(root, f"o{i}/f.md", "1\n")
+            outputs = set()
+            for seed in ("0", "1", "12345"):
+                env = dict(os.environ, PYTHONHASHSEED=seed)
+                proc = subprocess.run(
+                    [sys.executable, "-c", script, root], env=env, check=True, capture_output=True, text=True
+                )
+                outputs.add(proc.stdout)
+            self.assertEqual(len(outputs), 1, outputs)
 
 
 class NestedWorkspacePerformanceTests(unittest.TestCase):
@@ -251,7 +540,7 @@ class NestedWorkspacePerformanceTests(unittest.TestCase):
             _commit(root)
             _write(root, "src/inside.py", "x = 2\n")
 
-            with mock.patch.object(check_mod, "_nested_workspace_paths", wraps=check_mod._nested_workspace_paths) as spy:
+            with mock.patch.object(check_mod, "_nested_workspace_roots", wraps=check_mod._nested_workspace_roots) as spy:
                 result, _ = _check_task(root)
             self.assertEqual(result["diagnostics"], [])
             spy.assert_not_called()
@@ -278,10 +567,10 @@ class NestedWorkspacePerformanceTests(unittest.TestCase):
                 ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
             ).stdout.strip()
             with mock.patch("os.lstat", side_effect=_counting_lstat):
-                nested = check_mod._nested_workspace_paths(
+                nested = check_mod._nested_workspace_roots(
                     ["sandbox/exp1/note.md", "other/x.md"], "git", root, dict(os.environ), base, root
                 )
-            self.assertEqual(nested, {"sandbox/exp1/note.md"})
+            self.assertEqual(nested, {"sandbox/exp1/note.md": "sandbox/exp1"})
             self.assertFalse(any(os.sep + "big" in c for c in calls), calls)
             self.assertLessEqual(len(calls), 10)
 
@@ -309,12 +598,23 @@ class NestedWorkspacePerformanceTests(unittest.TestCase):
 
             started = time.monotonic()
             with mock.patch.object(gitutil, "_run", side_effect=_spy):
-                nested = check_mod._nested_workspace_paths(paths, "git", root, dict(os.environ), base, root)
+                nested = check_mod._nested_workspace_roots(paths, "git", root, dict(os.environ), base, root)
             elapsed = time.monotonic() - started
-            self.assertEqual(nested, set())
-            # 候補のディレクトリは`many`と1200個の`many/dNNNN`と1200個のファイル自身で2401個。512個ずつで5回。
+            self.assertEqual(nested, {})
+            # 変更集合を渡さなければ、候補のディレクトリは`many`と1200個の`many/dNNNN`と1200個のファイル自身で2401個。512個ずつで5回。
             self.assertEqual(len(ls_tree_calls), 5)
             self.assertLess(elapsed, 20.0)
+
+            # 変更集合の真の祖先だけを渡すと、ファイル自身は基準版で調べず、`many`と1200個の`many/dNNNN`の1201個。512個ずつで3回。
+            ls_tree_calls.clear()
+            parents = check_mod._changed_parent_dirs([gitutil.ChangedPath(status="A", path=p) for p in paths])
+            with mock.patch.object(gitutil, "_run", side_effect=_spy):
+                nested = check_mod._nested_workspace_roots(
+                    paths, "git", root, dict(os.environ), base, root, parents
+                )
+            self.assertEqual(nested, {})
+            self.assertEqual(len(ls_tree_calls), 3)
+            self.assertEqual(sum(len(c) - c.index("--") - 1 for c in ls_tree_calls), 1201)
 
 
 class ReservedSpecEntriesTests(unittest.TestCase):
