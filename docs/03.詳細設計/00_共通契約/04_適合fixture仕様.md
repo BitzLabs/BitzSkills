@@ -1097,6 +1097,7 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 入れ子のワークスペースのルートは、作業ワークスペースのルートの下位で、作業ツリーまたは基準版に`.spec/bitz.yaml`を持つディレクトリとし、設定の内容を読まず、シンボリックリンクをたどらない。
 `SINGLE-184-*`は、TASK-001（`changes: [src/]`）を`check TASK-001 --base HEAD`で検査する。作業ツリーの`.spec/bitz.yaml`は、Gitで追跡しているか、未追跡か、無視されているかによらず数え、
 `.spec/bitz.yaml`という名前のディレクトリは数えない（[`check`仕様 §7](../03_操作仕様/02_check.md#7-task境界)。[レビュー記録](../../../fixtures/conformance/single/入れ子のワークスペースと予約したディレクトリのレビュー記録.md)）。
+作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`の、エントリ自身とその配下の変更も比較の対象から除き、名前が似た別のエントリは除かない（同 §7）。
 `.spec/journal`と`.spec/plans`は、エントリの種別にかかわらず既知のエントリとし、探索せず、中身を読まず、未知のエントリとしても扱わない。シンボリックリンクを未知のエントリとする規則からも、
 `.spec/reports`と同じく、この2つとその中を除く（[ワークスペース・設定仕様 §3](../02_仕様文書モデル/01_ワークスペース・設定仕様.md#3-探索対象)）。
 `SINGLE-185-*`の中身は、仕様文書として読めばIDの重複（`REQ-001`）、ファイル名とIDの不一致、フロントマターの構文の不正になるMarkdownを含む。`SINGLE-185-06`〜`08`と`MULTI-070-01`は、既存のfixture（`SINGLE-042`・`055`・`001`・`MULTI-053-04`）の入力に予約したディレクトリを足し、期待結果は基のfixtureから導く。
@@ -1123,6 +1124,13 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-184-18` | 基準版に`sandbox/exp1/note.md`だけ。作業ツリーに`sandbox/exp1/.spec/bitz.yaml`を作り（未追跡。基準版にもインデックスにもない）、`note.md`を変える | check TASK-ID --base | passed／0 | 未追跡の設定でも入れ子とし、設定自身の追加と配下の変更を除く。診断0件 |
 | `SINGLE-184-19` | `SINGLE-184-18`の基準版に`.gitignore`（`sandbox/exp1/.spec/bitz.yaml`）を足す。同じ設定を作業ツリーに作り（無視される）、`note.md`を変える | check TASK-ID --base | passed／0 | `.gitignore`で無視された設定でも入れ子とし、配下の変更を除く。診断0件 |
 | `SINGLE-184-20` | 基準版の`sandbox/exp1/.spec/bitz.yaml`が、`config.yaml`を持つディレクトリ。`note.md`を変える | check TASK-ID --base | failed／1 | 対照: `.spec/bitz.yaml`という名前のディレクトリは設定のファイルではないので入れ子にしない。`SINGLE-184-02`と同じ1件 |
+| `SINGLE-184-21` | TASK-001（`changes: [src/]`）と`src/inside.py`だけの基準版（入れ子のワークスペースなし）。作業ツリーに未追跡の`.spec/journal/TASK-001.md`を作る | check TASK-ID --base | passed／0 | 作業ワークスペースの予約したディレクトリ`.spec/journal`の配下の変更を比較から除く。診断0件 |
+| `SINGLE-184-22` | 基準版に`.spec/journal/TASK-001.md`。作業ツリーでそれを変える（未ステージ） | check TASK-ID --base | passed／0 | 追跡しているファイルの変更も除く。診断0件 |
+| `SINGLE-184-23` | 基準版に`.spec/plans/TASK-001.md`と`.spec/plans/sub/old.md`。`TASK-001.md`を変えてステージし、`sub/old.md`を作業ツリーで削除する | check TASK-ID --base | passed／0 | `.spec/plans`の配下のステージした変更と削除（下位のディレクトリを含む）も除く。診断0件 |
+| `SINGLE-184-24` | 基準版の`.spec/journal`が通常のファイル。作業ツリーでそれを変える | check TASK-ID --base | passed／0 | エントリの種別にかかわらず、エントリ自身の変更も除く。診断0件 |
+| `SINGLE-184-25` | 基準版に`.spec/journal/TASK-001.md`。それを変え、作業ツリーに未追跡の`.spec/plans.md`を作る | check TASK-ID --base | failed／1 | 対照: 名前が似た別のエントリは除かない。`.spec/plans.md`の`SPEC-TASK-BOUNDARY-001`（summary「パス.spec/plans.mdはTASK-001の変更許可パスの外です」）と、同じパスの`SPEC-WORKSPACE-UNKNOWN-001`（summaryは`SINGLE-083`と同じ）の2件（同じ`path`なので`code`の辞書順）。`.spec/journal/TASK-001.md`の変更は除く |
+| `SINGLE-184-26` | 基準版に`sandbox/.spec/journal/TASK-001.md`（`sandbox`は`.spec/bitz.yaml`を持たない）。それを変える | check TASK-ID --base | failed／1 | 対照: 作業ワークスペースのルートの`.spec`でないので除かない。`SPEC-TASK-BOUNDARY-001`は`sandbox/.spec/journal/TASK-001.md`の1件だけ |
+| `SINGLE-184-27` | ワークスペースのルートは`app`（リポジトリのルートの下位）。基準版の`app/.spec/journal/TASK-001.md`を変え、未追跡の`app/.spec/plans/TASK-001.md`を作り、`app`で実行 | check TASK-ID --base | passed／0 | ワークスペース相対へ変換した`.spec/journal`と`.spec/plans`の配下の変更を除く。診断0件 |
 | `SINGLE-185-01` | `.spec/journal/`に`2026-11-18.md`と`requirements/REQ-001.md`（どちらも`REQ-001`と同じ内容）、壊れたフロントマターの`broken.md`、`sub/notes.txt`。ほかは`SINGLE-083`と同じREQ-001（コミット済み） | check --full --base | passed／0 | 診断0件。`.spec/journal/`を`SPEC-WORKSPACE-UNKNOWN-001`にせず、中身を仕様文書として読まない。検査文書1、規範文1 |
 | `SINGLE-185-02` | `SINGLE-185-01`と同じ形の中身を`.spec/plans/`に置く | check --full --base | passed／0 | `SINGLE-185-01`と同じ結果 |
 | `SINGLE-185-03` | `.spec/journal`が通常のファイル | check --full --base | passed／0 | エントリの種別にかかわらず既知のエントリとする。`SINGLE-185-01`と同じ結果 |
