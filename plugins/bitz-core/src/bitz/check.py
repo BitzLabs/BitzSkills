@@ -159,8 +159,9 @@ def _task_boundary_diagnostics(
     changed = gitutil.collect_changed_paths(git.executable, cwd, env, base_commit, workspace_root)
     allowed = (entry.frontmatter or {}).get("changes") or []
 
-    violations: list[str] = []
-    reported: set[str] = set()
+    # 比較の対象の候補（TASK自身、明示して生成したレポート、予約したディレクトリを除いたパス）。重複は除く。
+    compared: list[str] = []
+    seen: set[str] = set()
     for c in changed:
         # リネームは移動元と移動先の2つのパスを検査する（安全な入出力・互換性 §6、check.md §7）。
         candidates = [c.old_path, c.path] if c.status == "R" else [c.path]
@@ -170,22 +171,22 @@ def _task_boundary_diagnostics(
                 or pathown.nfc(p) == pathown.nfc(entry.path)
                 or p.startswith(".spec/reports/")
                 or _task_boundary_reserved(p)
-                or p in reported
+                or p in seen
             ):
                 continue
-            if not _task_own_path_allows(p, allowed):
-                reported.add(p)
-                violations.append(p)
+            seen.add(p)
+            compared.append(p)
 
-    nested_roots: list[str] = []
-    if exclude_nested and violations:
-        # 入れ子のワークスペースの判定は、境界の外の候補がある場合だけ、その候補の祖先のディレクトリだけで行う。
-        changed_parents = _changed_parent_dirs(changed)
+    nested: dict[str, str] = {}
+    if exclude_nested and compared:
+        # 入れ子のワークスペースの判定は、比較の候補がある場合だけ、その候補の祖先のディレクトリだけで行う。
+        # `changes`が許可する変更も、入れ子のワークスペースの配下なら比較から除いた変更として数える（`check.md §7`
+        # 「その宣言が許可する変更は比較の対象にならない（除かれる）」）。
         nested = _nested_workspace_roots(
-            violations, git.executable, cwd, env, base_commit, workspace_root, changed_parents
+            compared, git.executable, cwd, env, base_commit, workspace_root, _changed_parent_dirs(changed)
         )
-        violations = [p for p in violations if p not in nested]
-        nested_roots = sorted(set(nested.values()))
+    violations = [p for p in compared if p not in nested and not _task_own_path_allows(p, allowed)]
+    nested_roots = sorted(set(nested.values()))
 
     diags = [
         Diagnostic(
