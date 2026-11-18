@@ -1,6 +1,7 @@
 """不正な証拠を黙って受理しないことを確認する回帰試験。"""
 import json
 import copy
+import hashlib
 import os
 import re
 from pathlib import Path
@@ -117,6 +118,49 @@ from conformance import duplicate_closure_fixtures
 from conformance import multi_closure_origin_fixtures
 from conformance import closure_reachability_fixtures, closure_reference
 from conformance.initial_fixtures import observe as observe_single
+
+
+# 同じスキーマと同じ文書の組に対するスキーマの検証の成功を、試験の間で使い回す（自己試験の高速化）。
+# 改変の対照は、改変していない文書（マニフェスト、副作用の期待値など）を対照ごとに同じスキーマで検証し直すため、
+# 自己試験の時間の多くをスキーマの検証が占める。検証は文書とスキーマだけで決まるので、成功の結果を再利用しても
+# 判定は変わらない。失敗は記録せず、毎回検証し直して同じ例外を送出する。鍵は、JSONへ往復しても同じ値に戻る文書
+# （JSONの型だけからなる文書）にだけ作る。タプル、文字列以外のキー、NaNなどを含む文書は、記録せずに毎回検証する。
+_SCHEMA_ACCEPTED = set()
+_schema_validate_uncached = Draft202012Validator.validate
+
+
+def _json_key(value):
+    text = json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False)
+    if json.loads(text) != value:
+        raise ValueError("JSONへ往復すると値が変わります")
+    return text
+
+
+def _schema_validate_once(self, *args, **kwargs):
+    if len(args) != 1 or kwargs or self.format_checker is not None:
+        return _schema_validate_uncached(self, *args, **kwargs)
+    try:
+        digest = hashlib.sha256()
+        digest.update(_json_key(self.schema).encode())
+        digest.update(b"\0")
+        digest.update(_json_key(args[0]).encode())
+        key = digest.digest()
+    except (TypeError, ValueError):
+        return _schema_validate_uncached(self, *args, **kwargs)
+    if key in _SCHEMA_ACCEPTED:
+        return None
+    _schema_validate_uncached(self, *args, **kwargs)
+    _SCHEMA_ACCEPTED.add(key)
+    return None
+
+
+def setUpModule():
+    Draft202012Validator.validate = _schema_validate_once
+
+
+def tearDownModule():
+    Draft202012Validator.validate = _schema_validate_uncached
+    _SCHEMA_ACCEPTED.clear()
 
 
 class AuditTests(unittest.TestCase):
