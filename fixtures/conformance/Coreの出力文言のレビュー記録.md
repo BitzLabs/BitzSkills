@@ -786,7 +786,7 @@ P1〜P7 は、下の「2026-10-12: 出力文の見直し PR-3（意味の食い�
 
 | 種別 | コード（規則） | 場面 | 文言 |
 |---|---|---|---|
-| summary | `SPEC-TASK-BOUNDARY-003`（`CHECK-TASK-NESTED-EXCLUDED`） | 入れ子のワークスペースの配下の変更を、明示したTASKの境界の比較から除いた | `入れ子のワークスペース{path}の配下の変更を、TASK{task}の境界の比較から除きました`（例: `入れ子のワークスペースsandbox/exp1の配下の変更を、TASK TASK-001の境界の比較から除きました`） |
+| summary | `SPEC-TASK-BOUNDARY-003`（`CHECK-TASK-NESTED-EXCLUDED`） | 入れ子のワークスペースの配下の変更を、明示したTASKの境界の比較から除いた | `入れ子のワークスペース{path}の配下の変更を、TASK {task}の境界の比較から除きました`（例: `入れ子のワークスペースsandbox/exp1の配下の変更を、TASK TASK-001の境界の比較から除きました`） |
 
 `{path}`は入れ子のワークスペースのルートのワークスペース相対のパス、`{task}`は明示したTASKの文書IDである。`TASK`と`{task}`の間には空白を1つ置く。
 
