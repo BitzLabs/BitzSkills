@@ -226,6 +226,12 @@ def task_boundary_no_git(task_id: str) -> str:
     return f"Git不在のため{task_id}のTASK境界を検査できません"
 
 
+def task_boundary_nested_excluded(path: str, task_id: str) -> str:
+    """`SPEC-TASK-BOUNDARY-003`（`CHECK-TASK-NESTED-EXCLUDED`）。`TASK`と``task_id``の間に空白を1つ置く（承認済みの文言）。"""
+
+    return f"入れ子のワークスペース{path}の配下の変更を、TASK {task_id}の境界の比較から除きました"
+
+
 # --- 明示対象の解決（`CTX-ROOT-MISSING-*`） -------------------------------------
 
 def root_missing_explicit(target: str) -> str:
