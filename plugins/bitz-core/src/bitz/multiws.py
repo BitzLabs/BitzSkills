@@ -9,8 +9,7 @@ Gitの既知の設定の事前検査）、§10（スナップショット全体�
 事前検査が非成功なら :func:`precheck` は ``ok=False`` を返し、呼び出し側（`check.py`／`doctor.py`）は
 メンバーの処理（横断する関係の解決、メンバー単位の`check`/`verify`/`context`）を一切開始せず、`workspaces: []`の
 全体結果を返す（複合ワークスペース仕様 §8「非成功ならメンバーの処理、コンテキストの解決、テストコマンドの実行を開始せず、
-`workspaces: []`で結果を返す」）。メンバーの処理そのものはStep 5B・5Cで実装するため、事前検査を通過した
-場合は呼び出し側が既存の:class:`~bitz.notimpl.NotImplementedOperation`の作法で明示的に停止する。
+`workspaces: []`で結果を返す」）。事前検査を通過した場合は、呼び出し側がメンバーの処理へ進む。
 """
 
 from __future__ import annotations
