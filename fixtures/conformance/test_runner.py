@@ -156,12 +156,49 @@ class NoResultSuccessOutputTests(unittest.TestCase):
     HELP = {"exitCode": 0, "stdoutNonEmptyText": True, "stderrLineCount": 0}
     VERSION = {"exitCode": 0, "stdoutVersionLine": True, "stderrLineCount": 0}
 
-    def _check(self, cli_output, exit_code, stdout, stderr, expected_exit=0, core_version=None):
+    def _check(self, cli_output, exit_code, stdout, stderr, expected_exit=0, core_version=None, argv=None):
+        if argv is None:
+            argv = ["--version"] if "stdoutVersionLine" in cli_output else ["check", "--help"]
         with tempfile.TemporaryDirectory() as tmp:
             fixture_root = Path(tmp)
             (fixture_root / "cli-output.json").write_text(json.dumps(cli_output), encoding="utf-8")
-            return _check_cli_output(fixture_root, {"expect": {"exitCode": expected_exit}}, exit_code, stdout, stderr,
-                                     core_version=core_version)
+            manifest = {"invocation": {"argv": argv}, "expect": {"exitCode": expected_exit}}
+            return _check_cli_output(fixture_root, manifest, exit_code, stdout, stderr, core_version=core_version)
+
+    def test_comparison_kind_is_bound_to_the_exit_code(self):
+        # 終了コード4に`stdoutNonEmptyText`、空でない`stdout`、`stderrLineCount: 0`を書いたfixtureは、
+        # Coreの出力を何でも通すので、比べる前にエラーにする（独立レビューの指摘）。
+        rows = [
+            {"exitCode": 4, "stdoutNonEmptyText": True, "stderrLineCount": 0},
+            {"exitCode": 4, "stdout": "", "stderrLineCount": 0},
+            {"exitCode": 4, "stdout": "{}", "stderrLineCount": 1, "stderrPrefix": "bitz: ",
+             "stderrReasonRequired": True, "stderrTerminalControls": False},
+            {"exitCode": 0, "stdout": "", "stderrLineCount": 0},
+            {"exitCode": 0, "stdoutNonEmptyText": True, "stderrLineCount": 1, "stderrPrefix": "bitz: ",
+             "stderrReasonRequired": True, "stderrTerminalControls": False},
+            {"exitCode": 1, "stdoutNonEmptyText": True, "stderrLineCount": 0},
+        ]
+        for cli_output in rows:
+            with self.subTest(cli_output=cli_output):
+                with self.assertRaises(FixtureError):
+                    self._check(cli_output, cli_output["exitCode"], b"x\n", b"", expected_exit=cli_output["exitCode"])
+
+    def test_success_kind_is_bound_to_the_info_request_argv(self):
+        # 終了コード0の比べ方は、Core実行環境・CLI基盤契約 §5.1の起動だけに使える。
+        for cli_output, argv in [
+            (self.HELP, ["check", "--full"]),
+            (self.HELP, ["--version"]),
+            (self.HELP, ["foo", "--help"]),
+            (self.VERSION, ["--help"]),
+            (self.VERSION, ["check", "--version"]),
+            (self.VERSION, ["--version", "--version"]),
+        ]:
+            with self.subTest(argv=argv):
+                with self.assertRaises(FixtureError):
+                    self._check(cli_output, 0, b"bitz 1.0.0\n", b"", argv=argv)
+        for argv in (["--help"], ["--help", "--no-such"], ["verify", "REQ-001", "--help"]):
+            with self.subTest(argv=argv):
+                self.assertEqual(self._check(self.HELP, 0, b"usage\n", b"", argv=argv), [])
 
     def test_help_accepts_any_non_empty_utf8_text_ending_with_newline(self):
         for stdout in (b"usage: bitz\n", "使い方\n\n操作\n".encode(), b"\n"):

@@ -360,6 +360,9 @@ def _major_minor(core_version):
     return match.group(1).encode("ascii"), match.group(2).encode("ascii")
 
 
+PUBLIC_OPERATIONS = ("context", "check", "verify", "doctor")
+
+
 def _load_cli_output(fixture_root):
     """`cli-output.json`の形を検査して返す。比べ方の種類を取り違えたfixtureを、合格にも失敗にもせずエラーにする。
 
@@ -382,7 +385,37 @@ def _load_cli_output(fixture_root):
     present = CLI_OUTPUT_STDERR_KEYS & set(cli_output)
     if (line_count == 0 and present) or (line_count > 0 and present != CLI_OUTPUT_STDERR_KEYS):
         raise FixtureError("`cli-output.json`の標準エラー出力の行の形のキーが`stderrLineCount`と合いません")
+    # 比べ方を終了コードに結び付ける。終了コード4は標準出力が空で標準エラー出力が1行以上（結果・診断・終了コード §3）、
+    # 終了コード0は`--help`か`--version`で標準エラー出力が空（Core実行環境・CLI基盤契約 §5.1）。ほかの組合せを許すと、
+    # 誤って書いたfixtureがCoreの出力を何でも通す。
+    exit_code = cli_output.get("exitCode")
+    if exit_code == 4:
+        if kinds[0] != "stdout" or cli_output["stdout"] != "" or line_count < 1:
+            raise FixtureError("終了コード4の`cli-output.json`は`stdout: \"\"`と1以上の`stderrLineCount`を持ちます")
+    elif exit_code == 0:
+        if kinds[0] not in ("stdoutNonEmptyText", "stdoutVersionLine") or line_count != 0:
+            raise FixtureError("終了コード0の`cli-output.json`は`stdoutNonEmptyText`か`stdoutVersionLine`と、"
+                               "`stderrLineCount: 0`を持ちます")
+    else:
+        raise FixtureError("`cli-output.json`の`exitCode`は0か4です")
     return cli_output
+
+
+def _check_info_request_argv(manifest, cli_output):
+    """終了コード0の`cli-output.json`を持つfixtureの引数列が、`--help`か`--version`の起動であることを確かめる。
+
+    Core実行環境・CLI基盤契約 §5.1の判定の表と同じ条件で、`stdoutVersionLine`は`["--version"]`だけ、
+    `stdoutNonEmptyText`は`--help`の起動だけに使える。
+    """
+    if cli_output["exitCode"] != 0:
+        return
+    argv = manifest["invocation"]["argv"]
+    is_version = argv == ["--version"]
+    is_help = bool(argv) and (argv[0] == "--help" or (argv[0] in PUBLIC_OPERATIONS and "--help" in argv[1:]))
+    if "stdoutVersionLine" in cli_output and not is_version:
+        raise FixtureError("`stdoutVersionLine`は引数列が`--version`の1要素だけの起動に使います")
+    if "stdoutNonEmptyText" in cli_output and not is_help:
+        raise FixtureError("`stdoutNonEmptyText`は`--help`の起動に使います")
 
 
 def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes, core_version=None):
@@ -394,6 +427,7 @@ def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_by
     """
     differences = []
     cli_output = _load_cli_output(fixture_root)
+    _check_info_request_argv(manifest, cli_output)
     expect_exit = manifest["expect"]["exitCode"]
     if exit_code != expect_exit or exit_code != cli_output["exitCode"]:
         differences.append(f"`exitCode`: 期待={expect_exit} 実際={exit_code}")
