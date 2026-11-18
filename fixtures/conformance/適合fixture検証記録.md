@@ -2442,3 +2442,18 @@ commit `987ee944a7cd6500a8a53a39ec34bdf980eb378e`に対して`uv run fixtures/ce
 |---|---|
 | 監査 | 2つのクローンでReport SHA-256が両方`f438b40fc9d1cff2c14262249c4d42599f5ca9a69584e63af623528012a9de49`。Stepの件数は60／150／123／160／342（重複を除いて829件）、手動の一覧は28件、matrixは857件 |
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-11-18: `--help`と`--version`の起動（ADR-075）のfixtureを追加した後のGate Aの再認定
+
+[ADR-075](../../docs/02.設計書/10_決定記録/ADR-075_CLIへ--helpと--versionを加える.md)のとおり、CLIに`--help`と`--version`を加えた（ユーザーの決定）。
+規範（Core実行環境・CLI基盤契約 §5.1、結果・診断・終了コード §3、適合fixture仕様 §3・§4）を書き足し、`SINGLE-127-20`〜`46`の27件を追加した（群`help_version_fixtures`）。
+harnessは、結果を作らない終了コード0の起動（`stdout: none`）と、`cli-output.json`の`stdoutNonEmptyText`（文言を契約にしない`--help`）、
+`stdoutVersionLine`（`--version`。パッチ部は`doctor`の`core.version`と同じく比べない）、`stderrLineCount: 0`を扱う。
+独立レビューの指摘により、`cli-output.json`の比べ方を終了コードと引数列に結び付けた（終了コード4は空の標準出力と1行以上の標準エラー出力、終了コード0は`--help`か`--version`の起動に限る）。
+
+commit `be2420024ec7b8857fdf6280f635d35571cb8efc`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`cd0df9c4adf2c245e479407714e7bfc9e8038c0e5c200d96e4173f6b7a0fb2f6`。Stepの件数は87／150／123／160／342（重複を除いて856件）、手動の一覧は28件 |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |

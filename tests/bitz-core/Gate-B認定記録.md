@@ -1432,3 +1432,25 @@ Core固有の単体試験は1400件がすべて成功した（3件はスキッ�
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は1460件がすべて成功した（3件はスキップ）。
+
+## 2026-11-18: `--help`と`--version`を加えた後のStep 1〜5の再判定
+
+ADR-075のとおり、`cliargs.detect_info_request`が引数列の解析の前に`--help`と`--version`の起動を判定し、`cli.py`がワークスペースの探索、設定の読取り、
+Gitの呼出しより前に、標準出力へUTF-8で書いて終了コード0で返す。`--version`は`doctor`の`core.version`と同じ定義（`doctor.CORE_VERSION`）を使う。
+ヘルプの文言は`messages.py`の1か所にあり、各操作の公開構文は操作仕様 §2と一字違わず一致する（単体試験が仕様から読んで照合する）。
+到達しない`notimpl.py`と`cli.py`の未実装の操作の分岐を除いた。
+修正前のCoreでは`SINGLE-127-20`〜`46`の27件のうち22件が非成功（終了コード4を期待する5件は通過）、修正後は856件すべてが`passed`となる。
+独立レビューは条件付きの合格で、`--timeout`の説明の誤りと、harnessが終了コード4の比較を緩められる経路の指摘を是正した。
+レビューでは、`strace`で`--help`と`--version`がGit、作業ディレクトリ、設定にアクセスしないことを確かめた。
+
+コミット`be2420024ec7b8857fdf6280f635d35571cb8efc`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 856件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。結果のSHA-256は両方`6bd3a6612d651e271adbdb5aee36cb8c6ec4b29c2081f76ec5b4e4e1aa18f3e5` |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は、Coreが同じ内容のコミット`8ca9eb56`で1475件がすべて成功した（3件はスキップ。`be242002`との違いはfixtureの監査の1ファイルだけ）。
