@@ -15769,7 +15769,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["core_execution"], "Not run")
         # 複製した状態でも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
         for identifier in ("SINGLE-184-01", "SINGLE-184-07", "SINGLE-184-19", "SINGLE-184-20", "SINGLE-184-24", "SINGLE-184-25",
-                           "SINGLE-184-28", "SINGLE-184-31", "SINGLE-185-04", "SINGLE-185-09"):
+                           "SINGLE-184-28", "SINGLE-184-31", "SINGLE-184-33", "SINGLE-185-04", "SINGLE-185-09"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
                 self.assertEqual(module.validate(root, {identifier})["errors"], [])
@@ -15837,6 +15837,8 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-184-03", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
             ("SINGLE-184-08", "expected/check.json", lambda v: v["diagnostics"].pop()),
             ("SINGLE-184-08", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-184-33", "expected/check.json", lambda v: v["diagnostics"].insert(0, nested("a"))),
+            ("SINGLE-184-33", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="a")),
             ("SINGLE-184-10", "expected/check.json", lambda v: v["diagnostics"].reverse()),
             ("SINGLE-184-16", "expected/check.json", lambda v: v["diagnostics"].reverse()),
             ("SINGLE-184-19", "expected/check.json", lambda v: (v.update(status="passed"), v["diagnostics"].clear())),
@@ -15938,6 +15940,7 @@ class AuditTests(unittest.TestCase):
                     module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
         # 入れ子の除外の警告のルートを落とす、足す、予約したディレクトリや`.spec`のセグメントを含むディレクトリに返す期待値は、参照計算と一致しない。
         for identifier, roots in (("SINGLE-184-01", []), ("SINGLE-184-08", ["a"]), ("SINGLE-184-19", []),
+                                  ("SINGLE-184-33", ["a", "a/b"]), ("SINGLE-184-33", ["a"]),
                                   ("SINGLE-184-21", [".spec/journal"]), ("SINGLE-184-28", [".spec"]),
                                   ("SINGLE-184-31", ["sandbox/exp1", "sandbox/exp2", "sandbox/exp3"]),
                                   ("SINGLE-184-31", ["sandbox/exp1", "sandbox/exp2", "sandbox/exp2/.spec/v"]),
@@ -15955,15 +15958,14 @@ class AuditTests(unittest.TestCase):
                 repository = fixture_setup(fixture, module.reviewed_manifest(identifier), Path(temporary) / "repo")
                 self.assertEqual(module.nested_roots(repository, ".", True), workspace_roots)
                 self.assertEqual(module.nested_roots(repository, "."), {root for root in workspace_roots if ".spec" not in root.split("/")})
-        # 入れ子の入れ子の内側だけに変更がある入力は、帰属の読み方で警告が変わるので、参照計算が拒否する。
+        # 入れ子の入れ子の配下の変更は、最も内側のルートで数える（`check` §7）。外側だけに変更があれば外側のルートだけになる。
         with tempfile.TemporaryDirectory() as temporary:
             identifier = "SINGLE-184-08"
             manifest = module.reviewed_manifest(identifier)
             manifest["setup"]["operations"] = [operation for operation in manifest["setup"]["operations"]
-                                               if operation["path"] != "a/top.md"]
+                                               if operation["path"] != "a/b/deep.md"]
             repository = fixture_setup(module.fixture_dir(module.HERE, identifier), manifest, Path(temporary) / "repo")
-            with self.assertRaisesRegex(ValueError, "帰属"):
-                module.reference_excluded_roots(repository, ".")
+            self.assertEqual(module.reference_excluded_roots(repository, "."), ["a"])
         # 作業ワークスペースの`.spec/`の中の`.spec`という名前のディレクトリ（予約した3つのエントリの中を除く）は、入力として拒否する。
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)
