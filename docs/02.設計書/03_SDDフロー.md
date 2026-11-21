@@ -48,7 +48,8 @@ Intent -> Interpret Context -> Requirement Review -> Approval
 - 要求レビューは、目的、意味、受入条件、互換性を確認する。
 - 新規または編集中のREQまたはTECHは、レビューの後に`approved`へ変更し、`bitz check <ID>`を通す。
 - `approved`のREQまたはTECHの意味を変更する場合は、変更と同じ作業で先に`draft`または`outdated`へ戻し、
-  レビューの後に`approved`へ変更して`check`を再実行する。
+  レビューの後に`approved`へ変更して`check`を再実行する。戻した状態は、再承認の前にコミットする。統合の前の
+  `check --base <統合先先端>`は、その途中のコミットで状態を戻したことを確かめる（ADR-072、ADR-078）。
 - 設計レビュー（Design Review）は、依存、変更の境界、異常系、検証方法を確認する。
 - レビューの結果はCoreへ保存せず、Git／PRへ記録する。
 - 要求、依存、設定を変更した場合は、承認（Approval）の後の実装用のコンテキスト取得（Implement Context）を再度行う。
