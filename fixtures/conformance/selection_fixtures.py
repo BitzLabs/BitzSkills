@@ -23,7 +23,10 @@ for number, relation, target in ((2, "requires", "TECH-001"), (3, "related", "TE
     DOCUMENTS[path] = TECH.replace("TECH-001", identifier).replace(
         "status: approved\n---", f"status: approved\nrelations:\n  {relation}: [{target}]\n---", 1)
     FRONTMATTER[path] = {"id": identifier, "title": "前提技術", "status": "approved", "relations": {relation: [target]}}
-CHANGED_TECH = TECH.replace("前提技術", "改訂した前提技術")
+# 説明文だけを変える（2026-11-21の訂正。ADR-072でTECHのtitleの変更が保護の違反になり、原因が1種類でなくなったため）。
+# 影響候補の出発点は変更集合の仕様文書のパスから写像した文書であり（`check` §8）、意味の変更を要しない。
+CHANGED_TECH = TECH.replace("規範文を持たない前提技術。", "規範文を持たない改訂した前提技術。")
+assert CHANGED_TECH != TECH
 
 
 def base_files(identifier):
@@ -157,7 +160,7 @@ def validate(root=HERE, identifiers=None):
                 if path in FRONTMATTER:
                     frontmatter.validate(FRONTMATTER[path])
             if identifier == "SINGLE-033":
-                frontmatter.validate({"id": "TECH-001", "title": "改訂した前提技術", "status": "approved"})
+                frontmatter.validate({"id": "TECH-001", "title": "前提技術", "status": "approved"})
             if effects["before"] != effects["after"]:
                 raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None

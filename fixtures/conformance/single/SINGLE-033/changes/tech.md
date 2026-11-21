@@ -1,10 +1,10 @@
 ---
 id: TECH-001
-title: 改訂した前提技術
+title: 前提技術
 status: approved
 ---
 
-# TECH-001 改訂した前提技術
+# TECH-001 前提技術
 
 ## Context
 

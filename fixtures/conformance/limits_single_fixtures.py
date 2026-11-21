@@ -7,9 +7,9 @@
 
 | fixture | 操作 | 入力 | 期待 |
 |---|---|---|---|
-| `SINGLE-183-01` | `doctor` | `SINGLE-001`の設定に`limits: {}` | `passed`／0。`limits`は15キーすべて絶対上限 |
+| `SINGLE-183-01` | `doctor` | `SINGLE-001`の設定に`limits: {}` | `passed`／0。`limits`は16キーすべて絶対上限 |
 | `SINGLE-183-02` | `doctor` | `SINGLE-001`の設定に`limits`の2キー（`expandedArgvBytes: 4096`、`specFileCount: 5`の順に書く） | `passed`／0。`limits`はその2キーの値と残りの絶対上限 |
-| `SINGLE-183-03` | `check --full --base HEAD` | `limits`の15キーすべてが絶対上限ちょうど | `passed`／0。診断なし |
+| `SINGLE-183-03` | `check --full --base HEAD` | `limits`の16キーすべてが絶対上限ちょうど | `passed`／0。診断なし |
 | `SINGLE-183-04` | `check --full --base HEAD` | `limits: 1024`（マッピングでない） | `error`／3。`SPEC-CONFIG-SCHEMA-001`（`source.key`は`limits`） |
 | `SINGLE-183-05` | `check --full --base HEAD` | `limits`の中の未知のキー`futureLimit: 1` | `passed_with_warnings`／0。`SPEC-CONFIG-UNKNOWN-001`（`source.key`は`limits.futureLimit`） |
 | `SINGLE-180-01`、`02` | `check --full --base HEAD` | `specBytes`が仕様文書の大きさちょうど／1小さい | `passed`／`failed`（`SPEC-INPUT-LIMIT-001`） |
@@ -90,6 +90,8 @@ ABSOLUTE = {
     "expandedArgvCount": 10000,
     "expandedArgvElementBytes": 32768,
     "expandedArgvBytes": 1048576,
+    # ADR-078（2026-11-21）が加えた、承認済みの契約の保護で読む途中のコミットの数の上限。
+    "historyCommitCount": 10000,
 }
 # 複合ワークスペースのスナップショット全体へ適用する次元（複合ワークスペース仕様 §10）。単一ワークスペースでは使わない（§4.1）。
 SNAPSHOT_KEYS = ("inputBytes", "statementCount", "relationEdgeCount", "traceEntryCount",
@@ -172,11 +174,11 @@ def case(kind, step, description, **values):
 
 
 CASES = {
-    "SINGLE-183-01": case("doctor", 1, "limitsを空のマッピングで宣言したdoctorはlimitsに15キーすべての絶対上限を返す",
+    "SINGLE-183-01": case("doctor", 1, "limitsを空のマッピングで宣言したdoctorはlimitsに16キーすべての絶対上限を返す",
                           base="SINGLE-001", limits=[]),
     "SINGLE-183-02": case("doctor", 1, "limitsの一部のキーを小さくしたdoctorはその値と残りの絶対上限を表の順に返す",
                           base="SINGLE-001", limits=[("expandedArgvBytes", 4096), ("specFileCount", 5)]),
-    "SINGLE-183-03": case("config", 1, "limitsの15キーすべてが絶対上限ちょうどの設定を受け入れる",
+    "SINGLE-183-03": case("config", 1, "limitsの16キーすべてが絶対上限ちょうどの設定を受け入れる",
                           limits=list(ABSOLUTE.items()), status="passed"),
     "SINGLE-183-04": case("config", 1, "マッピングでないlimitsを設定の型の不正にする",
                           raw="limits: 1024\n", status="error"),

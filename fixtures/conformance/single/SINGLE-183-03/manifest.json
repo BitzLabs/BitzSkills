@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-183-03",
-  "description": "limitsの15キーすべてが絶対上限ちょうどの設定を受け入れる",
+  "description": "limitsの16キーすべてが絶対上限ちょうどの設定を受け入れる",
   "setup": {
     "git": true,
     "baseCommit": {
