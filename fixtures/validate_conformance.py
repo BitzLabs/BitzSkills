@@ -345,7 +345,21 @@ def registry():
     return coverage
 
 
+SKIP_SELF_TESTS = "--skip-self-tests"
+
+
+def run_audit_self_tests(skip):
+    # `--skip-self-tests`は、Gate Aの認定の2つ目のチェックアウトだけが使う（ADR-077）。実行しなかったことを`NotRun`で明示する。
+    if skip:
+        return {"status": "NotRun", "errors": []}
+    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=1200)
+    return {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
+
+
 def main():
+    unknown = [arg for arg in sys.argv[1:] if arg != SKIP_SELF_TESTS]
+    if unknown:
+        raise SystemExit(f"未知の引数です: {unknown[0]}")
     checks = {"public_json": public_json(), "grammar": grammar(), "matrix": matrix(), "registry": registry(), "links": links(), "target_vectors": validate_target_vectors(), "initial_fixtures": validate_initial_fixtures(), "ears_fixtures": validate_ears_fixtures(), "document_fixtures": validate_document_fixtures(), "trace_fixtures": validate_trace_fixtures()}
     checks["graph_fixtures"] = validate_graph_fixtures()
     checks["git_fixtures"] = validate_git_fixtures()
@@ -451,8 +465,7 @@ def main():
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
     # 監査試験は群の追加とともに増え、2026-10-27には負荷なしで約170秒かかったため、上限を600秒へ広げた（確認事項C70）。
     # 自己試験は増え続け、遅い実行環境では1回が600秒に近づいた。上限はハングを止めるためで、合否の条件ではない。
-    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=1200)
-    checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
+    checks["audit_self_tests"] = run_audit_self_tests(SKIP_SELF_TESTS in sys.argv[1:])
     checks["fixture_coverage"] = fixture_coverage(checks)
     checks["step_assignment"] = validate_step_assignment()
     # これらの検査は、構造の検査やヘルパーの試験では意図して保証しない。
