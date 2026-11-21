@@ -16417,6 +16417,10 @@ class AuditTests(unittest.TestCase):
             "MULTI-071-03": [], "MULTI-071-04": [module.violation(".spec/requirements/REQ-010.md", "title", "REQ", workspace="web")],
             # メンバーの設定または絶対上限を使う。
             "MULTI-071-05": [],
+            # 2つ目の親の側の状態の戻し、2つ目の親とだけ状態が異なるマージコミット、IDを読めない親を認めない。
+            "SINGLE-187-20": module.REQ_VIOLATION, "SINGLE-187-21": module.REQ_VIOLATION, "SINGLE-187-23": module.REQ_VIOLATION,
+            # outdatedからdraftへの変更を状態を変えた版とする。
+            "SINGLE-187-22": [],
             # マージコミットを、すべての親と異なる場合だけ変更したとする。
             "SINGLE-187-07": module.REQ_VIOLATION,
             # パスだけを変えたコミットを変更したとする。
@@ -16459,7 +16463,17 @@ class AuditTests(unittest.TestCase):
             # 重複したIDの読み方（F-3）: 同じIDの文書が2つある親を、文書がない親とみなす。
             "duplicates=absent": ({"duplicates": "absent"}, ["SINGLE-187-17"]),
             # ADR-081の前の定義（ADR-078の決定1）: 文書を変更した`draft`または`outdated`の版を認める。
-            "recognize=content": ({"recognize": "content"}, ["SINGLE-187-06"]),
+            "recognize=content": ({"recognize": "content"}, ["SINGLE-187-06", "SINGLE-187-22"]),
+            # 再検収のG-2: 版の状態が親の状態と異なれば状態を変えたとする（`outdated`から`draft`への変更を含む）。
+            "recognize=differs": ({"recognize": "differs"}, ["SINGLE-187-22"]),
+            # 再検収のG-1: 途中のコミットを1つ目の親の列だけでたどる。判定の違いで拒否するのは187-20（状態を戻したコミットが2つ目の親の側）と
+            # 188-06（数えるコミットが減り上限を超えない）で、ほかは途中のコミットの数の検査で拒否する。
+            "walk=first-parent": ({"walk": "first-parent"}, ["SINGLE-187-05", "SINGLE-187-06", "SINGLE-187-07", "SINGLE-187-09",
+                                                              "SINGLE-187-20", "SINGLE-187-22", "SINGLE-188-06", "SINGLE-188-07"]),
+            # 再検収のG-1: マージコミットの1つ目の親とだけ比べる。
+            "parents=first": ({"parents": "first"}, ["SINGLE-187-21"]),
+            # 再検収のG-3: IDを読めない親の版との比較では状態を変えたとしない。
+            "unreadable=unchanged": ({"unreadable": "unchanged"}, ["SINGLE-187-23"]),
         }
         for name, (reading, identifiers) in expected.items():
             with self.subTest(mutant=name), patch.dict(module.READING, reading):
@@ -16471,7 +16485,8 @@ class AuditTests(unittest.TestCase):
                     except ValueError:
                         rejected.append(identifier)
                 self.assertEqual(rejected, identifiers)
-        self.assertEqual(module.READING, {"recognize": "state", "boundary": "spec", "duplicates": "skip"})
+        self.assertEqual(module.READING, {"recognize": "state", "boundary": "spec", "duplicates": "skip", "walk": "all",
+                                          "parents": "all", "unreadable": "absent"})
 
     def test_approved_history_reference_reads_documents_narrowly(self):
         """参照計算の字句の読み方: YAMLの構文の不正、上限の超過、規範文と強い関係の読取り。"""

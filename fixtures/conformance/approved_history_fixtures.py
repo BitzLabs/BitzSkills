@@ -60,7 +60,12 @@ ABSOLUTE_LIMITS = (LIMIT_SPEC_BYTES, LIMIT_FRONTMATTER_BYTES)
 # - `boundary`: `spec`は境界のコミットが`HEAD`または基準版から到達できれば完全に得られないとする（§8.1）。`head`は`HEAD`から到達できる場合だけ、
 #   `adjacent`は境界が途中のコミットまたはその親である場合だけとする（検収で示された、通ってしまう2つの読み方）。
 # - `duplicates`: `skip`は同じIDの文書が2つ以上ある親との比較で状態を変えたとしない（§8.1）。`absent`はその親に文書がないとみなす。
-READING = {"recognize": "state", "boundary": "spec", "duplicates": "skip"}
+# - `recognize`の`differs`は、版の状態が親の状態と異なれば状態を変えたとする（`outdated`から`draft`への変更も含む。再検収のG-2）。
+# - `walk`: `all`はすべての途中のコミット（§8.1）。`first-parent`は1つ目の親の列だけをたどる（G-1）。
+# - `parents`: `all`はすべての親と比べる（§8.1「親の少なくとも1つ」）。`first`はマージコミットの1つ目の親とだけ比べる（G-1）。
+# - `unreadable`: `absent`はIDを読めない親の版を、同じIDの文書がない親とする（§8.1。索引に入らない版と同じ）。
+#   `unchanged`はその親との比較で状態を変えたとしない（G-3）。
+READING = {"recognize": "state", "boundary": "spec", "duplicates": "skip", "walk": "all", "parents": "all", "unreadable": "absent"}
 
 
 # --- 入力の文書 ---------------------------------------------------------------------------------
@@ -357,6 +362,36 @@ CASES.update({
                              [], "途中の版のフロントマターがlimits.frontmatterBytesちょうどなら読み、draftの版として認めて通過する"),
 })
 
+# 再検収（G-1〜G-3）: 2つ目の親の側だけにある状態を戻したコミット、マージコミットの2つ目の親とだけ状態が異なる版、
+# `outdated`から`draft`への変更、IDを読めない親の版（§8.1、ADR-081）。
+PRE_OUTDATED = {CONFIG_PATH: CONFIG, REQ_PATH: req(state="outdated")}
+CASES.update({
+    "SINGLE-187-20": history(BASE_REQ, CHANGED,
+                             [branch("feat"), checkout("feat"), *REAPPROVE, checkout("fixture"), merge("feat"), commit("merge feat")],
+                             [], "状態を戻したコミットがマージした枝（2つ目の親の側）だけにあっても、途中のコミットなので通過する"),
+    "SINGLE-187-21": dict(history(PRE_APPROVAL, {"approved-a.md": req(), "draft.md": req(state="draft"),
+                                                 "approved.md": req(REQ_TITLE_CHANGED), "note.md": NOTE},
+                                  [branch("old"), *change(REQ_PATH, "changes/approved-a.md", "approve"), branch("base"),
+                                   checkout("old"), *create("docs/note.md", "changes/note.md", "old"), merge("base"),
+                                   update(REQ_PATH, "changes/draft.md"), {"op": "stage", "paths": [REQ_PATH]}, commit("merge base"),
+                                   *change(REQ_PATH, "changes/approved.md", "approve")],
+                                  [], "マージコミットのdraftの版は、1つ目の親もdraftでも、2つ目の親がapprovedなら状態を変えた版として認める")),
+    "SINGLE-187-22": dict(history(PRE_OUTDATED, {"approved-a.md": req(), "draft.md": req(state="draft"),
+                                                 "approved.md": req(REQ_TITLE_CHANGED)},
+                                  [branch("old"), *change(REQ_PATH, "changes/approved-a.md", "approve"), branch("base"),
+                                   checkout("old"), *change(REQ_PATH, "changes/draft.md", "old"), checkout("fixture"),
+                                   *change(REQ_PATH, "changes/approved.md", "change"), merge("old"),
+                                   update(REQ_PATH, "changes/approved.md"), {"op": "stage", "paths": [REQ_PATH]}, commit("merge old")],
+                                  REQ_VIOLATION, "outdatedからdraftへの変更は、親の状態がoutdatedなので状態を変えた版ではなく、途中の状態として認めない")),
+    "SINGLE-187-23": history(BASE_REQ, {"broken.md": BROKEN_DRAFT, **CHANGED},
+                             [*change(REQ_PATH, "changes/broken.md", "broken"), *change(REQ_PATH, "changes/draft.md", "draft"),
+                              *change(REQ_PATH, "changes/approved.md", "approve")],
+                             [], "親の版のIDを読めなければ親に同じIDの文書がないとし、読めるdraftの版を状態を変えた版として認める"),
+})
+# 枝`base`を承認したコミットに作るケース。`history`が先頭に置いた枝`base`を除く。
+for _identifier in ("SINGLE-187-21", "SINGLE-187-22"):
+    CASES[_identifier]["operations"] = CASES[_identifier]["operations"][1:]
+
 FOUR_COMMITS = [branch("side"), *change(TECH_PATH, "changes/draft.md", "draft"), checkout("side"),
                 *create("docs/note.md", "changes/note.md", "side"), checkout("fixture"), merge("side"), commit("merge side"),
                 *change(TECH_PATH, "changes/approved.md", "approve")]
@@ -630,6 +665,8 @@ def documents_at(repository, revision, prefix, limits=ABSOLUTE_LIMITS):
         document = read_document(content, *limits)
         if document is not None:
             result.setdefault(document["id"], []).append((path[len(prefix):], content, document))
+        else:
+            result.setdefault(None, []).append(path[len(prefix):])
     return result
 
 
@@ -665,7 +702,8 @@ def history_state(repository, base):
     head = resolve(repository, "HEAD")
     if head == base or _succeeds(repository, "merge-base", "--is-ancestor", head, base):
         return [], True
-    commits = _git_text(repository, "rev-list", head, "--not", base).split()
+    walk = ["--first-parent"] if READING["walk"] == "first-parent" else []
+    commits = _git_text(repository, "rev-list", *walk, head, "--not", base).split()
     return commits, False
 
 
@@ -706,6 +744,8 @@ def has_intermediate_state(repository, commits, identifier, prefix, limits):
         parents = parents_of(repository, commit)
         if not parents:
             return True
+        if READING["parents"] == "first":
+            parents = parents[:1]
         for parent in parents:
             previous = at(parent).get(identifier, [])
             if len(previous) >= 2:
@@ -713,9 +753,14 @@ def has_intermediate_state(repository, commits, identifier, prefix, limits):
                     return True
                 continue
             if not previous:
+                if READING["unreadable"] == "unchanged" and versions[0][0] in at(parent).get(None, []):
+                    continue
                 return True
             if READING["recognize"] == "content":
                 if previous[0][1] != versions[0][1]:
+                    return True
+            elif READING["recognize"] == "differs":
+                if previous[0][2]["status"] != versions[0][2]["status"]:
                     return True
             elif previous[0][2]["status"] not in DRAFT_STATES:
                 return True
@@ -734,7 +779,7 @@ def reference_diagnostics(repository, base_revision, prefix, workspace, base_pre
     before = documents_at(repository, base, prefix if base_prefix is None else base_prefix, limits)
     after = documents_at(repository, None, prefix, limits)
     candidates = []
-    for identifier, versions in sorted(after.items()):
+    for identifier, versions in sorted((key, value) for key, value in after.items() if key is not None):
         if len(versions) != 1 or len(before.get(identifier, [])) != 1:
             continue
         old, new = before[identifier][0][2], versions[0][2]
@@ -754,7 +799,7 @@ def reference_diagnostics(repository, base_revision, prefix, workspace, base_pre
 
 
 def reference_counts(repository, prefix):
-    documents = documents_at(repository, None, prefix)
+    documents = {key: value for key, value in documents_at(repository, None, prefix).items() if key is not None}
     return sum(len(v) for v in documents.values()), sum(len(d[2]["statements"]) for v in documents.values() for d in v)
 
 
@@ -813,6 +858,7 @@ def inspect_history(repository, identifier):
     expected = {
         "SINGLE-187-05": 3, "SINGLE-187-06": 3, "SINGLE-187-07": 3, "SINGLE-187-09": 3,
         "SINGLE-188-06": 4, "SINGLE-188-07": 4,
+        "SINGLE-187-20": 3, "SINGLE-187-21": 3, "SINGLE-187-22": 3, "SINGLE-187-23": 3,
     }
     if identifier in expected and len(commits) != expected[identifier]:
         raise ValueError("途中のコミットの数がレビュー済みの履歴と異なります")
@@ -871,6 +917,21 @@ def inspect_history(repository, identifier):
         sizes = [len(git(repository, "cat-file", "blob", f"{revision}:{REQ_PATH}")) for revision in (base, "HEAD")]
         if len(draft) != SIZE_LIMIT or max(sizes) > limit:
             raise ValueError("途中の版だけがlimits.specBytesの境界にある形ではありません")
+    if identifier in {"SINGLE-187-20", "SINGLE-187-21", "SINGLE-187-22"}:
+        merge_commit = commits[1] if identifier == "SINGLE-187-21" else commits[0]
+        parents = parents_of(repository, merge_commit)
+        status = lambda revision: (read_document(git(repository, "cat-file", "blob", f"{revision}:{REQ_PATH}"), LIMIT_SPEC_BYTES)
+                                   or {"status": None})["status"]
+        shape = {"SINGLE-187-20": (["approved", "approved", "approved"], parents[:1] == [base]),
+                 "SINGLE-187-21": (["draft", "draft", "approved"], parents[1:] == [base]),
+                 "SINGLE-187-22": (["approved", "approved", "draft"], True)}[identifier]
+        if len(parents) != 2 or [status(revision) for revision in (merge_commit, *parents)] != shape[0] or not shape[1]:
+            raise ValueError("マージコミットと親の状態がレビュー済みの形と異なります")
+        if identifier == "SINGLE-187-22" and status(f"{parents[1]}^") != "outdated":
+            raise ValueError("枝oldのコミットの親がoutdatedではありません")
+    if identifier == "SINGLE-187-23" and (git(repository, "cat-file", "blob", f"{commits[2]}:{REQ_PATH}") != BROKEN_DRAFT
+                                          or read_document(BROKEN_DRAFT, LIMIT_SPEC_BYTES) is not None):
+        raise ValueError("IDを読めない版のコミットの形ではありません")
     if identifier == "SINGLE-187-07":
         merge_commit = commits[1]
         parents = _git_text(repository, "rev-list", "--parents", "-n", "1", merge_commit).split()[1:]
