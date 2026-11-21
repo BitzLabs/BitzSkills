@@ -28,6 +28,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CERTIFIED = "full Gate A fresh-checkout repeatability"
 CHECKOUTS = 2
 CONFORMANCE = ["fixtures/validate_conformance.py"]
+# 2つ目のチェックアウトは監査の自己試験を実行しない。比較は自己試験の項目を除いて行う（ADR-077）。
+CONFORMANCE_WITHOUT_SELF_TESTS = [*CONFORMANCE, "--skip-self-tests"]
+SELF_TESTS = "audit_self_tests"
 
 
 def git(*args, cwd=None):
@@ -65,27 +68,34 @@ def judge(conformance):
     """チェックアウトごとの監査の実行結果から、認定を妨げる理由を列挙する。空なら認定できる。
 
     監査は、エラーのある検査がなく、未完了の証拠がこのコマンドの認定する1項目だけで、
-    全チェックアウトのレポートがバイト列として一致することを求める。規模の検証の結果は求めない（ADR-076）。
+    全チェックアウトのレポートが、自己試験の項目を除いて一致することを求める。自己試験は1つ目のチェックアウトで
+    通過し、2つ目のチェックアウトでは実行していない（`NotRun`）ことを求める（ADR-077）。規模の検証の結果は求めない（ADR-076）。
     """
     errors = []
     if len(conformance) != CHECKOUTS:
         return [f"チェックアウトは{CHECKOUTS}つ必要です"]
+    compared = []
     for index, result in enumerate(conformance, 1):
         try:
             report = json.loads(result["stdout"])
             failed = sorted(name for name, check in report["checks"].items() if check.get("errors"))
             pending = report["pending"]
+            self_tests = report["checks"].pop(SELF_TESTS)["status"]
         except (ValueError, KeyError, TypeError, AttributeError):
             errors.append(f"監査{index}: レポートの形式が不正です{stderr_tail(result)}")
             continue
+        expected = "Passed" if index == 1 else "NotRun"
+        if self_tests != expected:
+            errors.append(f"監査{index}: 自己試験の状態が{expected}ではありません（{self_tests}）")
+        compared.append(json.dumps(report, ensure_ascii=False, sort_keys=True))
         if failed:
             errors.append(f"監査{index}: エラーのある検査があります（{', '.join(failed)}）")
         if pending != [CERTIFIED]:
             errors.append(f"監査{index}: このコマンドで認定できない未完了の証拠があります")
         if result["exitCode"] != 1:
             errors.append(f"監査{index}: 終了コードが1ではありません")
-    if len({result["stdout"] for result in conformance}) != 1:
-        errors.append("監査のレポートがチェックアウト間でバイト一致しません")
+    if len(compared) == CHECKOUTS and len(set(compared)) != 1:
+        errors.append("監査のレポートがチェックアウト間で一致しません（自己試験の項目を除く）")
     return errors
 
 
@@ -116,7 +126,8 @@ def main():
                     checkout(commit, directory)
                     # 監査はハングを止めるための上限で、合否の条件ではない。監査の自己試験が増え、遅い実行環境では
                     # 1回が600秒に近づいたので、上限を1800秒にする（中の自己試験の上限は1200秒。CIのGate Aのジョブは全体で30分の上限を持つ）。
-                    conformance.append(run(uv, CONFORMANCE, directory, 1800))
+                    script = CONFORMANCE if index == 0 else CONFORMANCE_WITHOUT_SELF_TESTS
+                    conformance.append(run(uv, script, directory, 1800))
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             errors.append(str(error).split("\n")[0])
         else:

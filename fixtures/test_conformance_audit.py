@@ -15015,11 +15015,15 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(step_assignment.manual_families(), ["MULTI-020", "MULTI-021", "MULTI-041"])
 
     @staticmethod
-    def certification_runs(pending=None, errors=None, conformance_exit=1):
-        report = {"gateA": "Blocked", "pending": [certify.CERTIFIED] if pending is None else pending,
-                  "checks": {"links": {"errors": errors or []}, "fixture_coverage": {"status": "Passed", "errors": []}}}
-        conformance = {"exitCode": conformance_exit, "stdout": json.dumps(report).encode()}
-        return [conformance, dict(conformance)]
+    def certification_runs(pending=None, errors=None, conformance_exit=1, self_tests=("Passed", "NotRun")):
+        # 1つ目のチェックアウトは自己試験を実行し、2つ目は実行しない（ADR-077）。
+        runs = []
+        for status in self_tests:
+            report = {"gateA": "Blocked", "pending": [certify.CERTIFIED] if pending is None else pending,
+                      "checks": {"links": {"errors": errors or []}, "fixture_coverage": {"status": "Passed", "errors": []},
+                                 "audit_self_tests": {"status": status, "errors": []}}}
+            runs.append({"exitCode": conformance_exit, "stdout": json.dumps(report).encode()})
+        return runs
 
     def test_gate_a_certification_accepts_identical_fresh_checkouts(self):
         self.assertEqual(certify.judge(self.certification_runs()), [])
@@ -15033,11 +15037,63 @@ class AuditTests(unittest.TestCase):
         }
         conformance = self.certification_runs()
         cases["checkout数"] = conformance[:1]
-        cases["reportのbyte不一致"] = [conformance[0], {"exitCode": 1, "stdout": conformance[1]["stdout"] + b"\n"}]
+        cases["自己試験の失敗"] = self.certification_runs(self_tests=("Failed", "NotRun"))
+        cases["1つ目で自己試験を実行していない"] = self.certification_runs(self_tests=("NotRun", "NotRun"))
+        cases["2つ目で自己試験を実行した"] = self.certification_runs(self_tests=("Passed", "Passed"))
+        cases["自己試験の項目の欠落"] = [{"exitCode": 1, "stdout": json.dumps({"pending": [certify.CERTIFIED], "checks": {}}).encode()}] * 2
+        altered = json.loads(conformance[1]["stdout"])
+        altered["checks"]["links"]["note"] = "x"
+        cases["自己試験の外のreportの不一致"] = [conformance[0], {"exitCode": 1, "stdout": json.dumps(altered).encode()}]
         cases["JSONでないreport"] = [{"exitCode": 1, "stdout": b"not json"}] * 2
         for name, runs in cases.items():
             with self.subTest(name):
                 self.assertTrue(certify.judge(runs))
+
+    def test_gate_a_certification_compares_reports_without_the_self_tests(self):
+        # 2つのレポートは自己試験の項目を除いて比べ、自己試験は1つ目のチェックアウトでだけ実行する（ADR-077）。
+        self.assertEqual(certify.CONFORMANCE_WITHOUT_SELF_TESTS, [*certify.CONFORMANCE, "--skip-self-tests"])
+        first, second = self.certification_runs()
+        reordered = json.dumps(json.loads(second["stdout"]), indent=2).encode()
+        self.assertEqual(certify.judge([first, {"exitCode": 1, "stdout": reordered}]), [])
+
+    def test_gate_a_certification_skips_the_self_tests_only_in_the_second_checkout(self):
+        import contextlib
+        import io
+        scripts = []
+        runs = iter(self.certification_runs())
+
+        def fake_run(uv, script, directory, timeout):
+            scripts.append(script)
+            return next(runs)
+
+        head = certify.subprocess.CompletedProcess(["git"], 0, stdout="0" * 40 + "\n", stderr="")
+        with patch.object(certify, "worktree_errors", return_value=[]), \
+                patch.object(certify.shutil, "which", return_value="uv"), \
+                patch.object(certify, "git", return_value=head), \
+                patch.object(certify, "checkout"), \
+                patch.object(certify, "run", side_effect=fake_run), \
+                patch.object(certify, "version", return_value="x"), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            exit_code = certify.main()
+        self.assertEqual(exit_code, 0, output.getvalue())
+        self.assertEqual(scripts, [certify.CONFORMANCE, certify.CONFORMANCE_WITHOUT_SELF_TESTS])
+        self.assertEqual(json.loads(output.getvalue())["gateA"], "Allowed")
+
+    def test_audit_skip_self_tests_option_reports_not_run(self):
+        # `--skip-self-tests`の監査は自己試験を起動せず、`NotRun`を明示する。未知の引数は受け付けない。
+        self.assertEqual(audit.SKIP_SELF_TESTS, "--skip-self-tests")
+        with patch.object(sys, "argv", ["validate_conformance.py", "--unknown"]):
+            with self.assertRaises(SystemExit):
+                audit.main()
+        with patch.object(audit.subprocess, "run") as run:
+            self.assertEqual(audit.run_audit_self_tests(True), {"status": "NotRun", "errors": []})
+        run.assert_not_called()
+        for code, status in ((0, "Passed"), (1, "Failed")):
+            with patch.object(audit.subprocess, "run", return_value=subprocess.CompletedProcess([], code, "", "誤り")) as run:
+                result = audit.run_audit_self_tests(False)
+            self.assertEqual(result["status"], status)
+            self.assertEqual(bool(result["errors"]), code != 0)
+            self.assertTrue(str(run.call_args.args[0][-1]).endswith("fixtures/test_conformance_audit.py"))
 
     def test_gate_a_certification_does_not_run_the_scale_validation(self):
         # 実寸の検証は手動の検証であり、Gate Aの認定の条件にしない（ADR-076）。認定は監査だけを各チェックアウトで実行する。
