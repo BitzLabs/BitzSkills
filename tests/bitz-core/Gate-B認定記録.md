@@ -1475,3 +1475,17 @@ ADR-074のとおり、単一ワークスペースのTASK境界の比較から、
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は、Coreが同じ内容のコミット`cbae1406`で1510件がすべて成功した（3件はスキップ。`fa26ac41`との違いはfixtureのharnessの時間の上限だけ）。
+
+## 2026-11-21: Gate Aの2つ目のチェックアウトで監査の自己試験を省いた（ADR-077）後のStep 1〜5の再判定
+
+ADR-077は、fixtureの監査とGate Aの認定の手順だけを変え、fixtureの入力と期待値、Coreの実装は変えていない。
+
+コミット`dddc9b1db9f3e881c87abc9021db6ab9eb2a9321`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た（所要時間は333秒）。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 900件と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。結果のSHA-256は両方`d5fb97464d042e05fab3f55a042b76cc288f87b57ef584c6704562b21289f02d`（前回の認定と同じ） |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
