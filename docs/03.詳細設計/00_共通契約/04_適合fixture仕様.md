@@ -1163,6 +1163,63 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-185-09` | `SINGLE-185-01`の`.spec/journal/`に、ファイルへのシンボリックリンク`linked.md`（`../requirements/REQ-001.md`）、ディレクトリへのシンボリックリンク`linked-dir`（`../../docs/linked`。リンク先は`REQ-001`と同じ内容のMarkdownと壊れたフロントマターのMarkdown）、リンク先のないシンボリックリンク`sub/dangling.md`を足す | check --full --base | passed／0 | `.spec/journal`の中のシンボリックリンクを未知のエントリにせず、たどらない。`SINGLE-185-01`と同じ結果 |
 | `SINGLE-185-10` | `SINGLE-185-09`と同じ形の中身を`.spec/plans/`に置く | check --full --base | passed／0 | `SINGLE-185-09`と同じ結果 |
 
+### 6.25 承認済みの契約の保護（TECH、途中のコミット、途中のコミットを完全には読めない場合）
+
+承認済みの契約の保護は、基準版の`approved`のREQとTECHを現在版と比べ、`title`、規範文、強い関係を変えながら状態を`draft`または`outdated`へ戻していない文書を、
+途中のコミットにその文書を変更した`draft`または`outdated`の版がない限り`SPEC-SAFETY-APPROVED-001`（`failed`）とする
+（[文書・フロントマター・状態仕様 §8、§8.1、§8.2](../02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#8-承認済み要求の保護)、[ADR-072](../../02.設計書/10_決定記録/ADR-072_承認済みの契約の保護をTECHへ広げ、途中のコミットの状態で再承認を判定する.md)、
+[ADR-078](../../02.設計書/10_決定記録/ADR-078_承認済みの契約の保護で認める途中の版を変更したコミットに限り、履歴の読取りに上限を設ける.md)、[ADR-079](../../02.設計書/10_決定記録/ADR-079_承認済みの契約の保護の途中のコミットの読み方と診断の形を定める.md)）。
+診断は意味が変わった1文書に1件で、`source`は現在版のその文書のファイル、`source.key`は変わった項目のうち`title`、`relations.requires`、`relations.refines`、`relations.addresses`、
+`relations.supersedes`、`statements`の順で最初のもの、`evidence`は持たない。`summary`は、通常は「状態approvedのREQの意味変更時に文書の状態が戻されていません」（TECHは「状態approvedのTECHの意味変更時に文書の状態が戻されていません」）、途中のコミットを完全には読めない場合
+（診断レジストリ`CHECK-APPROVED-MEANING-HISTORY`）は「状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」（TECHは「状態approvedのTECHの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」）とする。
+
+途中のコミットの履歴は、準備の処理`commit`、`branch`、`checkout`、`merge`、`shallow`で作る（§3.2、[ADR-080](../../02.設計書/10_決定記録/ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)）。
+`SINGLE-187-*`と`SINGLE-188-*`の多くは、基準版のコミットの直後に枝`base`を作り（承認の前から始めるものは、承認したコミットに作る）、`--base base`で起動する。
+REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検査」）、TECHは規範文1件（`TECH-001:AC-01`）を節Contractに持つ`TECH-001`（`title`は「出力の制約」）とし、
+`title`の変更はH1も同じく変える。`--full`の結果の`checkedDocumentCount`と`checkedStatementCount`は現在版のすべての仕様文書の数と規範文の数である。
+最後の状態がコミット済みでクリーンなら`revision.dirty`は`false`、作業ツリーまたはインデックスに変更があれば`true`とする。部分クローンの欠けたオブジェクトと親のないコミットは、準備の処理で作らない（§3.2）。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-186-01` | `approved`のTECH-001の`title`を作業ツリーで変え、状態は`approved`のまま | check --full --base HEAD | failed／1 | `SPEC-SAFETY-APPROVED-001`の1件（summary「状態approvedのTECHの意味変更時に文書の状態が戻されていません」、`source.key`は`title`）。検査文書1、規範文1 |
+| `SINGLE-186-02` | TECH-001の規範文の`operation`の文だけを変える | check --full --base HEAD | failed／1 | 同じ1件で、`source.key`は`statements` |
+| `SINGLE-186-03` | `approved`のREQ-001とTECH-001。TECH-001に`relations.requires: [REQ-001]`だけを足す | check --full --base HEAD | failed／1 | TECH-001の1件で、`source.key`は`relations.requires`。検査文書2、規範文2 |
+| `SINGLE-186-04` | 規範文のないTECH-001（`SINGLE-033`のTECH-001と同じ形）。`title`を変え、基準版と現在版のどちらにも規範文がない | check --full --base HEAD | failed／1 | TECH-001の1件で、`source.key`は`title`（`title`と強い関係だけを比べる。§8）。検査文書1、規範文0 |
+| `SINGLE-186-05` | TECH-001の`title`を変え、状態を`outdated`へ戻す | check --full --base HEAD | passed／0 | 診断なし（`approved -> outdated`は許可した遷移） |
+| `SINGLE-186-06` | TECH-001の節Contextの説明文だけを変える | check --full --base HEAD | passed／0 | 保護の対象外。診断なし |
+| `SINGLE-186-07` | REQ-001の規範文の`operation`の文だけを変える | check --full --base HEAD | failed／1 | `SPEC-SAFETY-APPROVED-001`の1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません」、`source.key`は`statements`） |
+| `SINGLE-186-08` | REQ-001と規範文のないTECH-001。REQ-001に`relations.requires: [TECH-001]`だけを足す | check --full --base HEAD | failed／1 | REQ-001の1件で、`source.key`は`relations.requires`。検査文書2、規範文1 |
+| `SINGLE-186-09` | `SINGLE-186-08`の入力で、REQ-001の`title`、`relations.requires`、規範文を同時に変える | check --full --base HEAD | failed／1 | 1件だけで、`source.key`は最初の項目の`title` |
+| `SINGLE-186-10` | REQ-001、REQ-002、規範文のないTECH-001。REQ-001の規範文を変え、`relations.refines: [REQ-002:AC-01]`と`relations.requires: [TECH-001]`を足す（`title`は変えない） | check --full --base HEAD | failed／1 | 1件だけで、`source.key`は関係型の順で最初の`relations.requires`。検査文書3、規範文2 |
+| `SINGLE-186-11` | REQ-001とTECH-001。TECH-001の規範文を変え、`relations.refines: [REQ-001:AC-01]`を足す | check --full --base HEAD | failed／1 | TECH-001の1件で、`source.key`は規範文より前の`relations.refines`。検査文書2、規範文2 |
+| `SINGLE-187-01` | 基準版の後に、REQ-001の`title`を変えて状態を`draft`にしたコミット、状態を`approved`に戻したコミットを作る（クリーン） | check --full --base base | passed／0 | 途中のコミットがREQ-001を変更し、その版が`draft`なので違反にしない。`dirty: false` |
+| `SINGLE-187-02` | 基準版の後に、REQ-001の状態だけを`outdated`にしたコミット、`title`を変えて`approved`にしたコミットを作る | check --full --base HEAD~2 | passed／0 | `outdated`の途中の版も認める。基準版はリビジョンの式で指定する（§3.1） |
+| `SINGLE-187-03` | 途中のコミットの版が`rejected`で、その後に`title`を変えて`approved`にする | check --full --base base | failed／1 | `rejected`は`draft`でも`outdated`でもないので違反のまま（summaryは通常の文言） |
+| `SINGLE-187-04` | 基準版の後に、`title`を変えた`approved`のREQ-001をコミットし、`draft`の版をインデックスにだけステージし、作業ツリーは`approved`の版に戻す | check --full --base base | failed／1 | インデックスの版は途中の状態としない（§8.1）。`dirty: true` |
+| `SINGLE-187-05` | 最初のコミットのREQ-001は`draft`で、そこで枝`old`を作る。REQ-001を`approved`にしたコミットに枝`base`を作る。`old`ではREQ-001に触れず`docs/note.md`を足し、`fixture`で`title`を変え（`approved`のまま）、`old`をマージする | check --full --base base | failed／1 | 枝`old`のコミットはREQ-001を変更していないので、その`draft`の版を途中の状態として認めない（ADR-078） |
+| `SINGLE-187-06` | `SINGLE-187-05`の形で、枝`old`のコミットが`draft`のREQ-001の節Verificationを変える。マージの結果は`approved`で、`title`と節Verificationが変わる | check --full --base base | passed／0 | 枝`old`のコミットは`draft`の文書を変更した版なので、途中の状態として認める（ADR-078の決定1の帰結。承認の前に分かれた枝でも、文書を変更していれば認める） |
+| `SINGLE-187-07` | `SINGLE-187-05`の形で、枝`old`（REQ-001に触れない）をマージしたコミットでREQ-001を`old`と同じ`draft`の版にし、その後のコミットで`title`を変えて`approved`にする | check --full --base base | passed／0 | マージコミットの版は2つ目の親と同じで1つ目の親と異なるので、文書を変更した版として認める（親の少なくとも1つで異なれば変更した。§8.1） |
+| `SINGLE-187-08` | 基準版の後に、`draft`の版をコミットし、次のコミットでパスを`.spec/requirements/REQ-001-renamed.md`へ移して`title`を変え`approved`にする | check --full --base base | passed／0 | 途中のコミットの版と現在版のパスが異なっても、IDで対応付ける |
+| `SINGLE-187-09` | `SINGLE-187-05`の形で、枝`old`のコミットがREQ-001（`draft`）のパスだけを`.spec/requirements/REQ-001-renamed.md`へ移す。マージの結果は新しいパスの`approved`で`title`が変わる | check --full --base base | failed／1 | パスだけを変えたコミットは文書を変更していない。診断の`source.path`は現在版の`.spec/requirements/REQ-001-renamed.md` |
+| `SINGLE-187-10` | 途中のコミットのREQ-001のフロントマターがYAMLの構文の不正（`title: [閉じていない`。状態の行は`draft`）。その後に`title`を変えて`approved`にする | check --full --base base | failed／1 | IDを読めない版は`draft`の版としない（`check` §5の索引に入らない版。ADR-079の決定4） |
+| `SINGLE-187-11` | `SINGLE-187-01`の形で、途中の`draft`の版を説明文で長くし、`limits.specBytes`をその版のバイト数より1小さくする（基準版と現在版は上限以内） | check --full --base base | failed／1 | 途中の版にも`specBytes`を当て、超えた版をIDを読めない版とする（安全な入出力・互換性 §4.1） |
+| `SINGLE-187-12` | `SINGLE-187-11`の入力で、`limits.specBytes`を途中の版のバイト数ちょうどにする | check --full --base base | passed／0 | ちょうどは遮断しない |
+| `SINGLE-187-13` | 途中のコミットで、REQ-001を`draft`にし、同じIDの`.spec/requirements/REQ-001-copy.md`（`draft`）も置く。その後のコミットで複製を削除し、`title`を変えて`approved`にする | check --full --base base | failed／1 | 同じIDの文書が2つあるコミットの版は途中の状態として認めない（§8.1） |
+| `SINGLE-187-14` | REQ-001とREQ-002。途中のコミットでREQ-001を`draft`にしてREQ-002の`title`を変え（`approved`のまま）、その後のコミットでREQ-001を`approved`にする。両方の`title`が変わる | check --full --base base | failed／1 | REQ-002の1件だけ（文書ごとに判定する）。検査文書2、規範文2 |
+| `SINGLE-187-15` | `SINGLE-187-01`の形で、TECH-001を`draft`にしてから`approved`に戻す | check --full --base base | passed／0 | TECHも途中の状態を認める |
+| `SINGLE-188-01` | `SINGLE-187-01`の入力で、`draft`の途中のコミット（`HEAD~1`）をシャロークローンの境界にする | check --full --base base | failed／1 | 境界が`HEAD`から到達できるので、途中に`draft`の版があっても違反のまま。summary「状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」、`source.key`は`title` |
+| `SINGLE-188-02` | 基準版のコミットの後に`docs/note.md`を足したコミットに枝`base`を作り、その後に`SINGLE-187-01`と同じ2つのコミットを作る。基準版（`base`）をシャロークローンの境界にする | check --full --base base | failed／1 | 境界が基準版から到達できるので、途中のコミットの外の境界でも`SINGLE-188-01`と同じ文言の違反 |
+| `SINGLE-188-03` | `SINGLE-187-01`の入力で、基準版から分けた枝`other`の`docs/note.md`のコミットだけをシャロークローンの境界にする | check --full --base base | passed／0 | 境界が`HEAD`からも基準版からも到達できないので、通常どおり判定する |
+| `SINGLE-188-04` | 基準版のコミットをシャロークローンの境界にし（深さ1）、作業ツリーでREQ-001の`title`を変える | check --full --base HEAD | failed／1 | 基準版が`HEAD`と同じなので境界を見ない。summaryは通常の文言（ADR-079の決定1） |
+| `SINGLE-188-05` | `docs/note.md`を足したコミットに枝`old`、REQ-001の`title`を変えたコミットに枝`base`を作り、`old`へ戻して`HEAD`を境界にする | check --full --base base | failed／1 | `HEAD`が基準版の祖先なので途中のコミットはなく、境界を見ない。summaryは通常の文言 |
+| `SINGLE-188-06` | TECH-001。基準版の後に、`draft`のコミット、枝`side`の`docs/note.md`のコミット、`side`のマージコミット、`approved`に戻したコミット（途中のコミットは4つ）。`limits.historyCommitCount: 3` | check --full --base base | failed／1 | 途中のコミットの数が上限を超えるので、`draft`の版があっても違反のまま。summary「状態approvedのTECHの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」（マージコミットと`HEAD`も数える。§4.1） |
+| `SINGLE-188-07` | `SINGLE-188-06`の入力で`limits.historyCommitCount: 4` | check --full --base base | passed／0 | ちょうどは遮断しない |
+| `SINGLE-188-08` | 設定に`safety.protectApprovedRequirements: false`。基準版の後に、REQ-001の`title`を変えたコミット（`approved`のまま）を作り、`HEAD`を境界にする | check --full --base base | passed／0 | 保護を無効にした設定では履歴を読まないので、シャロークローンでも違反にしない |
+| `SINGLE-188-09` | `SINGLE-188-01`の入力 | check REQ-001 --base base | failed／1 | 明示対象でも途中のコミットを読む。`scope: selected`、検査文書1、規範文1、`SINGLE-188-01`と同じ診断 |
+| `SINGLE-188-10` | 基準版のコミットを`commit`の準備の処理で作り（`setup.baseCommit`なし）、`HEAD`を境界にし、作業ツリーでREQ-001の`title`を変える | check REQ-001 | failed／1 | `--base`なしでは基準版を`HEAD`とする（`check` §5）。深さ1のチェックアウトでも通常の文言（ADR-079の`Consequences`）。`scope: selected` |
+| `SINGLE-188-11` | `SINGLE-186-01`の入力 | check --full --base HEAD --format text | failed／1 | 要約行`check failed scope=full targets=1 diagnostics=1 (<duration>ms)`と、診断の行`root:.spec/technical/TECH-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのTECHの意味変更時に文書の状態が戻されていません`（結果・診断・終了コード §7） |
+| `SINGLE-188-12` | `SINGLE-188-01`の入力 | check --full --base base --format text | failed／1 | 要約行と、診断の行`root:.spec/requirements/REQ-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）` |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1534,6 +1591,8 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `MULTI-069-24` | `MULTI-069-22`の形で、`m001`の2件のテスト対応が同じコマンド`c00001`を使う（展開した後の引数列は3要素、ほかは2要素）。ルートの設定に`limits.expandedArgvCount: 2` | verify all | blocked／2 | 展開した後の引数列の上限もルートの設定の値をメンバーのテスト割当てへ適用する（§4.1）。`m001`の`diagnostics`に`SPEC-VERIFY-BLOCKED-001`の1件（summary「{tests}展開後のargvの要素数が上限2を超えます」、`source.key`は`verify.commands.c00001.argv`）、`m001`の検証対象は`blocked`で`bindingRefs: []`、`commands`は空。ルートと`m002`は実行して`passed`（`MULTI-051-03`と同じ形） |
 | `MULTI-069-25` | `MULTI-069-20`と同じ基準版と変更で、変更した2つのファイルをインデックスへステージする（インデックスと作業ツリーは規範文5件、基準版のコミットは6件） | check --all-workspaces --base HEAD | blocked／2 | 基準版のスナップショットの上限は、作業ツリーとインデックスではなく基準版のコミットの内容で数える（安全な入出力・互換性 §4.1）。結果は`MULTI-069-20`と同じ（`statementCount`、`limit=5`、`observedAtLeast=6`、`revision.dirty`は`true`） |
 | `MULTI-070-01` | `MULTI-053-04`の入力から、メンバー`web`の設定のBOMと`profiles`、未知のファイル`.spec/aaa.txt`と`.spec/notes.txt`を除き、`web`に`SINGLE-185-01`と同じ形の`.spec/journal/`と`.spec/plans/`を置く | check --all-workspaces --base HEAD | passed／0 | メンバーの予約したディレクトリも`SPEC-WORKSPACE-UNKNOWN-001`にせず、読まない（[ADR-074](../../02.設計書/10_決定記録/ADR-074_入れ子のワークスペースをTASK境界から除き、経過の記録と計画の置き場を予約する.md)）。`platform`と`web`の`diagnostics`は空で、どちらも`passed`。件数は`MULTI-053-04`と同じ |
+| `MULTI-071-01` | ルート`platform`（仕様文書なし）、メンバー`web`（`approved`のREQ-010）と`api`（`approved`のTECH-020）。基準版の後に、REQ-010の`title`を変えて`draft`にしたコミット、`approved`に戻したコミットを作る（`apps/web`で実行） | check --full --base base | passed／0 | 作業ワークスペース`web`の文書でも途中の状態を認める。`workspace`は`web`（`apps/web`）、検査文書1、規範文1、`dirty: false` |
+| `MULTI-071-02` | `MULTI-071-01`の履歴に、TECH-020の`title`を変えたコミット（`approved`のまま）を足す（ルートで実行） | check --all-workspaces --base base | failed／1 | `api`の`diagnostics`に`SPEC-SAFETY-APPROVED-001`の1件（summary「状態approvedのTECHの意味変更時に文書の状態が戻されていません」、`source`は`{file, api, .spec/technical/TECH-020.md, title}`）。`platform`と`web`は`passed`、最上位の`diagnostics`は空 |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
