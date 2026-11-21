@@ -256,7 +256,7 @@ def apply_history_operation(root, operation, merging):
             raise ValueError(f"枝{name}が存在しません")
         if not _clean(root):
             raise ValueError("`checkout`にはクリーンな作業ツリーが必要です")
-        git(root, "checkout", "--quiet", name)
+        git(root, "checkout", "--quiet", name, "--")
         return None
     if kind == "merge":
         name = _branch_name(operation)

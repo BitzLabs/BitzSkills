@@ -16317,6 +16317,18 @@ class AuditTests(unittest.TestCase):
                                             "invocation": {**manifest["invocation"], "argv": ["check", "--full", "--format", "json"]}})
                     with self.assertRaises(ValueError):
                         fixture_setup(fixture, no_git, root / f"no-git-{operation['op']}")
+        # `--base`は、準備の処理`commit`だけでコミットを作るfixtureにも求め、省く例外はIDで列挙したものだけにする（適合fixture仕様 §3）。
+        check = {**manifest, "fixtureId": "SINGLE-999", "invocation": {**manifest["invocation"], "argv": ["check", "--full", "--format", "json"]}}
+        self.assertEqual(len(audit.base_option_errors(check)), 1)
+        by_commit = {**check, "setup": {"git": True, "operations": [{"op": "stage", "paths": ["."]}, {"op": "commit", "message": "m"}]}}
+        self.assertEqual(len(audit.base_option_errors(by_commit)), 1)
+        unborn = {**check, "setup": {"git": True, "operations": []}}
+        self.assertEqual(audit.base_option_errors(unborn), [])
+        self.assertEqual(audit.base_option_errors({**check, "fixtureId": "SINGLE-188-10"}), [])
+        self.assertEqual(len(audit.base_option_errors({**by_commit, "fixtureId": "SINGLE-188-10"})), 1)
+        self.assertEqual(len(audit.base_option_errors({**manifest, "fixtureId": "SINGLE-188-10"})), 1)
+        self.assertEqual(audit.base_option_errors(manifest), [])
+        self.assertEqual(audit.BASE_OMISSION_EXCEPTIONS, {"SINGLE-188-10"})
         # 監査は、Gitを実行せずにマニフェストだけでマージの途中の誤りを拒否する。
         self.assertEqual(audit.merge_sequence_errors(valid), [])
         self.assertEqual(len(audit.merge_sequence_errors([{"op": "merge", "name": "a"}])), 1)

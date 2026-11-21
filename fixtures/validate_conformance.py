@@ -204,6 +204,27 @@ def matrix_rows():
     return re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MULTI-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
 
 
+# `--base`の省略（基準版を`HEAD`とする。`check` §5）そのものを確かめるfixture。適合fixture仕様 §3がIDで列挙する例外である。
+BASE_OMISSION_EXCEPTIONS = frozenset({"SINGLE-188-10"})
+
+
+def base_option_errors(manifest):
+    """コミットを作るfixtureの`check`に、明示の`--base`を求める（適合fixture仕様 §3）。
+
+    コミットは`setup.baseCommit`と準備の処理`commit`のどちらでも作れるので、両方を数える。`--base`を省く例外は
+    `BASE_OMISSION_EXCEPTIONS`のIDだけで、最初のコミットを`setup.baseCommit`で作る（準備の処理`commit`で代えない）。
+    """
+    setup, argv = manifest["setup"], manifest["invocation"]["argv"]
+    commits = "baseCommit" in setup or any(operation.get("op") == "commit" for operation in setup["operations"])
+    if manifest["fixtureId"] in BASE_OMISSION_EXCEPTIONS:
+        if argv[0] != "check" or "--base" in argv or "baseCommit" not in setup:
+            return ["`--base`を省く例外のfixtureは、`setup.baseCommit`で最初のコミットを作り、`--base`なしの`check`を起動する必要があります"]
+        return []
+    if argv[0] == "check" and commits and "--base" not in argv:
+        return ["コミット済みのfixtureには明示の`--base`が必要です"]
+    return []
+
+
 def merge_sequence_errors(operations):
     """マージの途中（`merge`の後、`commit`の前）の`branch`、`checkout`、`merge`、`shallow`と、最後に残るマージの途中を拒否する。
 
@@ -248,8 +269,7 @@ def matrix():
             validator.validate(manifest)
             argv = manifest["invocation"]["argv"]
             # `--base`を受け付けるのは`check`だけで、`context`、`verify`、`doctor`は基準版のオプションを持たない。
-            if argv[0] == "check" and "baseCommit" in manifest["setup"] and "--base" not in argv:
-                errors.append(f"{path}: コミット済みのfixtureには明示の`--base`が必要です")
+            errors += [f"{path}: {error}" for error in base_option_errors(manifest)]
             if not manifest["setup"]["git"] and "--base" in argv:
                 errors.append(f"{path}: Git不在のfixtureでは`--base`を使えません")
             errors += [f"{path}: {error}" for error in merge_sequence_errors(manifest["setup"]["operations"])]
