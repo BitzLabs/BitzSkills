@@ -1,0 +1,2 @@
+check failed scope=full targets=1 diagnostics=1 (0ms)
+root:.spec/requirements/REQ-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）

@@ -1,0 +1,75 @@
+{
+  "fixtureId": "SINGLE-187-08",
+  "description": "途中のコミットのdraftの版と現在版のパスが異なっても、IDで対応付けて途中の状態として認める",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "branch",
+        "name": "base"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/draft.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "draft"
+      },
+      {
+        "op": "rename",
+        "from": ".spec/requirements/REQ-001.md",
+        "to": ".spec/requirements/REQ-001-renamed.md"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001-renamed.md",
+        "source": "changes/approved.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md",
+          ".spec/requirements/REQ-001-renamed.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "rename and approve"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "base",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
