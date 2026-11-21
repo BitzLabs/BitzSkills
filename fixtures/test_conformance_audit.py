@@ -16117,5 +16117,213 @@ class AuditTests(unittest.TestCase):
             (repository / ".spec/requirements/a.md").symlink_to("../x.md")
             self.assertEqual(module.unexempt_symlinks(repository), [".spec/requirements/a.md"])
 
+
+    # --- 適合harnessの準備の処理（commit、branch、checkout、merge、shallow。ADR-080、適合fixture仕様 §3.2） ---
+
+    def history_fixture(self, root, changes=None):
+        """履歴の準備の処理を試す最小のfixtureのディレクトリを作る。"""
+        fixture = root / "fixture"
+        (fixture / "repo").mkdir(parents=True)
+        (fixture / "repo/a.txt").write_bytes(b"base\n")
+        (fixture / "repo/b.txt").write_bytes(b"base\n")
+        (fixture / "changes").mkdir()
+        for name, content in (changes or {}).items():
+            (fixture / "changes" / name).write_bytes(content)
+        return fixture
+
+    def history_plan(self, operations, base=True):
+        plan = {"git": True, "operations": operations}
+        if base:
+            plan["baseCommit"] = {"message": "base", "paths": ["."]}
+        return {"setup": plan}
+
+    def test_history_operations_build_the_same_commits_twice(self):
+        """2回の`setup`で同じコミットID、親の順序、境界のコミットを与える。"""
+        operations = [
+            {"op": "branch", "name": "old"},
+            {"op": "branch", "name": "start"},
+            {"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+            {"op": "stage", "paths": ["a.txt"]},
+            {"op": "commit", "message": "main 1"},
+            {"op": "checkout", "name": "old"},
+            {"op": "update", "path": "b.txt", "source": "changes/b1.txt"},
+            {"op": "stage", "paths": ["b.txt"]},
+            {"op": "commit", "message": "old 1"},
+            {"op": "commit", "message": "old empty"},
+            {"op": "checkout", "name": "fixture"},
+            {"op": "merge", "name": "old"},
+            {"op": "commit", "message": "merge old"},
+            {"op": "shallow", "revisions": ["HEAD~1", "old"]},
+            # 境界のコミットの親は、Gitからたどれない。すでに記録したコミットは重ねない。
+            {"op": "shallow", "revisions": ["old", "start"]},
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root, {"a1.txt": b"main\n", "b1.txt": b"old\n"})
+            observations = []
+            for run in range(2):
+                repository = fixture_setup(fixture, self.history_plan(operations), root / f"run{run}")
+                head = fixture_git(repository, "rev-parse", "HEAD").decode().strip()
+                parents = fixture_git(repository, "rev-list", "--parents", "-n", "1", "HEAD").decode().split()[1:]
+                first = fixture_git(repository, "rev-parse", "HEAD^1").decode().strip()
+                old = fixture_git(repository, "rev-parse", "old").decode().strip()
+                # マージコミットの親は、1つ目が`HEAD`、2つ目がマージした枝の先端である。
+                self.assertEqual(parents, [first, old])
+                # 空のコミットを許す。
+                # `old`は境界のコミットなので、親はコミットのオブジェクトから読む。
+                lines = fixture_git(repository, "cat-file", "-p", old).decode().splitlines()
+                parent = next(line.split()[1] for line in lines if line.startswith("parent "))
+                self.assertEqual(fixture_git(repository, "rev-parse", f"{old}^{{tree}}"), fixture_git(repository, "rev-parse", f"{parent}^{{tree}}"))
+                # 境界のコミットを重ねずに追記し、オブジェクトは削除しない。
+                shallow = (repository / ".git/shallow").read_text().split()
+                start = fixture_git(repository, "rev-parse", "start").decode().strip()
+                self.assertEqual(shallow, [first, old, start])
+                self.assertEqual(fixture_git(repository, "cat-file", "-t", start).decode().strip(), "commit")
+                self.assertEqual(fixture_git(repository, "symbolic-ref", "HEAD").decode().strip(), "refs/heads/fixture")
+                self.assertEqual((repository / "a.txt").read_bytes(), b"main\n")
+                self.assertEqual((repository / "b.txt").read_bytes(), b"old\n")
+                self.assertEqual(fixture_git(repository, "status", "--porcelain=v1", "--untracked-files=all").decode(), "")
+                observations.append((head, parents, shallow, fixture_git(repository, "rev-list", "--all", "--parents").decode()))
+            self.assertEqual(observations[0], observations[1])
+
+    def test_history_operations_merge_conflict_needs_content(self):
+        """衝突は準備の誤りにせず、マージの途中に`update`または`delete`で内容を与えてからマージコミットを作る。"""
+        base = [{"op": "branch", "name": "side"},
+                {"op": "update", "path": "a.txt", "source": "changes/main.txt"}, {"op": "stage", "paths": ["a.txt"]},
+                {"op": "commit", "message": "main"}, {"op": "checkout", "name": "side"},
+                {"op": "update", "path": "a.txt", "source": "changes/side.txt"}, {"op": "stage", "paths": ["a.txt"]},
+                {"op": "commit", "message": "side"}, {"op": "checkout", "name": "fixture"}, {"op": "merge", "name": "side"}]
+        changes = {"main.txt": b"main\n", "side.txt": b"side\n", "merged.txt": b"merged\n"}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root, changes)
+            resolved = base + [{"op": "update", "path": "a.txt", "source": "changes/merged.txt"},
+                               {"op": "stage", "paths": ["a.txt"]}, {"op": "commit", "message": "merge"}]
+            repository = fixture_setup(fixture, self.history_plan(resolved), root / "resolved")
+            self.assertEqual(fixture_git(repository, "show", "HEAD:a.txt"), b"merged\n")
+            self.assertEqual(len(fixture_git(repository, "rev-list", "--parents", "-n", "1", "HEAD").decode().split()), 3)
+            deleted = base + [{"op": "delete", "path": "a.txt"}, {"op": "stage", "paths": ["a.txt"]},
+                              {"op": "commit", "message": "merge"}]
+            repository = fixture_setup(fixture, self.history_plan(deleted), root / "deleted")
+            self.assertNotIn("a.txt", fixture_git(repository, "ls-tree", "--name-only", "HEAD").decode().split())
+            rejected = {
+                # 衝突の印のまま、内容を与えずにステージしてコミットする。
+                "unresolved-content": base + [{"op": "stage", "paths": ["a.txt"]}, {"op": "commit", "message": "merge"}],
+                # 内容を与えても、ステージせずにコミットすると、インデックスに未解決の衝突が残る。
+                "unstaged": base + [{"op": "update", "path": "a.txt", "source": "changes/merged.txt"},
+                                    {"op": "commit", "message": "merge"}],
+            }
+            for name, operations in rejected.items():
+                with self.subTest(name=name), self.assertRaises(ValueError):
+                    fixture_setup(fixture, self.history_plan(operations), root / name)
+
+    def test_history_operations_reject_each_precondition(self):
+        """事前条件の違反ごとに、準備の誤り（`ValueError`）にする。"""
+        changes = {"a1.txt": b"main\n", "b1.txt": b"side\n"}
+        side = [{"op": "branch", "name": "side"}, {"op": "checkout", "name": "side"},
+                {"op": "update", "path": "b.txt", "source": "changes/b1.txt"}, {"op": "stage", "paths": ["b.txt"]},
+                {"op": "commit", "message": "side"}, {"op": "checkout", "name": "fixture"}]
+        merging = side + [{"op": "merge", "name": "side"}]
+        cases = {
+            # `commit`: マージの途中でない場合も、インデックスに未解決の衝突があれば拒否する（衝突はマージでしか作れないので、上の試験で確かめる）。
+            "commit-empty-message": ([{"op": "commit", "message": ""}], True),
+            # `branch`: `HEAD`のコミットがない、同じ名前の枝がある、マージの途中、名前の字句。
+            "branch-without-head": ([{"op": "branch", "name": "side"}], False),
+            "branch-exists": ([{"op": "branch", "name": "fixture"}], True),
+            "branch-twice": ([{"op": "branch", "name": "side"}, {"op": "branch", "name": "side"}], True),
+            "branch-while-merging": (merging + [{"op": "branch", "name": "other"}], True),
+            "branch-uppercase": ([{"op": "branch", "name": "Side"}], True),
+            "branch-leading-digit": ([{"op": "branch", "name": "1side"}], True),
+            "branch-slash": ([{"op": "branch", "name": "a/b"}], True),
+            "branch-empty": ([{"op": "branch", "name": ""}], True),
+            # `checkout`: 枝がない、作業ツリーがクリーンでない（作業ツリーの変更、ステージした変更、無視されない未追跡のファイル）、マージの途中。
+            "checkout-missing": ([{"op": "checkout", "name": "side"}], True),
+            "checkout-worktree-change": ([{"op": "branch", "name": "side"},
+                                          {"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+                                          {"op": "checkout", "name": "side"}], True),
+            "checkout-staged-change": ([{"op": "branch", "name": "side"},
+                                        {"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+                                        {"op": "stage", "paths": ["a.txt"]}, {"op": "checkout", "name": "side"}], True),
+            "checkout-untracked": ([{"op": "branch", "name": "side"},
+                                    {"op": "create", "path": "c.txt", "source": "changes/a1.txt"},
+                                    {"op": "checkout", "name": "side"}], True),
+            "checkout-while-merging": (merging + [{"op": "checkout", "name": "side"}], True),
+            # `merge`: 枝がない、先端が`HEAD`と同じ、`HEAD`の祖先、作業ツリーがクリーンでない、マージの途中、`HEAD`のコミットがない。
+            "merge-missing": ([{"op": "merge", "name": "side"}], True),
+            "merge-same-as-head": ([{"op": "branch", "name": "side"}, {"op": "merge", "name": "side"}], True),
+            "merge-ancestor": ([{"op": "branch", "name": "side"},
+                                {"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+                                {"op": "stage", "paths": ["a.txt"]}, {"op": "commit", "message": "main"},
+                                {"op": "merge", "name": "side"}], True),
+            "merge-dirty": (side + [{"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+                                    {"op": "merge", "name": "side"}], True),
+            "merge-untracked": (side + [{"op": "create", "path": "c.txt", "source": "changes/a1.txt"},
+                                        {"op": "merge", "name": "side"}], True),
+            "merge-while-merging": (merging + [{"op": "merge", "name": "side"}], True),
+            # `shallow`: リビジョンを解決できない、空、重複、マージの途中。
+            "shallow-unresolvable": ([{"op": "shallow", "revisions": ["HEAD~5"]}], True),
+            "shallow-unknown-branch": ([{"op": "shallow", "revisions": ["missing"]}], True),
+            "shallow-without-head": ([{"op": "shallow", "revisions": ["HEAD"]}], False),
+            "shallow-empty": ([{"op": "shallow", "revisions": []}], True),
+            "shallow-duplicate": ([{"op": "shallow", "revisions": ["HEAD", "HEAD"]}], True),
+            "shallow-option": ([{"op": "shallow", "revisions": ["--all"]}], True),
+            "shallow-while-merging": (merging + [{"op": "shallow", "revisions": ["HEAD"]}], True),
+            # 準備の処理の最後でマージの途中。
+            "ends-while-merging": (merging, True),
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root, changes)
+            for name, (operations, base) in cases.items():
+                with self.subTest(name=name), self.assertRaises(ValueError):
+                    fixture_setup(fixture, self.history_plan(operations, base), root / name)
+            # 対照: 事前条件を満たす同じ形の処理は通る。
+            repository = fixture_setup(fixture, self.history_plan(merging + [{"op": "commit", "message": "merge"}]), root / "control")
+            self.assertEqual(fixture_git(repository, "status", "--porcelain=v1").decode(), "")
+            # 無視されている未追跡のファイルは、クリーンな作業ツリーを妨げない。
+            ignored = self.history_fixture(root / "ignored", changes)
+            (ignored / "repo/.gitignore").write_bytes(b"c.txt\n")
+            repository = fixture_setup(ignored, self.history_plan(
+                [{"op": "branch", "name": "side"}, {"op": "create", "path": "c.txt", "source": "changes/a1.txt"},
+                 {"op": "checkout", "name": "side"}]), root / "ignored-run")
+            self.assertEqual(fixture_git(repository, "symbolic-ref", "HEAD").decode().strip(), "refs/heads/side")
+
+    def test_history_operations_require_git_and_schema(self):
+        """`setup.git: false`では5つの処理を禁止し、スキーマは未知のフィールドと不正な字句を拒否する。"""
+        validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
+        manifest = json.loads((audit.FIXTURES / "single/SINGLE-031/manifest.json").read_text())
+        valid = [{"op": "commit", "message": "m"}, {"op": "branch", "name": "side-1"}, {"op": "checkout", "name": "side-1"},
+                 {"op": "merge", "name": "side-1"}, {"op": "commit", "message": "merge"},
+                 {"op": "shallow", "revisions": ["HEAD~1", "side-1"]}]
+        validator.validate({**manifest, "setup": {**manifest["setup"], "operations": valid}})
+        invalid = [{"op": "commit"}, {"op": "commit", "message": ""}, {"op": "commit", "message": "m", "paths": ["."]},
+                   {"op": "branch", "name": "Side"}, {"op": "branch", "name": "1a"}, {"op": "branch", "name": "a_b"},
+                   {"op": "checkout"}, {"op": "merge", "name": "a", "noFf": True},
+                   {"op": "shallow", "revisions": []}, {"op": "shallow", "revisions": ["HEAD", "HEAD"]},
+                   {"op": "shallow", "revisions": ["-x"]}, {"op": "shallow", "revisions": "HEAD"},
+                   {"op": "rebase", "name": "a"}]
+        for operation in invalid:
+            with self.subTest(operation=operation), self.assertRaises(ValidationError):
+                validator.validate({**manifest, "setup": {**manifest["setup"], "operations": [operation]}})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root)
+            for operation in valid[:2] + valid[5:]:
+                no_git = {"setup": {"git": False, "operations": [operation]}}
+                with self.subTest(operation=operation["op"]):
+                    with self.assertRaises(ValidationError):
+                        validator.validate({**manifest, "setup": no_git["setup"],
+                                            "invocation": {**manifest["invocation"], "argv": ["check", "--full", "--format", "json"]}})
+                    with self.assertRaises(ValueError):
+                        fixture_setup(fixture, no_git, root / f"no-git-{operation['op']}")
+        # 監査は、Gitを実行せずにマニフェストだけでマージの途中の誤りを拒否する。
+        self.assertEqual(audit.merge_sequence_errors(valid), [])
+        self.assertEqual(len(audit.merge_sequence_errors([{"op": "merge", "name": "a"}])), 1)
+        for kind in ("branch", "checkout", "merge", "shallow"):
+            operation = {"op": kind, **({"revisions": ["HEAD"]} if kind == "shallow" else {"name": "b"})}
+            with self.subTest(kind=kind):
+                self.assertEqual(len(audit.merge_sequence_errors(
+                    [{"op": "merge", "name": "a"}, operation, {"op": "commit", "message": "m"}])), 1)
+
 if __name__ == "__main__":
     unittest.main()

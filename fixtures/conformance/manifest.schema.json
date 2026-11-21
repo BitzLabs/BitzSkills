@@ -157,13 +157,53 @@
         "paths": { "$ref": "#/$defs/pathList" }
       }
     },
+    "branchName": {
+      "description": "`branch`、`checkout`、`merge`の枝の名前。英小文字、数字、`-`だけからなり、英小文字で始まる（適合fixture仕様 §3.2）。",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "message"],
+      "properties": {
+        "op": { "const": "commit" },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "branchOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "name"],
+      "properties": {
+        "op": { "enum": ["branch", "checkout", "merge"] },
+        "name": { "$ref": "#/$defs/branchName" }
+      }
+    },
+    "shallow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "revisions"],
+      "properties": {
+        "op": { "const": "shallow" },
+        "revisions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "pattern": "^[^-]" }
+        }
+      }
+    },
     "operation": {
       "oneOf": [
         { "$ref": "#/$defs/createOrUpdate" },
         { "$ref": "#/$defs/delete" },
         { "$ref": "#/$defs/rename" },
         { "$ref": "#/$defs/stage" },
-        { "$ref": "#/$defs/gitStructure" }
+        { "$ref": "#/$defs/gitStructure" },
+        { "$ref": "#/$defs/commit" },
+        { "$ref": "#/$defs/branchOperation" },
+        { "$ref": "#/$defs/shallow" }
       ]
     },
     "setup": {
@@ -192,7 +232,7 @@
                     "operations": {
                       "contains": {
                         "type": "object",
-                        "properties": { "op": { "enum": ["stage", "submodule", "worktree"] } },
+                        "properties": { "op": { "enum": ["stage", "submodule", "worktree", "commit", "branch", "checkout", "merge", "shallow"] } },
                         "required": ["op"]
                       }
                     }

@@ -2,6 +2,7 @@
 import hashlib
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -110,8 +111,7 @@ def setup(fixture, manifest, destination, generated=None):
     materialize(destination, plan.get("materialize", []))
     if plan["git"]:
         git(destination, "init", "--initial-branch=fixture")
-    elif "baseCommit" in plan or any(op["op"] in {"stage", "submodule", "worktree"}
-                                     for op in plan["operations"]):
+    elif "baseCommit" in plan or any(op["op"] in GIT_OPERATIONS for op in plan["operations"]):
         raise ValueError("Gitの操作には`setup.git`が必要です")
     if "baseCommit" in plan:
         paths = plan["baseCommit"]["paths"]
@@ -119,8 +119,13 @@ def setup(fixture, manifest, destination, generated=None):
             safe_path(destination, path, allow_dot=True)
         git(destination, "add", "-A", "--", *paths)
         git(destination, "commit", "-m", plan["baseCommit"]["message"])
+    # マージの途中（`merge`の後、`commit`の前）の状態。`None`はマージの途中でないことを表す（ADR-080）。
+    merging = None
     for operation in plan["operations"]:
         kind = operation["op"]
+        if kind in HISTORY_OPERATIONS:
+            merging = apply_history_operation(destination, operation, merging)
+            continue
         if kind == "stage":
             for path in operation["paths"]:
                 safe_path(destination, path, allow_dot=True)
@@ -144,9 +149,13 @@ def setup(fixture, manifest, destination, generated=None):
                 # インデックス上の`stat`の情報と一致すると、Gitが内容を比べずに未変更と判定するためである。
                 shutil.copyfile(source, path)
                 shutil.copymode(source, path)
+            if merging is not None:
+                merging["resolved"].add(_relative(destination, path))
         elif kind == "delete":
             if not exists:
                 raise ValueError("削除対象が存在しません")
+            if merging is not None:
+                merging["resolved"].add(_relative(destination, path))
             if path.is_symlink() or path.is_file():
                 path.unlink()
             else:
@@ -169,7 +178,128 @@ def setup(fixture, manifest, destination, generated=None):
             path.rename(target)
         else:
             raise ValueError(f"準備手順の未知の操作です: {kind}")
+    if merging is not None:
+        raise ValueError("準備の処理の最後でマージの途中です")
     return destination
+
+
+# Gitを使う準備の処理（`setup.git: false`では禁止する。適合fixture仕様 §3.1）。
+GIT_OPERATIONS = frozenset({"stage", "submodule", "worktree", "commit", "branch", "checkout", "merge", "shallow"})
+# 履歴を作る準備の処理（ADR-080、適合fixture仕様 §3.2）。
+HISTORY_OPERATIONS = frozenset({"commit", "branch", "checkout", "merge", "shallow"})
+BRANCH_NAME = re.compile(r"[a-z][a-z0-9-]*")
+
+
+def _relative(root, path):
+    return path.relative_to(root).as_posix()
+
+
+def _git_succeeds(root, *args):
+    try:
+        git(root, *args)
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+
+def _head_commit(root):
+    if not _git_succeeds(root, "rev-parse", "--verify", "--quiet", "HEAD^{commit}"):
+        return None
+    return git(root, "rev-parse", "--verify", "HEAD^{commit}").decode().strip()
+
+
+def _branch_name(operation):
+    name = operation.get("name")
+    if not isinstance(name, str) or BRANCH_NAME.fullmatch(name) is None:
+        raise ValueError("枝の名前は英小文字、数字、`-`だけからなり、英小文字で始まる必要があります")
+    return name
+
+
+def _branch_exists(root, name):
+    return _git_succeeds(root, "show-ref", "--verify", "--quiet", f"refs/heads/{name}")
+
+
+def _clean(root):
+    """追跡しているパスのインデックスと作業ツリーが`HEAD`と同じで、無視されていない未追跡のファイルがない。"""
+    return git(root, "status", "--porcelain=v1", "--untracked-files=all", "--ignore-submodules=none").decode() == ""
+
+
+def apply_history_operation(root, operation, merging):
+    """`commit`、`branch`、`checkout`、`merge`、`shallow`を適用し、マージの途中の状態を返す（ADR-080）。
+
+    同一性、時刻、ブランチ名はharnessの固定値（`git`）を使うので、2回の`setup`で同じコミットIDになる。
+    """
+    kind = operation["op"]
+    if kind != "commit" and merging is not None:
+        raise ValueError(f"マージの途中に`{kind}`は使えません")
+    if kind == "commit":
+        if not isinstance(operation.get("message"), str) or not operation["message"]:
+            raise ValueError("`commit`には空でない`message`が必要です")
+        if git(root, "ls-files", "--unmerged").decode():
+            raise ValueError("インデックスに未解決の衝突があります")
+        if merging is not None and not merging["conflicts"] <= merging["resolved"]:
+            raise ValueError("マージで衝突したパスに`update`または`delete`で内容を与えていません")
+        # マージの途中なら、Gitが`MERGE_HEAD`を2つ目の親とするマージコミットを作る。
+        git(root, "commit", "--allow-empty", "--no-verify", "--cleanup=verbatim", "-m", operation["message"])
+        return None
+    if kind == "branch":
+        name = _branch_name(operation)
+        if _head_commit(root) is None:
+            raise ValueError("`branch`には`HEAD`のコミットが必要です")
+        if _branch_exists(root, name):
+            raise ValueError(f"枝{name}はすでに存在します")
+        git(root, "branch", "--no-track", name)
+        return None
+    if kind == "checkout":
+        name = _branch_name(operation)
+        if not _branch_exists(root, name):
+            raise ValueError(f"枝{name}が存在しません")
+        if not _clean(root):
+            raise ValueError("`checkout`にはクリーンな作業ツリーが必要です")
+        git(root, "checkout", "--quiet", name)
+        return None
+    if kind == "merge":
+        name = _branch_name(operation)
+        if not _branch_exists(root, name):
+            raise ValueError(f"枝{name}が存在しません")
+        head = _head_commit(root)
+        if head is None:
+            raise ValueError("`merge`には`HEAD`のコミットが必要です")
+        tip = git(root, "rev-parse", "--verify", f"refs/heads/{name}^{{commit}}").decode().strip()
+        if tip == head or _git_succeeds(root, "merge-base", "--is-ancestor", tip, head):
+            raise ValueError(f"枝{name}の先端は`HEAD`と同じか、`HEAD`の祖先です")
+        if not _clean(root):
+            raise ValueError("`merge`にはクリーンな作業ツリーが必要です")
+        # 衝突は準備の誤りにしない。Gitは衝突のときに終了コード1を返し、衝突の印を作業ツリーに残す。
+        try:
+            git(root, "merge", "--no-ff", "--no-commit", "--no-edit", "--quiet", f"refs/heads/{name}",
+                environment={"GIT_MERGE_AUTOEDIT": "no"})
+        except subprocess.CalledProcessError:
+            pass
+        if not _git_succeeds(root, "rev-parse", "--verify", "--quiet", "MERGE_HEAD"):
+            raise ValueError(f"枝{name}のマージを始められませんでした")
+        conflicts = set(git(root, "diff", "--name-only", "-z", "--diff-filter=U").decode().split("\0")[:-1])
+        return {"branch": name, "conflicts": conflicts, "resolved": set()}
+    if kind == "shallow":
+        revisions = operation.get("revisions")
+        if not isinstance(revisions, list) or not revisions or len(set(revisions)) != len(revisions):
+            raise ValueError("`revisions`は重複のない1件以上の配列である必要があります")
+        commits = []
+        for revision in revisions:
+            if not isinstance(revision, str) or not revision or revision.startswith("-"):
+                raise ValueError(f"リビジョンを解決できません: {revision!r}")
+            if not _git_succeeds(root, "rev-parse", "--verify", "--quiet", f"{revision}^{{commit}}"):
+                raise ValueError(f"リビジョンを解決できません: {revision!r}")
+            commits.append(git(root, "rev-parse", "--verify", f"{revision}^{{commit}}").decode().strip())
+        shallow = root / git(root, "rev-parse", "--git-path", "shallow").decode().strip()
+        recorded = shallow.read_text(encoding="ascii").split() if shallow.exists() else []
+        for commit in commits:
+            if commit not in recorded:
+                recorded.append(commit)
+        # Gitの`shallow`ファイル（境界のコミットのIDを1行に1つ）。オブジェクトは削除しない。
+        shallow.write_text("".join(f"{commit}\n" for commit in recorded), encoding="ascii")
+        return None
+    raise ValueError(f"準備手順の未知の操作です: {kind}")
 
 
 def copy_source_tree(source, destination):

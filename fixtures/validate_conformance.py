@@ -203,6 +203,25 @@ def matrix_rows():
     return re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MULTI-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
 
 
+def merge_sequence_errors(operations):
+    """マージの途中（`merge`の後、`commit`の前）の`branch`、`checkout`、`merge`、`shallow`と、最後に残るマージの途中を拒否する。
+
+    適合fixture仕様 §3.2（ADR-080）。harnessも準備の手順で同じ誤りを拒否するが、Gitを実行せずにマニフェストだけで判定できるので、監査でも検査する。
+    """
+    errors, merging = [], False
+    for index, operation in enumerate(operations):
+        kind = operation.get("op")
+        if kind == "commit":
+            merging = False
+        elif merging and kind in {"branch", "checkout", "merge", "shallow"}:
+            errors.append(f"準備の処理{index}: マージの途中に`{kind}`は使えません")
+        elif kind == "merge":
+            merging = True
+    if merging:
+        errors.append("準備の処理の最後でマージの途中です")
+    return errors
+
+
 def matrix():
     rows = matrix_rows()
     ids = [identifier for identifier, _ in rows]
@@ -232,6 +251,7 @@ def matrix():
                 errors.append(f"{path}: コミット済みのfixtureには明示の`--base`が必要です")
             if not manifest["setup"]["git"] and "--base" in argv:
                 errors.append(f"{path}: Git不在のfixtureでは`--base`を使えません")
+            errors += [f"{path}: {error}" for error in merge_sequence_errors(manifest["setup"]["operations"])]
             if manifest["fixtureId"] != path.parent.name:
                 errors.append(f"{path}: `fixtureId`がディレクトリ名と異なります")
             generated = "generate" in manifest["setup"]
