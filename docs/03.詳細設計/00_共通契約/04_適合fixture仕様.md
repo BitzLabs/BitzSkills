@@ -204,7 +204,8 @@ harnessは各fixtureを新しい一時ディレクトリへコピーし、次の
 作成者とコミッターの日時`2000-01-01T00:00:00Z`、`commit.gpgSign=false`、`core.autocrlf=false`、
 `core.fileMode=true`に固定する。ホスト側のグローバルまたはシステムのGit設定を読まず、フックを実行しない。
 
-`setup.git: false`では、`baseCommit`、`stage`の準備の処理、起動の`--base`を禁止する。
+`setup.git: false`では、`baseCommit`、Gitを使う準備の処理（`stage`、`submodule`、`worktree`、`commit`、`branch`、`checkout`、`merge`、`shallow`）、起動の`--base`を禁止する。
+起動の`--base`には、`HEAD`のほか、枝の名前と`HEAD~1`のようなリビジョンの式を書ける。式はGitが解決する（[ADR-080](../../02.設計書/10_決定記録/ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)）。
 `setup.git: true`かつ`baseCommit`なし、`operations: []`が、コミットのないリポジトリを表す。
 `baseCommit`あり、`operations: []`が、クリーンなコミット済みの状態を表す。状態名を別のフィールドで重複指定しない。
 
@@ -224,11 +225,19 @@ harnessは各fixtureを新しい一時ディレクトリへコピーし、次の
 | `stage` | `paths` | `setup.git: true` | 列挙したパスだけに`git add -A -- <paths...>`相当を適用する |
 | `submodule` | `path`, `source` | `path`が存在せず`setup.git: true` | `source`ディレクトリの内容を持つ別リポジトリを`path`へ作り、親のインデックスへgitlinkと`.gitmodules`を記録する |
 | `worktree` | `path`, `source` | `path`が存在せず`setup.git: true` | `source`ディレクトリの内容だけを持つコミットを作り、`path`を同じリポジトリの別ワークツリーとして追加する |
+| `commit` | `message` | `setup.git: true` | インデックスの内容でコミットを作る。空のコミットを許す。マージの途中なら、親の1つ目を`HEAD`、2つ目をマージした枝の先端とするマージコミットを作り、マージの途中を終える |
+| `branch` | `name` | `setup.git: true`。同じ名前の枝が存在せず、マージの途中でない | `HEAD`のコミットを指す枝を作る。`HEAD`は切り替えない |
+| `checkout` | `name` | `setup.git: true`。枝`name`が存在し、インデックスと作業ツリーが`HEAD`のコミットと同じで、マージの途中でない | `HEAD`を枝`name`へ切り替え、インデックスと作業ツリーをその枝のコミットに合わせる |
+| `merge` | `name` | `setup.git: true`。枝`name`が存在し、インデックスと作業ツリーが`HEAD`のコミットと同じで、マージの途中でない | 枝`name`を`HEAD`へ、早送りせず、コミットせずにマージし、マージの途中にする。衝突は準備の誤りとせず、衝突の印を含むファイルを作業ツリーに残す |
+| `shallow` | `revisions` | `setup.git: true`。各リビジョンを解決でき、マージの途中でない | 列挙したリビジョンのコミットを、シャロークローンの境界のコミットとしてGitの`shallow`ファイルへ記録する。オブジェクトは削除しない |
 
 未知のフィールドは禁止する。`paths`は1件以上で重複を禁止し、`.`はリポジトリ全体を明示するときだけ許可する。
 `submodule`と`worktree`の`source`だけは`changes/`配下のディレクトリを指し、その中の通常ファイルとシンボリックリンクを再現する。
 両方の準備の処理は、harnessが固定した同一性、時刻、ブランチ名を使い、2回の`setup`で同じGit構造とコミットIDを与える
 （[ADR-048](../../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造の準備の処理を確定する.md)）。
+`commit`、`branch`、`checkout`、`merge`、`shallow`も同じとする（[ADR-080](../../02.設計書/10_決定記録/ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)）。
+`merge`の後、`commit`の前をマージの途中とする。準備の処理の最後でマージの途中なら、準備の誤りとする。`revisions`は1件以上で重複を禁止する。
+部分クローンの欠けたオブジェクトは準備の処理で作らず、Coreの単体試験で確かめる。
 `create`、`update`、`rename`で親ディレクトリがなければharnessが作成する。`delete`後に空になった親ディレクトリは残す。
 `rename`と`delete`のGit上の判定はGit自身に委ねるが、期待するインデックス／作業ツリーの状態は、後続の`stage`の有無で一意に決まる。
 
