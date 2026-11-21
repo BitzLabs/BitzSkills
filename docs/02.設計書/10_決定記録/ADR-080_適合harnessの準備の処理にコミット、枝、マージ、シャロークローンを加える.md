@@ -1,7 +1,7 @@
 ---
 id: ADR-080
 title: 適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-048
@@ -62,3 +62,4 @@ relations:
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-21 | 起票（`proposed`） | ADR-048、ADR-072、ADR-078 |
+| 2026-11-21 | 利用者の承認により`accepted`へ変更 | — |
