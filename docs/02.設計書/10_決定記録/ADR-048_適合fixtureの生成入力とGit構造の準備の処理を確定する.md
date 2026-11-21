@@ -93,6 +93,8 @@ relations:
   `fixtures/conformance/multi_generator.py`、`fixtures/validate_scale.py`。
 - matrixの行（`MULTI-007-02/03`、`MULTI-020-*`、`MULTI-021-*`）は変更しない。本ADRは、それらを表す手段だけを加える。
 - `Decision`の3番目の項目のうち「Gate Aの認定には後者の記録を必要とする」は、[ADR-076](ADR-076_上限の値を設定で小さくできるようにし、実寸の上限の検証を手動にする.md)で部分改訂した（実寸の上限のfixtureと`scale`の検証を、Gate A、Gate B、CIの認定の対象から外し、手動の検証とする）。
+- `Decision`の4番目の項目の準備の処理は、[ADR-080](ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)で部分改訂した
+  （`commit`、`branch`、`checkout`、`merge`、`shallow`を加える）。
 
 ## Revision History
 
@@ -102,3 +104,4 @@ relations:
 | 2026-09-24 | Decision 3の既定の統合検証`fixtures/validate_step0b.py`を`fixtures/validate_conformance.py`へ改名（非意味的な訂正） | 適合fixture検証記録 |
 | 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |
 | 2026-11-17 | Decision 3を部分改訂 | ADR-076 |
+| 2026-11-21 | Decision 4を部分改訂 | ADR-080 |
