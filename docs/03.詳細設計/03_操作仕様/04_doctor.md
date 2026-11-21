@@ -161,7 +161,7 @@ earsAi: "1.0"
     "inputBytes": 268435456, "statementCount": 100000, "relationEdgeCount": 1000000,
     "traceEntryCount": 1000000, "commandDefinitionCount": 10000, "verifyBindingCount": 10000,
     "excludeCount": 100, "expandedArgvCount": 10000, "expandedArgvElementBytes": 32768,
-    "expandedArgvBytes": 1048576
+    "expandedArgvBytes": 1048576, "historyCommitCount": 10000
   }
 }
 ```

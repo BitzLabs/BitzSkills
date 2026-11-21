@@ -484,7 +484,7 @@
     },
     "limits": {
       "type": "object",
-      "required": ["specBytes", "frontmatterBytes", "specFileCount", "documentStatementCount", "documentArrayItemCount", "inputBytes", "statementCount", "relationEdgeCount", "traceEntryCount", "commandDefinitionCount", "verifyBindingCount", "excludeCount", "expandedArgvCount", "expandedArgvElementBytes", "expandedArgvBytes"],
+      "required": ["specBytes", "frontmatterBytes", "specFileCount", "documentStatementCount", "documentArrayItemCount", "inputBytes", "statementCount", "relationEdgeCount", "traceEntryCount", "commandDefinitionCount", "verifyBindingCount", "excludeCount", "expandedArgvCount", "expandedArgvElementBytes", "expandedArgvBytes", "historyCommitCount"],
       "properties": {
         "specBytes": {"type": "integer", "minimum": 1},
         "frontmatterBytes": {"type": "integer", "minimum": 1},
@@ -500,7 +500,8 @@
         "excludeCount": {"type": "integer", "minimum": 1},
         "expandedArgvCount": {"type": "integer", "minimum": 1},
         "expandedArgvElementBytes": {"type": "integer", "minimum": 1},
-        "expandedArgvBytes": {"type": "integer", "minimum": 1}
+        "expandedArgvBytes": {"type": "integer", "minimum": 1},
+        "historyCommitCount": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": false
     },
