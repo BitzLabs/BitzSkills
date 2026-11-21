@@ -2,18 +2,18 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "66eb38cb8f54dbade56ced3f38aecefc0e2e8f80f670b2ba5271ae4378b30a86",
-    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5cc4e1d4f7c37a882dd266168b4987546d97c637a8d46168aac0abc67b1ce5c5",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "54078dad6dfa7cf07f50b2f875c49fc2440db6ce5618edb08b21be5a4c25b6fc",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "a9846ef2fe55e36d32d37eb81599829b456f1a746f7e90b7fedc11aa9ade5b47",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "80c7361e1e3057e96f95897e5cc058d1aae47cad08ca62d0836c79dd2634240e",
-    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "f56c20f87c70455916dabd42d4dbb7b4f0a0c9cdb5f669919c79b48c10a99c04",
-    "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "293eff37049258c38b40ef2a6050b7879e9c61500ca3167efab2ae8499275c9d",
+    "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "97914a25c9f32b8a0e5d848cb9ffab90d7baacd5ecef3fcc15aeaa3fb172e174",
+    "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "391a8fb9708f7f7133092ea539cc02680dd27f42579ffb7d099b248378a48969",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "9556647f9bf2ab3ce17090a5d68579fbb7dc95e49feabd95c20afa8d3f78b03a",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "110f230e4f6bcc1c23fdb53429b4b91a077518dce3cf57876696ab486f2c45e1",
     "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "00eb90deecaef4776e6e86e2b7ef97570e57c215b9a0512a5e115f683cdbffc4",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5f79861e103eb51723a53302122fa32d5125a9bf9687a70c2dbbc5cc1776ee6f",
-    "docs/03.詳細設計/03_操作仕様/02_check.md": "0cae3a8560cc899a8b5614d71c7d8c762b0551a666a35c048f904d1be66e5608",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "38c7d466dc4635f5d6a29ca22e6bf61deba18a464f196c1bbf43664b431ba1ca",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "78532f1eea3521ade4c6b67043424407d7dc55d77b12f97f25e62f9ad2e68375",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "9a33c04b432ea1f6a9dff4947e689400b34661cbf0ac0d480e4fba9a026bf08e",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "e4652900ed5e26de7a900f0d2c619caa07826b436f88253dc9701659b85eab99",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
@@ -62,7 +62,7 @@
         "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md",
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
       ],
-      "rationale": "設定型・必須・YAML禁止・版互換性。doctorのEARS版は専用条件。 ADR-076: `limits`の型と範囲の不正はCONFIG-FIELD-TYPE、`limits`の中の未知のキー（`memberCount`を含む）はCONFIG-KEY-UNKNOWNで判定に使わない（ワークスペース・設定仕様 §5。SINGLE-183-04〜12。値のない`limits:`もマッピングでない、MULTI-068-05）。"
+      "rationale": "設定型・必須・YAML禁止・版互換性。doctorのEARS版は専用条件。 ADR-076: `limits`の型と範囲の不正はCONFIG-FIELD-TYPE、`limits`の中の未知のキー（`memberCount`を含む）はCONFIG-KEY-UNKNOWNで判定に使わない（ワークスペース・設定仕様 §5。SINGLE-183-04〜12。値のない`limits:`もマッピングでない、MULTI-068-05）。 ADR-078（2026-11-21）: `limits.historyCommitCount`（最大値10,000）も同じ型と範囲の規則に従う（ワークスペース・設定仕様 §5。SINGLE-183-03は16キーすべてを絶対上限ちょうどで書く）。"
     },
     {
       "id": "workspace",
@@ -197,6 +197,7 @@
         "CHECK-STATE-TRANSITION",
         "CHECK-DOCUMENT-DELETED",
         "CHECK-APPROVED-MEANING",
+        "CHECK-APPROVED-MEANING-HISTORY",
         "CHECK-TASK-BOUNDARY",
         "CHECK-TASK-NO-GIT",
         "CHECK-TASK-NESTED-EXCLUDED",
@@ -208,7 +209,7 @@
         "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md",
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
       ],
-      "rationale": "状態遷移・削除・承認済みREQ保護・TASK境界・影響候補・Git縮退。 ADR-074（2026-11-18）: 単一ワークスペースの`CHECK-TASK-BOUNDARY`は、入れ子のワークスペース（作業ワークスペースのルートの下位で、作業ツリーまたは基準版に`.spec/bitz.yaml`を持つディレクトリ。自身のルートを含めず、シンボリックリンクをたどらない）のルートと配下の変更を比較の対象から除く（`check` §7。SINGLE-184-01〜20）。対照はSINGLE-184-02（設定なし）・06・07（シンボリックリンク）・20（ディレクトリ）・09・10（入れ子の外とセグメントの境界）・14（ワークスペースのルートがリポジトリのルートの下位）・15（`changes`が入れ子を指す）・16（自身の設定）。入れ子の設定の内容は読まず、構文が不正でも設定の診断を出さない（SINGLE-184-11・12）。作業ツリーの`.spec/bitz.yaml`は追跡、未追跡、無視によらず数え（2026-11-18の明確化。未追跡はSINGLE-184-18、`.gitignore`で無視はSINGLE-184-19）、`.spec/bitz.yaml`という名前のディレクトリは数えない（対照SINGLE-184-20）。作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`の、エントリ自身とその配下の変更も比較の対象から除く（2026-11-18の利用者の決定。`check` §7）。未追跡の追加はSINGLE-184-21、追跡しているファイルの変更はSINGLE-184-22、ステージした変更と削除はSINGLE-184-23、通常のファイルの`.spec/journal`自身の変更はSINGLE-184-24、ワークスペースのルートがリポジトリのルートの下位はSINGLE-184-27。対照は、名前が似た`.spec/plans.md`（SINGLE-184-25。境界の外の変更で、未知のファイルの`WORKSPACE-ENTRY-UNKNOWN`も返す）と、作業ワークスペースのルートでない`sandbox/.spec/journal/`（SINGLE-184-26）。名前が似た未知のディレクトリ（`.spec/journals`）は、未知のディレクトリの`summary`が承認されていないので対照にしていない。 2026-11-18（独立レビューの後の利用者の決定。`check` §7）: 名前が`.spec`のセグメントを含むディレクトリは入れ子のワークスペースのルートにしない。基準版の`.spec/.spec/bitz.yaml`（SINGLE-184-28）、`.spec/requirements/.spec/bitz.yaml`（SINGLE-184-29）、作業ワークスペースの`.spec`の外の`sandbox/x/.spec/y/.spec/bitz.yaml`（SINGLE-184-30）で、設定とREQの変更が`CHECK-TASK-BOUNDARY`になることを、`.spec/journal/.spec/bitz.yaml`（SINGLE-184-32）で予約したディレクトリの除外のままであることを固定する。28・29は作業ツリーで`.spec/.spec`と`.spec/requirements/.spec`を削除し、未知のディレクトリの`summary`（未承認）に依存しない。`CHECK-TASK-NESTED-EXCLUDED`（`SPEC-TASK-BOUNDARY-003`、`warning`）は、入れ子のワークスペースとして比較から除いた変更を1件以上持つルートごとに1件、ルートのディレクトリを発生元に返す。変更を除いたSINGLE-184-01・03〜05・08〜19（03は変更2件で1件、08は`a`と`a/b`、09・10・14〜16は`CHECK-TASK-BOUNDARY`と`path`の辞書順に並ぶ、13はワークスペース相対の`sandbox/x`、19は無視された設定で除いた`note.md`）、SINGLE-184-31（ルートごとに1件、変更のないルートと`.spec`のセグメントを含むディレクトリには返さない）。対照は、予約したディレクトリだけの除外（SINGLE-184-21〜24・27・32）と入れ子のない入力（SINGLE-184-02・06・07・20・25・26・28〜30）。変更が入れ子の入れ子の配下にあるときは最も内側のルートで数え、TASKの`changes`が許可した変更でも入れ子として除いたものは数える（2026-11-18の司令塔の裁定。`check` §7）。内側の`a/b/deep.md`だけを変えたSINGLE-184-33は`a/b`の1件だけで、`changes`が許可した変更はSINGLE-184-15。"
+      "rationale": "状態遷移・削除・承認済みREQ保護・TASK境界・影響候補・Git縮退。 ADR-074（2026-11-18）: 単一ワークスペースの`CHECK-TASK-BOUNDARY`は、入れ子のワークスペース（作業ワークスペースのルートの下位で、作業ツリーまたは基準版に`.spec/bitz.yaml`を持つディレクトリ。自身のルートを含めず、シンボリックリンクをたどらない）のルートと配下の変更を比較の対象から除く（`check` §7。SINGLE-184-01〜20）。対照はSINGLE-184-02（設定なし）・06・07（シンボリックリンク）・20（ディレクトリ）・09・10（入れ子の外とセグメントの境界）・14（ワークスペースのルートがリポジトリのルートの下位）・15（`changes`が入れ子を指す）・16（自身の設定）。入れ子の設定の内容は読まず、構文が不正でも設定の診断を出さない（SINGLE-184-11・12）。作業ツリーの`.spec/bitz.yaml`は追跡、未追跡、無視によらず数え（2026-11-18の明確化。未追跡はSINGLE-184-18、`.gitignore`で無視はSINGLE-184-19）、`.spec/bitz.yaml`という名前のディレクトリは数えない（対照SINGLE-184-20）。作業ワークスペースの予約したディレクトリ`.spec/journal`と`.spec/plans`の、エントリ自身とその配下の変更も比較の対象から除く（2026-11-18の利用者の決定。`check` §7）。未追跡の追加はSINGLE-184-21、追跡しているファイルの変更はSINGLE-184-22、ステージした変更と削除はSINGLE-184-23、通常のファイルの`.spec/journal`自身の変更はSINGLE-184-24、ワークスペースのルートがリポジトリのルートの下位はSINGLE-184-27。対照は、名前が似た`.spec/plans.md`（SINGLE-184-25。境界の外の変更で、未知のファイルの`WORKSPACE-ENTRY-UNKNOWN`も返す）と、作業ワークスペースのルートでない`sandbox/.spec/journal/`（SINGLE-184-26）。名前が似た未知のディレクトリ（`.spec/journals`）は、未知のディレクトリの`summary`が承認されていないので対照にしていない。 2026-11-18（独立レビューの後の利用者の決定。`check` §7）: 名前が`.spec`のセグメントを含むディレクトリは入れ子のワークスペースのルートにしない。基準版の`.spec/.spec/bitz.yaml`（SINGLE-184-28）、`.spec/requirements/.spec/bitz.yaml`（SINGLE-184-29）、作業ワークスペースの`.spec`の外の`sandbox/x/.spec/y/.spec/bitz.yaml`（SINGLE-184-30）で、設定とREQの変更が`CHECK-TASK-BOUNDARY`になることを、`.spec/journal/.spec/bitz.yaml`（SINGLE-184-32）で予約したディレクトリの除外のままであることを固定する。28・29は作業ツリーで`.spec/.spec`と`.spec/requirements/.spec`を削除し、未知のディレクトリの`summary`（未承認）に依存しない。`CHECK-TASK-NESTED-EXCLUDED`（`SPEC-TASK-BOUNDARY-003`、`warning`）は、入れ子のワークスペースとして比較から除いた変更を1件以上持つルートごとに1件、ルートのディレクトリを発生元に返す。変更を除いたSINGLE-184-01・03〜05・08〜19（03は変更2件で1件、08は`a`と`a/b`、09・10・14〜16は`CHECK-TASK-BOUNDARY`と`path`の辞書順に並ぶ、13はワークスペース相対の`sandbox/x`、19は無視された設定で除いた`note.md`）、SINGLE-184-31（ルートごとに1件、変更のないルートと`.spec`のセグメントを含むディレクトリには返さない）。対照は、予約したディレクトリだけの除外（SINGLE-184-21〜24・27・32）と入れ子のない入力（SINGLE-184-02・06・07・20・25・26・28〜30）。変更が入れ子の入れ子の配下にあるときは最も内側のルートで数え、TASKの`changes`が許可した変更でも入れ子として除いたものは数える（2026-11-18の司令塔の裁定。`check` §7）。内側の`a/b/deep.md`だけを変えたSINGLE-184-33は`a/b`の1件だけで、`changes`が許可した変更はSINGLE-184-15。 ADR-072・ADR-078・ADR-079（2026-11-21）: `CHECK-APPROVED-MEANING`の対象を基準版の`approved`のREQとTECHへ広げ、途中のコミット（`HEAD`から到達でき基準版から到達できない）に、その文書を変更し状態が`draft`または`outdated`である版があれば違反にしない（文書・フロントマター・状態仕様 §8、§8.1）。診断は1文書に1件、`source.key`は`title`、`relations.requires`〜`supersedes`、`statements`の順の最初の項目、`evidence`なし（§8.2）。TECHの`title`・規範文・強い関係はSINGLE-186-01〜03、規範文のないTECHはSINGLE-186-04、`outdated`へ戻した変更と説明文だけの変更の対照はSINGLE-186-05・06、REQの規範文だけ・強い関係だけはSINGLE-186-07・08、複数の項目の最初のkeyはSINGLE-186-09〜11。途中の状態はSINGLE-187-01（`draft`）・02（`outdated`、`--base HEAD~2`）・15（TECH）で通過し、`rejected`（187-03）、インデックスだけ（187-04）、承認の前の枝で文書を変更していない版（187-05）、パスだけを変えたコミット（187-09）、YAMLの構文の不正（187-10）、`specBytes`の超過（187-11）、同じIDの文書が2つあるコミット（187-13）は認めない。文書を変更した古い枝の`draft`の版（187-06）、2つ目の親と同じで1つ目の親と異なるマージコミットの版（187-07）、パスの異なる途中の版（187-08）、`specBytes`ちょうど（187-12）は認める。文書ごとの判定はSINGLE-187-14。途中のコミットの集合が空と確定する場合（基準版が`HEAD`と同じ、`HEAD`が基準版の祖先）はシャロークローンの条件を見ない（ADR-079の決定1。SINGLE-188-04・05・10）。 `CHECK-APPROVED-MEANING-HISTORY`（新設。`CHECK-APPROVED-MEANING`と同じコード、重大度、結果への効果、発生元、継続単位、優先順位で、文言だけが異なる）は、シャロークローンの境界が`HEAD`または基準版から到達できる場合（SINGLE-188-01・02・09・12。どちらからも到達できない境界の対照はSINGLE-188-03）と、途中のコミットの数が`limits.historyCommitCount`を超える場合（SINGLE-188-06、ちょうどの対照は188-07）に、読めた範囲の版によらず返す。2つの条件は同じ元の原因（意味を変えて状態を戻していない）の互いに排他な場合分けで、1文書に1件だけを返す。部分クローンの欠けたオブジェクトは準備の処理で作れないので適合fixtureを置かない（適合fixture仕様 §3.2）。保護を無効にした設定では履歴を読まない（SINGLE-188-08）。複合ワークスペースの作業ワークスペースはMULTI-071-01、`--all-workspaces`のワークスペースごとの判定はMULTI-071-02。"
     },
     {
       "id": "verify",
@@ -264,7 +265,7 @@
         "docs/03.詳細設計/03_操作仕様/04_doctor.md",
         "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md"
       ],
-      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。設定がスキーマに適合しないときは返さない。`doctor` §7、SINGLE-183-11。全体事前検査がほかの原因で非成功でも、ルートの設定が適合していれば返す。MULTI-068-09）。"
+      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。設定がスキーマに適合しないときは返さない。`doctor` §7、SINGLE-183-11。全体事前検査がほかの原因で非成功でも、ルートの設定が適合していれば返す。MULTI-068-09）。 ADR-078（2026-11-21）: 結果の`limits`に`historyCommitCount`を加えた（SINGLE-183-01・02、MULTI-068-03・04・09）。診断の条件は増やさない。"
     },
     {
       "id": "multiWorkspace",
