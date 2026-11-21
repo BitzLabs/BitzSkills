@@ -9,12 +9,12 @@
       ".spec/bitz.yaml": {
         "kind": "file",
         "executable": false,
-        "sha256": "2c06b55b39f0d539517d3123e937019e774c5e49ec6507a2024d9efa0ddcbdd7"
+        "sha256": "195c3f363007bc4a309314bbf72bd6559e4ab31f8e4f21aa000b2c54234a99b2"
       }
     },
     "git": {
       "status": "",
-      "index": "100644 2a614a203099c8f36756f1517e5c2c1b3f1e0f8b 0\t.spec/bitz.yaml\n"
+      "index": "100644 cfb893d9a40a84143edb964d7dc96cd1264687aa 0\t.spec/bitz.yaml\n"
     },
     "home": {},
     "cache": {},
@@ -28,12 +28,12 @@
       ".spec/bitz.yaml": {
         "kind": "file",
         "executable": false,
-        "sha256": "2c06b55b39f0d539517d3123e937019e774c5e49ec6507a2024d9efa0ddcbdd7"
+        "sha256": "195c3f363007bc4a309314bbf72bd6559e4ab31f8e4f21aa000b2c54234a99b2"
       }
     },
     "git": {
       "status": "",
-      "index": "100644 2a614a203099c8f36756f1517e5c2c1b3f1e0f8b 0\t.spec/bitz.yaml\n"
+      "index": "100644 cfb893d9a40a84143edb964d7dc96cd1264687aa 0\t.spec/bitz.yaml\n"
     },
     "home": {},
     "cache": {},

@@ -68,6 +68,7 @@
     "excludeCount": 100,
     "expandedArgvCount": 10000,
     "expandedArgvElementBytes": 32768,
-    "expandedArgvBytes": 4096
+    "expandedArgvBytes": 4096,
+    "historyCommitCount": 10000
   }
 }
