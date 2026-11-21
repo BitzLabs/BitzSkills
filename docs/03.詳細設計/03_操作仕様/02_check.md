@@ -102,6 +102,9 @@ bitz check --all-workspaces
 同じ基準版を対象選択、状態遷移、削除の検出、承認済み要求の保護、TASK境界（TASK boundary）へ使用し、結果の`revision.base`へ完全なコミットIDを
 記録する。リビジョンを解決できなければ終了コード4とする。
 
+承認済み要求の保護は、端点の比較で違反になった文書がある場合に限り、基準版から`HEAD`までの途中のコミットを読む
+（[文書・フロントマター・状態仕様 §8.1](../02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#81-途中の状態)）。違反の候補がなければ、途中のコミットを読まない。
+
 変更集合と基準版の仕様文書の一覧は、現在のディレクトリによらず、作業ワークスペースのルートを基準に求める。現在のディレクトリが
 ワークスペースのルートの下位のディレクトリでも、ワークスペースのルートで実行した場合と同じ結果にする。
 
@@ -246,7 +249,7 @@ Coreは意味的な影響を断定せず、状態を自動で変更しない。`
 | `CTX-RELATION-TYPE-001` | `failed` | 存在する参照元と参照先の型の組が不適合 |
 | `SPEC-PATH-INVALID-001` | `failed`／警告 | パスが不正。状態`draft`の予定だけ警告 |
 | `SPEC-TEST-COVERAGE-001` | `failed` | `covers`が不正 |
-| `SPEC-SAFETY-APPROVED-001` | `failed` | `approved`を戻さず意味を変更 |
+| `SPEC-SAFETY-APPROVED-001` | `failed` | `approved`のREQまたはTECHの状態を戻さず意味を変更（途中のコミットの扱いは文書・フロントマター・状態仕様 §8.1） |
 | `SPEC-STATE-TRANSITION-001` | `failed` | 禁止された遷移または管理済みの仕様文書の削除 |
 | `SPEC-TASK-BOUNDARY-001` | `failed` | 明示したTASKの境界外の変更 |
 | `SPEC-TASK-BOUNDARY-002` | `blocked` | Git不在でTASK境界を判定できない |
