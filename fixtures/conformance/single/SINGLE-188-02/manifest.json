@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-188-02",
-  "description": "シャロークローンの境界が基準版から到達できれば、途中のコミットの外でも完全には読めない違反にする",
+  "description": "シャロークローンの境界が基準版から到達できれば、途中のコミットとその親でなくても完全には読めない違反にする",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -62,7 +62,7 @@
       {
         "op": "shallow",
         "revisions": [
-          "base"
+          "base~1"
         ]
       }
     ]
