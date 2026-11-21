@@ -447,7 +447,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-032-03` | `related`だけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-04` | `x-`拡張フィールドだけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-05` | 説明文だけの変更 | check --base | passed／0 | 保護対象外 |
-| `SINGLE-033` | 強い関係の参照先の変更 | check --base | passed_with_warnings／0 | `SPEC-IMPACT-OUTDATED-001` |
+| `SINGLE-033` | 強い関係の参照先の変更（`approved`のTECHの説明文だけを変える） | check --base | passed_with_warnings／0 | `SPEC-IMPACT-OUTDATED-001` |
 | `SINGLE-034` | 明示TASKの`src/`と`src2/` | check TASK-ID | failed／1 | `SPEC-TASK-BOUNDARY-001`、セグメント境界 |
 | `SINGLE-035-01` | 引数なしの`check`でTASKが選ばれる | check | passed／0 | 境界未実施を`warning`にしない |
 | `SINGLE-035-02` | `check --full`でTASKが選ばれる | check --full | passed／0 | 境界未実施を`warning`にしない |
@@ -1090,9 +1090,9 @@ NFCとNFDの名前、NFCで同じ名前になる2つの兄弟の項目は、`rep
 | `SINGLE-182-05` | `SINGLE-055`の設定に`limits.expandedArgvBytes: 47` | verify REQ-001 | blocked／2 | `SINGLE-182-03`と同じ形で、summaryは「{tests}展開後のargvがバイト数上限47バイトを超えます」 |
 | `SINGLE-182-06` | `SINGLE-055`の設定に、複合ワークスペースのスナップショット全体の次元の6キー（`inputBytes`、`statementCount`、`relationEdgeCount`、`traceEntryCount`、`commandDefinitionCount`、`verifyBindingCount`）をすべて1で書く | verify REQ-001 | passed／0 | `SINGLE-055`と同じ結果。単一ワークスペースはこれらのキーを使わない（§4.1） |
 | `SINGLE-182-07` | `SINGLE-055`の設定に`limits.expandedArgvCount: 2`（展開した後の要素は3件） | verify REQ-001 | blocked／2 | `SINGLE-182-03`と同じ形で、summaryは「{tests}展開後のargvの要素数が上限2を超えます」 |
-| `SINGLE-183-01` | `SINGLE-001`の設定に`limits: {}` | doctor | passed／0 | `SINGLE-001`の結果の最上位に`limits`を加え、15キーすべてが絶対上限（`doctor` §7。空のマッピングも宣言とする） |
-| `SINGLE-183-02` | `SINGLE-001`の設定に`limits`の`expandedArgvBytes: 4096`、`specFileCount: 5`（この順に書く） | doctor | passed／0 | `limits`は`specFileCount`が5、`expandedArgvBytes`が4096、残りの13キーが絶対上限。キーは§4.1の表の順 |
-| `SINGLE-183-03` | `SINGLE-001`の設定に、`limits`の15キーすべてを絶対上限ちょうどで書く | check --full --base | passed／0 | 診断なし。絶対上限ちょうどの値は設定の不適合にしない（ワークスペース・設定仕様 §5） |
+| `SINGLE-183-01` | `SINGLE-001`の設定に`limits: {}` | doctor | passed／0 | `SINGLE-001`の結果の最上位に`limits`を加え、16キーすべてが絶対上限（`doctor` §7。空のマッピングも宣言とする） |
+| `SINGLE-183-02` | `SINGLE-001`の設定に`limits`の`expandedArgvBytes: 4096`、`specFileCount: 5`（この順に書く） | doctor | passed／0 | `limits`は`specFileCount`が5、`expandedArgvBytes`が4096、残りの14キーが絶対上限。キーは§4.1の表の順 |
+| `SINGLE-183-03` | `SINGLE-001`の設定に、`limits`の16キーすべてを絶対上限ちょうどで書く | check --full --base | passed／0 | 診断なし。絶対上限ちょうどの値は設定の不適合にしない（ワークスペース・設定仕様 §5） |
 | `SINGLE-183-04` | `SINGLE-001`の設定に`limits: 1024`（マッピングでない） | check --full --base | error／3 | `SPEC-CONFIG-SCHEMA-001`の1件（summary「設定キーlimitsはマッピングで指定してください」、`source.key`は`limits`）。同一性を構成できないので`workspace.id`と`source.workspaceId`は`null`（`SINGLE-004-01`と同じ形） |
 | `SINGLE-183-05` | `SINGLE-001`の設定に`limits`の未知のキー`futureLimit: 1` | check --full --base | passed_with_warnings／0 | `SPEC-CONFIG-UNKNOWN-001`（`warning`、summary「未知の設定キーです」、`source.key`は`limits.futureLimit`）の1件だけ。判定に使わない |
 | `SINGLE-183-06` | `SINGLE-001`の設定に`limits`の`specBytes: 0`（0） | check --full --base | error／3 | `SPEC-CONFIG-SCHEMA-001`の1件（summary「設定キーlimits.specBytesは1〜1048576の整数で指定してください」、`source.key`は`limits.specBytes`）。結果の形は`SINGLE-183-04`と同じ（ワークスペース・設定仕様 §5） |
