@@ -3,17 +3,13 @@
   "description": "--baseなしでは基準版をHEADとし、深さ1のシャロークローンでも通常の文言にする",
   "setup": {
     "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
     "operations": [
-      {
-        "op": "stage",
-        "paths": [
-          "."
-        ]
-      },
-      {
-        "op": "commit",
-        "message": "base"
-      },
       {
         "op": "shallow",
         "revisions": [

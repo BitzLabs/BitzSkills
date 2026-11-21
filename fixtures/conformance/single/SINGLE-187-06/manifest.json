@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-187-06",
-  "description": "承認の前に分かれた枝でdraftの文書を編集したコミットは、文書を変更したdraftの版なので途中の状態として認める",
+  "description": "承認の前に分かれた枝でdraftの文書を編集したコミットは、状態をdraftへ変えていないので途中の状態として認めない",
   "setup": {
     "git": true,
     "baseCommit": {
@@ -95,8 +95,8 @@
     "env": {}
   },
   "expect": {
-    "status": "passed",
-    "exitCode": 0,
+    "status": "failed",
+    "exitCode": 1,
     "stdout": "json",
     "resultFile": "expected/check.json",
     "reportFileCount": 0

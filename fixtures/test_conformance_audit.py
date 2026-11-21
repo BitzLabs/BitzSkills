@@ -16357,7 +16357,11 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-186-02", "expected/check.json", lambda v: v["diagnostics"][0].update(evidence=["TECH-001:AC-01"])),
             ("SINGLE-188-01", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.SUMMARY.format(kind="REQ"))),
             ("SINGLE-188-04", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.HISTORY_SUMMARY.format(kind="REQ"))),
-            ("SINGLE-187-06", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-187-06", "expected/check.json", lambda v: v.update(status="passed")),
+            ("SINGLE-187-17", "expected/check.json", lambda v: v["diagnostics"].clear()),
+            ("SINGLE-188-13", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.SUMMARY.format(kind="REQ"))),
+            ("MULTI-071-03", "expected/check.json", lambda v: v["workspaces"][2].update(path="apps/web")),
+            ("SINGLE-188-10", "manifest.json", lambda v: v["setup"].pop("baseCommit")),
             ("SINGLE-187-14", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
             ("SINGLE-187-04", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
             ("MULTI-071-02", "expected/check.json", lambda v: v["workspaces"][1].update(status="passed")),
@@ -16399,8 +16403,20 @@ class AuditTests(unittest.TestCase):
         wrong = {
             # 古い枝の変更していないdraftの版を認める（ADR-072の決定2の文言どおりの読み方）。
             "SINGLE-187-05": [],
-            # 文書を変更したdraftの版を認めない。
-            "SINGLE-187-06": module.REQ_VIOLATION,
+            # 状態を変えていない（親もdraftの）古い枝の編集を認める（ADR-081の前の定義）。
+            "SINGLE-187-06": [],
+            # 状態を戻したコミットがあっても、最後のdraftの版が状態を変えていなければ認めない。
+            "SINGLE-187-16": module.REQ_VIOLATION,
+            # 同じIDの文書が2つある親を、文書がない親とみなす。
+            "SINGLE-187-17": [],
+            # 途中の版にfrontmatterBytesを当てない、ちょうどを超過とする。
+            "SINGLE-187-18": [], "SINGLE-187-19": module.REQ_VIOLATION,
+            # HEADから到達できない、基準版の側の境界を見ない。
+            "SINGLE-188-13": [], "SINGLE-188-14": [],
+            # メンバーのルートを移す前の版を対応付ける、移したコミットを状態を変えた版としない。
+            "MULTI-071-03": [], "MULTI-071-04": [module.violation(".spec/requirements/REQ-010.md", "title", "REQ", workspace="web")],
+            # メンバーの設定または絶対上限を使う。
+            "MULTI-071-05": [],
             # マージコミットを、すべての親と異なる場合だけ変更したとする。
             "SINGLE-187-07": module.REQ_VIOLATION,
             # パスだけを変えたコミットを変更したとする。
@@ -16432,6 +16448,30 @@ class AuditTests(unittest.TestCase):
                 fixture = module.fixture_dir(module.HERE, identifier)
                 with self.assertRaisesRegex(ValueError, "参照計算|dirty"):
                     module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+
+    def test_approved_history_reference_mutants_are_rejected(self):
+        """参照計算を別の読み方（ミュータント）に差し替えると、レビュー済みの期待値と分かれ、決まったfixtureが拒否する。"""
+        module = approved_history_fixtures
+        expected = {
+            # 検収で示された、境界の2つの読み方（F-2）: `HEAD`から到達できる境界だけを見る、途中のコミットとその親の境界だけを見る。
+            "boundary=head": ({"boundary": "head"}, ["SINGLE-188-13", "SINGLE-188-14"]),
+            "boundary=adjacent": ({"boundary": "adjacent"}, ["SINGLE-188-02", "SINGLE-188-13", "SINGLE-188-14"]),
+            # 重複したIDの読み方（F-3）: 同じIDの文書が2つある親を、文書がない親とみなす。
+            "duplicates=absent": ({"duplicates": "absent"}, ["SINGLE-187-17"]),
+            # ADR-081の前の定義（ADR-078の決定1）: 文書を変更した`draft`または`outdated`の版を認める。
+            "recognize=content": ({"recognize": "content"}, ["SINGLE-187-06"]),
+        }
+        for name, (reading, identifiers) in expected.items():
+            with self.subTest(mutant=name), patch.dict(module.READING, reading):
+                rejected = []
+                for identifier in module.CASES:
+                    try:
+                        module.prepared_states(module.fixture_dir(module.HERE, identifier), module.reviewed_manifest(identifier),
+                                               module.inspector(identifier))
+                    except ValueError:
+                        rejected.append(identifier)
+                self.assertEqual(rejected, identifiers)
+        self.assertEqual(module.READING, {"recognize": "state", "boundary": "spec", "duplicates": "skip"})
 
     def test_approved_history_reference_reads_documents_narrowly(self):
         """参照計算の字句の読み方: YAMLの構文の不正、上限の超過、規範文と強い関係の読取り。"""

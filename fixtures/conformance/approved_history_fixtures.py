@@ -52,6 +52,15 @@ KEY_ORDER = ("title", "relations.requires", "relations.refines", "relations.addr
 STRONG = ("requires", "refines", "addresses", "supersedes")
 LIMIT_HISTORY = 10000
 LIMIT_SPEC_BYTES = 1048576
+LIMIT_FRONTMATTER_BYTES = 32768
+ABSOLUTE_LIMITS = (LIMIT_SPEC_BYTES, LIMIT_FRONTMATTER_BYTES)
+# 参照計算の読み方。既定は規範文の読み方で、監査の自己試験は別の読み方（ミュータント）へ差し替え、どのfixtureが拒否するかを確かめる。
+# - `recognize`: `state`は途中の版の状態を`draft`または`outdated`へ変えた版だけを認める（§8.1、ADR-081）。`content`はADR-081の前の定義
+#   （文書を変更した`draft`または`outdated`の版を認める。ADR-078の決定1）。
+# - `boundary`: `spec`は境界のコミットが`HEAD`または基準版から到達できれば完全に得られないとする（§8.1）。`head`は`HEAD`から到達できる場合だけ、
+#   `adjacent`は境界が途中のコミットまたはその親である場合だけとする（検収で示された、通ってしまう2つの読み方）。
+# - `duplicates`: `skip`は同じIDの文書が2つ以上ある親との比較で状態を変えたとしない（§8.1）。`absent`はその親に文書がないとみなす。
+READING = {"recognize": "state", "boundary": "spec", "duplicates": "skip"}
 
 
 # --- 入力の文書 ---------------------------------------------------------------------------------
@@ -261,7 +270,7 @@ CASES.update({
                              [*APPROVE[1:], branch("base"), checkout("old"), *change(REQ_PATH, "changes/draft-edit.md", "old"),
                               checkout("fixture"), *change(REQ_PATH, "changes/approved.md", "change"), merge("old"),
                               commit("merge old")],
-                             [], "承認の前に分かれた枝でdraftの文書を編集したコミットは、文書を変更したdraftの版なので途中の状態として認める",
+                             REQ_VIOLATION, "承認の前に分かれた枝でdraftの文書を編集したコミットは、状態をdraftへ変えていないので途中の状態として認めない",
                              initial=[branch("old")], merged=req(REQ_TITLE_CHANGED, verification="Core実装後に確認する。手順を追記した。")),
     "SINGLE-187-07": history(PRE_APPROVAL, {"approved-a.md": req(), "draft.md": req(state="draft"),
                                             "approved.md": req(REQ_TITLE_CHANGED), "note.md": NOTE},
@@ -319,6 +328,35 @@ for _identifier in ("SINGLE-187-05", "SINGLE-187-06", "SINGLE-187-07", "SINGLE-1
 for _case in CASES.values():
     _case["changes"] = dict(_case["changes"])
 
+# 状態を戻した後の同じ枝の編集（ADR-081の`Consequences`）と、重複したIDの親（§8.1）、途中の版のフロントマターの上限（§4.1）。
+DRAFT_EDIT = req(REQ_TITLE_CHANGED, "draft", verification="Core実装後に確認する。手順を追記した。")
+APPROVED_EDIT = req(REQ_TITLE_CHANGED, verification="Core実装後に確認する。手順を追記した。")
+LONG_NOTE = "x-note: " + "再承認の前に確認する手順と観点を、レビューの依頼に合わせてここへ書き足した。" * 2
+FRONTMATTER_DRAFT = req(REQ_TITLE_CHANGED, "draft").replace(b"status: draft\n", f"status: draft\n{LONG_NOTE}\n".encode(), 1)
+FRONTMATTER_LIMIT = len(FRONTMATTER_DRAFT.split(b"\n---\n", 1)[0]) - 3
+CASES.update({
+    "SINGLE-187-16": history(BASE_REQ, {"draft.md": req(REQ_TITLE_CHANGED, "draft"), "draft-edit.md": DRAFT_EDIT,
+                                        "approved.md": APPROVED_EDIT},
+                             [*change(REQ_PATH, "changes/draft.md", "draft"), *change(REQ_PATH, "changes/draft-edit.md", "edit draft"),
+                              *change(REQ_PATH, "changes/approved.md", "approve")],
+                             [], "draftへ戻した後に同じ枝で本文を編集しても、状態を戻したコミットが別にあるので通過する"),
+    "SINGLE-187-17": history(BASE_REQ, CHANGED,
+                             [update(REQ_PATH, "changes/draft.md"), {"op": "create", "path": COPY_PATH, "source": "changes/draft.md"},
+                              {"op": "stage", "paths": [REQ_PATH, COPY_PATH]}, commit("draft with copy"),
+                              {"op": "delete", "path": COPY_PATH}, {"op": "stage", "paths": [COPY_PATH]}, commit("remove copy"),
+                              *change(REQ_PATH, "changes/approved.md", "approve")],
+                             REQ_VIOLATION,
+                             "同じIDの文書が2つある親との比較では状態を変えたとしないので、複製だけを削除したコミットのdraftの版も途中の状態として認めない"),
+    "SINGLE-187-18": history({CONFIG_PATH: limits_config(frontmatterBytes=FRONTMATTER_LIMIT - 1), REQ_PATH: req()},
+                             {"draft.md": FRONTMATTER_DRAFT, "approved.md": req(REQ_TITLE_CHANGED)},
+                             [*change(REQ_PATH, "changes/draft.md", "draft"), *change(REQ_PATH, "changes/approved.md", "approve")],
+                             REQ_VIOLATION, "途中の版のフロントマターがlimits.frontmatterBytesを超えればIDを読めない版とし、draftの版として認めない"),
+    "SINGLE-187-19": history({CONFIG_PATH: limits_config(frontmatterBytes=FRONTMATTER_LIMIT), REQ_PATH: req()},
+                             {"draft.md": FRONTMATTER_DRAFT, "approved.md": req(REQ_TITLE_CHANGED)},
+                             [*change(REQ_PATH, "changes/draft.md", "draft"), *change(REQ_PATH, "changes/approved.md", "approve")],
+                             [], "途中の版のフロントマターがlimits.frontmatterBytesちょうどなら読み、draftの版として認めて通過する"),
+})
+
 FOUR_COMMITS = [branch("side"), *change(TECH_PATH, "changes/draft.md", "draft"), checkout("side"),
                 *create("docs/note.md", "changes/note.md", "side"), checkout("fixture"), merge("side"), commit("merge side"),
                 *change(TECH_PATH, "changes/approved.md", "approve")]
@@ -329,8 +367,8 @@ CASES.update({
     "SINGLE-188-01": history(BASE_REQ, CHANGED, [*REAPPROVE, shallow("HEAD~1")], REQ_HISTORY,
                              "シャロークローンの境界がHEADから到達できれば、途中にdraftの版があっても完全には読めない違反にする"),
     "SINGLE-188-02": dict(history(BASE_REQ, {**CHANGED, "note.md": NOTE},
-                                  [*create("docs/note.md", "changes/note.md", "note"), branch("base"), *REAPPROVE, shallow("base")],
-                                  REQ_HISTORY, "シャロークローンの境界が基準版から到達できれば、途中のコミットの外でも完全には読めない違反にする")),
+                                  [*create("docs/note.md", "changes/note.md", "note"), branch("base"), *REAPPROVE, shallow("base~1")],
+                                  REQ_HISTORY, "シャロークローンの境界が基準版から到達できれば、途中のコミットとその親でなくても完全には読めない違反にする")),
     "SINGLE-188-03": history(BASE_REQ, {**CHANGED, "note.md": NOTE},
                              [branch("other"), checkout("other"), *create("docs/note.md", "changes/note.md", "other"),
                               checkout("fixture"), *REAPPROVE, shallow("other")],
@@ -353,11 +391,11 @@ CASES.update({
     "SINGLE-188-09": history(BASE_REQ, CHANGED, [*REAPPROVE, shallow("HEAD~1")], REQ_HISTORY,
                              "明示対象のcheckでも途中のコミットを読み、境界がHEADから到達できれば完全には読めない違反にする",
                              argv=["check", "REQ-001", "--base", "base", "--format", "json"], scope="selected"),
+    # `--base`の省略そのものを確かめる例外（適合fixture仕様 §3。監査の`BASE_OMISSION_EXCEPTIONS`）。最初のコミットは`setup.baseCommit`で作る。
     "SINGLE-188-10": dict(repo=BASE_REQ, changes={"current.md": req(REQ_TITLE_CHANGED)},
-                          operations=[{"op": "stage", "paths": ["."]}, commit("base"), shallow("HEAD"),
-                                      update(REQ_PATH, "changes/current.md")],
+                          operations=[shallow("HEAD"), update(REQ_PATH, "changes/current.md")],
                           argv=["check", "REQ-001", "--format", "json"], scope="selected", documents=1, statements=1, dirty=True,
-                          violations=REQ_VIOLATION, base_commit=False,
+                          violations=REQ_VIOLATION,
                           description="--baseなしでは基準版をHEADとし、深さ1のシャロークローンでも通常の文言にする"),
     "SINGLE-188-11": dict(CASES["SINGLE-186-01"], text=True, description="TECHの保護の違反をテキスト出力で表示する"),
     "SINGLE-188-12": dict(history(BASE_REQ, CHANGED, [*REAPPROVE, shallow("HEAD~1")], REQ_HISTORY,
@@ -367,6 +405,20 @@ for _identifier in ("SINGLE-188-11", "SINGLE-188-12"):
     CASES[_identifier]["argv"] = [*CASES[_identifier]["argv"][:-1], "text"]
 # 枝`base`を履歴の途中で作るケース。`history`が先頭に置いた枝`base`を除く。
 for _identifier in ("SINGLE-188-02", "SINGLE-188-05"):
+    CASES[_identifier]["operations"] = CASES[_identifier]["operations"][1:]
+
+# 分かれた枝の先端を基準版にし、`HEAD`から到達できない境界を置く（F-2）。途中のコミットはdraftへ戻して再承認した2つである。
+DIVERGED_BASE = [branch("side"), checkout("side"), *create("docs/note.md", "changes/note.md", "side 1")]
+CASES.update({
+    "SINGLE-188-13": history(BASE_REQ, {**CHANGED, "note.md": NOTE},
+                             [*DIVERGED_BASE, branch("base"), checkout("fixture"), *REAPPROVE, shallow("base")],
+                             REQ_HISTORY, "HEADから到達できない分かれた枝の先端の基準版が境界なら、完全には読めない違反にする"),
+    "SINGLE-188-14": history(BASE_REQ, {**CHANGED, "note.md": NOTE, "note2.md": "# 作業のメモ\n\n追記した。\n".encode()},
+                             [*DIVERGED_BASE, *change("docs/note.md", "changes/note2.md", "side 2"), branch("base"),
+                              checkout("fixture"), *REAPPROVE, shallow("base~1")],
+                             REQ_HISTORY, "HEADから到達できない基準版の枝の祖先が境界でも、基準版から到達できるので完全には読めない違反にする"),
+})
+for _identifier in ("SINGLE-188-13", "SINGLE-188-14"):
     CASES[_identifier]["operations"] = CASES[_identifier]["operations"][1:]
 
 # --- 複合ワークスペース（MULTI-071） ---
@@ -392,6 +444,32 @@ CASES.update({
 })
 # 各ワークスペースの完全検査の件数（--all-workspaces）。ルートの`platform`は仕様文書を持たない。
 ALL_WORKSPACES = (("platform", ".", 0, 0), ("api", API, 1, 1), ("web", WEB, 1, 1))
+# メンバーのルートを途中のコミットで移す（§8.1、ADR-078の決定4）。現在版のカタログでは`web`は`apps/site`にある。
+SITE = "apps/site"
+SITE_REQ = f"{SITE}/.spec/requirements/REQ-010.md"
+MOVED_CONFIG = ROOT_CONFIG.replace(b"path: apps/web", b"path: apps/site")
+MOVE = [{"op": "rename", "from": WEB, "to": SITE}, update(CONFIG_PATH, "changes/root.yaml")]
+MOVED_WORKSPACES = (("platform", ".", 0, 0), ("api", API, 1, 1), ("web", SITE, 1, 1, WEB))
+ALL = ["check", "--all-workspaces", "--base", "base", "--format", "json"]
+CASES.update({
+    "MULTI-071-03": history(MULTI_REPO, {**{key: MULTI_CHANGES[key] for key in ("draft.md", "approved.md")}, "root.yaml": MOVED_CONFIG},
+                            [*change(WEB_REQ, "changes/draft.md", "draft web"), *MOVE, update(SITE_REQ, "changes/approved.md"),
+                             {"op": "stage", "paths": [WEB, SITE, CONFIG_PATH]}, commit("move web and approve")],
+                            [violation(".spec/requirements/REQ-010.md", "title", "REQ", workspace="web")],
+                            "途中のコミットの間にメンバーのルートを移せば、移す前のコミットのdraftの版を対応付けず違反のままにする",
+                            argv=ALL, scope="all-workspaces", workspaces=MOVED_WORKSPACES),
+    "MULTI-071-04": history(MULTI_REPO, {**{key: MULTI_CHANGES[key] for key in ("draft.md", "approved.md")}, "root.yaml": MOVED_CONFIG},
+                            [*change(WEB_REQ, "changes/draft.md", "draft web"), *MOVE,
+                             {"op": "stage", "paths": [WEB, SITE, CONFIG_PATH]}, commit("move web"),
+                             *change(SITE_REQ, "changes/approved.md", "approve web")],
+                            [], "メンバーのルートを移したコミットのdraftの版は、移す前の親に同じIDの文書がないので状態を変えた版として認める",
+                            argv=ALL, scope="all-workspaces", workspaces=MOVED_WORKSPACES),
+    "MULTI-071-05": history({**MULTI_REPO, CONFIG_PATH: ROOT_CONFIG + b"limits:\n  historyCommitCount: 1\n"},
+                            {key: MULTI_CHANGES[key] for key in ("draft.md", "approved.md")}, WEB_REAPPROVE,
+                            [violation(".spec/requirements/REQ-010.md", "title", "REQ", history=True, workspace="web")],
+                            "複合ワークスペースではルートの設定のlimits.historyCommitCountを使い、超えれば完全には読めない違反にする",
+                            argv=ALL, scope="all-workspaces"),
+})
 
 
 def fixture_dir(root, identifier):
@@ -434,7 +512,7 @@ def reviewed_result(identifier):
     diagnostics = [diagnostic(item) for item in sorted(case_["violations"], key=lambda item: item["path"])]
     if case_.get("scope") == "all-workspaces":
         workspaces = []
-        for workspace_id, path, documents, statements in ALL_WORKSPACES:
+        for workspace_id, path, documents, statements, *_ in case_.get("workspaces", ALL_WORKSPACES):
             own = [item for item in diagnostics if item["source"]["workspaceId"] == workspace_id]
             workspaces.append({"id": workspace_id, "path": path, "status": "failed" if own else "passed",
                                "checkedDocumentCount": documents, "checkedStatementCount": statements,
@@ -471,12 +549,18 @@ def reviewed_inputs(identifier):
 
 # --- 参照計算 -------------------------------------------------------------------------------
 
-FRONTMATTER_LINE = re.compile(r"([a-z]+): ([^\[\]{}&*!|>'\"%@`#].*)")
+FRONTMATTER_LINE = re.compile(r"([a-z][a-z-]*): ([^\[\]{}&*!|>'\"%@`#].*)")
 RELATION_LINE = re.compile(r"  ([a-z]+): \[([A-Z0-9:, -]*)\]")
 STATEMENT_LINE = re.compile(r"- \[((?:REQ|TECH)-\d{3}:[A-Z]+-\d{2})\] (.+)")
 
 
-def read_document(content, spec_bytes):
+def frontmatter_size(text):
+    """区切りの行の間の各行を、改行を含めて数えたUTF-8のバイト数（文書・フロントマター・状態仕様 §11。このfixtureの入力はLFだけ）。"""
+    end = text.index("\n---\n", 3)
+    return len(text[4:end + 1].encode("utf-8"))
+
+
+def read_document(content, spec_bytes, frontmatter_bytes=LIMIT_FRONTMATTER_BYTES):
     """このfixtureの入力に限った字句の読み方で、ID、状態、意味の項目を返す。IDを読めない版は`None`。"""
     if len(content) > spec_bytes:
         return None
@@ -486,6 +570,8 @@ def read_document(content, spec_bytes):
             return None
         end = text.index("\n---\n", 3)
     except (UnicodeDecodeError, ValueError):
+        return None
+    if frontmatter_size(text) > frontmatter_bytes:
         return None
     fields, relations_ = {}, {}
     in_relations = False
@@ -530,7 +616,7 @@ def spec_paths(paths, prefix):
     return sorted(path for path in paths if path.startswith(roots) and path.endswith(".md"))
 
 
-def documents_at(repository, revision, prefix, spec_bytes):
+def documents_at(repository, revision, prefix, limits=ABSOLUTE_LIMITS):
     """IDから(パス, バイト列, 読んだ値)の一覧。`revision`が`None`なら作業ツリー。"""
     if revision is None:
         paths = [path.relative_to(repository).as_posix() for path in repository.rglob("*.md")
@@ -541,7 +627,7 @@ def documents_at(repository, revision, prefix, spec_bytes):
         contents = {path: git(repository, "cat-file", "blob", f"{revision}:{path}") for path in spec_paths(listing, prefix)}
     result = {}
     for path, content in contents.items():
-        document = read_document(content, spec_bytes)
+        document = read_document(content, *limits)
         if document is not None:
             result.setdefault(document["id"], []).append((path[len(prefix):], content, document))
     return result
@@ -558,12 +644,16 @@ def changed_items(base, current):
     return items
 
 
-def config_values(repository, prefix):
-    text = (repository / prefix / CONFIG_PATH).read_text()
-    protect = "protectApprovedRequirements: false" not in text
-    spec_bytes = int(re.search(r"specBytes: (\d+)", text).group(1)) if "specBytes:" in text else LIMIT_SPEC_BYTES
-    limit = int(re.search(r"historyCommitCount: (\d+)", text).group(1)) if "historyCommitCount:" in text else LIMIT_HISTORY
-    return protect, spec_bytes, limit
+def config_values(repository, prefix, root_prefix=""):
+    """作業ワークスペースの設定の保護の有無と、ルートワークスペースの設定の`limits`（複合ワークスペースではルートの値。§4.1）。"""
+    protect = "protectApprovedRequirements: false" not in (repository / prefix / CONFIG_PATH).read_text()
+    text = (repository / root_prefix / CONFIG_PATH).read_text()
+
+    def limit(key, default):
+        match = re.search(rf"^  {key}: (\d+)$", text, re.M)
+        return int(match.group(1)) if match else default
+    return protect, (limit("specBytes", LIMIT_SPEC_BYTES), limit("frontmatterBytes", LIMIT_FRONTMATTER_BYTES)), limit(
+        "historyCommitCount", LIMIT_HISTORY)
 
 
 def resolve(repository, revision):
@@ -571,7 +661,7 @@ def resolve(repository, revision):
 
 
 def history_state(repository, base):
-    """途中のコミット、空であると確定するか、完全に得られないか（シャロークローンの境界と上限は呼出し側）。"""
+    """途中のコミットと、その集合が空であるとGitの履歴から確定するか（基準版が`HEAD`と同じか、`HEAD`が基準版の祖先）。"""
     head = resolve(repository, "HEAD")
     if head == base or _succeeds(repository, "merge-base", "--is-ancestor", head, base):
         return [], True
@@ -579,46 +669,70 @@ def history_state(repository, base):
     return commits, False
 
 
-def shallow_reachable(repository, base):
+def parents_of(repository, commit):
+    return _git_text(repository, "rev-list", "--parents", "-n", "1", commit).split()[1:]
+
+
+def shallow_reachable(repository, base, commits=()):
+    """シャロークローンの境界のコミットのいずれかが、`HEAD`または基準版から到達できる（§8.1）。"""
     path = repository / ".git/shallow"
     if not path.exists():
         return False
-    reachable = set(_git_text(repository, "rev-list", "HEAD", base).split())
-    return any(commit in reachable for commit in path.read_text().split())
+    boundaries = path.read_text().split()
+    if READING["boundary"] == "adjacent":
+        nearby = set(commits) | {parent for commit in commits for parent in parents_of(repository, commit)}
+        return any(commit in nearby for commit in boundaries)
+    tips = ["HEAD"] if READING["boundary"] == "head" else ["HEAD", base]
+    reachable = set(_git_text(repository, "rev-list", *tips).split())
+    return any(commit in reachable for commit in boundaries)
 
 
-def has_intermediate_state(repository, commits, identifier, prefix, spec_bytes):
+DRAFT_STATES = {"draft", "outdated"}
+
+
+def has_intermediate_state(repository, commits, identifier, prefix, limits):
+    """途中のコミットのうち少なくとも1つが、文書の状態を`draft`または`outdated`へ変えた（§8.1、ADR-081）。"""
     cache = {}
 
     def at(revision):
         if revision not in cache:
-            cache[revision] = documents_at(repository, revision, prefix, spec_bytes)
+            cache[revision] = documents_at(repository, revision, prefix, limits)
         return cache[revision]
 
     for commit in commits:
         versions = at(commit).get(identifier, [])
-        if len(versions) != 1 or versions[0][2]["status"] not in {"draft", "outdated"}:
+        if len(versions) != 1 or versions[0][2]["status"] not in DRAFT_STATES:
             continue
-        parents = _git_text(repository, "rev-list", "--parents", "-n", "1", commit).split()[1:]
+        parents = parents_of(repository, commit)
         if not parents:
             return True
         for parent in parents:
             previous = at(parent).get(identifier, [])
             if len(previous) >= 2:
+                if READING["duplicates"] == "absent":
+                    return True
                 continue
-            if not previous or previous[0][1] != versions[0][1]:
+            if not previous:
+                return True
+            if READING["recognize"] == "content":
+                if previous[0][1] != versions[0][1]:
+                    return True
+            elif previous[0][2]["status"] not in DRAFT_STATES:
                 return True
     return False
 
 
-def reference_diagnostics(repository, base_revision, prefix, workspace):
-    """作業ワークスペース（`prefix`はリポジトリ相対のルートと`/`）の保護の違反を、§8、§8.1、§8.2から求める。"""
-    protect, spec_bytes, limit = config_values(repository, prefix)
+def reference_diagnostics(repository, base_revision, prefix, workspace, base_prefix=None, root_prefix=""):
+    """作業ワークスペース（`prefix`は現在版のリポジトリ相対のルートと`/`）の保護の違反を、§8、§8.1、§8.2から求める。
+
+    `base_prefix`は基準版のカタログでのそのワークスペースのルート（メンバーを移した場合）。途中のコミットは現在版のルートの配下だけを読む（§8.1）。
+    """
+    protect, limits, history_limit = config_values(repository, prefix, root_prefix)
     if not protect:
         return []
     base = resolve(repository, base_revision)
-    before = documents_at(repository, base, prefix, spec_bytes)
-    after = documents_at(repository, None, prefix, spec_bytes)
+    before = documents_at(repository, base, prefix if base_prefix is None else base_prefix, limits)
+    after = documents_at(repository, None, prefix, limits)
     candidates = []
     for identifier, versions in sorted(after.items()):
         if len(versions) != 1 or len(before.get(identifier, [])) != 1:
@@ -630,17 +744,17 @@ def reference_diagnostics(repository, base_revision, prefix, workspace):
     if not candidates:
         return []
     commits, empty = history_state(repository, base)
-    incomplete = not empty and (shallow_reachable(repository, base) or len(commits) > limit)
+    incomplete = not empty and (shallow_reachable(repository, base, commits) or len(commits) > history_limit)
     result = []
     for identifier, path, key in candidates:
-        if not empty and not incomplete and has_intermediate_state(repository, commits, identifier, prefix, spec_bytes):
+        if not empty and not incomplete and has_intermediate_state(repository, commits, identifier, prefix, limits):
             continue
         result.append(violation(path, key, identifier.split("-")[0], history=incomplete, workspace=workspace))
     return sorted(result, key=lambda item: item["path"])
 
 
 def reference_counts(repository, prefix):
-    documents = documents_at(repository, None, prefix, LIMIT_SPEC_BYTES)
+    documents = documents_at(repository, None, prefix)
     return sum(len(v) for v in documents.values()), sum(len(d[2]["statements"]) for v in documents.values() for d in v)
 
 
@@ -655,15 +769,18 @@ def inspector(identifier):
     def inspect(repository):
         base = base_revision(identifier)
         if case_.get("scope") == "all-workspaces":
-            actual, counts = [], []
-            for workspace_id, path, documents, statements in ALL_WORKSPACES:
+            actual, members = [], []
+            for workspace_id, path, documents, statements, *rest in case_.get("workspaces", ALL_WORKSPACES):
                 prefix = "" if path == "." else path + "/"
-                # ルートワークスペースの仕様文書は、メンバーの配下を含めない。
-                actual += reference_diagnostics(repository, base, prefix, workspace_id) if prefix else []
-                if prefix and reference_counts(repository, prefix) != (documents, statements):
-                    raise ValueError("ワークスペースの件数が参照計算と異なります")
+                base_prefix = (rest[0] + "/") if rest else None
+                # ルートワークスペースは仕様文書を持たない（下で確かめる）。`limits`はルートの設定の値を使う（§4.1）。
+                actual += reference_diagnostics(repository, base, prefix, workspace_id, base_prefix) if prefix else []
+                if prefix:
+                    members.append(prefix)
+                    if reference_counts(repository, prefix) != (documents, statements):
+                        raise ValueError("ワークスペースの件数が参照計算と異なります")
             if reference_counts(repository, "") != (0, 0) or any(
-                    not path.startswith((WEB + "/", API + "/")) for path in spec_paths(
+                    not path.startswith(tuple(members)) for path in spec_paths(
                         [p.relative_to(repository).as_posix() for p in repository.rglob("*.md")], "")):
                 raise ValueError("ルートワークスペースが仕様文書を持っています")
         else:
@@ -705,8 +822,39 @@ def inspect_history(repository, identifier):
         raise ValueError("途中のコミットがないシャロークローンのケースではありません")
     if identifier == "SINGLE-188-03" and (not boundaries or shallow_reachable(repository, base)):
         raise ValueError("境界のコミットがHEADまたは基準版から到達できます")
-    if identifier == "SINGLE-188-02" and (boundaries != [base] or base in commits):
-        raise ValueError("境界のコミットが基準版ではありません")
+    if identifier == "SINGLE-188-02":
+        nearby = set(commits) | {parent for commit in commits for parent in parents_of(repository, commit)}
+        if boundaries != [resolve(repository, "base~1")] or boundaries[0] in nearby:
+            raise ValueError("境界のコミットが、途中のコミットとその親でない基準版の祖先ではありません")
+    if identifier in {"SINGLE-188-13", "SINGLE-188-14"}:
+        head_reachable = set(_git_text(repository, "rev-list", "HEAD").split())
+        expected_boundary = base if identifier == "SINGLE-188-13" else resolve(repository, "base~1")
+        if (_succeeds(repository, "merge-base", "--is-ancestor", base, "HEAD") or boundaries != [expected_boundary]
+                or expected_boundary in head_reachable):
+            raise ValueError("境界のコミットが、HEADから到達できない分かれた枝の基準版の側にありません")
+    if identifier == "SINGLE-187-16":
+        statuses = [read_document(git(repository, "cat-file", "blob", f"{commit}:{REQ_PATH}"), LIMIT_SPEC_BYTES)["status"]
+                    for commit in commits]
+        if statuses != ["approved", "draft", "draft"]:
+            raise ValueError("draftへ戻した後に同じ枝で編集した履歴ではありません")
+    if identifier == "SINGLE-187-17":
+        copy_in = [COPY_PATH in _git_text(repository, "ls-tree", "--name-only", commit, ".spec/requirements/").split()
+                   for commit in commits]
+        same = (git(repository, "cat-file", "blob", f"{commits[1]}:{REQ_PATH}")
+                == git(repository, "cat-file", "blob", f"{commits[2]}:{REQ_PATH}"))
+        if copy_in != [False, False, True] or not same:
+            raise ValueError("複製だけを削除したコミットの形ではありません")
+    if identifier in {"SINGLE-187-18", "SINGLE-187-19"}:
+        sizes = [frontmatter_size(git(repository, "cat-file", "blob", f"{revision}:{REQ_PATH}").decode())
+                 for revision in (base, commits[1], "HEAD")]
+        limit = FRONTMATTER_LIMIT - 1 if identifier == "SINGLE-187-18" else FRONTMATTER_LIMIT
+        if sizes[1] != FRONTMATTER_LIMIT or max(sizes[0], sizes[2]) > limit:
+            raise ValueError("途中の版だけがlimits.frontmatterBytesの境界にある形ではありません")
+    if identifier in {"MULTI-071-03", "MULTI-071-04"}:
+        listing = _git_text(repository, "ls-tree", "-r", "--name-only", "HEAD").split()
+        if any(path.startswith(WEB + "/") for path in listing) or SITE_REQ not in listing or WEB_REQ not in _git_text(
+                repository, "ls-tree", "-r", "--name-only", base).split():
+            raise ValueError("メンバーのルートを途中のコミットで移した形ではありません")
     if identifier in {"SINGLE-188-01", "SINGLE-188-09", "SINGLE-188-12"} and boundaries != [commits[1]]:
         raise ValueError("境界のコミットがdraftの途中のコミットではありません")
     if identifier == "SINGLE-187-04" and (git(repository, "show", f":{REQ_PATH}") != req(REQ_TITLE_CHANGED, "draft")
