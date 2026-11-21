@@ -15040,6 +15040,12 @@ class AuditTests(unittest.TestCase):
         cases["自己試験の失敗"] = self.certification_runs(self_tests=("Failed", "NotRun"))
         cases["1つ目で自己試験を実行していない"] = self.certification_runs(self_tests=("NotRun", "NotRun"))
         cases["2つ目で自己試験を実行した"] = self.certification_runs(self_tests=("Passed", "Passed"))
+        for index, label in ((0, "Passedなのにerrorのある自己試験"), (1, "NotRunなのにerrorのある自己試験")):
+            runs = self.certification_runs()
+            report = json.loads(runs[index]["stdout"])
+            report["checks"]["audit_self_tests"]["errors"] = ["誤り"]
+            runs[index] = {"exitCode": 1, "stdout": json.dumps(report).encode()}
+            cases[label] = runs
         cases["自己試験の項目の欠落"] = [{"exitCode": 1, "stdout": json.dumps({"pending": [certify.CERTIFIED], "checks": {}}).encode()}] * 2
         altered = json.loads(conformance[1]["stdout"])
         altered["checks"]["links"]["note"] = "x"
@@ -15052,8 +15058,11 @@ class AuditTests(unittest.TestCase):
     def test_gate_a_certification_compares_reports_without_the_self_tests(self):
         # 2つのレポートは自己試験の項目を除いて比べ、自己試験は1つ目のチェックアウトでだけ実行する（ADR-077）。
         self.assertEqual(certify.CONFORMANCE_WITHOUT_SELF_TESTS, [*certify.CONFORMANCE, "--skip-self-tests"])
+        # 比べるのは、キーの順序を揃えたJSONである。自己試験の項目の状態の違いとキーの順序の違いは、不一致にしない。
         first, second = self.certification_runs()
-        reordered = json.dumps(json.loads(second["stdout"]), indent=2).encode()
+        report = json.loads(second["stdout"])
+        reordered = json.dumps({key: report[key] for key in reversed(list(report))}, indent=2).encode()
+        self.assertNotEqual(reordered, second["stdout"])
         self.assertEqual(certify.judge([first, {"exitCode": 1, "stdout": reordered}]), [])
 
     def test_gate_a_certification_skips_the_self_tests_only_in_the_second_checkout(self):
