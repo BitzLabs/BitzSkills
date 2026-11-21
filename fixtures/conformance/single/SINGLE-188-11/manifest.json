@@ -1,0 +1,40 @@
+{
+  "fixtureId": "SINGLE-188-11",
+  "description": "TECHの保護の違反をテキスト出力で表示する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/technical/TECH-001.md",
+        "source": "changes/current.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "text"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "text",
+    "textFile": "expected/check.txt",
+    "reportFileCount": 0
+  }
+}

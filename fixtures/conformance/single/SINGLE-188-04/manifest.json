@@ -1,0 +1,46 @@
+{
+  "fixtureId": "SINGLE-188-04",
+  "description": "基準版がHEADと同じ深さ1のシャロークローンでは、境界を見ずに端点の比較の通常の文言にする",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "shallow",
+        "revisions": [
+          "HEAD"
+        ]
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/current.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

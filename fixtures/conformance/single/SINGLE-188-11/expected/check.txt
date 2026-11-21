@@ -1,0 +1,2 @@
+check failed scope=full targets=1 diagnostics=1 (0ms)
+root:.spec/technical/TECH-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのTECHの意味変更時に文書の状態が戻されていません

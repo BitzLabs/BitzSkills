@@ -22,6 +22,7 @@ from conformance import step_assignment
 from conformance import limits_multi_fixtures, limits_single_fixtures
 from conformance import help_version_fixtures
 from conformance import nested_workspace_fixtures
+from conformance import approved_history_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions, CASES as INITIAL_CASES
@@ -16324,6 +16325,116 @@ class AuditTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 self.assertEqual(len(audit.merge_sequence_errors(
                     [{"op": "merge", "name": "a"}, operation, {"op": "commit", "message": "m"}])), 1)
+
+
+    # --- 承認済みの契約の保護（SINGLE-186〜188、MULTI-071。ADR-072、ADR-078、ADR-079） ---
+
+    def test_approved_history_fixtures(self):
+        result = approved_history_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(approved_history_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_approved_history_audit_rejects_corrupted_evidence(self):
+        module = approved_history_fixtures
+        mutations = [
+            # 文言の種別、完全には読めない場合の文言、`source.key`、件数、状態を取り違えない。
+            ("SINGLE-186-01", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.SUMMARY.format(kind="REQ"))),
+            ("SINGLE-186-10", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="relations.refines")),
+            ("SINGLE-186-09", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-186-02", "expected/check.json", lambda v: v["diagnostics"][0].update(evidence=["TECH-001:AC-01"])),
+            ("SINGLE-188-01", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.SUMMARY.format(kind="REQ"))),
+            ("SINGLE-188-04", "expected/check.json", lambda v: v["diagnostics"][0].update(summary=module.HISTORY_SUMMARY.format(kind="REQ"))),
+            ("SINGLE-187-06", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-187-14", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("SINGLE-187-04", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
+            ("MULTI-071-02", "expected/check.json", lambda v: v["workspaces"][1].update(status="passed")),
+            # 履歴を作る準備の処理を落とさない、変えない。
+            ("SINGLE-187-01", "manifest.json", lambda v: v["setup"]["operations"].pop(3)),
+            ("SINGLE-187-07", "manifest.json", lambda v: v["setup"]["operations"].insert(0, {"op": "branch", "name": "extra"})),
+            ("SINGLE-188-01", "manifest.json", lambda v: v["setup"]["operations"].pop()),
+            ("SINGLE-188-03", "manifest.json", lambda v: v["setup"]["operations"][-1].update(revisions=["HEAD~1"])),
+            ("SINGLE-188-10", "manifest.json", lambda v: v["invocation"].update(argv=["check", "REQ-001", "--base", "HEAD", "--format", "json"])),
+            ("SINGLE-187-04", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                kind = "multi" if identifier.startswith("MULTI-") else "single"
+                fixture = root / kind / identifier
+                shutil.copytree(audit.FIXTURES / kind / identifier, fixture, symlinks=True)
+                for name in ("manifest", "side-effects"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+        # 入力の文書を変えれば、レビュー済みの入力と異なる。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "single/SINGLE-187-01"
+            shutil.copytree(audit.FIXTURES / "single/SINGLE-187-01", fixture)
+            for name in ("manifest", "side-effects"):
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
+            draft = fixture / "changes/draft.md"
+            draft.write_text(draft.read_text().replace("status: draft", "status: rejected"))
+            self.assertTrue(module.validate(root, ["SINGLE-187-01"])["errors"])
+
+    def test_approved_history_reference_rejects_wrong_expectations(self):
+        """参照計算は、レビュー済みのリテラルの期待値と分かれる読み方を拒否する。"""
+        module = approved_history_fixtures
+        wrong = {
+            # 古い枝の変更していないdraftの版を認める（ADR-072の決定2の文言どおりの読み方）。
+            "SINGLE-187-05": [],
+            # 文書を変更したdraftの版を認めない。
+            "SINGLE-187-06": module.REQ_VIOLATION,
+            # マージコミットを、すべての親と異なる場合だけ変更したとする。
+            "SINGLE-187-07": module.REQ_VIOLATION,
+            # パスだけを変えたコミットを変更したとする。
+            "SINGLE-187-09": [],
+            # 境界が到達できても通常どおり判定する。
+            "SINGLE-188-01": [],
+            "SINGLE-188-02": [],
+            # 境界が到達できなくても完全には読めないとする。
+            "SINGLE-188-03": module.REQ_HISTORY,
+            # 途中のコミットがなくても境界を見る。
+            "SINGLE-188-04": module.REQ_HISTORY,
+            "SINGLE-188-05": module.REQ_HISTORY,
+            # マージコミットを数えない（上限を超えない）。
+            "SINGLE-188-06": [],
+            # 上限ちょうどを超過とする。
+            "SINGLE-188-07": module.TECH_HISTORY,
+            # 保護を無効にしても履歴を読む。
+            "SINGLE-188-08": module.REQ_HISTORY,
+            # IDを読めない版、上限を超えた版、同じIDの文書が2つある版を認める。
+            "SINGLE-187-10": [], "SINGLE-187-11": [], "SINGLE-187-13": [],
+            # インデックスの版を途中の状態とする。
+            "SINGLE-187-04": [],
+            # `source.key`の順を取り違える。
+            "SINGLE-186-10": [module.violation(module.REQ_PATH, "relations.refines", "REQ")],
+            "SINGLE-186-11": [module.violation(module.TECH_PATH, "statements", "TECH")],
+        }
+        for identifier, violations in wrong.items():
+            with self.subTest(identifier=identifier), patch.dict(module.CASES[identifier], violations=violations):
+                fixture = module.fixture_dir(module.HERE, identifier)
+                with self.assertRaisesRegex(ValueError, "参照計算|dirty"):
+                    module.prepared_states(fixture, module.reviewed_manifest(identifier), module.inspector(identifier))
+
+    def test_approved_history_reference_reads_documents_narrowly(self):
+        """参照計算の字句の読み方: YAMLの構文の不正、上限の超過、規範文と強い関係の読取り。"""
+        module = approved_history_fixtures
+        self.assertIsNone(module.read_document(module.BROKEN_DRAFT, module.LIMIT_SPEC_BYTES))
+        self.assertIsNone(module.read_document(module.PADDED_DRAFT, module.SIZE_LIMIT - 1))
+        self.assertEqual(module.read_document(module.PADDED_DRAFT, module.SIZE_LIMIT)["status"], "draft")
+        document = module.read_document(module.req(extra=["refines: [REQ-002:AC-01]", "requires: [TECH-001]"]), module.LIMIT_SPEC_BYTES)
+        self.assertEqual(document["relations"], {"requires": ("TECH-001",), "refines": ("REQ-002:AC-01",), "addresses": (), "supersedes": ()})
+        self.assertEqual(list(document["statements"]), ["REQ-001:AC-01"])
+        base = module.read_document(module.req(), module.LIMIT_SPEC_BYTES)
+        changed = module.read_document(module.req(module.REQ_TITLE_CHANGED, operation=module.REQ_OPERATION_CHANGED,
+                                                  extra=["supersedes: [REQ-002]", "refines: [REQ-002]"]), module.LIMIT_SPEC_BYTES)
+        self.assertEqual(module.changed_items(base, changed), ["title", "relations.refines", "relations.supersedes", "statements"])
+        self.assertEqual(module.changed_items(base, module.read_document(module.req(verification="説明だけ。"), module.LIMIT_SPEC_BYTES)), [])
 
 if __name__ == "__main__":
     unittest.main()

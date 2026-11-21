@@ -1,0 +1,48 @@
+{
+  "fixtureId": "SINGLE-188-10",
+  "description": "--baseなしでは基準版をHEADとし、深さ1のシャロークローンでも通常の文言にする",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "base"
+      },
+      {
+        "op": "shallow",
+        "revisions": [
+          "HEAD"
+        ]
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/current.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

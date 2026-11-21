@@ -1,0 +1,104 @@
+{
+  "fixtureId": "SINGLE-187-05",
+  "description": "承認の前に分かれ、その文書に触れていない枝を取り込んでも、枝のdraftの版は途中の状態として認めない",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "branch",
+        "name": "old"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/approved-a.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "approve"
+      },
+      {
+        "op": "branch",
+        "name": "base"
+      },
+      {
+        "op": "checkout",
+        "name": "old"
+      },
+      {
+        "op": "create",
+        "path": "docs/note.md",
+        "source": "changes/note.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "docs/note.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "old"
+      },
+      {
+        "op": "checkout",
+        "name": "fixture"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/approved.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "change"
+      },
+      {
+        "op": "merge",
+        "name": "old"
+      },
+      {
+        "op": "commit",
+        "message": "merge old"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "base",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2e02d28deba7f9baa856c1162bfe6c2d7425b877fff212b27025c3af4db65e8c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0ee3ec9bd8973b358630db6f039ba8ff033d69ad39100b6da9f2bef9c8718f81"
+      },
+      "docs": {
+        "kind": "directory"
+      },
+      "docs/note.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4915c0cacefc6aeffcc8f42570d48ed467c759d9fcbb06e320868f2bb8e34f83"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 bb030bde01cd5fcd57bd19c9e6787ffa27c0cea9 0\t.spec/bitz.yaml\n100644 a6cba3fb4ab68702ed941000eb2f123ae1b4f41d 0\t.spec/technical/TECH-001.md\n100644 135b7b4dc5241c5ca3a77cab71eb3e9797487586 0\tdocs/note.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2e02d28deba7f9baa856c1162bfe6c2d7425b877fff212b27025c3af4db65e8c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0ee3ec9bd8973b358630db6f039ba8ff033d69ad39100b6da9f2bef9c8718f81"
+      },
+      "docs": {
+        "kind": "directory"
+      },
+      "docs/note.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4915c0cacefc6aeffcc8f42570d48ed467c759d9fcbb06e320868f2bb8e34f83"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 bb030bde01cd5fcd57bd19c9e6787ffa27c0cea9 0\t.spec/bitz.yaml\n100644 a6cba3fb4ab68702ed941000eb2f123ae1b4f41d 0\t.spec/technical/TECH-001.md\n100644 135b7b4dc5241c5ca3a77cab71eb3e9797487586 0\tdocs/note.md\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

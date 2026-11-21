@@ -1,0 +1,75 @@
+{
+  "fixtureId": "SINGLE-188-12",
+  "description": "途中のコミットを完全には読めない違反をテキスト出力で表示する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "branch",
+        "name": "base"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/draft.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "draft"
+      },
+      {
+        "op": "update",
+        "path": ".spec/requirements/REQ-001.md",
+        "source": "changes/approved.md"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          ".spec/requirements/REQ-001.md"
+        ]
+      },
+      {
+        "op": "commit",
+        "message": "approve"
+      },
+      {
+        "op": "shallow",
+        "revisions": [
+          "HEAD~1"
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "base",
+      "--format",
+      "text"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "text",
+    "textFile": "expected/check.txt",
+    "reportFileCount": 0
+  }
+}
