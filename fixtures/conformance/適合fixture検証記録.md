@@ -2498,3 +2498,25 @@ commit `18d54d3db6506dbca9b23ad3a6589c488adb0864`に対して再び実行し、`
 
 同じ作業ツリーで別に実行した監査では、自己試験を含む全件と`--skip-self-tests`付きのレポートが、自己試験の項目を除く112の検査で一致した
 （どちらも終了コード1、未完了は`full Gate A fresh-checkout repeatability`の1件だけ）。
+
+## 2026-11-22: 承認済みの契約の保護をTECHへ広げ、途中のコミットで判定するfixtureを加えた後のGate Aの再認定
+
+[ADR-072](../../docs/02.設計書/10_決定記録/ADR-072_承認済みの契約の保護をTECHへ広げ、途中のコミットの状態で再承認を判定する.md)のとおり、承認済みの契約の保護をTECHへ広げ、
+基準版から`HEAD`までの途中のコミットで状態を戻したかを判定する。仕様へ落とす中で、利用者が次を決めた。
+
+- 途中の状態として認める版は、状態を`draft`または`outdated`へ変えた版に限る（ADR-078、ADR-081）。
+- 途中のコミットの数の上限`limits.historyCommitCount`（ADR-078）。
+- 途中のコミットの読み方と診断の形（ADR-079）。
+- 遅延取得をしないこと、読めない基準版を`blocked`にすること、途中の版に`documentArrayItemCount`を当てること、保護の有無を基準版と現在版の設定で判定すること（ADR-082）。
+
+適合harnessの準備の処理に、`commit`、`branch`、`checkout`、`merge`、`shallow`を加えた（ADR-080）。
+`SINGLE-186-*`、`SINGLE-187-*`、`SINGLE-188-*`、`SINGLE-189-*`、`MULTI-071-*`の60件を加えた（群`approved_history_fixtures`）。
+あわせて、`doctor`の`limits`の期待値（`SINGLE-183-01`〜`02`、`MULTI-068-03`・`04`・`09`）と、`SINGLE-183-03`、`SINGLE-033`の入力を訂正した（ADR-051）。
+独立した検収は5回行った。区別されていない規則が見つかるたびに、fixtureと、参照計算のミュータントの自己試験を足した（記録は`single/承認済みの契約の保護のレビュー記録.md`）。
+
+commit `082d3f7048db91fa134bfa6934310a522dcdb701`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た（769秒）。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 1つ目のReport SHA-256は`45a8816c654793c9ac785729bf0f857d19702c97f54a987abdc1c703f2a35b39`、2つ目は`8d7971c1a75bf642e5b1d402e2f6650584412edffb89b3bc3f31d0c37d079051`（自己試験の項目だけが異なる。ADR-077）。Stepの件数は88／157／211／161／349（重複を除いて960件）、手動の一覧は28件。診断レジストリは126条件 |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
