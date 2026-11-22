@@ -341,6 +341,76 @@ class IntermediateVersionTests(_Repo):
         self.assertEqual(self.protection(result), [(REQ_PATH, "title", SUMMARY)])
         self.assertEqual(result["status"], "failed")
 
+    def dated(self, seconds: int, *args: str) -> None:
+        """コミットの日時を決めてGitを起動する（途中のコミットを処理する順を、日時の古い順に固定する）。"""
+
+        date = f"{1_700_000_000 + seconds} +0000"
+        subprocess.run(
+            ["git", *args], cwd=self.root, check=True, capture_output=True,
+            env={**self.env, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date},
+        )
+
+    def test_moving_the_document_removes_the_old_path_from_the_listing(self):
+        # R-1: 同じコミットで文書を`sub/REQ-001.md`へ移して`draft`にし、その後で再承認する。
+        # 移す前のパスの削除（変更後のモードがファイルでない差分）を一覧に当てるので、そのコミットの版は1つで、状態を変えた版になる。
+        # 削除を当てなければ、移す前の`approved`の版が一覧に残って同じIDの版が2つになり、違反になる。
+        moved = ".spec/requirements/sub/REQ-001.md"
+        _write(self.root, ".spec/bitz.yaml", CONFIG)
+        _write(self.root, REQ_PATH, _req())
+        base = self.commit(self.root, "base", ".spec")
+        _git(self.root, "rm", "-q", "--", REQ_PATH)
+        _write(self.root, moved, _req(title="変更後の文書検査", status="draft"))
+        self.commit(self.root, "move and draft", ".spec")
+        _write(self.root, moved, _req(title="変更後の文書検査"))
+        self.commit(self.root, "approve", ".spec")
+        result = self.run_check("--full", "--base", base)
+        self.assertEqual(self.protection(result), [])
+        self.assertEqual(result["status"], "passed")
+
+    def test_two_children_of_the_same_first_parent_do_not_share_the_listing(self):
+        # R-2: Pの子C1とMが、同じ1つ目の親Pの一覧を引き継ぐ。C1の変更をMの一覧へ漏らさない（一覧を写す）。
+        # - P: 重複した`approved`の複製`copy/REQ-001.md`を足す（REQ-001の版が2つ）。
+        # - C1（Pの子、Mより古い）: 複製を消し、REQ-001を`draft`にする。親Pは重複を持つので、状態を変えた版としない。
+        # - M（Pの子）: 枝Q（基準版から分けた、REQ-001が`approved`の1つの版の枝）を`-s ours`でマージする。ツリーはPと同じで、版は2つ。
+        # - X: MをC1へマージする（C1の版のまま）。HEAD: 再承認する。
+        # 正しく写せば、どの途中のコミットも状態を変えていないので違反。Mの一覧がC1の変更を共有すると、Mの版が`draft`の1つになり、
+        # 2つ目の親Q（`approved`の1つの版）との比較で状態を変えた版と誤って認め、通過してしまう。
+        copy = ".spec/requirements/copy/REQ-001.md"
+        _write(self.root, ".spec/bitz.yaml", CONFIG)
+        _write(self.root, REQ_PATH, _req())
+        self.dated(0, "add", "--", ".spec")
+        self.dated(0, "commit", "-q", "-m", "base")
+        base = _git(self.root, "rev-parse", "HEAD")
+        self.dated(1, "checkout", "-q", "-b", "q")
+        _write(self.root, "docs/note.md", "メモ\n")
+        self.dated(1, "add", "--", "docs/note.md")
+        self.dated(1, "commit", "-q", "-m", "q")
+        self.dated(2, "checkout", "-q", "main")
+        _write(self.root, copy, _req())
+        self.dated(2, "add", "--", copy)
+        self.dated(2, "commit", "-q", "-m", "P: duplicate")
+        p = _git(self.root, "rev-parse", "HEAD")
+        _git(self.root, "rm", "-q", "--", copy)
+        _write(self.root, REQ_PATH, _req(title="変更後の文書検査", status="draft"))
+        self.dated(3, "add", "--", REQ_PATH)
+        self.dated(3, "commit", "-q", "-m", "C1: remove duplicate and draft")
+        c1 = _git(self.root, "rev-parse", "HEAD")
+        self.dated(4, "checkout", "-q", "-b", "m", p)
+        self.dated(4, "merge", "-q", "-s", "ours", "--no-edit", "q")
+        m = _git(self.root, "rev-parse", "HEAD")
+        self.assertEqual(_git(self.root, "rev-parse", f"{m}^{{tree}}"), _git(self.root, "rev-parse", f"{p}^{{tree}}"))
+        self.dated(5, "checkout", "-q", "main")
+        self.dated(5, "merge", "-q", "--no-ff", "--no-edit", "m")
+        _write(self.root, REQ_PATH, _req(title="変更後の文書検査"))
+        self.dated(6, "add", "--", REQ_PATH)
+        self.dated(6, "commit", "-q", "-m", "approve")
+        self.assertEqual(_git(self.root, "rev-parse", f"{m}^1"), p)
+        self.assertEqual(_git(self.root, "rev-parse", f"{c1}^1"), p)
+        self.assertFalse((self.root / copy).exists())
+        result = self.run_check("--full", "--base", base)
+        self.assertEqual(self.protection(result), [(REQ_PATH, "title", SUMMARY)])
+        self.assertEqual(result["status"], "failed")
+
     def test_read_errors_are_incomplete(self):
         # L-3: コミットのデータの形の不正（`ValueError`、`UnicodeDecodeError`）と深いツリー（`RecursionError`）は、完全には読めない側にする。
         _write(self.root, ".spec/bitz.yaml", CONFIG)
