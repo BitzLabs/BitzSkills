@@ -515,6 +515,108 @@ def show_base_file(
     return proc.stdout
 
 
+def head_is_unborn(executable: str, cwd: str, env: dict[str, str]) -> bool:
+    """``HEAD``がまだコミットを持たない枝（コミットのないリポジトリなど）を指すかを、Gitの出力で判定する。
+
+    `git rev-parse --verify --quiet HEAD^{commit}`が成功すれば偽。失敗した場合は、`git symbolic-ref -q HEAD`で枝の名前を得て、
+    `git for-each-ref`がその参照を1つも返さなければ真（Gitが参照の不在を示した）。そのほかの場合（切り離した`HEAD`を解決できない、
+    参照はあるのにコミットを解決できない、Gitの呼出しの失敗）は、:class:`GitReadError`を送出する（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+    """
+
+    def run(*args: str) -> subprocess.CompletedProcess:
+        try:
+            return _run([executable, "--no-optional-locks", *args], cwd, env)
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            raise GitReadError(f"git {args[0]}: {exc}") from exc
+
+    if run("rev-parse", "--verify", "--quiet", "HEAD^{commit}").returncode == 0:
+        return False
+    sym = run("symbolic-ref", "-q", "HEAD")
+    ref = sym.stdout.strip()
+    if sym.returncode != 0 or not ref.startswith("refs/"):
+        raise GitReadError("HEADを解決できません")
+    listed = run("for-each-ref", "--format=%(refname)", ref)
+    if listed.returncode != 0:
+        raise GitReadError(f"git for-each-ref: 終了コード{listed.returncode}")
+    if ref in listed.stdout.split("\n"):
+        raise GitReadError("HEADの参照はあるがコミットを解決できません")
+    return True
+
+
+#: :func:`read_tree_file`の結果: Gitがそのパスの不在を示した（リビジョンのツリーに、そのパスの項目がない）。
+TREE_FILE_ABSENT = "absent"
+#: :func:`read_tree_file`の結果: そのパスの項目はあるが、通常のファイルでない（ディレクトリ、シンボリックリンク、`gitlink`）。
+TREE_FILE_NOT_REGULAR = "not-regular"
+#: :func:`read_tree_file`の結果: 通常のファイルの内容を読めた。
+TREE_FILE_READ = "read"
+
+
+def read_tree_file(
+    executable: str,
+    cwd: str,
+    env: dict[str, str],
+    rev: str,
+    workspace_root: str,
+    workspace_rel_path: str,
+    toplevel: str | None = None,
+) -> tuple[str, bytes | None]:
+    """``rev``の時点の``workspace_rel_path``を読み、``(結果, 内容)``を返す（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+
+    不在と読取りの失敗を、Gitの出力で区別する。
+
+    1. `git ls-tree --full-tree -z <rev> -- <パス>`（`--literal-pathspecs`）を実行する。終了コード0で項目がなければ、Gitがそのパスの不在を
+       示したものとし、``(TREE_FILE_ABSENT, None)``を返す（途中のディレクトリがない場合も同じ）。項目が通常のファイル（種類`blob`で
+       モード``120000``でない）でなければ``(TREE_FILE_NOT_REGULAR, None)``。
+    2. 通常のファイルなら、`git cat-file blob <オブジェクトID>`で内容を読み、``(TREE_FILE_READ, 内容)``を返す。
+
+    Gitの起動の失敗、0でない終了コード（リビジョンやツリーのオブジェクトの欠落を含む）、出力の形の不正、内容のオブジェクトの欠落は、
+    :class:`GitReadError`を送出する（不在としない）。`git show <rev>:<パス>`は、パスの不在とオブジェクトの欠落をどちらも0でない終了コードで
+    返し区別できないので使わない。
+    """
+
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root, toplevel)
+    repo_path = workspace_rel_path if offset in (None, ".", "") else f"{offset.rstrip('/')}/{workspace_rel_path}"
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "--literal-pathspecs", "ls-tree", "--full-tree", "-z", rev, "--", repo_path],
+            cwd=cwd, env=git_env(env), capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise GitReadError(f"git ls-tree: {exc}") from exc
+    if proc.returncode != 0:
+        raise GitReadError(f"git ls-tree: 終了コード{proc.returncode}")
+    entries = [tok for tok in proc.stdout.split(b"\0") if tok]
+    target = os.fsencode(repo_path)
+    entry = None
+    for tok in entries:
+        if b"\t" not in tok:
+            raise GitReadError("git ls-treeの出力の形が不正です")
+        meta, raw_path = tok.split(b"\t", 1)
+        parts = meta.split()
+        if len(parts) != 3:
+            raise GitReadError("git ls-treeの出力の形が不正です")
+        if raw_path == target:
+            entry = parts
+    if entry is None:
+        if entries:
+            # 指定したパスと異なる項目だけが返った（出力の形の不正）。
+            raise GitReadError("git ls-treeの出力の形が不正です")
+        return TREE_FILE_ABSENT, None
+    mode, obj_type, oid = entry
+    if obj_type != b"blob" or mode == b"120000":
+        return TREE_FILE_NOT_REGULAR, None
+    try:
+        blob = subprocess.run(
+            [executable, "--no-optional-locks", "cat-file", "blob", oid.decode("ascii")],
+            cwd=cwd, env=git_env(env), capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitReadError(f"git cat-file: {exc}") from exc
+    if blob.returncode != 0:
+        raise GitReadError(f"git cat-file: 終了コード{blob.returncode}")
+    return TREE_FILE_READ, blob.stdout
+
+
 def base_tree_entry_mode(
     executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str, workspace_rel_path: str
 ) -> str | None:
@@ -650,6 +752,8 @@ def list_submodule_paths(
     """作業ツリーのインデックスに`gitlink`（モード ``160000``）として記録された、複合ワークスペースのルートからの相対パスを返す。
 
     ``workspace_root``の扱いは :func:`list_tree_config_paths` と同じ（入れ子の複合ワークスペースのルートからの相対へ写す）。
+    読取りが失敗した場合（起動の失敗、0でない終了コード、出力の形の不正）は、空の集合とせず:class:`GitReadError`を送出する
+    （複合ワークスペース仕様 §2、ADR-083の`Notes`）。
     """
 
     try:
@@ -658,15 +762,17 @@ def list_submodule_paths(
             _toplevel_or_cwd(executable, cwd, env, toplevel),
             env,
         )
-    except (OSError, subprocess.SubprocessError):
-        return set()
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitReadError(f"git ls-files --stage: {exc}") from exc
     if proc.returncode != 0:
-        return set()
+        raise GitReadError(f"git ls-files --stage: 終了コード{proc.returncode}")
     tokens = proc.stdout.split("\0")
     out: set[str] = set()
     for tok in tokens:
-        if not tok or "\t" not in tok:
+        if not tok:
             continue
+        if "\t" not in tok:
+            raise GitReadError("git ls-files --stageの出力の形が不正です")
         meta, path = tok.split("\t", 1)
         parts = meta.split(" ")
         if parts and parts[0] == "160000":
@@ -677,20 +783,27 @@ def list_submodule_paths(
 
 
 def list_worktree_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
-    """``git worktree list``が返すすべてのワークツリーの実パス（絶対パス）の集合を返す（自身を含む）。"""
+    """``git worktree list``が返すすべてのワークツリーの実パス（絶対パス）の集合を返す（自身を含む）。
+
+    読取りが失敗した場合（起動の失敗、0でない終了コード、出力の形の不正）は、空の集合とせず:class:`GitReadError`を送出する
+    （複合ワークスペース仕様 §2、ADR-083の`Notes`）。一覧は少なくとも自身のワークツリーを含むので、`worktree`の行が1つもない出力も
+    形の不正とする。
+    """
 
     try:
         proc = _run(
             [executable, "--no-optional-locks", "worktree", "list", "--porcelain"], cwd, env
         )
-    except (OSError, subprocess.SubprocessError):
-        return set()
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitReadError(f"git worktree list: {exc}") from exc
     if proc.returncode != 0:
-        return set()
+        raise GitReadError(f"git worktree list: 終了コード{proc.returncode}")
     out: set[str] = set()
     for line in proc.stdout.splitlines():
         if line.startswith("worktree "):
             out.add(os.path.abspath(line[len("worktree ") :].strip()))
+    if not out:
+        raise GitReadError("git worktree listの出力の形が不正です")
     return out
 
 

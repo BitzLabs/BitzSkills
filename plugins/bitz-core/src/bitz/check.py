@@ -972,8 +972,8 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     if pre.ok:
         try:
             return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
-        except gitutil.GitChangesError:
-            # ワークスペースの変更集合をGitから求められない場合は、空の結果として扱わず、全体事前検査で
+        except (gitutil.GitChangesError, gitutil.GitReadError):
+            # ワークスペースの変更集合、または基準版のカタログ（ルートの設定）をGitから読めない場合は、空の結果として扱わず、全体事前検査で
             # Gitの境界を確定できない場合と同じく`SPEC-MULTI-GIT-001`で止める（ADR-083の決定4）。
             stop_diags = [multiws.git_unreadable_diag()]
 

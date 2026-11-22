@@ -642,6 +642,10 @@ def _git_config_paths_outside_catalog(
     catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
     extra_set: set[str] = set()
     for rev in extra_config_revs:
+        if rev == "HEAD" and gitutil.head_is_unborn(git.executable, cwd, env):
+            # コミットのないリポジトリでは、現在のスナップショットだけを照合する（`doctor` §3、複合ワークスペース仕様 §8）。
+            # 不在はGitの出力で判定し、Gitの読取りの失敗は不在としない（複合ワークスペース仕様 §2）。
+            continue
         # 基準版のルートの設定は1回だけ読み、カタログの対応表と除外の両方を求める。
         rev_config = _read_base_root_config(git, cwd, env, rev, root, git_top)
         rev_map = _workspace_map(rev_config) if rev_config is not None else {}
@@ -764,8 +768,13 @@ def _validate_catalog(
     members: list[MemberRecord] = []
     remaining = [i for i in clean_indices if i not in consumed]
     if git.available and git.executable:
-        submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env, root, git_top)
-        worktree_paths = gitutil.list_worktree_paths(git.executable, cwd, env)
+        try:
+            submodule_paths = gitutil.list_submodule_paths(git.executable, cwd, env, root, git_top)
+            worktree_paths = gitutil.list_worktree_paths(git.executable, cwd, env)
+        except gitutil.GitReadError:
+            # メンバーのパスの検査に使うsubmoduleとworktreeの一覧を読めない場合は、空の一覧として扱わず止める
+            # （複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+            return [git_unreadable_diag()], None
         for i in remaining:
             rec = locals_[i]
             assert rec is not None
@@ -1284,14 +1293,16 @@ def _read_base_root_config(
 ) -> dict | None:
     """``base_rev``の時点の複合ワークスペースのルート（``repo_root``。入れ子では入れ子のルート）の``.spec/bitz.yaml``をYAMLとして読む。
 
-    読めなければ``None``。``ROOT_CONFIG_PATH``は``repo_root``からの相対で、入れ子の複合ワークスペースでは
-    基準版でも同じディレクトリの設定を読む（§2.1）。
+    ``ROOT_CONFIG_PATH``は``repo_root``からの相対で、入れ子の複合ワークスペースでは基準版でも同じディレクトリの設定を読む（§2.1）。
+    Gitがそのパスの不在を示した場合（:func:`gitutil.read_tree_file`）は、設定がないとして``None``を返す。通常のファイルでない場合と、
+    内容をYAMLのマッピングとして読めない場合も``None``（宣言のない設定と同じ）。そのほかのGitの読取りの失敗は、
+    :class:`gitutil.GitReadError`を送出する（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
     """
 
     if base_rev is None or not git.available or git.executable is None:
         return None
-    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH, git_top)
-    if raw is None:
+    found, raw = gitutil.read_tree_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH, git_top)
+    if found != gitutil.TREE_FILE_READ or raw is None:
         return None
     try:
         text = raw.decode("utf-8")
