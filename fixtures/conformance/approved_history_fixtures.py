@@ -53,7 +53,8 @@ STRONG = ("requires", "refines", "addresses", "supersedes")
 LIMIT_HISTORY = 10000
 LIMIT_SPEC_BYTES = 1048576
 LIMIT_FRONTMATTER_BYTES = 32768
-ABSOLUTE_LIMITS = (LIMIT_SPEC_BYTES, LIMIT_FRONTMATTER_BYTES)
+LIMIT_ARRAY_ITEMS = 1000
+ABSOLUTE_LIMITS = (LIMIT_SPEC_BYTES, LIMIT_FRONTMATTER_BYTES, LIMIT_ARRAY_ITEMS)
 # 参照計算の読み方。既定は規範文の読み方で、監査の自己試験は別の読み方（ミュータント）へ差し替え、どのfixtureが拒否するかを確かめる。
 # - `recognize`: `state`は途中の版の状態を`draft`または`outdated`へ変えた版だけを認める（§8.1、ADR-081）。`content`はADR-081の前の定義
 #   （文書を変更した`draft`または`outdated`の版を認める。ADR-078の決定1）。
@@ -65,7 +66,12 @@ ABSOLUTE_LIMITS = (LIMIT_SPEC_BYTES, LIMIT_FRONTMATTER_BYTES)
 # - `parents`: `all`はすべての親と比べる（§8.1「親の少なくとも1つ」）。`first`はマージコミットの1つ目の親とだけ比べる（G-1）。
 # - `unreadable`: `absent`はIDを読めない親の版を、同じIDの文書がない親とする（§8.1。索引に入らない版と同じ）。
 #   `unchanged`はその親との比較で状態を変えたとしない（G-3）。
-READING = {"recognize": "state", "boundary": "spec", "duplicates": "skip", "walk": "all", "parents": "all", "unreadable": "absent"}
+# - `protection`（ADR-082の決定4）: `either`は基準版と現在版のどちらかの設定で有効なら有効（§8）。`current`は現在版の設定だけ、`base`は基準版の設定だけで決める。
+#   `lenient`は、値が真偽値でない`"false"`もfalseと読む（スキーマに適合しない基準版の設定を有効とみなさない）。
+# - `array`（ADR-082の決定3）: `apply`は途中の版にも`documentArrayItemCount`を当てる（§4.1）。`ignore`は当てない。
+READING = {"recognize": "state", "boundary": "spec", "duplicates": "skip", "walk": "all", "parents": "all", "unreadable": "absent",
+           "protection": "either", "array": "apply", "protection_workspace": "own"}
+# - `protection_workspace`（ADR-082の決定5）: `own`は各ワークスペース自身の設定で判定する。`root`はルートワークスペースの設定で判定する。
 
 
 # --- 入力の文書 ---------------------------------------------------------------------------------
@@ -392,6 +398,43 @@ CASES.update({
 for _identifier in ("SINGLE-187-21", "SINGLE-187-22"):
     CASES[_identifier]["operations"] = CASES[_identifier]["operations"][1:]
 
+# ADR-082: 途中の版の`documentArrayItemCount`（決定3）。途中の`draft`の版だけが関係の配列を持つ。
+ARRAY_DRAFT = req(REQ_TITLE_CHANGED, "draft", extra=["related: [REQ-002, REQ-003, REQ-004]"])
+CASES.update({
+    "SINGLE-189-05": history({CONFIG_PATH: limits_config(documentArrayItemCount=2), REQ_PATH: req()},
+                             {"draft.md": ARRAY_DRAFT, "approved.md": req(REQ_TITLE_CHANGED)},
+                             [*change(REQ_PATH, "changes/draft.md", "draft"), *change(REQ_PATH, "changes/approved.md", "approve")],
+                             REQ_VIOLATION, "途中の版の関係の配列がlimits.documentArrayItemCountを超えればIDを読めない版とし、draftの版として認めない"),
+    "SINGLE-189-06": history({CONFIG_PATH: limits_config(documentArrayItemCount=3), REQ_PATH: req()},
+                             {"draft.md": ARRAY_DRAFT, "approved.md": req(REQ_TITLE_CHANGED)},
+                             [*change(REQ_PATH, "changes/draft.md", "draft"), *change(REQ_PATH, "changes/approved.md", "approve")],
+                             [], "途中の版の関係の配列がlimits.documentArrayItemCountちょうどなら読み、draftの版として認めて通過する"),
+})
+# ADR-082の決定4: 保護の有無を基準版と現在版の設定で判定する。どれも基準版は`HEAD`で、作業ツリーで設定とREQ-001の`title`を変える。
+INVALID_PROTECTION_CONFIG = CONFIG + b'safety:\n  protectApprovedRequirements: "false"\n'
+
+
+def setting_case(base_config, current_config, violations, description):
+    changes = {"current.md": req(REQ_TITLE_CHANGED)}
+    operations = [update(REQ_PATH, "changes/current.md")]
+    if current_config != base_config:
+        changes["bitz.yaml"] = current_config
+        operations.insert(0, update(CONFIG_PATH, "changes/bitz.yaml"))
+    return dict(repo={CONFIG_PATH: base_config, REQ_PATH: req()}, changes=changes, operations=operations, argv=full("HEAD"),
+                documents=1, statements=1, dirty=True, violations=violations, description=description)
+
+
+CASES.update({
+    "SINGLE-189-01": setting_case(CONFIG, UNPROTECTED_CONFIG, REQ_VIOLATION,
+                                  "基準版で有効な保護を、意味を変える同じ変更でfalseにしても、基準版の設定で有効なので違反にする"),
+    "SINGLE-189-02": setting_case(UNPROTECTED_CONFIG, CONFIG, REQ_VIOLATION,
+                                  "基準版でfalseの保護を現在版で有効に戻せば、現在版の設定で有効なので違反にする"),
+    "SINGLE-189-03": setting_case(UNPROTECTED_CONFIG, UNPROTECTED_CONFIG, [],
+                                  "基準版と現在版の両方の設定でfalseを明示した場合だけ、保護を無効にして通過する"),
+    "SINGLE-189-04": setting_case(INVALID_PROTECTION_CONFIG, UNPROTECTED_CONFIG, REQ_VIOLATION,
+                                  "基準版の設定がスキーマに適合しなければ基準版の側を有効とみなし、現在版でfalseにしても違反にする"),
+})
+
 FOUR_COMMITS = [branch("side"), *change(TECH_PATH, "changes/draft.md", "draft"), checkout("side"),
                 *create("docs/note.md", "changes/note.md", "side"), checkout("fixture"), merge("side"), commit("merge side"),
                 *change(TECH_PATH, "changes/approved.md", "approve")]
@@ -507,6 +550,14 @@ CASES.update({
 })
 
 
+# ADR-082の決定5: `--all-workspaces`では、各ワークスペース自身の基準版と現在版の設定で判定する。`web`だけが両方でfalseにする。
+UNPROTECTED_WEB = {**MULTI_REPO, f"{WEB}/{CONFIG_PATH}": CONFIG + b"workspace:\n  id: web\nsafety:\n  protectApprovedRequirements: false\n"}
+CASES["MULTI-071-06"] = dict(repo=UNPROTECTED_WEB, changes={"approved.md": MULTI_CHANGES["approved.md"]},
+                             operations=[update(WEB_REQ, "changes/approved.md")], argv=["check", "--all-workspaces", "--base", "HEAD", "--format", "json"],
+                             scope="all-workspaces", documents=1, statements=1, dirty=True, violations=[],
+                             description="--all-workspacesでは、ルートで有効でも、メンバー自身の基準版と現在版の設定でfalseなら、そのメンバーの保護を無効にする")
+
+
 def fixture_dir(root, identifier):
     return root / ("multi" if identifier.startswith("MULTI-") else "single") / identifier
 
@@ -595,7 +646,7 @@ def frontmatter_size(text):
     return len(text[4:end + 1].encode("utf-8"))
 
 
-def read_document(content, spec_bytes, frontmatter_bytes=LIMIT_FRONTMATTER_BYTES):
+def read_document(content, spec_bytes, frontmatter_bytes=LIMIT_FRONTMATTER_BYTES, array_items=LIMIT_ARRAY_ITEMS):
     """このfixtureの入力に限った字句の読み方で、ID、状態、意味の項目を返す。IDを読めない版は`None`。"""
     if len(content) > spec_bytes:
         return None
@@ -617,6 +668,9 @@ def read_document(content, spec_bytes, frontmatter_bytes=LIMIT_FRONTMATTER_BYTES
         match = RELATION_LINE.fullmatch(line)
         if in_relations and match:
             relations_[match.group(1)] = tuple(part.strip() for part in match.group(2).split(",") if part.strip())
+            # 関係の配列の項目数の上限（`documentArrayItemCount`。途中の版にも当てる。§4.1、ADR-082）。
+            if len(relations_[match.group(1)]) > array_items:
+                return None
             continue
         match = FRONTMATTER_LINE.fullmatch(line)
         if match is None:
@@ -681,16 +735,40 @@ def changed_items(base, current):
     return items
 
 
-def config_values(repository, prefix, root_prefix=""):
-    """作業ワークスペースの設定の保護の有無と、ルートワークスペースの設定の`limits`（複合ワークスペースではルートの値。§4.1）。"""
-    protect = "protectApprovedRequirements: false" not in (repository / prefix / CONFIG_PATH).read_text()
+PROTECTION_OFF = re.compile(r"^safety:\n  protectApprovedRequirements: false$", re.M)
+PROTECTION_OFF_LENIENT = re.compile(r"^safety:\n  protectApprovedRequirements: \"?false\"?$", re.M)
+
+
+def explicitly_unprotected(text):
+    """設定が`safety.protectApprovedRequirements: false`を明示する（このfixtureの入力に限った字句の読み方）。
+    値が真偽値でない（`"false"`のような文字列）設定は、スキーマに適合しないので明示とみなさない（§8、ADR-082）。"""
+    pattern = PROTECTION_OFF_LENIENT if READING["protection"] == "lenient" else PROTECTION_OFF
+    return text is not None and pattern.search(text) is not None
+
+
+def config_values(repository, prefix, root_prefix="", base=None, base_prefix=None):
+    """保護の有無（基準版と現在版の作業ワークスペースの設定のどちらかで有効なら有効。§8、ADR-082の決定4）と、
+    ルートワークスペースの設定の`limits`（複合ワークスペースではルートの値。§4.1）。"""
+    if READING["protection_workspace"] == "root":
+        prefix = base_prefix = root_prefix
+    current = (repository / prefix / CONFIG_PATH).read_text()
+    base_text = None
+    if base is not None:
+        path = f"{prefix if base_prefix is None else base_prefix}{CONFIG_PATH}"
+        try:
+            base_text = git(repository, "cat-file", "blob", f"{base}:{path}").decode("utf-8")
+        except (subprocess.CalledProcessError, UnicodeDecodeError):
+            base_text = None
+    protect = {"current": not explicitly_unprotected(current),
+               "base": base is None or not explicitly_unprotected(base_text)}.get(
+        READING["protection"], not (explicitly_unprotected(current) and explicitly_unprotected(base_text)))
     text = (repository / root_prefix / CONFIG_PATH).read_text()
 
     def limit(key, default):
         match = re.search(rf"^  {key}: (\d+)$", text, re.M)
         return int(match.group(1)) if match else default
-    return protect, (limit("specBytes", LIMIT_SPEC_BYTES), limit("frontmatterBytes", LIMIT_FRONTMATTER_BYTES)), limit(
-        "historyCommitCount", LIMIT_HISTORY)
+    return protect, (limit("specBytes", LIMIT_SPEC_BYTES), limit("frontmatterBytes", LIMIT_FRONTMATTER_BYTES),
+                     limit("documentArrayItemCount", LIMIT_ARRAY_ITEMS)), limit("historyCommitCount", LIMIT_HISTORY)
 
 
 def resolve(repository, revision):
@@ -732,6 +810,9 @@ def has_intermediate_state(repository, commits, identifier, prefix, limits):
     """途中のコミットのうち少なくとも1つが、文書の状態を`draft`または`outdated`へ変えた（§8.1、ADR-081）。"""
     cache = {}
 
+    if READING["array"] == "ignore":
+        limits = (*limits[:2], LIMIT_ARRAY_ITEMS)
+
     def at(revision):
         if revision not in cache:
             cache[revision] = documents_at(repository, revision, prefix, limits)
@@ -772,10 +853,10 @@ def reference_diagnostics(repository, base_revision, prefix, workspace, base_pre
 
     `base_prefix`は基準版のカタログでのそのワークスペースのルート（メンバーを移した場合）。途中のコミットは現在版のルートの配下だけを読む（§8.1）。
     """
-    protect, limits, history_limit = config_values(repository, prefix, root_prefix)
+    base = resolve(repository, base_revision)
+    protect, limits, history_limit = config_values(repository, prefix, root_prefix, base, base_prefix)
     if not protect:
         return []
-    base = resolve(repository, base_revision)
     before = documents_at(repository, base, prefix if base_prefix is None else base_prefix, limits)
     after = documents_at(repository, None, prefix, limits)
     candidates = []

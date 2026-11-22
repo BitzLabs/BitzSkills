@@ -16421,6 +16421,10 @@ class AuditTests(unittest.TestCase):
             "SINGLE-187-20": module.REQ_VIOLATION, "SINGLE-187-21": module.REQ_VIOLATION, "SINGLE-187-23": module.REQ_VIOLATION,
             # outdatedからdraftへの変更を状態を変えた版とする。
             "SINGLE-187-22": [],
+            # ADR-082: 片方の設定のfalseで保護を外す、両方のfalseでも保護する、途中の版の配列の上限を当てない・ちょうどを超過とする、メンバーにルートの設定を使う。
+            "SINGLE-189-01": [], "SINGLE-189-02": [], "SINGLE-189-03": module.REQ_VIOLATION, "SINGLE-189-04": [],
+            "SINGLE-189-05": [], "SINGLE-189-06": module.REQ_VIOLATION,
+            "MULTI-071-06": [module.violation(".spec/requirements/REQ-010.md", "title", "REQ", workspace="web")],
             # マージコミットを、すべての親と異なる場合だけ変更したとする。
             "SINGLE-187-07": module.REQ_VIOLATION,
             # パスだけを変えたコミットを変更したとする。
@@ -16474,6 +16478,14 @@ class AuditTests(unittest.TestCase):
             "parents=first": ({"parents": "first"}, ["SINGLE-187-21"]),
             # 再検収のG-3: IDを読めない親の版との比較では状態を変えたとしない。
             "unreadable=unchanged": ({"unreadable": "unchanged"}, ["SINGLE-187-23"]),
+            # ADR-082の決定4: 現在版の設定だけ、基準版の設定だけで保護の有無を決める。値が文字列の`"false"`もfalseと読む。
+            "protection=current": ({"protection": "current"}, ["SINGLE-189-01", "SINGLE-189-04"]),
+            "protection=base": ({"protection": "base"}, ["SINGLE-189-02"]),
+            "protection=lenient": ({"protection": "lenient"}, ["SINGLE-189-04"]),
+            # ADR-082の決定5: メンバーの保護の有無をルートの設定で決める。
+            "protection_workspace=root": ({"protection_workspace": "root"}, ["MULTI-071-06"]),
+            # ADR-082の決定3: 途中の版に`documentArrayItemCount`を当てない。
+            "array=ignore": ({"array": "ignore"}, ["SINGLE-189-05"]),
         }
         for name, (reading, identifiers) in expected.items():
             with self.subTest(mutant=name), patch.dict(module.READING, reading):
@@ -16486,7 +16498,8 @@ class AuditTests(unittest.TestCase):
                         rejected.append(identifier)
                 self.assertEqual(rejected, identifiers)
         self.assertEqual(module.READING, {"recognize": "state", "boundary": "spec", "duplicates": "skip", "walk": "all",
-                                          "parents": "all", "unreadable": "absent"})
+                                          "parents": "all", "unreadable": "absent", "protection": "either", "array": "apply",
+                                          "protection_workspace": "own"})
 
     def test_approved_history_reference_reads_documents_narrowly(self):
         """参照計算の字句の読み方: YAMLの構文の不正、上限の超過、規範文と強い関係の読取り。"""
