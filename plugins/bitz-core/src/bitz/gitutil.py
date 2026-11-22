@@ -559,27 +559,30 @@ def list_tree_config_paths(
     ``workspace_root``は複合ワークスペースのルート（絶対パス）。省略時はリポジトリのルート。入れ子の複合ワークスペースでは
     リポジトリのルートからの相対パスを入れ子のルートからの相対へ写し、ルートの外のパスは返さない（§2.1）。
     シンボリックリンク（モード ``120000``）とGitのサブモジュールの`gitlink`（モード ``160000``）は対象にしない。
+
+    読取りが失敗した場合（Gitの起動の失敗、0でない終了コード、出力の形の不正）は、空の一覧とせず:class:`GitReadError`を送出する
+    （複合ワークスペース仕様 §2、ADR-083の`Notes`。呼び出し側の全体事前検査が`SPEC-MULTI-GIT-001`にする）。
     """
 
     try:
         proc = _run(
             [executable, "--no-optional-locks", "ls-tree", "--full-tree", "-r", "-z", rev], cwd, env
         )
-    except (OSError, subprocess.SubprocessError):
-        return []
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitReadError(f"git ls-tree: {exc}") from exc
     if proc.returncode != 0:
-        return []
+        raise GitReadError(f"git ls-tree: 終了コード{proc.returncode}")
     tokens = proc.stdout.split("\0")
     if tokens and tokens[-1] == "":
         tokens = tokens[:-1]
     out: list[str] = []
     for tok in tokens:
         if "\t" not in tok:
-            continue
+            raise GitReadError("git ls-treeの出力の形が不正です")
         meta, path = tok.split("\t", 1)
         parts = meta.split(" ")
         if len(parts) < 2:
-            continue
+            raise GitReadError("git ls-treeの出力の形が不正です")
         mode, obj_type = parts[0], parts[1]
         if obj_type != "blob" or mode == "120000":
             continue
@@ -603,6 +606,9 @@ def list_working_config_paths(
     作業ツリーでの実在の有無に関わらず返すため、`.spec/bitz.yaml`へ実際に作業ツリーで
     到達できるパスだけへ絞る（複合ワークスペース仕様 §8「作業ツリーに存在する追跡対象またはステージ済みのパス」。
     ファイル移動後の旧パスがインデックス上に残っていても、作業ツリー上は既に存在しないため対象にしない）。
+
+    追跡対象の一覧と未追跡の一覧のどちらかの読取りが失敗した場合は、空の一覧とせず:class:`GitReadError`を送出する
+    （複合ワークスペース仕様 §2、ADR-083の`Notes`）。
     """
 
     root = os.path.abspath(_toplevel_or_cwd(executable, cwd, env, toplevel))
@@ -612,14 +618,18 @@ def list_working_config_paths(
         proc = _run(
             [executable, "--no-optional-locks", "ls-files", "-z", "--full-name"], root, env
         )
-    except (OSError, subprocess.SubprocessError):
-        proc = None
-    if proc is not None and proc.returncode == 0:
-        tokens = proc.stdout.split("\0")
-        for p in tokens:
-            if p:
-                paths.add(p)
-    for c in _ls_files_others_z(executable, cwd, env, toplevel):
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitReadError(f"git ls-files: {exc}") from exc
+    if proc.returncode != 0:
+        raise GitReadError(f"git ls-files: 終了コード{proc.returncode}")
+    for p in proc.stdout.split("\0"):
+        if p:
+            paths.add(p)
+    try:
+        untracked = _ls_files_others_z(executable, cwd, env, toplevel, strict=True)
+    except GitChangesError as exc:
+        raise GitReadError(str(exc)) from exc
+    for c in untracked:
         paths.add(c.path)
     found = sorted(
         p

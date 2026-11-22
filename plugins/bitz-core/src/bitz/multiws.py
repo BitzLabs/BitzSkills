@@ -622,6 +622,56 @@ def _deep_path_check(
     return None
 
 
+def _git_config_paths_outside_catalog(
+    git: gitutil.GitInfo,
+    cwd: str,
+    env: dict[str, str],
+    root: str,
+    members: list[MemberRecord],
+    exclude_parts: list[tuple[str, ...]],
+    extra_config_revs: list[str],
+    git_top: str | None,
+) -> set[str]:
+    """Gitが認識する設定のうち、各スナップショット自身のカタログにないもののパスを返す（UNREGISTERED段階。複合ワークスペース仕様 §8）。
+
+    Gitが認識する設定のパスの一覧の読取りが失敗した場合は、:class:`gitutil.GitReadError`を送出する（空の一覧として扱わない。
+    複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+    """
+
+    assert git.executable is not None
+    catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
+    extra_set: set[str] = set()
+    for rev in extra_config_revs:
+        # 基準版のルートの設定は1回だけ読み、カタログの対応表と除外の両方を求める。
+        rev_config = _read_base_root_config(git, cwd, env, rev, root, git_top)
+        rev_map = _workspace_map(rev_config) if rev_config is not None else {}
+        if not rev_map:
+            # このリビジョンは`multiWorkspace`を宣言していない（単一ワークスペースから複合ワークスペース化する前の
+            # スナップショット）。リポジトリ全体の不存在保証をさかのぼって適用しない（複合ワークスペース仕様 §8）。
+            continue
+        rev_catalog_paths = {
+            ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
+        }
+        # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
+        # `limits.excludeCount`は現在版のルートの設定の除外にだけ当て、基準版の設定の除外の件数は、現在版と基準版の
+        # どちらの`limits`にもよらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
+        rev_exclude = (
+            valid_exclude_parts(rev_config, limits_mod.ABSOLUTE.excludeCount)
+            if rev_config is not None else None
+        ) or []
+        rev_known = {
+            p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root, git_top)
+            if not _config_in_excluded_area(p, rev_exclude)
+        }
+        extra_set |= _without_nfc(rev_known, rev_catalog_paths)
+    current_known = {
+        p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root, git_top)
+        if not _config_in_excluded_area(p, exclude_parts)
+    }
+    extra_set |= _without_nfc(current_known, catalog_paths)
+    return extra_set
+
+
 def _validate_catalog(
     root: str,
     root_id: str,
@@ -754,36 +804,13 @@ def _validate_catalog(
             if not _in_excluded_area(_nfc_parts(rel_dir), exclude_parts):
                 unregistered[f"{rel_dir}/.spec/bitz.yaml"] = messages.MULTI_UNREGISTERED_SELECTED
     if compare_git_configs and git.available and git.executable:
-        catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
-        extra_set: set[str] = set()
-        for rev in extra_config_revs:
-            # 基準版のルートの設定は1回だけ読み、カタログの対応表と除外の両方を求める。
-            rev_config = _read_base_root_config(git, cwd, env, rev, root, git_top)
-            rev_map = _workspace_map(rev_config) if rev_config is not None else {}
-            if not rev_map:
-                # このリビジョンは`multiWorkspace`を宣言していない（単一ワークスペースから複合ワークスペース化する前の
-                # スナップショット）。リポジトリ全体の不存在保証をさかのぼって適用しない（複合ワークスペース仕様 §8）。
-                continue
-            rev_catalog_paths = {
-                ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
-            }
-            # 各スナップショットは、そのスナップショット自身のルートの設定の除外を使う（§2.1）。
-            # `limits.excludeCount`は現在版のルートの設定の除外にだけ当て、基準版の設定の除外の件数は、現在版と基準版の
-            # どちらの`limits`にもよらず絶対上限で検査する（安全な入出力・互換性 §4.1）。
-            rev_exclude = (
-                valid_exclude_parts(rev_config, limits_mod.ABSOLUTE.excludeCount)
-                if rev_config is not None else None
-            ) or []
-            rev_known = {
-                p for p in gitutil.list_tree_config_paths(git.executable, cwd, env, rev, root, git_top)
-                if not _config_in_excluded_area(p, rev_exclude)
-            }
-            extra_set |= _without_nfc(rev_known, rev_catalog_paths)
-        current_known = {
-            p for p in gitutil.list_working_config_paths(git.executable, cwd, env, root, git_top)
-            if not _config_in_excluded_area(p, exclude_parts)
-        }
-        extra_set |= _without_nfc(current_known, catalog_paths)
+        try:
+            extra_set = _git_config_paths_outside_catalog(
+                git, cwd, env, root, members, exclude_parts, extra_config_revs, git_top
+            )
+        except gitutil.GitReadError:
+            # Gitが認識する設定のパスの一覧を読めない場合は、空の一覧として扱わず止める（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+            return [git_unreadable_diag()], None
         for p in extra_set:
             unregistered[p] = messages.MULTI_UNREGISTERED
     if unregistered:
