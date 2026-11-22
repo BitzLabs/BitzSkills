@@ -53,13 +53,14 @@ KEYS_IN_TABLE_ORDER = [
     "specBytes", "frontmatterBytes", "specFileCount", "documentStatementCount", "documentArrayItemCount",
     "inputBytes", "statementCount", "relationEdgeCount", "traceEntryCount", "commandDefinitionCount",
     "verifyBindingCount", "excludeCount", "expandedArgvCount", "expandedArgvElementBytes", "expandedArgvBytes",
+    "historyCommitCount",
 ]
 ABSOLUTE_VALUES = {
     "specBytes": 1_048_576, "frontmatterBytes": 32_768, "specFileCount": 10_000, "documentStatementCount": 1_000,
     "documentArrayItemCount": 1_000, "inputBytes": 268_435_456, "statementCount": 100_000,
     "relationEdgeCount": 1_000_000, "traceEntryCount": 1_000_000, "commandDefinitionCount": 10_000,
     "verifyBindingCount": 10_000, "excludeCount": 100, "expandedArgvCount": 10_000,
-    "expandedArgvElementBytes": 32_768, "expandedArgvBytes": 1_048_576,
+    "expandedArgvElementBytes": 32_768, "expandedArgvBytes": 1_048_576, "historyCommitCount": 10_000,
 }
 
 
@@ -135,6 +136,8 @@ class ConfigValidationTests(unittest.TestCase):
             'statementCount: "5"': ("limits.statementCount", 100_000),
             "excludeCount: 1.5": ("limits.excludeCount", 100),
             "inputBytes: null": ("limits.inputBytes", 268_435_456),
+            "historyCommitCount: 10001": ("limits.historyCommitCount", 10_000),
+            "historyCommitCount: 0": ("limits.historyCommitCount", 10_000),
         }
         for line, (key, maximum) in cases.items():
             with self.subTest(line=line):
