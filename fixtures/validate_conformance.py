@@ -121,6 +121,7 @@ from conformance.limits_multi_fixtures import validate as validate_limits_multi_
 from conformance.help_version_fixtures import validate as validate_help_version_fixtures
 from conformance.nested_workspace_fixtures import validate as validate_nested_workspace_fixtures
 from conformance.approved_history_fixtures import validate as validate_approved_history_fixtures
+from conformance.change_set_fixtures import validate as validate_change_set_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -500,6 +501,7 @@ def main():
     checks["help_version_fixtures"] = validate_help_version_fixtures()
     checks["nested_workspace_fixtures"] = validate_nested_workspace_fixtures()
     checks["approved_history_fixtures"] = validate_approved_history_fixtures()
+    checks["change_set_fixtures"] = validate_change_set_fixtures()
     checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
     checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}

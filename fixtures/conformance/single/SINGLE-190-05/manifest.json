@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-190-05",
+  "description": "作業ツリーだけの仕様文書のパスだけの名前の変更も、2つのパスを同じ文書IDの1文書へ写す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "rename",
+        "from": ".spec/requirements/REQ-001.md",
+        "to": ".spec/requirements/REQ-001-renamed.md"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

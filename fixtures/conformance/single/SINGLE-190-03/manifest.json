@@ -1,0 +1,46 @@
+{
+  "fixtureId": "SINGLE-190-03",
+  "description": "implementsで所有するコードを移すと、移動元だけが逆索引でREQに写り、移動先は所有されないパスとして数える",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "rename",
+        "from": "src/old.py",
+        "to": "src/new.py"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "src/old.py",
+          "src/new.py"
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

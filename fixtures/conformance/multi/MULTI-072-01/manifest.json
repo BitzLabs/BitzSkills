@@ -1,0 +1,46 @@
+{
+  "fixtureId": "MULTI-072-01",
+  "description": "複合ワークスペースのメンバーでも、ステージした所有されないコードの名前の変更を2つのパスとして数える",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "rename",
+        "from": "apps/web/src/old.py",
+        "to": "apps/web/src/new.py"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "apps/web/src/old.py",
+          "apps/web/src/new.py"
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
