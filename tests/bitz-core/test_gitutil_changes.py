@@ -70,9 +70,11 @@ class CollectChangedPathsTests(unittest.TestCase):
             self.assertEqual(by_path["a.txt"].status, "M")
             self.assertEqual(by_path["b.txt"].status, "D")
             self.assertEqual(by_path["d.txt"].status, "A")
-            self.assertIn("c-renamed.txt", by_path)
-            self.assertEqual(by_path["c-renamed.txt"].status, "R")
-            self.assertEqual(by_path["c-renamed.txt"].old_path, "c.txt")
+            # 名前の変更は検出しない（ADR-083の決定1）。移動元の削除と移動先の追加の2件として入る。
+            self.assertEqual(by_path["c.txt"].status, "D")
+            self.assertEqual(by_path["c-renamed.txt"].status, "A")
+            self.assertTrue(all(c.old_path is None for c in changed))
+            self.assertEqual(sorted(by_path), ["a.txt", "b.txt", "c-renamed.txt", "c.txt", "d.txt"])
 
     def test_staged_then_reverted_path_is_still_in_index_diff(self):
         # 基準版→インデックス（ステージ済み）とインデックス→作業ツリー（戻した状態）を別々に取る和集合でなければ、
