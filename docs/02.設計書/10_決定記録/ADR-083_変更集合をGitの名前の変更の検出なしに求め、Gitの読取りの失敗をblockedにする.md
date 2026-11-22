@@ -1,7 +1,7 @@
 ---
 id: ADR-083
 title: 変更集合をGitの名前の変更の検出なしに求め、Gitの読取りの失敗をblockedにする
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-037
@@ -64,9 +64,11 @@ relations:
 
 - 2026-11-22に、利用者がDecisionの1から3のもとになった案を選んだ。診断コードの名前、`summary`の文言、Decisionの4と5は、起票者の案である。
 - ADR-082の`Notes`に記録した既知の問題を解消する。
+- 2026-11-22に、利用者がADRを承認した。Decisionの3の診断コードと`summary`の文言も、このとき承認した（ADR-062）。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-22 | 起票（`proposed`） | ADR-082 |
+| 2026-11-22 | 利用者の承認により`accepted`へ変更（Decisionの3の`summary`の文言を含む） | — |
