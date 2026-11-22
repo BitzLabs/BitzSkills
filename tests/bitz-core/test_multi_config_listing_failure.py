@@ -20,6 +20,7 @@ from pathlib import Path
 from unittest import mock
 
 from bitz import check as check_mod
+from bitz import compat as compat_mod
 from bitz import context as context_mod
 from bitz import doctor as doctor_mod
 from bitz import gitutil
@@ -65,6 +66,16 @@ def _is_tracked_listing(argv):
 
 def _is_untracked_listing(argv):
     return "ls-files" in argv and "--others" in argv
+
+
+def _is_submodule_listing(argv):
+    # `list_submodule_paths`（`git ls-files --stage`）。
+    return "ls-files" in argv and "--stage" in argv
+
+
+def _is_worktree_listing(argv):
+    # `list_worktree_paths`（`git worktree list --porcelain`）。
+    return "worktree" in argv and "list" in argv
 
 
 class _FailingRun:
@@ -185,6 +196,210 @@ class ConfigListingFailureTests(unittest.TestCase):
         result, code = self.run_op(["doctor", "--all-workspaces"], env=env)
         self.assertEqual([d["code"] for d in result["diagnostics"]], ["SPEC-MULTI-GIT-001"])
         self.assertEqual({c["name"]: c["status"] for c in result["checks"]}.get("git"), "blocked")
+        self.assertEqual(code, 2)
+
+
+class MemberPathListingFailureTests(ConfigListingFailureTests):
+    """メンバーのパスの検査に使うsubmoduleとworktreeの一覧の読取りの失敗（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+
+    この読取りは、全体事前検査を行うすべての操作（単独の`check`、`context`、`verify`も）が行う。
+    """
+
+    CASES = [
+        (["check", "--all-workspaces"], None),
+        (["verify", "--all-workspaces"], None),
+        (["doctor", "--all-workspaces"], None),
+        (["doctor"], "apps/web"),
+        (["check", "--full"], "apps/web"),
+        (["verify"], "apps/web"),
+        (["context", "REQ-010"], "apps/web"),
+    ]
+
+    def assert_single_stopped(self, argv: list[str], result: dict, code: int) -> None:
+        if argv[0] == "context":
+            # `context`の停止結果（結果・診断・終了コード §2）。
+            self.assertEqual(result["status"], "blocked")
+            self.assertEqual(result["diagnostics"], [MULTI_GIT])
+            self.assertIsNone(result["contextDigest"])
+            self.assertEqual(code, 2)
+            return
+        self.assert_stopped(argv, result, code)
+
+    def test_each_listing_failure_stops_each_operation(self):
+        outcomes = {"exit": (128, ""), "launch": OSError("起動できない")}
+        for argv, cwd in self.CASES:
+            for read, predicate in (("submodule", _is_submodule_listing), ("worktree", _is_worktree_listing)):
+                for name, outcome in outcomes.items():
+                    with self.subTest(argv=argv, read=read, outcome=name):
+                        fake = _FailingRun(predicate, outcome)
+                        with mock.patch.object(gitutil, "_run", fake):
+                            result, code = self.run_op(argv, self.root / cwd if cwd else None)
+                        self.assertGreater(fake.hits, 0)
+                        self.assert_single_stopped(argv, result, code)
+
+    def test_malformed_tree_listing_stops(self):
+        # 出力の形の不正: `ls-files --stage`の項目にタブがない、`worktree list`に`worktree`の行がない。
+        for read, predicate, output in (
+            ("submodule", _is_submodule_listing, "壊れた出力\0"),
+            ("worktree", _is_worktree_listing, "HEAD 0000000000000000000000000000000000000000\n"),
+        ):
+            with self.subTest(read=read):
+                fake = _FailingRun(predicate, (0, output))
+                with mock.patch.object(gitutil, "_run", fake):
+                    result, code = self.run_op(["doctor", "--all-workspaces"])
+                self.assertGreater(fake.hits, 0)
+                self.assert_stopped(["doctor", "--all-workspaces"], result, code)
+
+    def test_operations_without_the_comparison_do_not_read_the_listings(self):
+        # このクラスの読取りは単独の操作も行う（親クラスの対照は当てはまらない）。
+        result, _code = self.run_op(["check", "--full"], self.root / "apps/web")
+        self.assertEqual(result["diagnostics"], [])
+
+    def test_compat_migration_check_stops(self):
+        # `compat`の移行の検証（`to-multi-workspace`）も全体事前検査を呼ぶので、同じく`blocked`になる。
+        self.assertEqual(compat_mod._to_multi_workspace_status(str(self.root), self.env), "passed")
+        for predicate in (_is_submodule_listing, _is_worktree_listing, _is_tracked_listing):
+            with self.subTest(read=predicate.__name__):
+                fake = _FailingRun(predicate, (128, ""))
+                with mock.patch.object(gitutil, "_run", fake):
+                    status = compat_mod._to_multi_workspace_status(str(self.root), self.env)
+                self.assertGreater(fake.hits, 0)
+                self.assertEqual(status, "blocked")
+
+
+class RevisionRootConfigTests(unittest.TestCase):
+    """比べるリビジョンのルートの設定の読取り（複合ワークスペース仕様 §2、ADR-083の`Notes`）。
+
+    Gitがそのパスの不在を示した場合だけ設定がないとし、そのほかの失敗は読めないとする（:func:`gitutil.read_tree_file`）。
+    """
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.root = self.tmp / "repo"
+        self.root.mkdir()
+        self.env = {**os.environ, **_GIT_ENV}
+        _git(self.root, "init", "-q", "--initial-branch=main")
+        _git(self.root, "config", "user.email", "t@t")
+        _git(self.root, "config", "user.name", "t")
+        _git(self.root, "config", "uploadpack.allowFilter", "true")
+
+    def read(self, root: Path, rev: str, rel: str) -> tuple[str, bytes | None]:
+        return gitutil.read_tree_file("git", str(root), self.env, rev, str(root), rel)
+
+    def test_absent_not_regular_and_read(self):
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG)
+        _write(self.root, "docs/x.md", "x\n")
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "base")
+        self.assertEqual(self.read(self.root, "HEAD", ".spec/bitz.yaml"), (gitutil.TREE_FILE_READ, ROOT_CONFIG.encode()))
+        self.assertEqual(self.read(self.root, "HEAD", ".spec/other.yaml"), (gitutil.TREE_FILE_ABSENT, None))
+        self.assertEqual(self.read(self.root, "HEAD", "nowhere/.spec/bitz.yaml"), (gitutil.TREE_FILE_ABSENT, None))
+        self.assertEqual(self.read(self.root, "HEAD", "docs"), (gitutil.TREE_FILE_NOT_REGULAR, None))
+
+    def test_unknown_revision_and_missing_object_are_failures(self):
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG)
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "base")
+        base = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.root, env=self.env, check=True,
+                              capture_output=True, text=True).stdout.strip()
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG + "# 変更\n")
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "change")
+        with self.assertRaises(gitutil.GitReadError):
+            self.read(self.root, "0" * 40, ".spec/bitz.yaml")
+        # 部分クローン（取得元に届かない）で、基準版のルートの設定の内容が欠けている。
+        clone = self.tmp / "clone"
+        subprocess.run(["git", "clone", "-q", "--filter=blob:none", f"file://{self.root}", str(clone)],
+                       env=self.env, check=True, capture_output=True)
+        (self.tmp / "repo").rename(self.tmp / "moved")
+        with self.assertRaises(gitutil.GitReadError):
+            self.read(clone, base, ".spec/bitz.yaml")
+        # 対照: チェックアウトで取得済みの`HEAD`の内容は読める。
+        self.assertEqual(self.read(clone, "HEAD", ".spec/bitz.yaml")[0], gitutil.TREE_FILE_READ)
+
+    def build_multi(self) -> None:
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG)
+        _write(self.root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "base")
+
+    def run_op(self, argv: list[str], cwd: Path | None = None) -> tuple[dict, int]:
+        return OPERATIONS[argv[0]].run(parse_argv([*argv, "--format", "json"]), str(cwd or self.root), self.env)
+
+    def test_read_failure_stops_the_precheck(self):
+        self.build_multi()
+        for argv, cwd in ((["doctor", "--all-workspaces"], None), (["doctor"], "apps/web"), (["check", "--all-workspaces"], None)):
+            with self.subTest(argv=argv):
+                with mock.patch.object(gitutil, "read_tree_file", side_effect=gitutil.GitReadError("読めない")):
+                    result, code = self.run_op(argv, self.root / cwd if cwd else None)
+                self.assertEqual(result["diagnostics"], [MULTI_GIT])
+                self.assertEqual(result["status"], "blocked")
+                self.assertEqual(code, 2)
+
+    def test_absent_root_config_is_no_config(self):
+        # 対照: リビジョンにルートの設定がない（`HEAD`のコミットは複合ワークスペース化の前で、設定を持たない）。
+        # 不在なので、そのリビジョンは`multiWorkspace`を宣言しないものとし、現在のスナップショットだけを照合する（§8）。
+        _write(self.root, "README.md", "x\n")
+        _git(self.root, "add", "--", "README.md")
+        _git(self.root, "commit", "-q", "-m", "before")
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG)
+        _write(self.root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
+        result, code = self.run_op(["doctor", "--all-workspaces"])
+        self.assertEqual(result["diagnostics"], [])
+        self.assertEqual([ws["id"] for ws in result["workspaces"]], ["platform", "web"])
+        self.assertEqual(code, 0)
+
+
+class UnbornHeadTests(unittest.TestCase):
+    """コミットのないリポジトリの`HEAD`は、Gitの出力で不在と判定し、読取りの失敗と区別する（`doctor` §3、複合ワークスペース仕様 §2）。"""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.env = {**os.environ, **_GIT_ENV}
+        _git(self.root, "init", "-q", "--initial-branch=main")
+        _git(self.root, "config", "user.email", "t@t")
+        _git(self.root, "config", "user.name", "t")
+        _write(self.root, ".spec/bitz.yaml", ROOT_CONFIG)
+        _write(self.root, "apps/web/.spec/bitz.yaml", CONFIG + "workspace:\n  id: web\n")
+
+    def unborn(self) -> bool:
+        return gitutil.head_is_unborn("git", str(self.root), self.env)
+
+    def doctor(self) -> tuple[dict, int]:
+        return doctor_mod.run(parse_argv(["doctor", "--all-workspaces", "--format", "json"]), str(self.root), self.env)
+
+    def test_unborn_head_is_absent(self):
+        self.assertTrue(self.unborn())
+        result, code = self.doctor()
+        self.assertEqual(result["diagnostics"], [])
+        self.assertEqual(code, 0)
+
+    def test_committed_head_is_not_unborn(self):
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "base")
+        self.assertFalse(self.unborn())
+
+    def test_unresolvable_head_is_a_failure(self):
+        # 枝の参照はあるが、指すコミットのオブジェクトがない（壊れたリポジトリ）。
+        _git(self.root, "add", "--", ".")
+        _git(self.root, "commit", "-q", "-m", "base")
+        (self.root / ".git/refs/heads/main").write_text("1" * 40 + "\n")
+        with self.assertRaises(gitutil.GitReadError):
+            self.unborn()
+        result, code = self.doctor()
+        self.assertIn(MULTI_GIT, result["diagnostics"])
+        self.assertEqual(code, 2)
+
+    def test_reference_listing_failure_is_a_failure(self):
+        fake = _FailingRun(lambda argv: "for-each-ref" in argv, (128, ""))
+        with mock.patch.object(gitutil, "_run", fake):
+            result, code = self.doctor()
+        self.assertGreater(fake.hits, 0)
+        self.assertEqual(result["diagnostics"], [MULTI_GIT])
         self.assertEqual(code, 2)
 
 
