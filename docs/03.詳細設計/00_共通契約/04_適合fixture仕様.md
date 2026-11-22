@@ -1224,13 +1224,19 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `SINGLE-188-05` | `docs/note.md`を足したコミットに枝`old`、REQ-001の`title`を変えたコミットに枝`base`を作り、`old`へ戻して`HEAD`を境界にする | check --full --base base | failed／1 | `HEAD`が基準版の祖先なので途中のコミットはなく、境界を見ない。summaryは通常の文言 |
 | `SINGLE-188-06` | TECH-001。基準版の後に、`draft`のコミット、枝`side`の`docs/note.md`のコミット、`side`のマージコミット、`approved`に戻したコミット（途中のコミットは4つ）。`limits.historyCommitCount: 3` | check --full --base base | failed／1 | 途中のコミットの数が上限を超えるので、`draft`の版があっても違反のまま。summary「状態approvedのTECHの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」（マージコミットと`HEAD`も数える。§4.1） |
 | `SINGLE-188-07` | `SINGLE-188-06`の入力で`limits.historyCommitCount: 4` | check --full --base base | passed／0 | ちょうどは遮断しない |
-| `SINGLE-188-08` | 設定に`safety.protectApprovedRequirements: false`。基準版の後に、REQ-001の`title`を変えたコミット（`approved`のまま）を作り、`HEAD`を境界にする | check --full --base base | passed／0 | 保護を無効にした設定では履歴を読まないので、シャロークローンでも違反にしない |
+| `SINGLE-188-08` | 設定に`safety.protectApprovedRequirements: false`（基準版のコミットに含むので、基準版と現在版の両方の設定で`false`）。基準版の後に、REQ-001の`title`を変えたコミット（`approved`のまま）を作り、`HEAD`を境界にする | check --full --base base | passed／0 | 保護を無効にした設定では履歴を読まないので、シャロークローンでも違反にしない |
 | `SINGLE-188-09` | `SINGLE-188-01`の入力 | check REQ-001 --base base | failed／1 | 明示対象でも途中のコミットを読む。`scope: selected`、検査文書1、規範文1、`SINGLE-188-01`と同じ診断 |
 | `SINGLE-188-10` | 基準版のコミットを`setup.baseCommit`で作り、`HEAD`を境界にし、作業ツリーでREQ-001の`title`を変える。`--base`を省く（§3の例外。監査がIDで列挙する） | check REQ-001 | failed／1 | `--base`なしでは基準版を`HEAD`とする（`check` §5）。深さ1のチェックアウトでも通常の文言（ADR-079の`Consequences`）。`scope: selected` |
 | `SINGLE-188-11` | `SINGLE-186-01`の入力 | check --full --base HEAD --format text | failed／1 | 要約行`check failed scope=full targets=1 diagnostics=1 (<duration>ms)`と、診断の行`root:.spec/technical/TECH-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのTECHの意味変更時に文書の状態が戻されていません`（結果・診断・終了コード §7） |
 | `SINGLE-188-12` | `SINGLE-188-01`の入力 | check --full --base base --format text | failed／1 | 要約行と、診断の行`root:.spec/requirements/REQ-001.md::: error: SPEC-SAFETY-APPROVED-001: 状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）` |
 | `SINGLE-188-13` | 基準版のコミットから枝`side`を分け、`docs/note.md`を足したコミット（枝の先端）に枝`base`を作る。`fixture`で`SINGLE-187-01`と同じ2つのコミットを作り、基準版（`base`）をシャロークローンの境界にする | check --full --base base | failed／1 | 基準版は`HEAD`の祖先でなく、境界は`HEAD`から到達できないが、基準版から到達できるので、途中に`draft`の版があっても`SINGLE-188-01`と同じ文言の違反 |
 | `SINGLE-188-14` | `SINGLE-188-13`の形で、枝`side`にもう1つコミットを足して枝`base`を作り、枝の上の祖先（`base~1`）を境界にする | check --full --base base | failed／1 | 境界は基準版自身でも途中のコミットの親でもないが、基準版から到達できるので同じ違反 |
+| `SINGLE-189-01` | 基準版の設定は保護の既定（`true`）。作業ツリーで、設定に`safety.protectApprovedRequirements: false`を足し、同じ変更でREQ-001の`title`を変える | check --full --base HEAD | failed／1 | 保護は基準版と現在版の設定のどちらかで有効なら有効（§8、ADR-082の決定4）。`SPEC-SAFETY-APPROVED-001`の1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません」） |
+| `SINGLE-189-02` | 基準版の設定は`safety.protectApprovedRequirements: false`。作業ツリーでその行を除き（現在版は既定の`true`）、REQ-001の`title`を変える | check --full --base HEAD | failed／1 | 現在版の設定で有効なので保護する。`SINGLE-189-01`と同じ診断 |
+| `SINGLE-189-03` | 基準版と現在版の設定がどちらも`safety.protectApprovedRequirements: false`。作業ツリーでREQ-001の`title`を変える | check --full --base HEAD | passed／0 | 両方の設定で`false`と明示した場合だけ無効とする |
+| `SINGLE-189-04` | 基準版の設定の値が文字列`"false"`（真偽値でないのでスキーマに適合しない）。作業ツリーで設定を`false`（真偽値）に直し、REQ-001の`title`を変える | check --full --base HEAD | failed／1 | スキーマに適合しない基準版の設定は、基準版の側を有効とみなす（§8、ADR-082の決定4）。`SINGLE-189-01`と同じ診断。現在版の設定は適合するので設定の診断はない |
+| `SINGLE-189-05` | `SINGLE-187-01`の形で、途中の`draft`の版だけが`relations.related`に3件を持ち、`limits.documentArrayItemCount: 2`（基準版と現在版は配列を持たない） | check --full --base base | failed／1 | 途中の版にも`documentArrayItemCount`を当て、超えた版をIDを読めない版とする（安全な入出力・互換性 §4.1、ADR-082の決定3） |
+| `SINGLE-189-06` | `SINGLE-189-05`の入力で`limits.documentArrayItemCount: 3` | check --full --base base | passed／0 | ちょうどは遮断しない |
 
 ## 7. 最小matrix: 複合ワークスペース
 
@@ -1608,6 +1614,7 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `MULTI-071-03` | `MULTI-071-01`の入力。基準版の後に、REQ-010を`draft`にしたコミットを作り、次のコミットでメンバー`web`のディレクトリを`apps/site`へ移してルートのカタログを改め、同時に`title`を変えて`approved`にする（ルートで実行） | check --all-workspaces --base base | failed／1 | 途中のコミットは現在版のカタログのルート（`apps/site`）の配下だけを読むので、移す前のコミットの`draft`の版を対応付けない（§8.1、ADR-078の決定4）。`web`（`apps/site`）の`diagnostics`に1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません」、`source`は`{file, web, .spec/requirements/REQ-010.md, title}`）。`platform`と`api`は`passed` |
 | `MULTI-071-04` | `MULTI-071-03`の形で、ルートを移すコミットではREQ-010を`draft`のまま（同じバイト列）にし、その後のコミットで`title`を変えて`approved`にする | check --all-workspaces --base base | passed／0 | ルートを移したコミットの`draft`の版は、親（移す前）の新しいルートの配下に同じIDの文書がないので、状態を変えた版として認める（§8.1） |
 | `MULTI-071-05` | `MULTI-071-01`の入力で、ルートの設定に`limits.historyCommitCount: 1`（途中のコミットは2つ。ルートで実行） | check --all-workspaces --base base | failed／1 | 複合ワークスペースではルートの設定の値を使う（安全な入出力・互換性 §4.1）。`web`の`diagnostics`に1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」） |
+| `MULTI-071-06` | `MULTI-071-01`の入力で、メンバー`web`の設定（基準版と現在版）に`safety.protectApprovedRequirements: false`。ルートと`api`の設定は既定。作業ツリーでREQ-010の`title`を変える（ルートで実行） | check --all-workspaces --base HEAD | passed／0 | `--all-workspaces`では、各ワークスペース自身の基準版と現在版の設定で保護の有無を判定する（§8、ADR-082の決定5）。`web`は無効なので診断なし。`dirty: true` |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
