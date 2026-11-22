@@ -23,6 +23,7 @@ from conformance import limits_multi_fixtures, limits_single_fixtures
 from conformance import help_version_fixtures
 from conformance import nested_workspace_fixtures
 from conformance import approved_history_fixtures
+from conformance import change_set_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions, CASES as INITIAL_CASES
@@ -16515,6 +16516,52 @@ class AuditTests(unittest.TestCase):
                                                   extra=["supersedes: [REQ-002]", "refines: [REQ-002]"]), module.LIMIT_SPEC_BYTES)
         self.assertEqual(module.changed_items(base, changed), ["title", "relations.refines", "relations.supersedes", "statements"])
         self.assertEqual(module.changed_items(base, module.read_document(module.req(verification="説明だけ。"), module.LIMIT_SPEC_BYTES)), [])
+
+
+    # --- 変更集合の名前の変更（SINGLE-190、MULTI-072。ADR-083） ---
+
+    def test_change_set_fixtures(self):
+        result = change_set_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(change_set_fixtures.CASES))
+
+    def test_change_set_audit_rejects_corrupted_evidence(self):
+        module = change_set_fixtures
+        mutations = [
+            # 名前の変更を1つのパスと数えない。所有された移動元と移動先を取り違えない。
+            ("SINGLE-190-02", "expected/check.json", lambda v: v["selection"].update(changedPathCount=1, excludedCodeTestPathCount=1)),
+            ("SINGLE-190-03", "expected/check.json", lambda v: v["selection"].update(excludedCodeTestPathCount=2)),
+            ("SINGLE-190-03", "expected/check.json", lambda v: v["diagnostics"].clear()),
+            ("SINGLE-190-04", "expected/check.json", lambda v: v["selection"].update(targetDocumentCount=2)),
+            ("SINGLE-190-05", "manifest.json", lambda v: v["setup"]["operations"].append({"op": "stage", "paths": ["."]})),
+            ("MULTI-072-01", "expected/check.json", lambda v: v["workspace"].update(id="platform", path=".")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                kind = "multi" if identifier.startswith("MULTI-") else "single"
+                shutil.copytree(audit.FIXTURES / kind / identifier, root / kind / identifier)
+                for name in ("manifest", "side-effects"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = root / kind / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_change_set_reference_rejects_rename_detection(self):
+        """名前の変更を検出する読み方（ADR-083の前）は、ステージした名前の変更のfixtureで参照計算と分かれる。"""
+        module = change_set_fixtures
+        rejected = []
+        with patch.dict(module.READING, {"renames": "detect"}):
+            for identifier in module.CASES:
+                try:
+                    module.prepared_states(module.fixture_dir(module.HERE, identifier), module.reviewed_manifest(identifier),
+                                           module.inspector(identifier))
+                except ValueError:
+                    rejected.append(identifier)
+        self.assertEqual(rejected, ["SINGLE-190-02", "SINGLE-190-03", "SINGLE-190-04", "MULTI-072-01"])
+        self.assertEqual(module.READING, {"renames": "none"})
 
 if __name__ == "__main__":
     unittest.main()

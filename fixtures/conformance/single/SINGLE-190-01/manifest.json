@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-190-01",
+  "description": "作業ツリーだけで移した所有されないコードは、移動元と移動先の2つのパスとしてchangedPathCountとexcludedCodeTestPathCountに数える",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "rename",
+        "from": "src/old.py",
+        "to": "src/new.py"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

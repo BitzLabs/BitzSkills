@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2f013c48b5d458ac6df017512a749583963e64ce7b15cf4ff36012f85b407cdc"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/new.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "affc1331e39fcf586c40bb6d5784e6d31f78238e81255114528c1159b189d7cf"
+      }
+    },
+    "git": {
+      "status": "R  src/old.py -> src/new.py\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 35237b7525641006ba6ec9d0ad852de4f04eaa5f 0\t.spec/requirements/REQ-001.md\n100644 aa816147eb5b9031afec158254d05c2b6354d96a 0\tsrc/new.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "2f013c48b5d458ac6df017512a749583963e64ce7b15cf4ff36012f85b407cdc"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/new.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "affc1331e39fcf586c40bb6d5784e6d31f78238e81255114528c1159b189d7cf"
+      }
+    },
+    "git": {
+      "status": "R  src/old.py -> src/new.py\n",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 35237b7525641006ba6ec9d0ad852de4f04eaa5f 0\t.spec/requirements/REQ-001.md\n100644 aa816147eb5b9031afec158254d05c2b6354d96a 0\tsrc/new.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
