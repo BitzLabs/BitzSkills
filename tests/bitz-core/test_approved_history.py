@@ -232,8 +232,8 @@ class PartialCloneTests(_Repo):
 class GitCallCountTests(_Repo):
     """違反の候補がない場合は、途中のコミットを読まず、Gitの呼出しが増えない（ADR-072の`Consequences`、`check` §5）。"""
 
-    def build(self, *, change_title: bool) -> str:
-        _write(self.root, ".spec/bitz.yaml", CONFIG)
+    def build(self, *, change_title: bool, config: str = CONFIG) -> str:
+        _write(self.root, ".spec/bitz.yaml", config)
         _write(self.root, REQ_PATH, _req())
         _write(self.root, ".spec/technical/TECH-001.md", _tech())
         base = self.commit(self.root, "base", ".spec")
@@ -294,8 +294,8 @@ class GitCallCountTests(_Repo):
         self.assertGreater(with_history, without_history)
 
     def test_disabled_protection_does_not_read_history(self):
-        base = self.build(change_title=True)
-        _write(self.root, ".spec/bitz.yaml", CONFIG + "safety:\n  protectApprovedRequirements: false\n")
+        # 基準版と現在版の両方の設定で`false`と明示した場合だけ無効（ADR-082の決定4）。
+        base = self.build(change_title=True, config=CONFIG + "safety:\n  protectApprovedRequirements: false\n")
         created: list[approvedhistory.History] = []
         real = check_mod._new_history
 
