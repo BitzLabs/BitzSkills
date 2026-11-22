@@ -253,6 +253,10 @@ def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> s
 GIT_BASE_UNREADABLE = "基準版の仕様文書の内容をGitから読めません"
 
 
+#: `CHECK-GIT-CHANGES-UNREADABLE`（`SPEC-GIT-CHANGES-001`。ADR-083の決定3で利用者が承認した文言）。
+GIT_CHANGES_UNREADABLE = "変更されたパスをGitから求められません"
+
+
 def approved_meaning_changed(kind: str, *, history_incomplete: bool = False) -> str:
     """`CHECK-APPROVED-MEANING`と`CHECK-APPROVED-MEANING-HISTORY`の文言（ADR-078の決定5）。``kind``は`REQ`または`TECH`。"""
 

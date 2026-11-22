@@ -359,30 +359,34 @@ def changed_selection(
     フロントマターのIDへ（現在版になければ削除の検出用に基準版へ）正規化し、コードとテストのパスは
     `implements`／`tests[].path`の逆索引で正規化する。どの逆索引にも該当しないコードとテストのパスは
     件数だけを残す（診断を出さない）。
+
+    件数はパスごとに数える（`check` §9、ADR-083の決定2）。`changedPathCount`は変更集合のパスの数、`excludedCodeTestPathCount`は
+    どの逆索引にも該当しないコードまたはテストのパスの数とする。同じパスが複数の項目（基準版からインデックスの追加と、インデックスから
+    作業ツリーの変更など）に現れても1つと数え、名前の変更は移動元と移動先の2つのパスとして数える（``old_path``を持つ項目も、2つのパスとする）。
     """
 
     owning: set[str] = set()
-    excluded = 0
+    paths: list[str] = []
+    seen: set[str] = set()
     for c in changed_paths:
-        touched = [p for p in (c.path, c.old_path) if p]
-        matched = False
-        has_spec_path = False
-        for p in touched:
-            if p.startswith(".spec/"):
-                has_spec_path = True
-                doc_id = _owning_doc_id(p, current_by_path, base_by_path)
-                if doc_id is not None:
-                    owning.add(doc_id)
-                    matched = True
-            else:
-                key = pathown.nfc(p)
-                ids = implements_index.get(key, set()) | tests_index.get(key, set())
-                if ids:
-                    owning.update(ids)
-                    matched = True
-        if not matched and not has_spec_path:
+        for p in (c.old_path, c.path):
+            if p and p not in seen:
+                seen.add(p)
+                paths.append(p)
+    excluded = 0
+    for p in paths:
+        if p.startswith(".spec/"):
+            doc_id = _owning_doc_id(p, current_by_path, base_by_path)
+            if doc_id is not None:
+                owning.add(doc_id)
+            continue
+        key = pathown.nfc(p)
+        ids = implements_index.get(key, set()) | tests_index.get(key, set())
+        if ids:
+            owning.update(ids)
+        else:
             excluded += 1
-    return owning, len(changed_paths), excluded
+    return owning, len(paths), excluded
 
 
 def changed_spec_document_ids(

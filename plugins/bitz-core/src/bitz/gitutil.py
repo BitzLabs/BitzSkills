@@ -134,8 +134,9 @@ def is_dirty(executable: str, cwd: str, env: dict[str, str]) -> bool:
 class ChangedPath:
     """Gitの変更集合の1件（`03_操作仕様/02_check.md` §5）。
 
-    ``status``は``A``（追加。未追跡を含む）、``M``（変更）、``D``（削除）、``R``（リネーム）のいずれか。
-    ``path``は現在版のパス（削除は基準版のパス）、``old_path``はリネームの旧パスだけに設定する。
+    ``status``は``A``（追加。未追跡を含む）、``M``（変更）、``D``（削除）のいずれか。名前の変更は検出せず、移動元の``D``と移動先の``A``の
+    2件になる（ADR-083の決定1）。``path``は現在版のパス（削除は基準版のパス）。:func:`collect_changed_paths`は``old_path``を設定しない
+    （単体試験などが組み立てる``R``の項目は、呼び出し側が移動元と移動先の両方のパスとして扱う）。
     """
 
     status: str
@@ -143,8 +144,20 @@ class ChangedPath:
     old_path: str | None = None
 
 
+class GitChangesError(Exception):
+    """変更集合、または入れ子のワークスペースの判定に使う設定のパスの一覧をGitから求められない（`check` §5、ADR-083の決定3）。
+
+    Gitの起動の失敗、0でない終了コード、出力の形の不正のどれか。呼び出し側は空の結果として扱わず、単一ワークスペースでは
+    `SPEC-GIT-CHANGES-001`、複合ワークスペースでは`SPEC-MULTI-GIT-001`として操作を止める。
+    """
+
+
 def _parse_name_status_z(output: str) -> list[ChangedPath]:
-    """``git diff -z --name-status``の出力を解析する（NUL区切り。`quotePath`でパスが化けない）。"""
+    """``git diff -z --name-status --no-renames``の出力を解析する（NUL区切り。`quotePath`でパスが化けない）。
+
+    名前の変更とコピーを検出しないので、項目はどれも1つのパスを持つ。名前の変更またはコピーの項目（`R`、`C`）、パスのない項目など、
+    形の不正な出力は:class:`GitChangesError`にする（黙って読み飛ばさない）。
+    """
 
     tokens = output.split("\0")
     if tokens and tokens[-1] == "":
@@ -154,17 +167,8 @@ def _parse_name_status_z(output: str) -> list[ChangedPath]:
     n = len(tokens)
     while i < n:
         code = tokens[i]
-        if not code:
-            i += 1
-            continue
-        if code[0] in ("R", "C"):
-            if i + 2 >= n:
-                break
-            changed.append(ChangedPath(status="R", path=tokens[i + 2], old_path=tokens[i + 1]))
-            i += 3
-            continue
-        if i + 1 >= n:
-            break
+        if not code or code[0] in ("R", "C") or i + 1 >= n or not tokens[i + 1]:
+            raise GitChangesError("git diff --name-statusの出力の形が不正です")
         path = tokens[i + 1]
         if code == "D":
             changed.append(ChangedPath(status="D", path=path))
@@ -177,22 +181,34 @@ def _parse_name_status_z(output: str) -> list[ChangedPath]:
 def _diff_name_status_z(
     executable: str, cwd: str, env: dict[str, str], extra_args: list[str]
 ) -> list[ChangedPath]:
+    """変更集合の1つの差分を求める。名前の変更とコピーを検出しない（`--no-renames`。Gitの設定`diff.renames`によらない。ADR-083の決定1）。
+
+    名前の変更の検出をしないので、ファイルの内容のオブジェクトを読まない（部分クローンで欠けたブロブがあっても失敗しない）。
+    失敗は:class:`GitChangesError`にする（ADR-083の決定3）。
+    """
+
     try:
         proc = _run(
-            [executable, "--no-optional-locks", "diff", "-z", "--no-color", "--no-relative", "-M", "--name-status", *extra_args],
+            [executable, "--no-optional-locks", "diff", "-z", "--no-color", "--no-relative", "--no-renames",
+             "--no-ext-diff", "--name-status", *extra_args],
             cwd,
             env,
         )
-    except (OSError, subprocess.SubprocessError):
-        return []
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitChangesError(str(exc)) from exc
     if proc.returncode != 0:
-        return []
+        raise GitChangesError(f"git diff: 終了コード{proc.returncode}")
     return _parse_name_status_z(proc.stdout)
 
 
 def _ls_files_others_z(
-    executable: str, cwd: str, env: dict[str, str], toplevel: str | None = None
+    executable: str, cwd: str, env: dict[str, str], toplevel: str | None = None, *, strict: bool = False
 ) -> list[ChangedPath]:
+    """未追跡で、Gitが無視しないパスの一覧。``strict``（変更集合）なら、失敗を:class:`GitChangesError`にする（ADR-083の決定3）。
+
+    ``strict``が偽の呼出し（複合ワークスペースの全体事前検査の設定のパスの一覧）は、従来どおり失敗を空の一覧にする。
+    """
+
     # `git ls-files`は現在のディレクトリの配下しか列挙しないため、リポジトリのルートで実行する。
     cwd = _toplevel_or_cwd(executable, cwd, env, toplevel)
     try:
@@ -209,9 +225,13 @@ def _ls_files_others_z(
             cwd,
             env,
         )
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        if strict:
+            raise GitChangesError(str(exc)) from exc
         return []
     if proc.returncode != 0:
+        if strict:
+            raise GitChangesError(f"git ls-files: 終了コード{proc.returncode}")
         return []
     tokens = proc.stdout.split("\0")
     return [ChangedPath(status="A", path=p) for p in tokens if p]
@@ -283,6 +303,10 @@ def collect_changed_paths(
     なるため`--full-name`でリポジトリのルートからの相対へ揃える。そのうえでワークスペースのルートとの相対オフセットを
     引いてワークスペースのルートからの相対へ変換し、ワークスペースのルートの外のパスは変更集合から除外する（TASK
     の`changes`はワークスペース内のパスしか宣言できず、境界外の追跡対象のパスの表記を持たないため）。
+
+    名前の変更とコピーは検出しない（ADR-083の決定1）。名前の変更は、移動元のパスの削除（`D`）と移動先のパスの追加（`A`）として入る。
+    ワークスペースの内と外の間の移動は、内側のパスだけが残る（内から外は削除、外から内は追加）。3つの読取りのどれかが失敗すれば、
+    :class:`GitChangesError`を送出する（空の変更集合にしない。ADR-083の決定3）。
     """
 
     offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
@@ -290,35 +314,19 @@ def collect_changed_paths(
     raw: list[ChangedPath] = []
     raw.extend(_diff_name_status_z(executable, cwd, env, ["--cached", base_rev]))
     raw.extend(_diff_name_status_z(executable, cwd, env, []))
-    raw.extend(_ls_files_others_z(executable, cwd, env))
+    raw.extend(_ls_files_others_z(executable, cwd, env, strict=True))
 
     changed: list[ChangedPath] = []
-    seen: set[tuple[str, str, str | None]] = set()
+    seen: set[tuple[str, str]] = set()
     for c in raw:
-        entry: ChangedPath | None
-        if c.status == "R" and c.old_path is not None:
-            new_path = _to_workspace_relative(c.path, offset)
-            old_path = _to_workspace_relative(c.old_path, offset)
-            if new_path is not None and old_path is not None:
-                entry = ChangedPath(status="R", path=new_path, old_path=old_path)
-            elif old_path is not None:
-                # 移動先がワークスペースの外: ワークスペース側からは削除に相当。
-                entry = ChangedPath(status="D", path=old_path)
-            elif new_path is not None:
-                # 移動元がワークスペースの外: ワークスペース側からは追加に相当。
-                entry = ChangedPath(status="A", path=new_path)
-            else:
-                entry = None
-        else:
-            p = _to_workspace_relative(c.path, offset)
-            entry = ChangedPath(status=c.status, path=p) if p is not None else None
-        if entry is None:
+        p = _to_workspace_relative(c.path, offset)
+        if p is None:
             continue
-        key = (entry.status, entry.path, entry.old_path)
+        key = (c.status, p)
         if key in seen:
             continue
         seen.add(key)
-        changed.append(entry)
+        changed.append(ChangedPath(status=c.status, path=p))
 
     return changed
 
@@ -430,7 +438,8 @@ def list_base_config_dirs(
     （`--full-tree`でリポジトリのルートからの相対。`--literal-pathspecs`でパスの`*`などを字句どおりに扱う）、
     基準版の全体を列挙しない。モード``120000``（シンボリックリンク）と、ブロブでないエントリ（`.spec/bitz.yaml`という名前の
     ディレクトリ、`gitlink`）は数えない。途中のセグメントがシンボリックリンクのパスは、Gitがツリーをたどらないので現れない。
-    設定の内容は読まない。Gitの呼び出しに失敗したパスは、設定を持たないものとして扱う。
+    設定の内容は読まない。Gitの呼出しが失敗した場合（起動の失敗、0でない終了コード、出力の形の不正）は、設定を持たないものとせず、
+    :class:`GitChangesError`を送出する（入れ子のワークスペースの判定に使う設定のパスの一覧。`check` §5、ADR-083の決定3）。
     """
 
     if not dirs:
@@ -451,13 +460,15 @@ def list_base_config_dirs(
                 cwd,
                 env,
             )
-        except (OSError, subprocess.SubprocessError):
-            continue
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            raise GitChangesError(str(exc)) from exc
         if proc.returncode != 0:
-            continue
+            raise GitChangesError(f"git ls-tree: 終了コード{proc.returncode}")
         for tok in proc.stdout.split("\0"):
-            if "\t" not in tok:
+            if not tok:
                 continue
+            if "\t" not in tok:
+                raise GitChangesError("git ls-treeの出力の形が不正です")
             meta, path = tok.split("\t", 1)
             parts = meta.split(" ")
             if len(parts) < 2 or parts[1] != "blob" or parts[0] == "120000":
