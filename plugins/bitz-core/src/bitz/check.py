@@ -647,6 +647,49 @@ def _base_root_for_git(repo_root: str, base_path: str) -> str:
     return os.path.join(repo_root, *base_path.split("/"))
 
 
+def _base_unreadable_diag() -> Diagnostic:
+    """単一ワークスペースで、基準版の仕様文書の一覧または内容をGitから読めない（`CHECK-BASE-UNREADABLE`。`check` §5、ADR-082の決定2）。"""
+
+    return Diagnostic(
+        code="SPEC-GIT-BASE-001",
+        severity="error",
+        resultStatus="blocked",
+        summary=messages.GIT_BASE_UNREADABLE,
+        source={"kind": "environment", "component": "git"},
+    )
+
+
+def _protection_enabled(
+    current_config: dict | None,
+    git: gitutil.GitInfo,
+    cwd: str,
+    env: dict[str, str],
+    base_commit: str,
+    base_workspace_root: str,
+    *,
+    validate_limits: bool = True,
+) -> bool:
+    """承認済み要求の保護が有効か（文書・フロントマター・状態仕様 §8、ADR-082の決定4）。
+
+    基準版と現在版の作業ワークスペースの設定のどちらかで有効なら有効とし、どちらの設定でも`false`と明示した場合だけ無効とする。
+    現在版の設定で有効なら、基準版の設定を読まない。基準版に設定がない場合、基準版の設定を読めない場合、スキーマに適合しない場合
+    （停止する設定）は、基準版の側を有効とみなし、基準版の設定の不適合は診断しない。``validate_limits``は、複合ワークスペースの
+    メンバーの設定（`limits`を持てない。全体事前検査と同じく値を検査しない）だけ偽にする。
+    """
+
+    if basecompare.protection_enabled(current_config):
+        return True
+    if not git.available or git.executable is None:
+        return True
+    raw = gitutil.show_base_file(git.executable, cwd, env, base_commit, base_workspace_root, config_mod.CONFIG_PATH)
+    if raw is None:
+        return True
+    base_outcome = config_mod.load_config(raw, validate_limits=validate_limits)
+    if base_outcome.stop or base_outcome.config is None:
+        return True
+    return basecompare.protection_enabled(base_outcome.config)
+
+
 def _new_history(
     git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_commit: str | None, limits: limits_mod.Limits
 ) -> approvedhistory.History | None:
@@ -701,11 +744,17 @@ def _member_base_diagnostics(
     current_by_id: dict[str, DocEntry],
     limits: limits_mod.Limits = limits_mod.ABSOLUTE,
     *,
-    protect: bool = True,
+    current_config: dict | None = None,
+    validate_base_limits: bool = True,
     history: approvedhistory.History | None = None,
 ) -> list[Diagnostic]:
     base_root = _base_root_for_git(repo_root, base_path)
-    base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id, limits)
+    try:
+        base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id, limits)
+    except gitutil.GitReadError:
+        # 複合ワークスペースでは、基準版の内容を読めない場合を`SPEC-MULTI-GIT-001`とする（安全な入出力・互換性 §4.1）。
+        # 通常は全体事前検査が先に返すので、ここへは来ない。基準版との比較は行わない。
+        return [multiws.git_unreadable_diag()]
     current_ids_present = {e.doc_id for e in entries if e.doc_id is not None}
     # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にも比較にもしない（確認事項C105）。
     unreadable_paths = basecompare.unreadable_id_paths(entries)
@@ -716,7 +765,8 @@ def _member_base_diagnostics(
             base_by_id, current_by_id, ws_id, current_ids_present=current_ids_present
         )
     )
-    if protect:
+    # 保護の有無は、このワークスペース自身の基準版と現在版の設定で決める（ADR-082の決定5）。
+    if _protection_enabled(current_config, git, cwd, env, base_commit, base_root, validate_limits=validate_base_limits):
         diags.extend(
             basecompare.approved_protection_diagnostics(
                 base_by_id, current_by_id, ws_id, history=_history_judge(history, ws_root_abs, ws_id, limits)
@@ -794,13 +844,19 @@ def _run_all_workspaces_members(
     # 途中のコミットは、1回の起動の中で各ワークスペースが共有する（違反の候補がある場合だけ読む。`check` §5）。
     # 上限`historyCommitCount`はルートの設定の値を使う（安全な入出力・互換性 §4.1）。
     history = _new_history(git, cwd, env, resolved_base, limits)
-    # 保護の有無は、各ワークスペースの設定で決める（`safety.protectApprovedRequirements`）。
+    # 保護の有無は、各ワークスペース自身の基準版と現在版の設定で決める（`safety.protectApprovedRequirements`。ADR-082の決定5）。
     configs_by_ws: dict[str, dict | None] = {pre.root_id: pre.root_config, **{m.id: m.config for m in pre.members}}
 
     top_level_diags: list[Diagnostic] = []
     for deleted_id in sorted(set(base_map) - set(current_map)):
         base_root = _base_root_for_git(pre.repo_root, base_map[deleted_id])
-        base_by_id = basecompare.load_base_catalog(git, cwd, env, resolved_base, base_root, deleted_id, limits)
+        try:
+            base_by_id = basecompare.load_base_catalog(git, cwd, env, resolved_base, base_root, deleted_id, limits)
+        except gitutil.GitReadError:
+            # 通常は全体事前検査が先に`SPEC-MULTI-GIT-001`を返す（安全な入出力・互換性 §4.1）。削除の検出を黙って省かない。
+            if all(d.code != "SPEC-MULTI-GIT-001" for d in top_level_diags):
+                top_level_diags.append(multiws.git_unreadable_diag())
+            continue
         top_level_diags.extend(
             basecompare.state_transition_diagnostics(base_by_id, {}, deleted_id, current_ids_present=set())
         )
@@ -820,7 +876,7 @@ def _run_all_workspaces_members(
                 _member_base_diagnostics(
                     git, cwd, env, resolved_base, pre.repo_root, base_map[wid], wid, root, entries,
                     local_id_indices[wid], limits,
-                    protect=basecompare.protection_enabled(configs_by_ws.get(wid)), history=history,
+                    current_config=configs_by_ws.get(wid), validate_base_limits=(wid == pre.root_id), history=history,
                 )
             )
 
@@ -1048,6 +1104,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         )
 
     catalog_stopped = False
+    preloaded_base: dict[str, DocEntry] = {}
     if loc.config_path is None:
         workspace_id = None
         diagnostics.append(
@@ -1086,6 +1143,19 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             catalog_stopped = catalog.stopped
             if catalog_stopped:
                 diagnostics.extend(d.to_dict() for d in catalog.diagnostics)
+            elif base_commit is not None:
+                # 基準版の仕様文書の一覧または内容をGitから読めない場合は、基準版との比較（状態遷移、削除の検出、承認済み要求の保護、
+                # 影響候補）を始めず、操作を止める（`stop-operation`。`check` §5、ADR-082の決定2）。複合ワークスペースでは
+                # `SPEC-MULTI-GIT-001`とする（安全な入出力・互換性 §4.1。通常は全体事前検査が先に返す）。
+                try:
+                    preloaded_base = basecompare.load_base_catalog(
+                        git, cwd, env, base_commit, loc.root, workspace_id, limits
+                    )
+                except gitutil.GitReadError:
+                    catalog_stopped = True
+                    diagnostics.append(
+                        (multiws.git_unreadable_diag() if multi_active else _base_unreadable_diag()).to_dict()
+                    )
         if not outcome.stop and not catalog_stopped:
             assert loc.root is not None
             catalog_diags = catalog.diagnostics
@@ -1130,9 +1200,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             base_by_id: dict[str, DocEntry] = {}
             changed_paths: list[gitutil.ChangedPath] = []
             if base_commit is not None:
-                base_by_id = basecompare.load_base_catalog(
-                    git, cwd, env, base_commit, loc.root, workspace_id, limits
-                )
+                base_by_id = preloaded_base
                 if git.available and git.executable:
                     changed_paths = gitutil.collect_changed_paths(
                         git.executable, cwd, env, base_commit, loc.root
@@ -1342,9 +1410,12 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                         source_ids=base_source_ids,
                     )
                 )
-                # 承認済み要求の保護は、作業ワークスペースの設定で無効にできる（`safety.protectApprovedRequirements`）。
-                # 無効のときは端点も履歴も比べない。途中のコミットは、違反の候補がある場合だけ読む（`check` §5）。
-                if basecompare.protection_enabled(outcome.config):
+                # 承認済み要求の保護は、基準版と現在版の作業ワークスペースの設定の両方で`false`と明示した場合だけ無効とする
+                # （`safety.protectApprovedRequirements`。ADR-082の決定4）。無効のときは端点も履歴も比べない。途中のコミットは、違反の候補がある場合だけ読む（`check` §5）。
+                if _protection_enabled(
+                    outcome.config, git, cwd, env, base_commit, loc.root,
+                    validate_limits=not (multi_active and workspace_rel_path != "."),
+                ):
                     base_diags.extend(
                         basecompare.approved_protection_diagnostics(
                             base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids,

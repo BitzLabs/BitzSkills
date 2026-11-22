@@ -1022,7 +1022,7 @@ def _check_resource_limits(
     return counter.finish()
 
 
-def _git_unreadable_diag() -> Diagnostic:
+def git_unreadable_diag() -> Diagnostic:
     """基準版の内容をGitから読めないときの診断。Gitを利用できない場合と同じ`SPEC-MULTI-GIT-001`（`blocked`）とする（安全な入出力・互換性 §4.1）。"""
 
     return _diag(
@@ -1076,7 +1076,7 @@ def _check_base_snapshot_limits(
     assert executable is not None
     toplevel = git_top or gitutil.show_toplevel(executable, cwd, env)
     if toplevel is None:
-        return _git_unreadable_diag()
+        return git_unreadable_diag()
     offset = os.path.relpath(os.path.realpath(root), os.path.realpath(toplevel)).replace(os.sep, "/")
 
     def _repo_rel(ws_path: str) -> str:
@@ -1140,7 +1140,7 @@ def _check_base_snapshot_limits(
                         return diag
             return counter.finish()
     except gitutil.GitReadError:
-        return _git_unreadable_diag()
+        return git_unreadable_diag()
 
 
 def _walk_order_key(rel_in_spec: str) -> tuple:

@@ -352,7 +352,13 @@ def _process_document(
 
 
 def _process_document_content(
-    raw: bytes, path: str, kind: str, workspace_id: str, limits: limits_mod.Limits = limits_mod.ABSOLUTE
+    raw: bytes,
+    path: str,
+    kind: str,
+    workspace_id: str,
+    limits: limits_mod.Limits = limits_mod.ABSOLUTE,
+    *,
+    identity_only: bool = False,
 ) -> DocEntry:
     """バイト列から:class:`DocEntry`を組み立てる（`_process_document`のファイルの読取り以降を共有する）。
 
@@ -360,6 +366,8 @@ def _process_document_content(
     「基準版の文書の解析は現在版と同じフロントマター／構文解析器を使う」）。ファイルの読取り自体のI/Oエラー
     （`SPEC-INPUT-READ-001`）だけは呼び出し側（`_process_document`）の責務であり、ここには含めない。
     ``limits``はファイル単位の上限（`specBytes`、`frontmatterBytes`、`documentStatementCount`、`documentArrayItemCount`）を決める。
+    ``identity_only``が真なら、IDと状態を確定した時点で返す（ファイル名とIDの一致、EARS-AIの構文、本文の検査をしない）。
+    IDを読めるか（``doc_id``が``None``でないか）は、偽のときと同じに決まる。承認済み要求の保護の途中のコミットの版の読取りが使う。
     """
 
     entry = DocEntry(path=path, kind=kind)
@@ -432,6 +440,8 @@ def _process_document_content(
     entry.doc_id = fm["id"]
     entry.title = fm["title"]
     entry.status = fm["status"]
+    if identity_only:
+        return entry
 
     # --- ファイル名とフロントマターのIDの一致 -----------------------------------
     basename = os.path.basename(path)
@@ -691,25 +701,37 @@ def build_base_catalog(
     など`skip-document`相当（``entry.hard is not None``）の基準版の文書は、推測で診断を作らず
     比較対象から静かに除く（状態遷移・承認済み要求の保護のいずれも、既に壊れていた基準版の文書との
     差分を機械的に断定できないため）。IDが重複しているときは、最初に見つかった（パス昇順の）文書だけを使う。
+
+    仕様文書の一覧または内容をGitから読めない場合（部分クローンで欠けたオブジェクトなど。Gitは遅延取得をしない）は、
+    :class:`bitz.gitutil.GitReadError`を送出する（`check` §5、ADR-082の決定2）。
     """
 
     from . import gitutil  # 遅延インポート（循環インポートを避ける）。
 
-    paths = sorted(gitutil.list_base_spec_paths(git_executable, cwd, env, base_rev, workspace_root))
+    blobs = gitutil.list_base_spec_blobs(git_executable, cwd, env, base_rev, workspace_root)
+    if blobs is None:
+        raise gitutil.GitReadError("基準版の仕様文書の一覧を読めません")
     result: dict[str, DocEntry] = {}
-    for path in paths:
-        if not path.endswith(".md"):
-            continue
-        kind = _kind_for_base_path(path)
-        if kind is None:
-            continue
-        raw = gitutil.show_base_file(git_executable, cwd, env, base_rev, workspace_root, path)
-        if raw is None:
-            continue
-        entry = _process_document_content(raw, path, kind, workspace_id, limits)
-        if entry.hard is not None or entry.duplicate:
-            continue
-        if entry.doc_id is None or entry.doc_id in result:
-            continue
-        result[entry.doc_id] = entry
+    spec_blobs = sorted(
+        (path, oid) for path, oid in blobs if path.endswith(".md") and _kind_for_base_path(path) is not None
+    )
+    if not spec_blobs:
+        return result
+    with gitutil.BlobReader(git_executable, cwd, env) as reader:
+        for path, oid in spec_blobs:
+            kind = _kind_for_base_path(path)
+            assert kind is not None
+            # 読めない内容（欠けたオブジェクトなど）は、黙って除かず:class:`gitutil.GitReadError`にする（`check` §5、ADR-082の決定2）。
+            # `specBytes`を超える内容は保持せずに読み捨てる（上限を超えた版は`skip-document`相当で、比較から除く）。
+            obj_type, raw = reader.read_object(oid, max_bytes=limits.specBytes)
+            if obj_type != "blob":
+                raise gitutil.GitReadError("基準版の仕様文書の内容を読めません")
+            if raw is None:
+                continue
+            entry = _process_document_content(raw, path, kind, workspace_id, limits)
+            if entry.hard is not None or entry.duplicate:
+                continue
+            if entry.doc_id is None or entry.doc_id in result:
+                continue
+            result[entry.doc_id] = entry
     return result

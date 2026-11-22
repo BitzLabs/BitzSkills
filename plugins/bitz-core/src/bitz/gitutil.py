@@ -23,11 +23,31 @@ class GitInfo:
     version: tuple[int, int] | None = None
 
 
+#: 部分クローンの遅延取得を止める環境変数（Core実行環境・CLI基盤契約 §4、ADR-082の決定1）。
+#:
+#: - ``GIT_NO_LAZY_FETCH=1``: 遅延取得そのものを止める（新しいGitが解する変数）。
+#: - ``GIT_ALLOW_PROTOCOL``: 値の一覧にない転送をすべて禁じる（`git help git`の環境変数の節。`protocol.allow`を`never`にし、
+#:   一覧の転送だけを許すのと同じで、既存の設定より優先する）。実在しない名前だけを置くので、`file`を含むすべての転送を禁じ、
+#:   ``GIT_NO_LAZY_FETCH``を解さない版のGitでも、遅延取得の取得が転送の段階で失敗する。
+#:
+#: 欠けたオブジェクトは、Gitから読めないものとして扱う。
+NO_FETCH_ENV: dict[str, str] = {"GIT_NO_LAZY_FETCH": "1", "GIT_ALLOW_PROTOCOL": "bitz-no-transport"}
+
+
+def git_env(env: dict[str, str]) -> dict[str, str]:
+    """Coreが起動するGitへ渡す環境変数（``env``に:data:`NO_FETCH_ENV`を重ねる）。``env``自体は変えない。
+
+    Gitの呼出しだけに使い、`verify`が起動するテストのコマンドの環境には加えない。
+    """
+
+    return {**env, **NO_FETCH_ENV}
+
+
 def _run(argv: list[str], cwd: str, env: dict[str, str]) -> subprocess.CompletedProcess:
     return subprocess.run(
         argv,
         cwd=cwd,
-        env=env,
+        env=git_env(env),
         capture_output=True,
         text=True,
         timeout=30,
@@ -349,6 +369,47 @@ def list_base_spec_paths(
     return out
 
 
+def list_base_spec_blobs(
+    executable: str, cwd: str, env: dict[str, str], base_rev: str, workspace_root: str
+) -> list[tuple[str, str]] | None:
+    """``base_rev``の時点の``.spec/``配下の通常のファイルを、``(ワークスペースのルートからの相対パス, オブジェクトID)``で返す。
+
+    :func:`list_base_spec_paths`と同じ規則で列挙する（`--full-tree`、シンボリックリンクとサブモジュールを除く）。ただし、Gitが失敗した場合
+    （ツリーオブジェクトの欠落など）は空の一覧ではなく``None``を返す（基準版の仕様文書の一覧を読めない。`check` §5、ADR-082の決定2）。
+    ファイルの大きさを求めない（`-l`を使わない）ので、ファイルの内容のオブジェクトは読まない。
+    """
+
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
+    subdir = ".spec" if offset in (None, ".", "") else f"{offset.rstrip('/')}/.spec"
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "--literal-pathspecs", "ls-tree", "--full-tree", "-r", "-z",
+             base_rev, "--", subdir],
+            cwd=cwd, env=git_env(env), capture_output=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    out: list[tuple[str, str]] = []
+    for tok in proc.stdout.split(b"\0"):
+        if not tok:
+            continue
+        if b"\t" not in tok:
+            return None
+        meta, raw_path = tok.split(b"\t", 1)
+        parts = meta.split()
+        if len(parts) < 3:
+            return None
+        mode, obj_type, oid = parts[0], parts[1], parts[2]
+        if obj_type != b"blob" or mode == b"120000":
+            continue
+        rel = _to_workspace_relative(raw_path.decode("utf-8", "surrogateescape"), offset)
+        if rel is not None:
+            out.append((rel, oid.decode("ascii")))
+    return out
+
+
 #: :func:`list_base_config_dirs`が1回の`git ls-tree`へ渡すパスの数の上限（引数列の長さの上限を超えないため）。
 _LS_TREE_PATH_CHUNK = 512
 
@@ -432,7 +493,7 @@ def show_base_file(
         proc = subprocess.run(
             [executable, "--no-optional-locks", "show", f"{base_rev}:{repo_path}"],
             cwd=cwd,
-            env=env,
+            env=git_env(env),
             capture_output=True,
             timeout=30,
         )
@@ -648,7 +709,7 @@ def list_tree_blobs(
         proc = subprocess.run(
             [executable, "--no-optional-locks", "--literal-pathspecs", "ls-tree", "--full-tree", "-r", "-l", "-z",
              rev, "--", prefix],
-            cwd=toplevel, env=env, capture_output=True, timeout=30,
+            cwd=toplevel, env=git_env(env), capture_output=True, timeout=30,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -702,7 +763,7 @@ class BlobReader:
     ) -> None:
         self._argv = [executable, "--no-optional-locks", "cat-file", "--batch"]
         self._cwd = toplevel
-        self._env = env
+        self._env = git_env(env)
         self._timeout = timeout
         self._proc: subprocess.Popen | None = None
         self._selector: selectors.BaseSelector | None = None

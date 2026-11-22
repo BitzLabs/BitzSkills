@@ -249,6 +249,10 @@ def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> s
 
 # --- 承認済み要求の保護（`CHECK-APPROVED-MEANING`） --------------------------------
 
+#: `CHECK-BASE-UNREADABLE`（`SPEC-GIT-BASE-001`。ADR-082の決定2で利用者が承認した文言）。
+GIT_BASE_UNREADABLE = "基準版の仕様文書の内容をGitから読めません"
+
+
 def approved_meaning_changed(kind: str, *, history_incomplete: bool = False) -> str:
     """`CHECK-APPROVED-MEANING`と`CHECK-APPROVED-MEANING-HISTORY`の文言（ADR-078の決定5）。``kind``は`REQ`または`TECH`。"""
 
