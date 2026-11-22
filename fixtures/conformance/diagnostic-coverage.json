@@ -9,7 +9,7 @@
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "231b6b37ee9df32a313fddafdb44148a1bac8e1f5d010320103ffce986ae9058",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "9556647f9bf2ab3ce17090a5d68579fbb7dc95e49feabd95c20afa8d3f78b03a",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "110f230e4f6bcc1c23fdb53429b4b91a077518dce3cf57876696ab486f2c45e1",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "00eb90deecaef4776e6e86e2b7ef97570e57c215b9a0512a5e115f683cdbffc4",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "e2ee8f05c99618c604c7dbcf6ed713599343e336cd6cb9ab52a63ac0dda59b8d",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5f79861e103eb51723a53302122fa32d5125a9bf9687a70c2dbbc5cc1776ee6f",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "7dff2ee7298cce5843ee24a9b1c07c617c3aeeabfdefb210d83a48153c342b7f",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "78532f1eea3521ade4c6b67043424407d7dc55d77b12f97f25e62f9ad2e68375",
@@ -297,7 +297,7 @@
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md",
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md"
       ],
-      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用し、基準版は作業ツリーとインデックスではなくコミットの内容で数える（MULTI-069-*。ステージした変更はMULTI-069-25）。除外の件数の超過はMULTI-CONFIG（MULTI-068-02）。`excludeCount`は現在版の除外にだけ当て、基準版の除外は絶対上限で検査する（MULTI-068-10・11）。基準版の内容を読めない場合は上限を数えずに通さず、Gitを利用できない場合と同じMULTI-GIT（§4.1。準備の処理で表せないのでfixtureなし）。メンバーの設定の`limits`は、値の型と範囲によらず`multiWorkspace`を宣言したメンバーと同じMULTI-MEMBERで、発生元もカタログの宣言、値は検査しない（MULTI-068-06〜08）。ルートの設定のファイル単位の上限と展開した後の引数列の上限はメンバーにも当てる（MULTI-069-22〜24）。"
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用し、基準版は作業ツリーとインデックスではなくコミットの内容で数える（MULTI-069-*。ステージした変更はMULTI-069-25）。除外の件数の超過はMULTI-CONFIG（MULTI-068-02）。`excludeCount`は現在版の除外にだけ当て、基準版の除外は絶対上限で検査する（MULTI-068-10・11）。基準版の内容を読めない場合は上限を数えずに通さず、Gitを利用できない場合と同じMULTI-GIT（§4.1。準備の処理で表せないのでfixtureなし）。メンバーの設定の`limits`は、値の型と範囲によらず`multiWorkspace`を宣言したメンバーと同じMULTI-MEMBERで、発生元もカタログの宣言、値は検査しない（MULTI-068-06〜08）。ルートの設定のファイル単位の上限と展開した後の引数列の上限はメンバーにも当てる（MULTI-069-22〜24）。 ADR-083の`Notes`（2026-11-22、利用者の決定）: 全体事前検査（複合ワークスペース仕様 §8）で、Gitが認識する設定のパスの一覧の読取りが失敗した場合（Gitの起動の失敗、0でない終了コード、出力の形の不正）も、空の一覧として扱わず`MULTI-GIT`（`SPEC-MULTI-GIT-001`、`blocked`）とする（同 §2）。条件は増やさず、`MULTI-GIT`の範囲が広がる。読取りの失敗は準備の処理で作れないので適合fixtureを置かず、Coreの単体試験で確かめる。"
     }
   ],
   "openIssues": []
