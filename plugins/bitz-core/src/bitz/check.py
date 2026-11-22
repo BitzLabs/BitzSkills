@@ -23,6 +23,7 @@ import time
 from collections.abc import Callable
 
 from . import activews
+from . import approvedhistory
 from . import basecompare
 from . import config as config_mod
 from . import document as document_mod
@@ -646,6 +647,26 @@ def _base_root_for_git(repo_root: str, base_path: str) -> str:
     return os.path.join(repo_root, *base_path.split("/"))
 
 
+def _new_history(
+    git: gitutil.GitInfo, cwd: str, env: dict[str, str], base_commit: str | None, limits: limits_mod.Limits
+) -> approvedhistory.History | None:
+    """承認済み要求の保護の途中のコミットの読取り（文書・フロントマター・状態仕様 §8.1）。作るだけではGitを呼ばない。"""
+
+    if base_commit is None or not git.available or git.executable is None:
+        return None
+    return approvedhistory.History(git.executable, cwd, env, base_commit, limits.historyCommitCount)
+
+
+def _history_judge(
+    history: approvedhistory.History | None, workspace_root: str, workspace_id: str, limits: limits_mod.Limits
+) -> basecompare.HistoryJudge | None:
+    """違反の候補から途中のコミットの判定を返す関数。途中のコミットは現在版の作業ワークスペースのルートの配下を読む（§8.1）。"""
+
+    if history is None:
+        return None
+    return lambda candidate_ids: history.evaluate(workspace_root, workspace_id, limits, candidate_ids)
+
+
 def _member_check_diagnostics(
     entries: list[DocEntry],
     ws_id: str,
@@ -679,6 +700,9 @@ def _member_base_diagnostics(
     entries: list[DocEntry],
     current_by_id: dict[str, DocEntry],
     limits: limits_mod.Limits = limits_mod.ABSOLUTE,
+    *,
+    protect: bool = True,
+    history: approvedhistory.History | None = None,
 ) -> list[Diagnostic]:
     base_root = _base_root_for_git(repo_root, base_path)
     base_by_id = basecompare.load_base_catalog(git, cwd, env, base_commit, base_root, ws_id, limits)
@@ -692,7 +716,12 @@ def _member_base_diagnostics(
             base_by_id, current_by_id, ws_id, current_ids_present=current_ids_present
         )
     )
-    diags.extend(basecompare.approved_protection_diagnostics(base_by_id, current_by_id, ws_id))
+    if protect:
+        diags.extend(
+            basecompare.approved_protection_diagnostics(
+                base_by_id, current_by_id, ws_id, history=_history_judge(history, ws_root_abs, ws_id, limits)
+            )
+        )
     current_by_path = basecompare.by_path(relations_mod.valid_entries(entries))
     base_by_path = basecompare.by_path(base_by_id.values())
     changed_paths_ws: list[gitutil.ChangedPath] = []
@@ -762,6 +791,12 @@ def _run_all_workspaces_members(
         )
     current_map = {wid: relpath for wid, _root, relpath in workspaces}
 
+    # 途中のコミットは、1回の起動の中で各ワークスペースが共有する（違反の候補がある場合だけ読む。`check` §5）。
+    # 上限`historyCommitCount`はルートの設定の値を使う（安全な入出力・互換性 §4.1）。
+    history = _new_history(git, cwd, env, resolved_base, limits)
+    # 保護の有無は、各ワークスペースの設定で決める（`safety.protectApprovedRequirements`）。
+    configs_by_ws: dict[str, dict | None] = {pre.root_id: pre.root_config, **{m.id: m.config for m in pre.members}}
+
     top_level_diags: list[Diagnostic] = []
     for deleted_id in sorted(set(base_map) - set(current_map)):
         base_root = _base_root_for_git(pre.repo_root, base_map[deleted_id])
@@ -785,6 +820,7 @@ def _run_all_workspaces_members(
                 _member_base_diagnostics(
                     git, cwd, env, resolved_base, pre.repo_root, base_map[wid], wid, root, entries,
                     local_id_indices[wid], limits,
+                    protect=basecompare.protection_enabled(configs_by_ws.get(wid)), history=history,
                 )
             )
 
@@ -1306,11 +1342,17 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                         source_ids=base_source_ids,
                     )
                 )
-                base_diags.extend(
-                    basecompare.approved_protection_diagnostics(
-                        base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids
+                # 承認済み要求の保護は、作業ワークスペースの設定で無効にできる（`safety.protectApprovedRequirements`）。
+                # 無効のときは端点も履歴も比べない。途中のコミットは、違反の候補がある場合だけ読む（`check` §5）。
+                if basecompare.protection_enabled(outcome.config):
+                    base_diags.extend(
+                        basecompare.approved_protection_diagnostics(
+                            base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids,
+                            history=_history_judge(
+                                _new_history(git, cwd, env, base_commit, limits), loc.root, workspace_id, limits
+                            ),
+                        )
                     )
-                )
                 changed_doc_ids = basecompare.changed_spec_document_ids(
                     changed_paths, current_by_path, base_by_path_cmp
                 )

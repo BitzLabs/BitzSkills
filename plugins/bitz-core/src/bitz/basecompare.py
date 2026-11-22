@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
 
 from . import gitutil
 from . import limits as limits_mod
@@ -15,6 +16,9 @@ from . import messages
 from . import pathown
 from .config import Diagnostic
 from .document import DocEntry, build_base_catalog
+
+if TYPE_CHECKING:
+    from . import approvedhistory
 
 #: 文書・フロントマター・状態仕様 §6。
 _REQ_TECH_TRANSITIONS: dict[str, set[str]] = {
@@ -222,25 +226,46 @@ def _meaning_change_key(base_entry: DocEntry, current_entry: DocEntry) -> str | 
     return None
 
 
+def protection_enabled(config: dict | None) -> bool:
+    """承認済み要求の保護が有効か（`safety.protectApprovedRequirements`。既定は有効。ワークスペース・設定仕様 §5）。"""
+
+    if not isinstance(config, dict):
+        return True
+    safety = config.get("safety")
+    if not isinstance(safety, dict):
+        return True
+    return safety.get("protectApprovedRequirements", True) is not False
+
+
+#: 違反の候補の文書IDの集合から、途中のコミットの判定（:class:`bitz.approvedhistory.Verdict`）を返す関数。
+HistoryJudge = Callable[[set[str]], "approvedhistory.Verdict"]
+
+
 def approved_protection_diagnostics(
     base_by_id: dict[str, DocEntry],
     current_by_id: dict[str, DocEntry],
     workspace_id: str,
     *,
     source_ids: set[str] | None = None,
+    history: HistoryJudge | None = None,
 ) -> list[Diagnostic]:
-    """`approved`のREQの意味が変わったときに、状態を戻していない場合を検査する（文書・フロントマター・状態仕様 §8）。
+    """`approved`のREQとTECHの意味が変わったときに、状態を戻していない場合を検査する（文書・フロントマター・状態仕様 §8、§8.1、§8.2）。
+
+    まず基準版と現在版の端点だけを比べ、違反の候補を求める。違反の候補がある場合だけ``history``を呼び、途中のコミットに
+    状態を`draft`または`outdated`へ変えた版がある文書を除く（§8.1）。途中のコミットを完全には読めない場合は、すべての候補を
+    違反のままとし、`CHECK-APPROVED-MEANING-HISTORY`の文言にする。``history``が``None``なら、端点の比較だけで判定する。
+    診断は1文書に1件で、`source.key`は変わった項目のうち最初のもの、`evidence`は持たない（§8.2）。
 
     ``source_ids``（`scope: selected`の`full_check_ids`）を渡すと、対象をその集合内の文書だけへ
     絞る（`check.md §5`）。
     """
 
-    diags: list[Diagnostic] = []
+    candidates: list[tuple[str, DocEntry, str]] = []
     for doc_id in sorted(base_by_id):
         if source_ids is not None and doc_id not in source_ids:
             continue
         base_entry = base_by_id[doc_id]
-        if base_entry.kind != "REQ" or base_entry.status != "approved":
+        if base_entry.kind not in ("REQ", "TECH") or base_entry.status != "approved":
             continue
         current_entry = current_by_id.get(doc_id)
         if current_entry is None or current_entry.status != "approved":
@@ -248,17 +273,33 @@ def approved_protection_diagnostics(
             continue
         key = _meaning_change_key(base_entry, current_entry)
         if key is not None:
-            diags.append(
-                _mk(
-                    "SPEC-SAFETY-APPROVED-001",
-                    "error",
-                    "failed",
-                    messages.APPROVED_MEANING_CHANGED,
-                    current_entry.path,
-                    workspace_id,
-                    key=key,
-                )
+            candidates.append((doc_id, current_entry, key))
+    if not candidates:
+        # 違反の候補がなければ、途中のコミットを読まない（`check` §5）。
+        return []
+
+    incomplete = False
+    recognized: frozenset[str] = frozenset()
+    if history is not None:
+        verdict = history({doc_id for doc_id, _entry, _key in candidates})
+        incomplete = verdict.incomplete
+        recognized = verdict.recognized
+
+    diags: list[Diagnostic] = []
+    for doc_id, current_entry, key in candidates:
+        if not incomplete and doc_id in recognized:
+            continue
+        diags.append(
+            _mk(
+                "SPEC-SAFETY-APPROVED-001",
+                "error",
+                "failed",
+                messages.approved_meaning_changed(current_entry.kind, history_incomplete=incomplete),
+                current_entry.path,
+                workspace_id,
+                key=key,
             )
+        )
     return diags
 
 

@@ -34,6 +34,8 @@ ABSOLUTE_LIMITS: dict[str, int] = {
     "expandedArgvCount": 10_000,
     "expandedArgvElementBytes": 32_768,
     "expandedArgvBytes": 1_048_576,
+    #: 承認済み要求の保護で読む途中のコミットの数（文書・フロントマター・状態仕様 §8.1、ADR-078）。
+    "historyCommitCount": 10_000,
 }
 
 LIMIT_KEYS: tuple[str, ...] = tuple(ABSOLUTE_LIMITS)
@@ -58,6 +60,7 @@ class Limits:
     expandedArgvCount: int = ABSOLUTE_LIMITS["expandedArgvCount"]
     expandedArgvElementBytes: int = ABSOLUTE_LIMITS["expandedArgvElementBytes"]
     expandedArgvBytes: int = ABSOLUTE_LIMITS["expandedArgvBytes"]
+    historyCommitCount: int = ABSOLUTE_LIMITS["historyCommitCount"]
 
     def value(self, key: str) -> int:
         """キーの名前で値を返す（複合ワークスペースの次元の名前は`limits`のキーと同じ）。"""
