@@ -249,7 +249,12 @@ def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> s
 
 # --- 承認済み要求の保護（`CHECK-APPROVED-MEANING`） --------------------------------
 
-APPROVED_MEANING_CHANGED = "状態approvedのREQの意味変更時に文書の状態が戻されていません"
+def approved_meaning_changed(kind: str, *, history_incomplete: bool = False) -> str:
+    """`CHECK-APPROVED-MEANING`と`CHECK-APPROVED-MEANING-HISTORY`の文言（ADR-078の決定5）。``kind``は`REQ`または`TECH`。"""
+
+    if history_incomplete:
+        return f"状態approvedの{kind}の意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）"
+    return f"状態approvedの{kind}の意味変更時に文書の状態が戻されていません"
 
 
 # --- 影響候補（`CHECK-IMPACT-OUTDATED`） ---------------------------------------

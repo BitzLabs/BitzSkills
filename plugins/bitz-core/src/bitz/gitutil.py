@@ -779,8 +779,30 @@ class BlobReader:
         del self._buf[:size]
         return data
 
+    def _discard_exact(self, size: int, deadline: float) -> None:
+        """``size``バイトを読み捨てる（内容を保持しない）。"""
+
+        remaining = size
+        while remaining > 0:
+            if not self._buf:
+                self._fill(deadline)
+            taken = min(remaining, len(self._buf))
+            del self._buf[:taken]
+            remaining -= taken
+
     def read(self, oid: str) -> bytes:
         """``oid``の内容を返す。読めなければ:class:`GitReadError`を送出する。"""
+
+        _obj_type, data = self.read_object(oid)
+        assert data is not None
+        return data
+
+    def read_object(self, oid: str, *, max_bytes: int | None = None) -> tuple[str, bytes | None]:
+        """``oid``の種類（``blob``、``tree``、``commit``など）と内容を返す。読めなければ:class:`GitReadError`を送出する。
+
+        ``max_bytes``を渡すと、それより大きいオブジェクトは内容を読み捨て、内容の代わりに``None``を返す
+        （途中のコミットの仕様文書のファイルごとの上限。内容をすべて保持しない）。
+        """
 
         proc = self._proc
         if self._failed or proc is None or proc.stdin is None or self._selector is None:
@@ -794,11 +816,18 @@ class BlobReader:
             if len(fields) != 3 or not fields[2].isdigit():
                 # `<oid> missing`、`<oid> ambiguous`など。
                 raise GitReadError("基準版のオブジェクトを読めません")
+            obj_type = fields[1].decode("ascii")
             size = int(fields[2])
-            data = self._read_exact(size + 1, deadline)
-            if data[-1:] != b"\n":
+            if max_bytes is not None and size > max_bytes:
+                self._discard_exact(size, deadline)
+                data: bytes | None = None
+                tail = self._read_exact(1, deadline)
+            else:
+                raw = self._read_exact(size + 1, deadline)
+                data, tail = raw[:-1], raw[-1:]
+            if tail != b"\n":
                 raise GitReadError("git cat-file --batchの出力が不正です")
-            return data[:-1]
+            return obj_type, data
         except GitReadError:
             self._failed = True
             raise
