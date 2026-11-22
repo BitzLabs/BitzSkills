@@ -659,6 +659,19 @@ def _base_unreadable_diag() -> Diagnostic:
     )
 
 
+def _changes_unreadable_diag() -> Diagnostic:
+    """単一ワークスペースで、変更集合または入れ子の判定に使う設定のパスの一覧をGitから求められない（`CHECK-GIT-CHANGES-UNREADABLE`。
+    `check` §5、ADR-083の決定3）。"""
+
+    return Diagnostic(
+        code="SPEC-GIT-CHANGES-001",
+        severity="error",
+        resultStatus="blocked",
+        summary=messages.GIT_CHANGES_UNREADABLE,
+        source={"kind": "environment", "component": "git"},
+    )
+
+
 def _protection_enabled(
     current_config: dict | None,
     git: gitutil.GitInfo,
@@ -955,10 +968,16 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
     if pre.discovery_failed:
         raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
+    stop_diags = list(pre.diagnostics)
     if pre.ok:
-        return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
+        try:
+            return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
+        except gitutil.GitChangesError:
+            # ワークスペースの変更集合をGitから求められない場合は、空の結果として扱わず、全体事前検査で
+            # Gitの境界を確定できない場合と同じく`SPEC-MULTI-GIT-001`で止める（ADR-083の決定4）。
+            stop_diags = [multiws.git_unreadable_diag()]
 
-    diagnostics = sort_diagnostics([d.to_dict() for d in pre.diagnostics])
+    diagnostics = sort_diagnostics([d.to_dict() for d in stop_diags])
     status = status_from_diagnostics(diagnostics)
     result: dict = {
         "schemaVersion": "1.0",
@@ -1156,297 +1175,310 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     diagnostics.append(
                         (multiws.git_unreadable_diag() if multi_active else _base_unreadable_diag()).to_dict()
                     )
-        if not outcome.stop and not catalog_stopped:
-            assert loc.root is not None
-            catalog_diags = catalog.diagnostics
-            member_catalogs: dict[str, document_mod.CatalogResult] = {}
-            if multi_active:
-                assert multi_pre is not None
-                (
-                    id_index,
-                    statement_index,
-                    local_id_indices,
-                    local_stmt_indices,
-                    known_ws_ids,
-                ) = multirelate.build_multi_context(
-                    workspace_id, catalog.entries, multi_pre, catalogs_out=member_catalogs
-                )
-                area_roots = {wid: os.path.abspath(root) for wid, root in ws_roots.items()}
-            else:
-                id_index = relations_mod.build_id_index(catalog.entries)
-                statement_index = relations_mod.build_statement_index(catalog.entries)
-                local_id_indices = {workspace_id: id_index}
-                local_stmt_indices = {workspace_id: statement_index}
-                known_ws_ids = {workspace_id}
-                area_roots = {}
-            # 作業ワークスペース自身の文書の索引（修飾の別名と他のメンバーの文書を含まない）。
-            # 基準版との比較・所有文書の逆索引は、作業ワークスペースの文書だけを対象にする。
-            active_index = local_id_indices[workspace_id]
-            # 統合索引は作業ワークスペースの文書にも`<作業>::<ID>`の別名を持つ。閉包と逆参照で別名に入った
-            # 作業ワークスペースの文書は、修飾のないIDへ正規化する（他のメンバーの文書は`ws::ID`のまま）。
-            normalize = _alias_normalizer(workspace_id) if multi_active else None
-            # 逆参照の走査元（各文書を1回だけ。作業ワークスペースの別名は除く）。
-            reverse_source_index = (
-                {k: v for k, v in id_index.items() if normalize is not None and normalize(k) == k}
-                if multi_active
-                else None
-            )
-            current_by_path = basecompare.by_path(relations_mod.valid_entries(catalog.entries))
-
-            # --- Gitの基準版を解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
-            # 実際の診断の生成は、`scope`ごとの完全検査の対象（`full_check_ids`）を確定した後に行う
-            # （`scope: selected`は完全検査の対象だけへ絞る。`check.md §5`「同じ基準版を対象選択、
-            # 状態遷移、削除の検出、承認済み要求の保護、TASK境界へ使用」）。
-            base_by_id: dict[str, DocEntry] = {}
-            changed_paths: list[gitutil.ChangedPath] = []
-            if base_commit is not None:
-                base_by_id = preloaded_base
-                if git.available and git.executable:
-                    changed_paths = gitutil.collect_changed_paths(
-                        git.executable, cwd, env, base_commit, loc.root
-                    )
-                    if multi_active and workspace_rel_path == ".":
-                        # ルートワークスペースは、登録したメンバーの配下を所有しない（複合ワークスペース仕様 §5）。
-                        assert multi_pre is not None
-                        changed_paths = _exclude_member_paths(changed_paths, [m.path for m in multi_pre.members])
-            base_by_path = basecompare.by_path(base_by_id.values())
-
-            current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
-            # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にせず、状態遷移・承認済み要求の保護・影響候補の比較もしない
-            # （`check` §5、確認事項C105）。対象の選択（`changed_selection`）は基準版の全体で行い、そのファイル自身の診断は下で返す。
-            unreadable_paths = basecompare.unreadable_id_paths(catalog.entries)
-            base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths, current_ids_present)
-            # 現在版でIDを読めないファイルが基準版のIDの唯一の対応先である文書（比較しない）。引数なしの`check`は、その文書への直接の逆参照も完全検査の対象に加える。
-            unreadable_owner_ids = set(base_by_id) - set(base_by_id_cmp)
-            base_by_path_cmp = basecompare.by_path(base_by_id_cmp.values())
-
-            # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
-            # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
-            active_check_ids: set[str] | None = None
-            other_check_ids: set[str] = set()
-            changed_owning_ids: set[str] | None = None
-
-            if scope == "full":
-                # `--full`は作業ワークスペースの文書の一覧全体が完全検査の対象（check.md §3）。
-                # `source_ids`で絞らない（`None`）。
-                source_ids: set[str] | None = None
-                checked_document_count = catalog.checked_document_count
-                checked_statement_count = catalog.checked_statement_count
-                extra_diags: list[Diagnostic] = []
+        # 変更集合、または入れ子のワークスペースの判定に使う設定のパスの一覧をGitから求められない場合は、空の結果として扱わず、
+        # それまでの文書の検査の結果を捨てて操作を止める（`stop-operation`。`check` §5、ADR-083の決定3）。複合ワークスペースでは
+        # `SPEC-MULTI-GIT-001`とする（ADR-083の決定4）。
+        stop_mark = len(diagnostics)
+        try:
+            if not outcome.stop and not catalog_stopped:
+                assert loc.root is not None
+                catalog_diags = catalog.diagnostics
+                member_catalogs: dict[str, document_mod.CatalogResult] = {}
                 if multi_active:
-                    # 複合ワークスペースでは、作業ワークスペースの文書から強い関係の閉包で到達した他のメンバーの文書と、
-                    # 作業ワークスペースの文書を直接参照する他のメンバーの文書も完全検査の対象に含める。閉包で到達した
-                    # 他のメンバーの文書を参照するだけの他のメンバーの文書へは広げない（仕様 §7）。
-                    start_ids = set(active_index)
-                    reached = basecompare.strong_dependency_closure(start_ids, id_index, normalize=normalize)
-                    reached |= _direct_reverse_references(
-                        start_ids | reached, id_index, statement_index,
+                    assert multi_pre is not None
+                    (
+                        id_index,
+                        statement_index,
+                        local_id_indices,
+                        local_stmt_indices,
+                        known_ws_ids,
+                    ) = multirelate.build_multi_context(
+                        workspace_id, catalog.entries, multi_pre, catalogs_out=member_catalogs
+                    )
+                    area_roots = {wid: os.path.abspath(root) for wid, root in ws_roots.items()}
+                else:
+                    id_index = relations_mod.build_id_index(catalog.entries)
+                    statement_index = relations_mod.build_statement_index(catalog.entries)
+                    local_id_indices = {workspace_id: id_index}
+                    local_stmt_indices = {workspace_id: statement_index}
+                    known_ws_ids = {workspace_id}
+                    area_roots = {}
+                # 作業ワークスペース自身の文書の索引（修飾の別名と他のメンバーの文書を含まない）。
+                # 基準版との比較・所有文書の逆索引は、作業ワークスペースの文書だけを対象にする。
+                active_index = local_id_indices[workspace_id]
+                # 統合索引は作業ワークスペースの文書にも`<作業>::<ID>`の別名を持つ。閉包と逆参照で別名に入った
+                # 作業ワークスペースの文書は、修飾のないIDへ正規化する（他のメンバーの文書は`ws::ID`のまま）。
+                normalize = _alias_normalizer(workspace_id) if multi_active else None
+                # 逆参照の走査元（各文書を1回だけ。作業ワークスペースの別名は除く）。
+                reverse_source_index = (
+                    {k: v for k, v in id_index.items() if normalize is not None and normalize(k) == k}
+                    if multi_active
+                    else None
+                )
+                current_by_path = basecompare.by_path(relations_mod.valid_entries(catalog.entries))
+
+                # --- Gitの基準版を解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
+                # 実際の診断の生成は、`scope`ごとの完全検査の対象（`full_check_ids`）を確定した後に行う
+                # （`scope: selected`は完全検査の対象だけへ絞る。`check.md §5`「同じ基準版を対象選択、
+                # 状態遷移、削除の検出、承認済み要求の保護、TASK境界へ使用」）。
+                base_by_id: dict[str, DocEntry] = {}
+                changed_paths: list[gitutil.ChangedPath] = []
+                if base_commit is not None:
+                    base_by_id = preloaded_base
+                    if git.available and git.executable:
+                        changed_paths = gitutil.collect_changed_paths(
+                            git.executable, cwd, env, base_commit, loc.root
+                        )
+                        if multi_active and workspace_rel_path == ".":
+                            # ルートワークスペースは、登録したメンバーの配下を所有しない（複合ワークスペース仕様 §5）。
+                            assert multi_pre is not None
+                            changed_paths = _exclude_member_paths(changed_paths, [m.path for m in multi_pre.members])
+                base_by_path = basecompare.by_path(base_by_id.values())
+
+                current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
+                # 基準版と同じパスに、現在版でIDを読めないファイルがある文書は、削除にせず、状態遷移・承認済み要求の保護・影響候補の比較もしない
+                # （`check` §5、確認事項C105）。対象の選択（`changed_selection`）は基準版の全体で行い、そのファイル自身の診断は下で返す。
+                unreadable_paths = basecompare.unreadable_id_paths(catalog.entries)
+                base_by_id_cmp = basecompare.exclude_unreadable_paths(base_by_id, unreadable_paths, current_ids_present)
+                # 現在版でIDを読めないファイルが基準版のIDの唯一の対応先である文書（比較しない）。引数なしの`check`は、その文書への直接の逆参照も完全検査の対象に加える。
+                unreadable_owner_ids = set(base_by_id) - set(base_by_id_cmp)
+                base_by_path_cmp = basecompare.by_path(base_by_id_cmp.values())
+
+                # 完全検査の対象のうち、作業ワークスペースの文書（`active_check_ids`。`None`は全件）と、
+                # 強い関係の閉包・直接の逆参照で到達した他のメンバーの文書（`other_check_ids`。修飾ID）。
+                active_check_ids: set[str] | None = None
+                other_check_ids: set[str] = set()
+                changed_owning_ids: set[str] | None = None
+
+                if scope == "full":
+                    # `--full`は作業ワークスペースの文書の一覧全体が完全検査の対象（check.md §3）。
+                    # `source_ids`で絞らない（`None`）。
+                    source_ids: set[str] | None = None
+                    checked_document_count = catalog.checked_document_count
+                    checked_statement_count = catalog.checked_statement_count
+                    extra_diags: list[Diagnostic] = []
+                    if multi_active:
+                        # 複合ワークスペースでは、作業ワークスペースの文書から強い関係の閉包で到達した他のメンバーの文書と、
+                        # 作業ワークスペースの文書を直接参照する他のメンバーの文書も完全検査の対象に含める。閉包で到達した
+                        # 他のメンバーの文書を参照するだけの他のメンバーの文書へは広げない（仕様 §7）。
+                        start_ids = set(active_index)
+                        reached = basecompare.strong_dependency_closure(start_ids, id_index, normalize=normalize)
+                        reached |= _direct_reverse_references(
+                            start_ids | reached, id_index, statement_index,
+                            source_index=reverse_source_index, normalize=normalize,
+                        )
+                        other_check_ids = reached - start_ids
+                        extra_documents, extra_statements = _count_checked(other_check_ids, id_index)
+                        checked_document_count += extra_documents
+                        checked_statement_count += extra_statements
+                elif scope == "selected":
+                    # `scope: selected`の完全検査の対象は`TargetExpansion(root, interpret).contextDocuments`と
+                    # それらへの直接逆参照の和集合だけに限る（check.md §3）。
+                    root_diags, context_ids, task_roots = _resolve_selected_roots(
+                        parsed,
+                        id_index,
+                        statement_index,
+                        active_ws_id=workspace_id if multi_active else None,
+                        local_entries=catalog.entries if multi_active else None,
+                        all_entries=catalog.entries,
+                    )
+                    if normalize is not None:
+                        context_ids = {normalize(i) for i in context_ids}
+                    full_check_ids = context_ids | _direct_reverse_references(
+                        context_ids, id_index, statement_index,
                         source_index=reverse_source_index, normalize=normalize,
                     )
-                    other_check_ids = reached - start_ids
-                    extra_documents, extra_statements = _count_checked(other_check_ids, id_index)
-                    checked_document_count += extra_documents
-                    checked_statement_count += extra_statements
-            elif scope == "selected":
-                # `scope: selected`の完全検査の対象は`TargetExpansion(root, interpret).contextDocuments`と
-                # それらへの直接逆参照の和集合だけに限る（check.md §3）。
-                root_diags, context_ids, task_roots = _resolve_selected_roots(
-                    parsed,
-                    id_index,
-                    statement_index,
-                    active_ws_id=workspace_id if multi_active else None,
-                    local_entries=catalog.entries if multi_active else None,
-                    all_entries=catalog.entries,
-                )
-                if normalize is not None:
-                    context_ids = {normalize(i) for i in context_ids}
-                full_check_ids = context_ids | _direct_reverse_references(
-                    context_ids, id_index, statement_index,
-                    source_index=reverse_source_index, normalize=normalize,
-                )
-                other_check_ids = {i for i in full_check_ids if "::" in i}
-                active_check_ids = full_check_ids - other_check_ids
-                source_ids = active_check_ids
-                checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
+                    other_check_ids = {i for i in full_check_ids if "::" in i}
+                    active_check_ids = full_check_ids - other_check_ids
+                    source_ids = active_check_ids
+                    checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
 
-                checked_document_count, checked_statement_count = _count_checked(full_check_ids, id_index)
+                    checked_document_count, checked_statement_count = _count_checked(full_check_ids, id_index)
 
-                task_diags: list[Diagnostic] = []
-                for task_entry in task_roots:
-                    task_diags.extend(
-                        _task_boundary_diagnostics(
-                            task_entry, git, cwd, env, base_commit, workspace_id, loc.root,
-                            qualified_ids=multi_active, exclude_nested=not multi_active,
+                    task_diags: list[Diagnostic] = []
+                    for task_entry in task_roots:
+                        task_diags.extend(
+                            _task_boundary_diagnostics(
+                                task_entry, git, cwd, env, base_commit, workspace_id, loc.root,
+                                qualified_ids=multi_active, exclude_nested=not multi_active,
+                            )
                         )
+                    extra_diags = root_diags + task_diags
+                    catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
+                else:
+                    # `scope: changed`: Gitの変更集合から選んだ所有文書、強い関係の閉包、直接逆参照が
+                    # 完全検査の対象（check.md §3・§6）。複合ワークスペースでは、出発点は作業ワークスペースが所有する
+                    # 変更されたパスだけで、閉包と直接の逆参照はワークスペースをまたいで辿る。
+                    implements_index = basecompare.build_reverse_index(active_index, "implements")
+                    tests_index = basecompare.build_reverse_index(active_index, "tests")
+                    owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
+                        changed_paths, current_by_path, base_by_path, implements_index, tests_index
                     )
-                extra_diags = root_diags + task_diags
-                catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
-            else:
-                # `scope: changed`: Gitの変更集合から選んだ所有文書、強い関係の閉包、直接逆参照が
-                # 完全検査の対象（check.md §3・§6）。複合ワークスペースでは、出発点は作業ワークスペースが所有する
-                # 変更されたパスだけで、閉包と直接の逆参照はワークスペースをまたいで辿る。
-                implements_index = basecompare.build_reverse_index(active_index, "implements")
-                tests_index = basecompare.build_reverse_index(active_index, "tests")
-                owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
-                    changed_paths, current_by_path, base_by_path, implements_index, tests_index
-                )
-                changed_owning_ids = owning_ids
-                strong_closure = basecompare.strong_dependency_closure(
-                    owning_ids, id_index, normalize=normalize
-                )
-                full_check_ids = owning_ids | strong_closure
-                full_check_ids |= _direct_reverse_references(
-                    full_check_ids, id_index, statement_index,
-                    source_index=reverse_source_index, normalize=normalize,
-                )
-                # 現在版でIDを読めないファイルしかない文書（索引に入らない）への直接の逆参照も、完全検査の対象に加える（`check` §5）。
-                full_check_ids |= _reverse_references_to_ids(
-                    unreadable_owner_ids & owning_ids, id_index, source_index=reverse_source_index, normalize=normalize,
-                )
-                other_check_ids = {i for i in full_check_ids if "::" in i}
-                active_check_ids = full_check_ids - other_check_ids
-                source_ids = active_check_ids
-                checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
-                # 変更されたパスのファイルでIDを読めないもの（基準版の文書と同じパスに壊れて残るものを含む）は、所有する文書を持たないので、
-                # そのファイル自身の診断（`SPEC-FM-SCHEMA-001`など）を、変更されたパスの診断として返す（`check` §5、確認事項C105）。
-                checked_paths |= {c.path for c in changed_paths if pathown.nfc(c.path) in unreadable_paths}
-                catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
-                extra_diags = []
-                selection = {
-                    "changedPathCount": changed_path_count,
-                    "targetDocumentCount": len(owning_ids),
-                    "excludedCodeTestPathCount": excluded_count,
-                }
-
-            if multi_active:
-                # 複合ワークスペース内の単独操作の`check`: 修飾IDの解決の優先順位（関係・トレースモデル §5.1）と
-                # 所有境界（複合ワークスペース仕様 §5.1）を適用する。診断は完全検査の対象文書だけへ生成する
-                # （`relations.py`の``_source_entries``と同じ絞り込みを`entries`側で行う）。作業ワークスペースの
-                # 文書は``source_ids``、他のメンバーの文書は到達したものだけを、所有ワークスペースのIDと
-                # そのルート相対のパスで返す。
-                scoped_entries = (
-                    catalog.entries if source_ids is None
-                    else [e for e in catalog.entries if e.doc_id in source_ids]
-                )
-                relation_diags = []
-                for e in relations_mod.valid_entries(scoped_entries):
-                    relation_diags.extend(
-                        multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
+                    changed_owning_ids = owning_ids
+                    strong_closure = basecompare.strong_dependency_closure(
+                        owning_ids, id_index, normalize=normalize
                     )
-                path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, area_roots)
-                coverage_diags = multirelate.coverage_diagnostics(
-                    scoped_entries, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids
-                )
+                    full_check_ids = owning_ids | strong_closure
+                    full_check_ids |= _direct_reverse_references(
+                        full_check_ids, id_index, statement_index,
+                        source_index=reverse_source_index, normalize=normalize,
+                    )
+                    # 現在版でIDを読めないファイルしかない文書（索引に入らない）への直接の逆参照も、完全検査の対象に加える（`check` §5）。
+                    full_check_ids |= _reverse_references_to_ids(
+                        unreadable_owner_ids & owning_ids, id_index, source_index=reverse_source_index, normalize=normalize,
+                    )
+                    other_check_ids = {i for i in full_check_ids if "::" in i}
+                    active_check_ids = full_check_ids - other_check_ids
+                    source_ids = active_check_ids
+                    checked_paths = {e.path for e in catalog.entries if e.doc_id in active_check_ids}
+                    # 変更されたパスのファイルでIDを読めないもの（基準版の文書と同じパスに壊れて残るものを含む）は、所有する文書を持たないので、
+                    # そのファイル自身の診断（`SPEC-FM-SCHEMA-001`など）を、変更されたパスの診断として返す（`check` §5、確認事項C105）。
+                    checked_paths |= {c.path for c in changed_paths if pathown.nfc(c.path) in unreadable_paths}
+                    catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
+                    extra_diags = []
+                    selection = {
+                        "changedPathCount": changed_path_count,
+                        "targetDocumentCount": len(owning_ids),
+                        "excludedCodeTestPathCount": excluded_count,
+                    }
 
-                # 到達した他のメンバーの文書（修飾する前の元のエントリ）。
-                other_ids_by_ws: dict[str, set[str]] = {}
-                for qualified_id in other_check_ids:
-                    q = multirelate.parse_qualified(qualified_id)
-                    if q is not None:
-                        other_ids_by_ws.setdefault(q[0], set()).add(q[1])
-                other_entries_by_ws: dict[str, list[DocEntry]] = {}
-                for other_ws in sorted(other_ids_by_ws):
-                    member_catalog = member_catalogs.get(other_ws)
-                    if member_catalog is None:
-                        continue
-                    other_entries_by_ws[other_ws] = [
-                        e
-                        for e in relations_mod.valid_entries(member_catalog.entries)
-                        if e.doc_id in other_ids_by_ws[other_ws]
-                    ]
-                for other_ws, other_entries in other_entries_by_ws.items():
-                    for e in other_entries:
+                if multi_active:
+                    # 複合ワークスペース内の単独操作の`check`: 修飾IDの解決の優先順位（関係・トレースモデル §5.1）と
+                    # 所有境界（複合ワークスペース仕様 §5.1）を適用する。診断は完全検査の対象文書だけへ生成する
+                    # （`relations.py`の``_source_entries``と同じ絞り込みを`entries`側で行う）。作業ワークスペースの
+                    # 文書は``source_ids``、他のメンバーの文書は到達したものだけを、所有ワークスペースのIDと
+                    # そのルート相対のパスで返す。
+                    scoped_entries = (
+                        catalog.entries if source_ids is None
+                        else [e for e in catalog.entries if e.doc_id in source_ids]
+                    )
+                    relation_diags = []
+                    for e in relations_mod.valid_entries(scoped_entries):
                         relation_diags.extend(
-                            multirelate.field_diagnostics(e, other_ws, local_id_indices, local_stmt_indices, known_ws_ids)
+                            multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                         )
-                    path_diags.extend(
-                        multirelate.path_diagnostics(other_entries, other_ws, ws_roots[other_ws], area_roots)
+                    path_diags = multirelate.path_diagnostics(scoped_entries, workspace_id, loc.root, area_roots)
+                    coverage_diags = multirelate.coverage_diagnostics(
+                        scoped_entries, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids
                     )
-                    coverage_diags.extend(
-                        multirelate.coverage_diagnostics(
-                            other_entries, other_ws, local_id_indices, local_stmt_indices, known_ws_ids
+
+                    # 到達した他のメンバーの文書（修飾する前の元のエントリ）。
+                    other_ids_by_ws: dict[str, set[str]] = {}
+                    for qualified_id in other_check_ids:
+                        q = multirelate.parse_qualified(qualified_id)
+                        if q is not None:
+                            other_ids_by_ws.setdefault(q[0], set()).add(q[1])
+                    other_entries_by_ws: dict[str, list[DocEntry]] = {}
+                    for other_ws in sorted(other_ids_by_ws):
+                        member_catalog = member_catalogs.get(other_ws)
+                        if member_catalog is None:
+                            continue
+                        other_entries_by_ws[other_ws] = [
+                            e
+                            for e in relations_mod.valid_entries(member_catalog.entries)
+                            if e.doc_id in other_ids_by_ws[other_ws]
+                        ]
+                    for other_ws, other_entries in other_entries_by_ws.items():
+                        for e in other_entries:
+                            relation_diags.extend(
+                                multirelate.field_diagnostics(e, other_ws, local_id_indices, local_stmt_indices, known_ws_ids)
+                            )
+                        path_diags.extend(
+                            multirelate.path_diagnostics(other_entries, other_ws, ws_roots[other_ws], area_roots)
                         )
-                    )
-                    # 到達した文書のファイル単位の構文の診断（フロントマター・EARS-AI・スタイル）。
-                    other_paths = {e.path for e in other_entries}
-                    catalog_diags = list(catalog_diags) + [
+                        coverage_diags.extend(
+                            multirelate.coverage_diagnostics(
+                                other_entries, other_ws, local_id_indices, local_stmt_indices, known_ws_ids
+                            )
+                        )
+                        # 到達した文書のファイル単位の構文の診断（フロントマター・EARS-AI・スタイル）。
+                        other_paths = {e.path for e in other_entries}
+                        catalog_diags = list(catalog_diags) + [
+                            d
+                            for d in member_catalogs[other_ws].diagnostics
+                            if d.source.get("kind") == "file" and d.source.get("path") in other_paths
+                        ]
+
+                    # 横断エッジを含めたグラフで循環を検査する（関係・トレースモデル §4）。読み込み済みの
+                    # すべてのワークスペース（作業ワークスペースと、修飾参照で読み込んだ他のワークスペース）を1つのグラフとして
+                    # 計算し、完全検査の対象の文書へ帰属するエッジだけをこの結果へ残す。
+                    checked_cycle_paths: dict[str, set[str]] = {
+                        workspace_id: {e.path for e in scoped_entries},
+                        **{other_ws: {e.path for e in ents} for other_ws, ents in other_entries_by_ws.items()},
+                    }
+                    cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
+                    relation_diags.extend(
                         d
-                        for d in member_catalogs[other_ws].diagnostics
-                        if d.source.get("kind") == "file" and d.source.get("path") in other_paths
-                    ]
-
-                # 横断エッジを含めたグラフで循環を検査する（関係・トレースモデル §4）。読み込み済みの
-                # すべてのワークスペース（作業ワークスペースと、修飾参照で読み込んだ他のワークスペース）を1つのグラフとして
-                # 計算し、完全検査の対象の文書へ帰属するエッジだけをこの結果へ残す。
-                checked_cycle_paths: dict[str, set[str]] = {
-                    workspace_id: {e.path for e in scoped_entries},
-                    **{other_ws: {e.path for e in ents} for other_ws, ents in other_entries_by_ws.items()},
-                }
-                cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
-                relation_diags.extend(
-                    d
-                    for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-                    if d.source.get("path") in checked_cycle_paths.get(d.source.get("workspaceId"), set())
-                )
-            else:
-                relation_diags = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=source_ids)
-                path_diags = relations_mod.check_paths(catalog.entries, loc.root, workspace_id, source_ids=source_ids)
-                coverage_diags = relations_mod.check_coverage(catalog.entries, workspace_id, source_ids=source_ids)
-
-            # `scope: selected`は完全検査の対象（`active_check_ids`）だけへ、状態遷移・
-            # 承認済み要求の保護・影響候補を絞る（検収指摘: `check.md §5`は`scope`を限定しない）。
-            # `scope: full`・`changed`は従来どおり絞らない（未変更の文書は基準版と現在版が同一の内容の
-            # ため、これらの検査は自然に何もせず安全）。基準版との比較は作業ワークスペースの文書だけが対象
-            # （他のメンバーの文書は、そのメンバーの基準版を読まない）。
-            base_source_ids = active_check_ids if scope == "selected" else None
-            base_diags: list[Diagnostic] = []
-            if base_commit is not None:
-                base_diags.extend(
-                    basecompare.state_transition_diagnostics(
-                        base_by_id_cmp,
-                        active_index,
-                        workspace_id,
-                        current_ids_present=current_ids_present,
-                        source_ids=base_source_ids,
+                        for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
+                        if d.source.get("path") in checked_cycle_paths.get(d.source.get("workspaceId"), set())
                     )
-                )
-                # 承認済み要求の保護は、基準版と現在版の作業ワークスペースの設定の両方で`false`と明示した場合だけ無効とする
-                # （`safety.protectApprovedRequirements`。ADR-082の決定4）。無効のときは端点も履歴も比べない。途中のコミットは、違反の候補がある場合だけ読む（`check` §5）。
-                if _protection_enabled(
-                    outcome.config, git, cwd, env, base_commit, loc.root,
-                    validate_limits=not (multi_active and workspace_rel_path != "."),
-                ):
+                else:
+                    relation_diags = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=source_ids)
+                    path_diags = relations_mod.check_paths(catalog.entries, loc.root, workspace_id, source_ids=source_ids)
+                    coverage_diags = relations_mod.check_coverage(catalog.entries, workspace_id, source_ids=source_ids)
+
+                # `scope: selected`は完全検査の対象（`active_check_ids`）だけへ、状態遷移・
+                # 承認済み要求の保護・影響候補を絞る（検収指摘: `check.md §5`は`scope`を限定しない）。
+                # `scope: full`・`changed`は従来どおり絞らない（未変更の文書は基準版と現在版が同一の内容の
+                # ため、これらの検査は自然に何もせず安全）。基準版との比較は作業ワークスペースの文書だけが対象
+                # （他のメンバーの文書は、そのメンバーの基準版を読まない）。
+                base_source_ids = active_check_ids if scope == "selected" else None
+                base_diags: list[Diagnostic] = []
+                if base_commit is not None:
                     base_diags.extend(
-                        basecompare.approved_protection_diagnostics(
-                            base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids,
-                            history=_history_judge(
-                                _new_history(git, cwd, env, base_commit, limits), loc.root, workspace_id, limits
-                            ),
+                        basecompare.state_transition_diagnostics(
+                            base_by_id_cmp,
+                            active_index,
+                            workspace_id,
+                            current_ids_present=current_ids_present,
+                            source_ids=base_source_ids,
                         )
                     )
-                changed_doc_ids = basecompare.changed_spec_document_ids(
-                    changed_paths, current_by_path, base_by_path_cmp
-                )
-                base_diags.extend(
-                    basecompare.impact_candidate_diagnostics(
-                        changed_doc_ids, active_index, workspace_id,
-                        source_ids=base_source_ids, normalize=normalize, qualify_summary_ids=multi_active,
+                    # 承認済み要求の保護は、基準版と現在版の作業ワークスペースの設定の両方で`false`と明示した場合だけ無効とする
+                    # （`safety.protectApprovedRequirements`。ADR-082の決定4）。無効のときは端点も履歴も比べない。途中のコミットは、違反の候補がある場合だけ読む（`check` §5）。
+                    if _protection_enabled(
+                        outcome.config, git, cwd, env, base_commit, loc.root,
+                        validate_limits=not (multi_active and workspace_rel_path != "."),
+                    ):
+                        base_diags.extend(
+                            basecompare.approved_protection_diagnostics(
+                                base_by_id_cmp, active_index, workspace_id, source_ids=base_source_ids,
+                                history=_history_judge(
+                                    _new_history(git, cwd, env, base_commit, limits), loc.root, workspace_id, limits
+                                ),
+                            )
+                        )
+                    changed_doc_ids = basecompare.changed_spec_document_ids(
+                        changed_paths, current_by_path, base_by_path_cmp
                     )
-                )
+                    base_diags.extend(
+                        basecompare.impact_candidate_diagnostics(
+                            changed_doc_ids, active_index, workspace_id,
+                            source_ids=base_source_ids, normalize=normalize, qualify_summary_ids=multi_active,
+                        )
+                    )
 
-            diagnostics.extend(d.to_dict() for d in catalog_diags)
-            if multi_active:
-                diagnostics.extend(
-                    _other_member_duplicate_diagnostics(
-                        scope, parsed, workspace_id, catalog, member_catalogs, normalize,
-                        start_ids=set(active_index), owning_ids=changed_owning_ids,
+                diagnostics.extend(d.to_dict() for d in catalog_diags)
+                if multi_active:
+                    diagnostics.extend(
+                        _other_member_duplicate_diagnostics(
+                            scope, parsed, workspace_id, catalog, member_catalogs, normalize,
+                            start_ids=set(active_index), owning_ids=changed_owning_ids,
+                        )
                     )
-                )
-            diagnostics.extend(d.to_dict() for d in relation_diags)
-            diagnostics.extend(d.to_dict() for d in path_diags)
-            diagnostics.extend(d.to_dict() for d in coverage_diags)
-            diagnostics.extend(d.to_dict() for d in extra_diags)
-            diagnostics.extend(d.to_dict() for d in base_diags)
+                diagnostics.extend(d.to_dict() for d in relation_diags)
+                diagnostics.extend(d.to_dict() for d in path_diags)
+                diagnostics.extend(d.to_dict() for d in coverage_diags)
+                diagnostics.extend(d.to_dict() for d in extra_diags)
+                diagnostics.extend(d.to_dict() for d in base_diags)
+        except gitutil.GitChangesError:
+            del diagnostics[stop_mark:]
+            diagnostics.append(
+                (multiws.git_unreadable_diag() if multi_active else _changes_unreadable_diag()).to_dict()
+            )
+            checked_document_count = 0
+            checked_statement_count = 0
+            selection = None
 
     diagnostics = sort_diagnostics(diagnostics)
     status = status_from_diagnostics(diagnostics)
