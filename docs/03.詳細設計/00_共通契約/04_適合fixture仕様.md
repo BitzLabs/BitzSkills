@@ -1238,6 +1238,22 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `SINGLE-189-05` | `SINGLE-187-01`の形で、途中の`draft`の版だけが`relations.related`に3件を持ち、`limits.documentArrayItemCount: 2`（基準版と現在版は配列を持たない） | check --full --base base | failed／1 | 途中の版にも`documentArrayItemCount`を当て、超えた版をIDを読めない版とする（安全な入出力・互換性 §4.1、ADR-082の決定3） |
 | `SINGLE-189-06` | `SINGLE-189-05`の入力で`limits.documentArrayItemCount: 3` | check --full --base base | passed／0 | ちょうどは遮断しない |
 
+### 6.26 変更集合の名前の変更（`selection`の件数）
+
+変更集合は、Gitの名前の変更とコピーの検出をせずに求め、名前の変更は移動元のパスの削除と移動先のパスの追加として入れる。`selection.changedPathCount`は変更集合のパスの数、
+`selection.excludedCodeTestPathCount`はどの逆索引にも該当しないコードまたはテストのパスの数で、名前の変更は2つのパスとして数える
+（[`check`仕様 §5、§9](../03_操作仕様/02_check.md#5-git基準版と変更集合)、[ADR-083](../../02.設計書/10_決定記録/ADR-083_変更集合をGitの名前の変更の検出なしに求め、Gitの読取りの失敗をblockedにする.md)）。
+どれも引数なしの`check --base HEAD`（`scope: changed`）で、`revision.dirty`は`true`である。変更集合または入れ子の判定に使う設定のパスの一覧をGitから求められない場合
+（`SPEC-GIT-CHANGES-001`）は、Gitの読取りの失敗を準備の処理で作れないので、適合fixtureを置かない（Coreの単体試験で確かめる）。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-190-01` | `approved`のREQ-001（`implements`なし）と、どの文書にも所有されないコード`src/old.py`。作業ツリーだけで`src/new.py`へ移す | check --base HEAD | passed／0 | `selection`は`changedPathCount: 2`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 2`。診断なし |
+| `SINGLE-190-02` | `SINGLE-190-01`と同じ移動をステージする（インデックス。同じ内容なのでGitは名前の変更として検出し得る） | check --base HEAD | passed／0 | `SINGLE-190-01`と同じ結果（名前の変更を検出しない） |
+| `SINGLE-190-03` | `approved`のREQ-001が`implements: [src/old.py]`で所有するコードを`src/new.py`へ移し、ステージする | check --base HEAD | failed／1 | 移動元だけが`implements`の逆索引でREQ-001へ写り、移動先は所有されない（§6）。`changedPathCount: 2`、`targetDocumentCount: 1`、`excludedCodeTestPathCount: 1`。REQ-001の`SPEC-PATH-INVALID-001`の1件（summary「実装パスが存在しません」、`source.key`は`implements`。`SINGLE-024`と同じ形） |
+| `SINGLE-190-04` | `approved`のREQ-001のパスだけを`.spec/requirements/REQ-001-renamed.md`へ移し、ステージする | check --base HEAD | passed／0 | 2つのパスを同じ文書IDのREQ-001へ写す（移動元は基準版のID。§9）。`changedPathCount: 2`、`targetDocumentCount: 1`、`excludedCodeTestPathCount: 0` |
+| `SINGLE-190-05` | `SINGLE-190-04`と同じ移動を作業ツリーだけで行う | check --base HEAD | passed／0 | `SINGLE-190-04`と同じ結果 |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1615,6 +1631,7 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `MULTI-071-04` | `MULTI-071-03`の形で、ルートを移すコミットではREQ-010を`draft`のまま（同じバイト列）にし、その後のコミットで`title`を変えて`approved`にする | check --all-workspaces --base base | passed／0 | ルートを移したコミットの`draft`の版は、親（移す前）の新しいルートの配下に同じIDの文書がないので、状態を変えた版として認める（§8.1） |
 | `MULTI-071-05` | `MULTI-071-01`の入力で、ルートの設定に`limits.historyCommitCount: 1`（途中のコミットは2つ。ルートで実行） | check --all-workspaces --base base | failed／1 | 複合ワークスペースではルートの設定の値を使う（安全な入出力・互換性 §4.1）。`web`の`diagnostics`に1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」） |
 | `MULTI-071-06` | `MULTI-071-01`の入力で、メンバー`web`の設定（基準版と現在版）に`safety.protectApprovedRequirements: false`。ルートと`api`の設定は既定。作業ツリーでREQ-010の`title`を変える（ルートで実行） | check --all-workspaces --base HEAD | passed／0 | `--all-workspaces`では、各ワークスペース自身の基準版と現在版の設定で保護の有無を判定する（§8、ADR-082の決定5）。`web`は無効なので診断なし。`dirty: true` |
+| `MULTI-072-01` | ルート`platform`、メンバー`web`（`approved`のREQ-010）と`api`。`web`のどの文書にも所有されないコード`apps/web/src/old.py`を`apps/web/src/new.py`へ移し、ステージする（`apps/web`で実行） | check --base HEAD | passed／0 | 複合ワークスペースの単独操作でも名前の変更を検出しない。`workspace`は`web`（`apps/web`）、`selection`は`changedPathCount: 2`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 2` |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
