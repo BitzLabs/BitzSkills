@@ -2520,3 +2520,21 @@ commit `082d3f7048db91fa134bfa6934310a522dcdb701`に対して`uv run fixtures/ce
 |---|---|
 | 監査 | 1つ目のReport SHA-256は`45a8816c654793c9ac785729bf0f857d19702c97f54a987abdc1c703f2a35b39`、2つ目は`8d7971c1a75bf642e5b1d402e2f6650584412edffb89b3bc3f31d0c37d079051`（自己試験の項目だけが異なる。ADR-077）。Stepの件数は88／157／211／161／349（重複を除いて960件）、手動の一覧は28件。診断レジストリは126条件 |
 | 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-11-23: 変更集合を名前の変更の検出なしに求め、Gitの読取りの失敗をblockedにした後のGate Aの再認定
+
+[ADR-083](../../docs/02.設計書/10_決定記録/ADR-083_変更集合をGitの名前の変更の検出なしに求め、Gitの読取りの失敗をblockedにする.md)のとおり、変更集合をGitの名前の変更とコピーの検出をせずに求め、
+`selection`の件数をパスごとに数える（名前の変更は2件）。`check`と全体事前検査のGitの読取りの失敗は、空の結果とせず`blocked`にする
+（単一ワークスペースは`SPEC-GIT-CHANGES-001`または`SPEC-GIT-BASE-001`、複合ワークスペースは`SPEC-MULTI-GIT-001`）。
+実装と検収の中で、対象の読取りを利用者の決定で広げた（ADR-083の`Notes`）。
+
+`SINGLE-190-01`〜`05`と`MULTI-072-01`の6件を加えた（群`change_set_fixtures`）。引数なしの`check`で`selection`を固定する既存の24件は、名前の変更として
+検出される変更を含まないので、期待値は変わらない。Gitの読取りの失敗は準備の処理で作れないので、fixtureを置かず、Coreの単体試験で確かめる。
+診断レジストリは127条件になった。
+
+commit `b1a39d881cd774970983949faaf63ca5751f2e93`に対して`uv run fixtures/certify_gate_a.py`を実行し、`gateA: "Allowed"`、エラー0件を得た（797秒）。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 1つ目のReport SHA-256は`e05bdc8a33d545f4a35472e356931b28efcfe9a41c1f8792a5cb9cfe8d7b6fa4`、2つ目は`49ce8af323b0201c5a9a17926ff52164d940ac82a97c885f648b13cc3960c5f2`（自己試験の項目だけが異なる。ADR-077）。Stepの件数は88／157／216／161／350（重複を除いて966件）、手動の一覧は28件 |
+| 実行環境 | CPython 3.13.18、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
