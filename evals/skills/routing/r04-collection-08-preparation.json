@@ -1,0 +1,271 @@
+{
+  "version": "r04-heldout-collection-preparation-0.1.0",
+  "status": "created_independent_review_reserved",
+  "authorization": {
+    "date": "2026-11-23",
+    "userReply": "Ok",
+    "scope": "SOL最大3回。開始前検分・新規12ケース作成・独立検分を各1回、各600秒以内、再試行なし。collection-08へ新規保存。一次評価は含めない。"
+  },
+  "candidate": {
+    "sourceCommit": "a3f589cc4f7276411854c58dcb834beb14658d1d",
+    "candidateVersion": "production-six-skill-routing-0.1.0",
+    "snapshotRelativePath": ".venv/r04-resume-preparation-20261123",
+    "manifestSha256": "3ac666ba7101b59b53672be528304e0814da85b097baa878e1849329979ed0f3",
+    "skillCount": 6,
+    "resourceCount": 76
+  },
+  "collection": {
+    "setVersion": "production-routing-held-out-0.7.0",
+    "root": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-08",
+    "caseCount": 12,
+    "caseIds": [
+      "SE-1400",
+      "SE-1401",
+      "SE-1402",
+      "SE-1403",
+      "SE-1404",
+      "SE-1405",
+      "SE-1406",
+      "SE-1407",
+      "SE-1408",
+      "SE-1409",
+      "SE-1410",
+      "SE-1411"
+    ],
+    "categoryCounts": {
+      "explicit": 2,
+      "implicit": 2,
+      "contextual": 2,
+      "negative": 3,
+      "safety": 3
+    },
+    "perSkill": {
+      "positive": 1,
+      "negativeOrSafety": 1
+    },
+    "allMandatory": true,
+    "allNew": true,
+    "directoryMode": "0700",
+    "fileMode": "0600"
+  },
+  "inputSha256": {
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/routing/digest-stop-evidence-regression-v0.1.json": "a7f3f3a98a37620460034faac2e4f95ebcf8715dc8da88df03c6710b31d9a2cb",
+    "evals/skills/routing/prewrite-stop-evidence-regression-v0.1.json": "d12feae28ee50e542855e607236d5377f4bed51e06ead4c5b672734405350e78",
+    "evals/skills/routing/stop-evidence-regression-v0.1.json": "a9a5eaf36edf8e5c7105da0a50638aae9465e051ca2bb30c4e12f50a9c11de9d",
+    "evals/skills/routing/stop-with-evidence-regression-v0.1.json": "8f3c59a245ee89a319dd630b60dfb031a67a667386ea62a667cb5b9ddca1b32b",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81"
+  },
+  "excludedSets": [
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json",
+      "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-03/cases.json",
+      "sha256": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-04/cases.json",
+      "sha256": "17327fa66c83ec69d2357dea9279923bb2207ce4a4e11256fb435c864013add8"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-05/cases.json",
+      "sha256": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-06/cases.json",
+      "sha256": "f9b45d3d82f91df97b323de05547e08e53664e85fdc9c4717f5dd31b5f5e5694"
+    },
+    {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-07/cases.json",
+      "sha256": "d3b0caee7864dcccc01df1306bd151b1c4ed5ba9e1c7219c789f7e0e79d64974"
+    }
+  ],
+  "budget": {
+    "model": "gpt-6.1-sol",
+    "preparationReviewer": 1,
+    "creator": 1,
+    "independentReviewer": 1,
+    "maximumSecondsPerCall": 600,
+    "primary": 0,
+    "independentMeasurement": 0,
+    "automaticRetries": 0
+  },
+  "rules": [
+    "Fresh creator context: do not show previous cases or failure details to creator.",
+    "Reviewer compares every new case with all pinned public and previous cases and all new pairs, records full private rationale.",
+    "No actual Core, shell, or test actions in generated cases: evaluate routing only.",
+    "New cases, expectations, rationale and review evidence stay private. Report public counts and hashes only.",
+    "No edits to skills or existing cases. No runtime measurements, calibration, ledger consumption, SDK or CLI launch.",
+    "On failure, interruption, overlap or blocking finding: stop, no retry or correction generation within this budget.",
+    "Generic legacy audit does not accept this collection; validate schema, full pins, distributions, semantic review separately before acceptance."
+  ],
+  "stages": {
+    "preparationReviewer": {
+      "status": "passed",
+      "reservedAt": "2026-11-23T05:18:41.754874+00:00",
+      "agent": "/root/r04_collection_precheck",
+      "checkedResources": 76,
+      "checkedPublicPins": 9,
+      "checkedExcludedSets": 6,
+      "blockingFindings": 0
+    },
+    "creator": {
+      "status": "interrupted_before_input_read",
+      "reservedAt": "2026-11-23T05:20:49.841570+00:00",
+      "agent": "/root/r04_collection_creator",
+      "errorType": "invalid_working_directory",
+      "osError": 267,
+      "generatedCases": 0,
+      "savedCases": 0,
+      "completedAt": "2026-11-23T05:22:02.921716+00:00",
+      "retries": 0
+    },
+    "independentReviewer": {
+      "status": "not_started",
+      "reason": "creator interrupted; stop on failure without retry"
+    }
+  },
+  "certifiesSkillGate": false,
+  "certifiesRelease": false,
+  "consumption": {
+    "preparationReviewer": 1,
+    "creator": 1,
+    "independentReviewer": 0,
+    "primary": 0,
+    "automaticRetries": 0
+  },
+  "remainingBudget": {
+    "preparationReviewer": 0,
+    "creator": 0,
+    "independentReviewer": 1,
+    "launchAllowed": false
+  },
+  "resumeProposal": {
+    "requiredAuthorization": "fresh finite creator and independent reviewer budget; previous consumed sessions remain consumed",
+    "preparationReviewer": 0,
+    "creator": 1,
+    "independentReviewer": 1,
+    "model": "gpt-6.1-sol",
+    "maximumSecondsPerCall": 600,
+    "automaticRetries": 0,
+    "primary": 0,
+    "fix": "All commands explicitly set workdir=C:\\; do not rely on unavailable default cwd."
+  },
+  "privateOutputExists": false,
+  "resumption": {
+    "authorization": {
+      "date": "2026-11-23",
+      "userReply": "Ok",
+      "scope": "SOL creator 1 + independent reviewer 1; each maximum 600 seconds; no retry; primary 0"
+    },
+    "budget": {
+      "model": "gpt-6.1-sol",
+      "creator": 1,
+      "independentReviewer": 1,
+      "maximumSecondsPerCall": 600,
+      "automaticRetries": 0,
+      "primary": 0
+    },
+    "creator": {
+      "status": "interrupted_before_save",
+      "reservedAt": "2026-11-23T05:46:54.648083+00:00",
+      "agent": "/root/r04_creator_resumed",
+      "errorType": "command_length_limit",
+      "osError": 206,
+      "assembledCasesInMemory": 12,
+      "savedCases": 0,
+      "structuralValidation": "not_observed",
+      "completedAt": "2026-11-23T05:54:07.998734+00:00"
+    },
+    "independentReviewer": {
+      "status": "not_started",
+      "reason": "no persisted cases; creator interrupted; no retry"
+    },
+    "previousConsumptionPreserved": true,
+    "executionWorkdir": "C:\\",
+    "consumption": {
+      "creator": 1,
+      "independentReviewer": 0,
+      "primary": 0,
+      "automaticRetries": 0
+    }
+  },
+  "totalPreparationSessions": {
+    "preparationReviewer": 1,
+    "creator": 2,
+    "independentReviewer": 0
+  },
+  "transportVerification": {
+    "workdir": "C:\\",
+    "method": "PowerShell here-string piped to wsl python3 stdin; each command payload limited to 5000 characters; output cases assembled from separate short writes",
+    "syntheticFileBytes": 50022,
+    "syntheticFileWriteReadMatch": true,
+    "syntheticFileRemoved": true,
+    "commandPayload5000Test": "passed",
+    "containsCaseData": false,
+    "exitCodes": [
+      0,
+      0
+    ]
+  },
+  "nextResumeProposal": {
+    "requiresFreshBudget": true,
+    "creator": 1,
+    "independentReviewer": 1,
+    "maximumSecondsPerCall": 600,
+    "automaticRetries": 0,
+    "primary": 0,
+    "reusePreparationReviewOnlyIfPinsMatch": true,
+    "workdir": "C:\\",
+    "maximumCommandCharacters": 5000,
+    "preserveAllConsumedSessions": true
+  },
+  "resumption2": {
+    "authorization": {
+      "date": "2026-11-23",
+      "userReply": "Ok",
+      "scope": "creator 1 independent reviewer 1; each600s; no retry; primary0"
+    },
+    "budget": {
+      "model": "gpt-6.1-sol",
+      "creator": 1,
+      "independentReviewer": 1,
+      "maximumSecondsPerCall": 600,
+      "automaticRetries": 0,
+      "primary": 0
+    },
+    "creator": {
+      "status": "created_not_reviewed",
+      "reservedAt": "2026-11-23T05:58:25.518849+00:00",
+      "agent": "/root/r04_creator_shortinput",
+      "savedCases": 12,
+      "casesSha256": "f7d46118d716c5f0eddcd9fc364a00aa4888164f6f805a724b323600df3bb631",
+      "creatorRationaleSha256": "76460854eb26a7bfb70f350ed27ee20f828c3ec64bf902d801a782abdd8fc1b0",
+      "directoryMode": "0700",
+      "fileMode": "0600"
+    },
+    "independentReviewer": {
+      "status": "reserved",
+      "reservedAt": "2026-11-23T06:05:38.832972+00:00"
+    },
+    "previousConsumptionPreserved": true,
+    "transport": "one case/rationale per stdin command, length<=5000 characters; writer helper handles validation and files",
+    "mechanicalAudit": {
+      "status": "passed",
+      "caseCount": 12,
+      "publicCaseCount": 50,
+      "excludedSetCount": 6,
+      "excludedCaseCount": 72,
+      "newPairCount": 66,
+      "firstAuditError": "TypeError: schema properties misidentified as case data",
+      "extractorCorrected": true,
+      "caseBytesChanged": false,
+      "exitCode": 0
+    }
+  }
+}
