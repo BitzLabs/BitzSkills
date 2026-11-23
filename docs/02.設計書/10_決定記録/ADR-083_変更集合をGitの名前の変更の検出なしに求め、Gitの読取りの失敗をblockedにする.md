@@ -82,6 +82,9 @@ relations:
 - 既知の問題（2026-11-23）: SHA-256のリポジトリでは、Coreが`HEAD`を解決できず、`check`は`SPEC-GIT-CHANGES-001`になる（変更の前は`revision: null`の縮退だった）。
   SHA-256のリポジトリは、Core 1.0の対象に含めていない。
 
+- 既知の問題（2026-11-23）: `doctor`は、`check`を止める状態（壊れた`HEAD`の参照、Gitが所有者を疑ってリポジトリを拒む状態）を報告しない。
+  単一ワークスペースの`doctor`は`git: passed`を返す。`check`は止まるので、黙って通る誤りではない。`doctor`の検査の範囲は、別に定める。
+
 ## Revision History
 
 | Date | Summary | Reference |
