@@ -85,9 +85,12 @@ relations:
 - 既知の問題（2026-11-23）: `doctor`は、`check`を止める状態（壊れた`HEAD`の参照、Gitが所有者を疑ってリポジトリを拒む状態）を報告しない。
   単一ワークスペースの`doctor`は`git: passed`を返す。`check`は止まるので、黙って通る誤りではない。`doctor`の検査の範囲は、別に定める。
 
+- `Notes`の既知の問題のうち5つは、[ADR-084](ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)で解消した。
+
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-22 | 起票（`proposed`） | ADR-082 |
 | 2026-11-22 | 利用者の承認により`accepted`へ変更（Decisionの3の`summary`の文言を含む） | — |
+| 2026-11-23 | 既知の問題の解消を記録 | ADR-084 |

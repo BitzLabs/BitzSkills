@@ -1,7 +1,7 @@
 ---
 id: ADR-084
 title: Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-048
@@ -73,9 +73,12 @@ relations:
 - 起票者は、Decisionの2の案を選んでいただく質問で、`SPEC-MULTI-CONFIG-001`の結果への効果を`blocked`と書いた。これは誤りで、既存の条件のとおり`failed`である
   （継続単位`stop-multi-workspace`で、操作は止まる）。
 - ADR-083の`Notes`に記録した既知の問題のうち、本ADRの5つを解消する。
+- 2026-11-23に、利用者がADRを承認した（「進めて下さい」）。Decisionの1、2、4の`summary`の文言も、このとき承認した（ADR-062）。
+- 本ADRは、ADR-048の決定4とADR-080の決定1（準備の入力）を部分改訂し、`setup.objectFormat`を加える。そのほかの決定は変えない。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-23 | 起票（`proposed`） | ADR-083 |
+| 2026-11-23 | 利用者の承認により`accepted`へ変更（文言を含む） | — |

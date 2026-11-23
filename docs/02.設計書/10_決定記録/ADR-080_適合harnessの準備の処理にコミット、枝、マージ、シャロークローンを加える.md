@@ -60,9 +60,12 @@ relations:
 - 衝突したパスの扱い、`checkout`と`merge`の事前条件（クリーンな作業ツリー、取り込み済みの枝の`merge`の禁止）、枝の名前の字句、`shallow`の追記は、
   独立レビューの指摘により、適合fixture仕様 §3.2で明確にした。
 
+- `Decision`の1番目の項目の準備の入力に、[ADR-084](ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)で`setup.objectFormat`を加えた。
+
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-21 | 起票（`proposed`） | ADR-048、ADR-072、ADR-078 |
 | 2026-11-21 | 利用者の承認により`accepted`へ変更 | — |
+| 2026-11-23 | 準備の入力を部分改訂 | ADR-084 |

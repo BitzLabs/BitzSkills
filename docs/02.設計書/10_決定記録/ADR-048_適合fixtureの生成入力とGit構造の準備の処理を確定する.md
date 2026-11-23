@@ -96,6 +96,8 @@ relations:
 - `Decision`の4番目の項目の準備の処理は、[ADR-080](ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)で部分改訂した
   （`commit`、`branch`、`checkout`、`merge`、`shallow`を加える）。
 
+- `Decision`の4番目の項目の準備の入力に、[ADR-084](ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)で`setup.objectFormat`を加えた。
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -105,3 +107,4 @@ relations:
 | 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |
 | 2026-11-17 | Decision 3を部分改訂 | ADR-076 |
 | 2026-11-21 | Decision 4を部分改訂 | ADR-080 |
+| 2026-11-23 | 準備の入力を部分改訂 | ADR-084 |
