@@ -204,6 +204,7 @@ harnessは各fixtureを新しい一時ディレクトリへコピーし、次の
 `setup`用のGitの値は、既定ブランチ`fixture`、`user.name=Bitz Fixture`、`user.email=fixture@bitz.invalid`、
 作成者とコミッターの日時`2000-01-01T00:00:00Z`、`commit.gpgSign=false`、`core.autocrlf=false`、
 `core.fileMode=true`に固定する。ホスト側のグローバルまたはシステムのGit設定を読まず、フックを実行しない。
+リポジトリのオブジェクトの形式は、`setup.objectFormat`（`sha1`または`sha256`、既定は`sha1`）で指定し、`git init --object-format`に渡す（[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)）。
 
 `setup.git: false`では、`baseCommit`、Gitを使う準備の処理（`stage`、`submodule`、`worktree`、`commit`、`branch`、`checkout`、`merge`、`shallow`）、起動の`--base`を禁止する。
 起動の`--base`には、`HEAD`のほか、枝の名前と`HEAD~1`のようなリビジョンの式を書ける。式はGitが解決する（[ADR-080](../../02.設計書/10_決定記録/ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)）。

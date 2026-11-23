@@ -57,7 +57,7 @@
       "type": "object",
       "required": ["commit", "dirty"],
       "properties": {
-        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "commit": {"type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"},
         "dirty": {"type": "boolean"}
       },
       "additionalProperties": false
@@ -66,8 +66,8 @@
       "type": "object",
       "required": ["base", "commit", "dirty"],
       "properties": {
-        "base": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "base": {"type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"},
+        "commit": {"type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"},
         "dirty": {"type": "boolean"}
       },
       "additionalProperties": false

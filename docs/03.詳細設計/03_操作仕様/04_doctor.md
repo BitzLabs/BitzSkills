@@ -119,6 +119,10 @@ earsAi: "1.0"
 `deletion-detection`、`status-transition`、`task-boundary`の安定した名前で重複なく辞書順に置く。
 複合ワークスペースでは、リポジトリの境界と所有領域を確定できないため診断`SPEC-MULTI-GIT-001`（`blocked`）とする。
 
+検査項目`git`は、Gitの利用可否と版に加えて、`check`と同じGitの読取り（リポジトリのルート、`HEAD`の解決、作業ツリーの状態）を確かめる
+（[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)）。失敗した場合は、単一ワークスペースでは診断`SPEC-DOCTOR-GIT-001`（`warning`。診断レジストリ`DOCTOR-GIT-READ`）とし、検査項目`git`を`warning`にする。
+複合ワークスペースでは`SPEC-MULTI-GIT-001`（`blocked`）とする。コミットのないリポジトリとリポジトリの外は、失敗としない（[`check` §5](02_check.md#5-git基準版と変更集合)と同じ判定）。
+
 ## 7. 結果
 
 ```json
