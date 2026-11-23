@@ -53,3 +53,24 @@ def materialize(outline, case_id, draft, catalog, routes):
     evidence = {k: deepcopy(draft[k]) for k in
                 ("decisionReason", "alternativeReason", "source", "counterfactual", "eventEvidence")}
     return case, evidence
+
+
+def draft_schema(outline_keys, case_schema, catalog):
+    """Constrain the draft vocabulary without prescribing any outline's answer."""
+    def record(properties):
+        return {"type": "object", "additionalProperties": False,
+                "properties": properties, "required": list(properties)}
+
+    text = {"type": "string"}
+    expected = case_schema["properties"]["expected"]["properties"]
+    event = record({"event": {"type": "string", "enum": list(catalog)},
+                    "source": text, "trigger": text, "observable": text})
+    events = {"type": "array", "items": {"$ref": "#/$defs/event"}}
+    draft = record({"selectedSkill": expected["sixSkill"], "outcome": expected["outcome"],
+                    "decisionReason": text, "alternativeReason": text, "source": text,
+                    "counterfactual": text, "category": case_schema["properties"]["category"],
+                    "prompt": text, "context": {"type": "array", "items": text},
+                    "eventEvidence": record({"required": events, "forbidden": events})})
+    schema = record({key: {"$ref": "#/$defs/draft"} for key in outline_keys})
+    schema["$defs"] = {"event": event, "draft": draft}
+    return schema

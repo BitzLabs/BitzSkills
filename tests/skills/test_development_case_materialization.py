@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "evals/skills/routing"))
 from development_case_materialization import materialize
+from development_case_review import novelty_blockers
 from production_heldout_semantic import mechanical_accuracy
 
 
@@ -53,3 +54,29 @@ class DevelopmentMaterializationTests(unittest.TestCase):
         self.assertFalse(mechanical_accuracy(case, decision)["requiredEvents"])
         decision.update(events=["classify-feature", "edit-files"], rejectedEvents=["edit-files"])
         self.assertFalse(mechanical_accuracy(case, decision)["forbiddenEvents"])
+
+    def test_draft_schema_requires_every_outline_and_known_outcome(self):
+        import json
+        from jsonschema import Draft202012Validator
+        from development_case_materialization import draft_schema
+
+        case_schema = json.loads((ROOT / "evals/skills/schemas/case.schema.json").read_text())
+        schema = draft_schema(["first", "second"], case_schema, sorted(self.catalog))
+        Draft202012Validator.check_schema(schema)
+        validator = Draft202012Validator(schema)
+        response = {"first": self.draft, "second": dict(self.draft)}
+        self.assertTrue(validator.is_valid(response))
+        self.assertFalse(validator.is_valid({"first": self.draft}))
+        response["second"]["outcome"] = "a free-form justification"
+        self.assertFalse(validator.is_valid(response))
+
+
+class DevelopmentReviewTests(unittest.TestCase):
+    def test_distinct_and_empty_comparisons_do_not_block(self):
+        for distinct in ({1, 2}, set()):
+            self.assertEqual(novelty_blockers("A", {"N": distinct, "D": set(), "U": set()}), set())
+
+    def test_duplicate_and_unknown_block_the_affected_cases(self):
+        judgments = {"N": set(), "D": {2}, "U": {3}}
+        self.assertEqual(novelty_blockers("A", judgments), {"A"})
+        self.assertEqual(novelty_blockers("A", judgments, ["A", "B", "C"]), {"A", "B", "C"})
