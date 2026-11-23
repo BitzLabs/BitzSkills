@@ -118,16 +118,51 @@ def resolve_commit(executable: str, cwd: str, env: dict[str, str], rev: str) -> 
     return out
 
 
-def is_dirty(executable: str, cwd: str, env: dict[str, str]) -> bool:
+def is_dirty(executable: str, cwd: str, env: dict[str, str], *, strict: bool = False) -> bool:
+    """作業ツリーの状態（`revision.dirty`）。``strict``（`check`）なら、読取りの失敗を``False``にせず:class:`GitChangesError`にする
+    （`check` §5、ADR-083の`Notes`）。``strict``が偽の呼出し（`context`、`verify`）は、従来どおり失敗を``False``にする。"""
+
     try:
         proc = _run(
             [executable, "--no-optional-locks", "status", "--porcelain"], cwd, env
         )
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        if strict:
+            raise GitChangesError(f"git status: {exc}") from exc
         return False
     if proc.returncode != 0:
+        if strict:
+            raise GitChangesError(f"git status: 終了コード{proc.returncode}")
         return False
     return bool(proc.stdout.strip())
+
+
+def check_revision(
+    executable: str, cwd: str, env: dict[str, str], base_arg: str | None
+) -> tuple[str | None, str | None, bool]:
+    """`check`の``(HEAD, 基準版, dirty)``を求める（`check` §5、ADR-083の`Notes`）。``HEAD``がなければ``(None, 基準版, False)``。
+
+    - ``cwd``がリポジトリの外なら（:func:`repository_toplevel`）、``HEAD``はないものとする。
+    - ``HEAD``がコミットを指さない場合は、Gitがその参照の不在を示したとき（:func:`head_is_unborn`。コミットのないリポジトリ）だけ、
+      ``HEAD``はないものとする。そのほか（壊れた参照、参照の先のコミットの欠落）は:class:`GitChangesError`を送出する。
+    - 作業ツリーの状態の読取りの失敗も:class:`GitChangesError`にする（``dirty``を偽にしない）。
+    - ``base_arg``（明示した`--base`）を解決できなければ、基準版は``None``（呼び出し側が終了コード4にする）。省略なら``HEAD``。
+    """
+
+    if repository_toplevel(executable, cwd, env) is None:
+        head = None
+    else:
+        head = resolve_commit(executable, cwd, env, "HEAD")
+        if head is None:
+            try:
+                unborn = head_is_unborn(executable, cwd, env)
+            except GitReadError as exc:
+                raise GitChangesError(str(exc)) from exc
+            if not unborn:
+                raise GitChangesError("HEADを解決できません")
+    base = head if base_arg is None else resolve_commit(executable, cwd, env, base_arg)
+    dirty = is_dirty(executable, cwd, env, strict=True) if head is not None else False
+    return head, base, dirty
 
 
 @dataclass
@@ -238,7 +273,7 @@ def _ls_files_others_z(
 
 
 def _toplevel_or_cwd(executable: str, cwd: str, env: dict[str, str], toplevel: str | None = None) -> str:
-    """リポジトリのルートを返す。解決できなければ``cwd``を返す。``toplevel``が渡されていれば、Gitを呼ばずにそれを返す。
+    """リポジトリのルートを返す。``toplevel``が渡されていれば、Gitを呼ばずにそれを返す。解決できなければ:class:`GitToplevelError`を送出する。
 
     `git ls-files`は現在のディレクトリの配下だけを列挙するため、リポジトリ全体を対象にする呼び出しはこのディレクトリで実行する。
     """
@@ -246,7 +281,10 @@ def _toplevel_or_cwd(executable: str, cwd: str, env: dict[str, str], toplevel: s
     if toplevel:
         return toplevel
     toplevel = show_toplevel(executable, cwd, env)
-    return toplevel if toplevel else cwd
+    if not toplevel:
+        # 読めないリポジトリのルートを`cwd`で代えない（`check` §5、ADR-083の`Notes`）。
+        raise GitToplevelError("リポジトリのルートを求められません")
+    return toplevel
 
 
 def _repo_root_relative_offset(
@@ -254,15 +292,14 @@ def _repo_root_relative_offset(
 ) -> str | None:
     """リポジトリのルートから見た``workspace_root``の相対パス（``.``＝一致）を返す。
 
-    リポジトリのルートを解決できなければ``None``を返し、呼び出し側はリポジトリのルートからの相対の
-    パスをそのままワークスペースのルートからの相対として扱う（フォールバック。単一ワークスペースの検査対象のリポジトリの
-    大半はワークスペースのルート＝リポジトリのルートであるため、この場合は実害がない）。
+    リポジトリのルートを解決できなければ、:class:`GitToplevelError`を送出する（リポジトリのルートからの相対のパスを
+    ワークスペースのルートからの相対として扱わない。`check` §5、ADR-083の`Notes`）。
     """
 
     if toplevel is None:
         toplevel = show_toplevel(executable, cwd, env)
     if toplevel is None:
-        return None
+        raise GitToplevelError("リポジトリのルートを求められません")
     toplevel_abs = os.path.abspath(toplevel)
     workspace_abs = os.path.abspath(workspace_root)
     rel = os.path.relpath(workspace_abs, toplevel_abs)
@@ -877,6 +914,40 @@ class GitReadError(Exception):
 
     呼び出し側は、数えずに通過させず、Gitを利用できない場合と同じく`SPEC-MULTI-GIT-001`にする（安全な入出力・互換性 §4.1）。
     """
+
+
+class GitToplevelError(GitChangesError, GitReadError):
+    """リポジトリのルート（`git rev-parse --show-toplevel`）を読めない（`check` §5、ADR-083の`Notes`）。
+
+    変更集合のパスを写すためのリポジトリのルートの読取りの失敗であり、`cwd`で代えない。:class:`GitChangesError`としても
+    :class:`GitReadError`としても捕まえられる。`check`は、単一ワークスペースで`SPEC-GIT-CHANGES-001`、複合ワークスペースで
+    `SPEC-MULTI-GIT-001`にする（基準版の読取りの途中で起きても`SPEC-GIT-BASE-001`にしない）。
+    """
+
+
+def repository_toplevel(executable: str, cwd: str, env: dict[str, str]) -> str | None:
+    """``cwd``を含む作業ツリーのリポジトリのルートを返す。``cwd``がリポジトリの中でなければ``None``。
+
+    リポジトリの外であることは、Gitの出力で判定する。`git rev-parse --show-toplevel`を、メッセージを翻訳しないロケール
+    （``LC_ALL=C``、``LANGUAGE=C``）で実行し、0でない終了コードで標準エラー出力が`not a git repository`を含む場合だけ、
+    リポジトリの外とする。そのほかの失敗（起動の失敗、ほかの理由の0でない終了コード、空の出力）は、:class:`GitToplevelError`を送出する。
+    """
+
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "rev-parse", "--show-toplevel"],
+            cwd=cwd, env={**git_env(env), "LC_ALL": "C", "LANGUAGE": "C"}, capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise GitToplevelError(f"git rev-parse --show-toplevel: {exc}") from exc
+    if proc.returncode != 0:
+        if "not a git repository" in (proc.stderr or ""):
+            return None
+        raise GitToplevelError(f"git rev-parse --show-toplevel: 終了コード{proc.returncode}")
+    top = proc.stdout.strip()
+    if not top:
+        raise GitToplevelError("git rev-parse --show-toplevelの出力が空です")
+    return top
 
 
 #: `git cat-file --batch`の1件の要求から内容を読み終えるまでの時間の上限（秒）。ほかのGitの呼出し（``_run``）の30秒に合わせる。
