@@ -947,15 +947,19 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
 
     revision: dict | None = None
     resolved_base: str | None = None
+    revision_unreadable = False
     if git.available and git.executable:
-        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
-        resolved_base = head_commit
-        if "--base" in parsed.single:
-            resolved_base = gitutil.resolve_commit(git.executable, cwd, env, base_arg)
-            if resolved_base is None:
-                raise CliArgError("check", f"--baseを解決できません: {base_arg}")
+        try:
+            head_commit, resolved_base, dirty = gitutil.check_revision(
+                git.executable, cwd, env, base_arg if "--base" in parsed.single else None
+            )
+        except gitutil.GitChangesError:
+            # リポジトリのルート、`HEAD`の参照、作業ツリーの状態を読めない（`check` §5）。全体事前検査の後に止める。
+            revision_unreadable = True
+            head_commit, resolved_base, dirty = None, None, False
+        if "--base" in parsed.single and resolved_base is None and not revision_unreadable:
+            raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         if head_commit is not None:
-            dirty = gitutil.is_dirty(git.executable, cwd, env)
             revision = {"base": resolved_base, "commit": head_commit, "dirty": dirty}
     else:
         if "--base" in parsed.single:
@@ -969,7 +973,9 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
         raise CliArgError("check", "複合ワークスペースのルートワークスペースの設定を発見できません")
 
     stop_diags = list(pre.diagnostics)
-    if pre.ok:
+    if pre.ok and revision_unreadable:
+        stop_diags = [multiws.git_unreadable_diag()]
+    elif pre.ok:
         try:
             return _run_all_workspaces_members(parsed, cwd, env, git, pre, revision, resolved_base, started)
         except (gitutil.GitChangesError, gitutil.GitReadError):
@@ -1048,20 +1054,25 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     base_arg = parsed.single.get("--base", "HEAD")
 
     revision: dict | None = None
+    # リポジトリのルート、`HEAD`の参照、作業ツリーの状態をGitから読めない場合は、`revision: null`へ縮退せず、作業ワークスペースを
+    # 決めた後に操作を止める（単一ワークスペースで`SPEC-GIT-CHANGES-001`、複合ワークスペースで`SPEC-MULTI-GIT-001`。`check` §5）。
+    revision_unreadable = False
     if git.available and git.executable:
         # 終了コード4になるのは、明示した`--base`を解決できない場合だけである（結果・診断・終了コード §2）。
         # `--base`を省略したときの`HEAD`が解決できない、コミットのないリポジトリは`revision: null`へ縮退する。
-        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
-        base_commit = head_commit
-        if "--base" in parsed.single:
-            base_commit = gitutil.resolve_commit(git.executable, cwd, env, base_arg)
-            if base_commit is None:
-                raise CliArgError("check", f"--baseを解決できません: {base_arg}")
+        try:
+            head_commit, base_commit, dirty = gitutil.check_revision(
+                git.executable, cwd, env, base_arg if "--base" in parsed.single else None
+            )
+        except gitutil.GitChangesError:
+            revision_unreadable = True
+            head_commit, base_commit, dirty = None, None, False
+        if "--base" in parsed.single and base_commit is None and not revision_unreadable:
+            raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         if head_commit is None:
             # コミットのないリポジトリ: `revision`を`null`へ縮退する（安全な入出力・互換性 §8）。
             revision = None
         else:
-            dirty = gitutil.is_dirty(git.executable, cwd, env)
             revision = {"base": base_commit, "commit": head_commit, "dirty": dirty}
     else:
         if "--base" in parsed.single:
@@ -1073,7 +1084,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     # 示す。コミットのないリポジトリ（Gitは利用できるがHEADがない）は、黙って全体検査へ縮退する。
     scope = scope_requested
     git_degraded = False
-    if scope_requested == "changed" and revision is None:
+    if scope_requested == "changed" and revision is None and not revision_unreadable:
         scope = "full"
         if not git.available:
             git_degraded = True
@@ -1170,6 +1181,12 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     preloaded_base = basecompare.load_base_catalog(
                         git, cwd, env, base_commit, loc.root, workspace_id, limits
                     )
+                except gitutil.GitToplevelError:
+                    # リポジトリのルートを読めない（基準版の読取りの途中でも`SPEC-GIT-BASE-001`にしない。`check` §5）。
+                    catalog_stopped = True
+                    diagnostics.append(
+                        (multiws.git_unreadable_diag() if multi_active else _changes_unreadable_diag()).to_dict()
+                    )
                 except gitutil.GitReadError:
                     catalog_stopped = True
                     diagnostics.append(
@@ -1181,6 +1198,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         stop_mark = len(diagnostics)
         try:
             if not outcome.stop and not catalog_stopped:
+                if revision_unreadable:
+                    raise gitutil.GitChangesError("リポジトリのルート、HEADの参照、または作業ツリーの状態を読めません")
                 assert loc.root is not None
                 catalog_diags = catalog.diagnostics
                 member_catalogs: dict[str, document_mod.CatalogResult] = {}
