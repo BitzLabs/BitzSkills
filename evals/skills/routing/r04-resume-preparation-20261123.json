@@ -1,0 +1,152 @@
+{
+  "status": "stopped_on_collection_novelty_findings",
+  "checkedDate": "2026-11-23",
+  "sourceCommit": "a3f589cc4f7276411854c58dcb834beb14658d1d",
+  "manifestSha256": "3ac666ba7101b59b53672be528304e0814da85b097baa878e1849329979ed0f3",
+  "snapshotRelativePath": ".venv/r04-resume-preparation-20261123",
+  "skillCount": 6,
+  "resourceCount": 76,
+  "modelInvocations": 0,
+  "reservations": 0,
+  "certifiesSkillGate": false,
+  "nextStage": "proposed_decision_condition_review_before_case_generation",
+  "proposedCollection": {
+    "setVersion": "production-routing-held-out-0.7.0",
+    "directory": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-08",
+    "caseCount": 12,
+    "allNewCases": true,
+    "categoryCounts": {
+      "explicit": 2,
+      "implicit": 2,
+      "contextual": 2,
+      "negative": 3,
+      "safety": 3
+    },
+    "perSkill": {
+      "positive": 1,
+      "negativeOrSafety": 1
+    }
+  },
+  "proposedPreparationBudget": {
+    "model": "gpt-6.1-sol",
+    "preparationReviewer": 1,
+    "creator": 1,
+    "independentReviewer": 1,
+    "maximumSecondsPerCall": 600,
+    "primaryMeasurements": 0,
+    "automaticRetries": 0
+  },
+  "notAuthorizedByThisFile": true,
+  "remainingRequirements": [
+    "new preparation approach after rejected novelty review; existing collection not adopted",
+    "fresh finite authorization before any generation or review beyond consumed budget",
+    "76-resource input/deployment/execution contracts after an adopted collection",
+    "daily calibration and isolated prelaunch review",
+    "separate measurement authorization"
+  ],
+  "validation": {
+    "snapshotResourceHashes": "Passed",
+    "snapshotInventory": "Passed",
+    "evaluationContractAudit": {
+      "command": "uv run evals/skills/validate.py audit",
+      "status": "Passed",
+      "exitCode": 0
+    },
+    "routingPreparationTests": {
+      "command": "uv run --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p test_routing_prepare.py",
+      "tests": 8,
+      "status": "OK",
+      "exitCode": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "independentReview": "not_performed"
+  },
+  "preparationModelSessions": 5,
+  "generatedCases": 12,
+  "savedCases": 12,
+  "modelInvocationsScope": "primary measurements only; preparationModelSessions includes reserved/running preparation sessions",
+  "collectionPreparationContract": "evals/skills/routing/r04-collection-08-preparation.json",
+  "assembledCasesInMemoryNotPreserved": 12,
+  "collectionCasesSha256": "f7d46118d716c5f0eddcd9fc364a00aa4888164f6f805a724b323600df3bb631",
+  "collectionAcceptedForMeasurementPreparation": false,
+  "authorizationContractSha256": "835036652bdebdef2c804f9d8ba2399809e27b05c0b683dd8f9244dc0525f9ba",
+  "collectionPreparationResult": {
+    "setVersion": "production-routing-held-out-0.7.0",
+    "casesSha256": "f7d46118d716c5f0eddcd9fc364a00aa4888164f6f805a724b323600df3bb631",
+    "creatorRationaleSha256": "76460854eb26a7bfb70f350ed27ee20f828c3ec64bf902d801a782abdd8fc1b0",
+    "reviewSha256": "3a1a5bd57ffbce7185b63ab8dc606e3255bc630656dad8c4c0f149af90bb0568",
+    "reviewedContractSha256": "835036652bdebdef2c804f9d8ba2399809e27b05c0b683dd8f9244dc0525f9ba",
+    "reviewStatus": "stopped_on_findings",
+    "caseCount": 12,
+    "expectedCorrectCount": 12,
+    "noveltyPassedCount": 2,
+    "blockingFindings": 10,
+    "publicCasesCompared": 50,
+    "excludedSetsCompared": 6,
+    "excludedCasesCompared": 72,
+    "newPairsCompared": 66,
+    "parentBindingAndCoverageCheck": "passed",
+    "casesUnchanged": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "acceptedForMeasurementPreparation": false,
+    "newCasesRetried": false,
+    "primaryMeasurements": 0,
+    "ledgerReservations": 0
+  },
+  "consumptionByAuthorization": [
+    {
+      "phase": "initial",
+      "preparationReviewer": 1,
+      "creator": 1,
+      "independentReviewer": 0,
+      "outcome": "invalid_workdir_before_generation"
+    },
+    {
+      "phase": "resumption",
+      "preparationReviewer": 0,
+      "creator": 1,
+      "independentReviewer": 0,
+      "outcome": "command_length_limit_before_save"
+    },
+    {
+      "phase": "resumption2",
+      "preparationReviewer": 0,
+      "creator": 1,
+      "independentReviewer": 1,
+      "outcome": "12_saved_10_novelty_blockers"
+    }
+  ],
+  "totalConsumedPreparationBudget": {
+    "preparationReviewer": 1,
+    "creator": 3,
+    "independentReviewer": 1,
+    "automaticRetries": 0,
+    "primary": 0
+  },
+  "recordPolicy": "preparation contract bytes remain unchanged to preserve independent review binding; final outcome is recorded here",
+  "methodRevision": {
+    "status": "proposed_not_authorized_for_model_launch",
+    "source": "docs/04.提案資料/31_スキル統合残件の開発計画と進捗.md",
+    "principle": "review causal decision conditions before writing complete cases",
+    "stages": [
+      "source_grounded_condition_proposal",
+      "independent_exhaustive_condition_novelty_review",
+      "case_materialization_and_mechanical_checks",
+      "final_independent_case_review"
+    ],
+    "mustKeep": {
+      "cases": 12,
+      "allNew": true,
+      "allMandatory": true,
+      "allFindingsPreserved": true,
+      "creatorNotShownPriorHeldoutOrFailures": true
+    },
+    "insufficientNovelConditions": "stop_before_materialization_and_seek_scope_decision",
+    "newModelSessions": 0,
+    "primary": 0
+  }
+}
