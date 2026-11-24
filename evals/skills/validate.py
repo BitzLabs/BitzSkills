@@ -69,13 +69,13 @@ def load_cases():
 
 
 def protocol_path(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6"):
         return ROOT / "contracts" / version / "protocol.json"
     return ROOT / "protocol.json"
 
 
 def load_event_catalog(version=None):
-    path = protocol_path(version).with_name("event-catalog.json") if version in ("0.7.3", "0.7.4", "0.7.5") else EVENT_CATALOG
+    path = protocol_path(version).with_name("event-catalog.json") if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6") else EVENT_CATALOG
     source = load_json(path)
     if not isinstance(source, dict) or set(source) != {"schemaVersion", "catalogVersion", "events"}:
         raise ValueError("event-catalog.jsonの形式が不正です")
@@ -626,7 +626,7 @@ def main(argv=None):
     scorer.add_argument("--trace-root", type=Path)
     scorer.add_argument("--output", type=Path)
     for command in (auditor, scorer):
-        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5"), default="0.7.2")
+        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6"), default="0.7.2")
     args = parser.parse_args(argv)
 
     try:

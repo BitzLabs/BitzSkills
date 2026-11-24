@@ -98,6 +98,33 @@ class SkillEvalTests(unittest.TestCase):
             if allowed:
                 self.assertTrue(skill_eval_runner.trace_has_forbidden_action(trace, "six-skill", "0.7.3"))
 
+    def test_advice_outcome_contract_preserves_the_previous_prompt(self):
+        case = next(c for c in skill_eval.load_cases() if c["caseId"] == "SE-010")
+        catalog = skill_eval.load_event_catalog("0.7.6")["events"]
+        previous = skill_eval_runner.prompt_for(case, catalog, "six-skill", "0.7.5")
+        self.assertEqual(hashlib.sha256(previous.encode()).hexdigest(),
+                         "b71f526d790bfe6e559fa277fa0ff8a022a166a3164cab0e81c72436bad9b1a8")
+        updated = skill_eval_runner.prompt_for(case, catalog, "six-skill", "0.7.6")
+        self.assertIn("助言の結論が否定的でも", updated)
+        self.assertEqual(previous.split("- events:")[1], updated.split("- events:")[1])
+
+    def test_public_advice_and_refusal_cases_distinguish_outcomes(self):
+        source = skill_eval.ROOT / "routing/review-advice-outcome-regression-v0.1.json"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / source.name
+            shutil.copyfile(source, path)
+            cases, _ = skill_eval.load_held_out_cases(path, "0.7.6")
+        self.assertEqual(cases[0]["context"], cases[1]["context"])
+        for case, outcome, other in zip(cases, ("proceed", "stop"), ("stop", "proceed"), strict=True):
+            expected = case["expected"]
+            observation = dict(selectedEntry="quality-review", selectedPath=None, outcome=outcome,
+                               events=expected["requiredEvents"], rejectedEvents=[],
+                               readyClaimed=False, evidencePresent=False)
+            run = dict(architecture="six-skill", observation=observation)
+            self.assertTrue(skill_eval.observed_pass(case, run, "0.7.6"))
+            observation["outcome"] = other
+            self.assertFalse(skill_eval.observed_pass(case, run, "0.7.6"))
+
     def test_empty_run_set_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "empty.jsonl"

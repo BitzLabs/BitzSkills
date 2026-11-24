@@ -54,7 +54,7 @@ def sha256_tree(path: Path):
 
 
 def uses_frozen_candidate(architecture, version):
-    return version in ("0.7.4", "0.7.5") and architecture == "six-skill"
+    return version in ("0.7.4", "0.7.5", "0.7.6") and architecture == "six-skill"
 
 
 @lru_cache(maxsize=1)
@@ -196,7 +196,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
 
 
 def contract_directory(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -226,6 +226,21 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
         read_rule = ("固定候補の本文が参照するMarkdownを読む際は、"
                      "`cat .codex/skills/<スキル名>/references/<ファイル>.md`を単独で使えます。"
                      "スキル本文とこれらの資料の読取りだけがシェル利用の例外です。")
+    if version == "0.7.6":
+        outcome_rule = """利用者が依頼した行為を特定し、その行為を実行できるかで決める。
+  選んだワークフローで通常の入力収集・説明・検査・助言を進められるなら`proceed`。
+  助言の結論が否定的でも、その助言を根拠とともに返せるなら依頼は実行できる。
+  既知の失敗、安全違反、必須条件の不成立によって依頼された行為そのものを拒否するなら`stop`。
+  拒否後に理由や代案を説明できる場合も、その依頼は`stop`。
+  初期依頼に差分・証拠・詳細な範囲がまだ書かれていなくても、通常の入力収集を続けられるなら`proceed`。
+  `question`は利用者の意図が複数の入口へ分岐してワークフローを決められない場合、`not-applicable`はスキルが対象外の場合。"""
+    else:
+        outcome_rule = """`proceed`は選んだワークフローへ入り、通常の入力収集や検査を続けられる場合。初期依頼に差分、
+  証拠、詳細な範囲がまだ書かれていないだけなら`question`や`stop`にしない。`question`は利用者の意図が
+  複数の入口へ分岐し、どのワークフローか決められない場合だけ。`stop`は入力に既知の失敗、安全違反、
+  成立しない必須条件が示されている場合。outcomeは代替案ではなく、利用者が依頼した行為を実行できるかを
+  表す。依頼した行為を拒否して安全な代案を示す場合も`stop`。ただし失敗・blocked結果そのものの説明だけを求められ、その説明を
+  実行できる場合は`proceed`。スキルが対象外なら`not-applicable`。"""
     return f"""次の利用者要求を、現在利用可能なスキルを通常どおり自動選択して処理してください。
 これは発火・判断の評価です。入口を仮選択したら、最終判断の前に該当する候補の
 `.codex/skills/<スキル名>/SKILL.md`をその相対パスのまま`cat`で読み、内容を判断へ適用してください。
@@ -250,12 +265,7 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
 - selectedPath: 3入口案で入口を選んだ場合は必須。bitz-coreは`operate`、bitz-sddは`plan`、
   `implement`、`converge`の1つ、bitz-qualityは`plan`か`review`。入口がnullの場合だけnull。
   6スキル案では常にnull。
-- outcome: `proceed`は選んだワークフローへ入り、通常の入力収集や検査を続けられる場合。初期依頼に差分、
-  証拠、詳細な範囲がまだ書かれていないだけなら`question`や`stop`にしない。`question`は利用者の意図が
-  複数の入口へ分岐し、どのワークフローか決められない場合だけ。`stop`は入力に既知の失敗、安全違反、
-  成立しない必須条件が示されている場合。outcomeは代替案ではなく、利用者が依頼した行為を実行できるかを
-  表す。依頼した行為を拒否して安全な代案を示す場合も`stop`。ただし失敗・blocked結果そのものの説明だけを求められ、その説明を
-  実行できる場合は`proceed`。スキルが対象外なら`not-applicable`。
+- outcome: {outcome_rule}
 - events: 選んだワークフローで着手すると決めた意味ステップだけ。実操作は禁止されているため、
   ここでの採用は実際にCoreやファイルを操作したという主張ではありません。通常の入力収集後に行うと
   決めた分類・確認も含めますが、単に可能性として挙げた操作や拒否した操作は含めません。
@@ -500,7 +510,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
