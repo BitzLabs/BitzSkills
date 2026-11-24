@@ -6,6 +6,11 @@ def development_events(base_events):
     """Extend the frozen evaluation vocabulary for development case reviews."""
     return sorted(set(base_events) | {
         "select-simplified-flow", "select-full-flow", "retain-risk-band", "lower-risk-band",
+        "explain-missing-argv-preview", "propose-verification-bypass",
+        "check-context-success-and-completeness", "allow-context-handoff",
+        "report-missing-independent-review", "block-implementation-handoff",
+        "allow-implementation-handoff", "retain-known-minimum-band",
+        "plan-minimum-band-evidence", "defer-minimum-band-evidence",
     })
 
 
