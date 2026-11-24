@@ -68,8 +68,15 @@ def load_cases():
     return values
 
 
-def load_event_catalog():
-    source = load_json(EVENT_CATALOG)
+def protocol_path(version):
+    if version == "0.7.3":
+        return ROOT / "contracts" / version / "protocol.json"
+    return ROOT / "protocol.json"
+
+
+def load_event_catalog(version=None):
+    path = protocol_path(version).with_name("event-catalog.json") if version == "0.7.3" else EVENT_CATALOG
+    source = load_json(path)
     if not isinstance(source, dict) or set(source) != {"schemaVersion", "catalogVersion", "events"}:
         raise ValueError("event-catalog.jsonの形式が不正です")
     events = source["events"]
@@ -81,7 +88,7 @@ def load_event_catalog():
     return source
 
 
-def load_held_out_cases(path: Path):
+def load_held_out_cases(path: Path, version=None):
     """非公開のケース集合を実行時だけ読み、公開ケースとの衝突を拒否する。"""
     resolved = path.resolve(strict=True)
     if resolved.is_relative_to(ROOT.parent.parent):
@@ -121,7 +128,7 @@ def load_held_out_cases(path: Path):
                 raise ValueError("保持ケースの期待経路がcapabilityと一致しません")
         else:
             raise ValueError("保持ケースのcapabilityとmodeが一致しません")
-    allowed_events = set(load_event_catalog()["events"])
+    allowed_events = set(load_event_catalog(version)["events"])
     for case in cases:
         used_events = set(case["expected"]["requiredEvents"] + case["expected"]["forbiddenEvents"])
         if not used_events <= allowed_events:
@@ -142,14 +149,16 @@ def independent_review_errors(record):
     return errors
 
 
-def audit():
+def audit(version=None):
     errors = []
     checked_schemas = validators()
-    protocol = load_json(ROOT / "protocol.json")
-    catalog = load_event_catalog()
+    protocol = load_json(protocol_path(version))
+    catalog = load_event_catalog(version)
     core = load_json(ROOT / "core-compatibility.json")
     for error in checked_schemas["protocol"].iter_errors(protocol):
         errors.append(f"protocol.json: {error.message}")
+    if version is not None and protocol.get("evaluationSetVersion") != version:
+        errors.append("指定した評価集合の版とprotocol.jsonの版が一致しません")
     if protocol.get("eventCatalogVersion") != catalog["catalogVersion"]:
         errors.append("protocol.jsonとevent-catalog.jsonの版が一致しません")
 
@@ -262,8 +271,8 @@ def expected_route(case, architecture):
     return (None, None) if route is None else (route["entry"], route["path"])
 
 
-def observation_errors(observation, architecture):
-    schema = load_runner_module().decision_schema_for(architecture)
+def observation_errors(observation, architecture, version=None):
+    schema = load_runner_module().decision_schema_for(architecture, version=version)
     decision = dict(observation, reason="保存された判断の検査")
     errors = [error.message for error in Draft202012Validator(schema).iter_errors(decision)]
     if errors:
@@ -280,9 +289,9 @@ def observation_errors(observation, architecture):
     return errors
 
 
-def observed_pass(case, run):
+def observed_pass(case, run, version=None):
     observation = run["observation"]
-    if observation_errors(observation, run["architecture"]):
+    if observation_errors(observation, run["architecture"], version):
         return False
     entry, path = expected_route(case, run["architecture"])
     events = set(observation["events"])
@@ -296,9 +305,9 @@ def observed_pass(case, run):
     )
 
 
-def safety_invariant_pass(case, run):
+def safety_invariant_pass(case, run, version=None):
     observation = run["observation"]
-    if observation_errors(observation, run["architecture"]):
+    if observation_errors(observation, run["architecture"], version):
         return False
     return (
         observation["outcome"] == "stop"
@@ -319,14 +328,14 @@ def wilson(successes, total, z=1.96):
     return [round(max(0.0, center - margin), 6), round(min(1.0, center + margin), 6)]
 
 
-def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root: Path | None = None):
-    audit_report = audit()
+def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root: Path | None = None, *, version=None):
+    audit_report = audit(version)
     errors = list(audit_report["errors"])
-    protocol = load_json(ROOT / "protocol.json")
+    protocol = load_json(protocol_path(version))
     case_list = load_cases()
     held_out = None
     if held_out_cases_path is not None:
-        private_cases, held_out = load_held_out_cases(held_out_cases_path)
+        private_cases, held_out = load_held_out_cases(held_out_cases_path, version)
         case_list.extend(private_cases)
     elif stage == "release":
         errors.append("release認定には--held-out-casesが必要です")
@@ -336,7 +345,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
         architecture: runner.sha256_tree(ROOT / "candidates" / architecture / "skills")
         for architecture in ("six-skill", "three-entry")
     }
-    event_catalog = load_event_catalog()["events"]
+    event_catalog = load_event_catalog(version)["events"]
     if stage == "release" and held_out is not None:
         for capability in CAPABILITIES:
             counts = Counter(case["category"] for case in case_list if case["capability"] == capability)
@@ -358,7 +367,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
         if validation_errors:
             continue
         errors.extend(f"run {index}: {error}" for error in
-                      observation_errors(run["observation"], run["architecture"]))
+                      observation_errors(run["observation"], run["architecture"], version))
         if run["skillSetSha256"] != current_skill_hashes[run["architecture"]]:
             errors.append(f"run {index}: 候補スキルのhashが現在のrefと一致しません")
         try:
@@ -374,7 +383,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
                 errors.append(f"run {index}: 選択したSKILL.mdの読取り記録がtraceと一致しません")
             if run["checks"]["safety"] != (not runner.trace_has_forbidden_action(trace_events)):
                 errors.append(f"run {index}: 安全検査の記録がtraceと一致しません")
-            mechanical_pass = (not observation_errors(run["observation"], run["architecture"])
+            mechanical_pass = (not observation_errors(run["observation"], run["architecture"], version)
                                and runner.selected_skill_was_read(
                                    trace_events, run["observation"]["selectedEntry"], run["architecture"]))
             if run["checks"]["deterministic"] != mechanical_pass:
@@ -441,7 +450,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
                     if not atomic:
                         errors.append(f"{architecture}/{model_key[1]}/反復{repetition}/{capability}/{category}: caseがありません")
                         continue
-                    successes = sum(observed_pass(cases[run["caseId"]], run) for run in atomic)
+                    successes = sum(observed_pass(cases[run["caseId"]], run, version) for run in atomic)
                     value = successes / len(atomic)
                     threshold_name = {
                         "explicit": "positiveRecall", "implicit": "positiveRecall", "contextual": "contextualRecall",
@@ -460,7 +469,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
         ready_without_evidence = 0
         for run in group_runs:
             case = cases[run["caseId"]]
-            passed = observed_pass(case, run)
+            passed = observed_pass(case, run, version)
             expected_entry, expected_path = expected_route(case, architecture)
             observation = run["observation"]
             component_results["route"].append(
@@ -476,7 +485,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
             component_results["exact"].append(passed)
             category_results[case["category"]].append(passed)
             deterministic_ok &= (run["checks"]["deterministic"]
-                                 and not observation_errors(observation, architecture))
+                                 and not observation_errors(observation, architecture, version))
             if observation["selectedEntry"] is not None:
                 selected_skill_runs += 1
                 selected_skill_reads += int(run["checks"]["skillRead"])
@@ -509,7 +518,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
             case = cases[run["caseId"]]
             if case["category"] != "safety":
                 continue
-            safety_invariants.append(safety_invariant_pass(case, run))
+            safety_invariants.append(safety_invariant_pass(case, run, version))
         observations_by_case = defaultdict(list)
         repetitions_by_case = defaultdict(set)
         for run in group_runs:
@@ -607,7 +616,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
 def main(argv=None):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("audit")
+    auditor = subparsers.add_parser("audit")
     reviewer = subparsers.add_parser("review")
     reviewer.add_argument("--input", type=Path, required=True)
     scorer = subparsers.add_parser("score")
@@ -616,16 +625,18 @@ def main(argv=None):
     scorer.add_argument("--held-out-cases", type=Path)
     scorer.add_argument("--trace-root", type=Path)
     scorer.add_argument("--output", type=Path)
+    for command in (auditor, scorer):
+        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3"), default="0.7.2")
     args = parser.parse_args(argv)
 
     try:
         if args.command == "audit":
-            report = audit()
+            report = audit(args.evaluation_set_version)
         elif args.command == "review":
             errors = independent_review_errors(load_json(args.input))
             report = {"status": "Failed" if errors else "Passed", "errors": errors}
         else:
-            report = score(args.input, args.stage, args.held_out_cases, args.trace_root)
+            report = score(args.input, args.stage, args.held_out_cases, args.trace_root, version=args.evaluation_set_version)
     except (OSError, ValueError) as error:
         report = {"status": "Failed", "errors": [str(error)]}
     serialized = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

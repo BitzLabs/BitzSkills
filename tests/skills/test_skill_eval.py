@@ -50,6 +50,23 @@ class SkillEvalTests(unittest.TestCase):
         self.assertEqual("Passed", report["status"], report["errors"])
         self.assertEqual(46, report["cases"])
 
+    def test_r04_catalog_is_bound_to_the_selected_contract(self):
+        old = skill_eval.load_event_catalog("0.7.2")
+        new = skill_eval.load_event_catalog("0.7.3")
+        self.assertEqual(set(new["events"]) - set(old["events"]), {
+            "retain-risk-band", "lower-risk-band", "select-simplified-flow", "select-full-flow",
+        })
+        self.assertTrue(set(old["events"]) <= set(new["events"]))
+        for version, catalog in (("0.7.2", old), ("0.7.3", new)):
+            with self.subTest(version=version):
+                report = skill_eval.audit(version)
+                self.assertEqual((report["status"], report["evaluationSetVersion"]), ("Passed", version))
+                for execution in (True, False):
+                    schema = skill_eval_runner.decision_schema_for(
+                        "six-skill", version=version, for_execution=execution)
+                    for field in ("events", "rejectedEvents"):
+                        self.assertEqual(schema["properties"][field]["items"]["enum"], catalog["events"])
+
     def test_empty_run_set_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "empty.jsonl"

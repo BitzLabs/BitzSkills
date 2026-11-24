@@ -127,9 +127,15 @@ def trace_has_forbidden_action(events):
     return False
 
 
-def decision_schema_for(architecture, *, for_execution=False):
+def contract_directory(version):
+    if version == "0.7.3":
+        return ROOT / "contracts" / version
+    return ROOT
+
+
+def decision_schema_for(architecture, *, for_execution=False, version=None):
     schema = json.loads(DECISION_SCHEMA.read_text(encoding="utf-8"))
-    catalog = json.loads((ROOT / "event-catalog.json").read_text(encoding="utf-8"))["events"]
+    catalog = json.loads((contract_directory(version) / "event-catalog.json").read_text(encoding="utf-8"))["events"]
     for field in ("events", "rejectedEvents"):
         schema["properties"][field]["items"]["enum"] = catalog
         if for_execution:
@@ -217,9 +223,9 @@ def run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, h
         "subjectCommit": subject_commit,
         "skillSetSha256": skill_sha,
         "heldOutSet": held_out_set,
-        "decisionSchema": decision_schema_for(args.architecture),
-        "executionSchema": decision_schema_for(args.architecture, for_execution=True),
-        "eventCatalogSha256": sha256_file(ROOT / "event-catalog.json"),
+        "decisionSchema": decision_schema_for(args.architecture, version=evaluation_set_version),
+        "executionSchema": decision_schema_for(args.architecture, for_execution=True, version=evaluation_set_version),
+        "eventCatalogSha256": sha256_file(contract_directory(evaluation_set_version) / "event-catalog.json"),
         "runnerSha256": sha256_file(Path(__file__)),
         "timeoutSeconds": args.timeout,
     })
@@ -333,7 +339,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         record["checks"]["skillRead"] = selected_skill_was_read(
             trace_events, record["observation"]["selectedEntry"], args.architecture)
         record["checks"]["deterministic"] = (
-            not load_validator_module().observation_errors(record["observation"], args.architecture)
+            not load_validator_module().observation_errors(record["observation"], args.architecture, evaluation_set_version)
             and record["checks"]["skillRead"]
         )
         record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -347,7 +353,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         shutil.copytree(CANDIDATES / args.architecture / "skills", skills_destination)
         execution_schema = workspace / "decision.schema.json"
         execution_schema.write_text(
-            json.dumps(decision_schema_for(args.architecture, for_execution=True), ensure_ascii=False), encoding="utf-8"
+            json.dumps(decision_schema_for(args.architecture, for_execution=True, version=evaluation_set_version), ensure_ascii=False), encoding="utf-8"
         )
         subprocess.run(["git", "init", "--quiet"], cwd=workspace, check=True)
 
@@ -389,7 +395,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         raise RuntimeError(f"{case['caseId']}: 保存した判断がtraceの最終応答と一致しません")
     validator = load_validator_module()
     skill_read = selected_skill_was_read(events, observation["selectedEntry"], args.architecture)
-    deterministic = not validator.observation_errors(observation, args.architecture) and skill_read
+    deterministic = not validator.observation_errors(observation, args.architecture, evaluation_set_version) and skill_read
     record = {
         "schemaVersion": "1.1",
         "evaluationSetVersion": evaluation_set_version,
@@ -423,6 +429,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
@@ -437,13 +444,13 @@ def main(argv=None):
         parser.error("保持ケースの実行結果は公開リポジトリ外へ保存してください")
 
     validator = load_validator_module()
-    audit = validator.audit()
+    audit = validator.audit(args.evaluation_set_version)
     if audit["status"] != "Passed":
         raise SystemExit(json.dumps(audit, ensure_ascii=False, indent=2))
     cases = validator.load_cases()
     held_out = None
     if args.held_out_cases is not None:
-        private_cases, held_out = validator.load_held_out_cases(args.held_out_cases)
+        private_cases, held_out = validator.load_held_out_cases(args.held_out_cases, args.evaluation_set_version)
         cases.extend(private_cases)
     evaluation_set_version = audit["evaluationSetVersion"]
     if args.case_ids:
@@ -452,7 +459,7 @@ def main(argv=None):
             raise SystemExit(f"未知のcaseIdです: {', '.join(unknown)}")
         cases = [case for case in cases if case["caseId"] in set(args.case_ids)]
 
-    event_catalog = validator.load_event_catalog()["events"]
+    event_catalog = validator.load_event_catalog(args.evaluation_set_version)["events"]
     skills = CANDIDATES / args.architecture / "skills"
     skill_sha = sha256_tree(skills)
     read_bytes = sum(path.stat().st_size for path in skills.rglob("*") if path.is_file())
