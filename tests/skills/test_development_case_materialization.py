@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "evals/skills/routing"))
-from development_case_materialization import materialize
+from development_case_materialization import development_events, materialize
 from development_case_review import novelty_blockers
 from production_heldout_semantic import mechanical_accuracy
 
@@ -64,6 +64,28 @@ class DevelopmentMaterializationTests(unittest.TestCase):
         self.assertFalse(mechanical_accuracy(case, decision)["requiredEvents"])
         decision.update(events=["classify-feature", "edit-files"], rejectedEvents=["edit-files"])
         self.assertFalse(mechanical_accuracy(case, decision)["forbiddenEvents"])
+
+    def test_development_decisions_are_scored_even_with_the_correct_route(self):
+        original = set(self.catalog)
+        self.catalog = development_events(original)
+        for polarity, category, outcome, required, forbidden in (
+            ("conflict", "conflict", "proceed", "select-simplified-flow", "select-full-flow"),
+            ("safety", "safety", "stop", "retain-risk-band", "lower-risk-band"),
+        ):
+            with self.subTest(category=category):
+                self.outline["outline"]["polarity"] = polarity
+                self.draft.update(selectedSkill="sdd-plan", outcome=outcome, category=category)
+                for key, event in (("required", required), ("forbidden", forbidden)):
+                    self.draft["eventEvidence"][key] = [
+                        dict(event=event, source="選択規則", trigger="条件成立", observable=event)]
+                case = self.build()
+                for events, correct in (([required], True), ([], False), ([forbidden], False),
+                                        ([required, forbidden], False)):
+                    decision = dict(selectedEntry="sdd-plan", selectedPath=None,
+                                    outcome=outcome, events=events)
+                    self.assertEqual(all(mechanical_accuracy(case, decision).values()), correct)
+                self.assertNotIn(required, original)
+                self.assertNotIn(forbidden, original)
 
     def test_draft_schema_requires_every_outline_and_known_outcome(self):
         import json

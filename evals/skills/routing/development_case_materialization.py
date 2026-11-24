@@ -2,6 +2,13 @@
 from copy import deepcopy
 
 
+def development_events(base_events):
+    """Extend the frozen evaluation vocabulary for development case reviews."""
+    return sorted(set(base_events) | {
+        "select-simplified-flow", "select-full-flow", "retain-risk-band", "lower-risk-band",
+    })
+
+
 def materialize(outline, case_id, draft, catalog, routes):
     """Return the case and private evidence, or stop if the outline cannot be represented."""
     skill = outline["skill"]
