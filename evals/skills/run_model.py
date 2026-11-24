@@ -54,15 +54,18 @@ def sha256_tree(path: Path):
 
 
 def uses_frozen_candidate(architecture, version):
-    return version in ("0.7.4", "0.7.5", "0.7.6") and architecture == "six-skill"
+    return version in ("0.7.4", "0.7.5", "0.7.6", "0.7.7") and architecture == "six-skill"
 
 
-@lru_cache(maxsize=1)
-def frozen_candidate():
-    manifest_path = contract_directory("0.7.4") / "candidate-manifest.json"
+@lru_cache(maxsize=4)
+def frozen_candidate(version="0.7.4"):
+    manifest_version = "0.7.7" if version == "0.7.7" else "0.7.4"
+    manifest_path = contract_directory(manifest_version) / "candidate-manifest.json"
     raw = manifest_path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
-    if digest != "5d03e8c7ba46a5dd2e65041551da7ddd01f6b9f6319806694a53cd80f751b10e":
+    expected_digest = {"0.7.7": "0846cf6d659ea73d3651bfaa9d1b209fda94f0d7988edaf03d1a15047d4039a1",
+                       "0.7.4": "5d03e8c7ba46a5dd2e65041551da7ddd01f6b9f6319806694a53cd80f751b10e"}
+    if digest != expected_digest[manifest_version]:
         raise ValueError("R04固定候補のmanifestが一致しません")
     manifest = json.loads(raw)
     files = {}
@@ -79,7 +82,7 @@ def frozen_candidate():
 
 def candidate_metrics(architecture, version, skills):
     if uses_frozen_candidate(architecture, version):
-        digest, files, _ = frozen_candidate()
+        digest, files, _ = frozen_candidate(version)
         return digest, sum(map(len, files.values()))
     return sha256_tree(skills), sum(p.stat().st_size for p in skills.rglob("*") if p.is_file())
 
@@ -90,7 +93,7 @@ def install_candidate(workspace, architecture, version):
     if not uses_frozen_candidate(architecture, version):
         shutil.copytree(CANDIDATES / architecture / "skills", destination)
         return
-    _, files, entries = frozen_candidate()
+    _, files, entries = frozen_candidate(version)
     for relative, content in files.items():
         path = workspace / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -144,7 +147,7 @@ def selected_skill_was_read(events, selected_entry, architecture, version=None):
         if selected_entry not in names:
             continue
         if uses_frozen_candidate(architecture, version):
-            _, files, entries = frozen_candidate()
+            _, files, entries = frozen_candidate(version)
             if any(name not in entries for name in names):
                 continue
             contents = [files[entries[name]].decode("utf-8") for name in names]
@@ -168,13 +171,13 @@ def selected_skill_was_read(events, selected_entry, architecture, version=None):
     return False
 
 
-def is_frozen_reference_read(command):
+def is_frozen_reference_read(command, version="0.7.4"):
     if not isinstance(command, str):
         return False
     match = re.fullmatch(r"/bin/bash -lc 'cat \.codex/skills/([a-z0-9-]+)/references/([a-zA-Z0-9._/-]+\.md)'", command)
     if not match:
         return False
-    _, files, entries = frozen_candidate()
+    _, files, entries = frozen_candidate(version)
     entry = entries.get(match[1])
     return entry is not None and str(Path(entry).parent / "references" / match[2]) in files and not match[2].startswith("/")
 
@@ -188,7 +191,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
         if item.get("type") == "command_execution" and is_candidate_skill_read(item.get("command", "")):
             continue
         if (item.get("type") == "command_execution" and uses_frozen_candidate(architecture, version)
-                and is_frozen_reference_read(item.get("command"))):
+                and is_frozen_reference_read(item.get("command"), version)):
             continue
         if isinstance(item, dict):
             return True
@@ -196,7 +199,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
 
 
 def contract_directory(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -226,7 +229,7 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
         read_rule = ("固定候補の本文が参照するMarkdownを読む際は、"
                      "`cat .codex/skills/<スキル名>/references/<ファイル>.md`を単独で使えます。"
                      "スキル本文とこれらの資料の読取りだけがシェル利用の例外です。")
-    if version == "0.7.6":
+    if version in ("0.7.6", "0.7.7"):
         outcome_rule = """利用者が依頼した行為を特定し、その行為を実行できるかで決める。
   選んだワークフローで通常の入力収集・説明・検査・助言を進められるなら`proceed`。
   助言の結論が否定的でも、その助言を根拠とともに返せるなら依頼は実行できる。
@@ -510,7 +513,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
