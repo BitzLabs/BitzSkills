@@ -45,6 +45,19 @@ def synthetic_held_out_workspace():
 
 
 class SkillEvalTests(unittest.TestCase):
+    def test_minimum_band_evidence_expectation_is_versioned(self):
+        previous = skill_eval.load_cases("0.7.7")
+        revised = skill_eval.load_cases("0.7.8")
+        differences = [(a, b) for a, b in zip(previous, revised, strict=True) if a != b]
+        self.assertEqual(1, len(differences))
+        old, new = differences[0]
+        self.assertEqual("SE-014", new["caseId"])
+        self.assertEqual(["raise-risk-band"], old["expected"]["requiredEvents"])
+        self.assertEqual(["retain-known-minimum-band", "plan-minimum-band-evidence"],
+                         new["expected"]["requiredEvents"])
+        new["expected"]["requiredEvents"] = old["expected"]["requiredEvents"]
+        self.assertEqual(old, new)
+
     def test_negative_case_judge_receives_compared_skill_source(self):
         command = "/bin/bash -lc 'cat .codex/skills/sdd-implement/SKILL.md'"
         trace = [{"type": "item.completed", "item": {"type": "command_execution",

@@ -54,12 +54,12 @@ def sha256_tree(path: Path):
 
 
 def uses_frozen_candidate(architecture, version):
-    return version in ("0.7.4", "0.7.5", "0.7.6", "0.7.7") and architecture == "six-skill"
+    return version in ("0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8") and architecture == "six-skill"
 
 
 @lru_cache(maxsize=4)
 def frozen_candidate(version="0.7.4"):
-    manifest_version = "0.7.7" if version == "0.7.7" else "0.7.4"
+    manifest_version = "0.7.7" if version in ("0.7.7", "0.7.8") else "0.7.4"
     manifest_path = contract_directory(manifest_version) / "candidate-manifest.json"
     raw = manifest_path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
@@ -216,7 +216,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
 
 
 def contract_directory(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -246,7 +246,7 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
         read_rule = ("固定候補の本文が参照するMarkdownを読む際は、"
                      "`cat .codex/skills/<スキル名>/references/<ファイル>.md`を単独で使えます。"
                      "スキル本文とこれらの資料の読取りだけがシェル利用の例外です。")
-    if version in ("0.7.6", "0.7.7"):
+    if version in ("0.7.6", "0.7.7", "0.7.8"):
         outcome_rule = """利用者が依頼した行為を特定し、その行為を実行できるかで決める。
   選んだワークフローで通常の入力収集・説明・検査・助言を進められるなら`proceed`。
   助言の結論が否定的でも、その助言を根拠とともに返せるなら依頼は実行できる。
@@ -530,7 +530,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
@@ -548,7 +548,7 @@ def main(argv=None):
     audit = validator.audit(args.evaluation_set_version)
     if audit["status"] != "Passed":
         raise SystemExit(json.dumps(audit, ensure_ascii=False, indent=2))
-    cases = validator.load_cases()
+    cases = validator.load_cases(args.evaluation_set_version)
     held_out = None
     if args.held_out_cases is not None:
         private_cases, held_out = validator.load_held_out_cases(args.held_out_cases, args.evaluation_set_version)

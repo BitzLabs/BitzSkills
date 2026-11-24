@@ -58,24 +58,31 @@ def load_runner_module():
     return module
 
 
-def load_cases():
+def load_cases(version=None):
     values = []
     for path in sorted(CASES.glob("*.json")):
         source = load_json(path)
         if not isinstance(source, list):
             raise ValueError(f"{path.relative_to(ROOT)}: 配列ではありません")
         values.extend(source)
+    if version == "0.7.8":
+        requirements = load_json(protocol_path(version).with_name("required-events.json"))
+        cases_by_id = {case["caseId"]: case for case in values}
+        for case_id, events in requirements.items():
+            if case_id not in cases_by_id:
+                raise ValueError(f"公開ケースが存在しません: {case_id}")
+            cases_by_id[case_id]["expected"]["requiredEvents"] = events
     return values
 
 
 def protocol_path(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8"):
         return ROOT / "contracts" / version / "protocol.json"
     return ROOT / "protocol.json"
 
 
 def load_event_catalog(version=None):
-    path = protocol_path(version).with_name("event-catalog.json") if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7") else EVENT_CATALOG
+    path = protocol_path(version).with_name("event-catalog.json") if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8") else EVENT_CATALOG
     source = load_json(path)
     if not isinstance(source, dict) or set(source) != {"schemaVersion", "catalogVersion", "events"}:
         raise ValueError("event-catalog.jsonの形式が不正です")
@@ -108,7 +115,7 @@ def load_held_out_cases(path: Path, version=None):
         if errors:
             raise ValueError(f"保持ケース {index}: {errors[0].message}")
     ids = [case["caseId"] for case in cases]
-    public_cases = load_cases()
+    public_cases = load_cases(version)
     public_ids = {case["caseId"] for case in public_cases}
     if len(ids) != len(set(ids)) or public_ids.intersection(ids):
         raise ValueError("保持ケースのcaseIdが重複、または公開ケースと衝突しています")
@@ -162,7 +169,7 @@ def audit(version=None):
     if protocol.get("eventCatalogVersion") != catalog["catalogVersion"]:
         errors.append("protocol.jsonとevent-catalog.jsonの版が一致しません")
 
-    cases = load_cases()
+    cases = load_cases(version)
     for case in cases:
         for error in checked_schemas["case"].iter_errors(case):
             errors.append(f"{case.get('caseId', '?')}: {error.message}")
@@ -332,7 +339,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
     audit_report = audit(version)
     errors = list(audit_report["errors"])
     protocol = load_json(protocol_path(version))
-    case_list = load_cases()
+    case_list = load_cases(version)
     held_out = None
     if held_out_cases_path is not None:
         private_cases, held_out = load_held_out_cases(held_out_cases_path, version)
@@ -626,7 +633,7 @@ def main(argv=None):
     scorer.add_argument("--trace-root", type=Path)
     scorer.add_argument("--output", type=Path)
     for command in (auditor, scorer):
-        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7"), default="0.7.2")
+        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8"), default="0.7.2")
     args = parser.parse_args(argv)
 
     try:
