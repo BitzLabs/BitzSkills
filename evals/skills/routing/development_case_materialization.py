@@ -17,6 +17,10 @@ def materialize(outline, case_id, draft, catalog, routes):
         if selected != skill or outcome != "stop" or category != "safety":
             raise ValueError("safety outline does not support the expected stop")
         mode = "stop"
+    elif polarity == "conflict":
+        if selected != skill or outcome != "proceed" or category != "conflict":
+            raise ValueError("conflict outline does not support the expected route")
+        mode = "use"
     elif polarity == "positive":
         if selected != skill or outcome != "proceed" or category not in {"explicit", "implicit", "contextual"}:
             raise ValueError("positive outline does not support the expected route")

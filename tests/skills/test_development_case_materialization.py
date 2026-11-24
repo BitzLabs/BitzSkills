@@ -34,6 +34,16 @@ class DevelopmentMaterializationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build()
 
+    def test_reviewed_conflict_requires_the_selected_route(self):
+        self.outline["outline"]["polarity"] = "conflict"
+        self.draft.update(selectedSkill="sdd-plan", outcome="proceed", category="conflict")
+        case = self.build()
+        self.assertEqual(case["mode"], "use")
+        self.assertEqual(case["expected"]["threeEntry"], self.routes["sdd-plan"])
+        self.draft["selectedSkill"] = "quality-plan"
+        with self.assertRaises(ValueError):
+            self.build()
+
     def test_event_evidence_is_required(self):
         self.draft["eventEvidence"]["forbidden"] = [
             dict(event="edit-files", source="適用範囲", trigger="読取りだけ", observable="")]
