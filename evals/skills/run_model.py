@@ -54,7 +54,7 @@ def sha256_tree(path: Path):
 
 
 def uses_frozen_candidate(architecture, version):
-    return version == "0.7.4" and architecture == "six-skill"
+    return version in ("0.7.4", "0.7.5") and architecture == "six-skill"
 
 
 @lru_cache(maxsize=1)
@@ -196,7 +196,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
 
 
 def contract_directory(version):
-    if version in ("0.7.3", "0.7.4"):
+    if version in ("0.7.3", "0.7.4", "0.7.5"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -500,7 +500,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)

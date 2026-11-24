@@ -44,6 +44,15 @@ class DevelopmentMaterializationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build()
 
+    def test_negative_advice_can_be_given_without_stopping_the_review(self):
+        self.outline = {"skill": "quality-review", "outline": {"polarity": "behavior"}}
+        self.routes["quality-review"] = {"entry": "bitz-quality", "path": "review"}
+        self.draft.update(selectedSkill="quality-review", outcome="proceed", category="behavior")
+        self.assertEqual(self.build()["mode"], "use")
+        self.draft["outcome"] = "stop"
+        with self.assertRaises(ValueError):
+            self.build()
+
     def test_event_evidence_is_required(self):
         self.draft["eventEvidence"]["forbidden"] = [
             dict(event="edit-files", source="適用範囲", trigger="読取りだけ", observable="")]

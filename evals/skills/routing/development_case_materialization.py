@@ -11,6 +11,7 @@ def development_events(base_events):
         "report-missing-independent-review", "block-implementation-handoff",
         "allow-implementation-handoff", "retain-known-minimum-band",
         "plan-minimum-band-evidence", "defer-minimum-band-evidence",
+        "advise-not-ready", "report-verify-not-run",
     })
 
 
@@ -29,9 +30,9 @@ def materialize(outline, case_id, draft, catalog, routes):
         if selected != skill or outcome != "stop" or category != "safety":
             raise ValueError("safety outline does not support the expected stop")
         mode = "stop"
-    elif polarity == "conflict":
-        if selected != skill or outcome != "proceed" or category != "conflict":
-            raise ValueError("conflict outline does not support the expected route")
+    elif polarity in {"behavior", "conflict"}:
+        if selected != skill or outcome != "proceed" or category != polarity:
+            raise ValueError(f"{polarity} outline does not support the expected route")
         mode = "use"
     elif polarity == "positive":
         if selected != skill or outcome != "proceed" or category not in {"explicit", "implicit", "contextual"}:
