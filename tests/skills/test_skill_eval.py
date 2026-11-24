@@ -45,6 +45,17 @@ def synthetic_held_out_workspace():
 
 
 class SkillEvalTests(unittest.TestCase):
+    def test_negative_case_judge_receives_compared_skill_source(self):
+        command = "/bin/bash -lc 'cat .codex/skills/sdd-implement/SKILL.md'"
+        trace = [{"type": "item.completed", "item": {"type": "command_execution",
+                  "command": command, "exit_code": 0}}]
+        sources = skill_eval_runner.independent_grading_sources(
+            {"capability": "sdd-plan"}, {"selectedEntry": None}, trace, "0.7.7")
+        expected = {"sdd-plan", "sdd-implement"}
+        self.assertEqual(expected, {Path(path).parent.name for path in sources
+                                    if path.endswith("/SKILL.md")})
+
+
     def test_contract_audit_passes(self):
         report = skill_eval.audit()
         self.assertEqual("Passed", report["status"], report["errors"])

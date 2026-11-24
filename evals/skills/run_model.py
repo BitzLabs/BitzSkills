@@ -171,6 +171,23 @@ def selected_skill_was_read(events, selected_entry, architecture, version=None):
     return False
 
 
+def independent_grading_sources(case, observation, trace, version):
+    """独立採点に対象スキルの資料と、一次が実際に参照したスキルの資料を渡す。"""
+    _, files, entries = frozen_candidate(version)
+    names = {case["capability"], observation["selectedEntry"]} & entries.keys()
+    for event in trace:
+        item = event.get("item") or {}
+        if (event.get("type") == "item.completed" and item.get("type") == "command_execution"
+                and item.get("exit_code") == 0):
+            command = item.get("command", "")
+            names.update(candidate_skill_names_read(command) & entries.keys())
+            if is_frozen_reference_read(command, version):
+                names.add(command.split(".codex/skills/", 1)[1].split("/", 1)[0])
+    prefixes = tuple(str(Path(entries[name]).parent) + "/" for name in names)
+    return {path: data.decode("utf-8") for path, data in files.items()
+            if path.endswith(".md") and path.startswith(prefixes)}
+
+
 def is_frozen_reference_read(command, version="0.7.4"):
     if not isinstance(command, str):
         return False
