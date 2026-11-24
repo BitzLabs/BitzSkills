@@ -67,6 +67,37 @@ class SkillEvalTests(unittest.TestCase):
                     for field in ("events", "rejectedEvents"):
                         self.assertEqual(schema["properties"][field]["items"]["enum"], catalog["events"])
 
+    def test_frozen_candidate_install_and_trace_use_the_same_bytes(self):
+        runner = skill_eval_runner
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            runner.install_candidate(workspace, "six-skill", "0.7.4")
+            digest, files, entries = runner.frozen_candidate()
+            self.assertEqual(len(files), 76)
+            self.assertEqual(len(entries), 6)
+            self.assertEqual(runner.candidate_metrics("six-skill", "0.7.4", workspace)[0], digest)
+            for name, path in entries.items():
+                skill = workspace / ".codex/skills" / name / "SKILL.md"
+                self.assertEqual(skill.read_bytes(), files[path])
+                item = dict(type="command_execution", exit_code=0,
+                            command=f"/bin/bash -lc 'cat .codex/skills/{name}/SKILL.md'",
+                            aggregated_output=skill.read_text())
+                trace = [dict(type="item.completed", item=item)]
+                self.assertTrue(runner.selected_skill_was_read(trace, name, "six-skill", "0.7.4"))
+                item["aggregated_output"] = "different skill text"
+                self.assertFalse(runner.selected_skill_was_read(trace, name, "six-skill", "0.7.4"))
+
+    def test_only_pinned_reference_reads_are_allowed_for_frozen_candidate(self):
+        item = dict(type="command_execution")
+        trace = [dict(type="item.completed", item=item)]
+        for path, allowed in (("references/planning.md", True), ("references/missing.md", False),
+                              ("references/../SKILL.md", False), ("references/planning.md; pwd", False)):
+            item["command"] = f"/bin/bash -lc 'cat .codex/skills/sdd-plan/{path}'"
+            self.assertEqual(not skill_eval_runner.trace_has_forbidden_action(
+                trace, "six-skill", "0.7.4"), allowed)
+            if allowed:
+                self.assertTrue(skill_eval_runner.trace_has_forbidden_action(trace, "six-skill", "0.7.3"))
+
     def test_empty_run_set_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "empty.jsonl"

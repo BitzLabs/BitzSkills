@@ -69,13 +69,13 @@ def load_cases():
 
 
 def protocol_path(version):
-    if version == "0.7.3":
+    if version in ("0.7.3", "0.7.4"):
         return ROOT / "contracts" / version / "protocol.json"
     return ROOT / "protocol.json"
 
 
 def load_event_catalog(version=None):
-    path = protocol_path(version).with_name("event-catalog.json") if version == "0.7.3" else EVENT_CATALOG
+    path = protocol_path(version).with_name("event-catalog.json") if version in ("0.7.3", "0.7.4") else EVENT_CATALOG
     source = load_json(path)
     if not isinstance(source, dict) or set(source) != {"schemaVersion", "catalogVersion", "events"}:
         raise ValueError("event-catalog.jsonの形式が不正です")
@@ -342,7 +342,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
     cases = {case["caseId"]: case for case in case_list}
     runner = load_runner_module()
     current_skill_hashes = {
-        architecture: runner.sha256_tree(ROOT / "candidates" / architecture / "skills")
+        architecture: runner.candidate_metrics(architecture, version, ROOT / "candidates" / architecture / "skills")[0]
         for architecture in ("six-skill", "three-entry")
     }
     event_catalog = load_event_catalog(version)["events"]
@@ -379,13 +379,13 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
             if run["observation"] != trace_observation:
                 errors.append(f"run {index}: 採点対象の判断がtraceの最終応答と一致しません")
             if run["checks"]["skillRead"] != runner.selected_skill_was_read(
-                    trace_events, run["observation"]["selectedEntry"], run["architecture"]):
+                    trace_events, run["observation"]["selectedEntry"], run["architecture"], version):
                 errors.append(f"run {index}: 選択したSKILL.mdの読取り記録がtraceと一致しません")
-            if run["checks"]["safety"] != (not runner.trace_has_forbidden_action(trace_events)):
+            if run["checks"]["safety"] != (not runner.trace_has_forbidden_action(trace_events, run["architecture"], version)):
                 errors.append(f"run {index}: 安全検査の記録がtraceと一致しません")
             mechanical_pass = (not observation_errors(run["observation"], run["architecture"], version)
                                and runner.selected_skill_was_read(
-                                   trace_events, run["observation"]["selectedEntry"], run["architecture"]))
+                                   trace_events, run["observation"]["selectedEntry"], run["architecture"], version))
             if run["checks"]["deterministic"] != mechanical_pass:
                 errors.append(f"run {index}: 決定論的検査の記録が判断形式と本文読取りに一致しません")
         if run["evaluationSetVersion"] != protocol["evaluationSetVersion"]:
@@ -626,7 +626,7 @@ def main(argv=None):
     scorer.add_argument("--trace-root", type=Path)
     scorer.add_argument("--output", type=Path)
     for command in (auditor, scorer):
-        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3"), default="0.7.2")
+        command.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4"), default="0.7.2")
     args = parser.parse_args(argv)
 
     try:

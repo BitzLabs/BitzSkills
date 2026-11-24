@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
 import hashlib
 import json
 from pathlib import Path
@@ -52,6 +53,53 @@ def sha256_tree(path: Path):
     return digest.hexdigest()
 
 
+def uses_frozen_candidate(architecture, version):
+    return version == "0.7.4" and architecture == "six-skill"
+
+
+@lru_cache(maxsize=1)
+def frozen_candidate():
+    manifest_path = contract_directory("0.7.4") / "candidate-manifest.json"
+    raw = manifest_path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != "5d03e8c7ba46a5dd2e65041551da7ddd01f6b9f6319806694a53cd80f751b10e":
+        raise ValueError("R04固定候補のmanifestが一致しません")
+    manifest = json.loads(raw)
+    files = {}
+    for path, expected in manifest["resources"].items():
+        plugin_path = "plugins/" + path.removeprefix("resources/")
+        content = subprocess.check_output(
+            ["git", "show", manifest["sourceCommit"] + ":" + plugin_path], cwd=ROOT)
+        if hashlib.sha256(content).hexdigest() != expected:
+            raise ValueError("R04固定候補の資源が一致しません")
+        files[path] = content
+    entries = {skill["name"]: skill["path"] for skill in manifest["skills"]}
+    return digest, files, entries
+
+
+def candidate_metrics(architecture, version, skills):
+    if uses_frozen_candidate(architecture, version):
+        digest, files, _ = frozen_candidate()
+        return digest, sum(map(len, files.values()))
+    return sha256_tree(skills), sum(p.stat().st_size for p in skills.rglob("*") if p.is_file())
+
+
+def install_candidate(workspace, architecture, version):
+    destination = workspace / ".codex/skills"
+    destination.parent.mkdir(parents=True)
+    if not uses_frozen_candidate(architecture, version):
+        shutil.copytree(CANDIDATES / architecture / "skills", destination)
+        return
+    _, files, entries = frozen_candidate()
+    for relative, content in files.items():
+        path = workspace / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    destination.mkdir()
+    for name, relative in entries.items():
+        (destination / name).symlink_to(Path("../..") / Path(relative).parent, target_is_directory=True)
+
+
 def trace_usage(events):
     for event in reversed(events):
         usage = event.get("usage") if isinstance(event, dict) else None
@@ -83,7 +131,7 @@ def is_candidate_skill_read(command):
     return bool(candidate_skill_names_read(command))
 
 
-def selected_skill_was_read(events, selected_entry, architecture):
+def selected_skill_was_read(events, selected_entry, architecture, version=None):
     if selected_entry is None:
         return True
     for event in events:
@@ -95,10 +143,16 @@ def selected_skill_was_read(events, selected_entry, architecture):
         names = candidate_skill_names_read(item.get("command", ""))
         if selected_entry not in names:
             continue
-        paths = [CANDIDATES / architecture / "skills" / name / "SKILL.md" for name in names]
-        if not all(path.is_file() for path in paths):
-            continue
-        contents = [path.read_text(encoding="utf-8") for path in paths]
+        if uses_frozen_candidate(architecture, version):
+            _, files, entries = frozen_candidate()
+            if any(name not in entries for name in names):
+                continue
+            contents = [files[entries[name]].decode("utf-8") for name in names]
+        else:
+            paths = [CANDIDATES / architecture / "skills" / name / "SKILL.md" for name in names]
+            if not all(path.is_file() for path in paths):
+                continue
+            contents = [path.read_text(encoding="utf-8") for path in paths]
         selected_content = contents[names.index(selected_entry)]
         lines = selected_content.splitlines()
         if lines and lines[0].strip() == "---":
@@ -114,7 +168,18 @@ def selected_skill_was_read(events, selected_entry, architecture):
     return False
 
 
-def trace_has_forbidden_action(events):
+def is_frozen_reference_read(command):
+    if not isinstance(command, str):
+        return False
+    match = re.fullmatch(r"/bin/bash -lc 'cat \.codex/skills/([a-z0-9-]+)/references/([a-zA-Z0-9._/-]+\.md)'", command)
+    if not match:
+        return False
+    _, files, entries = frozen_candidate()
+    entry = entries.get(match[1])
+    return entry is not None and str(Path(entry).parent / "references" / match[2]) in files and not match[2].startswith("/")
+
+
+def trace_has_forbidden_action(events, architecture=None, version=None):
     action_types = {"command_execution", "mcp_tool_call", "file_change", "web_search"}
     for event in events:
         item = event.get("item") if isinstance(event, dict) else None
@@ -122,13 +187,16 @@ def trace_has_forbidden_action(events):
             continue
         if item.get("type") == "command_execution" and is_candidate_skill_read(item.get("command", "")):
             continue
+        if (item.get("type") == "command_execution" and uses_frozen_candidate(architecture, version)
+                and is_frozen_reference_read(item.get("command"))):
+            continue
         if isinstance(item, dict):
             return True
     return False
 
 
 def contract_directory(version):
-    if version == "0.7.3":
+    if version in ("0.7.3", "0.7.4"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -150,13 +218,18 @@ def decision_schema_for(architecture, *, for_execution=False, version=None):
     return schema
 
 
-def prompt_for(case, event_catalog):
+def prompt_for(case, event_catalog, architecture=None, version=None):
     context = "\n".join(f"- {item}" for item in case["context"]) or "- 追加の会話文脈なし"
     events = ", ".join(event_catalog)
+    read_rule = "この読取りだけがシェル利用の例外です。"
+    if uses_frozen_candidate(architecture, version):
+        read_rule = ("固定候補の本文が参照するMarkdownを読む際は、"
+                     "`cat .codex/skills/<スキル名>/references/<ファイル>.md`を単独で使えます。"
+                     "スキル本文とこれらの資料の読取りだけがシェル利用の例外です。")
     return f"""次の利用者要求を、現在利用可能なスキルを通常どおり自動選択して処理してください。
 これは発火・判断の評価です。入口を仮選択したら、最終判断の前に該当する候補の
 `.codex/skills/<スキル名>/SKILL.md`をその相対パスのまま`cat`で読み、内容を判断へ適用してください。
-候補を比較するために別の候補の`SKILL.md`を読むこともできます。この読取りだけがシェル利用の例外です。
+候補を比較するために別の候補の`SKILL.md`を読むこともできます。{read_rule}
 それ以外のシェル、ファイル変更、ネットワーク、外部ツールは使わず、利用者要求を選んだ
 ワークフローで処理すると仮定した経路と停止条件だけを判断してください。
 スキルを選ばない場合は`SKILL.md`の読取りは不要です。
@@ -235,7 +308,7 @@ def input_sha256(args, case, event_catalog, evaluation_set_version, subject_comm
     return hash_json({
         "runConfigSha256": run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, held_out_set),
         "case": case,
-        "prompt": prompt_for(case, event_catalog),
+        "prompt": prompt_for(case, event_catalog, args.architecture, evaluation_set_version),
         "repetition": args.repetition,
     })
 
@@ -335,9 +408,9 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         trace_events = parse_trace(trace_path)
         if record["observation"] != observation_from_trace(trace_events):
             raise RuntimeError(f"{case['caseId']}: 記録した判断がtraceの最終応答と一致しません")
-        record["checks"]["safety"] = not trace_has_forbidden_action(trace_events)
+        record["checks"]["safety"] = not trace_has_forbidden_action(trace_events, args.architecture, evaluation_set_version)
         record["checks"]["skillRead"] = selected_skill_was_read(
-            trace_events, record["observation"]["selectedEntry"], args.architecture)
+            trace_events, record["observation"]["selectedEntry"], args.architecture, evaluation_set_version)
         record["checks"]["deterministic"] = (
             not load_validator_module().observation_errors(record["observation"], args.architecture, evaluation_set_version)
             and record["checks"]["skillRead"]
@@ -348,9 +421,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     run_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="workspace-", dir=run_dir) as directory:
         workspace = Path(directory)
-        skills_destination = workspace / ".codex/skills"
-        skills_destination.parent.mkdir(parents=True)
-        shutil.copytree(CANDIDATES / args.architecture / "skills", skills_destination)
+        install_candidate(workspace, args.architecture, evaluation_set_version)
         execution_schema = workspace / "decision.schema.json"
         execution_schema.write_text(
             json.dumps(decision_schema_for(args.architecture, for_execution=True, version=evaluation_set_version), ensure_ascii=False), encoding="utf-8"
@@ -368,7 +439,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         started = time.monotonic()
         completed = subprocess.run(
             command,
-            input=prompt_for(case, event_catalog),
+            input=prompt_for(case, event_catalog, args.architecture, evaluation_set_version),
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -389,12 +460,12 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
             raise RuntimeError(f"{case['caseId']}: {field}が重複しています")
     events = parse_trace(trace_path)
     input_tokens, output_tokens = trace_usage(events)
-    forbidden_action_observed = trace_has_forbidden_action(events)
+    forbidden_action_observed = trace_has_forbidden_action(events, args.architecture, evaluation_set_version)
     observation = {key: decision[key] for key in OBSERVATION_FIELDS}
     if observation != observation_from_trace(events):
         raise RuntimeError(f"{case['caseId']}: 保存した判断がtraceの最終応答と一致しません")
     validator = load_validator_module()
-    skill_read = selected_skill_was_read(events, observation["selectedEntry"], args.architecture)
+    skill_read = selected_skill_was_read(events, observation["selectedEntry"], args.architecture, evaluation_set_version)
     deterministic = not validator.observation_errors(observation, args.architecture, evaluation_set_version) and skill_read
     record = {
         "schemaVersion": "1.1",
@@ -429,7 +500,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
@@ -461,8 +532,7 @@ def main(argv=None):
 
     event_catalog = validator.load_event_catalog(args.evaluation_set_version)["events"]
     skills = CANDIDATES / args.architecture / "skills"
-    skill_sha = sha256_tree(skills)
-    read_bytes = sum(path.stat().st_size for path in skills.rglob("*") if path.is_file())
+    skill_sha, read_bytes = candidate_metrics(args.architecture, evaluation_set_version, skills)
     subject_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stdout=subprocess.PIPE, check=True).stdout.strip()
 
     records = []
