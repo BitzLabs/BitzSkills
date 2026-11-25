@@ -2,8 +2,8 @@
 name: quality-review
 description: Bitzの実装後の変更を独立した文脈で検分し、要求・差分・実試験・安全・証拠の不足からready、条件付き、not_ready、unknownの受入れ助言を返す。独立品質レビュー、品質証拠の確認、受入れ判断の相談で使う。品質計画の作成、仕様草案、コード修正、Core検査だけ、出荷承認には使わない。重大事項と証拠不足を相殺せず、独立性が成立しなければその不足を明記する。
 metadata:
-  version: 0.1.3
-  updated: 2026-10-06
+  version: 0.1.4
+  updated: 2026-11-25
 ---
 
 # 品質の独立レビュー
@@ -34,6 +34,7 @@ riskAssessmentへ確認したminimumBandとrationaleを記録し、riskBandは�
 追加観点が不明なら所見・未検査事項として分ける。根拠から最低帯も導けない場合だけminimumBand=nullと理由を残す。
 これは人間の承認ではない。計画がある場合も重大な新規観点を保持し、既存帯を無断降格しない。
 Q2/Q3で品質計画がない場合は、quality-planをrequiredEvidenceIdsとmissingEvidenceIdsへ入れ、未取得理由をnotRerunへ残す。
+再検分に進むため、変更の担当者に対象refの品質計画の提示を求める。まだ作成していなければquality-planでの作成を依頼する。レビュー担当は提示された計画と実際の証拠を照合する。
 known major/criticalのnot_readyでも品質計画の必須不足を省略しない。既知の重大事項がなければunknownとする。
 計画がある場合はquality-planの同じIDへ実際の取得先・hash・対象refを付け、qualityPlanPresentと証拠取得を一致させる。
 
