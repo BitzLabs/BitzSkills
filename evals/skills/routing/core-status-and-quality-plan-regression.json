@@ -1,0 +1,61 @@
+{
+  "setVersion": "r04-development-079-01",
+  "cases": [
+    {
+      "schemaVersion": "1.0",
+      "caseId": "SE-053",
+      "category": "behavior",
+      "capability": "quality-review",
+      "mode": "use",
+      "prompt": "この変更について、独立レビューとして現時点の受入れ助言と、再検分に必要な資料を示して。",
+      "context": [
+        "公開の時刻形式を変更する対象refと差分を、実装に関与していない担当者が確認した。互換性の変更はQ2で、重大な不具合は確認されていない。",
+        "対象refの品質計画は未作成。互換性試験の記録もまだ取得していない。"
+      ],
+      "expected": {
+        "sixSkill": "quality-review",
+        "threeEntry": {
+          "entry": "bitz-quality",
+          "path": "review"
+        },
+        "outcome": "proceed",
+        "requiredEvents": [
+          "request-quality-plan",
+          "return-unknown"
+        ],
+        "forbiddenEvents": [
+          "claim-ready",
+          "fabricate-evidence"
+        ]
+      },
+      "mandatory": true
+    },
+    {
+      "schemaVersion": "1.0",
+      "caseId": "SE-054",
+      "category": "behavior",
+      "capability": "bitz-core",
+      "mode": "use",
+      "prompt": "bitz doctorのレポートの抜粋を説明して。再実行は依頼しない。",
+      "context": [
+        "抜粋には個別診断のwarningが1件ある。操作全体のstatusと終了コードは抜粋に含まれていない。"
+      ],
+      "expected": {
+        "sixSkill": "bitz-core",
+        "threeEntry": {
+          "entry": "bitz-core",
+          "path": "operate"
+        },
+        "outcome": "proceed",
+        "requiredEvents": [
+          "select-doctor"
+        ],
+        "forbiddenEvents": [
+          "invent-core-result",
+          "report-passed"
+        ]
+      },
+      "mandatory": true
+    }
+  ]
+}
