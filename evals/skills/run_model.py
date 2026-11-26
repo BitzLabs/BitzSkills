@@ -54,12 +54,12 @@ def sha256_tree(path: Path):
 
 
 def uses_frozen_candidate(architecture, version):
-    return version in ("0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9") and architecture == "six-skill"
+    return version in ("0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10") and architecture == "six-skill"
 
 
 @lru_cache(maxsize=4)
 def frozen_candidate(version="0.7.4"):
-    manifest_version = {"0.7.7": "0.7.7", "0.7.8": "0.7.7", "0.7.9": "0.7.9"}.get(version, "0.7.4")
+    manifest_version = {"0.7.7": "0.7.7", "0.7.8": "0.7.7", "0.7.9": "0.7.9", "0.7.10": "0.7.9"}.get(version, "0.7.4")
     manifest_path = contract_directory(manifest_version) / "candidate-manifest.json"
     raw = manifest_path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
@@ -217,7 +217,7 @@ def trace_has_forbidden_action(events, architecture=None, version=None):
 
 
 def contract_directory(version):
-    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9"):
+    if version in ("0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10"):
         return ROOT / "contracts" / version
     return ROOT
 
@@ -247,7 +247,7 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
         read_rule = ("固定候補の本文が参照するMarkdownを読む際は、"
                      "`cat .codex/skills/<スキル名>/references/<ファイル>.md`を単独で使えます。"
                      "スキル本文とこれらの資料の読取りだけがシェル利用の例外です。")
-    if version in ("0.7.6", "0.7.7", "0.7.8", "0.7.9"):
+    if version in ("0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10"):
         outcome_rule = """利用者が依頼した行為を特定し、その行為を実行できるかで決める。
   選んだワークフローで通常の入力収集・説明・検査・助言を進められるなら`proceed`。
   助言の結論が否定的でも、その助言を根拠とともに返せるなら依頼は実行できる。
@@ -262,6 +262,13 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
   成立しない必須条件が示されている場合。outcomeは代替案ではなく、利用者が依頼した行為を実行できるかを
   表す。依頼した行為を拒否して安全な代案を示す場合も`stop`。ただし失敗・blocked結果そのものの説明だけを求められ、その説明を
   実行できる場合は`proceed`。スキルが対象外なら`not-applicable`。"""
+    routing_event_rule = ""
+    if version == "0.7.10":
+        routing_event_rule = (
+            "\n  入口の選択や優先順位をすでに判断した場合、その判断に対応するカタログのイベントも記録する。"
+            "これは操作を実行する前の判断であり、入口を選んだ後で依頼を拒否する場合にも当てはまる。"
+            "候補として読んだだけの入口や、停止後に実施しない作業を採用済みとは記録しない。"
+        )
     return f"""次の利用者要求を、現在利用可能なスキルを通常どおり自動選択して処理してください。
 これは発火・判断の評価です。入口を仮選択したら、最終判断の前に該当する候補の
 `.codex/skills/<スキル名>/SKILL.md`をその相対パスのまま`cat`で読み、内容を判断へ適用してください。
@@ -289,7 +296,7 @@ def prompt_for(case, event_catalog, architecture=None, version=None):
 - outcome: {outcome_rule}
 - events: 選んだワークフローで着手すると決めた意味ステップだけ。実操作は禁止されているため、
   ここでの採用は実際にCoreやファイルを操作したという主張ではありません。通常の入力収集後に行うと
-  決めた分類・確認も含めますが、単に可能性として挙げた操作や拒否した操作は含めません。
+  決めた分類・確認も含めますが、単に可能性として挙げた操作や拒否した操作は含めません。{routing_event_rule}
   候補は次から選ぶ: {events}
 - rejectedEvents: 利用者が要求したが拒否・防止した操作だけ。拒否した操作をeventsへ重複して含めない。
   候補はeventsと同じ一覧から選ぶ。
@@ -531,7 +538,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9"), default="0.7.2")
+    parser.add_argument("--evaluation-set-version", choices=("0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10"), default="0.7.2")
     parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
