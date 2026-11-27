@@ -45,10 +45,109 @@ def synthetic_held_out_workspace():
 
 
 class SkillEvalTests(unittest.TestCase):
+    def test_minimum_band_evidence_expectation_is_versioned(self):
+        previous = skill_eval.load_cases("0.7.7")
+        revised = skill_eval.load_cases("0.7.8")
+        differences = [(a, b) for a, b in zip(previous, revised, strict=True) if a != b]
+        self.assertEqual(1, len(differences))
+        old, new = differences[0]
+        self.assertEqual("SE-014", new["caseId"])
+        self.assertEqual(["raise-risk-band"], old["expected"]["requiredEvents"])
+        self.assertEqual(["retain-known-minimum-band", "plan-minimum-band-evidence"],
+                         new["expected"]["requiredEvents"])
+        new["expected"]["requiredEvents"] = old["expected"]["requiredEvents"]
+        self.assertEqual(old, new)
+
+    def test_negative_case_judge_receives_compared_skill_source(self):
+        command = "/bin/bash -lc 'cat .codex/skills/sdd-implement/SKILL.md'"
+        trace = [{"type": "item.completed", "item": {"type": "command_execution",
+                  "command": command, "exit_code": 0}}]
+        sources = skill_eval_runner.independent_grading_sources(
+            {"capability": "sdd-plan"}, {"selectedEntry": None}, trace, "0.7.7")
+        expected = {"sdd-plan", "sdd-implement"}
+        self.assertEqual(expected, {Path(path).parent.name for path in sources
+                                    if path.endswith("/SKILL.md")})
+
+
     def test_contract_audit_passes(self):
         report = skill_eval.audit()
         self.assertEqual("Passed", report["status"], report["errors"])
         self.assertEqual(46, report["cases"])
+
+    def test_r04_catalog_is_bound_to_the_selected_contract(self):
+        old = skill_eval.load_event_catalog("0.7.2")
+        new = skill_eval.load_event_catalog("0.7.3")
+        self.assertEqual(set(new["events"]) - set(old["events"]), {
+            "retain-risk-band", "lower-risk-band", "select-simplified-flow", "select-full-flow",
+        })
+        self.assertTrue(set(old["events"]) <= set(new["events"]))
+        for version, catalog in (("0.7.2", old), ("0.7.3", new)):
+            with self.subTest(version=version):
+                report = skill_eval.audit(version)
+                self.assertEqual((report["status"], report["evaluationSetVersion"]), ("Passed", version))
+                for execution in (True, False):
+                    schema = skill_eval_runner.decision_schema_for(
+                        "six-skill", version=version, for_execution=execution)
+                    for field in ("events", "rejectedEvents"):
+                        self.assertEqual(schema["properties"][field]["items"]["enum"], catalog["events"])
+
+    def test_frozen_candidate_install_and_trace_use_the_same_bytes(self):
+        runner = skill_eval_runner
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            runner.install_candidate(workspace, "six-skill", "0.7.4")
+            digest, files, entries = runner.frozen_candidate()
+            self.assertEqual(len(files), 76)
+            self.assertEqual(len(entries), 6)
+            self.assertEqual(runner.candidate_metrics("six-skill", "0.7.4", workspace)[0], digest)
+            for name, path in entries.items():
+                skill = workspace / ".codex/skills" / name / "SKILL.md"
+                self.assertEqual(skill.read_bytes(), files[path])
+                item = dict(type="command_execution", exit_code=0,
+                            command=f"/bin/bash -lc 'cat .codex/skills/{name}/SKILL.md'",
+                            aggregated_output=skill.read_text())
+                trace = [dict(type="item.completed", item=item)]
+                self.assertTrue(runner.selected_skill_was_read(trace, name, "six-skill", "0.7.4"))
+                item["aggregated_output"] = "different skill text"
+                self.assertFalse(runner.selected_skill_was_read(trace, name, "six-skill", "0.7.4"))
+
+    def test_only_pinned_reference_reads_are_allowed_for_frozen_candidate(self):
+        item = dict(type="command_execution")
+        trace = [dict(type="item.completed", item=item)]
+        for path, allowed in (("references/planning.md", True), ("references/missing.md", False),
+                              ("references/../SKILL.md", False), ("references/planning.md; pwd", False)):
+            item["command"] = f"/bin/bash -lc 'cat .codex/skills/sdd-plan/{path}'"
+            self.assertEqual(not skill_eval_runner.trace_has_forbidden_action(
+                trace, "six-skill", "0.7.4"), allowed)
+            if allowed:
+                self.assertTrue(skill_eval_runner.trace_has_forbidden_action(trace, "six-skill", "0.7.3"))
+
+    def test_advice_outcome_contract_preserves_the_previous_prompt(self):
+        case = next(c for c in skill_eval.load_cases() if c["caseId"] == "SE-010")
+        catalog = skill_eval.load_event_catalog("0.7.6")["events"]
+        previous = skill_eval_runner.prompt_for(case, catalog, "six-skill", "0.7.5")
+        self.assertEqual(hashlib.sha256(previous.encode()).hexdigest(),
+                         "b71f526d790bfe6e559fa277fa0ff8a022a166a3164cab0e81c72436bad9b1a8")
+        updated = skill_eval_runner.prompt_for(case, catalog, "six-skill", "0.7.6")
+        self.assertIn("助言の結論が否定的でも", updated)
+        self.assertEqual(previous.split("- events:")[1], updated.split("- events:")[1])
+
+    def test_public_advice_and_refusal_cases_distinguish_outcomes(self):
+        source = skill_eval.ROOT / "routing/review-advice-outcome-regression-v0.1.json"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / source.name
+            shutil.copyfile(source, path)
+            cases, _ = skill_eval.load_held_out_cases(path, "0.7.6")
+        self.assertEqual(cases[0]["context"], cases[1]["context"])
+        for case, outcome, other in zip(cases, ("proceed", "stop"), ("stop", "proceed"), strict=True):
+            expected = case["expected"]
+            observation = dict(selectedEntry="quality-review", selectedPath=None, outcome=outcome,
+                               events=expected["requiredEvents"], rejectedEvents=[],
+                               readyClaimed=False, evidencePresent=False)
+            run = dict(architecture="six-skill", observation=observation)
+            self.assertTrue(skill_eval.observed_pass(case, run, "0.7.6"))
+            observation["outcome"] = other
+            self.assertFalse(skill_eval.observed_pass(case, run, "0.7.6"))
 
     def test_empty_run_set_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
