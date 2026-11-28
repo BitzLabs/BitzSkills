@@ -1281,6 +1281,7 @@ UTF-8でない名前は`setup.materialize`の`toBytes`で作る（§3.1の1.5。
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
 | `SINGLE-192-01` | `approved`のREQ-001。基準版のコミットは`.spec/`だけを含み、未追跡の`notes/<0xff>.txt`（`toBytes`で作る、UTF-8でない名前） | check --base HEAD | failed／1 | `SPEC-PATH-INVALID-001`の1件（summary「パスnotes/\xff.txtの名前をUTF-8として読めません」、`source`は`{file, root, notes/\xff.txt}`で`key`なし）。`selection`は`changedPathCount: 1`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 1`。`dirty: true` |
+| `SINGLE-192-02` | `SINGLE-184-*`と同じTASK-001（`changes: [src/]`）。基準版のコミットに入れ子の設定`sandbox/<0xff>/.spec/bitz.yaml`（`toBytes`で作る）を含め、作業ツリーで`src/inside.py`を変える | check TASK-001 --base HEAD | failed／1 | 入れ子のワークスペースの判定（`check` §7）に使う設定のパスの一覧のUTF-8でないパスを、`SPEC-PATH-INVALID-001`の1件（summary「パスsandbox/\xff/.spec/bitz.yamlの名前をUTF-8として読めません」、`source`は`{file, root, sandbox/\xff/.spec/bitz.yaml}`）として返して続ける（ADR-074、ADR-086の決定2）。`scope: selected`、検査文書1、規範文0 |
 
 ## 7. 最小matrix: 複合ワークスペース
 
@@ -1665,6 +1666,11 @@ UTF-8でない名前は`setup.materialize`の`toBytes`で作る（§3.1の1.5。
 | `MULTI-074-01` | `MULTI-071-01`の入力で、基準版のルートの設定のYAMLの構文が不正（`workspace: [platform`）。作業ツリーで適合する設定に直す | check --all-workspaces --base HEAD | failed／1 | 比べるリビジョンのルートの設定がYAMLのマッピングとして読めない（複合ワークスペース仕様 §2）。`SPEC-MULTI-CONFIG-001`の1件（summary「比べるリビジョンのルートワークスペースの設定が不正です」、`source`は`{file, platform, .spec/bitz.yaml}`で`key`なし。ADR-085の決定3）。`workspaces: []`、`dirty: true`（`MULTI-037-15`と同じ停止の形） |
 | `MULTI-074-02` | `MULTI-074-01`と同じ入力（`HEAD`のルートの設定が不正） | doctor --all-workspaces | failed／1 | `doctor`は`HEAD`のスナップショットも事前検査する（§8）。`MULTI-048-02`と同じ形（検査項目`catalog`が`failed`、`workspaces: []`）で、診断は`MULTI-074-01`と同じ1件 |
 | `MULTI-074-03` | `MULTI-071-01`の入力で、基準版のルートの設定がシンボリックリンク（`../config/root.yaml`）。作業ツリーで通常のファイルにする | check --all-workspaces --base HEAD | failed／1 | 比べるリビジョンのルートの設定が通常のファイルでない。`MULTI-074-01`と同じ結果 |
+| `MULTI-075-01` | `MULTI-071-01`の入力。基準版のコミットは設定と仕様文書だけを含み、メンバー`web`の配下に未追跡の`apps/web/notes/<0xff>.txt`（`toBytes`で作る） | check --all-workspaces --base HEAD | failed／1 | UTF-8でないパスの`SPEC-PATH-INVALID-001`を、所有するワークスペース`web`の`diagnostics`に置く（summary「パスnotes/\xff.txtの名前をUTF-8として読めません」、`source`は`{file, web, notes/\xff.txt}`。安全な入出力・互換性 §6、ADR-086の決定1）。最上位の`diagnostics`は空、`platform`と`api`は`passed` |
+| `MULTI-075-02` | `MULTI-075-01`の形で、メンバーの外に未追跡の`notes/<0xff>.txt` | check --all-workspaces --base HEAD | failed／1 | ルートワークスペース`platform`の`diagnostics`に1件（`source`は`{file, platform, notes/\xff.txt}`） |
+| `MULTI-075-03` | `MULTI-075-01`の形で、メンバーのパスの親の直下に未追跡の`apps/<0xff>/x.txt` | check --all-workspaces --base HEAD | failed／1 | UTF-8として復号できないセグメントはどのメンバーのパスとも一致しない（複合ワークスペース仕様 §5）ので、`platform`の`diagnostics`に1件（`source.path`は`apps/\xff/x.txt`） |
+| `MULTI-075-04` | `MULTI-075-01`の形で、未追跡の設定の候補`tools/<0xff>/.spec/bitz.yaml` | check --all-workspaces --base HEAD | blocked／2 | 設定の候補の一覧のUTF-8でないパスは未登録の設定とする（§8、ADR-086の決定2）。`SPEC-MULTI-UNREGISTERED-001`の1件（summary「Gitが認識する設定ファイルがカタログに登録されていません」、`source`は`{file, null, tools/\xff/.spec/bitz.yaml}`）、`workspaces: []`、`CHECK-PATH-NOT-UTF8`は返さない（`MULTI-030-02`と同じ形） |
+| `MULTI-075-05` | `MULTI-075-04`と同じ入力 | doctor --all-workspaces | blocked／2 | `MULTI-048-02`と同じ形で、検査項目`catalog`は`blocked`、診断は`MULTI-075-04`と同じ1件（`MULTI-036-10`と同じ未登録の設定の停止） |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
