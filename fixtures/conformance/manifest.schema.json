@@ -212,6 +212,10 @@
       "required": ["git", "operations"],
       "properties": {
         "git": { "type": "boolean" },
+        "objectFormat": {
+          "description": "リポジトリのオブジェクトの形式。`git init --object-format`に渡す。省略時は`sha1`（適合fixture仕様 §3.1、ADR-084）。",
+          "enum": ["sha1", "sha256"]
+        },
         "generate": { "$ref": "#/$defs/generate" },
         "materialize": { "$ref": "#/$defs/materialize" },
         "baseCommit": { "$ref": "#/$defs/baseCommit" },
@@ -227,6 +231,7 @@
             "not": {
               "anyOf": [
                 { "required": ["baseCommit"] },
+                { "required": ["objectFormat"] },
                 {
                   "properties": {
                     "operations": {

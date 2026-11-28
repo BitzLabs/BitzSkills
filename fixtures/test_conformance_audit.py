@@ -16563,5 +16563,66 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(rejected, ["SINGLE-190-02", "SINGLE-190-03", "SINGLE-190-04", "MULTI-072-01"])
         self.assertEqual(module.READING, {"renames": "none"})
 
+
+    # --- 適合harnessのオブジェクトの形式（`setup.objectFormat`。ADR-084、適合fixture仕様 §3.1） ---
+
+    def test_object_format_builds_the_same_commits_twice(self):
+        """`sha256`は64桁、既定と`sha1`は40桁のコミットIDを作り、2回の準備で同じコミットIDになる。"""
+        operations = [{"op": "branch", "name": "side"}, {"op": "update", "path": "a.txt", "source": "changes/a1.txt"},
+                      {"op": "stage", "paths": ["a.txt"]}, {"op": "commit", "message": "main"},
+                      {"op": "checkout", "name": "side"}, {"op": "update", "path": "b.txt", "source": "changes/b1.txt"},
+                      {"op": "stage", "paths": ["b.txt"]}, {"op": "commit", "message": "side"},
+                      {"op": "checkout", "name": "fixture"}, {"op": "merge", "name": "side"}, {"op": "commit", "message": "merge"},
+                      {"op": "shallow", "revisions": ["HEAD~1"]}]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root, {"a1.txt": b"main\n", "b1.txt": b"side\n"})
+            heads = {}
+            for name, extra, digits in (("default", {}, 40), ("sha1", {"objectFormat": "sha1"}, 40), ("sha256", {"objectFormat": "sha256"}, 64)):
+                observed = []
+                for run in range(2):
+                    plan = self.history_plan(operations)
+                    plan["setup"].update(extra)
+                    repository = fixture_setup(fixture, plan, root / f"{name}{run}")
+                    self.assertEqual(fixture_git(repository, "rev-parse", "--show-object-format").decode().strip(),
+                                     extra.get("objectFormat", "sha1"))
+                    head = fixture_git(repository, "rev-parse", "HEAD").decode().strip()
+                    self.assertRegex(head, f"^[0-9a-f]{{{digits}}}$")
+                    shallow = (repository / ".git/shallow").read_text().split()
+                    self.assertTrue(all(len(commit) == digits for commit in shallow))
+                    observed.append(fixture_git(repository, "rev-list", "--all", "--parents").decode())
+                self.assertEqual(observed[0], observed[1])
+                heads[name] = observed[0]
+            self.assertEqual(heads["default"], heads["sha1"])
+            self.assertNotEqual(heads["sha1"], heads["sha256"])
+
+    def test_object_format_is_validated(self):
+        """スキーマは`sha1`と`sha256`だけを受け付け、`setup.git: false`では`objectFormat`を禁止する。harnessも同じ誤りを拒否する。"""
+        validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
+        manifest = json.loads((audit.FIXTURES / "single/SINGLE-031/manifest.json").read_text())
+        for value in ("sha1", "sha256"):
+            validator.validate({**manifest, "setup": {**manifest["setup"], "objectFormat": value}})
+        for value in ("SHA256", "sha512", "", 256):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                validator.validate({**manifest, "setup": {**manifest["setup"], "objectFormat": value}})
+        no_git = {"git": False, "objectFormat": "sha256", "operations": []}
+        with self.assertRaises(ValidationError):
+            validator.validate({**manifest, "setup": no_git, "invocation": {**manifest["invocation"], "argv": ["check", "--full", "--format", "json"]}})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root)
+            with self.assertRaises(ValueError):
+                fixture_setup(fixture, {"setup": no_git}, root / "no-git")
+            with self.assertRaises(ValueError):
+                fixture_setup(fixture, {"setup": {"git": True, "objectFormat": "sha512", "operations": []}}, root / "unknown")
+            # サブモジュールも親と同じ形式で作る。
+            (fixture / "changes/member").mkdir()
+            (fixture / "changes/member/a.txt").write_bytes(b"member\n")
+            repository = fixture_setup(fixture, {"setup": {"git": True, "objectFormat": "sha256", "baseCommit": {"message": "base", "paths": ["."]},
+                                                           "operations": [{"op": "submodule", "path": "member", "source": "changes/member"}]}},
+                                       root / "submodule")
+            entry = fixture_git(repository, "ls-files", "--stage", "--", "member").decode().split()
+            self.assertEqual((entry[0], len(entry[1])), ("160000", 64))
+
 if __name__ == "__main__":
     unittest.main()

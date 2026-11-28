@@ -109,9 +109,13 @@ def setup(fixture, manifest, destination, generated=None):
             raise ValueError("fixtureの元のディレクトリはGitのメタデータを含んではいけません")
         shutil.copytree(fixture / "repo", destination, symlinks=True)
     materialize(destination, plan.get("materialize", []))
+    object_format = plan.get("objectFormat", "sha1")
+    if object_format not in OBJECT_FORMATS:
+        raise ValueError(f"未知のオブジェクトの形式です: {object_format!r}")
     if plan["git"]:
-        git(destination, "init", "--initial-branch=fixture")
-    elif "baseCommit" in plan or any(op["op"] in GIT_OPERATIONS for op in plan["operations"]):
+        # リポジトリのオブジェクトの形式（適合fixture仕様 §3.1、ADR-084）。既定は`sha1`。
+        git(destination, "init", "--initial-branch=fixture", f"--object-format={object_format}")
+    elif "baseCommit" in plan or "objectFormat" in plan or any(op["op"] in GIT_OPERATIONS for op in plan["operations"]):
         raise ValueError("Gitの操作には`setup.git`が必要です")
     if "baseCommit" in plan:
         paths = plan["baseCommit"]["paths"]
@@ -167,7 +171,7 @@ def setup(fixture, manifest, destination, generated=None):
             if not operation["source"].startswith("changes/") or not source.is_dir():
                 raise ValueError("Git構造の`source`は`changes`のディレクトリである必要があります")
             if kind == "submodule":
-                add_submodule(destination, path, source)
+                add_submodule(destination, path, source, object_format)
             else:
                 add_worktree(destination, path, source)
         elif kind == "rename":
@@ -183,6 +187,8 @@ def setup(fixture, manifest, destination, generated=None):
     return destination
 
 
+# リポジトリのオブジェクトの形式（`setup.objectFormat`。適合fixture仕様 §3.1、ADR-084）。
+OBJECT_FORMATS = frozenset({"sha1", "sha256"})
 # Gitを使う準備の処理（`setup.git: false`では禁止する。適合fixture仕様 §3.1）。
 GIT_OPERATIONS = frozenset({"stage", "submodule", "worktree", "commit", "branch", "checkout", "merge", "shallow"})
 # 履歴を作る準備の処理（ADR-080、適合fixture仕様 §3.2）。
@@ -314,11 +320,12 @@ def copy_source_tree(source, destination):
             shutil.copy2(entry, target)
 
 
-def add_submodule(destination, path, source):
+def add_submodule(destination, path, source, object_format="sha1"):
     """メンバーのパスを、`source`と同じ内容の別のリポジトリにし、親へ`gitlink`と`.gitmodules`を記録する。"""
     relative = path.relative_to(destination).as_posix()
     copy_source_tree(source, path)
-    git(path, "init", "--initial-branch=fixture")
+    # サブモジュールのリポジトリも、親と同じオブジェクトの形式にする（親のインデックスへ記録するgitlinkの形式を揃える）。
+    git(path, "init", "--initial-branch=fixture", f"--object-format={object_format}")
     git(path, "add", "-A", "--", ".")
     git(path, "commit", "-m", "member")
     modules = destination / ".gitmodules"
