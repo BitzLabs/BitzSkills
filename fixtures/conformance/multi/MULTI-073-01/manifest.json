@@ -1,0 +1,33 @@
+{
+  "fixtureId": "MULTI-073-01",
+  "description": "SHA-256のリポジトリでもdoctor --all-workspacesはSHA-1のリポジトリと同じ結果を返す",
+  "setup": {
+    "git": true,
+    "objectFormat": "sha256",
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": "apps/web",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

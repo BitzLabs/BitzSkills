@@ -24,6 +24,7 @@ from conformance import help_version_fixtures
 from conformance import nested_workspace_fixtures
 from conformance import approved_history_fixtures
 from conformance import change_set_fixtures
+from conformance import object_format_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions, CASES as INITIAL_CASES
@@ -16623,6 +16624,36 @@ class AuditTests(unittest.TestCase):
                                        root / "submodule")
             entry = fixture_git(repository, "ls-files", "--stage", "--", "member").decode().split()
             self.assertEqual((entry[0], len(entry[1])), ("160000", 64))
+
+
+    # --- SHA-256のリポジトリ（SINGLE-191、MULTI-073。ADR-084） ---
+
+    def test_object_format_fixtures(self):
+        result = object_format_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(object_format_fixtures.CASES))
+
+    def test_object_format_audit_rejects_corrupted_evidence(self):
+        module = object_format_fixtures
+        mutations = [
+            ("SINGLE-191-01", "manifest.json", lambda v: v["setup"].pop("objectFormat")),
+            ("SINGLE-191-01", "manifest.json", lambda v: v["setup"].update(objectFormat="sha1")),
+            ("SINGLE-191-01", "expected/doctor.json", lambda v: v["checks"][-1].update(status="warning")),
+            ("MULTI-073-01", "expected/doctor.json", lambda v: v.update(status="blocked")),
+            ("MULTI-073-01", "side-effects.json", lambda v: v["after"]["git"].update(status="?? extra\n")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                kind = "multi" if identifier.startswith("MULTI-") else "single"
+                shutil.copytree(audit.FIXTURES / kind / identifier, root / kind / identifier)
+                for name in ("manifest", "side-effects"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = root / kind / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=False))
+                self.assertTrue(module.validate(root, [identifier])["errors"])
 
 if __name__ == "__main__":
     unittest.main()
