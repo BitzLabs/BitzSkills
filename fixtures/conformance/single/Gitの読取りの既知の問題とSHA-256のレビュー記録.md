@@ -42,3 +42,44 @@
    UTF-8でないバイトを表せない（JSONの`\u`エスケープはUnicodeの文字だけを表す）。準備の入力の拡張が要る（ADR-048の部分改訂）。
 3. **比べるリビジョンの壊れたルートの設定**（決定2、`MULTI-REVISION-ROOT-CONFIG-INVALID`）: 準備の処理では作れる（基準版または`HEAD`のコミットに構文の不正な設定、
    またはシンボリックリンクを置き、作業ツリーで直す）。しかし診断の`source`（`workspaceId`を現在版のルートのIDとするか`null`とするか、`path`、`key`の有無）を、仕様が定めていないので、期待値を書けない。
+
+## 2026-11-28の追加（ADR-085。ADR-051の追加）
+
+前の節で判断を待つとした3点を、[ADR-085](../../../docs/02.設計書/10_決定記録/ADR-085_適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める.md)が決めた
+（`setup.materialize`の`toBytes`、`setup.objectFormat`に応じたコミットIDの桁数の正規化、壊れたリビジョンの設定の診断の`source`）。前の節の「置いていないもの」の1〜3は、この節で解消した
+（`--all-workspaces`のUTF-8でないパスの名前を除く。下の最後の項目）。
+
+### 準備の入力と正規化器
+
+- harnessとマニフェストのスキーマに`toBytes`（付け替えた後のパスのバイト列の小文字の16進。`2f`はセグメントの区切り。`to`と排他）を加えた。harnessはバイト列を
+  ファイルシステムの名前へ変え、`to`と同じく安全なパスの規則（`.`、`..`、`.git`、NUL）を当てる。自己試験で、UTF-8でない名前を作り、2回の準備で同じスナップショットになることを確かめる。
+- 参照harnessの共通正規化器（`runner.py`）は、`setup.objectFormat`に応じた40桁または64桁の小文字16進であることだけを検査し、同じ桁数の`0`へ置き換える（適合fixture仕様 §4）。
+  桁数が合わなければ置き換えずに差分として報告する。自己試験（`test_runner.py`）を加えた。
+- UTF-8でない名前は、副作用の期待値のスナップショットにファイルシステムの符号化（surrogateescape）の文字として現れるので、その`side-effects.json`はASCIIのエスケープで書く。
+
+### 加えたfixture
+
+| ID | 入力 | 操作 | 期待 |
+|---|---|---|---|
+| SINGLE-191-02 | `SINGLE-041`を`sha256`で | 引数なしの`check --base HEAD` | `SINGLE-041`と同じで、`revision`は64桁の`0` |
+| SINGLE-191-03 | `SINGLE-031`を`sha256`で | `check --full --base HEAD` | `SINGLE-031`と同じ（`failed`）で、64桁の`0` |
+| SINGLE-191-04 | `SINGLE-187-01`を`sha256`で | `check --full --base base` | `SINGLE-187-01`と同じ（途中のコミットを読む） |
+| SINGLE-191-05 | `SINGLE-105-01`を`sha256`で | `context REQ-001 --purpose verify` | `SINGLE-105-01`と同じで、`revision.commit`は64桁の`0` |
+| SINGLE-191-06 | `SINGLE-055`の入力を`sha256`のリポジトリにコミット | `verify REQ-001` | `revision`は`{commit: 64桁の0, dirty: false}`、ほかは`SINGLE-055`と同じ |
+| MULTI-073-02 | `MULTI-001`を`sha256`で | `check --all-workspaces --base HEAD` | `MULTI-001`と同じで、64桁の`0` |
+| SINGLE-192-01 | 未追跡の`notes/<0xff>.txt`（`toBytes`）。基準版のコミットは`.spec/`だけ | 引数なしの`check --base HEAD` | `failed`／1。`SPEC-PATH-INVALID-001`（「パスnotes/\xff.txtの名前をUTF-8として読めません」、`source.path`は`notes/\xff.txt`）。`selection`は1・0・1 |
+| MULTI-074-01 | 基準版のルートの設定のYAMLの構文が不正、作業ツリーで直す | `check --all-workspaces --base HEAD` | `failed`／1。`SPEC-MULTI-CONFIG-001`（「比べるリビジョンのルートワークスペースの設定が不正です」、`source`は`{file, platform, .spec/bitz.yaml}`で`key`なし）。`workspaces: []` |
+| MULTI-074-02 | 同じ入力 | `doctor --all-workspaces` | `MULTI-048-02`と同じ形（検査項目`catalog`が`failed`）で、診断は同じ1件 |
+| MULTI-074-03 | 基準版のルートの設定がシンボリックリンク、作業ツリーで通常のファイルにする | `check --all-workspaces --base HEAD` | `MULTI-074-01`と同じ |
+
+- 期待値の根拠: SHA-256は適合fixture仕様 §4と結果・診断・終了コード §2（ほかの規則はオブジェクトの形式によらず同じ。ADR-084の決定5）。`SINGLE-191-06`は、基の`SINGLE-055`が
+  コミットのないリポジトリ（`revision: null`）なので、入力をコミットして`revision`を`{commit, dirty: false}`にした（`SINGLE-055`の`stage`はコミットに含まれる。§2）。
+  UTF-8でないパスは安全な入出力・互換性 §6と`check` §5・§9。壊れたリビジョンの設定は複合ワークスペース仕様 §2・§8（`check`は基準版、`doctor`は`HEAD`のスナップショット）と
+  ADR-085の決定3。停止の結果の形は、全体事前検査の`SPEC-MULTI-CONFIG-001`で止まる既存の`MULTI-037-15`（`check`）と`MULTI-048-02`（`doctor`）に倣った。
+- 監査は`object_format_fixtures.py`（SHA-256。基のfixtureの入力、期待値、`git status`と照合する）と`git_read_fixtures.py`（UTF-8でない名前と壊れたリビジョンの設定）が行う。
+
+### 置いていないもの（判断を待つ）
+
+- **`--all-workspaces`のUTF-8でないパスの名前**: 全体事前検査で読むGitのパスの一覧にUTF-8でないパスがある場合の診断を、結果のどこに置くか（最上位の`diagnostics`か、
+  そのパスを所有するワークスペースの`diagnostics`か）、`source.workspaceId`と`source.path`の基準（リポジトリのルートからか、ワークスペースのルートからか）、
+  `failed`の診断が全体事前検査を非成功にしてワークスペースの処理を止めるか（継続単位は`continue`だが、§8は全体事前検査が非成功なら処理を始めない）を、仕様が定めていない。
