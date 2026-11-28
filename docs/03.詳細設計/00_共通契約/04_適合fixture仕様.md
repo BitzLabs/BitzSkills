@@ -1255,6 +1255,16 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `SINGLE-190-04` | `approved`のREQ-001のパスだけを`.spec/requirements/REQ-001-renamed.md`へ移し、ステージする | check --base HEAD | passed／0 | 2つのパスを同じ文書IDのREQ-001へ写す（移動元は基準版のID。§9）。`changedPathCount: 2`、`targetDocumentCount: 1`、`excludedCodeTestPathCount: 0` |
 | `SINGLE-190-05` | `SINGLE-190-04`と同じ移動を作業ツリーだけで行う | check --base HEAD | passed／0 | `SINGLE-190-04`と同じ結果 |
 
+### 6.27 SHA-256のリポジトリ
+
+Core 1.0は、オブジェクトの形式がSHA-1とSHA-256のリポジトリを対象とし、ほかの規則はオブジェクトの形式によらず同じとする
+（[Core実行環境・CLI基盤契約 §4](06_Core実行環境・CLI基盤契約.md#4-git)、[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)の決定5）。
+リポジトリは`setup.objectFormat: sha256`で作る（§3.1）。`doctor`の結果は`revision`を持たないので、期待結果は基のfixtureと同じである。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-191-01` | `SINGLE-001`の入力を、`setup.objectFormat: sha256`のリポジトリにコミットする | doctor | passed／0 | `SINGLE-001`と同じ結果。検査項目`git`は`passed`で、`SPEC-DOCTOR-GIT-001`を返さない（`doctor` §6） |
+
 ## 7. 最小matrix: 複合ワークスペース
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
@@ -1633,6 +1643,7 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 | `MULTI-071-05` | `MULTI-071-01`の入力で、ルートの設定に`limits.historyCommitCount: 1`（途中のコミットは2つ。ルートで実行） | check --all-workspaces --base base | failed／1 | 複合ワークスペースではルートの設定の値を使う（安全な入出力・互換性 §4.1）。`web`の`diagnostics`に1件（summary「状態approvedのREQの意味変更時に文書の状態が戻されていません（途中のコミットを完全には読めません）」） |
 | `MULTI-071-06` | `MULTI-071-01`の入力で、メンバー`web`の設定（基準版と現在版）に`safety.protectApprovedRequirements: false`。ルートと`api`の設定は既定。作業ツリーでREQ-010の`title`を変える（ルートで実行） | check --all-workspaces --base HEAD | passed／0 | `--all-workspaces`では、各ワークスペース自身の基準版と現在版の設定で保護の有無を判定する（§8、ADR-082の決定5）。`web`は無効なので診断なし。`dirty: true` |
 | `MULTI-072-01` | ルート`platform`、メンバー`web`（`approved`のREQ-010）と`api`。`web`のどの文書にも所有されないコード`apps/web/src/old.py`を`apps/web/src/new.py`へ移し、ステージする（`apps/web`で実行） | check --base HEAD | passed／0 | 複合ワークスペースの単独操作でも名前の変更を検出しない。`workspace`は`web`（`apps/web`）、`selection`は`changedPathCount: 2`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 2` |
+| `MULTI-073-01` | `MULTI-026-01`の入力を、`setup.objectFormat: sha256`のリポジトリにコミットする（`apps/web`で実行） | doctor --all-workspaces | passed／0 | `MULTI-026-01`と同じ結果（ADR-084の決定5） |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
