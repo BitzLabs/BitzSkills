@@ -206,7 +206,7 @@ harnessは各fixtureを新しい一時ディレクトリへコピーし、次の
 `core.fileMode=true`に固定する。ホスト側のグローバルまたはシステムのGit設定を読まず、フックを実行しない。
 リポジトリのオブジェクトの形式は、`setup.objectFormat`（`sha1`または`sha256`、既定は`sha1`）で指定し、`git init --object-format`に渡す（[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)）。
 
-`setup.git: false`では、`baseCommit`、Gitを使う準備の処理（`stage`、`submodule`、`worktree`、`commit`、`branch`、`checkout`、`merge`、`shallow`）、起動の`--base`を禁止する。
+`setup.git: false`では、`setup.objectFormat`（[ADR-086](../../02.設計書/10_決定記録/ADR-086_複合ワークスペースでUTF-8でないパスの名前の診断の置き場と、設定の候補の扱いを定める.md)）、`baseCommit`、Gitを使う準備の処理（`stage`、`submodule`、`worktree`、`commit`、`branch`、`checkout`、`merge`、`shallow`）、起動の`--base`を禁止する。
 起動の`--base`には、`HEAD`のほか、枝の名前と`HEAD~1`のようなリビジョンの式を書ける。式はGitが解決する（[ADR-080](../../02.設計書/10_決定記録/ADR-080_適合harnessの準備の処理にコミット、枝、マージ、シャロークローンを加える.md)）。
 `setup.git: true`かつ`baseCommit`なし、`operations: []`が、コミットのないリポジトリを表す。
 `baseCommit`あり、`operations: []`が、クリーンなコミット済みの状態を表す。状態名を別のフィールドで重複指定しない。
