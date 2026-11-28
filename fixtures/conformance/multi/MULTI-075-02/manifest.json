@@ -1,0 +1,42 @@
+{
+  "fixtureId": "MULTI-075-02",
+  "description": "--all-workspaces\u3067\u306f\u3001\u30e1\u30f3\u30d0\u30fc\u306e\u5916\u306eUTF-8\u3067\u306a\u3044\u30d1\u30b9\u306e\u8a3a\u65ad\u3092\u3001\u30eb\u30fc\u30c8\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9\u306b\u7f6e\u304f",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tmp/root-note.txt",
+        "toBytes": "6e6f7465732fff2e747874"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        ".spec/bitz.yaml",
+        "apps/web/.spec",
+        "services/api/.spec"
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

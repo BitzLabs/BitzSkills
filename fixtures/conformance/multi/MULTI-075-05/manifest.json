@@ -1,0 +1,40 @@
+{
+  "fixtureId": "MULTI-075-05",
+  "description": "doctor\u3082\u3001Git\u304c\u8a8d\u8b58\u3059\u308b\u8a2d\u5b9a\u306e\u5019\u88dc\u306e\u540d\u524d\u304cUTF-8\u3067\u306a\u3051\u308c\u3070\u3001\u672a\u767b\u9332\u306e\u8a2d\u5b9a\u3068\u3057\u3066\u5168\u4f53\u4e8b\u524d\u691c\u67fb\u3092\u6b62\u3081\u308b",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tmp/bitz.yaml",
+        "toBytes": "746f6f6c732fff2f2e737065632f6269747a2e79616d6c"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        ".spec/bitz.yaml",
+        "apps/web/.spec",
+        "services/api/.spec"
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

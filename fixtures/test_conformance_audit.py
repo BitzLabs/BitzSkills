@@ -16715,6 +16715,17 @@ class AuditTests(unittest.TestCase):
             ("MULTI-074-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(workspaceId=None)),
             ("MULTI-074-02", "expected/doctor.json", lambda v: v["checks"][-1].update(status="passed")),
             ("MULTI-074-03", "manifest.json", lambda v: v["setup"]["operations"].pop(0)),
+            # ADR-086: 所有するワークスペースへ置き、パスはそのルートから表す。設定の候補は未登録の設定とする。
+            ("MULTI-075-01", "expected/check.json", lambda v: (v["diagnostics"].append(v["workspaces"][2]["diagnostics"].pop()),
+                                                               v["workspaces"][2].update(status="passed"))),
+            ("MULTI-075-01", "expected/check.json", lambda v: v["workspaces"][2]["diagnostics"][0]["source"].update(path="apps/web/notes/\\xff.txt")),
+            ("MULTI-075-03", "expected/check.json", lambda v: (v["workspaces"][2]["diagnostics"].append(v["workspaces"][0]["diagnostics"].pop()),
+                                                               v["workspaces"][0].update(status="passed"), v["workspaces"][2].update(status="failed"))),
+            ("MULTI-075-04", "expected/check.json", lambda v: v["diagnostics"].append({"code": "SPEC-PATH-INVALID-001", "severity": "error",
+                "resultStatus": "failed", "summary": "パスtools/\\xff/.spec/bitz.yamlの名前をUTF-8として読めません",
+                "source": {"kind": "file", "workspaceId": None, "path": "tools/\\xff/.spec/bitz.yaml"}})),
+            ("MULTI-075-05", "expected/doctor.json", lambda v: v["checks"][-1].update(status="failed")),
+            ("SINGLE-192-02", "manifest.json", lambda v: v["setup"]["baseCommit"].update(paths=[".spec", "src"])),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:

@@ -83,3 +83,27 @@
 - **`--all-workspaces`のUTF-8でないパスの名前**: 全体事前検査で読むGitのパスの一覧にUTF-8でないパスがある場合の診断を、結果のどこに置くか（最上位の`diagnostics`か、
   そのパスを所有するワークスペースの`diagnostics`か）、`source.workspaceId`と`source.path`の基準（リポジトリのルートからか、ワークスペースのルートからか）、
   `failed`の診断が全体事前検査を非成功にしてワークスペースの処理を止めるか（継続単位は`continue`だが、§8は全体事前検査が非成功なら処理を始めない）を、仕様が定めていない。
+
+## 2026-11-28の追加（ADR-086。ADR-051の追加）
+
+前の節で判断を待つとした`--all-workspaces`のUTF-8でないパスの名前を、[ADR-086](../../../docs/02.設計書/10_決定記録/ADR-086_複合ワークスペースでUTF-8でないパスの名前の診断の置き場と、設定の候補の扱いを定める.md)が決めた。
+どれも`toBytes`で名前を作り、Linux専用である。複合ワークスペースのcorpusは`MULTI-071-01`と同じ（ルート`platform`は仕様文書を持たず、`web`にREQ-010、`api`にTECH-020）で、
+基準版のコミットは設定と仕様文書だけを含め、UTF-8でない名前の入力を未追跡のまま残す。
+
+| ID | 入力 | 操作 | 期待 |
+|---|---|---|---|
+| MULTI-075-01 | `apps/web/notes/<0xff>.txt`（`web`の配下） | `check --all-workspaces --base HEAD` | `failed`／1。`web`の`diagnostics`に`SPEC-PATH-INVALID-001`（`source`は`{file, web, notes/\xff.txt}`）。最上位は空 |
+| MULTI-075-02 | `notes/<0xff>.txt`（メンバーの外） | 同上 | `failed`／1。`platform`の`diagnostics`に1件 |
+| MULTI-075-03 | `apps/<0xff>/x.txt`（メンバーのパスの親の直下） | 同上 | `failed`／1。`platform`の`diagnostics`に1件（`source.path`は`apps/\xff/x.txt`） |
+| MULTI-075-04 | 設定の候補`tools/<0xff>/.spec/bitz.yaml` | 同上 | `blocked`／2。`SPEC-MULTI-UNREGISTERED-001`の1件（`workspaceId: null`）、`workspaces: []` |
+| MULTI-075-05 | 同じ入力 | `doctor --all-workspaces` | `blocked`／2。同じ1件、検査項目`catalog`は`blocked` |
+| SINGLE-192-02 | 基準版にコミットした入れ子の設定`sandbox/<0xff>/.spec/bitz.yaml`。TASKの`changes`の中の`src/inside.py`を変える | `check TASK-001 --base HEAD` | `failed`／1。`SPEC-PATH-INVALID-001`の1件（`source.path`は`sandbox/\xff/.spec/bitz.yaml`）。境界の外の変更はない |
+
+- 期待値の根拠: 安全な入出力・互換性 §6（所有するワークスペースに、そのルートからのパスで置く）、複合ワークスペース仕様 §5（UTF-8として復号できないセグメントはどのメンバーのパスとも一致しない）、
+  §8（設定の候補の一覧のUTF-8でないパスは未登録の設定）、`check` §7（入れ子の判定に使う設定のパスの一覧）。停止の結果の形は、未登録の設定で止まる`MULTI-030-02`（`check`）と、
+  全体事前検査で止まる`MULTI-048-02`（`doctor --all-workspaces`）に、未登録の設定の`catalog`の状態`blocked`（`MULTI-036-10`）を合わせた。
+- 作らなかったもの: submoduleとworktreeのUTF-8でないパス（ADR-086の決定3）。準備の処理`submodule`と`worktree`の`path`はJSONの文字列で、`setup.materialize`はGitの準備の前に行うので、
+  UTF-8でない名前のsubmoduleとworktreeを作れない。対照（診断を返さずに除き、検査の結果が変わらない）も、同じ理由で置いていない。
+- 解釈を含む点（期待値に影響しないと判断した）: `MULTI-075-01`〜`03`の未追跡のファイルは、名前が`.spec/bitz.yaml`で終わらないので、設定の候補の一覧に入らないとした。
+  `SINGLE-192-02`の設定のパスは、基準版と作業ツリーの両方の一覧に現れるが、1つの元の原因なので診断を1件とした（診断レジストリ §2）。
+- `setup.objectFormat`は`setup.git: true`を要する（ADR-086の決定4）。前の節で解釈としてスキーマとharnessで拒否していた扱いが、仕様と一致した。

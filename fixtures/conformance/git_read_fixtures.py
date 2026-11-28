@@ -12,8 +12,19 @@
 | `MULTI-074-02` | 同じ入力（`HEAD`のルートの設定が不正） | `doctor --all-workspaces` | `failed`／1。`MULTI-048-02`と同じ形で、診断だけが異なる |
 | `MULTI-074-03` | 基準版のルートの設定がシンボリックリンク。作業ツリーで通常のファイルにする | `check --all-workspaces --base HEAD` | `MULTI-074-01`と同じ結果 |
 
-`--all-workspaces`でUTF-8でないパスの名前を置くfixtureは、診断の置き場所（最上位かワークスペースか）、`source`の`workspaceId`とパスの基準、
-全体事前検査を止めるかを仕様が定めないので、置いていない（報告の対象）。
+[ADR-086](../../docs/02.設計書/10_決定記録/ADR-086_複合ワークスペースでUTF-8でないパスの名前の診断の置き場と、設定の候補の扱いを定める.md)の決定1〜3
+（安全な入出力・互換性 §6、複合ワークスペース仕様 §5、§8）による追加:
+
+| fixture | 入力 | 操作 | 期待 |
+|---|---|---|---|
+| `MULTI-075-01` | メンバー`web`の配下の未追跡の`apps/web/notes/\\xff.txt` | `check --all-workspaces --base HEAD` | `failed`／1。`web`の`diagnostics`に`SPEC-PATH-INVALID-001`（`source.path`は`web`のルートからの`notes/\\xff.txt`） |
+| `MULTI-075-02` | ルートワークスペースの未追跡の`notes/\\xff.txt`（メンバーの外） | 同上 | `failed`／1。`platform`の`diagnostics`に1件 |
+| `MULTI-075-03` | メンバーのパスの親の直下の未追跡の`apps/\\xff/x.txt`（どのメンバーのパスとも一致しないセグメント） | 同上 | `failed`／1。`platform`の`diagnostics`に1件（`source.path`は`apps/\\xff/x.txt`） |
+| `MULTI-075-04` | 未追跡の設定の候補`tools/\\xff/.spec/bitz.yaml` | 同上 | `blocked`／2。`SPEC-MULTI-UNREGISTERED-001`の1件（`workspaceId: null`）、`workspaces: []`。`CHECK-PATH-NOT-UTF8`は返さない |
+| `MULTI-075-05` | 同じ入力 | `doctor --all-workspaces` | `blocked`／2。同じ1件、検査項目`catalog`は`blocked` |
+| `SINGLE-192-02` | 基準版にコミットした入れ子の設定`sandbox/\\xff/.spec/bitz.yaml`。TASKの`changes`の中のコードを変える | `check TASK-001 --base HEAD` | `failed`／1。入れ子の判定に使う設定のパスの一覧のUTF-8でないパスを、`SPEC-PATH-INVALID-001`の1件として返して続ける（ADR-074、ADR-086の決定2） |
+
+submoduleとworktreeのUTF-8でないパス（決定3）は、準備の処理`submodule`と`worktree`の`path`がJSONの文字列で、`setup.materialize`はGitの準備の前に行うので、作れない（報告の対象）。
 """
 import copy
 import json
@@ -24,7 +35,8 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from .approved_history_fixtures import CONFIG, CONFIG_PATH, MULTI_REPO, ROOT_CONFIG, req
+from .approved_history_fixtures import API, CONFIG, CONFIG_PATH, MULTI_REPO, ROOT_CONFIG, WEB, req
+from .nested_workspace_fixtures import BASE_TASK, TASK_PATH
 from .document_fixtures import REQ_PATH
 from .harness import git, setup
 from .initial_fixtures import compare_state, observe
@@ -43,6 +55,26 @@ LINK_TARGET = "../config/root.yaml"
 
 class Link(str):
     """シンボリックリンクのリンク先。"""
+
+
+def path_diagnostic(workspace, text):
+    return {"code": "SPEC-PATH-INVALID-001", "severity": "error", "resultStatus": "failed", "summary": PATH_SUMMARY.format(path=text),
+            "source": {"kind": "file", "workspaceId": workspace, "path": text}}
+
+
+UNREGISTERED_SUMMARY = "Gitが認識する設定ファイルがカタログに登録されていません"
+# 基準版のコミットに含めるパス（UTF-8でない名前の入力を未追跡のまま残す）。
+MULTI_TRACKED = [CONFIG_PATH, f"{WEB}/.spec", f"{API}/.spec"]
+
+
+def untracked_multi(placeholder, raw, argv="check"):
+    """`MULTI-071-01`のcorpusに、UTF-8でない名前の未追跡のファイルを1つ置く。"""
+    return dict(repo={**MULTI_REPO, placeholder: CONFIG + b"workspace:\n  id: x\n" if raw.endswith(b"bitz.yaml") else b"# not UTF-8 name\n"},
+                changes={}, raw=raw, placeholder=placeholder,
+                setup={"git": True, "materialize": [{"from": placeholder, "toBytes": raw.hex()}],
+                       "baseCommit": {"message": "base", "paths": list(MULTI_TRACKED)}, "operations": []},
+                argv=(["check", "--all-workspaces", "--base", "HEAD", "--format", "json"] if argv == "check"
+                      else ["doctor", "--all-workspaces", "--format", "json"]))
 
 
 def revision_diagnostic():
@@ -78,6 +110,29 @@ CASES = {
         description="比べるリビジョンのルートの設定が通常のファイルでなければ（シンボリックリンク）、全体事前検査の不適合にする"),
 }
 
+CASES.update({
+    "MULTI-075-01": dict(untracked_multi("tmp/web-note.txt", b"apps/web/notes/\xff.txt"), owner="web", text="notes/\\xff.txt",
+                         description="--all-workspacesでは、メンバーの配下のUTF-8でないパスの診断を、所有するワークスペースにそのルートからのパスで置く"),
+    "MULTI-075-02": dict(untracked_multi("tmp/root-note.txt", b"notes/\xff.txt"), owner="platform", text="notes/\\xff.txt",
+                         description="--all-workspacesでは、メンバーの外のUTF-8でないパスの診断を、ルートワークスペースに置く"),
+    "MULTI-075-03": dict(untracked_multi("tmp/apps-note.txt", b"apps/\xff/x.txt"), owner="platform", text="apps/\\xff/x.txt",
+                         description="UTF-8でないセグメントはどのメンバーのパスとも一致しないので、メンバーの親の直下のパスはルートワークスペースが所有する"),
+    "MULTI-075-04": dict(untracked_multi("tmp/bitz.yaml", b"tools/\xff/.spec/bitz.yaml"), text="tools/\\xff/.spec/bitz.yaml",
+                         description="Gitが認識する設定の候補の名前がUTF-8でなければ、未登録の設定として全体事前検査を止める"),
+    "MULTI-075-05": dict(untracked_multi("tmp/bitz.yaml", b"tools/\xff/.spec/bitz.yaml", argv="doctor"), text="tools/\\xff/.spec/bitz.yaml",
+                         description="doctorも、Gitが認識する設定の候補の名前がUTF-8でなければ、未登録の設定として全体事前検査を止める"),
+    "SINGLE-192-02": dict(
+        repo={**BASE_TASK, "tmp/bitz.yaml": CONFIG}, changes={"inside.py": b"# changed allowed path\n"},
+        raw=b"sandbox/\xff/.spec/bitz.yaml", placeholder="tmp/bitz.yaml", text="sandbox/\\xff/.spec/bitz.yaml",
+        setup={"git": True, "materialize": [{"from": "tmp/bitz.yaml", "toBytes": b"sandbox/\xff/.spec/bitz.yaml".hex()}],
+               "baseCommit": {"message": "base", "paths": ["."]},
+               "operations": [{"op": "update", "path": "src/inside.py", "source": "changes/inside.py"}]},
+        argv=["check", "TASK-001", "--base", "HEAD", "--format", "json"],
+        description="入れ子のワークスペースの判定に使う設定のパスの名前がUTF-8でなければ、そのパスを診断して続ける"),
+})
+# 各ワークスペースの完全検査の件数（`MULTI-071-01`のcorpus。ルートの`platform`は仕様文書を持たない）。
+MULTI_WORKSPACES = (("platform", ".", 0, 0), ("api", API, 1, 1), ("web", WEB, 1, 1))
+
 
 def fixture_dir(root, identifier):
     return root / ("multi" if identifier.startswith("MULTI-") else "single") / identifier
@@ -89,13 +144,45 @@ def operation(identifier):
 
 def reviewed_manifest(identifier):
     case_ = CASES[identifier]
+    status = "blocked" if identifier in {"MULTI-075-04", "MULTI-075-05"} else "failed"
     return {"fixtureId": identifier, "description": case_["description"], "setup": copy.deepcopy(case_["setup"]),
             "invocation": {"runner": "bitz", "cwd": ".", "argv": list(case_["argv"]), "env": {}},
-            "expect": {"status": "failed", "exitCode": 1, "stdout": "json",
+            "expect": {"status": status, "exitCode": 2 if status == "blocked" else 1, "stdout": "json",
                        "resultFile": f"expected/{operation(identifier)}.json", "reportFileCount": 0}}
 
 
 def reviewed_result(identifier):
+    case_ = CASES[identifier]
+    if identifier in {"MULTI-075-01", "MULTI-075-02", "MULTI-075-03"}:
+        workspaces = []
+        for workspace_id, path, documents, statements in MULTI_WORKSPACES:
+            own = [path_diagnostic(workspace_id, case_["text"])] if workspace_id == case_["owner"] else []
+            workspaces.append({"id": workspace_id, "path": path, "status": "failed" if own else "passed",
+                               "checkedDocumentCount": documents, "checkedStatementCount": statements, "durationMs": 0, "diagnostics": own})
+        return {"schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "failed",
+                "multiWorkspace": {"id": "platform", "path": "."}, "workspaces": workspaces,
+                "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True}, "durationMs": 0, "diagnostics": []}
+    if identifier in {"MULTI-075-04", "MULTI-075-05"}:
+        unregistered = {"code": "SPEC-MULTI-UNREGISTERED-001", "severity": "error", "resultStatus": "blocked", "summary": UNREGISTERED_SUMMARY,
+                        "source": {"kind": "file", "workspaceId": None, "path": case_["text"]}}
+        if identifier == "MULTI-075-04":
+            # 未登録の設定で止まる`check --all-workspaces`の形（`MULTI-030-02`）。
+            return {"schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "blocked",
+                    "multiWorkspace": {"id": "platform", "path": "."}, "workspaces": [],
+                    "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True}, "durationMs": 0, "diagnostics": [unregistered]}
+        # 全体事前検査で止まる`doctor --all-workspaces`の形（`MULTI-048-02`）で、未登録の設定は検査項目`catalog`を`blocked`にする（`MULTI-036-10`）。
+        result = json.loads((HERE / "multi/MULTI-048-02/expected/doctor.json").read_text())
+        if [item["name"] for item in result["checks"]] != ["core", "git", "catalog"] or result["workspaces"]:
+            raise ValueError("基のfixture（MULTI-048-02）の形がレビュー済みの形と異なります")
+        result.update(status="blocked", diagnostics=[unregistered])
+        result["checks"][-1]["status"] = "blocked"
+        return result
+    if identifier == "SINGLE-192-02":
+        # 明示したTASKの`check`の形（`SINGLE-184-*`）。完全検査の対象はTASK-001だけで、TASKの`changes`の中の変更は境界の外でない。
+        return {"schemaVersion": "1.0", "operation": "check", "status": "failed", "scope": "selected",
+                "workspace": {"id": "root", "path": "."}, "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True},
+                "checkedDocumentCount": 1, "checkedStatementCount": 0, "durationMs": 0,
+                "diagnostics": [path_diagnostic("root", case_["text"])]}
     if identifier == "SINGLE-192-01":
         return {"schemaVersion": "1.0", "operation": "check", "status": "failed", "scope": "changed",
                 "workspace": {"id": "root", "path": "."}, "revision": {"base": COMMIT, "commit": COMMIT, "dirty": True},
@@ -155,6 +242,20 @@ def dump(value):
 
 def inspect(repository, identifier):
     status = git(repository, "status", "--porcelain=v1", "--untracked-files=all").decode()
+    case_ = CASES[identifier]
+    if "raw" in case_ and identifier != "SINGLE-192-01":
+        raw = case_["raw"]
+        if not os.path.lexists(os.path.join(os.fsencode(repository), raw)) or (repository / case_["placeholder"]).exists():
+            raise ValueError("UTF-8でない名前の入力がレビュー済みの位置にありません")
+        tracked = raw in git(repository, "ls-files", "-z").split(b"\0")
+        if tracked != (identifier == "SINGLE-192-02"):
+            raise ValueError("UTF-8でない名前の入力の追跡の状態がレビュー済みの形と異なります")
+        if identifier == "SINGLE-192-02":
+            if status != " M src/inside.py\n":
+                raise ValueError("変更がTASKのchangesの中のコードだけではありません")
+        elif status.count("\n") != 1 or not status.startswith('?? "'):
+            raise ValueError("変更がUTF-8でない名前の未追跡のファイルだけではありません")
+        return
     if identifier == "SINGLE-192-01":
         names = os.listdir(os.fsencode(repository / "notes"))
         if names != [b"\xff.txt"] or status != '?? "notes/\\377.txt"\n':

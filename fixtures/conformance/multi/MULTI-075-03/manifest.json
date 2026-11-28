@@ -1,0 +1,42 @@
+{
+  "fixtureId": "MULTI-075-03",
+  "description": "UTF-8\u3067\u306a\u3044\u30bb\u30b0\u30e1\u30f3\u30c8\u306f\u3069\u306e\u30e1\u30f3\u30d0\u30fc\u306e\u30d1\u30b9\u3068\u3082\u4e00\u81f4\u3057\u306a\u3044\u306e\u3067\u3001\u30e1\u30f3\u30d0\u30fc\u306e\u89aa\u306e\u76f4\u4e0b\u306e\u30d1\u30b9\u306f\u30eb\u30fc\u30c8\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9\u304c\u6240\u6709\u3059\u308b",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "tmp/apps-note.txt",
+        "toBytes": "617070732fff2f782e747874"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        ".spec/bitz.yaml",
+        "apps/web/.spec",
+        "services/api/.spec"
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
