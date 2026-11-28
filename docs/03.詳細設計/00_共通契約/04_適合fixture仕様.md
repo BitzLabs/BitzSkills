@@ -1260,11 +1260,27 @@ REQは`SINGLE-031`と同じ`REQ-001`（規範文1件、`title`は「文書の検
 
 Core 1.0は、オブジェクトの形式がSHA-1とSHA-256のリポジトリを対象とし、ほかの規則はオブジェクトの形式によらず同じとする
 （[Core実行環境・CLI基盤契約 §4](06_Core実行環境・CLI基盤契約.md#4-git)、[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)の決定5）。
-リポジトリは`setup.objectFormat: sha256`で作る（§3.1）。`doctor`の結果は`revision`を持たないので、期待結果は基のfixtureと同じである。
+リポジトリは`setup.objectFormat: sha256`で作る（§3.1）。`doctor`の結果は`revision`を持たないので、期待結果は基のfixtureと同じである。`revision`を持つ操作の期待結果は、基のfixtureの結果の`revision.base`と`revision.commit`を64桁の`0`にしたものである（§4、[ADR-085](../../02.設計書/10_決定記録/ADR-085_適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める.md)の決定2）。
 
 | fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
 |---|---|---|---|---|
 | `SINGLE-191-01` | `SINGLE-001`の入力を、`setup.objectFormat: sha256`のリポジトリにコミットする | doctor | passed／0 | `SINGLE-001`と同じ結果。検査項目`git`は`passed`で、`SPEC-DOCTOR-GIT-001`を返さない（`doctor` §6） |
+| `SINGLE-191-02` | `SINGLE-041`の入力と変更を、`sha256`のリポジトリで準備する | check --base HEAD | passed／0 | `SINGLE-041`と同じ`selection`と診断で、`revision`は64桁の`0` |
+| `SINGLE-191-03` | `SINGLE-031`の入力と変更を、`sha256`のリポジトリで準備する | check --full --base HEAD | failed／1 | `SINGLE-031`と同じ`SPEC-SAFETY-APPROVED-001`の1件。`revision`は64桁の`0` |
+| `SINGLE-191-04` | `SINGLE-187-01`の履歴（`draft`へ戻して再承認）を、`sha256`のリポジトリで準備する | check --full --base base | passed／0 | 途中のコミットを読み、`SINGLE-187-01`と同じ結果。`revision`は64桁の`0` |
+| `SINGLE-191-05` | `SINGLE-105-01`の入力を、`sha256`のリポジトリで準備する | context REQ-001 --purpose verify | passed／0 | `SINGLE-105-01`と同じ結果（`contextDigest`を含む）。`revision.commit`は64桁の`0` |
+| `SINGLE-191-06` | `SINGLE-055`の入力を、`sha256`のリポジトリにコミットする（`SINGLE-055`はコミットのないリポジトリ） | verify REQ-001 | passed／0 | `revision`は`{commit: 64桁の0, dirty: false}`、ほかは`SINGLE-055`と同じ結果 |
+
+### 6.28 UTF-8でないパスの名前
+
+`check`と全体事前検査で読むGitのパスの一覧に、UTF-8として復号できないパスがあれば、パスごとに`SPEC-PATH-INVALID-001`（`error`、`failed`。`CHECK-PATH-NOT-UTF8`）を返し、
+そのパスを除いて続ける。変更集合では、どの逆索引にも該当しないパスとして数える（[安全な入出力・互換性 §6](02_安全な入出力・互換性.md#6-正規パス)、
+[`check`仕様 §5、§9](../03_操作仕様/02_check.md#5-git基準版と変更集合)、[ADR-084](../../02.設計書/10_決定記録/ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)の決定1）。
+UTF-8でない名前は`setup.materialize`の`toBytes`で作る（§3.1の1.5。Linux専用）。
+
+| fixture | 主な入力 | 操作 | 状態／終了コード | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-192-01` | `approved`のREQ-001。基準版のコミットは`.spec/`だけを含み、未追跡の`notes/<0xff>.txt`（`toBytes`で作る、UTF-8でない名前） | check --base HEAD | failed／1 | `SPEC-PATH-INVALID-001`の1件（summary「パスnotes/\xff.txtの名前をUTF-8として読めません」、`source`は`{file, root, notes/\xff.txt}`で`key`なし）。`selection`は`changedPathCount: 1`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 1`。`dirty: true` |
 
 ## 7. 最小matrix: 複合ワークスペース
 
@@ -1645,6 +1661,10 @@ Core 1.0は、オブジェクトの形式がSHA-1とSHA-256のリポジトリを
 | `MULTI-071-06` | `MULTI-071-01`の入力で、メンバー`web`の設定（基準版と現在版）に`safety.protectApprovedRequirements: false`。ルートと`api`の設定は既定。作業ツリーでREQ-010の`title`を変える（ルートで実行） | check --all-workspaces --base HEAD | passed／0 | `--all-workspaces`では、各ワークスペース自身の基準版と現在版の設定で保護の有無を判定する（§8、ADR-082の決定5）。`web`は無効なので診断なし。`dirty: true` |
 | `MULTI-072-01` | ルート`platform`、メンバー`web`（`approved`のREQ-010）と`api`。`web`のどの文書にも所有されないコード`apps/web/src/old.py`を`apps/web/src/new.py`へ移し、ステージする（`apps/web`で実行） | check --base HEAD | passed／0 | 複合ワークスペースの単独操作でも名前の変更を検出しない。`workspace`は`web`（`apps/web`）、`selection`は`changedPathCount: 2`、`targetDocumentCount: 0`、`excludedCodeTestPathCount: 2` |
 | `MULTI-073-01` | `MULTI-026-01`の入力を、`setup.objectFormat: sha256`のリポジトリにコミットする（`apps/web`で実行） | doctor --all-workspaces | passed／0 | `MULTI-026-01`と同じ結果（ADR-084の決定5） |
+| `MULTI-073-02` | `MULTI-001`の入力を、`setup.objectFormat: sha256`のリポジトリにコミットする | check --all-workspaces --base HEAD | passed／0 | `MULTI-001`と同じ結果で、`revision`は64桁の`0`（§4） |
+| `MULTI-074-01` | `MULTI-071-01`の入力で、基準版のルートの設定のYAMLの構文が不正（`workspace: [platform`）。作業ツリーで適合する設定に直す | check --all-workspaces --base HEAD | failed／1 | 比べるリビジョンのルートの設定がYAMLのマッピングとして読めない（複合ワークスペース仕様 §2）。`SPEC-MULTI-CONFIG-001`の1件（summary「比べるリビジョンのルートワークスペースの設定が不正です」、`source`は`{file, platform, .spec/bitz.yaml}`で`key`なし。ADR-085の決定3）。`workspaces: []`、`dirty: true`（`MULTI-037-15`と同じ停止の形） |
+| `MULTI-074-02` | `MULTI-074-01`と同じ入力（`HEAD`のルートの設定が不正） | doctor --all-workspaces | failed／1 | `doctor`は`HEAD`のスナップショットも事前検査する（§8）。`MULTI-048-02`と同じ形（検査項目`catalog`が`failed`、`workspaces: []`）で、診断は`MULTI-074-01`と同じ1件 |
+| `MULTI-074-03` | `MULTI-071-01`の入力で、基準版のルートの設定がシンボリックリンク（`../config/root.yaml`）。作業ツリーで通常のファイルにする | check --all-workspaces --base HEAD | failed／1 | 比べるリビジョンのルートの設定が通常のファイルでない。`MULTI-074-01`と同じ結果 |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立した検証対象を通過とし、最上位は最悪値の`failed`に固定する。
