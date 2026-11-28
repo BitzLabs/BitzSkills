@@ -2,23 +2,23 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "018f03d8add540b6bbd2494bb63470537324e2a95cfed17d380a2dd233747b96",
-    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "f7375f5cfed63dbc760de501a4c7a3451a29f366106c285ffa2edeb35be08b41",
-    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "55c25d8df6773dfa964e7b2eb8110e85d27d5378c911959eb85a2eb41f71e976",
+    "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md": "82404302a8f94445467cde3c5261999672281260a6623570c9141740e12f4b66",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "bd75464ef27263a25a8443422bca9e9c85b919c56ea6789161ccc5d4c6e49ffa",
+    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "ec7a5f63494873fcc86796973081ec8533773dd061c71347a57b06e2ff64b570",
     "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md": "86491bda03cebe5e14c3b15c09300c948a6eb23e11b5b2b271fc4d2a7524c353",
     "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md": "231b6b37ee9df32a313fddafdb44148a1bac8e1f5d010320103ffce986ae9058",
     "docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md": "9556647f9bf2ab3ce17090a5d68579fbb7dc95e49feabd95c20afa8d3f78b03a",
     "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md": "110f230e4f6bcc1c23fdb53429b4b91a077518dce3cf57876696ab486f2c45e1",
-    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "ad23de83afb09fae52e93b82f4dbde91b6cbb59bbf6357fc30e3fd37313adec3",
+    "docs/03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md": "3289b90c53e82e59fa9c6540fa4f74eca0ae702ff0e72fb7ab0ce530b47b0592",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "5f79861e103eb51723a53302122fa32d5125a9bf9687a70c2dbbc5cc1776ee6f",
-    "docs/03.詳細設計/03_操作仕様/02_check.md": "0cc1949499176c72162d7793387577cfafa9aae0e98a0aec6c9291d0eaf2d98c",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "0bf9fc24c2a2020fafe830040c9145d1b6f55b18f82e7f851a70f2f49e8f56c0",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "78532f1eea3521ade4c6b67043424407d7dc55d77b12f97f25e62f9ad2e68375",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "e4652900ed5e26de7a900f0d2c619caa07826b436f88253dc9701659b85eab99",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "113737f1c9260c7be3c3901984c0a42253c520d2120d850d571fd4366628a86b",
     "docs/03.詳細設計/03_操作仕様/README.md": "740d92f116bd7ff64d8f52e03d46e5bc349f609d9b5f2be9c4a14f8687003ea1",
     "docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md": "fe94e79a4ad6e28ebc614bc027ed44b59b6e2c5dade3bbd4f4cab73499a2416e",
     "docs/03.詳細設計/01_EARS-AI/02_EARS-AI適合性・移行仕様.md": "8d6aa456c9391513d27a8c3dde8fe23253dc49c04380e6a3f3751a822055978f",
     "docs/03.詳細設計/01_EARS-AI/03_EARS-AI例・アンチパターン.md": "7564d43883f734d37f402226b1ab234c00e56fad81c3498ea28d8773cc64fed7",
-    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "f03c3c28de467829f5747713cbda74c6a8d4e6649cc40de43b5bdeff4ba55e75"
+    "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md": "2034432b374574f6593e17a739b7e26e0e5fc1efd0b68402d1126d0cde96287a"
   },
   "groups": [
     {
@@ -154,15 +154,18 @@
     {
       "id": "trace",
       "conditionIds": [
+        "CHECK-PATH-NOT-UTF8",
         "TRACE-PATH-APPROVED",
         "TRACE-PATH-DRAFT",
         "TRACE-COVERAGE-INVALID"
       ],
       "sources": [
         "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md",
-        "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md"
+        "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md",
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md",
+        "docs/03.詳細設計/03_操作仕様/02_check.md"
       ],
-      "rationale": "path不正（シンボリックリンク、別の綴り、NFCの衝突を含む）とdraft未作成予定、covers不在・対応できない参照（対応の重複はFM-FIELD-TYPE）。実効cwd配下外はverify binding解決で別途遮断。"
+      "rationale": "path不正（シンボリックリンク、別の綴り、NFCの衝突を含む）とdraft未作成予定、covers不在・対応できない参照（対応の重複はFM-FIELD-TYPE）。実効cwd配下外はverify binding解決で別途遮断。 ADR-084（2026-11-28）: `CHECK-PATH-NOT-UTF8`（新設。`SPEC-PATH-INVALID-001`、`error`、`failed`、`file`、`continue`、優先順位339）は、`check`と全体事前検査で読むGitのパスの一覧にUTF-8として復号できないパスがあれば、パスごとに返してそのパスを除いて続ける（安全な入出力・互換性 §6、`check` §5・§9）。`source.path`と`summary`のパスは復号できないバイトを`\\xNN`で表す。既存のパスの診断（`TRACE-PATH-*`、`VERIFY-TEST-PATH-INVALID`）とは原因が異なる。適合fixtureは未作成: 準備の入力（`setup.materialize`の`to`はJSONの文字列）でUTF-8でないバイトの名前を作れず、入力の拡張の判断を待つ。"
     },
     {
       "id": "context",
@@ -187,9 +190,10 @@
         "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md",
         "docs/03.詳細設計/03_操作仕様/01_context.md",
         "docs/03.詳細設計/03_操作仕様/03_verify.md",
-        "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md"
+        "docs/03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md",
+        "docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md"
       ],
-      "rationale": "起点・適用状態・閉包上限・coverage・stale・projection。coverageはpurposeとMUST/SHOULDを区別。"
+      "rationale": "起点・適用状態・閉包上限・coverage・stale・projection。coverageはpurposeとMUST/SHOULDを区別。 ADR-084（2026-11-28）: `context`と`verify`は、リポジトリのルート、`HEAD`、作業ツリーの状態をGitから読めない場合、推測せず`revision: null`とし、診断を返さない（結果・診断・終了コード §2）。診断の条件は増えない。読取りの失敗は準備の処理で作れないので適合fixtureを置かず、Coreの単体試験で確かめる。コミットIDは40桁（SHA-1）または64桁（SHA-256）とした。"
     },
     {
       "id": "check",
@@ -260,6 +264,7 @@
         "DOCTOR-CAPABILITY",
         "DOCTOR-WORKSPACE-MISSING",
         "DOCTOR-EARS-VERSION",
+        "DOCTOR-GIT-READ",
         "DOCTOR-GIT-DEGRADED",
         "DOCTOR-COMMAND-FILE",
         "DOCTOR-COMMAND-CWD"
@@ -268,7 +273,7 @@
         "docs/03.詳細設計/03_操作仕様/04_doctor.md",
         "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md"
       ],
-      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。設定がスキーマに適合しないときは返さない。`doctor` §7、SINGLE-183-11。全体事前検査がほかの原因で非成功でも、ルートの設定が適合していれば返す。MULTI-068-09）。 ADR-078（2026-11-21）: 結果の`limits`に`historyCommitCount`を加えた（SINGLE-183-01・02、MULTI-068-03・04・09）。診断の条件は増やさない。"
+      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。 ADR-076: `limits`を宣言した設定の結果の最上位に実際に使う上限を返す（診断の条件は増やさない。設定がスキーマに適合しないときは返さない。`doctor` §7、SINGLE-183-11。全体事前検査がほかの原因で非成功でも、ルートの設定が適合していれば返す。MULTI-068-09）。 ADR-078（2026-11-21）: 結果の`limits`に`historyCommitCount`を加えた（SINGLE-183-01・02、MULTI-068-03・04・09）。診断の条件は増やさない。 ADR-084（2026-11-28）: `DOCTOR-GIT-READ`（新設。`SPEC-DOCTOR-GIT-001`、`warning`、`passed_with_warnings`、`environment`、`continue`、優先順位831）は、単一ワークスペースでリポジトリのルート、`HEAD`、作業ツリーの状態をGitから読めない場合に返し、検査項目`git`を`warning`にする（`doctor` §6）。Git不在の`DOCTOR-GIT-DEGRADED`とは、Gitを利用できるかで排他に分かれる。複合ワークスペースは`MULTI-GIT`。コミットのないリポジトリとリポジトリの外は失敗としない。読取りの失敗は準備の処理で作れないので適合fixtureを置かず、Coreの単体試験で確かめる。SHA-256のリポジトリの`doctor`（読取りが成功する）はSINGLE-191-01、MULTI-073-01。"
     },
     {
       "id": "multiWorkspace",
@@ -278,6 +283,7 @@
         "MULTI-REF-WORKSPACE",
         "MULTI-OWNERSHIP",
         "MULTI-OWNERSHIP-CWD",
+        "MULTI-REVISION-ROOT-CONFIG-INVALID",
         "MULTI-CONFIG",
         "MULTI-MEMBER",
         "MULTI-ID",
@@ -297,7 +303,7 @@
         "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md",
         "docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md"
       ],
-      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用し、基準版は作業ツリーとインデックスではなくコミットの内容で数える（MULTI-069-*。ステージした変更はMULTI-069-25）。除外の件数の超過はMULTI-CONFIG（MULTI-068-02）。`excludeCount`は現在版の除外にだけ当て、基準版の除外は絶対上限で検査する（MULTI-068-10・11）。基準版の内容を読めない場合は上限を数えずに通さず、Gitを利用できない場合と同じMULTI-GIT（§4.1。準備の処理で表せないのでfixtureなし）。メンバーの設定の`limits`は、値の型と範囲によらず`multiWorkspace`を宣言したメンバーと同じMULTI-MEMBERで、発生元もカタログの宣言、値は検査しない（MULTI-068-06〜08）。ルートの設定のファイル単位の上限と展開した後の引数列の上限はメンバーにも当てる（MULTI-069-22〜24）。 ADR-083の`Notes`（2026-11-22、利用者の決定）: 全体事前検査（複合ワークスペース仕様 §8）で、Gitが認識する設定のパスの一覧の読取りが失敗した場合（Gitの起動の失敗、0でない終了コード、出力の形の不正）も、空の一覧として扱わず`MULTI-GIT`（`SPEC-MULTI-GIT-001`、`blocked`）とする（同 §2）。条件は増やさず、`MULTI-GIT`の範囲が広がる。読取りの失敗は準備の処理で作れないので適合fixtureを置かず、Coreの単体試験で確かめる。 同日の利用者の決定（`3bbef945`）で、対象を、メンバーのパスの検査に使うsubmoduleとworktreeの一覧と、比べるリビジョンのルートワークスペースの設定の読取りへ広げた（空の一覧または「ない」として扱わない。リビジョンのルートの設定は、Gitがパスの不在を示した場合だけ設定がないとする）。条件は増やさず、適合fixtureも置かない（Coreの単体試験で確かめる）。 同じ決定で、複合ワークスペースの操作の変更集合、基準版の仕様文書、リポジトリのルート、作業ツリーの状態の読取りの失敗と、壊れた`HEAD`の参照も`MULTI-GIT`に当たることを診断レジストリの条件の説明に書き足した（`check` §5）。条件は増えない。適合fixtureは置かない。"
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。cwdの字句のパスの所有の違反はverifyがそのbindingだけを起動しない。 ADR-076: スナップショット全体の次元（`memberCount`を除く）と除外の件数の上限はルートの設定の`limits`で小さくでき、LIMITの`evidence.limit`は実際に使った値、`check --base`は現在版の設定の上限を両方のスナップショットへ適用し、基準版は作業ツリーとインデックスではなくコミットの内容で数える（MULTI-069-*。ステージした変更はMULTI-069-25）。除外の件数の超過はMULTI-CONFIG（MULTI-068-02）。`excludeCount`は現在版の除外にだけ当て、基準版の除外は絶対上限で検査する（MULTI-068-10・11）。基準版の内容を読めない場合は上限を数えずに通さず、Gitを利用できない場合と同じMULTI-GIT（§4.1。準備の処理で表せないのでfixtureなし）。メンバーの設定の`limits`は、値の型と範囲によらず`multiWorkspace`を宣言したメンバーと同じMULTI-MEMBERで、発生元もカタログの宣言、値は検査しない（MULTI-068-06〜08）。ルートの設定のファイル単位の上限と展開した後の引数列の上限はメンバーにも当てる（MULTI-069-22〜24）。 ADR-083の`Notes`（2026-11-22、利用者の決定）: 全体事前検査（複合ワークスペース仕様 §8）で、Gitが認識する設定のパスの一覧の読取りが失敗した場合（Gitの起動の失敗、0でない終了コード、出力の形の不正）も、空の一覧として扱わず`MULTI-GIT`（`SPEC-MULTI-GIT-001`、`blocked`）とする（同 §2）。条件は増やさず、`MULTI-GIT`の範囲が広がる。読取りの失敗は準備の処理で作れないので適合fixtureを置かず、Coreの単体試験で確かめる。 同日の利用者の決定（`3bbef945`）で、対象を、メンバーのパスの検査に使うsubmoduleとworktreeの一覧と、比べるリビジョンのルートワークスペースの設定の読取りへ広げた（空の一覧または「ない」として扱わない。リビジョンのルートの設定は、Gitがパスの不在を示した場合だけ設定がないとする）。条件は増やさず、適合fixtureも置かない（Coreの単体試験で確かめる）。 同じ決定で、複合ワークスペースの操作の変更集合、基準版の仕様文書、リポジトリのルート、作業ツリーの状態の読取りの失敗と、壊れた`HEAD`の参照も`MULTI-GIT`に当たることを診断レジストリの条件の説明に書き足した（`check` §5）。条件は増えない。適合fixtureは置かない。 ADR-084（2026-11-28）: `MULTI-REVISION-ROOT-CONFIG-INVALID`（新設。`SPEC-MULTI-CONFIG-001`、`error`、`failed`、`file`、`stop-multi-workspace`、優先順位901）は、比べるリビジョン（`check`は基準版、`doctor`は`HEAD`。§8）にルートの設定のパスが存在するのに、通常のファイルでないかYAMLのマッピングとして読めない場合に、全体事前検査の不適合として返す（複合ワークスペース仕様 §2）。Gitがパスの不在を示した場合は設定がなく、そのほかの読取りの失敗は`MULTI-GIT`で、排他に分かれる。適合fixtureは未作成: 準備の処理で作れるが、診断の`source`（`workspaceId`、`path`、`key`）を仕様が定めないので期待値を書けず、判断を待つ。"
     }
   ],
   "openIssues": []
