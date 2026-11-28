@@ -25,6 +25,7 @@ from conformance import nested_workspace_fixtures
 from conformance import approved_history_fixtures
 from conformance import change_set_fixtures
 from conformance import object_format_fixtures
+from conformance import git_read_fixtures
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions, CASES as INITIAL_CASES
@@ -16641,6 +16642,12 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-191-01", "expected/doctor.json", lambda v: v["checks"][-1].update(status="warning")),
             ("MULTI-073-01", "expected/doctor.json", lambda v: v.update(status="blocked")),
             ("MULTI-073-01", "side-effects.json", lambda v: v["after"]["git"].update(status="?? extra\n")),
+            # 64桁のコミットIDの期待値を40桁に戻さない。基のfixtureと異なる結果にしない。
+            ("SINGLE-191-02", "expected/check.json", lambda v: v["revision"].update(base="0" * 40)),
+            ("SINGLE-191-05", "expected/context.json", lambda v: v["revision"].update(commit="0" * 40)),
+            ("SINGLE-191-06", "expected/verify.json", lambda v: v.update(revision=None)),
+            ("SINGLE-191-04", "manifest.json", lambda v: v["setup"]["operations"].pop()),
+            ("MULTI-073-02", "expected/check.json", lambda v: v.update(status="failed")),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -16687,6 +16694,40 @@ class AuditTests(unittest.TestCase):
                                             [{"from": "a.txt", "toBytes": "622e747874"}])):
                 with self.subTest(renames=renames), self.assertRaises(ValueError):
                     fixture_setup(fixture, {"setup": {**plan, "materialize": renames}}, root / f"rejected{index}")
+
+
+    # --- UTF-8でないパスの名前と比べるリビジョンの壊れたルートの設定（SINGLE-192、MULTI-074。ADR-084、ADR-085） ---
+
+    def test_git_read_fixtures(self):
+        result = git_read_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(git_read_fixtures.CASES))
+
+    def test_git_read_audit_rejects_corrupted_evidence(self):
+        module = git_read_fixtures
+        mutations = [
+            # パスの表し方（\xNN）、所有されないパスとしての件数、診断のsourceを取り違えない。
+            ("SINGLE-192-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="notes/\\xFF.txt")),
+            ("SINGLE-192-01", "expected/check.json", lambda v: v["selection"].update(changedPathCount=0, excludedCodeTestPathCount=0)),
+            ("SINGLE-192-01", "manifest.json", lambda v: v["setup"]["baseCommit"].update(paths=["."])),
+            ("SINGLE-192-01", "manifest.json", lambda v: v["setup"]["materialize"][0].update(toBytes="6e6f7465732f612e747874")),
+            ("MULTI-074-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="workspace")),
+            ("MULTI-074-01", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(workspaceId=None)),
+            ("MULTI-074-02", "expected/doctor.json", lambda v: v["checks"][-1].update(status="passed")),
+            ("MULTI-074-03", "manifest.json", lambda v: v["setup"]["operations"].pop(0)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                kind = "multi" if identifier.startswith("MULTI-") else "single"
+                shutil.copytree(audit.FIXTURES / kind / identifier, root / kind / identifier, symlinks=True)
+                for name in ("manifest", "side-effects"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = root / kind / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value, ensure_ascii=True))
+                self.assertTrue(module.validate(root, [identifier])["errors"])
 
 if __name__ == "__main__":
     unittest.main()

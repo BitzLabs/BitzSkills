@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "changed",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "selection": {
+    "changedPathCount": 1,
+    "targetDocumentCount": 0,
+    "excludedCodeTestPathCount": 1
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-PATH-INVALID-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "パスnotes/\\xff.txtの名前をUTF-8として読めません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": "notes/\\xff.txt"
+      }
+    }
+  ]
+}

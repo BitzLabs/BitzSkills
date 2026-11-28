@@ -482,7 +482,12 @@
         "SINGLE-190-02",
         "SINGLE-190-03",
         "SINGLE-190-04",
-        "SINGLE-190-05"
+        "SINGLE-190-05",
+        "SINGLE-191-02",
+        "SINGLE-191-03",
+        "SINGLE-191-04",
+        "SINGLE-191-05",
+        "SINGLE-192-01"
       ]
     },
     {
@@ -648,7 +653,8 @@
         "SINGLE-182-05",
         "SINGLE-182-06",
         "SINGLE-182-07",
-        "SINGLE-185-07"
+        "SINGLE-185-07",
+        "SINGLE-191-06"
       ]
     },
     {
@@ -1004,7 +1010,11 @@
         "MULTI-071-05",
         "MULTI-071-06",
         "MULTI-072-01",
-        "MULTI-073-01"
+        "MULTI-073-01",
+        "MULTI-073-02",
+        "MULTI-074-01",
+        "MULTI-074-02",
+        "MULTI-074-03"
       ]
     }
   ],

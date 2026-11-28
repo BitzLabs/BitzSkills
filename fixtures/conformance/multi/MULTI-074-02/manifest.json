@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-074-02",
+  "description": "doctor\u306fHEAD\u306e\u30eb\u30fc\u30c8\u306e\u8a2d\u5b9a\u304cYAML\u306e\u30de\u30c3\u30d4\u30f3\u30b0\u3068\u3057\u3066\u8aad\u3081\u306a\u3051\u308c\u3070\u3001\u5168\u4f53\u4e8b\u524d\u691c\u67fb\u306e\u4e0d\u9069\u5408\u306b\u3059\u308b",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/root.yaml"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-191-05",
+  "description": "SHA-256のリポジトリのcontextは、64桁のコミットIDのrevisionを返す",
+  "setup": {
+    "git": true,
+    "objectFormat": "sha256",
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

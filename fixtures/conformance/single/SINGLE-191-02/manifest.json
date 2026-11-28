@@ -1,0 +1,51 @@
+{
+  "fixtureId": "SINGLE-191-02",
+  "description": "SHA-256のリポジトリの引数なしのcheckは、64桁のコミットIDのrevisionで同じ選択を返す",
+  "setup": {
+    "git": true,
+    "objectFormat": "sha256",
+    "operations": [
+      {
+        "op": "update",
+        "path": "src/unowned.py",
+        "source": "changes/code.py"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "src/unowned.py"
+        ]
+      },
+      {
+        "op": "create",
+        "path": "tests/test_unowned.py",
+        "source": "changes/test.py"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

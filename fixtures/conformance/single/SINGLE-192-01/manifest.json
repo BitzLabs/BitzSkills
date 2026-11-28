@@ -1,0 +1,39 @@
+{
+  "fixtureId": "SINGLE-192-01",
+  "description": "\u672a\u8ffd\u8de1\u306e\u30d1\u30b9\u306e\u540d\u524d\u304cUTF-8\u3067\u306a\u3051\u308c\u3070\u3001\u305d\u306e\u30d1\u30b9\u3092\\xNN\u3067\u8868\u3057\u3066\u8a3a\u65ad\u3057\u3001\u6240\u6709\u3055\u308c\u306a\u3044\u30d1\u30b9\u3068\u3057\u3066\u6570\u3048\u3066\u7d9a\u3051\u308b",
+  "setup": {
+    "git": true,
+    "materialize": [
+      {
+        "from": "notes/placeholder.txt",
+        "toBytes": "6e6f7465732fff2e747874"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        ".spec"
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

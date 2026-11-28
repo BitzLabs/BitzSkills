@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-191-06",
+  "description": "SHA-256のリポジトリにコミットした入力のverifyは、64桁のコミットIDのrevisionを返す",
+  "setup": {
+    "git": true,
+    "objectFormat": "sha256",
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

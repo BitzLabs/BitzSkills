@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1bc06086ad6999ffa0cde9d7a53f6d4d8565178d6f0116fce996bd9c389123b1"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/unowned.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f66eeb5ed18918d664a150bb760d4d4f6b533ba28fbd01b358b9c1f8873ea109"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_unowned.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": "M  src/unowned.py\n?? tests/test_unowned.py\n",
+      "index": "100644 d791f8b1e51d3f86c630cfa864c93101574809967ea73a2f10a444087946e5eb 0\t.spec/bitz.yaml\n100644 e89b6d2123e4c183708a2e542589a0d652a3c51bef24cdbc6797439b14ef475c 0\t.spec/technical/TECH-001.md\n100644 92d76bddd30d79f4516d23be76e2f78bc97c181ce473b999b5fde13aa1f81212 0\tsrc/unowned.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1bc06086ad6999ffa0cde9d7a53f6d4d8565178d6f0116fce996bd9c389123b1"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/unowned.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f66eeb5ed18918d664a150bb760d4d4f6b533ba28fbd01b358b9c1f8873ea109"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_unowned.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": "M  src/unowned.py\n?? tests/test_unowned.py\n",
+      "index": "100644 d791f8b1e51d3f86c630cfa864c93101574809967ea73a2f10a444087946e5eb 0\t.spec/bitz.yaml\n100644 e89b6d2123e4c183708a2e542589a0d652a3c51bef24cdbc6797439b14ef475c 0\t.spec/technical/TECH-001.md\n100644 92d76bddd30d79f4516d23be76e2f78bc97c181ce473b999b5fde13aa1f81212 0\tsrc/unowned.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
