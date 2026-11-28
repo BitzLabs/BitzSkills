@@ -1,7 +1,7 @@
 ---
 id: ADR-085
 title: 適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-048
@@ -52,3 +52,4 @@ relations:
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-11-28 | 起票（`proposed`） | ADR-084 |
+| 2026-11-28 | 利用者の承認により`accepted`へ変更 | — |

@@ -98,6 +98,8 @@ relations:
 
 - `Decision`の4番目の項目の準備の入力に、[ADR-084](ADR-084_Gitの読取りの既知の問題を解消し、SHA-256のリポジトリに対応する.md)で`setup.objectFormat`を加えた。
 
+- `Decision`の4番目の項目の準備の入力`setup.materialize`に、[ADR-085](ADR-085_適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める.md)で`toBytes`を加えた。
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -108,3 +110,4 @@ relations:
 | 2026-11-17 | Decision 3を部分改訂 | ADR-076 |
 | 2026-11-21 | Decision 4を部分改訂 | ADR-080 |
 | 2026-11-23 | 準備の入力を部分改訂 | ADR-084 |
+| 2026-11-28 | 準備の入力を部分改訂 | ADR-085 |
