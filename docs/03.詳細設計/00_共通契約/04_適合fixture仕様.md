@@ -125,7 +125,7 @@ fixture IDは`SINGLE-NNN`または`MULTI-NNN`をケースファミリーとし�
 | `description` | ○ | 検査する論点の1行要約 |
 | `setup.git` | ○ | Gitのリポジトリを作るかどうか。`false`はGit不在のfixture |
 | `setup.generate` | — | 生成する入力。`repo/`と排他。§3.4 |
-| `setup.materialize` | — | コピーした入力の名前を、`git init`の前に付け替える。`[{from, to}]`。§3.1の1.5 |
+| `setup.materialize` | — | コピーした入力の名前を、`git init`の前に付け替える。`[{from, to}]`または`[{from, toBytes}]`。§3.1の1.5 |
 | `setup.baseCommit` | — | 基準版コミットの作り方。省略時はコミットを作らない |
 | `setup.operations` | ○ | 基準版コミットの後に順番に適用する準備の処理。0件でも配列を置く |
 | `invocation.runner` | ○ | `bitz`、`consumer`、`migration`、`package`のいずれか |
@@ -195,7 +195,7 @@ matrixの行に省略を明記し、監査が例外としてIDで列挙する（
 harnessは各fixtureを新しい一時ディレクトリへコピーし、次の順で準備手順を適用する。
 
 1. `repo/`の通常ファイルとディレクトリを一時ディレクトリへコピーする。シンボリックリンクはシンボリックリンクとして再作成する。
-1.5. `setup.materialize`があれば、配列順に`from`を`to`へ付け替える（`git init`の前。付け替えの後の名前が基準版のコミットに入る）。`repo/`へ直接置けない名前（Unicodeの正規化形だけが異なる名前、NFCで同じ名前になる2つの兄弟の項目。macOSのファイルシステムとGitの既定の設定で、名前が正規化または衝突する）を、ASCIIの名前の入力から作る。`to`はJSONの`\u`エスケープで書く（`\u00e9`はNFC、`e\u0301`はNFD）。`from`が存在しない、または`to`が存在すれば準備の誤りとする。この付け替えは、NFCとNFDの名前が共存できる環境（Linux）で行う。`setup.materialize`を使うfixtureはLinux専用で、macOSでは名前が正規化または衝突して準備に失敗するため対象外とする（[ADR-055](../../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)。harnessは変えない）。
+1.5. `setup.materialize`があれば、配列順に`from`を`to`へ付け替える（`git init`の前。付け替えの後の名前が基準版のコミットに入る）。`repo/`へ直接置けない名前（Unicodeの正規化形だけが異なる名前、NFCで同じ名前になる2つの兄弟の項目。macOSのファイルシステムとGitの既定の設定で、名前が正規化または衝突する）を、ASCIIの名前の入力から作る。`to`はJSONの`\u`エスケープで書く（`\u00e9`はNFC、`e\u0301`はNFD）。`to`の代わりに`toBytes`（付け替えた後のパスのバイト列を16進の小文字の文字列で表したもの。`/`の`2f`はセグメントの区切りとして扱う）を書けば、UTF-8でない名前を作れる。`to`と`toBytes`は排他とする（[ADR-085](../../02.設計書/10_決定記録/ADR-085_適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める.md)）。`from`が存在しない、または`to`（`toBytes`）が存在すれば準備の誤りとする。この付け替えは、NFCとNFDの名前が共存できる環境（Linux）で行う。`setup.materialize`を使うfixtureはLinux専用で、macOSでは名前が正規化または衝突して準備に失敗するため対象外とする（[ADR-055](../../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)。harnessは変えない）。
 2. `setup.git: true`なら`git init`し、同一性、時刻、既定ブランチ名をharnessの固定値にする。
 3. `setup.baseCommit`があれば、その`paths[]`だけをステージして1コミットを作る。
 4. `setup.operations[]`を配列順に適用する。
@@ -301,7 +301,8 @@ LFを標準出力へ書いて終了0とし、それ以外の`argv`はシムの�
 
 - `durationMs`（最上位、`workspaces[]`、`commands[]`のすべて）
 - レポートのファイル名に含まれる生成時刻と連番
-- GitのコミットID。`revision.base`と`revision.commit`は「40桁の小文字16進」であることだけを検査する
+- GitのコミットID。`revision.base`と`revision.commit`は、fixtureのリポジトリのオブジェクトの形式（`setup.objectFormat`）に応じた40桁（`sha1`）または64桁（`sha256`）の
+  小文字16進であることだけを検査し、期待値には同じ桁数の`0`を置く（[ADR-085](../../02.設計書/10_決定記録/ADR-085_適合harnessでUTF-8でない名前とSHA-256のコミットIDを扱い、壊れたリビジョンの設定の診断の形を定める.md)）
 - `core.version`のパッチ部（`--version`の出力のパッチ部も同じく比べない。§3の`stdoutVersionLine`）
 - 実行環境に依存するプロセス出力の抜粋
 
