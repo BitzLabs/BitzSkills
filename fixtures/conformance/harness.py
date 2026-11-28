@@ -76,6 +76,19 @@ def write_generated(entries, destination):
         path.write_bytes(content)
 
 
+def bytes_path(value):
+    """`toBytes`（付け替えた後のパスのバイト列の小文字の16進。`2f`はセグメントの区切り）を、ファイルシステムのパスの文字列にする（ADR-085）。
+
+    UTF-8でないバイトは、Pythonのファイルシステムの符号化（surrogateescape）で表す。Linux専用である（適合fixture仕様 §3.1の1.5）。
+    """
+    if not isinstance(value, str) or not value or len(value) % 2 or any(c not in "0123456789abcdef" for c in value):
+        raise ValueError(f"`toBytes`は小文字の16進の空でない文字列である必要があります: {value!r}")
+    raw = bytes.fromhex(value)
+    if b"\0" in raw:
+        raise ValueError("`toBytes`はNULを含められません")
+    return os.fsdecode(raw)
+
+
 def materialize(destination, renames):
     """コピーした入力の名前を、Gitの準備より前に付け替える（適合fixture仕様 §3.1の1.5）。
 
@@ -86,7 +99,9 @@ def materialize(destination, renames):
     """
     for rename in renames:
         source = safe_path(destination, rename["from"])
-        target = safe_path(destination, rename["to"])
+        if ("to" in rename) == ("toBytes" in rename):
+            raise ValueError("`materialize`には`to`か`toBytes`のどちらか一方が必要です")
+        target = safe_path(destination, rename["to"] if "to" in rename else bytes_path(rename["toBytes"]))
         if not (source.exists() or source.is_symlink()) or target.exists() or target.is_symlink():
             raise ValueError("`materialize`の前提条件を満たしていません")
         target.parent.mkdir(parents=True, exist_ok=True)

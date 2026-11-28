@@ -45,6 +45,21 @@ class NormalizeResultTests(unittest.TestCase):
         self.assertEqual(normalized["revision"]["base"], "not-a-commit")
         self.assertEqual(normalized["revision"]["commit"], "A" * 40)
 
+    def test_commit_digits_follow_object_format(self):
+        """コミットIDは`setup.objectFormat`に応じた桁数だけを受け付け、同じ桁数の`0`へ置き換える（適合fixture仕様 §4、ADR-085）。"""
+        sha256 = "b" * 64
+        normalized, warnings = normalize_result({"revision": {"base": sha256, "commit": sha256, "dirty": False}}, object_format="sha256")
+        self.assertEqual(warnings, [])
+        self.assertEqual((normalized["revision"]["base"], normalized["revision"]["commit"]), ("0" * 64, "0" * 64))
+        # 形式と桁数が合わなければ置き換えず、警告する（40桁をsha256で、64桁をsha1で）。
+        for object_format, value in (("sha256", "a" * 40), ("sha1", "b" * 64)):
+            with self.subTest(object_format=object_format):
+                normalized, warnings = normalize_result({"revision": {"commit": value, "dirty": False}}, object_format=object_format)
+                self.assertEqual(len(warnings), 1)
+                self.assertEqual(normalized["revision"]["commit"], value)
+        with self.assertRaises(FixtureError):
+            normalize_result({}, object_format="sha512")
+
     def test_core_version_patch_excluded(self):
         value = {"core": {"version": "1.0.7", "apiVersion": "1.0"}}
         normalized, warnings = normalize_result(value)

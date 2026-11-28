@@ -141,11 +141,23 @@
     "materialize": {
       "type": "array",
       "items": {
-        "type": "object", "additionalProperties": false, "required": ["from", "to"],
-        "properties": {
-          "from": { "$ref": "#/$defs/strictPath" },
-          "to": { "$ref": "#/$defs/strictPath" }
-        }
+        "oneOf": [
+          {
+            "type": "object", "additionalProperties": false, "required": ["from", "to"],
+            "properties": {
+              "from": { "$ref": "#/$defs/strictPath" },
+              "to": { "$ref": "#/$defs/strictPath" }
+            }
+          },
+          {
+            "description": "付け替えた後のパスのバイト列を小文字の16進で表す。`2f`はセグメントの区切り。UTF-8でない名前を作る（適合fixture仕様 §3.1の1.5、ADR-085）。",
+            "type": "object", "additionalProperties": false, "required": ["from", "toBytes"],
+            "properties": {
+              "from": { "$ref": "#/$defs/strictPath" },
+              "toBytes": { "type": "string", "pattern": "^(?:[0-9a-f]{2})+$" }
+            }
+          }
+        ]
       }
     },
     "stage": {

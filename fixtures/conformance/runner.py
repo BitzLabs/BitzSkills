@@ -27,6 +27,8 @@ HERE = Path(__file__).resolve().parent
 FIXTURES_ROOT = HERE.parent
 DEFAULT_TIMEOUT = 120
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+# リポジトリのオブジェクトの形式ごとのコミットIDの桁数（適合fixture仕様 §4、ADR-085）。期待値には同じ桁数の`0`を置く。
+COMMIT_DIGITS = {"sha1": 40, "sha256": 64}
 DURATION_TOKEN = re.compile(r"\([0-9]+ms\)")
 
 
@@ -226,7 +228,7 @@ def _validate_expected_result(fixture_root, manifest, validators):
     return payload
 
 
-def _normalize(node, warnings, top, zero_duration=False):
+def _normalize(node, warnings, top, zero_duration=False, object_format="sha1"):
     if isinstance(node, dict):
         if zero_duration:
             # 生成fixtureの`resultDigest`は、`durationMs`をリテラル0で固定した正規JSONの
@@ -245,24 +247,25 @@ def _normalize(node, warnings, top, zero_duration=False):
                 for key in ("base", "commit"):
                     value = revision.get(key)
                     if isinstance(value, str):
-                        if COMMIT_PATTERN.fullmatch(value):
-                            revision[key] = "0" * 40
+                        digits = COMMIT_DIGITS[object_format]
+                        if re.fullmatch(f"[0-9a-f]{{{digits}}}", value):
+                            revision[key] = "0" * digits
                         else:
-                            warnings.append(f"`revision.{key}`が40桁の小文字16進ではありません: {value!r}")
+                            warnings.append(f"`revision.{key}`が{digits}桁の小文字16進ではありません: {value!r}")
             core = node.get("core")
             if isinstance(core, dict) and isinstance(core.get("version"), str):
                 parts = core["version"].split(".")
                 if len(parts) >= 2:
                     core["version"] = ".".join(parts[:2])
         for value in node.values():
-            _normalize(value, warnings, top=False, zero_duration=zero_duration)
+            _normalize(value, warnings, top=False, zero_duration=zero_duration, object_format=object_format)
     elif isinstance(node, list):
         for item in node:
-            _normalize(item, warnings, top=False, zero_duration=zero_duration)
+            _normalize(item, warnings, top=False, zero_duration=zero_duration, object_format=object_format)
     return node
 
 
-def normalize_result(value, zero_duration=False):
+def normalize_result(value, zero_duration=False, object_format="sha1"):
     """共通の正規化器(適合fixture仕様 4)。`durationMs`の除外、コミット形式の検査、`core.version`のパッチバージョンの除外。
 
     `durationMs`は名前が一致すれば任意の深さで除外する(仕様が明示する最上位・`workspaces[]`・
@@ -272,10 +275,13 @@ def normalize_result(value, zero_duration=False):
     レポートのファイル名の生成時刻と連番の正規化は、公開結果のJSONに現れないため未使用(レポートの本文の比較を行わないため)。
 
     `zero_duration`は生成fixtureの`resultDigest`の比較だけに使う(既定は`False`で従来どおり`pop`する)。
+    `object_format`はfixtureの`setup.objectFormat`で、コミットIDの桁数（`sha1`は40、`sha256`は64）を決める(適合fixture仕様 4、ADR-085)。
     """
+    if object_format not in COMMIT_DIGITS:
+        raise FixtureError(f"未知のオブジェクトの形式です: {object_format!r}")
     import copy
     warnings = []
-    normalized = _normalize(copy.deepcopy(value), warnings, top=True, zero_duration=zero_duration)
+    normalized = _normalize(copy.deepcopy(value), warnings, top=True, zero_duration=zero_duration, object_format=object_format)
     return normalized, warnings
 
 
@@ -676,7 +682,8 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             else:
                 differences.extend(timed_call(timings, "compareSideEffects", _compare_side_effects, side_effects, expect, before_state, after_state, new_reports))
             if new_reports and manifest["invocation"]["runner"] == "bitz" and expect["stdout"] == "json":
-                differences.extend(_validate_report_contents(repository, new_reports, expected_result, validators))
+                differences.extend(_validate_report_contents(repository, new_reports, expected_result, validators,
+                                                             manifest["setup"].get("objectFormat", "sha1")))
 
         status = "passed" if not differences else "failed"
         return {"id": fixture_id, "result": status, "differences": differences}
@@ -687,6 +694,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
 
 
 def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, validators):
+    object_format = manifest["setup"].get("objectFormat", "sha1")
     differences = []
     if exit_code != expect["exitCode"]:
         differences.append(f"`exitCode`: 期待={expect['exitCode']} 実際={exit_code}")
@@ -705,14 +713,14 @@ def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, va
             # 生成fixture(仕様3.4・3.5)。期待結果のファイルを持たないため、実結果側を`durationMs`=0固定の
             # 同じ正規化器で正規JSON化し、レビュー済みのハッシュ値と文字列で比較する(緩和ではなく、
             # `multi_limit_fixtures.canonical_digest`が計算した期待のハッシュ値の再現)。
-            normalized_actual, warnings_a = normalize_result(actual_result, zero_duration=True)
+            normalized_actual, warnings_a = normalize_result(actual_result, zero_duration=True, object_format=object_format)
             differences.extend(f"正規化器: {message}" for message in warnings_a)
             actual_digest = digest_reference.digest(digest_reference.canonical_bytes(normalized_actual))
             if actual_digest != expect["resultDigest"]:
                 differences.append(f"`resultDigest`: 期待={expect['resultDigest']} 実際={actual_digest}")
         else:
-            normalized_actual, warnings_a = normalize_result(actual_result)
-            normalized_expected, warnings_e = normalize_result(expected_result)
+            normalized_actual, warnings_a = normalize_result(actual_result, object_format=object_format)
+            normalized_expected, warnings_e = normalize_result(expected_result, object_format=object_format)
             differences.extend(f"正規化器: {message}" for message in (*warnings_a, *warnings_e))
             differences.extend(_format_diffs(diff_json(normalized_expected, normalized_actual)))
     else:
@@ -745,7 +753,7 @@ def _compare_text(fixture_root, expect, exit_code, stdout_bytes):
     return differences
 
 
-def _validate_report_contents(repository, new_reports, expected_result, validators):
+def _validate_report_contents(repository, new_reports, expected_result, validators, object_format="sha1"):
     """新規レポートの内容を検査する(適合fixture仕様2、結果・診断・終了コード 8)。
 
     レポートは結果JSONそのものであるため、期待結果と同じスキーマで、正規化器を適用する前に検証し、適用した後に
@@ -766,8 +774,8 @@ def _validate_report_contents(repository, new_reports, expected_result, validato
             validators["result"].validate(payload)
         except ValidationError as error:
             raise FixtureError(f"レポート（{relative_path}）が`result.schema.json`に適合しません: {error.message}") from error
-        normalized_report, warnings_report = normalize_result(payload)
-        normalized_expected, warnings_expected = normalize_result(expected_result)
+        normalized_report, warnings_report = normalize_result(payload, object_format=object_format)
+        normalized_expected, warnings_expected = normalize_result(expected_result, object_format=object_format)
         differences.extend(f"レポート（{relative_path}）の正規化器: {message}"
                             for message in (*warnings_report, *warnings_expected))
         differences.extend(f"レポート（{relative_path}）: " + message

@@ -33,7 +33,7 @@ from conformance.document_fixtures import validate as validate_documents
 from conformance.trace_fixtures import validate as validate_trace
 from conformance.graph_fixtures import validate as validate_graph
 from conformance.git_fixtures import validate as validate_git_fixtures, check_git_states, reviewed_manifest as git_manifest
-from conformance.harness import setup as fixture_setup, git as fixture_git
+from conformance.harness import setup as fixture_setup, git as fixture_git, snapshot as audit_snapshot
 from conformance.task_fixtures import validate as validate_tasks, check_git_states as check_task_git_states, reviewed_manifest as task_manifest
 from conformance.selection_fixtures import validate as validate_selection, check_git_states as check_selection_git_states, reviewed_manifest as selection_manifest
 from conformance.git_environment_fixtures import (validate as validate_git_environment,
@@ -16654,6 +16654,39 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value, ensure_ascii=False))
                 self.assertTrue(module.validate(root, [identifier])["errors"])
+
+
+    def test_materialize_to_bytes_makes_non_utf8_names(self):
+        """`toBytes`は付け替えた後の名前をバイト列で作り、UTF-8でない名前も作れる（適合fixture仕様 §3.1の1.5、ADR-085）。"""
+        validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
+        manifest = json.loads((audit.FIXTURES / "single/SINGLE-031/manifest.json").read_text())
+        validator.validate({**manifest, "setup": {**manifest["setup"], "materialize": [{"from": "a.txt", "toBytes": "6e6f7465732fff2e747874"}]}})
+        for item in ({"from": "a.txt", "to": "b.txt", "toBytes": "62"}, {"from": "a.txt"}, {"from": "a.txt", "toBytes": "FF"},
+                     {"from": "a.txt", "toBytes": "f"}, {"from": "a.txt", "toBytes": ""}):
+            with self.subTest(item=item), self.assertRaises(ValidationError):
+                validator.validate({**manifest, "setup": {**manifest["setup"], "materialize": [item]}})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = self.history_fixture(root)
+            plan = {"git": True, "baseCommit": {"message": "base", "paths": ["b.txt"]}, "operations": [],
+                    "materialize": [{"from": "a.txt", "toBytes": "6e6f7465732fff2e747874"}]}
+            observed = []
+            for run in range(2):
+                repository = fixture_setup(fixture, {"setup": plan}, root / f"run{run}")
+                names = sorted(os.listdir(os.fsencode(repository / "notes")))
+                self.assertEqual(names, [b"\xff.txt"])
+                # 基準版のコミットに含めなければ、未追跡のパスとして残る。Gitは名前を引用符と8進で表す。
+                status = fixture_git(repository, "status", "--porcelain=v1", "--untracked-files=all").decode()
+                self.assertEqual(status, '?? "notes/\\377.txt"\n')
+                state = audit_snapshot(repository)
+                observed.append(json.dumps(state, ensure_ascii=True, sort_keys=True))
+            self.assertEqual(observed[0], observed[1])
+            self.assertEqual(json.loads(observed[0]), json.loads(observed[1]))
+            for index, renames in enumerate(([{"from": "a.txt", "toBytes": "2e2e2f78"}], [{"from": "a.txt", "toBytes": "2e6769742f78"}],
+                                            [{"from": "a.txt", "toBytes": "6100"}], [{"from": "a.txt", "toBytes": "62"}, {"from": "a.txt", "to": "c.txt"}],
+                                            [{"from": "a.txt", "toBytes": "622e747874"}])):
+                with self.subTest(renames=renames), self.assertRaises(ValueError):
+                    fixture_setup(fixture, {"setup": {**plan, "materialize": renames}}, root / f"rejected{index}")
 
 if __name__ == "__main__":
     unittest.main()
